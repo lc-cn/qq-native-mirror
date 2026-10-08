@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "packages": [
+    {
+      "platform": "linux",
+      "arch": "arm64",
+      "version": {
+        "clientVersion": "3.2.31-51102",
+        "appId": "537376498",
+        "qua": "V1_LNX_3.2.31-51102_51102_GW_B"
+      },
+      "manifestUrl": "https://raw.githubusercontent.com/lc-cn/qq-native-mirror/main/packages/3.2.31-51102-linux-arm64/25e3e4fbf046d7acb45f2569f2f4e2c5b374142f0575d52d5c962fdbc8c718fa/manifest.json",
+      "manifestSha256": "25e3e4fbf046d7acb45f2569f2f4e2c5b374142f0575d52d5c962fdbc8c718fa"
+    },
+    {
+      "platform": "linux",
+      "arch": "x64",
+      "version": {
+        "clientVersion": "3.2.31-51102",
+        "appId": "537376497",
+        "qua": "V1_LNX_3.2.31-51102_51102_GW_B"
+      },
+      "manifestUrl": "https://raw.githubusercontent.com/lc-cn/qq-native-mirror/main/packages/3.2.31-51102-linux-x64/7f13f72b7cb5b86583cbf97f08bd3e61ba2b6b288250720d9db393e634bb62eb/manifest.json",
+      "manifestSha256": "7f13f72b7cb5b86583cbf97f08bd3e61ba2b6b288250720d9db393e634bb62eb"
+    },
+    {
+      "platform": "darwin",
+      "arch": "arm64",
+      "version": {
+        "clientVersion": "7.0.2-53644",
+        "appId": "537391652",
+        "qua": "V1_MAC_7.0.2-53644_53644_GW_B"
+      },
+      "manifestUrl": "https://raw.githubusercontent.com/lc-cn/qq-native-mirror/main/packages/7.0.2-53644-darwin-arm64/cdaac27e9a5debd10b66c44016ea5b279cdcfe7008a75191d4431aab34c0d73d/manifest.json",
+      "manifestSha256": "cdaac27e9a5debd10b66c44016ea5b279cdcfe7008a75191d4431aab34c0d73d"
+    },
+    {
+      "platform": "linux",
+      "arch": "arm64",
+      "version": {
+        "clientVersion": "3.2.32-52194",
+        "appId": "537379448",
+        "qua": "V1_LNX_3.2.32-52194_52194_GW_B"
+      },
+      "manifestUrl": "https://raw.githubusercontent.com/lc-cn/qq-native-mirror/main/packages/3.2.32-52194-linux-arm64/11fdcdd66cb9c112a633f6efb8a8c7958e6314606d59dd7e57c4c24d286ec150/manifest.json",
+      "manifestSha256": "11fdcdd66cb9c112a633f6efb8a8c7958e6314606d59dd7e57c4c24d286ec150"
+    },
+    {
+      "platform": "linux",
+      "arch": "x64",
+      "version": {
+        "clientVersion": "3.2.32-52194",
+        "appId": "537379447",
+        "qua": "V1_LNX_3.2.32-52194_52194_GW_B"
+      },
+      "manifestUrl": "https://raw.githubusercontent.com/lc-cn/qq-native-mirror/main/packages/3.2.32-52194-linux-x64/2bce7bc8cd052d57c1e7f73062a10d35991e252f4b3a90e07cc500c3c6c0bcd9/manifest.json",
+      "manifestSha256": "2bce7bc8cd052d57c1e7f73062a10d35991e252f4b3a90e07cc500c3c6c0bcd9"
+    }
+  ]
+}

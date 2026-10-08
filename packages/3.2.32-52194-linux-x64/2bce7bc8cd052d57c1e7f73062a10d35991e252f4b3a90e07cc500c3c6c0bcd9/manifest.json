@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "id": "qq-3.2.32-52194-linux-x64",
+  "platform": "linux",
+  "arch": "x64",
+  "wrapper": "wrapper.node",
+  "version": {
+    "clientVersion": "3.2.32-52194",
+    "appId": "537379447",
+    "qua": "V1_LNX_3.2.32-52194_52194_GW_B"
+  },
+  "files": [
+    {
+      "path": "libbugly.so",
+      "sha256": "b4c78ae60326e7c68b9f026d5c43a8db1ad19ab4069a11a3468a498b9ee8599d",
+      "url": "https://github.com/lc-cn/qq-native-mirror/releases/download/native-v1/3.2.32-52194-linux-x64-0-libbugly.so"
+    },
+    {
+      "path": "libcrbase.so",
+      "sha256": "5c4ef5b297291301eb40c4ae48d31083830132b146bac3c21a68e080ec71fc8e",
+      "url": "https://github.com/lc-cn/qq-native-mirror/releases/download/native-v1/3.2.32-52194-linux-x64-1-libcrbase.so"
+    },
+    {
+      "path": "libssh2.so.1",
+      "sha256": "b18f774efaf7e074338133ec9ae93dd3a94fb33ff2aa1eedbf4d5b45172d8e23",
+      "url": "https://github.com/lc-cn/qq-native-mirror/releases/download/native-v1/3.2.32-52194-linux-x64-2-libssh2.so.1"
+    },
+    {
+      "path": "libunwind-x86_64.so.8",
+      "sha256": "ffd57d6f0a4e902278f2f33d88247b7661f7bd03bd300733db3193d51cd98f7b",
+      "url": "https://github.com/lc-cn/qq-native-mirror/releases/download/native-v1/3.2.32-52194-linux-x64-3-libunwind-x86_64.so.8"
+    },
+    {
+      "path": "libunwind.so.8",
+      "sha256": "7466ebba89873fa3a959ae0a14c824140df82a8ebba40bc1c3808acbc5eab76b",
+      "url": "https://github.com/lc-cn/qq-native-mirror/releases/download/native-v1/3.2.32-52194-linux-x64-4-libunwind.so.8"
+    },
+    {
+      "path": "sharp-lib/libvips-cpp.so.42",
+      "sha256": "994c562dc1242f07ce62c0c918bd4e49eebf5bb7a0e34726892a4c79ddab3399",
+      "url": "https://github.com/lc-cn/qq-native-mirror/releases/download/native-v1/3.2.32-52194-linux-x64-5-libvips-cpp.so.42"
+    },
+    {
+      "path": "wrapper.node",
+      "sha256": "7882b8e3055cd38584861042befacd8be9939896f5cbbca6fa4a230926b48526",
+      "url": "https://github.com/lc-cn/qq-native-mirror/releases/download/native-v1/3.2.32-52194-linux-x64-6-wrapper.node"
+    }
+  ]
+}

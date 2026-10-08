@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "id": "qq-3.2.31-51102-linux-arm64",
+  "platform": "linux",
+  "arch": "arm64",
+  "wrapper": "wrapper.node",
+  "version": {
+    "clientVersion": "3.2.31-51102",
+    "appId": "537376498",
+    "qua": "V1_LNX_3.2.31-51102_51102_GW_B"
+  },
+  "files": [
+    {
+      "path": "libbugly.so",
+      "sha256": "573cbe3f173c31945ad8adc7f91b462ee40e92d711f049311a9ffc67ba164f08",
+      "url": "https://github.com/lc-cn/qq-native-mirror/releases/download/native-v1/3.2.31-51102-linux-arm64-0-libbugly.so"
+    },
+    {
+      "path": "libcrbase.so",
+      "sha256": "d9152f08a120fd80d106e575582425c4f9b5ceccb579681c08a1cc998d4d290a",
+      "url": "https://github.com/lc-cn/qq-native-mirror/releases/download/native-v1/3.2.31-51102-linux-arm64-1-libcrbase.so"
+    },
+    {
+      "path": "libssh2.so.1",
+      "sha256": "feb4e10c885745ff39d924e0f0d83d78f0b2a26d7900965b29eba5dc70600104",
+      "url": "https://github.com/lc-cn/qq-native-mirror/releases/download/native-v1/3.2.31-51102-linux-arm64-2-libssh2.so.1"
+    },
+    {
+      "path": "libunwind-aarch64.so.8",
+      "sha256": "b3d419fdf5146bdf1f829fa6146b8867788f57ea75adf6bd999b4791be90f196",
+      "url": "https://github.com/lc-cn/qq-native-mirror/releases/download/native-v1/3.2.31-51102-linux-arm64-3-libunwind-aarch64.so.8"
+    },
+    {
+      "path": "libunwind.so.8",
+      "sha256": "ff7bb631cb460dfcb231d80f61e1390448244a0a6f940b12c7c03dbd1a565205",
+      "url": "https://github.com/lc-cn/qq-native-mirror/releases/download/native-v1/3.2.31-51102-linux-arm64-4-libunwind.so.8"
+    },
+    {
+      "path": "libz.so.1",
+      "sha256": "d7e452e38e2b8d3f47d6110e50a1c0b505477d558e56806cccc75535d0302393",
+      "url": "https://github.com/lc-cn/qq-native-mirror/releases/download/native-v1/3.2.31-51102-linux-arm64-5-libz.so.1"
+    },
+    {
+      "path": "sharp-lib/libvips-cpp.so.42",
+      "sha256": "41978e127befa8d0bcd1a4042142bc4d7b4ddda0d76e389ee31c4aac30cec7f0",
+      "url": "https://github.com/lc-cn/qq-native-mirror/releases/download/native-v1/3.2.31-51102-linux-arm64-6-libvips-cpp.so.42"
+    },
+    {
+      "path": "wrapper.node",
+      "sha256": "72978494d18d0076a378550099628569ff5081ada79f37e0b7adaeae6904217a",
+      "url": "https://github.com/lc-cn/qq-native-mirror/releases/download/native-v1/3.2.31-51102-linux-arm64-7-wrapper.node"
+    }
+  ]
+}
