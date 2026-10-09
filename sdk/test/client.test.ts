@@ -494,3 +494,23 @@ test('worker crash cancels a scheduled automatic restore while explicit reconnec
     assert.deepEqual(replacement.requests.find(request => request.method === 'login').login, { method: 'restore', uin: '123' });
   } finally { await client.close(); }
 });
+
+
+test('merged-forward public query defaults first-level parent and captures exact nested context before IPC', async()=>{
+ const worker=new Worker(),client=new QQClient(worker as unknown as ChildProcess,500),longId='900719925474099312345';
+ try{
+  await assert.rejects(client.getForwardMessages({type:'group',groupId:'123'},longId),/not online/);
+  worker.emit('message',{event:'ready',payload:{uin:'456',uid:'u_self'}});
+  await assert.rejects(client.getForwardMessages({type:'group',groupId:'123'},'not-a-resource-id'),/numeric string/);
+  await assert.rejects(client.getForwardMessages({type:'group',groupId:'123'},longId,'bad'),/numeric string/);
+  assert.equal(worker.requests.length,0);
+  const peer={type:'group' as const,groupId:'123'},first=client.getForwardMessages(peer,longId);peer.groupId='999';
+  let request=worker.requests.at(-1);
+  assert.deepEqual({peer:request.peer,root:request.rootMessageId,parent:request.parentMessageId},{peer:{type:'group',groupId:'123'},root:longId,parent:longId});
+  worker.emit('message',{id:request.id,result:[]});assert.deepEqual(await first,[]);
+  const nested=client.getForwardMessages({type:'group',groupId:'123'},longId,'0002');request=worker.requests.at(-1);
+  assert.equal(request.rootMessageId,longId);assert.equal(request.parentMessageId,'0002');
+  worker.emit('message',{id:request.id,result:[]});await nested;
+  assert.equal(worker.requests.length,2);
+ }finally{await client.close();}
+});

@@ -40,13 +40,33 @@ export function createForwardMessages(
     if (!service || typeof service[method] !== 'function') throw new Error(`Native message service is missing ${method}`);
     return service[method](...args);
   };
+  // Native promises may remain unsettled after the Session closes. Observe late
+  // completion while ending this caller immediately, without replaying dispatch.
+  async function alive<T>(invoke: () => T | PromiseLike<T>): Promise<T> {
+    signal?.throwIfAborted();
+    if (!signal) return invoke();
+    return new Promise<T>((resolve,reject) => {
+      let settled=false;
+      const finish=(ok:boolean,value:unknown) => {
+        if(settled)return;settled=true;signal.removeEventListener('abort',abort);
+        if(ok)resolve(value as T);else reject(value);
+      };
+      const abort=()=>finish(false,signal.reason ?? new Error('Forward operation aborted'));
+      signal.addEventListener('abort',abort,{once:true});
+      try {
+        signal.throwIfAborted();
+        Promise.resolve(invoke()).then(value=>signal.aborted?abort():finish(true,value),error=>finish(false,error));
+      } catch(error) {finish(false,error);}
+    });
+  }
   async function invokeOperation(method: ForwardOperation, payload: Record<string, unknown>): Promise<Message[] | void> {
     signal?.throwIfAborted();
     if (method === 'getForwardMessages') {
       const source = peer(payload.peer, 'peer');
       const root = id(payload.rootMessageId, 'rootMessageId');
       const parent = id(payload.parentMessageId, 'parentMessageId');
-      const result = await call('getMultiMsg', await resolvePeer(source), root, parent);
+      const resolved = await alive(() => resolvePeer(source));
+      const result = await alive(() => call('getMultiMsg', resolved, root, parent));
       signal?.throwIfAborted();
       check(result, 'getMultiMsg');
       if (!Array.isArray(result.msgList)) throw new Error('Native getMultiMsg returned an invalid message list');
@@ -60,7 +80,7 @@ export function createForwardMessages(
         if (!Array.isArray(record.elements) || Array.from(record.elements).some(element => !element || typeof element !== 'object' || Array.isArray(element))) throw new Error('Native getMultiMsg returned invalid message elements');
         return record;
       });
-      const decodedMessages = decodeMessages ? await decodeMessages(messages) : await Promise.all(messages.map(decodeMessage));
+      const decodedMessages = await alive(() => decodeMessages ? decodeMessages(messages) : Promise.all(messages.map(decodeMessage)));
       signal?.throwIfAborted();
       if (decodedMessages.length !== messages.length) throw new Error('Invalid decoded forwarded message batch');
       return Array.from(decodedMessages, decoded => {
@@ -73,11 +93,11 @@ export function createForwardMessages(
     const destination = peer(payload.destination, 'destination');
     if (!Array.isArray(payload.messageIds) || !payload.messageIds.length) throw new Error('messageIds must be a nonempty array');
     const messageIds = Array.from(payload.messageIds, value => id(value, 'messageId'));
-    const sourcePeer = await resolvePeer(source);
+    const sourcePeer = await alive(() => resolvePeer(source));
     signal?.throwIfAborted();
-    const destinationPeer = await resolvePeer(destination);
+    const destinationPeer = await alive(() => resolvePeer(destination));
     signal?.throwIfAborted();
-    const result = await call('forwardMsg', messageIds, sourcePeer, [destinationPeer], new Map());
+    const result = await alive(() => call('forwardMsg', messageIds, sourcePeer, [destinationPeer], new Map()));
     signal?.throwIfAborted();
     check(result, 'forwardMsg');
     // Native acceptance does not establish destination receipt or expose new IDs.

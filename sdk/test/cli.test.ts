@@ -148,6 +148,9 @@ test('forward CLI preserves exact source, destination and message identifiers be
  const read=await prepareCommand('forward-history',{kind:'group',target:'456','root-message-id':'42','parent-message-id':'41'});
  await read(client);
  assert.deepEqual(calls[1],[{type:'group',groupId:'456'},'42','41']);
+ const first=await prepareCommand('forward-history',{kind:'group',target:'456','root-message-id':'900719925474099312345'});
+ await first(client);
+ assert.deepEqual(calls[2],[{type:'group',groupId:'456'},'900719925474099312345','900719925474099312345']);
  await assert.rejects(prepareCommand('forward',{'source-kind':'private','source-target':'123',kind:'group',target:'456','message-ids':'42,'}),/message-ids/);
 });
 

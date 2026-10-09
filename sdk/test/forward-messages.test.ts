@@ -98,3 +98,32 @@ test('shutdown during source resolution prevents destination lookup and forward 
   await began;controller.abort();finish({chatType:2,peerUid:'123'});
   await assert.rejects(pending,/abort/i);assert.equal(resolutions,1);assert.equal(mutations,0);
 });
+
+for(const stage of ['source','destination','read','forward','decode'] as const) test(`close promptly ends stalled forward ${stage} without waiting for native settlement or replay`,async()=>{
+ const controller=new AbortController();let began!:()=>void,rejectLate!:(error:unknown)=>void,resolutions=0,readCalls=0,forwardCalls=0,decodes=0;
+ const started=new Promise<void>(resolve=>{began=resolve;}),stalled=new Promise<never>((_,reject)=>{rejectLate=reject;});
+ const hang=()=>{began();return stalled;};
+ const operations=createForwardMessages({getMsgService:()=>({
+  getMultiMsg(){readCalls++;if(stage==='read')return hang();return{result:0,msgList:[{msgId:'1',chatType:2,elements:[]}]};},
+  forwardMsg(){forwardCalls++;return hang();},
+ })},async peer=>{resolutions++;if(stage==='source'||(stage==='destination'&&resolutions===2))return hang();return resolvePeer(peer);},()=>{decodes++;return hang();},controller.signal);
+ const reading=stage==='read'||stage==='decode';
+ const pending=operations.invokeOperation(reading?'getForwardMessages':'forwardMessages',reading?{peer:{type:'group',groupId:'123'},rootMessageId:'10',parentMessageId:'20'}:{source:{type:'group',groupId:'123'},destination:{type:'group',groupId:'456'},messageIds:['10']});
+ await started;const rejected=assert.rejects(pending,/abort/i);controller.abort();let deadline:NodeJS.Timeout|undefined;
+ try{await Promise.race([rejected,new Promise((_,reject)=>{deadline=setTimeout(()=>reject(Error('Closed forward caller remained stalled')),500);})]);}
+ finally{clearTimeout(deadline);rejectLate(Error('late-native-private-rejection'));}
+ await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(forwardCalls,stage==='forward'?1:0);assert.equal(readCalls,reading?1:0);assert.equal(decodes,stage==='decode'?1:0);
+ assert.equal(resolutions,stage==='destination'||stage==='forward'?2:1);
+});
+
+test('forward cancellation listeners are removed on success, rejection and synchronous abort',async()=>{
+ const {getEventListeners}=await import('node:events');
+ for(const mode of ['success','reject-undefined','abort-sync'] as const){
+  const controller=new AbortController();
+  const operations=createForwardMessages({getMsgService:()=>({getMultiMsg(){if(mode==='abort-sync'){controller.abort();return Promise.reject(Error('late rejection'));}if(mode==='reject-undefined')return Promise.reject(undefined);return{result:0,msgList:[]};}})},resolvePeer,()=>undefined,controller.signal);
+  const pending=operations.invokeOperation('getForwardMessages',{peer:{type:'group',groupId:'123'},rootMessageId:'1',parentMessageId:'1'});
+  if(mode==='success')assert.deepEqual(await pending,[]);else if(mode==='abort-sync')await assert.rejects(pending,/abort/i);else await assert.rejects(pending,error=>error===undefined);
+  assert.equal(getEventListeners(controller.signal,'abort').length,0);
+ }
+});

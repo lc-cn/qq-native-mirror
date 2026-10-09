@@ -56,7 +56,7 @@ const usage = `qq-native-client <command> [options]
   history --config FILE --kind private|group --target ID [--limit 20] [--before MESSAGE_ID] [--uin UIN]
   message --config FILE --kind private|group --target ID --message-id ID
   messages --config FILE --kind private|group --target ID --message-ids ID,ID
-  forward-history --config FILE --kind private|group --target ID --root-message-id ID --parent-message-id ID
+  forward-history --config FILE --kind private|group --target ID --root-message-id ID [--parent-message-id ID]
   forward --config FILE --source-kind private|group --source-target ID --kind private|group --target ID --message-ids ID,ID
   send-forward --config FILE --kind private|group --target ID --nodes-file FILE
        [--title TEXT --summary TEXT --prompt TEXT] [--uin UIN]
@@ -163,7 +163,7 @@ export async function prepareCommand(command: string, flags: Record<string, stri
     case 'profile': { const target = numeric(flags, 'target'); return client => client.getUserProfile(target); }
     case 'requests': return client => client.listFriendRequests();
     case 'forward-history': {
-      const target = peer(flags), root = numeric(flags, 'root-message-id'), parent = numeric(flags, 'parent-message-id');
+      const target = peer(flags), root = numeric(flags, 'root-message-id'), parent = flags['parent-message-id'] === undefined ? root : numeric(flags, 'parent-message-id');
       return client => client.getForwardMessages(target, root, parent);
     }
     case 'forward': {

@@ -9,7 +9,15 @@ export function needsMentionLookup(elements: Native[]): boolean {
 export function captureElementBatches(batches: Native[][]) {
   const dense = Array.from(batches, elements => { if (!Array.isArray(elements)) throw new Error('Invalid native message element batch'); return elements; });
   const decoded = dense.map(elements => decodeElements(elements));
-  const snapshots = dense.map(elements => elements.map(element => element.textElement && typeof element.textElement === 'object' && !Array.isArray(element.textElement) ? { ...element, textElement: { ...element.textElement } } : element));
+  const snapshots = dense.map(elements => elements.map(element => {
+    const type = Object.getOwnPropertyDescriptor(element, 'elementType');
+    if (type && 'value' in type && (type.value === 10 || type.value === 16)) return element;
+    const text = Object.getOwnPropertyDescriptor(element, 'textElement');
+    if (!text || !('value' in text) || !text.value || typeof text.value !== 'object' || Array.isArray(text.value)) return element;
+    const descriptors = Object.getOwnPropertyDescriptors(element);
+    descriptors.textElement.value = Object.create(Object.getPrototypeOf(text.value), Object.getOwnPropertyDescriptors(text.value));
+    return Object.create(Object.getPrototypeOf(element), descriptors);
+  }));
   const uids = [...new Set(snapshots.flatMap(elements => Array.from(elements, mentionLookupUid)).filter((value): value is string => value !== undefined))];
   return { decoded, snapshots, uids };
 }

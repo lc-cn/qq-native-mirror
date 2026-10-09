@@ -248,7 +248,11 @@ export class QQClient extends EventEmitter<ClientEvents> {
   async getMessage(peer: Peer, messageId: string): Promise<Message | undefined> { return this.#operation('getMessage', normalizeMessageQuery(peer, messageId)); }
   /** Same order as unique requested IDs; absent successful-response items are undefined. */
   async getMessages(peer: Peer, messageIds: readonly string[]): Promise<(Message | undefined)[]> { return this.#operation('getMessages', normalizeMessageBatchQuery(peer, messageIds)); }
-  getForwardMessages(peer: Peer, rootMessageId: string, parentMessageId: string): Promise<Message[]> { return this.#operation('getForwardMessages', { peer, rootMessageId, parentMessageId }); }
+  /** First-level cards use their message ID for both root and parent. Nested reads keep the outer peer/root explicit. */
+  async getForwardMessages(peer: Peer, rootMessageId: string, parentMessageId: string = rootMessageId): Promise<Message[]> {
+    const root=normalizeMessageQuery(peer,rootMessageId),parent=normalizeMessageQuery(root.peer,parentMessageId);
+    return this.#operation('getForwardMessages', { peer:root.peer, rootMessageId:root.messageId, parentMessageId:parent.messageId });
+  }
   /** Native submission only; this does not confirm destination receipt. */
   forwardMessages(source: Peer, destination: Peer, messageIds: string[]): Promise<void> { return this.#operation('forwardMessages', { source, destination, messageIds }); }
   /** Text-only composition; upload and card dispatch are never automatically retried. */

@@ -40,7 +40,21 @@ export async function verifyForwardConsumer(packageRoot) {
     const invoke=()=>{nativeCalls++;begin();return result;};
     const services=createNativeServices({getMsgService:()=>({addKernelMsgListener(){},getMultiMsg:invoke,forwardMsg:invoke}),getBuddyService:()=>({addKernelBuddyListener(){}}),getGroupService:()=>({addKernelGroupListener(){}})},'7.0.2-53644',()=>{});
     const input=method==='getForwardMessages'?payload:{source:peer,destination:peer,messageIds:[longId]};
-    try{const pending=services.invokeOperation(method,input);await started;services.close();finish({result:0,msgList:[]});await assert.rejects(pending,/abort|closed/i);assert.equal(nativeCalls,1);}finally{services.close();}
+    try{const pending=services.invokeOperation(method,input);await started;services.close();let deadline;try{await Promise.race([assert.rejects(pending,/abort|closed/i),new Promise((_,reject)=>{deadline=setTimeout(()=>reject(Error('Forward caller stalled after close')),500);})]);}finally{clearTimeout(deadline);finish({result:0,msgList:[]});}assert.equal(nativeCalls,1);}finally{services.close();}
   }
+  const {QQClient}=await load('index.js'),{EventEmitter}=await import('node:events');
+  class Worker extends EventEmitter {
+    connected=true;stdout=new EventEmitter();stderr=new EventEmitter();requests=[];
+    send(request,callback){this.requests.push(request);callback(null);queueMicrotask(()=>this.emit('message',{id:request.id,result:request.method==='close'?null:[]}));}
+    kill(){this.connected=false;queueMicrotask(()=>this.emit('exit',0,null));return true;}
+  }
+  const worker=new Worker(),client=new QQClient(worker,500);
+  try{
+    worker.emit('message',{event:'ready',payload:{uin:'456',uid:'u_self'}});
+    await assert.rejects(client.getForwardMessages(peer,'invalid-resource'),/numeric string/);assert.equal(worker.requests.length,0);
+    await client.getForwardMessages(peer,longId);assert.deepEqual(worker.requests.map(r=>[r.method,r.peer,r.rootMessageId,r.parentMessageId]),[['getForwardMessages',peer,longId,longId]]);
+    await client.getForwardMessages(peer,longId,'0002');assert.equal(worker.requests[1].parentMessageId,'0002');assert.equal(worker.requests[1].rootMessageId,longId);
+    const first=await prepareCommand('forward-history',{kind:'group',target:'123','root-message-id':longId});let values;await first({getForwardMessages:async(...args)=>{values=args;}});assert.deepEqual(values,[peer,longId,longId]);
+  }finally{await client.close();}
   return {forwardMessageContract:true,nativeForwardQueryAttempted:false,forwardSubmissionAttempted:false};
 }

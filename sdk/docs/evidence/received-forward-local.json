@@ -1,0 +1,125 @@
+{
+  "schemaVersion": 1,
+  "observedAt": "2026-10-09T20:49:33.939346+00:00",
+  "baseCommit": "96b657751bc78892157ca2d6fadf53bfb68c6fa3",
+  "feature": "receive-only ARK/native MULTIFORWARD references, first-level native ID default and prompt forward cancellation",
+  "sourceFiles": [
+    {
+      "path": "ci/verify-consumer.mjs",
+      "sha256": "07ed6f05f65f7f1fb863114492fa3d737d8c0293a8442b27d25a17b20b622567"
+    },
+    {
+      "path": "sdk/README.md",
+      "sha256": "03a319e1a2cef1d1e6e357e4b840e3d73cf5fc544a7f32ec1ae3322d8831d3fd"
+    },
+    {
+      "path": "sdk/docs/forward-resource-contract.md",
+      "sha256": "0a9951164301de24f8a391a0c5a37c1d5f7e70963a2555ae63019b03f4a0472e"
+    },
+    {
+      "path": "sdk/docs/received-forward.md",
+      "sha256": "564028638d6fc9ae01efa3edd7e96276eb010dfa1130a7edb0999221781c4241"
+    },
+    {
+      "path": "sdk/scripts/forward-consumer-contract.mjs",
+      "sha256": "2be7bb3c66fec86a1733d305cef349d89590a44214072f97f57c5b00d1b2d5da"
+    },
+    {
+      "path": "sdk/scripts/received-forward-consumer-contract.mjs",
+      "sha256": "dfdcc6dff0e8733cf5c20f2b8337462b05de7fc6bc6702239cb74d5c03687664"
+    },
+    {
+      "path": "sdk/src/cli.ts",
+      "sha256": "1462f02d0232d12f17f5d3fa3378ed35f1b5f877c26fec42609362713321db28"
+    },
+    {
+      "path": "sdk/src/forward-messages.ts",
+      "sha256": "44de23c069b0b70e2a9ca63eb13dea6e63fb85102ccc0467ca57752512621d7e"
+    },
+    {
+      "path": "sdk/src/inbound-mentions.ts",
+      "sha256": "cf3ea62a5e042a0064a108a3df93220b4f92472317cd123ed86af3695c51a1b9"
+    },
+    {
+      "path": "sdk/src/inbound-messages.ts",
+      "sha256": "695691351b9ba903a7aa4e737f293c3396259f6903cb13d9f0a20caf2ce14760"
+    },
+    {
+      "path": "sdk/src/index.ts",
+      "sha256": "8b9dc201983388edf34492bcdbd21ee56c3efe375a0996366a31fbbc1cbfa03b"
+    },
+    {
+      "path": "sdk/src/message-elements.ts",
+      "sha256": "0e0ab82a1bcc47c7a4edaacaa6e3d2c30b8fdf07d1c0ecf2be9c849a4b413c75"
+    },
+    {
+      "path": "sdk/src/received-forward.ts",
+      "sha256": "649bad952c535a899277b4bf36209cb53076aaea9944d23a630c0880f2fc3165"
+    },
+    {
+      "path": "sdk/src/types.ts",
+      "sha256": "2fd6dcdaad82798dd273d8074913fb890a14ecd45af6f70b8a9feaf9727086c7"
+    },
+    {
+      "path": "sdk/test/cli.test.ts",
+      "sha256": "0ea2538c8dc7b5c8b9fb78bd8385ffe00459168646feae22c1f38986135e4cbc"
+    },
+    {
+      "path": "sdk/test/client.test.ts",
+      "sha256": "59003ca82ddb96e8ebd691cf4667919242b1f60b6ef16161c7eb4bc04d535125"
+    },
+    {
+      "path": "sdk/test/forward-messages.test.ts",
+      "sha256": "b84f2a148db9395c4f0790e51a5323107ce428be9793e9bb4abd25e66e28a614"
+    },
+    {
+      "path": "sdk/test/received-forward-services.test.ts",
+      "sha256": "65c36435b0d54a75c0169dce45546b81ce698ce04780807437ea5a354918b4a0"
+    },
+    {
+      "path": "sdk/test/received-forward.test.ts",
+      "sha256": "d30765b5889b00bf759a8a63fbe9fd2f5a7857b56d9bbb1b183a044e17e1d654"
+    },
+    {
+      "path": "tools/verify-dedup-consumer.mjs",
+      "sha256": "6975b5e4c72599274ca744a7bce8eeec00f0b55ee3dce3b6f8f95e567009ba09"
+    },
+    {
+      "path": "tools/verify-dedup-consumer.test.mjs",
+      "sha256": "16c0a49a26aa08f2c2ecda9bdaa65731bdccdbfdd54b63a59fe7109c175b92dd"
+    }
+  ],
+  "localBuildPassed": true,
+  "fullSdkRegression": {
+    "tests": 501,
+    "passed": 501,
+    "failed": 0,
+    "skipped": 0,
+    "logSha256": "f400c918aa128db2326bce3d4bf9606273d60ef92ba6ae8847aee7a29952f963"
+  },
+  "typeCheckPassed": true,
+  "producerContracts": {
+    "tests": 6,
+    "passed": 6
+  },
+  "compiledConsumerContract": {
+    "forwardMessageContract": true,
+    "nativeForwardQueryAttempted": false,
+    "forwardSubmissionAttempted": false,
+    "receivedForwardContract": true,
+    "nativeReceivedForwardObserved": false
+  },
+  "compiledConsumerLogSha256": "6b2c3410a70cedc3133bc80d3b62d6119ad15a2e3a81b81a75ebe7a40e6e738d",
+  "independentReviewFixes": [
+    "capture forward fields without invoking accessors",
+    "do not coerce native type objects",
+    "verify getter rejection through three query paths and live callback",
+    "promptly reject stalled forwarding promises on Session close without replay"
+  ],
+  "accountUsed": false,
+  "nativeReceivedForwardObserved": false,
+  "resourceDownloadImplemented": false,
+  "signingAuthenticityEstablished": false,
+  "published": false,
+  "defaultsChanged": false
+}

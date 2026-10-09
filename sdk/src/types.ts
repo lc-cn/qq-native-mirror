@@ -117,7 +117,20 @@ export type SendableMessageElement =
   | { type: 'record'; file: string; elementId?: string }
   | { type: 'reply'; messageId: string }
   | { type: 'file'; file: string; name?: string; size?: string; elementId?: string };
+/** Received merged-record reference; this is not a sendable raw card. */
+export interface ReceivedForwardElement {
+  type: 'forward';
+  format: 'ark' | 'native';
+  resourceId: string;
+  cardId?: string;
+  title?: string;
+  summary?: string;
+  prompt?: string;
+  count?: number;
+  previews?: string[];
+}
 export type MessageElement = SendableMessageElement
+  | ReceivedForwardElement
   | { type: 'unknown'; nativeType: number; data: unknown };
 export type MessageInput = string | SendableMessageElement[];
 export interface SentMessage { messageId: string; sequence: string; time: number }

@@ -32,12 +32,16 @@ export function captureNativeMessage(raw: Native): Native {
   if (!Array.isArray(raw.elements)) throw new Error('Invalid native message elements');
   const elements = Array.from(raw.elements, element => {
     if (!element || typeof element !== 'object' || Array.isArray(element)) throw new Error('Invalid native message element');
-    const captured = { ...element };
-    for (const field of ['textElement', 'replyElement', 'faceElement', 'picElement', 'fileElement', 'videoElement', 'pttElement']) {
-      const value = element[field];
-      if (value && typeof value === 'object' && !Array.isArray(value)) captured[field] = { ...value };
+    const descriptors = Object.getOwnPropertyDescriptors(element);
+    for (const field of ['textElement', 'replyElement', 'faceElement', 'picElement', 'fileElement', 'videoElement', 'pttElement', 'arkElement', 'multiForwardMsgElement']) {
+      const descriptor = descriptors[field];
+      if (!descriptor || !('value' in descriptor)) continue;
+      const value = descriptor.value;
+      if (value && typeof value === 'object' && !Array.isArray(value)) {
+        descriptor.value = Object.create(Object.getPrototypeOf(value), Object.getOwnPropertyDescriptors(value));
+      }
     }
-    return captured;
+    return Object.create(Object.getPrototypeOf(element), descriptors);
   });
   const captured = { ...raw, elements };
   originalElements.set(captured, originalElements.get(raw) ?? Array.from(raw.elements));

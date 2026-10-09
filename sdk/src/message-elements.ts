@@ -3,6 +3,7 @@ import { readFile, stat, mkdir, copyFile } from 'node:fs/promises';
 import { basename, dirname, isAbsolute } from 'node:path';
 import type { MessageElement } from './types.ts';
 import { qqFaceRows } from './qq-faces.ts';
+import {decodeReceivedForward} from './received-forward.ts';
 import { queryNativeMessage } from './message-query.ts';
 
 type Native = Record<string, any>;
@@ -110,15 +111,27 @@ export function mentionUserId(value: unknown): string | undefined {
   if (number >= -2147483648n && number < 0n) return String(number + 4294967296n);
 }
 export function mentionLookupUid(element: Native): string | undefined {
-  const text = element.textElement;
-  if (!text || typeof text !== 'object' || Array.isArray(text) || typeof text.content !== 'string' || (text.atType !== 2 && text.atType !== 4)) return;
-  if (text.atUid !== undefined && text.atUid !== '' && !(typeof text.atUid === 'string' && /^0+$/.test(text.atUid))) return;
-  if (typeof text.atNtUid === 'string' && text.atNtUid.trim() && !text.atNtUid.includes('*')) return text.atNtUid;
+  const data = (record: Native, key: string) => {
+    const descriptor = Object.getOwnPropertyDescriptor(record, key);
+    return descriptor && 'value' in descriptor ? descriptor.value : undefined;
+  };
+  const type = data(element, 'elementType');
+  if (type === 10 || type === 16) return;
+  const text = data(element, 'textElement');
+  if (!text || typeof text !== 'object' || Array.isArray(text)) return;
+  const content = data(text, 'content'), atType = data(text, 'atType'), atUid = data(text, 'atUid'), atNtUid = data(text, 'atNtUid');
+  if (typeof content !== 'string' || (atType !== 2 && atType !== 4)) return;
+  if (atUid !== undefined && atUid !== '' && !(typeof atUid === 'string' && /^0+$/.test(atUid))) return;
+  if (typeof atNtUid === 'string' && atNtUid.trim() && !atNtUid.includes('*')) return atNtUid;
 }
 export function decodeElements(native: Native[], resolvedUins: ReadonlyMap<string, string> = new Map()): MessageElement[] {
   return Array.from(native, element => {
     if (!element || typeof element !== 'object' || Array.isArray(element)) throw new Error('Invalid native message element');
-    const unknown: MessageElement = { type: 'unknown', nativeType: Number(element.elementType), data: element };
+    const typeDescriptor = Object.getOwnPropertyDescriptor(element, 'elementType');
+    const nativeType = typeDescriptor && 'value' in typeDescriptor ? typeDescriptor.value : undefined;
+    const unknown: MessageElement = { type: 'unknown', nativeType: typeof nativeType === 'number' || typeof nativeType === 'string' ? Number(nativeType) : NaN, data: element };
+    if (!typeDescriptor || !('value' in typeDescriptor) || (typeof nativeType !== 'number' && typeof nativeType !== 'string')) return unknown;
+    if (nativeType === 10 || nativeType === 16) return decodeReceivedForward(element) ?? unknown;
     const text = element.textElement;
     if (text) {
       if (typeof text !== 'object' || Array.isArray(text) || typeof text.content !== 'string') return unknown;
@@ -142,6 +155,6 @@ export function decodeElements(native: Native[], resolvedUins: ReadonlyMap<strin
         return { type, file: media.filePath, elementId: String(element.elementId ?? ''), ...(type === 'file' ? { name: media.fileName, size: media.fileSize } : {}) };
       }
     }
-    return unknown;
+    return decodeReceivedForward(element) ?? unknown;
   });
 }
