@@ -10,19 +10,19 @@ import {validateRelease} from '../sdk/scripts/local-first-publish.mjs';
 import {verifyVideoMaterialsOnline} from '../sdk/scripts/video-materials.mjs';
 import { npm } from '../ci/npm.mjs';
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
-const profilePath = resolve('tools/profiles/darwin-arm64-resources-codec-v2.json');
+const profileFile=arch=>{check(arch==='arm64'||arch==='x64','Unsupported profile architecture');return resolve(`tools/profiles/darwin-${arch}-resources-codec-v2.json`);};
 const check = (condition, message) => { if (!condition) throw new Error(message); };
 const safePath = path => typeof path === 'string' && path && !path.includes('\\') && !/[\0\r\n:]/.test(path) && !path.startsWith('/') && !path.split('/').some(part => !part || part === '.' || part === '..');
 
 export function validateProfile(profile) {
-  check(profile.schemaVersion === 1 && profile.id === 'darwin-arm64-resources-codec-v2' && profile.experimental === true && profile.platform === 'darwin' && profile.arch === 'arm64' && profile.sdkVersion === '0.0.2', 'Unsupported pruning profile');
+  check(profile.schemaVersion === 1 && profile.id === `darwin-${profile.arch}-resources-codec-v2` && profile.experimental === true && profile.platform === 'darwin' && ['arm64','x64'].includes(profile.arch) && profile.sdkVersion === '0.0.2', 'Unsupported pruning profile');
   const source = profile.source;
   check(source?.repository === 'lc-cn/qq-native-mirror' && source.runId === '37962268125' && source.runAttempt === 1 && source.commit === '6cae1ec0a5e1bfb03cb7871083915b3d03272347' && source.tag === 'npm-v0.0.2-ci-37962268125' && source.nativePaths === 1168, 'Unsupported pruning source');
-  check(source.releaseManifestSha256==='9a362f3c4abada4c8cfc397039c20835bcb5393e0ae356873cccb518be9c8e1a'&&source.nativeManifestSha256==='a3c633ad5fc13082b5b8ffa7aa3e09b9a9d37708300bf5df3ea66bd0daa729df','Pinned source digests changed');
+  check(source.releaseManifestSha256==='9a362f3c4abada4c8cfc397039c20835bcb5393e0ae356873cccb518be9c8e1a'&&source.nativeManifestSha256===(profile.arch==='arm64'?'a3c633ad5fc13082b5b8ffa7aa3e09b9a9d37708300bf5df3ea66bd0daa729df':'b69b9c0709c2afe10a4857d96aa3a0d88e599b53fbd7f19304a40e1077fcfbfd'),'Pinned source digests changed');
   check(profile.referenceOldProfile?.path==='tools/profiles/darwin-arm64-resources-v1.json','Unsafe old profile reference');
   check(source.schemaVersion===2&&profile.videoCodec==='video/video-codec.node','Codec profile source schema changed');
   check(['releaseManifestSha256', 'nativeManifestSha256'].every(key => /^[a-f0-9]{64}$/.test(source[key] ?? '')), 'Invalid source digest');
-  for (const [kind, name] of [['main', 'qq-native-client'], ['auxiliary', 'qq-native-client-darwin-arm64']]) {
+  for (const [kind, name] of [['main', 'qq-native-client'], ['auxiliary', `qq-native-client-darwin-${profile.arch}`]]) {
     check(source[kind]?.tarball === `${name}-${profile.sdkVersion}.tgz` && /^[a-f0-9]{64}$/.test(source[kind].sha256 ?? '') && Number.isSafeInteger(source[kind].size) && source[kind].size > 0, 'Invalid source tarball');
   }
   check(profile.version?.clientVersion === '7.0.2-53644' && profile.version.appId === '537391652' && profile.version.qua === 'V1_MAC_7.0.2-53644_53644_GW_B', 'Unsupported vendor version');
@@ -50,7 +50,7 @@ export async function stagePrunedPackage(profile, source, destination) {
   check(manifest.videoCodec==='video/video-codec.node','Source codec missing');
   const videoRows=manifest.files.filter(row=>row.path.startsWith('video/'));assert.deepEqual(profile.files.filter(row=>row.path.startsWith('video/')),videoRows.map(({path,sha256,size})=>({path,sha256,size})));
   const metadata = JSON.parse(source.get('package/package.json'));
-  check(metadata.name === 'qq-native-client-darwin-arm64' && metadata.version === profile.sdkVersion && JSON.stringify(metadata.os) === '["darwin"]' && JSON.stringify(metadata.cpu) === '["arm64"]', 'Source npm metadata changed');
+  check(metadata.name === `qq-native-client-darwin-${profile.arch}` && metadata.version === profile.sdkVersion && JSON.stringify(metadata.os) === '["darwin"]' && JSON.stringify(metadata.cpu) === JSON.stringify([profile.arch]), 'Source npm metadata changed');
   // Destination must be new. Do not overwrite any full fallback or prior candidate.
   await mkdir(destination);
   for (const row of profile.files) {
@@ -61,11 +61,11 @@ export async function stagePrunedPackage(profile, source, destination) {
   manifest.id = `qq-${profile.version.clientVersion}-${profile.id}`;
   manifest.profile = profile.id;
   manifest.files = profile.files.map(row => ({ ...row, url: row.path }));
-  metadata.description = 'Experimental CI-built resource-pruned macOS arm64 candidate; account compatibility unverified';
+  metadata.description = `Experimental CI-built resource-pruned macOS ${profile.arch} candidate; account compatibility unverified`;
   metadata.files = [...profile.files.map(row => row.path), 'manifest.json', 'README.md'];
   await writeFile(join(destination, 'manifest.json'), JSON.stringify(manifest, null, 2) + '\n');
   await writeFile(join(destination, 'package.json'), JSON.stringify(metadata, null, 2) + '\n');
-  await writeFile(join(destination, 'README.md'), '# Experimental resource-pruned native candidate\n\nUnpublished 58-path macOS arm64 candidate from a pinned full CI package. Account and business compatibility remain unverified. The original full default package remains available and unchanged.\n');
+  await writeFile(join(destination, 'README.md'), '# Experimental resource-pruned native candidate\n\nUnpublished 58-path macOS candidate from a pinned full CI package. Account and business compatibility remain unverified. The original full default package remains available and unchanged.\n'.replace('macOS candidate',`macOS ${profile.arch} candidate`));
   return { manifestSha256: sha(await readFile(join(destination, 'manifest.json'))), nativePaths: 58 };
 }
 
@@ -82,9 +82,9 @@ async function checkedSource(profile, directory) {
   }
 }
 
-export async function buildCandidate({ sourceDirectory = 'candidate-source', outputDirectory = 'out' } = {}) {
-  const profile = validateProfile(JSON.parse(await readFile(profilePath)));
-  const oldBytes=await readFile(resolve(profile.referenceOldProfile.path));check(sha(oldBytes)===profile.referenceOldProfile.sha256&&profile.referenceOldProfile.paths===47,'Old profile reference changed');const old=JSON.parse(oldBytes);assert.deepEqual(profile.files.filter(row=>!row.path.startsWith('video/')),old.files);
+export async function buildCandidate({ sourceDirectory = 'candidate-source', outputDirectory = 'out', arch='arm64' } = {}) {
+  const profilePath=profileFile(arch);const profile = validateProfile(JSON.parse(await readFile(profilePath)));
+  const oldBytes=await readFile(resolve(profile.referenceOldProfile.path));check(sha(oldBytes)===profile.referenceOldProfile.sha256&&profile.referenceOldProfile.paths===47,'Old profile reference changed');const old=JSON.parse(oldBytes);if(arch==='arm64')assert.deepEqual(profile.files.filter(row=>!row.path.startsWith('video/')),old.files);else assert.deepEqual(profile.files.filter(row=>!row.path.startsWith('video/')).map(f=>f.path),old.files.map(f=>f.path));
   await checkedSource(profile, sourceDirectory);
   const release=await validateRelease(resolve(sourceDirectory));check(release.videoMaterials?.pending===false,'Complete permanent materials missing');await verifyVideoMaterialsOnline(release.videoMaterials);
   const scratch = await mkdtemp(join(tmpdir(), 'qq-pruned-pack-'));
@@ -112,12 +112,12 @@ export function validateConsumerReceipts(profile, build, receipt, environment = 
   check(build.builderCommit === (environment.GITHUB_SHA ?? null) && build.builderRunId === (environment.GITHUB_RUN_ID ?? null), 'Candidate belongs to another builder run');
   assert.deepEqual(build.source, profile.source);
   check(receipt.automaticVideoCodec===true&&receipt.installedVideoDecoder===true&&receipt.installedVideoFakeCache===true&&receipt.nativeVideoSendAttempted===false&&receipt.node==='v24.20.0','Automatic installed codec not verified');
-  check(receipt.platform === 'darwin' && receipt.arch === 'arm64' && receipt.exports === 104 && receipt.installedMainOnly === true && receipt.automaticPlatformSelection === true && receipt.prepared === true && receipt.closed === true && receipt.loginAttempted === false && receipt.nativeHistoryQueryAttempted === false && receipt.nativeFriendListQueryAttempted === false && receipt.nativeGroupListQueryAttempted === false && receipt.nativeGroupMemberQueryAttempted === false, 'Pruned consumer acceptance failed');
-  check(JSON.stringify(receipt.tarballRequests?.slice().sort()) === JSON.stringify(['qq-native-client','qq-native-client-darwin-arm64','silk-wasm'].sort()), 'Consumer did not use matching candidate packages');
+  check(receipt.platform === 'darwin' && receipt.arch === profile.arch && receipt.exports === 104 && receipt.installedMainOnly === true && receipt.automaticPlatformSelection === true && receipt.prepared === true && receipt.closed === true && receipt.loginAttempted === false && receipt.nativeHistoryQueryAttempted === false && receipt.nativeFriendListQueryAttempted === false && receipt.nativeGroupListQueryAttempted === false && receipt.nativeGroupMemberQueryAttempted === false, 'Pruned consumer acceptance failed');
+  check(JSON.stringify(receipt.tarballRequests?.slice().sort()) === JSON.stringify(['qq-native-client',`qq-native-client-darwin-${profile.arch}`,'silk-wasm'].sort()), 'Consumer did not use matching candidate packages');
 }
 
-export async function verifyConsumer(directory = 'out') {
-  const profile = validateProfile(JSON.parse(await readFile(profilePath)));
+export async function verifyConsumer(directory = 'out',arch='arm64') {
+  const profilePath=profileFile(arch);const profile = validateProfile(JSON.parse(await readFile(profilePath)));
   const buildBytes = await readFile(join(directory, 'pruning-build.json')), build = JSON.parse(buildBytes);
   check(build.profileSha256 === sha(await readFile(profilePath)) && sha(await readFile(join(directory, 'pruning-profile.json'))) === build.profileSha256 && sha(await readFile(join(directory, 'source-release-manifest.json'))) === profile.source.releaseManifestSha256, 'Candidate source records changed');
   const tarball = await readFile(join(directory, build.tarball));
@@ -133,7 +133,7 @@ export async function verifyConsumer(directory = 'out') {
   const videoBytes=await readFile(join(directory,'installed-video.json')),video=JSON.parse(videoBytes);
   assert.deepEqual(receipt.installedVideo,video);
   const codec=profile.files.find(row=>row.path==='video/video-codec.node');
-  check(video.passed===true&&video.noAccount===true&&video.noQQ===true&&video.nativeSendAttempted===false&&video.platform==='darwin'&&video.arch==='arm64'&&video.node==='v24.20.0'&&video.binary?.sha256===codec.sha256&&video.binary.bytes===codec.size&&video.inputs?.length===3,'Actual codec acceptance failed');
+  check(video.passed===true&&video.noAccount===true&&video.noQQ===true&&video.nativeSendAttempted===false&&video.platform==='darwin'&&video.arch===profile.arch&&video.node==='v24.20.0'&&video.binary?.sha256===codec.sha256&&video.binary.bytes===codec.size&&video.inputs?.length===3,'Actual codec acceptance failed');
   assert.deepEqual(video.inputs.map(row=>row.sha256).sort(),['ced7b4e1cd47d948ecf407116095282e5b5ca4df76142b7a06826eecb92cb932','1c8920f2db13e3c1b28b708bc94d3889ed8bd10f15ee5d89881d99715188b468','53a0baad6f0853d39e53263c22c847bd78435fc263e6844450878b471d13cc57'].sort());
   const result = { nativePaths:58,packagedPaths:61,videoReceiptSha256:sha(videoBytes),videoBinarySha256:codec.sha256,autoVideoCodec:true,installedVideoDecoder:true, profile: profile.id, source: profile.source, candidateTarballSha256: build.tarballSha256, buildReceiptSha256: sha(buildBytes), consumerReceiptSha256: sha(receiptBytes), prepared: true, closed: true, loginAttempted: false, accountAcceptanceEstablished: false, signingAuthenticityEstablished: false, published: false, defaultsChanged: false, builderCommit: process.env.GITHUB_SHA ?? null, builderRunId: process.env.GITHUB_RUN_ID ?? null };
   await writeFile(join(directory, 'pruning-acceptance.json'), JSON.stringify(result, null, 2) + '\n');
@@ -142,7 +142,7 @@ export async function verifyConsumer(directory = 'out') {
 
 if (process.argv[1] && pathToFileURL(resolve(process.argv[1])).href === import.meta.url) {
   try {
-    check(process.argv.length <= 3 && (!process.argv[2] || process.argv[2] === '--verify-consumer'), 'Invalid pruning arguments');
-    console.log(JSON.stringify(process.argv[2] ? await verifyConsumer() : await buildCandidate()));
+    const arch=process.env.PRUNE_CODEC_ARCH??'arm64';check(process.argv.length <= 3 && (!process.argv[2] || process.argv[2] === '--verify-consumer'), 'Invalid pruning arguments');
+    console.log(JSON.stringify(process.argv[2] ? await verifyConsumer('out',arch) : await buildCandidate({arch})));
   } catch (error) { console.error(error.message); process.exitCode = 1; }
 }

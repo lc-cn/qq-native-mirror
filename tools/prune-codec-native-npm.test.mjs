@@ -16,3 +16,16 @@ test('acceptance requires automatic actual codec, same builder, no account and e
  assert.throws(()=>validateConsumerReceipts(profile,{...build,nativePaths:47},receipt,env));
  assert.throws(()=>validateConsumerReceipts(profile,build,receipt,{...env,GITHUB_RUN_ID:'2'}));
 });
+test('x64 profile requires x64 native digest and bytes rather than arm64 identity',async()=>{
+ const x=JSON.parse(await readFile(new URL('./profiles/darwin-x64-resources-codec-v2.json',import.meta.url)));validateProfile(x);
+ assert.deepEqual(x.files.map(f=>f.path),profile.files.map(f=>f.path));
+ assert.notEqual(x.files.find(f=>f.path==='wrapper.node').sha256,profile.files.find(f=>f.path==='wrapper.node').sha256);
+ for(const mutate of [p=>p.source.nativeManifestSha256=profile.source.nativeManifestSha256,p=>p.source.auxiliary.tarball=profile.source.auxiliary.tarball,p=>p.arch='arm64',p=>p.arch='ppc']){const changed=structuredClone(x);mutate(changed);assert.throws(()=>validateProfile(changed));}
+});
+test('x64 acceptance refuses arm64 receipts or mixed platform package requests',async()=>{
+ const x=JSON.parse(await readFile(new URL('./profiles/darwin-x64-resources-codec-v2.json',import.meta.url)));
+ const build={schemaVersion:1,experimental:true,profile:x.id,nativePaths:58,packagedPaths:61,accountAcceptanceEstablished:false,signingAuthenticityEstablished:false,published:false,defaultsChanged:false,builderCommit:'fixture',builderRunId:'1',source:x.source};
+ const receipt={platform:'darwin',arch:'x64',exports:104,installedMainOnly:true,automaticPlatformSelection:true,prepared:true,closed:true,loginAttempted:false,nativeHistoryQueryAttempted:false,nativeFriendListQueryAttempted:false,nativeGroupListQueryAttempted:false,nativeGroupMemberQueryAttempted:false,automaticVideoCodec:true,installedVideoDecoder:true,installedVideoFakeCache:true,nativeVideoSendAttempted:false,node:'v24.20.0',tarballRequests:['qq-native-client','qq-native-client-darwin-x64','silk-wasm']};
+ const env={GITHUB_SHA:'fixture',GITHUB_RUN_ID:'1'};validateConsumerReceipts(x,build,receipt,env);
+ for(const changes of [{arch:'arm64'},{tarballRequests:['qq-native-client','qq-native-client-darwin-arm64','silk-wasm']},{tarballRequests:[...receipt.tarballRequests,'qq-native-client-darwin-arm64']},{loginAttempted:true}])assert.throws(()=>validateConsumerReceipts(x,build,{...receipt,...changes},env));
+});
