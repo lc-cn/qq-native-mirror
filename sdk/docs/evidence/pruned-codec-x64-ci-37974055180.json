@@ -1,0 +1,282 @@
+{
+  "schemaVersion": 1,
+  "runUrl": "https://github.com/lc-cn/qq-native-mirror/actions/runs/37974055180",
+  "independentReviewSha256": "d1c58014b62e25860b1127b4eccc5f611b1118ed56d4669c06d70cb03ec8f0e4",
+  "review": {
+    "schemaVersion": 1,
+    "independentOfflineReview": true,
+    "runId": 37974055180,
+    "builderCommit": "5797fe9463d077c8c41d466480f04b9868fc647a",
+    "sourceCommit": "6cae1ec0a5e1bfb03cb7871083915b3d03272347",
+    "conclusion": "success",
+    "packagedRegularFiles": 61,
+    "nativeFiles": 58,
+    "retainedVideoFiles": 11,
+    "allRetainedBytesEqualOriginal": true,
+    "originalMainByteIdentical": true,
+    "localPrunedTarballByteIdentical": true,
+    "prunedTarballSha256": "27a1b4ba476d353d538d01d3e6c5b934c91621c9bbffe75f23445a8a01ce742f",
+    "tarballBytes": 65268780,
+    "logReceiptsEqualDownloadedArtifacts": true,
+    "node": "v24.20.0",
+    "arch": "x64",
+    "consumerExports": 104,
+    "installedMainOnly": true,
+    "automaticActualVideoClips": 3,
+    "prepared": true,
+    "closed": true,
+    "loginAttempted": false,
+    "accountAcceptanceEstablished": false,
+    "signingAuthenticityEstablished": false,
+    "published": false,
+    "defaultsChanged": false,
+    "boundFiles": [
+      {
+        "path": ".local/research/pruned-codec-x64-ci-state.json",
+        "bytes": 3230,
+        "sha256": "f0c761d3b084825b218eb17dfc75ef14bd624bbf6ac889cc02cdec722ad9bb86"
+      },
+      {
+        "path": ".local/research/pruned-codec-x64-ci-37974055180-full.log",
+        "bytes": 61635,
+        "sha256": "34f92c04f2356a363fc9c162db132075c5263ac4e5cfc82fffdb8000f91ef87b"
+      },
+      {
+        "path": ".local/research/pruned-codec-x64-ci-37974055180-artifacts/experimental-darwin-x64-resources-codec-v2/qq-native-client-darwin-x64-0.0.2.tgz",
+        "bytes": 65268780,
+        "sha256": "27a1b4ba476d353d538d01d3e6c5b934c91621c9bbffe75f23445a8a01ce742f"
+      },
+      {
+        "path": ".local/research/pruned-codec-x64-ci-37974055180-artifacts/experimental-darwin-x64-resources-codec-v2/qq-native-client-0.0.2.tgz",
+        "bytes": 319380,
+        "sha256": "ff2d8330985eb9fceb1f20d35859280a5c3799cc90e96077826a080b911d118b"
+      },
+      {
+        "path": ".local/releases/pruned-codec-x64-local-v2/qq-native-client-darwin-x64-0.0.2.tgz",
+        "bytes": 65268780,
+        "sha256": "27a1b4ba476d353d538d01d3e6c5b934c91621c9bbffe75f23445a8a01ce742f"
+      },
+      {
+        "path": ".local/research/pruned-codec-x64-ci-37974055180-artifacts/experimental-darwin-x64-resources-codec-v2/consumer.json",
+        "bytes": 3841,
+        "sha256": "841811928814d635e50acb321a6111738e08c777375c12b8d185999f786db46a"
+      },
+      {
+        "path": ".local/research/pruned-codec-x64-ci-37974055180-artifacts/experimental-darwin-x64-resources-codec-v2/pruning-acceptance.json",
+        "bytes": 2098,
+        "sha256": "51383300654c7d271d5e75a3fe53e5aad1f6576bc2c5a85576ad375e51d865bc"
+      },
+      {
+        "path": ".local/research/pruned-codec-x64-ci-37974055180-artifacts/experimental-darwin-x64-resources-codec-v2/pruning-profile.json",
+        "bytes": 12256,
+        "sha256": "0dbb3c4b95a37b565fee726ebe059b507f4558441fc998d3894f16d03ccd945b"
+      },
+      {
+        "path": ".local/research/pruned-codec-x64-ci-37974055180-artifacts/experimental-darwin-x64-resources-codec-v2/installed-video.json",
+        "bytes": 1834,
+        "sha256": "f0d4d01a3ac1db5983c6a037a9a760f21199e204e676350bd335b94bbde75f8a"
+      },
+      {
+        "path": ".local/research/pruned-codec-x64-ci-37974055180-artifacts/experimental-darwin-x64-resources-codec-v2/source-release-manifest.json",
+        "bytes": 4702,
+        "sha256": "9a362f3c4abada4c8cfc397039c20835bcb5393e0ae356873cccb518be9c8e1a"
+      },
+      {
+        "path": ".local/research/pruned-codec-x64-ci-37974055180-artifacts/experimental-darwin-x64-resources-codec-v2/pruning-build.json",
+        "bytes": 1960,
+        "sha256": "6e8f182ce6c26fde3f7d21acde595a6bd8949b2df41e03f78df34278996afb90"
+      }
+    ],
+    "scope": "One local-vs-CI exact byte comparison; not universal reproducibility certification or new batch API proof. No account/native execution by reviewer."
+  },
+  "consumer": {
+    "platform": "darwin",
+    "arch": "x64",
+    "node": "v24.20.0",
+    "exports": 104,
+    "forwardMessageContract": true,
+    "nativeForwardQueryAttempted": false,
+    "forwardSubmissionAttempted": false,
+    "normalizedRecallContract": true,
+    "nativeRecallObserved": false,
+    "accountUsed": false,
+    "inboundMentionContract": true,
+    "nativeMentionLookupAttempted": false,
+    "sendMessageContract": true,
+    "nativeSendAttempted": false,
+    "receivedMessageContract": true,
+    "nativeReceivedIdentityLookupAttempted": false,
+    "videoCodecContract": true,
+    "nativeVideoSendAttempted": false,
+    "automaticVideoCodec": true,
+    "installedVideoDecoder": true,
+    "installedVideoFakeCache": true,
+    "installedVideo": {
+      "schemaVersion": 1,
+      "platform": "darwin",
+      "arch": "x64",
+      "node": "v24.20.0",
+      "noAccount": true,
+      "noQQ": true,
+      "nativeSendAttempted": false,
+      "passed": true,
+      "inputs": [
+        {
+          "name": "blue-64.mp4",
+          "sha256": "ced7b4e1cd47d948ecf407116095282e5b5ca4df76142b7a06826eecb92cb932",
+          "bytes": 1684,
+          "width": 64,
+          "height": 64,
+          "duration": 0.4,
+          "thumbnailWidth": 64,
+          "thumbnailHeight": 64,
+          "thumbnailSha256": "6dd6fdedccb6f2c3524b05d848d96bde56f7f10a98038104827b391f089a4646",
+          "thumbnailBytes": 12342,
+          "pattern": "blue",
+          "rowStride": 192
+        },
+        {
+          "name": "blue-1280.mp4",
+          "sha256": "1c8920f2db13e3c1b28b708bc94d3889ed8bd10f15ee5d89881d99715188b468",
+          "bytes": 1820,
+          "width": 1280,
+          "height": 720,
+          "duration": 0.4,
+          "thumbnailWidth": 640,
+          "thumbnailHeight": 360,
+          "thumbnailSha256": "f94feb9cd93a661f4e585b2d73a44856666488847a97f54643eb49939f4ca782",
+          "thumbnailBytes": 691254,
+          "pattern": "blue",
+          "rowStride": 1920
+        },
+        {
+          "name": "blue-red-65.mp4",
+          "sha256": "53a0baad6f0853d39e53263c22c847bd78435fc263e6844450878b471d13cc57",
+          "bytes": 1652,
+          "width": 65,
+          "height": 33,
+          "duration": 0.4,
+          "thumbnailWidth": 65,
+          "thumbnailHeight": 33,
+          "thumbnailSha256": "f375d0f2d4c7fc580c07b639f27897bbd20348285329f6c39cce381acb0504d5",
+          "thumbnailBytes": 6522,
+          "pattern": "blue-red",
+          "rowStride": 196
+        }
+      ],
+      "binary": {
+        "sha256": "29147dd3c7a10b6b2f16e1b5df3f5e75b10b5d09f8ebc2a3bf2202e23c09799e",
+        "bytes": 14826672
+      },
+      "exports": [
+        "getVideoInfo"
+      ],
+      "concurrentDecode": true,
+      "unicodeFilename": true,
+      "malformedMissingNetworkRejected": true,
+      "sourceUnchanged": true,
+      "sdkFakeCache": true
+    },
+    "installedMainOnly": true,
+    "automaticPlatformSelection": true,
+    "tarballRequests": [
+      "silk-wasm",
+      "qq-native-client-darwin-x64",
+      "qq-native-client"
+    ],
+    "faceContract": true,
+    "faceDeliveryAttempted": false,
+    "messageQueryContract": true,
+    "historyQueryContract": true,
+    "nativeHistoryQueryAttempted": false,
+    "nativeMessageQueryAttempted": false,
+    "selfProfileContract": true,
+    "profileMutationAttempted": false,
+    "groupOperationContract": true,
+    "groupMutationAttempted": false,
+    "groupMemberQueryContract": true,
+    "groupMemberIdentityContract": true,
+    "nativeGroupMemberQueryAttempted": false,
+    "groupMetadataEventContract": true,
+    "businessWatchContract": true,
+    "nativeGroupMetadataObserved": false,
+    "friendMetadataEventContract": true,
+    "nativeFriendMetadataObserved": false,
+    "friendListQueryContract": true,
+    "friendListBatchContract": true,
+    "friendProfileQueryContract": true,
+    "groupListQueryContract": true,
+    "nativeGroupListQueryAttempted": false,
+    "nativeFriendListQueryAttempted": false,
+    "prepared": true,
+    "closed": true,
+    "loginAttempted": false,
+    "registry": "isolated local fixture serving actual CI tarballs"
+  },
+  "codec": {
+    "schemaVersion": 1,
+    "platform": "darwin",
+    "arch": "x64",
+    "node": "v24.20.0",
+    "noAccount": true,
+    "noQQ": true,
+    "nativeSendAttempted": false,
+    "passed": true,
+    "inputs": [
+      {
+        "name": "blue-64.mp4",
+        "sha256": "ced7b4e1cd47d948ecf407116095282e5b5ca4df76142b7a06826eecb92cb932",
+        "bytes": 1684,
+        "width": 64,
+        "height": 64,
+        "duration": 0.4,
+        "thumbnailWidth": 64,
+        "thumbnailHeight": 64,
+        "thumbnailSha256": "6dd6fdedccb6f2c3524b05d848d96bde56f7f10a98038104827b391f089a4646",
+        "thumbnailBytes": 12342,
+        "pattern": "blue",
+        "rowStride": 192
+      },
+      {
+        "name": "blue-1280.mp4",
+        "sha256": "1c8920f2db13e3c1b28b708bc94d3889ed8bd10f15ee5d89881d99715188b468",
+        "bytes": 1820,
+        "width": 1280,
+        "height": 720,
+        "duration": 0.4,
+        "thumbnailWidth": 640,
+        "thumbnailHeight": 360,
+        "thumbnailSha256": "f94feb9cd93a661f4e585b2d73a44856666488847a97f54643eb49939f4ca782",
+        "thumbnailBytes": 691254,
+        "pattern": "blue",
+        "rowStride": 1920
+      },
+      {
+        "name": "blue-red-65.mp4",
+        "sha256": "53a0baad6f0853d39e53263c22c847bd78435fc263e6844450878b471d13cc57",
+        "bytes": 1652,
+        "width": 65,
+        "height": 33,
+        "duration": 0.4,
+        "thumbnailWidth": 65,
+        "thumbnailHeight": 33,
+        "thumbnailSha256": "f375d0f2d4c7fc580c07b639f27897bbd20348285329f6c39cce381acb0504d5",
+        "thumbnailBytes": 6522,
+        "pattern": "blue-red",
+        "rowStride": 196
+      }
+    ],
+    "binary": {
+      "sha256": "29147dd3c7a10b6b2f16e1b5df3f5e75b10b5d09f8ebc2a3bf2202e23c09799e",
+      "bytes": 14826672
+    },
+    "exports": [
+      "getVideoInfo"
+    ],
+    "concurrentDecode": true,
+    "unicodeFilename": true,
+    "malformedMissingNetworkRejected": true,
+    "sourceUnchanged": true,
+    "sdkFakeCache": true
+  }
+}
