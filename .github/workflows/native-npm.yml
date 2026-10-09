@@ -20,8 +20,39 @@ permissions:
 jobs:
   video:
     uses: ./.github/workflows/video-codec-native.yml
-  build:
+  materials:
     needs: video
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.20.0'
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: video-*
+          path: material-input
+      - uses: actions/download-artifact@v4
+        with:
+          name: verified-video-source
+          path: material-input/verified-video-source
+      - name: Prepare permanently distributable video materials
+        run: node ci/prepare-video-materials.mjs material-input video-materials
+      - name: Archive immutable corresponding source and relink materials
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node ci/archive-video-materials.mjs video-materials
+      - uses: actions/upload-artifact@v4
+        with:
+          name: video-materials-binding
+          path: |
+            video-materials/video-materials-binding.json
+            video-materials/video-materials.json
+          retention-days: 30
+  build:
+    needs: [video, materials]
     name: ${{ matrix.platform }}-${{ matrix.arch }}
     strategy:
       fail-fast: false
@@ -79,6 +110,10 @@ jobs:
         with:
           name: video-${{ matrix.platform }}-${{ matrix.arch }}
           path: out/video-codec
+      - uses: actions/download-artifact@v4
+        with:
+          name: video-materials-binding
+          path: out/video-materials
       - name: Download pinned native files and build platform npm tarball
         run: node ci/build-platform.mjs
       - name: Pack main SDK
@@ -118,6 +153,10 @@ jobs:
         with:
           pattern: npm-*
           path: artifacts
+      - uses: actions/download-artifact@v4
+        with:
+          name: video-materials-binding
+          path: out/video-materials
       - name: Install main SDK build dependencies
         working-directory: sdk
         run: npm ci --ignore-scripts --no-audit --no-fund
@@ -147,7 +186,7 @@ jobs:
           version=$(node -p "require('./release/release-manifest.json').version")
           tar -czf release/acceptance-evidence.tar.gz -C release evidence
           printf 'CI-built candidates for local first publication. No npm publish was performed. Source commit: %s. Acceptance: https://github.com/%s/actions/runs/%s\n' "$GITHUB_SHA" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID" > release/notes.md
-          gh release create "npm-v$version-ci-$GITHUB_RUN_ID" release/*.tgz release/release-manifest.json release/acceptance-evidence.tar.gz --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease --latest=false --title "npm $version CI candidate $GITHUB_RUN_ID" --notes-file release/notes.md
+          gh release create "npm-v$version-ci-$GITHUB_RUN_ID" release/*.tgz release/release-manifest.json release/acceptance-evidence.tar.gz release/video-materials/*.json --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease --latest=false --title "npm $version CI candidate $GITHUB_RUN_ID" --notes-file release/notes.md
       - uses: actions/upload-artifact@v4
         with:
           name: npm-release
@@ -162,6 +201,7 @@ jobs:
       contents: read
       id-token: write
     steps:
+      - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '24.20.0'
@@ -171,10 +211,8 @@ jobs:
         with:
           name: npm-release
           path: release
-      - name: Block publication until permanent video materials are bound
-        run: |
-          echo "Permanent corresponding source/relink release closure is not implemented; candidate artifacts only." >&2
-          exit 1
+      - name: Verify permanent video materials before publication
+        run: node ci/video-release-gate.mjs
       - name: Publish platform packages, then main package
         shell: bash
         run: |

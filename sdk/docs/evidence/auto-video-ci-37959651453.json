@@ -1,0 +1,143 @@
+{
+  "schemaVersion": 1,
+  "runId": 37959651453,
+  "sourceCommit": "f5c1d64fd9dcaf2ef94db782620c35131564556d",
+  "overallConclusion": "success",
+  "producerPlatformsPassed": 6,
+  "producerRuntimeRelinkReceiptsPassed": 12,
+  "installedPlatformsPassed": [
+    "darwin-arm64",
+    "darwin-x64",
+    "linux-arm64",
+    "linux-x64",
+    "win32-arm64",
+    "win32-x64"
+  ],
+  "aggregatedMainInstalledPassed": true,
+  "installedConsumerReceiptCount": 7,
+  "fixturesPerReceipt": 3,
+  "regressions": {
+    "tests": 391,
+    "passed": 391,
+    "failed": 0
+  },
+  "sourcePgpVerified": true,
+  "sourceArchiveSha256": "8c3850283eb25fa026482078a04051e0be17347b09ef81a0849bec15a96e002e",
+  "archive": "skipped",
+  "publish": "skipped",
+  "boundFiles": [
+    {
+      "path": ".local/research/auto-video-ci-second-full.log",
+      "bytes": 4238524,
+      "sha256": "559fb08a7638457b3cb69146528bd29db7ac527f2c7c534289665409ba2341c8"
+    },
+    {
+      "path": ".local/research/auto-video-ci-second-state.json",
+      "bytes": 49178,
+      "sha256": "a43040293690c0b0693dfd4ba9e0ec93f086d053fc58784c8625fe31f108cb2b"
+    }
+  ],
+  "scope": "Independent offline log/state review; no native/account/publication execution; permanent materials closure not proven by candidate CI.",
+  "installedConsumers": [
+    {
+      "job": "linux-x64",
+      "platform": "linux",
+      "arch": "x64",
+      "node": "v24.20.0",
+      "binary": {
+        "sha256": "195312a9613fd716e2df52a11d409571bdb5959e1537e12f475c2048c6c9f88d",
+        "bytes": 17704104
+      },
+      "automaticVideoCodec": true,
+      "prepared": true,
+      "closed": true,
+      "loginAttempted": false
+    },
+    {
+      "job": "win32-arm64",
+      "platform": "win32",
+      "arch": "arm64",
+      "node": "v24.20.0",
+      "binary": {
+        "sha256": "8c94640a35021703936eba69edc5882f3f145a1949203402115057a1f6b0cab0",
+        "bytes": 11209728
+      },
+      "automaticVideoCodec": true,
+      "prepared": true,
+      "closed": true,
+      "loginAttempted": false
+    },
+    {
+      "job": "win32-x64",
+      "platform": "win32",
+      "arch": "x64",
+      "node": "v24.20.0",
+      "binary": {
+        "sha256": "51ea994f5f9a0eaad13409316b1dd25059caa403f673a8cbe359225396754f62",
+        "bytes": 12058112
+      },
+      "automaticVideoCodec": true,
+      "prepared": true,
+      "closed": true,
+      "loginAttempted": false
+    },
+    {
+      "job": "darwin-arm64",
+      "platform": "darwin",
+      "arch": "arm64",
+      "node": "v24.20.0",
+      "binary": {
+        "sha256": "101a8eb635806b8c06fd55e3353a5a129d643c42198a3eb0dcaca7eefeab74c4",
+        "bytes": 13167872
+      },
+      "automaticVideoCodec": true,
+      "prepared": true,
+      "closed": true,
+      "loginAttempted": false
+    },
+    {
+      "job": "linux-arm64",
+      "platform": "linux",
+      "arch": "arm64",
+      "node": "v24.20.0",
+      "binary": {
+        "sha256": "8eff4ebdf6b704b1a3aa4a25a328c0949ce81b1b8db220ef5bf3f310fe3ac741",
+        "bytes": 15499928
+      },
+      "automaticVideoCodec": true,
+      "prepared": true,
+      "closed": true,
+      "loginAttempted": false
+    },
+    {
+      "job": "darwin-x64",
+      "platform": "darwin",
+      "arch": "x64",
+      "node": "v24.20.0",
+      "binary": {
+        "sha256": "29147dd3c7a10b6b2f16e1b5df3f5e75b10b5d09f8ebc2a3bf2202e23c09799e",
+        "bytes": 14826672
+      },
+      "automaticVideoCodec": true,
+      "prepared": true,
+      "closed": true,
+      "loginAttempted": false
+    },
+    {
+      "job": "aggregate",
+      "platform": "linux",
+      "arch": "x64",
+      "node": "v24.20.0",
+      "binary": {
+        "sha256": "195312a9613fd716e2df52a11d409571bdb5959e1537e12f475c2048c6c9f88d",
+        "bytes": 17704104
+      },
+      "automaticVideoCodec": true,
+      "prepared": true,
+      "closed": true,
+      "loginAttempted": false
+    }
+  ],
+  "accountUsed": false,
+  "nativeSendAttempted": false
+}

@@ -41,4 +41,14 @@ const tarball=`${sdk.name}-${sdk.version}.tgz`,bytes=await readFile(join(release
 packages.push({name:sdk.name,version:sdk.version,tarball,size:bytes.length,sha256:sha(bytes),integrity:'sha512-'+sha(bytes,'sha512','base64')});
 const {GITHUB_REPOSITORY:repository,GITHUB_SHA:commit,GITHUB_RUN_ID:runId,GITHUB_RUN_ATTEMPT:attempt}=process.env;
 if(repository!=='lc-cn/qq-native-mirror'||! /^[a-f0-9]{40}$/.test(commit??'')||!/^\d+$/.test(runId??'')||!/^\d+$/.test(attempt??''))throw Error('GitHub release identity missing');
-await writeFile(join(release,'release-manifest.json'),JSON.stringify({schemaVersion:1,repository,commit,runId,runAttempt:Number(attempt),version:sdk.version,packages},null,2)+'\n');
+// The producer materials have already been archived before any platform package
+// was built. Retain their exact binding/report bytes with the seven-package set.
+const bindingBytes=await readFile('out/video-materials/video-materials-binding.json');
+const reportBytes=await readFile('out/video-materials/video-materials.json');
+const binding=JSON.parse(bindingBytes);
+if(binding.repository!==repository||binding.commit!==commit||binding.runId!==runId||binding.runAttempt!==Number(attempt)||binding.version!==sdk.version)throw Error('Video materials differ from this package run');
+await mkdir(join(release,'video-materials'),{recursive:true});
+await writeFile(join(release,'video-materials/video-materials-binding.json'),bindingBytes);
+await writeFile(join(release,'video-materials/video-materials.json'),reportBytes);
+const videoMaterials={binding:{path:'video-materials/video-materials-binding.json',sha256:sha(bindingBytes)},report:{path:'video-materials/video-materials.json',sha256:sha(reportBytes)}};
+await writeFile(join(release,'release-manifest.json'),JSON.stringify({schemaVersion:1,repository,commit,runId,runAttempt:Number(attempt),version:sdk.version,packages,videoMaterials},null,2)+'\n');

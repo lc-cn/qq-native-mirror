@@ -71,3 +71,11 @@ node scripts/download-npm-candidate.mjs npm-v0.0.1-ci-RUN_ID /absolute/path/npm-
 [CI 37925080425](https://github.com/lc-cn/qq-native-mirror/actions/runs/37925080425) 已完成六平台和聚合验收，源 commit 为 `b4b2e4eab5e44f99126e2efc68d6701ac7658833`。296 项回归通过，七份实际安装消费者记录及完整日志已独立核对，schema 2 聚合摘要绑定成功，npm 发布跳过。另一归档 run `37925110570` 两次 macOS arm64 原生文件下载返回 HTTP 500；其失败产物不用于候选。后续归档使用成功 run 的原始产物，并保留其源码及 run 身份。
 
 [候选归档 npm-v0.0.2-ci-37925080425](https://github.com/lc-cn/qq-native-mirror/releases/tag/npm-v0.0.2-ci-37925080425) 已由补归档 [run 37926819590](https://github.com/lc-cn/qq-native-mirror/actions/runs/37926819590) 完成。九个 GitHub 资产完整：七包、manifest、证据压缩包；每个 tarball 的资产摘要与成功源 CI 原始文件一致。七包共 347,739,307 字节，主包 277,406 字节，主包 SHA-256 为 `3fb41d3dab3fe7f0dd225f7413b3cb7dbfdf0c80e9efb11bda1ed948020ca908`。本地完整校验通过，七个 receipt 对象逐一与原始 CI 日志匹配；使用 `gh-proxy.com` 的下载校验也通过（已缓存七包，只新下载证据归档，不宣称本轮进行了七包冷下载）。本轮未执行账号操作或 npm 发布，候选的源码身份仍为 `b4b2e4e...`，不是归档工具所在的 commit。
+
+## 包含内置视频组件的候选
+
+新的候选工作流在构建辅包前，为源码和六平台重链接材料建立独立的 `video-npm-vVERSION-ci-RUN-attempt-ATTEMPT` GitHub prerelease。它保留官方 FFmpeg 源码及签名、签名公钥、验签记录、项目 addon 源码、六平台重链接包和材料报告，共十二个资产。每个辅包的 `video/SOURCE-PROVENANCE.json` 绑定该 release、各资产的 SHA256/大小及实际平台二进制；`video/SOURCE-AND-RELINK.txt` 提供可读链接。QQ 原生文件与视频组件的许可分别保留。
+
+这类 npm 候选归档共有十一个资产：原九个，再加 `video-materials-binding.json` 和 `video-materials.json`。下载脚本会把两份材料恢复到 `video-materials/` 下，并按照 release manifest 的 `videoMaterials.binding` / `videoMaterials.report` 路径与摘要核对。旧的九资产、无 codec 候选仍兼容。
+
+不带 `--publish` 的首发命令执行离线检查，不联网验证材料、不登录账号。启用发布后，脚本先匿名检查材料 release 的身份和全部资产的服务端摘要/大小，并下载报告核对实际字节，再进入 npm registry 查询与认证。材料缺失、篡改、不可访问或与辅包二进制不匹配时停止。此检查不重新下载所有大资产，也不证明修改后的 FFmpeg 库兼容性或 QQ 视频真实送达。新永久材料流程的远端验收尚未完成；npm 仍为 0.0.1。

@@ -3,6 +3,8 @@ import { resolve, join, sep } from 'node:path';
 import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
+import { validateVideoMaterials, verifyVideoMaterialsOnline } from './video-materials.mjs';
+export { verifyVideoMaterialsOnline } from './video-materials.mjs';
 const targets = ['linux-x64','linux-arm64','darwin-x64','darwin-arm64','win32-x64','win32-arm64'];
 export const firstMainEvidencePaths = Object.freeze(targets.flatMap(target => ['installed-no-symlink.consumer.json','cache-no-symlink.consumer.json','source-provenance.json'].map(name => `evidence/${target}.${name}`)));
 const names = [...targets.map(target => `qq-native-client-${target}`), 'qq-native-client'];
@@ -27,7 +29,7 @@ export async function validateRelease(directory) {
   requireThat(Array.isArray(manifest.packages) && manifest.packages.length === 7, 'Exactly seven packages required');
   requireThat(typeof manifest.runId === 'string' && Number.isInteger(manifest.runAttempt) && manifest.runAttempt > 0, 'Invalid CI run attempt');
   const packages = [];
-  let videoMaterialsPending = false;
+  const nativePackages = [];
   for (const name of names) {
     const rows = manifest.packages.filter(row => row.name === name);
     requireThat(rows.length === 1, `Missing or duplicate package: ${name}`);
@@ -41,13 +43,14 @@ export async function validateRelease(directory) {
       const target = name.slice('qq-native-client-'.length); const [platform, arch] = target.split('-');
       requireThat(JSON.stringify(pkg.os) === JSON.stringify([platform]) && JSON.stringify(pkg.cpu) === JSON.stringify([arch]), `Packed OS/CPU mismatch: ${name}`);
       const native = tarJson(file.path, 'package/manifest.json');
-      if (native.json.videoCodec !== undefined) videoMaterialsPending = true;
+
       requireThat(native.json.platform === platform && native.json.arch === arch, `Native manifest platform mismatch: ${name}`);
       requireThat(row.manifestSha256 === hash(native.bytes, 'sha256', 'hex'), `Native manifest digest mismatch: ${target}`);
       requireThat(row.receipt === `evidence/${target}.consumer.json`, `Invalid receipt path: ${target}`);
       const receiptFile = await localFile(root, row.receipt);
       requireThat(row.receiptSha256 === hash(receiptFile.bytes, 'sha256', 'hex'), `Receipt digest mismatch: ${target}`);
       const receipt = JSON.parse(receiptFile.bytes);
+      nativePackages.push({path:file.path,native:native.json,target,receipt});
       requireThat(receipt.platform === platform && receipt.arch === arch && receipt.installedMainOnly === true && receipt.automaticPlatformSelection === true && receipt.prepared === true && receipt.closed === true && receipt.loginAttempted === false && Number.isInteger(receipt.exports) && receipt.exports >= 80 && /^v24\./.test(receipt.node), `Unsuccessful consumer: ${target}`);
 
     } else {
@@ -94,10 +97,12 @@ export async function validateRelease(directory) {
   }
   const mainReceipt = JSON.parse(mainReceiptBytes);
   requireThat(mainReceipt.platform === 'linux' && mainReceipt.arch === 'x64' && mainReceipt.installedMainOnly === true && mainReceipt.automaticPlatformSelection === true && mainReceipt.prepared === true && mainReceipt.closed === true && mainReceipt.loginAttempted === false && Number.isInteger(mainReceipt.exports) && mainReceipt.exports >= 80 && /^v24\./.test(mainReceipt.node), 'Aggregate main consumer failed');
-  return { manifest, packages, videoMaterialsPending };
+  const videoMaterials = await validateVideoMaterials(root, manifest, nativePackages);
+  return { manifest, packages, videoMaterials, videoMaterialsPending: videoMaterials?.pending === true };
 }
 export function publishValidated(release, run = spawnSync) {
   requireThat(release.videoMaterialsPending !== true, 'Video runtime candidate lacks permanent corresponding-source/relink distribution; publication is unavailable until those materials are bound');
+  requireThat(!release.videoMaterials || release.videoMaterials.onlineVerified === true, 'Video materials must be verified online before registry authentication or publication');
   requireThat(process.stdin.isTTY && process.stdout.isTTY, '--publish requires an interactive terminal for npm authentication/2FA');
   for (const pkg of release.packages) {
     // Read-only registry lookup. Only a structured E404 allows a new publish.
@@ -120,7 +125,7 @@ if (process.argv[1] && pathToFileURL(resolve(process.argv[1])).href === import.m
     const release = await validateRelease(args.find(arg => arg !== '--publish'));
     console.log(`Validated ${release.manifest.repository} run ${release.manifest.runId}, commit ${release.manifest.commit}`);
     for (const pkg of release.packages) console.log(`${publish ? 'Queued' : 'Dry run'}: ${pkg.name}@${pkg.version} ${pkg.sha256}`);
-    if (publish) publishValidated(release);
+    if (publish) { if(release.videoMaterials && !release.videoMaterials.pending) await verifyVideoMaterialsOnline(release.videoMaterials); publishValidated(release); }
     else console.log('Validation complete. No registry lookup, login or publish performed.');
   } catch (error) { console.error(error.message); process.exitCode = 1; }
 }

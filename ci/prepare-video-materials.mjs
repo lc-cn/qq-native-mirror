@@ -55,7 +55,7 @@ for(const device of devices){
  }
  const libraries=platform==='win32'?['avformat.lib','avcodec.lib','swscale.lib','avutil.lib','video-codec.obj']:['libavformat.a','libavcodec.a','libswscale.a','libavutil.a','video-codec.o'];for(const file of libraries)assert.ok((await regular(join(relink,file))).length);
  for(const key of ['configureArgs','compileArgs','linkArgs','systemLinkFlags'])assert.ok(Array.isArray(build[key])&&build[key].every(x=>typeof x==='string'));
- validated.push({device,base,build,receipts,members:all});
+ validated.push({device,base,build,receipts,members:all,normalizedAddonSourceSha256:sha(Buffer.from(normalized(preservedSource)))});
 }
 await mkdir(out,{recursive:true});if(!(await lstat(out)).isDirectory())throw Error('Output must be a regular directory');if((await readdir(out)).length)throw Error('Output directory must be empty');
 const scratch=await mkdtemp(join(tmpdir(),'qq-video-materials-')),assets=[];
@@ -75,7 +75,7 @@ try{
  const platforms=[];for(const item of validated){
   const directory=join(scratch,item.device);await mkdir(directory);await copyInventory(item.base,directory,item.members);
   const members=await archive('video-'+item.device+'-relink.tar.gz',directory);
-  platforms.push({platform:item.build.platform,arch:item.build.arch,node:item.build.node,ffmpegVersion:item.build.ffmpegVersion,sourceArchiveSha256:item.build.sourceArchiveSha256,binarySha256:item.build.binarySha256,addonSourceSha256:item.build.addonSourceSha256,flagsSource:'relink/build.json',build:item.build,receipts:item.receipts,members,relinkedBinaryPreserved:false});
+  platforms.push({platform:item.build.platform,arch:item.build.arch,node:item.build.node,ffmpegVersion:item.build.ffmpegVersion,sourceArchiveSha256:item.build.sourceArchiveSha256,binarySha256:item.build.binarySha256,addonSourceSha256:item.build.addonSourceSha256,normalizedAddonSourceSha256:item.normalizedAddonSourceSha256,flagsSource:'relink/build.json',build:item.build,receipts:item.receipts,members,relinkedBinaryPreserved:false});
  }
  const report={schemaVersion:1,candidateOnly:true,pgpVerification:'Producer receipt bound to pinned archive; GPG not rerun by this offline packager',ffmpeg:pin,sourceVerification:verification,assets,addonMembers,platforms,archiveExtractionInventoryVerified:true,nativeExecuted:false,accountUsed:false,published:false};
  await writeFile(join(out,'video-materials.json'),JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify({output:out,assets:assets.length,platforms:platforms.length,archiveExtractionInventoryVerified:true}));

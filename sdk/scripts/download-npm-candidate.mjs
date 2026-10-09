@@ -50,7 +50,11 @@ export async function downloadCandidate(tag, directory, { proxy, getMetadata = a
   check(release.tag_name === tag && release.prerelease === true && release.draft === false, 'Not the expected published candidate');
   check(String(run.id) === runId && run.repository?.full_name === repository && run.status === 'completed' && run.conclusion === 'success' && ['.github/workflows/native-npm.yml', '.github/workflows/native-first-main.yml'].includes(run.path), 'Candidate CI did not succeed in expected workflow');
   check(/^[a-f0-9]{40}$/.test(run.head_sha) && release.target_commitish === run.head_sha, 'Release commit differs from CI');
-  const expected = ['release-manifest.json', 'acceptance-evidence.tar.gz', ...targets.map(target => `qq-native-client-${target}-${version}.tgz`), `qq-native-client-${version}.tgz`];
+  const baseAssets = ['release-manifest.json', 'acceptance-evidence.tar.gz', ...targets.map(target => `qq-native-client-${target}-${version}.tgz`), `qq-native-client-${version}.tgz`];
+  const materialAssets = ['video-materials-binding.json', 'video-materials.json'];
+  check(Array.isArray(release.assets), 'Unexpected candidate asset list');
+  const includesMaterials = materialAssets.some(name => release.assets.some(asset => asset.name === name));
+  const expected = [...baseAssets, ...(includesMaterials ? materialAssets : [])];
   check(Array.isArray(release.assets) && release.assets.length === expected.length, 'Unexpected candidate asset count');
   const assets = expected.map(name => {
     const matches = release.assets.filter(asset => asset.name === name); check(matches.length === 1, 'Missing/duplicate candidate asset'); const asset = matches[0];
@@ -92,6 +96,7 @@ export async function downloadCandidate(tag, directory, { proxy, getMetadata = a
   await download(assets[0]);
   const manifest = JSON.parse(await readFile(join(root, 'release-manifest.json')));
   check(manifest.repository === repository && manifest.version === version && manifest.runId === runId && manifest.commit === run.head_sha && manifest.runAttempt === run.run_attempt, 'Manifest CI provenance mismatch');
+  check((manifest.videoMaterials !== undefined) === includesMaterials, 'Candidate video material assets/declaration mismatch');
   const includeFirstMain = run.path === '.github/workflows/native-first-main.yml';
   if (includeFirstMain) {
     check(Array.isArray(manifest.acceptanceEvidence) && manifest.acceptanceEvidence.length === firstMainEvidencePaths.length && firstMainEvidencePaths.every(path => manifest.acceptanceEvidence.filter(item => item.path === path && /^[a-f0-9]{64}$/.test(item.sha256)).length === 1) && Array.isArray(manifest.auxiliarySources) && manifest.auxiliarySources.length === 6 && targets.every(target => manifest.auxiliarySources.filter(item => item.target === target).length === 1), 'Candidate first-main evidence declaration missing/incomplete');
@@ -103,6 +108,16 @@ export async function downloadCandidate(tag, directory, { proxy, getMetadata = a
   await mkdir(join(root, 'evidence'), { recursive: true });
   check(!(await lstat(join(root, 'evidence'))).isSymbolicLink(), 'Evidence directory must not be a symlink');
   for (const [name, bytes] of evidence) { const temporary = join(root, 'evidence', `.${randomUUID()}.tmp`); await writeFile(temporary, bytes, { flag: 'wx' }); await rename(temporary, join(root, name)); }
+  if (includesMaterials) {
+    const materials = join(root, 'video-materials');
+    await mkdir(materials, { recursive: true });
+    check((await lstat(materials)).isDirectory() && !(await lstat(materials)).isSymbolicLink(), 'Video materials directory must be a regular directory');
+    for (const name of materialAssets) {
+      const temporary = join(materials, `.${randomUUID()}.tmp`);
+      try { await writeFile(temporary, await readFile(join(root, name)), { flag: 'wx' }); await rename(temporary, join(materials, name)); }
+      finally { await unlink(temporary).catch(error => { if (error.code !== 'ENOENT') throw error; }); }
+    }
+  }
   await validateRelease(root);
   return { directory: root, tag, runId, commit: run.head_sha, validated: true };
 }
