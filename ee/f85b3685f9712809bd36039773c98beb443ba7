@@ -1,0 +1,33 @@
+.github/workflows/npm-public-consumer.yml
+  s_2104cc474f1ce5::t_570ede17d7a2a2 11
+mirror-ci/fixture-test.mjs
+  s_2104cc474f1ce5::t_f501df4f63017b 2-3
+mirror-ci/verify.mjs
+  s_2104cc474f1ce5::t_88248fdaba79e5 8
+sdk/docs/linux-signing-static.md
+  s_2104cc474f1ce5::t_42d047b1354ee9 297-309
+sdk/docs/sdk-acceptance.md
+  s_2104cc474f1ce5::t_0ed54d75b5c91e 282-286
+sdk/scripts/linux-signing-next-vector-search.py
+  s_2104cc474f1ce5::t_3559fcd7cf4149 1-42
+version-ci/acquire-main.mjs
+  s_2104cc474f1ce5::t_5f0b644c84c879 5,12,18
+version-ci/offline-fixture.mjs
+  s_2104cc474f1ce5::t_8943b4f292fb6a 22-23
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "eef85b3685f9712809bd36039773c98beb443ba7",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
