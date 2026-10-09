@@ -4,6 +4,7 @@ import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 const targets = ['linux-x64','linux-arm64','darwin-x64','darwin-arm64','win32-x64','win32-arm64'];
+export const firstMainEvidencePaths = Object.freeze(targets.flatMap(target => ['installed-no-symlink.consumer.json','cache-no-symlink.consumer.json','source-provenance.json'].map(name => `evidence/${target}.${name}`)));
 const names = [...targets.map(target => `qq-native-client-${target}`), 'qq-native-client'];
 const hash = (bytes, algorithm, encoding) => createHash(algorithm).update(bytes).digest(encoding);
 function requireThat(condition, message) { if (!condition) throw new Error(message); }
@@ -54,8 +55,36 @@ export async function validateRelease(directory) {
   }
   const diskTarballs = (await readdir(root)).filter(name => name.endsWith('.tgz')).sort();
   requireThat(JSON.stringify(diskTarballs) === JSON.stringify(packages.map(row => row.tarball).sort()), 'Unexpected or missing tarball');
-  const evidence = (await readdir(join(root, 'evidence'))).filter(name => name.endsWith('.consumer.json'));
-  requireThat(evidence.length === 7 && evidence.includes('aggregated-main.consumer.json'), 'Six platform receipts and aggregate main receipt required');
+  const extended = manifest.acceptanceEvidence !== undefined || manifest.auxiliarySources !== undefined;
+  const basePaths = [...targets.map(target => `evidence/${target}.consumer.json`), 'evidence/aggregated-main.consumer.json'];
+  const expectedPaths = [...basePaths, ...(extended ? firstMainEvidencePaths : [])];
+  const evidenceDirectory = await lstat(join(root, 'evidence'));
+  requireThat(evidenceDirectory.isDirectory() && !evidenceDirectory.isSymbolicLink(), 'Evidence directory must be a regular directory');
+  const diskEvidence = await readdir(join(root, 'evidence'));
+  requireThat(JSON.stringify(diskEvidence.sort()) === JSON.stringify(expectedPaths.map(path => path.slice('evidence/'.length)).sort()), 'Unexpected or missing evidence files');
+  for (const path of expectedPaths) requireThat((await lstat(join(root, path))).isFile() && !(await lstat(join(root, path))).isSymbolicLink(), 'Evidence must be a regular file');
+  if (extended) {
+    requireThat(Array.isArray(manifest.acceptanceEvidence) && manifest.acceptanceEvidence.length === 18 && Array.isArray(manifest.auxiliarySources) && manifest.auxiliarySources.length === 6, 'Incomplete first-main evidence declaration');
+    for (const path of firstMainEvidencePaths) {
+      const declarations = manifest.acceptanceEvidence.filter(item => item.path === path);
+      requireThat(declarations.length === 1, 'Missing/duplicate first-main evidence declaration');
+      const bytes = (await localFile(root, path)).bytes;
+      requireThat(declarations[0].sha256 === hash(bytes, 'sha256', 'hex'), 'First-main evidence digest mismatch');
+      const proof = JSON.parse(bytes), target = targets.find(target => path.startsWith(`evidence/${target}.`));
+      const [platform, arch] = target.split('-');
+      if (!path.endsWith('.source-provenance.json')) {
+        requireThat(proof.platform === platform && proof.arch === arch && /^v(\d+)\./.test(proof.node) && Number(proof.node.match(/^v(\d+)\./)[1]) >= 24 && Number.isInteger(proof.exports) && proof.exports >= 80 && proof.prepared === true && proof.closed === true && proof.loginAttempted === false && proof.symlinkCreationDenied === true && proof.currentRun === manifest.runId, 'Unsuccessful first-main acceptance proof');
+        if (path.endsWith('.cache-no-symlink.consumer.json')) requireThat(proof.cacheReused === true && Number.isInteger(proof.firstRequests) && proof.firstRequests > 0 && Number.isInteger(proof.cachedRequests) && proof.cachedRequests >= 0 && proof.cachedRequests <= 1 && proof.cachedFileRequests === 0, 'Cache acceptance did not reuse cached files');
+        else requireThat(proof.installedMainOnly === true && proof.automaticPlatformSelection === true, 'Installed acceptance did not automatically select platform');
+      } else {
+        const row = manifest.packages.find(item => item.name === `qq-native-client-${target}`);
+        requireThat(proof.schemaVersion === 1 && proof.sourceRepository === manifest.repository && proof.target === target && proof.reusedAuxiliaryBytes === true && typeof proof.sourceRunId === 'string' && /^\d+$/.test(proof.sourceRunId) && proof.sourceTag === `npm-v${manifest.version}-ci-${proof.sourceRunId}` && /^[a-f0-9]{40}$/.test(proof.sourceCommit) && Number.isInteger(proof.sourceRunAttempt) && proof.sourceRunAttempt > 0 && /^[a-f0-9]{64}$/.test(proof.releaseManifestSha256) && proof.assetDigest === `sha256:${row.sha256}`, 'Invalid auxiliary source provenance');
+        requireThat(['name','version','tarball','size','sha256','integrity','manifestSha256'].every(key => proof.package?.[key] === row[key]), 'Auxiliary source package byte identity mismatch');
+        const sources = manifest.auxiliarySources.filter(item => item.target === target);
+        requireThat(sources.length === 1 && JSON.stringify(sources[0]) === JSON.stringify(proof), 'Auxiliary source declaration mismatch');
+      }
+    }
+  }
   const mainReceipt = JSON.parse((await localFile(root, 'evidence/aggregated-main.consumer.json')).bytes);
   requireThat(mainReceipt.platform === 'linux' && mainReceipt.arch === 'x64' && mainReceipt.installedMainOnly === true && mainReceipt.automaticPlatformSelection === true && mainReceipt.prepared === true && mainReceipt.closed === true && mainReceipt.loginAttempted === false && Number.isInteger(mainReceipt.exports) && mainReceipt.exports >= 80 && /^v24\./.test(mainReceipt.node), 'Aggregate main consumer failed');
   return { manifest, packages };

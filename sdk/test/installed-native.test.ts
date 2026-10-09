@@ -8,7 +8,7 @@ import {createHash} from 'node:crypto';
 
 test('installed platform bundle integrity and explicit source precedence',async t=>{
  const root=await realpath(await mkdtemp(join(tmpdir(),'qq-installed-fixture-')));t.after(()=>rm(root,{recursive:true,force:true}));
- for(const name of ['native-package.ts','native-catalog.ts','types.ts'])await copyFile(new URL('../src/'+name,import.meta.url),join(root,name));
+ for(const name of ['native-package.ts','native-catalog.ts','process-lock.ts','types.ts'])await copyFile(new URL('../src/'+name,import.meta.url),join(root,name));
  const pkg=join(root,'node_modules',`qq-native-client-${process.platform}-${process.arch}`);await mkdir(pkg,{recursive:true});
  await writeFile(join(pkg,'package.json'),JSON.stringify({name:`qq-native-client-${process.platform}-${process.arch}`,exports:{'./manifest.json':'./manifest.json'}}));
  const bytes=Buffer.from('native fixture; never execute'),sha=createHash('sha256').update(bytes).digest('hex');

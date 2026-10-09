@@ -1,0 +1,149 @@
+{
+  "schemaVersion": 1,
+  "id": "9.9.33-52230-win32-x64-gzip-v1",
+  "platform": "win32",
+  "arch": "x64",
+  "wrapper": "wrapper.node",
+  "version": {
+    "clientVersion": "9.9.33-52230",
+    "appId": "537379411",
+    "qua": "V1_WIN_NQ_9.9.33_52230_GW_B"
+  },
+  "files": [
+    {
+      "path": "avif_convert.dll",
+      "url": "https://github.com/lc-cn/qq-native-mirror/releases/download/gzip-v1/017ee5e2eec6fb496d5bed733e100b8bd5383dbf292c8f836393b21871bc3235.gz",
+      "sha256": "efa1bc996c75ccf86666f71c3a1c720b483f0e00881761e1d999ad309fe6ba2f",
+      "encoding": "gzip",
+      "downloadSha256": "017ee5e2eec6fb496d5bed733e100b8bd5383dbf292c8f836393b21871bc3235"
+    },
+    {
+      "path": "broadcast_ipc.dll",
+      "url": "https://github.com/lc-cn/qq-native-mirror/releases/download/gzip-v1/3455a539358306148b31fc39955822740b90624389bd5e4dcb6b875f7085e635.gz",
+      "sha256": "a8cdf25e2b9dabfb27cbbaccc54581f4248002783bbde0e863890d51097a4812",
+      "encoding": "gzip",
+      "downloadSha256": "3455a539358306148b31fc39955822740b90624389bd5e4dcb6b875f7085e635"
+    },
+    {
+      "path": "crypto.dll",
+      "url": "https://github.com/lc-cn/qq-native-mirror/releases/download/gzip-v1/c629f3903f50c8556b9e71e5e235f542f7c7c08e70356aeddadccf6dc9cd637d.gz",
+      "sha256": "62f1defec4b0416e2b75b28c7f1f7141d06523a3dae9c03cb65da22debfad2df",
+      "encoding": "gzip",
+      "downloadSha256": "c629f3903f50c8556b9e71e5e235f542f7c7c08e70356aeddadccf6dc9cd637d"
+    },
+    {
+      "path": "dbghelp.dll",
+      "url": "https://github.com/lc-cn/qq-native-mirror/releases/download/gzip-v1/703d96655a05a5664f5568ea2471e4fb542ab1d5edd406f6c60086d626b6069d.gz",
+      "sha256": "7349bbf484448d1532582b5eeb6e861b35b1a1b4a69f6bcda5dfbb1a85f8b272",
+      "encoding": "gzip",
+      "downloadSha256": "703d96655a05a5664f5568ea2471e4fb542ab1d5edd406f6c60086d626b6069d"
+    },
+    {
+      "path": "libglib-2.0-0.dll",
+      "url": "https://github.com/lc-cn/qq-native-mirror/releases/download/gzip-v1/58aaade8e22ed7369e0246b7b407a8141fcdd526bc42e7b79099b86bccad563d.gz",
+      "sha256": "d86059d0e175e123b51de826b46ae62ef07412b83816f26d3e6c99b2991c6ae2",
+      "encoding": "gzip",
+      "downloadSha256": "58aaade8e22ed7369e0246b7b407a8141fcdd526bc42e7b79099b86bccad563d"
+    },
+    {
+      "path": "libgobject-2.0-0.dll",
+      "url": "https://github.com/lc-cn/qq-native-mirror/releases/download/gzip-v1/86a5458530f4f0d2bd491cd1b4acf9d9f946390b9e4effd766c8c803f08c7b44.gz",
+      "sha256": "d4b72d8d876cd00c0fb9a67af7e775e3c798a24ed9a4bc465bc7d3dc85fc1a35",
+      "encoding": "gzip",
+      "downloadSha256": "86a5458530f4f0d2bd491cd1b4acf9d9f946390b9e4effd766c8c803f08c7b44"
+    },
+    {
+      "path": "libvips-42.dll",
+      "url": "https://github.com/lc-cn/qq-native-mirror/releases/download/gzip-v1/82b6348b235715bab65bb3c5f49a4b077b81650ececeb7003992a223535d0d93.gz",
+      "sha256": "6aaa2e0c4642dcd32c40f0d98ef49bacc0aa5763c7b4952c6f07af6760c43b59",
+      "encoding": "gzip",
+      "downloadSha256": "82b6348b235715bab65bb3c5f49a4b077b81650ececeb7003992a223535d0d93"
+    },
+    {
+      "path": "LightQuic.dll",
+      "url": "https://github.com/lc-cn/qq-native-mirror/releases/download/gzip-v1/1e1ca80444f1389979578941e4acc73857d36098f42463fe2a540abde4e04dc5.gz",
+      "sha256": "c4802636a10ef0c8e71f736fa00c5df5da5b26e962d02e2d15e0523fd188425e",
+      "encoding": "gzip",
+      "downloadSha256": "1e1ca80444f1389979578941e4acc73857d36098f42463fe2a540abde4e04dc5"
+    },
+    {
+      "path": "msvcp140.dll",
+      "url": "https://github.com/lc-cn/qq-native-mirror/releases/download/gzip-v1/677579374e5318ac9224753d75f8441773af85ad1e1fbdb20ed0592d2221ab9e.gz",
+      "sha256": "52700c144ad1afd194d8c63b231b2f557d4bf9acf99e9c5d9fdad38031d1f2c1",
+      "encoding": "gzip",
+      "downloadSha256": "677579374e5318ac9224753d75f8441773af85ad1e1fbdb20ed0592d2221ab9e"
+    },
+    {
+      "path": "msvcrt.dll",
+      "url": "https://github.com/lc-cn/qq-native-mirror/releases/download/gzip-v1/b200f715ec88a06fa97b78cf7d8dcd15d126441656b657ca73d15be6b4a7b33b.gz",
+      "sha256": "a25728ebe4b91834515e85121280d0d2f0bd74817fa076ae71697ffc7c220e12",
+      "encoding": "gzip",
+      "downloadSha256": "b200f715ec88a06fa97b78cf7d8dcd15d126441656b657ca73d15be6b4a7b33b"
+    },
+    {
+      "path": "ncnn.dll",
+      "url": "https://github.com/lc-cn/qq-native-mirror/releases/download/gzip-v1/cd8ec52b177f37e30e09dbae3f105156fd33bc96dc957580209c87861462f7d7.gz",
+      "sha256": "b1802b167585200e498d96d08a66b05323d0e0945c4bf62650c2acd544e76c38",
+      "encoding": "gzip",
+      "downloadSha256": "cd8ec52b177f37e30e09dbae3f105156fd33bc96dc957580209c87861462f7d7"
+    },
+    {
+      "path": "opencv.dll",
+      "url": "https://github.com/lc-cn/qq-native-mirror/releases/download/gzip-v1/3126d09f97082f7aaa8238b5822ae4a9b64c79f7318c409ba4c9251e7c1968eb.gz",
+      "sha256": "40dd412856b2c220fd9af315291ddb5d43eba5bca683ee574d0ebd96915f8c9a",
+      "encoding": "gzip",
+      "downloadSha256": "3126d09f97082f7aaa8238b5822ae4a9b64c79f7318c409ba4c9251e7c1968eb"
+    },
+    {
+      "path": "QBar.dll",
+      "url": "https://github.com/lc-cn/qq-native-mirror/releases/download/gzip-v1/4ea539da4ca8bd1259d793c8ccb0655b38a8b0641ee71db0fdd0aa87706ce381.gz",
+      "sha256": "724b0e670af05bb054d22b9860dbaf6af5760ab1b699aa552ea17975b31193cc",
+      "encoding": "gzip",
+      "downloadSha256": "4ea539da4ca8bd1259d793c8ccb0655b38a8b0641ee71db0fdd0aa87706ce381"
+    },
+    {
+      "path": "ssl.dll",
+      "url": "https://github.com/lc-cn/qq-native-mirror/releases/download/gzip-v1/2031f225ec5272e3a473a7d06503c9ae222b26858cc2a3960b7c8ce4ec7e4094.gz",
+      "sha256": "05ad4869fafd07217962aec23e0b987ecb206837557c970a900a252dd9f8876f",
+      "encoding": "gzip",
+      "downloadSha256": "2031f225ec5272e3a473a7d06503c9ae222b26858cc2a3960b7c8ce4ec7e4094"
+    },
+    {
+      "path": "vcruntime140.dll",
+      "url": "https://github.com/lc-cn/qq-native-mirror/releases/download/gzip-v1/7bb7f9f214002a78e3b837fc91e2c0006a214477b8fe506ad64311359d9a48f5.gz",
+      "sha256": "c53d7ef0e129a09b19c9dac927d601052a14b7b7ee318fb40b180515dccacb62",
+      "encoding": "gzip",
+      "downloadSha256": "7bb7f9f214002a78e3b837fc91e2c0006a214477b8fe506ad64311359d9a48f5"
+    },
+    {
+      "path": "vcruntime140_1.dll",
+      "url": "https://github.com/lc-cn/qq-native-mirror/releases/download/gzip-v1/54bf7be14e73de6c4112c258389110d1a70a1f6537a77931800baf955965ad66.gz",
+      "sha256": "24912a1d180d5891cc5b736d65b55ef3089e7399a311a34006638c202c914741",
+      "encoding": "gzip",
+      "downloadSha256": "54bf7be14e73de6c4112c258389110d1a70a1f6537a77931800baf955965ad66"
+    },
+    {
+      "path": "wrapper.node",
+      "url": "https://github.com/lc-cn/qq-native-mirror/releases/download/gzip-v1/f32f332fef195bb677ec04b967ea6b44019df2feea943dc4f6e4c931aec85148.gz",
+      "sha256": "63112ab9161e127f5f7e17998a7196e143808923fb54cbbf7b4e21426187a5f0",
+      "encoding": "gzip",
+      "downloadSha256": "f32f332fef195bb677ec04b967ea6b44019df2feea943dc4f6e4c931aec85148"
+    },
+    {
+      "path": "QQNT.dll",
+      "url": "https://github.com/lc-cn/qq-native-mirror/releases/download/gzip-v1/caabd2292d4faff42af78bc9c760e654affc49a49bff9b15e969672a123b84c1.gz",
+      "sha256": "9345ed421d86c22c3554ad7eb187f36459b6e1563320b94c7cd72b120b1cd8d3",
+      "encoding": "gzip",
+      "downloadSha256": "caabd2292d4faff42af78bc9c760e654affc49a49bff9b15e969672a123b84c1"
+    },
+    {
+      "path": "NODE-LICENSE.txt",
+      "url": "https://github.com/lc-cn/qq-native-mirror/releases/download/gzip-v1/ad3fde39ccfe638c07ad0a52fd810a424aae066b1e462f68101ac634233fc6d6.gz",
+      "sha256": "5888dbb9a1d2b18f2c3e6c5f6af1b39de658372b402a0577b002777f14c62ace",
+      "encoding": "gzip",
+      "downloadSha256": "ad3fde39ccfe638c07ad0a52fd810a424aae066b1e462f68101ac634233fc6d6"
+    }
+  ],
+  "nodeVersion": "v24.20.0",
+  "nodeConfigSha256": "cef8c4e3f5021ff106d9d0a910912e6336d56faaec280e8000ee84227fa86a96"
+}

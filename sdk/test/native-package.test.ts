@@ -1,4 +1,7 @@
 import {gzipSync} from 'node:zlib';
+import fs from 'node:fs';
+import fsPromises from 'node:fs/promises';
+import {syncBuiltinESMExports} from 'node:module';
 import { spawn } from 'node:child_process';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -10,6 +13,21 @@ import { join, dirname } from 'node:path';
 import { prepareNative, safeRelative } from '../src/native-package.ts';
 import type { NativeManifest } from '../src/types.ts';
 const sha = (value: string | Buffer) => createHash('sha256').update(value).digest('hex');
+
+test('native cache installation needs no symlink creation privilege',async t=>{
+ const dir=await mkdtemp(join(tmpdir(),'qq-cache-no-symlink-'));t.after(()=>rm(dir,{recursive:true,force:true}));
+ const denied=()=>{throw Object.assign(new Error('symlink privilege denied'),{code:'EPERM'});};
+ const originalSync=fs.symlinkSync,originalAsync=fsPromises.symlink;
+ fs.symlinkSync=denied;fsPromises.symlink=async()=>denied();syncBuiltinESMExports();
+ t.after(()=>{fs.symlinkSync=originalSync;fsPromises.symlink=originalAsync;syncBuiltinESMExports();});
+ const bytes=Buffer.from('no symlink native fixture');
+ const body=JSON.stringify({schemaVersion:1,id:'no-symlink',platform:process.platform,arch:process.arch,wrapper:'wrapper.node',version:{clientVersion:'test',appId:'1',qua:'fixture'},files:[{path:'wrapper.node',url:'./wrapper',sha256:sha(bytes)}]});
+ const original=globalThis.fetch;t.after(()=>{globalThis.fetch=original;});
+ globalThis.fetch=async input=>new Response(String(input).endsWith('/manifest.json')?body:bytes);
+ const result=await prepareNative({dataDir:dir,cacheDir:dir,manifestUrl:'https://fixture.example/manifest.json',manifestSha256:sha(body)});
+ assert.deepEqual(await readFile(result.wrapperPath),bytes);
+ assert.equal((await readdir(dir)).some(name=>name.endsWith('.lock')||name.includes('.owner-')),false);
+});
 
 test('native mirror validates, downloads nested dependencies, caches and repairs corruption', async t => {
   const cacheDir = await mkdtemp(join(tmpdir(), 'qq-package-test-'));

@@ -1,12 +1,13 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { gunzipSync } from 'node:zlib';
 import { constants as fsConstants } from 'node:fs';
-import { mkdir, readFile, rename, rm, writeFile, realpath, lstat, symlink, readlink, unlink, link, copyFile } from 'node:fs/promises';
+import { mkdir, readFile, rename, rm, writeFile, realpath, lstat, unlink, link, copyFile } from 'node:fs/promises';
 import { dirname, isAbsolute, join, resolve, sep } from 'node:path';
 import { homedir } from 'node:os';
 import { createRequire } from 'node:module';
 import type { ClientOptions, NativeManifest, QQVersion } from './types.ts';
 import { resolveNativeCatalog } from './native-catalog.ts';
+import {publishProcessLock,readProcessLock,removeOwnedProcessLock} from './process-lock.ts';
 
 const digest = (data: Uint8Array) => createHash('sha256').update(data).digest('hex');
 const installations = new Map<string, Promise<void>>();
@@ -81,19 +82,20 @@ async function download(url: string, maxBytes: number): Promise<Buffer> {
   }
   return Buffer.concat(chunks);
 }
-// Atomic symlink creation publishes the owner PID and unique token together.
+// Bounded synchronous owner-file publication is shared with the account lock.
 async function acquirePackageLock(target: string): Promise<() => Promise<void>> {
   const lock = `${target}.lock`;
   const owner = `${process.pid}-${randomUUID()}`;
   const started = Date.now();
   for (;;) {
     try {
-      await symlink(owner, lock);
-      return async () => { if (await readlink(lock).catch(() => '') === owner) await unlink(lock); };
+      publishProcessLock(lock,owner);
+      return async () => {removeOwnedProcessLock(lock,owner);};
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error;
     }
-    const existing = await readlink(lock).catch(() => '');
+    const existing = readProcessLock(lock);
+    if(existing === undefined) continue;
     if (existing && !/^\d+-[a-zA-Z0-9-]+$/.test(existing)) throw new Error(`Invalid native package lock owner: ${lock}`);
     const pid = Number(existing.split('-')[0]);
     let dead = false;
@@ -106,7 +108,7 @@ async function acquirePackageLock(target: string): Promise<() => Promise<void>> 
       const claim = `${lock}.reap-${existing}`;
       try {
         await mkdir(claim);
-        try { if (await readlink(lock).catch(() => '') === existing) await unlink(lock); }
+        try {removeOwnedProcessLock(lock,existing);}
         finally { await rm(claim, { recursive: true, force: true }); }
         continue;
       } catch (error) {

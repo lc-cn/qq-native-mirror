@@ -1,0 +1,11 @@
+import {execFileSync} from 'node:child_process';
+import {resolve} from 'node:path';
+import {readFile,writeFile} from 'node:fs/promises';
+const preload=resolve('first-ci/deny-symlink.cjs');
+const env={...process.env,NODE_OPTIONS:`${process.env.NODE_OPTIONS??''} --require ${JSON.stringify(preload)}`};
+execFileSync(process.execPath,['--input-type=module','-e',"import {symlink} from 'node:fs/promises';await symlink('unused','unused').then(()=>{throw Error('Preload did not deny symlinks')},e=>{if(e.code!=='EPERM')throw e});"],{env,stdio:'inherit'});
+execFileSync(process.execPath,['ci/verify-consumer.mjs'],{env,stdio:'inherit'});
+const installed=JSON.parse(await readFile('out/consumer.json','utf8'));
+if(!installed.prepared||!installed.closed)throw Error('Installed consumer failed');
+await writeFile('out/installed-no-symlink.consumer.json',JSON.stringify({...installed,symlinkCreationDenied:true,currentRun:process.env.GITHUB_RUN_ID},null,2));
+execFileSync(process.execPath,['first-ci/verify-cache.mjs'],{env,stdio:'inherit'});

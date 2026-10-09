@@ -1,0 +1,116 @@
+name: Revalidate first main with immutable native packages
+on:
+  workflow_dispatch:
+    inputs:
+      source_tag:
+        description: Successful immutable CI source candidate tag
+        type: string
+        default: npm-v0.0.1-ci-37880903538
+      archive:
+        description: Archive validated candidates for local first publication
+        type: boolean
+        default: true
+permissions:
+  contents: read
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { platform: linux, arch: x64, runner: ubuntu-24.04 }
+          - { platform: linux, arch: arm64, runner: ubuntu-24.04-arm }
+          - { platform: darwin, arch: x64, runner: macos-15-intel }
+          - { platform: darwin, arch: arm64, runner: macos-15 }
+          - { platform: win32, arch: x64, runner: windows-2022 }
+          - { platform: win32, arch: arm64, runner: windows-11-arm }
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.20.0'
+          architecture: ${{ matrix.arch }}
+      - name: Verify device
+        env:
+          TARGET_PLATFORM: ${{ matrix.platform }}
+          TARGET_ARCH: ${{ matrix.arch }}
+        run: node -e "if(process.platform!==process.env.TARGET_PLATFORM||process.arch!==process.env.TARGET_ARCH)throw Error('Incorrect runner')"
+      - name: Acquire byte-identical verified auxiliary and bridge
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_TAG: ${{ inputs.source_tag }}
+          TARGET_PLATFORM: ${{ matrix.platform }}
+          TARGET_ARCH: ${{ matrix.arch }}
+        run: python first-ci/acquire-source.py
+      - name: Linux runtime dependencies
+        if: matrix.platform == 'linux'
+        run: sudo apt-get update && sudo apt-get install -y libx11-xcb1 libgnutls30
+      - name: Install full SDK dependencies
+        working-directory: sdk
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Compile and pack corrected main only
+        working-directory: sdk
+        run: |
+          npm exec tsc
+          npm pack --ignore-scripts --pack-destination ../out
+      - name: Fresh installed and cache consumers with symlink denied
+        run: node first-ci/verify-no-symlink.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: npm-${{ matrix.platform }}-${{ matrix.arch }}
+          path: |
+            out/*.tgz
+            out/*.json
+            out/bridges/
+          retention-days: 14
+  aggregate:
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.20.0'
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: npm-*
+          path: artifacts
+      - name: Install full SDK dependencies
+        working-directory: sdk
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: SDK regression tests
+        working-directory: sdk
+        run: npm test
+      - name: Aggregate reused auxiliary packages and new main
+        run: node ci/aggregate-release.mjs
+      - name: Verify final aggregated main and preserve fresh evidence
+        run: |
+          sudo apt-get update && sudo apt-get install -y libx11-xcb1 libgnutls30
+          mkdir -p out
+          cp release/*.tgz out/
+          node ci/verify-consumer.mjs
+          node first-ci/finalize-release.mjs
+      - name: Archive local-publication candidate; never publish npm
+        if: inputs.archive
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version=$(node -p "require('./release/release-manifest.json').version")
+          tar -czf release/acceptance-evidence.tar.gz -C release evidence
+          printf 'Fresh corrected-main six-platform consumers; immutable auxiliary tarballs reused from verified source. No npm publication. Current run: https://github.com/%s/actions/runs/%s\n' "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID" > release/notes.md
+          gh release create "npm-v$version-ci-$GITHUB_RUN_ID" release/*.tgz release/release-manifest.json release/acceptance-evidence.tar.gz --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease --latest=false --title "npm $version corrected-main candidate $GITHUB_RUN_ID" --notes-file release/notes.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: npm-release
+          path: release/
+          retention-days: 30

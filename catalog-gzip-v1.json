@@ -33,6 +33,39 @@
       },
       "manifestUrl": "https://raw.githubusercontent.com/lc-cn/qq-native-mirror/main/packages/3.2.32-52194-linux-arm64-gzip-v1/84d61aca429377e9fd6717327c23d3a5e06d6655e520fc60b1adc12378b2848a/manifest.json",
       "manifestSha256": "84d61aca429377e9fd6717327c23d3a5e06d6655e520fc60b1adc12378b2848a"
+    },
+    {
+      "platform": "darwin",
+      "arch": "x64",
+      "version": {
+        "clientVersion": "7.0.2-53644",
+        "appId": "537391652",
+        "qua": "V1_MAC_7.0.2-53644_53644_GW_B"
+      },
+      "manifestUrl": "https://raw.githubusercontent.com/lc-cn/qq-native-mirror/main/packages/7.0.2-53644-darwin-x64-gzip-v1/9c363f0388d29025a001f1b05a748fc559816467108d7c0f909de932677a7e9c/manifest.json",
+      "manifestSha256": "9c363f0388d29025a001f1b05a748fc559816467108d7c0f909de932677a7e9c"
+    },
+    {
+      "platform": "win32",
+      "arch": "x64",
+      "version": {
+        "clientVersion": "9.9.33-52230",
+        "appId": "537379411",
+        "qua": "V1_WIN_NQ_9.9.33_52230_GW_B"
+      },
+      "manifestUrl": "https://raw.githubusercontent.com/lc-cn/qq-native-mirror/main/packages/9.9.33-52230-win32-x64-gzip-v1/2caa41db2b1bcea8d317a655053821e46969be6964b412f3df979d72edd10161/manifest.json",
+      "manifestSha256": "2caa41db2b1bcea8d317a655053821e46969be6964b412f3df979d72edd10161"
+    },
+    {
+      "platform": "win32",
+      "arch": "arm64",
+      "version": {
+        "clientVersion": "9.9.33-52230",
+        "appId": "537379423",
+        "qua": "V1_WIN_NQ_9.9.33_52230_GW_B"
+      },
+      "manifestUrl": "https://raw.githubusercontent.com/lc-cn/qq-native-mirror/main/packages/9.9.33-52230-win32-arm64-gzip-v1/56e7d7743379f190ba7b19e780db98e82966ca724fcf26bd491f2ac1a32df366/manifest.json",
+      "manifestSha256": "56e7d7743379f190ba7b19e780db98e82966ca724fcf26bd491f2ac1a32df366"
     }
   ]
 }

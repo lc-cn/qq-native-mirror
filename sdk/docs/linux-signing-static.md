@@ -243,6 +243,14 @@ The descriptor is consumed/mutated rather than simply retained: blocks ending in
 
 The workspace still lacks an authoritative object schema, and no alias between these fields and the downstream OR8 target/provider output has been established. `scripts/linux-signing-setup-contract.py` verifies the hash and precise register-save/derived-local/direct-store instruction words and emits `.local/research/linux-signing-setup-contract.json`. The investigation stops at this setup function; no helper body, login or native code was executed.
 
+## One indexed setup helper: 0x4332380
+
+A subsequent bounded inspection follows only helper `0x4332380..0x4332588`, with the same pinned binary hash and unwind boundaries. It retains `x0` as an owner pointer (the setup caller supplies `workspace+8`) and `x1` as an index. Its direct writes use two pointers loaded from the owner: `0x4332490` clears an eight-byte slot at `owner[+0x10] + index*8`; `0x43324fc` stores a callee-produced local value into the same slot; `0x4332518` writes byte `1` at `owner[+0x18] + index`. These give array-shaped field evidence, without establishing the owner's C++ type.
+
+The two internal calls are `0x434d384(owner, original x4)` and `0x434daa4(owner, original x2, &local)`. Their bodies and indirect writes remain uninspected. This helper has no identified direct owner-field store, so it is not classified as a constructor for `workspace+8`. Its epilogue does not establish a new explicit `x0` return value, and the setup caller ignores its return. The only named PLT call in this helper is `__stack_chk_fail`.
+
+`scripts/linux-signing-setup-helper.py` verifies exact instruction words, calls and unwind boundaries; its output is `.local/research/linux-signing-setup-helper.json`. This adds a limited owner/index structure clue. It does not establish aliasing with the downstream OR8 target, propagation into provider output, a signature format or a server-visible account marker. No native code, login or signing operation was executed.
+
 ## Independent older-version comparison: Linux 3.2.31-51102 ARM64
 
 A bounded offline comparison used `.local/native/qq-3.2.31-linux-arm64/wrapper.node`, SHA-256 `72978494d18d0076a378550099628569ff5081ada79f37e0b7adaeae6904217a`. All older addresses were derived independently from its own ELF string sections, relative relocations and unwind table; no 3.2.32 absolute addresses were reused.

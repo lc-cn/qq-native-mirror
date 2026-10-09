@@ -38,4 +38,15 @@ node scripts/download-npm-candidate.mjs npm-v0.0.1-ci-RUN_ID /absolute/path/npm-
 
 需要资产下载代理时显式添加 `--proxy=https://gh-proxy.com/`；GitHub API 始终由 `gh api` 直接查询，不传给代理。脚本固定仓库、校验 release tag/目标 commit 与成功 CI run 的 SHA、workflow、runAttempt，再核对每个 GitHub asset 的 SHA256。最多并发 3 个有界下载，临时文件校验后原子替换；正确摘要的缓存可跳过，另一 run 禁止复用此目录。代理和重定向不会收到 GitHub API 认证头；脚本不输出 token 或临时签名 URL。
 
-验收归档仅接受七个确定名称的普通 JSON 文件，允许至多一个空的 `evidence/` 目录条目，拒绝链接、其他目录、路径穿越和额外条目，然后执行同一 `validateRelease` 校验。此命令不会执行 native、登录或发布。完成后再运行上面的本地首发命令。
+常规验收归档仅接受七个确定名称的普通 JSON 文件，允许至多一个空的 `evidence/` 目录条目，拒绝链接、其他目录、路径穿越和额外条目，然后执行同一 `validateRelease` 校验。此命令不会执行 native、登录或发布。完成后再运行上面的本地首发命令。
+
+
+## 首发中主包修正
+
+部分辅包已发布后，若主包发现问题，使用 `native-first-main.yml` 手动重验。它从指定的成功候选归档复用六个辅包的原始 tarball，核对源 run、平台及摘要，只编译修正后的主包。不能重新打包已发布的同版本辅包。
+
+六个原生 runner 会禁用 SDK 及子进程创建符号链接，验证仅安装主包后的自动平台选择、初始化和关闭，并用真实原生文件验证镜像缓存首次安装及第二次零文件下载。此流程不登录账号、不发布 npm。聚合主包还会在 Linux 复验。
+
+该候选归档包含 25 份确定名称的 JSON：原七份验收，加上每个平台的 `installed-no-symlink.consumer.json`、`cache-no-symlink.consumer.json`、`source-provenance.json`。manifest 的 `acceptanceEvidence` 绑定新增 18 份文件摘要，`auxiliarySources` 记录原始辅包出处；下载与首发脚本会严格检查所有证据。校验通过后，同一首发脚本跳过摘要一致的已发布辅包，继续发布剩余包和修正后的主包。
+
+账号目录锁与镜像缓存锁使用先完整写入 owner 文件、再原子创建硬链接的方式发布，读取时兼容旧符号链接锁。使用的文件系统须支持同目录硬链接；不要求 Windows 创建符号链接的权限。禁用符号链接的 CI 验收验证这两条 SDK 路径，不替代账号登录或签名真实性验证。
