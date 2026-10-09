@@ -1,0 +1,27 @@
+.github/workflows/native-version-consumer.yml
+  s_2104cc474f1ce5::t_865f26d0ee2232 1-48
+version-ci/acquire-main.mjs
+  s_2104cc474f1ce5::t_3713a5a05a6a09 1-23
+version-ci/consumer.mjs
+  s_2104cc474f1ce5::t_65cf08439024d6 1-37
+version-ci/offline-fixture.mjs
+  s_2104cc474f1ce5::t_7c11c19c8bca26 1-35
+version-ci/verify.mjs
+  s_2104cc474f1ce5::t_88957b7f3c2239 1-15
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "94af6920c2f180092eda9f09a6be551afab022f7",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
