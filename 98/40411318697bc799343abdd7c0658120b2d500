@@ -1,0 +1,29 @@
+sdk/docs/evidence/kernel-session-linux-versions-ci-38000688080.json
+  s_2104cc474f1ce5::t_c9e891ae4efe77 1-221
+sdk/docs/evidence/kernel-session-six-ci-38000680198.json
+  s_2104cc474f1ce5::t_2d1ad512bf54ec 1-1271
+sdk/docs/evidence/sdk-002-readonly-v3-preparation.json
+  s_2104cc474f1ce5::t_d78d3c284b458c 1-21
+sdk/docs/sdk-acceptance.md
+  s_2104cc474f1ce5::t_d9aedb34eb18c7 674-682
+sdk/docs/session-strategy.md
+  s_2104cc474f1ce5::t_adae5319d61676 20-28
+sdk/scripts/verify-sdk-002-readonly-v3.ts
+  s_2104cc474f1ce5::t_a2540c7621aae4 1-107
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "9840411318697bc799343abdd7c0658120b2d500",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
