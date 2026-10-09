@@ -67,6 +67,7 @@ export function validateDedupInstalledReceipts(build,manifest,receipt,video){
  check(receipt.receivedForwardContract===true&&receipt.nativeReceivedForwardObserved===false,'Installed received-forward contract missing or real observation claimed');
  check(receipt.forwardResourceContract===true&&receipt.nativeForwardResourceAttempted===false,'Installed forward-resource contract missing or real read claimed');
  check(receipt.historyInputCaptureContract===true&&receipt.loginWaitIdentityContract===true&&receipt.watchReconnectPolicyContract===true&&receipt.nativeHistoryQueryAttempted===false,'Installed history lifecycle contracts missing or real read claimed');
+ check(receipt.pendingReadCloseContract===true&&receipt.reentrantReadCloseContract===true,'Installed pending or reentrant read close contract missing');
  check(receipt.installedCliEntrypointContract===true&&receipt.posixNpmBinEntrypointChecked===(receipt.platform!=='win32'),'Installed CLI entrypoint contract missing');
  check(receipt.mergedForwardClientContract===true&&receipt.mergedForwardServiceContract===true&&receipt.nativeMergedForwardAttempted===false,'Installed merged-forward contracts missing or real operation attempted');
  check(receipt.nativeMessageBatchQueryAttempted===false&&receipt.messageBatchQueryContract===true&&receipt.messageBatchCliContract===true,'Installed batch contracts missing');

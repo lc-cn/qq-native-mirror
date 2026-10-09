@@ -74,14 +74,20 @@ export function createNativeServices(session: Native, version: string, emit: (ev
   };
   const service = (name: string): Native => call(guardedSession, `get${name}Service`);
   const awaitAlive = async <T>(value: T | PromiseLike<T>): Promise<T> => {
-    lifetime.signal.throwIfAborted();
+    // The native call is evaluated before this helper. A synchronous callback can
+    // close the Session while returning a Promise that may reject much later.
+    const pending = Promise.resolve(value);
+    if (lifetime.signal.aborted) {
+      void pending.catch(() => {});
+      lifetime.signal.throwIfAborted();
+    }
     let abort: () => void;
     const stopped = new Promise<never>((_, reject) => {
       abort = () => reject(new Error('Native services closed during operation'));
       lifetime.signal.addEventListener('abort', abort, { once: true });
     });
     try {
-      const result = await Promise.race([Promise.resolve(value), stopped]);
+      const result = await Promise.race([pending, stopped]);
       lifetime.signal.throwIfAborted();
       return result;
     } finally { lifetime.signal.removeEventListener('abort', abort!); }

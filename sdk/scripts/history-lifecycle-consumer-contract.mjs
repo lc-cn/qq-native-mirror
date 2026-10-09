@@ -38,7 +38,7 @@ export async function checkHistoryLifecycle({ QQClient, createNativeServices, ob
 
   // Observe service shutdown before a dispatched native Promise ever settles.
   // Releasing this late Promise cannot replay or deliver the retired operation.
-  for (const [method, query, nativeMethod] of [
+  for (const reentrant of [false, true]) for (const [method, query, nativeMethod] of [
     ['getHistory', { peer: { type: 'group', groupId: '123' } }, 'getMsgsIncludeSelf'],
     ['getMessage', { peer: { type: 'group', groupId: '123' }, messageId: '42' }, 'getMsgsByMsgId'],
     ['getMessages', { peer: { type: 'group', groupId: '123' }, messageIds: ['42'] }, 'getMsgsByMsgId'],
@@ -47,7 +47,7 @@ export async function checkHistoryLifecycle({ QQClient, createNativeServices, ob
     const began = new Promise(resolve => { begin = resolve; });
     const native = new Promise((_resolve, reject) => { rejectNative = reject; });
     const stopped = createNativeServices({
-      getMsgService: () => ({ addKernelMsgListener() {}, [nativeMethod]() { calls++; begin(); return native; } }),
+      getMsgService: () => ({ addKernelMsgListener() {}, [nativeMethod]() { calls++; if (reentrant) stopped.close(); begin(); return native; } }),
       getBuddyService: () => ({ addKernelBuddyListener() {} }),
       getGroupService: () => ({ addKernelGroupListener() {} }),
     }, '7.0.2-53644', () => {});
@@ -104,7 +104,7 @@ export async function checkHistoryLifecycle({ QQClient, createNativeServices, ob
     cliCalls++; assert.deepEqual(peer, { type: 'group', groupId: '123' }); assert.deepEqual(options, { before: raw.msgId, limit: 2 }); return [];
   } });
   assert.equal(cliCalls, 1);
-  return { historyInputCaptureContract: true, loginWaitIdentityContract: true, watchReconnectPolicyContract: true, nativeHistoryQueryAttempted: false };
+  return { pendingReadCloseContract: true, reentrantReadCloseContract: true, historyInputCaptureContract: true, loginWaitIdentityContract: true, watchReconnectPolicyContract: true, nativeHistoryQueryAttempted: false };
 }
 
 export async function verifyHistoryLifecycleConsumer(packageRoot) {

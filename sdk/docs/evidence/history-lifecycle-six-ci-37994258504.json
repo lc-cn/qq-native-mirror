@@ -1,0 +1,1082 @@
+{
+  "schemaVersion": 1,
+  "feature": "history input capture and cancellation, current login wait identity, object watch reconnect policy and realpath CLI entrypoint",
+  "observedAt": "2026-10-09T21:42:20.786687+00:00",
+  "repository": "lc-cn/qq-native-mirror",
+  "runId": "37994258504",
+  "runUrl": "https://github.com/lc-cn/qq-native-mirror/actions/runs/37994258504",
+  "sourceCommit": "55157516e200685729ef76c61e7c1080058045b8",
+  "nativeSourceCommit": "6cae1ec0a5e1bfb03cb7871083915b3d03272347",
+  "nativeSourceRunId": "37962268125",
+  "status": "completed",
+  "conclusion": "success",
+  "independentAuditSha256": "21c465f43babff415d95017e2f8693427b50c8b41d2e91c9b283c414ca3ea66e",
+  "runApiSha256": "63a2c9c3575c5011a13aba59a8a9046c4f597616fb3492d4e2d2f84015cfb0ad",
+  "jobsApiSha256": "f6649a0408b2174fb82349c9865b61128af0af71d6aa548f424bb40617563af6",
+  "artifactsApiSha256": "25328c67ba28308a8c031b42f957f0b3a2a42ab58324af4f753e657f4f0799fc",
+  "fullLogSha256": "4c7484cea7cc13c3df4f80d28036dfc6cab968428e1b552ff43ad3bcf52737c1",
+  "storageContracts": [
+    {
+      "job": "storage-contracts (windows-latest)",
+      "jobId": 114036117882,
+      "conclusion": "success",
+      "tests": 10,
+      "pass": 10,
+      "fail": 0,
+      "skipped": 0
+    },
+    {
+      "job": "storage-contracts (macos-15)",
+      "jobId": 114036118300,
+      "conclusion": "success",
+      "tests": 10,
+      "pass": 10,
+      "fail": 0,
+      "skipped": 0
+    },
+    {
+      "job": "storage-contracts (ubuntu-latest)",
+      "jobId": 114036118320,
+      "conclusion": "success",
+      "tests": 10,
+      "pass": 10,
+      "fail": 0,
+      "skipped": 0
+    }
+  ],
+  "producerContracts": [
+    {
+      "job": "full-inventory-consumer (ubuntu-24.04-arm, linux, arm64, linux-arm64)",
+      "jobId": 114036259931,
+      "tests": 6,
+      "pass": 6,
+      "fail": 0,
+      "skipped": 0
+    },
+    {
+      "job": "full-inventory-consumer (windows-11-arm, win32, arm64, win32-arm64)",
+      "jobId": 114036259949,
+      "tests": 6,
+      "pass": 6,
+      "fail": 0,
+      "skipped": 0
+    },
+    {
+      "job": "full-inventory-consumer (macos-15-intel, darwin, x64, darwin-x64)",
+      "jobId": 114036259965,
+      "tests": 6,
+      "pass": 6,
+      "fail": 0,
+      "skipped": 0
+    },
+    {
+      "job": "full-inventory-consumer (ubuntu-24.04, linux, x64, linux-x64)",
+      "jobId": 114036260021,
+      "tests": 6,
+      "pass": 6,
+      "fail": 0,
+      "skipped": 0
+    },
+    {
+      "job": "full-inventory-consumer (macos-15, darwin, arm64, darwin-arm64)",
+      "jobId": 114036260058,
+      "tests": 6,
+      "pass": 6,
+      "fail": 0,
+      "skipped": 0
+    },
+    {
+      "job": "full-inventory-consumer (windows-2022, win32, x64, win32-x64)",
+      "jobId": 114036260210,
+      "tests": 6,
+      "pass": 6,
+      "fail": 0,
+      "skipped": 0
+    }
+  ],
+  "installedPackageSource": "isolated localhost npm registry serving actual CI tarballs",
+  "compiledModuleComparison": {
+    "modulesPerPlatform": 16,
+    "platforms": 6,
+    "exactByteMatches": 94,
+    "windowsCliCrLfNormalizedMatches": 2,
+    "difference": "42 CR bytes within usage help template per Windows CLI; original artifact, tarball and module digests retained"
+  },
+  "platforms": [
+    {
+      "device": "linux-x64",
+      "artifactSha256": "dc72ec9218be8187073f9ef480e149800fe257c782cfc737b0814144e9ed162a",
+      "artifactBytes": 70320122,
+      "candidate": {
+        "tarball": "qq-native-client-linux-x64-0.0.2.tgz",
+        "sha256": "adb8467488a0da4123d01b774edeea862e742e78f0df9885d6118f8302ffc155",
+        "size": 69959806,
+        "nativeManifestSha256": "e8ae221fa740ba23074c53da36aee7a7a397b297400e7e3a0416914665f4770b",
+        "nativePaths": 19,
+        "objectCount": 19
+      },
+      "consumerSdk": {
+        "schemaVersion": 1,
+        "tarball": "qq-native-client-0.0.2.tgz",
+        "sha256": "f710e1d01b77a58db4bffd3fc30d3114a5e08decc95ca91e9a19ce1b5068001c",
+        "size": 327400,
+        "storageLoaderSha256": "b03a20a5284ec1b38a6eb37a2c3364579be30db551abeba1983b89a6a3489c51",
+        "builderCommit": "55157516e200685729ef76c61e7c1080058045b8",
+        "builderRunId": "37994258504",
+        "nativeSource": {
+          "repository": "lc-cn/qq-native-mirror",
+          "commit": "6cae1ec0a5e1bfb03cb7871083915b3d03272347",
+          "runId": "37962268125",
+          "runAttempt": 1,
+          "releaseManifestSha256": "9a362f3c4abada4c8cfc397039c20835bcb5393e0ae356873cccb518be9c8e1a",
+          "auxiliary": {
+            "tarball": "qq-native-client-linux-x64-0.0.2.tgz",
+            "sha256": "eb7c43401b42f0eb1186037700fb7e80194d072936c954bcf12838051852bfe7",
+            "size": 70030024,
+            "nativeManifestSha256": "4ae75dbf26c44673fb4226726a1f5ed884b513de7b5f0b2055a0162692f060c5"
+          }
+        }
+      },
+      "allOriginalPathBytesEqual": true,
+      "originalPaths": 19,
+      "objectsVerified": 19,
+      "actualVideoFixtures": 3,
+      "warmCacheVerified": true,
+      "noAccount": true,
+      "mergedForwardClientContract": true,
+      "mergedForwardServiceContract": true,
+      "nativeMergedForwardAttempted": false,
+      "forwardMessageContract": true,
+      "nativeForwardQueryAttempted": false,
+      "forwardSubmissionAttempted": false,
+      "forwardResourceContract": true,
+      "nativeForwardResourceAttempted": false,
+      "historyInputCaptureContract": true,
+      "loginWaitIdentityContract": true,
+      "watchReconnectPolicyContract": true,
+      "installedCliEntrypointContract": true,
+      "posixNpmBinEntrypointChecked": true,
+      "nativeHistoryQueryAttempted": false,
+      "receivedForwardContract": true,
+      "nativeReceivedForwardObserved": false,
+      "compiledForwardModulesMatchReviewedSource": true,
+      "compiledModuleChecks": [
+        {
+          "module": "long-message-request",
+          "packedSha256": "1413379604898ca0a8efd4c3011d1616dbf49ad1a5e732783b1387208acad0e6",
+          "reviewedSha256": "1413379604898ca0a8efd4c3011d1616dbf49ad1a5e732783b1387208acad0e6",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "merged-forward-card",
+          "packedSha256": "93912ba78d4de2871c09e056cb46e4c614e03b7f15d6392227fca88a30e00cdc",
+          "reviewedSha256": "93912ba78d4de2871c09e056cb46e4c614e03b7f15d6392227fca88a30e00cdc",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "merged-forward",
+          "packedSha256": "86442bc37b315447ed8f157f6b568b17973a550b4f8149a45933325f0a68d869",
+          "reviewedSha256": "86442bc37b315447ed8f157f6b568b17973a550b4f8149a45933325f0a68d869",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "native-services",
+          "packedSha256": "5bbcd2f0043199c7dbb2949aeeb221318af9d9a90c42c6b1df8f6950f9bcc670",
+          "reviewedSha256": "5bbcd2f0043199c7dbb2949aeeb221318af9d9a90c42c6b1df8f6950f9bcc670",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "errors",
+          "packedSha256": "759f31b54a56c641c2f8b46f4e0688576d3026fd7fe89bfc201deed59e8aa3b2",
+          "reviewedSha256": "759f31b54a56c641c2f8b46f4e0688576d3026fd7fe89bfc201deed59e8aa3b2",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "index",
+          "packedSha256": "0017395a2fce498bb51cf9fa9f6287cb5ce092949f435922bd6bb875d909bfc9",
+          "reviewedSha256": "0017395a2fce498bb51cf9fa9f6287cb5ce092949f435922bd6bb875d909bfc9",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "cli",
+          "packedSha256": "d37a549cce005c9b494dd3fed6d26c87fa4c8aacb18c6b33daba97e67efd013a",
+          "reviewedSha256": "d37a549cce005c9b494dd3fed6d26c87fa4c8aacb18c6b33daba97e67efd013a",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "worker",
+          "packedSha256": "8a012f8fdae70bfabf5e836d21cb795b4a4a10ffe9b3d52e767b64ce8457bae0",
+          "reviewedSha256": "8a012f8fdae70bfabf5e836d21cb795b4a4a10ffe9b3d52e767b64ce8457bae0",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "forward-messages",
+          "packedSha256": "c253b7e9edfc18c7e1a3c3d521f80b3233b4d289ea1fe6d42339aa15c4526c13",
+          "reviewedSha256": "c253b7e9edfc18c7e1a3c3d521f80b3233b4d289ea1fe6d42339aa15c4526c13",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "received-forward",
+          "packedSha256": "448ba53e01e03a4733d85b2357b20185f2430efc38f9afd0951684d968f29828",
+          "reviewedSha256": "448ba53e01e03a4733d85b2357b20185f2430efc38f9afd0951684d968f29828",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "message-elements",
+          "packedSha256": "fd1e204f313154eb72ed2e202c78252afb3614e09549fa66418a69d470109990",
+          "reviewedSha256": "fd1e204f313154eb72ed2e202c78252afb3614e09549fa66418a69d470109990",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "inbound-messages",
+          "packedSha256": "48062d30d2d6ebcb0ef6cb0d2d77f45e7c2d5a0e1f224f63491b2a51153afbb6",
+          "reviewedSha256": "48062d30d2d6ebcb0ef6cb0d2d77f45e7c2d5a0e1f224f63491b2a51153afbb6",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "inbound-mentions",
+          "packedSha256": "8c57fc575e51937295403a8185856054ebaaea35d6ed7491f56dc8abb08dccb5",
+          "reviewedSha256": "8c57fc575e51937295403a8185856054ebaaea35d6ed7491f56dc8abb08dccb5",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "forward-resource-wire",
+          "packedSha256": "ab7b1699bea7a1673a629e81482b33a48649904a988768ad20c5c41a4afd0e55",
+          "reviewedSha256": "ab7b1699bea7a1673a629e81482b33a48649904a988768ad20c5c41a4afd0e55",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "forward-resource-transport",
+          "packedSha256": "28c22450c2b20349282cb18f8026fea06b5172fa9892675be871b4fa973e978e",
+          "reviewedSha256": "28c22450c2b20349282cb18f8026fea06b5172fa9892675be871b4fa973e978e",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "message-query",
+          "packedSha256": "f0c70173bb0d82550f786feec61190069874c4b9989ac7123f916cd1dc210d6f",
+          "reviewedSha256": "f0c70173bb0d82550f786feec61190069874c4b9989ac7123f916cd1dc210d6f",
+          "comparison": "exact-bytes"
+        }
+      ],
+      "acceptanceLogDeepEqual": true
+    },
+    {
+      "device": "win32-arm64",
+      "artifactSha256": "3efe41d5edf4afd071c9ecb8e1345c3e3e2797cf55e08ea6fb2962a0f1c6803d",
+      "artifactBytes": 54457996,
+      "candidate": {
+        "tarball": "qq-native-client-win32-arm64-0.0.2.tgz",
+        "sha256": "d60a1b6a9d7b2ef499b69dde3bc9725efb57426820703feaef775afa29618869",
+        "size": 54104288,
+        "nativeManifestSha256": "9a40d5e85191fd28092f3e6af7c927806f74fd232c3dee8ba8769767db083812",
+        "nativePaths": 27,
+        "objectCount": 26
+      },
+      "consumerSdk": {
+        "schemaVersion": 1,
+        "tarball": "qq-native-client-0.0.2.tgz",
+        "sha256": "85f76c907d8e3a126e0897b7e4999b7acdbf4eea7d360f27efaa41016e0bc3e6",
+        "size": 324338,
+        "storageLoaderSha256": "b03a20a5284ec1b38a6eb37a2c3364579be30db551abeba1983b89a6a3489c51",
+        "builderCommit": "55157516e200685729ef76c61e7c1080058045b8",
+        "builderRunId": "37994258504",
+        "nativeSource": {
+          "repository": "lc-cn/qq-native-mirror",
+          "commit": "6cae1ec0a5e1bfb03cb7871083915b3d03272347",
+          "runId": "37962268125",
+          "runAttempt": 1,
+          "releaseManifestSha256": "9a362f3c4abada4c8cfc397039c20835bcb5393e0ae356873cccb518be9c8e1a",
+          "auxiliary": {
+            "tarball": "qq-native-client-win32-arm64-0.0.2.tgz",
+            "sha256": "14e9c002c86e4f286eb88bb620565d64032525bdd2f62a6a446b1e1ea6998b27",
+            "size": 54122150,
+            "nativeManifestSha256": "1889d069ba871386b2e467b6f4c173b8c93e06d143e474cbc7383bcc51dbcf1a"
+          }
+        }
+      },
+      "allOriginalPathBytesEqual": true,
+      "originalPaths": 27,
+      "objectsVerified": 26,
+      "actualVideoFixtures": 3,
+      "warmCacheVerified": true,
+      "noAccount": true,
+      "mergedForwardClientContract": true,
+      "mergedForwardServiceContract": true,
+      "nativeMergedForwardAttempted": false,
+      "forwardMessageContract": true,
+      "nativeForwardQueryAttempted": false,
+      "forwardSubmissionAttempted": false,
+      "forwardResourceContract": true,
+      "nativeForwardResourceAttempted": false,
+      "historyInputCaptureContract": true,
+      "loginWaitIdentityContract": true,
+      "watchReconnectPolicyContract": true,
+      "installedCliEntrypointContract": true,
+      "posixNpmBinEntrypointChecked": false,
+      "nativeHistoryQueryAttempted": false,
+      "receivedForwardContract": true,
+      "nativeReceivedForwardObserved": false,
+      "compiledForwardModulesMatchReviewedSource": true,
+      "compiledModuleChecks": [
+        {
+          "module": "long-message-request",
+          "packedSha256": "1413379604898ca0a8efd4c3011d1616dbf49ad1a5e732783b1387208acad0e6",
+          "reviewedSha256": "1413379604898ca0a8efd4c3011d1616dbf49ad1a5e732783b1387208acad0e6",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "merged-forward-card",
+          "packedSha256": "93912ba78d4de2871c09e056cb46e4c614e03b7f15d6392227fca88a30e00cdc",
+          "reviewedSha256": "93912ba78d4de2871c09e056cb46e4c614e03b7f15d6392227fca88a30e00cdc",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "merged-forward",
+          "packedSha256": "86442bc37b315447ed8f157f6b568b17973a550b4f8149a45933325f0a68d869",
+          "reviewedSha256": "86442bc37b315447ed8f157f6b568b17973a550b4f8149a45933325f0a68d869",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "native-services",
+          "packedSha256": "5bbcd2f0043199c7dbb2949aeeb221318af9d9a90c42c6b1df8f6950f9bcc670",
+          "reviewedSha256": "5bbcd2f0043199c7dbb2949aeeb221318af9d9a90c42c6b1df8f6950f9bcc670",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "errors",
+          "packedSha256": "759f31b54a56c641c2f8b46f4e0688576d3026fd7fe89bfc201deed59e8aa3b2",
+          "reviewedSha256": "759f31b54a56c641c2f8b46f4e0688576d3026fd7fe89bfc201deed59e8aa3b2",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "index",
+          "packedSha256": "0017395a2fce498bb51cf9fa9f6287cb5ce092949f435922bd6bb875d909bfc9",
+          "reviewedSha256": "0017395a2fce498bb51cf9fa9f6287cb5ce092949f435922bd6bb875d909bfc9",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "cli",
+          "packedSha256": "56a2a1d8310c529491ea82d86c941ddd9d67efa8c8a52b46e4c283574a4c7d09",
+          "reviewedSha256": "d37a549cce005c9b494dd3fed6d26c87fa4c8aacb18c6b33daba97e67efd013a",
+          "comparison": "windows-cli-crlf-normalized"
+        },
+        {
+          "module": "worker",
+          "packedSha256": "8a012f8fdae70bfabf5e836d21cb795b4a4a10ffe9b3d52e767b64ce8457bae0",
+          "reviewedSha256": "8a012f8fdae70bfabf5e836d21cb795b4a4a10ffe9b3d52e767b64ce8457bae0",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "forward-messages",
+          "packedSha256": "c253b7e9edfc18c7e1a3c3d521f80b3233b4d289ea1fe6d42339aa15c4526c13",
+          "reviewedSha256": "c253b7e9edfc18c7e1a3c3d521f80b3233b4d289ea1fe6d42339aa15c4526c13",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "received-forward",
+          "packedSha256": "448ba53e01e03a4733d85b2357b20185f2430efc38f9afd0951684d968f29828",
+          "reviewedSha256": "448ba53e01e03a4733d85b2357b20185f2430efc38f9afd0951684d968f29828",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "message-elements",
+          "packedSha256": "fd1e204f313154eb72ed2e202c78252afb3614e09549fa66418a69d470109990",
+          "reviewedSha256": "fd1e204f313154eb72ed2e202c78252afb3614e09549fa66418a69d470109990",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "inbound-messages",
+          "packedSha256": "48062d30d2d6ebcb0ef6cb0d2d77f45e7c2d5a0e1f224f63491b2a51153afbb6",
+          "reviewedSha256": "48062d30d2d6ebcb0ef6cb0d2d77f45e7c2d5a0e1f224f63491b2a51153afbb6",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "inbound-mentions",
+          "packedSha256": "8c57fc575e51937295403a8185856054ebaaea35d6ed7491f56dc8abb08dccb5",
+          "reviewedSha256": "8c57fc575e51937295403a8185856054ebaaea35d6ed7491f56dc8abb08dccb5",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "forward-resource-wire",
+          "packedSha256": "ab7b1699bea7a1673a629e81482b33a48649904a988768ad20c5c41a4afd0e55",
+          "reviewedSha256": "ab7b1699bea7a1673a629e81482b33a48649904a988768ad20c5c41a4afd0e55",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "forward-resource-transport",
+          "packedSha256": "28c22450c2b20349282cb18f8026fea06b5172fa9892675be871b4fa973e978e",
+          "reviewedSha256": "28c22450c2b20349282cb18f8026fea06b5172fa9892675be871b4fa973e978e",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "message-query",
+          "packedSha256": "f0c70173bb0d82550f786feec61190069874c4b9989ac7123f916cd1dc210d6f",
+          "reviewedSha256": "f0c70173bb0d82550f786feec61190069874c4b9989ac7123f916cd1dc210d6f",
+          "comparison": "exact-bytes"
+        }
+      ],
+      "acceptanceLogDeepEqual": true
+    },
+    {
+      "device": "darwin-x64",
+      "artifactSha256": "7e6a6737ca2b5c76868eeff4725d400b87b6279966929c2ce51b4d3d1eca558a",
+      "artifactBytes": 60469493,
+      "candidate": {
+        "tarball": "qq-native-client-darwin-x64-0.0.2.tgz",
+        "sha256": "35c8d775a455ccf99c95d3e7480a53fbbfd1299920b2d9b3a233bf9601f17b5f",
+        "size": 59967588,
+        "nativeManifestSha256": "052098ea29aab786b04fc8bf06b8fb4653714680f20c9894c1218b7402078dad",
+        "nativePaths": 1168,
+        "objectCount": 321
+      },
+      "consumerSdk": {
+        "schemaVersion": 1,
+        "tarball": "qq-native-client-0.0.2.tgz",
+        "sha256": "61d855a217fbebd0b61428242d56564713333848390e18716b14b7bcdb6b9c21",
+        "size": 325888,
+        "storageLoaderSha256": "b03a20a5284ec1b38a6eb37a2c3364579be30db551abeba1983b89a6a3489c51",
+        "builderCommit": "55157516e200685729ef76c61e7c1080058045b8",
+        "builderRunId": "37994258504",
+        "nativeSource": {
+          "repository": "lc-cn/qq-native-mirror",
+          "commit": "6cae1ec0a5e1bfb03cb7871083915b3d03272347",
+          "runId": "37962268125",
+          "runAttempt": 1,
+          "releaseManifestSha256": "9a362f3c4abada4c8cfc397039c20835bcb5393e0ae356873cccb518be9c8e1a",
+          "auxiliary": {
+            "tarball": "qq-native-client-darwin-x64-0.0.2.tgz",
+            "sha256": "5629121c461b0031cca0f5b69d6a0e83a5a4193dda8235fceb805235b7bf77e7",
+            "size": 65852287,
+            "nativeManifestSha256": "b69b9c0709c2afe10a4857d96aa3a0d88e599b53fbd7f19304a40e1077fcfbfd"
+          }
+        }
+      },
+      "allOriginalPathBytesEqual": true,
+      "originalPaths": 1168,
+      "objectsVerified": 321,
+      "actualVideoFixtures": 3,
+      "warmCacheVerified": true,
+      "noAccount": true,
+      "mergedForwardClientContract": true,
+      "mergedForwardServiceContract": true,
+      "nativeMergedForwardAttempted": false,
+      "forwardMessageContract": true,
+      "nativeForwardQueryAttempted": false,
+      "forwardSubmissionAttempted": false,
+      "forwardResourceContract": true,
+      "nativeForwardResourceAttempted": false,
+      "historyInputCaptureContract": true,
+      "loginWaitIdentityContract": true,
+      "watchReconnectPolicyContract": true,
+      "installedCliEntrypointContract": true,
+      "posixNpmBinEntrypointChecked": true,
+      "nativeHistoryQueryAttempted": false,
+      "receivedForwardContract": true,
+      "nativeReceivedForwardObserved": false,
+      "compiledForwardModulesMatchReviewedSource": true,
+      "compiledModuleChecks": [
+        {
+          "module": "long-message-request",
+          "packedSha256": "1413379604898ca0a8efd4c3011d1616dbf49ad1a5e732783b1387208acad0e6",
+          "reviewedSha256": "1413379604898ca0a8efd4c3011d1616dbf49ad1a5e732783b1387208acad0e6",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "merged-forward-card",
+          "packedSha256": "93912ba78d4de2871c09e056cb46e4c614e03b7f15d6392227fca88a30e00cdc",
+          "reviewedSha256": "93912ba78d4de2871c09e056cb46e4c614e03b7f15d6392227fca88a30e00cdc",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "merged-forward",
+          "packedSha256": "86442bc37b315447ed8f157f6b568b17973a550b4f8149a45933325f0a68d869",
+          "reviewedSha256": "86442bc37b315447ed8f157f6b568b17973a550b4f8149a45933325f0a68d869",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "native-services",
+          "packedSha256": "5bbcd2f0043199c7dbb2949aeeb221318af9d9a90c42c6b1df8f6950f9bcc670",
+          "reviewedSha256": "5bbcd2f0043199c7dbb2949aeeb221318af9d9a90c42c6b1df8f6950f9bcc670",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "errors",
+          "packedSha256": "759f31b54a56c641c2f8b46f4e0688576d3026fd7fe89bfc201deed59e8aa3b2",
+          "reviewedSha256": "759f31b54a56c641c2f8b46f4e0688576d3026fd7fe89bfc201deed59e8aa3b2",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "index",
+          "packedSha256": "0017395a2fce498bb51cf9fa9f6287cb5ce092949f435922bd6bb875d909bfc9",
+          "reviewedSha256": "0017395a2fce498bb51cf9fa9f6287cb5ce092949f435922bd6bb875d909bfc9",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "cli",
+          "packedSha256": "d37a549cce005c9b494dd3fed6d26c87fa4c8aacb18c6b33daba97e67efd013a",
+          "reviewedSha256": "d37a549cce005c9b494dd3fed6d26c87fa4c8aacb18c6b33daba97e67efd013a",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "worker",
+          "packedSha256": "8a012f8fdae70bfabf5e836d21cb795b4a4a10ffe9b3d52e767b64ce8457bae0",
+          "reviewedSha256": "8a012f8fdae70bfabf5e836d21cb795b4a4a10ffe9b3d52e767b64ce8457bae0",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "forward-messages",
+          "packedSha256": "c253b7e9edfc18c7e1a3c3d521f80b3233b4d289ea1fe6d42339aa15c4526c13",
+          "reviewedSha256": "c253b7e9edfc18c7e1a3c3d521f80b3233b4d289ea1fe6d42339aa15c4526c13",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "received-forward",
+          "packedSha256": "448ba53e01e03a4733d85b2357b20185f2430efc38f9afd0951684d968f29828",
+          "reviewedSha256": "448ba53e01e03a4733d85b2357b20185f2430efc38f9afd0951684d968f29828",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "message-elements",
+          "packedSha256": "fd1e204f313154eb72ed2e202c78252afb3614e09549fa66418a69d470109990",
+          "reviewedSha256": "fd1e204f313154eb72ed2e202c78252afb3614e09549fa66418a69d470109990",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "inbound-messages",
+          "packedSha256": "48062d30d2d6ebcb0ef6cb0d2d77f45e7c2d5a0e1f224f63491b2a51153afbb6",
+          "reviewedSha256": "48062d30d2d6ebcb0ef6cb0d2d77f45e7c2d5a0e1f224f63491b2a51153afbb6",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "inbound-mentions",
+          "packedSha256": "8c57fc575e51937295403a8185856054ebaaea35d6ed7491f56dc8abb08dccb5",
+          "reviewedSha256": "8c57fc575e51937295403a8185856054ebaaea35d6ed7491f56dc8abb08dccb5",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "forward-resource-wire",
+          "packedSha256": "ab7b1699bea7a1673a629e81482b33a48649904a988768ad20c5c41a4afd0e55",
+          "reviewedSha256": "ab7b1699bea7a1673a629e81482b33a48649904a988768ad20c5c41a4afd0e55",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "forward-resource-transport",
+          "packedSha256": "28c22450c2b20349282cb18f8026fea06b5172fa9892675be871b4fa973e978e",
+          "reviewedSha256": "28c22450c2b20349282cb18f8026fea06b5172fa9892675be871b4fa973e978e",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "message-query",
+          "packedSha256": "f0c70173bb0d82550f786feec61190069874c4b9989ac7123f916cd1dc210d6f",
+          "reviewedSha256": "f0c70173bb0d82550f786feec61190069874c4b9989ac7123f916cd1dc210d6f",
+          "comparison": "exact-bytes"
+        }
+      ],
+      "acceptanceLogDeepEqual": true
+    },
+    {
+      "device": "darwin-arm64",
+      "artifactSha256": "0c7078adfcb0181a500bbed131dbd204cc019e5c7900a54a9253cd903ef1e0d1",
+      "artifactBytes": 55425859,
+      "candidate": {
+        "tarball": "qq-native-client-darwin-arm64-0.0.2.tgz",
+        "sha256": "8f7ef5790f9dbe993ddccc0597931415c5df85478af0f92fb06d880bf73db734",
+        "size": 54924300,
+        "nativeManifestSha256": "19fb1f7122aaab09289ff2460113ca864d0bec06fae663940d140420d8e144ba",
+        "nativePaths": 1168,
+        "objectCount": 321
+      },
+      "consumerSdk": {
+        "schemaVersion": 1,
+        "tarball": "qq-native-client-0.0.2.tgz",
+        "sha256": "56a808964ec231ec460768b091a62686846e02b3335ce853c5f964edb6e47876",
+        "size": 326971,
+        "storageLoaderSha256": "b03a20a5284ec1b38a6eb37a2c3364579be30db551abeba1983b89a6a3489c51",
+        "builderCommit": "55157516e200685729ef76c61e7c1080058045b8",
+        "builderRunId": "37994258504",
+        "nativeSource": {
+          "repository": "lc-cn/qq-native-mirror",
+          "commit": "6cae1ec0a5e1bfb03cb7871083915b3d03272347",
+          "runId": "37962268125",
+          "runAttempt": 1,
+          "releaseManifestSha256": "9a362f3c4abada4c8cfc397039c20835bcb5393e0ae356873cccb518be9c8e1a",
+          "auxiliary": {
+            "tarball": "qq-native-client-darwin-arm64-0.0.2.tgz",
+            "sha256": "17df5e2ec460ff2e21209eea473030f6dd4911c43774872d6d4f33417281d586",
+            "size": 59911840,
+            "nativeManifestSha256": "a3c633ad5fc13082b5b8ffa7aa3e09b9a9d37708300bf5df3ea66bd0daa729df"
+          }
+        }
+      },
+      "allOriginalPathBytesEqual": true,
+      "originalPaths": 1168,
+      "objectsVerified": 321,
+      "actualVideoFixtures": 3,
+      "warmCacheVerified": true,
+      "noAccount": true,
+      "mergedForwardClientContract": true,
+      "mergedForwardServiceContract": true,
+      "nativeMergedForwardAttempted": false,
+      "forwardMessageContract": true,
+      "nativeForwardQueryAttempted": false,
+      "forwardSubmissionAttempted": false,
+      "forwardResourceContract": true,
+      "nativeForwardResourceAttempted": false,
+      "historyInputCaptureContract": true,
+      "loginWaitIdentityContract": true,
+      "watchReconnectPolicyContract": true,
+      "installedCliEntrypointContract": true,
+      "posixNpmBinEntrypointChecked": true,
+      "nativeHistoryQueryAttempted": false,
+      "receivedForwardContract": true,
+      "nativeReceivedForwardObserved": false,
+      "compiledForwardModulesMatchReviewedSource": true,
+      "compiledModuleChecks": [
+        {
+          "module": "long-message-request",
+          "packedSha256": "1413379604898ca0a8efd4c3011d1616dbf49ad1a5e732783b1387208acad0e6",
+          "reviewedSha256": "1413379604898ca0a8efd4c3011d1616dbf49ad1a5e732783b1387208acad0e6",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "merged-forward-card",
+          "packedSha256": "93912ba78d4de2871c09e056cb46e4c614e03b7f15d6392227fca88a30e00cdc",
+          "reviewedSha256": "93912ba78d4de2871c09e056cb46e4c614e03b7f15d6392227fca88a30e00cdc",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "merged-forward",
+          "packedSha256": "86442bc37b315447ed8f157f6b568b17973a550b4f8149a45933325f0a68d869",
+          "reviewedSha256": "86442bc37b315447ed8f157f6b568b17973a550b4f8149a45933325f0a68d869",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "native-services",
+          "packedSha256": "5bbcd2f0043199c7dbb2949aeeb221318af9d9a90c42c6b1df8f6950f9bcc670",
+          "reviewedSha256": "5bbcd2f0043199c7dbb2949aeeb221318af9d9a90c42c6b1df8f6950f9bcc670",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "errors",
+          "packedSha256": "759f31b54a56c641c2f8b46f4e0688576d3026fd7fe89bfc201deed59e8aa3b2",
+          "reviewedSha256": "759f31b54a56c641c2f8b46f4e0688576d3026fd7fe89bfc201deed59e8aa3b2",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "index",
+          "packedSha256": "0017395a2fce498bb51cf9fa9f6287cb5ce092949f435922bd6bb875d909bfc9",
+          "reviewedSha256": "0017395a2fce498bb51cf9fa9f6287cb5ce092949f435922bd6bb875d909bfc9",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "cli",
+          "packedSha256": "d37a549cce005c9b494dd3fed6d26c87fa4c8aacb18c6b33daba97e67efd013a",
+          "reviewedSha256": "d37a549cce005c9b494dd3fed6d26c87fa4c8aacb18c6b33daba97e67efd013a",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "worker",
+          "packedSha256": "8a012f8fdae70bfabf5e836d21cb795b4a4a10ffe9b3d52e767b64ce8457bae0",
+          "reviewedSha256": "8a012f8fdae70bfabf5e836d21cb795b4a4a10ffe9b3d52e767b64ce8457bae0",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "forward-messages",
+          "packedSha256": "c253b7e9edfc18c7e1a3c3d521f80b3233b4d289ea1fe6d42339aa15c4526c13",
+          "reviewedSha256": "c253b7e9edfc18c7e1a3c3d521f80b3233b4d289ea1fe6d42339aa15c4526c13",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "received-forward",
+          "packedSha256": "448ba53e01e03a4733d85b2357b20185f2430efc38f9afd0951684d968f29828",
+          "reviewedSha256": "448ba53e01e03a4733d85b2357b20185f2430efc38f9afd0951684d968f29828",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "message-elements",
+          "packedSha256": "fd1e204f313154eb72ed2e202c78252afb3614e09549fa66418a69d470109990",
+          "reviewedSha256": "fd1e204f313154eb72ed2e202c78252afb3614e09549fa66418a69d470109990",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "inbound-messages",
+          "packedSha256": "48062d30d2d6ebcb0ef6cb0d2d77f45e7c2d5a0e1f224f63491b2a51153afbb6",
+          "reviewedSha256": "48062d30d2d6ebcb0ef6cb0d2d77f45e7c2d5a0e1f224f63491b2a51153afbb6",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "inbound-mentions",
+          "packedSha256": "8c57fc575e51937295403a8185856054ebaaea35d6ed7491f56dc8abb08dccb5",
+          "reviewedSha256": "8c57fc575e51937295403a8185856054ebaaea35d6ed7491f56dc8abb08dccb5",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "forward-resource-wire",
+          "packedSha256": "ab7b1699bea7a1673a629e81482b33a48649904a988768ad20c5c41a4afd0e55",
+          "reviewedSha256": "ab7b1699bea7a1673a629e81482b33a48649904a988768ad20c5c41a4afd0e55",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "forward-resource-transport",
+          "packedSha256": "28c22450c2b20349282cb18f8026fea06b5172fa9892675be871b4fa973e978e",
+          "reviewedSha256": "28c22450c2b20349282cb18f8026fea06b5172fa9892675be871b4fa973e978e",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "message-query",
+          "packedSha256": "f0c70173bb0d82550f786feec61190069874c4b9989ac7123f916cd1dc210d6f",
+          "reviewedSha256": "f0c70173bb0d82550f786feec61190069874c4b9989ac7123f916cd1dc210d6f",
+          "comparison": "exact-bytes"
+        }
+      ],
+      "acceptanceLogDeepEqual": true
+    },
+    {
+      "device": "linux-arm64",
+      "artifactSha256": "68718419537e626d280ca52f031152ab16ba8ae0f92d50b05a9def0042aeec6c",
+      "artifactBytes": 72258094,
+      "candidate": {
+        "tarball": "qq-native-client-linux-arm64-0.0.2.tgz",
+        "sha256": "f96a0b09027fa262c6819a7854ec9e8bc8d550498c9baa3d4c96d75a66b39237",
+        "size": 71896208,
+        "nativeManifestSha256": "87a77613cec12f37bff7c6b89a1a14760a78d0b639f120c5ee3129be73a41f2a",
+        "nativePaths": 20,
+        "objectCount": 20
+      },
+      "consumerSdk": {
+        "schemaVersion": 1,
+        "tarball": "qq-native-client-0.0.2.tgz",
+        "sha256": "b1ecde44d1e4864fd5fffa80f8b9aca7aafddb0b57d9a1078de98e3786196207",
+        "size": 328483,
+        "storageLoaderSha256": "b03a20a5284ec1b38a6eb37a2c3364579be30db551abeba1983b89a6a3489c51",
+        "builderCommit": "55157516e200685729ef76c61e7c1080058045b8",
+        "builderRunId": "37994258504",
+        "nativeSource": {
+          "repository": "lc-cn/qq-native-mirror",
+          "commit": "6cae1ec0a5e1bfb03cb7871083915b3d03272347",
+          "runId": "37962268125",
+          "runAttempt": 1,
+          "releaseManifestSha256": "9a362f3c4abada4c8cfc397039c20835bcb5393e0ae356873cccb518be9c8e1a",
+          "auxiliary": {
+            "tarball": "qq-native-client-linux-arm64-0.0.2.tgz",
+            "sha256": "a68e18dcef2af72176cd2d7d64b4b9e8c41d4191202c9a202793052c93bc34b8",
+            "size": 72005502,
+            "nativeManifestSha256": "20b4c73d56324a28ee1c42fdba101b24b94999cae9966dc8a1f995d70f9e97f0"
+          }
+        }
+      },
+      "allOriginalPathBytesEqual": true,
+      "originalPaths": 20,
+      "objectsVerified": 20,
+      "actualVideoFixtures": 3,
+      "warmCacheVerified": true,
+      "noAccount": true,
+      "mergedForwardClientContract": true,
+      "mergedForwardServiceContract": true,
+      "nativeMergedForwardAttempted": false,
+      "forwardMessageContract": true,
+      "nativeForwardQueryAttempted": false,
+      "forwardSubmissionAttempted": false,
+      "forwardResourceContract": true,
+      "nativeForwardResourceAttempted": false,
+      "historyInputCaptureContract": true,
+      "loginWaitIdentityContract": true,
+      "watchReconnectPolicyContract": true,
+      "installedCliEntrypointContract": true,
+      "posixNpmBinEntrypointChecked": true,
+      "nativeHistoryQueryAttempted": false,
+      "receivedForwardContract": true,
+      "nativeReceivedForwardObserved": false,
+      "compiledForwardModulesMatchReviewedSource": true,
+      "compiledModuleChecks": [
+        {
+          "module": "long-message-request",
+          "packedSha256": "1413379604898ca0a8efd4c3011d1616dbf49ad1a5e732783b1387208acad0e6",
+          "reviewedSha256": "1413379604898ca0a8efd4c3011d1616dbf49ad1a5e732783b1387208acad0e6",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "merged-forward-card",
+          "packedSha256": "93912ba78d4de2871c09e056cb46e4c614e03b7f15d6392227fca88a30e00cdc",
+          "reviewedSha256": "93912ba78d4de2871c09e056cb46e4c614e03b7f15d6392227fca88a30e00cdc",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "merged-forward",
+          "packedSha256": "86442bc37b315447ed8f157f6b568b17973a550b4f8149a45933325f0a68d869",
+          "reviewedSha256": "86442bc37b315447ed8f157f6b568b17973a550b4f8149a45933325f0a68d869",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "native-services",
+          "packedSha256": "5bbcd2f0043199c7dbb2949aeeb221318af9d9a90c42c6b1df8f6950f9bcc670",
+          "reviewedSha256": "5bbcd2f0043199c7dbb2949aeeb221318af9d9a90c42c6b1df8f6950f9bcc670",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "errors",
+          "packedSha256": "759f31b54a56c641c2f8b46f4e0688576d3026fd7fe89bfc201deed59e8aa3b2",
+          "reviewedSha256": "759f31b54a56c641c2f8b46f4e0688576d3026fd7fe89bfc201deed59e8aa3b2",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "index",
+          "packedSha256": "0017395a2fce498bb51cf9fa9f6287cb5ce092949f435922bd6bb875d909bfc9",
+          "reviewedSha256": "0017395a2fce498bb51cf9fa9f6287cb5ce092949f435922bd6bb875d909bfc9",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "cli",
+          "packedSha256": "d37a549cce005c9b494dd3fed6d26c87fa4c8aacb18c6b33daba97e67efd013a",
+          "reviewedSha256": "d37a549cce005c9b494dd3fed6d26c87fa4c8aacb18c6b33daba97e67efd013a",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "worker",
+          "packedSha256": "8a012f8fdae70bfabf5e836d21cb795b4a4a10ffe9b3d52e767b64ce8457bae0",
+          "reviewedSha256": "8a012f8fdae70bfabf5e836d21cb795b4a4a10ffe9b3d52e767b64ce8457bae0",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "forward-messages",
+          "packedSha256": "c253b7e9edfc18c7e1a3c3d521f80b3233b4d289ea1fe6d42339aa15c4526c13",
+          "reviewedSha256": "c253b7e9edfc18c7e1a3c3d521f80b3233b4d289ea1fe6d42339aa15c4526c13",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "received-forward",
+          "packedSha256": "448ba53e01e03a4733d85b2357b20185f2430efc38f9afd0951684d968f29828",
+          "reviewedSha256": "448ba53e01e03a4733d85b2357b20185f2430efc38f9afd0951684d968f29828",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "message-elements",
+          "packedSha256": "fd1e204f313154eb72ed2e202c78252afb3614e09549fa66418a69d470109990",
+          "reviewedSha256": "fd1e204f313154eb72ed2e202c78252afb3614e09549fa66418a69d470109990",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "inbound-messages",
+          "packedSha256": "48062d30d2d6ebcb0ef6cb0d2d77f45e7c2d5a0e1f224f63491b2a51153afbb6",
+          "reviewedSha256": "48062d30d2d6ebcb0ef6cb0d2d77f45e7c2d5a0e1f224f63491b2a51153afbb6",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "inbound-mentions",
+          "packedSha256": "8c57fc575e51937295403a8185856054ebaaea35d6ed7491f56dc8abb08dccb5",
+          "reviewedSha256": "8c57fc575e51937295403a8185856054ebaaea35d6ed7491f56dc8abb08dccb5",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "forward-resource-wire",
+          "packedSha256": "ab7b1699bea7a1673a629e81482b33a48649904a988768ad20c5c41a4afd0e55",
+          "reviewedSha256": "ab7b1699bea7a1673a629e81482b33a48649904a988768ad20c5c41a4afd0e55",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "forward-resource-transport",
+          "packedSha256": "28c22450c2b20349282cb18f8026fea06b5172fa9892675be871b4fa973e978e",
+          "reviewedSha256": "28c22450c2b20349282cb18f8026fea06b5172fa9892675be871b4fa973e978e",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "message-query",
+          "packedSha256": "f0c70173bb0d82550f786feec61190069874c4b9989ac7123f916cd1dc210d6f",
+          "reviewedSha256": "f0c70173bb0d82550f786feec61190069874c4b9989ac7123f916cd1dc210d6f",
+          "comparison": "exact-bytes"
+        }
+      ],
+      "acceptanceLogDeepEqual": true
+    },
+    {
+      "device": "win32-x64",
+      "artifactSha256": "33153ad4655f5214cedeecc9e0780a55c784d0490cf509250af1560337634c57",
+      "artifactBytes": 66974521,
+      "candidate": {
+        "tarball": "qq-native-client-win32-x64-0.0.2.tgz",
+        "sha256": "76393ea5503e6cc4dcad8f2a40bf5f6faaf7df201a14f2189668783c84344b33",
+        "size": 66616131,
+        "nativeManifestSha256": "c182dc8ae2567768a2aa93cdfe1c7455a3d2c2aa3223a3700442c0b8e8a24d64",
+        "nativePaths": 32,
+        "objectCount": 31
+      },
+      "consumerSdk": {
+        "schemaVersion": 1,
+        "tarball": "qq-native-client-0.0.2.tgz",
+        "sha256": "85f76c907d8e3a126e0897b7e4999b7acdbf4eea7d360f27efaa41016e0bc3e6",
+        "size": 324338,
+        "storageLoaderSha256": "b03a20a5284ec1b38a6eb37a2c3364579be30db551abeba1983b89a6a3489c51",
+        "builderCommit": "55157516e200685729ef76c61e7c1080058045b8",
+        "builderRunId": "37994258504",
+        "nativeSource": {
+          "repository": "lc-cn/qq-native-mirror",
+          "commit": "6cae1ec0a5e1bfb03cb7871083915b3d03272347",
+          "runId": "37962268125",
+          "runAttempt": 1,
+          "releaseManifestSha256": "9a362f3c4abada4c8cfc397039c20835bcb5393e0ae356873cccb518be9c8e1a",
+          "auxiliary": {
+            "tarball": "qq-native-client-win32-x64-0.0.2.tgz",
+            "sha256": "eb599527b8c4eb47cf5bc1f7c9eafbb84b1acf91d26587ff93da19bcd218aa9b",
+            "size": 66610876,
+            "nativeManifestSha256": "54ada05e9f19d3394283def363a965902d32dd42fb2f4ae9d4fa0bccc99894a6"
+          }
+        }
+      },
+      "allOriginalPathBytesEqual": true,
+      "originalPaths": 32,
+      "objectsVerified": 31,
+      "actualVideoFixtures": 3,
+      "warmCacheVerified": true,
+      "noAccount": true,
+      "mergedForwardClientContract": true,
+      "mergedForwardServiceContract": true,
+      "nativeMergedForwardAttempted": false,
+      "forwardMessageContract": true,
+      "nativeForwardQueryAttempted": false,
+      "forwardSubmissionAttempted": false,
+      "forwardResourceContract": true,
+      "nativeForwardResourceAttempted": false,
+      "historyInputCaptureContract": true,
+      "loginWaitIdentityContract": true,
+      "watchReconnectPolicyContract": true,
+      "installedCliEntrypointContract": true,
+      "posixNpmBinEntrypointChecked": false,
+      "nativeHistoryQueryAttempted": false,
+      "receivedForwardContract": true,
+      "nativeReceivedForwardObserved": false,
+      "compiledForwardModulesMatchReviewedSource": true,
+      "compiledModuleChecks": [
+        {
+          "module": "long-message-request",
+          "packedSha256": "1413379604898ca0a8efd4c3011d1616dbf49ad1a5e732783b1387208acad0e6",
+          "reviewedSha256": "1413379604898ca0a8efd4c3011d1616dbf49ad1a5e732783b1387208acad0e6",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "merged-forward-card",
+          "packedSha256": "93912ba78d4de2871c09e056cb46e4c614e03b7f15d6392227fca88a30e00cdc",
+          "reviewedSha256": "93912ba78d4de2871c09e056cb46e4c614e03b7f15d6392227fca88a30e00cdc",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "merged-forward",
+          "packedSha256": "86442bc37b315447ed8f157f6b568b17973a550b4f8149a45933325f0a68d869",
+          "reviewedSha256": "86442bc37b315447ed8f157f6b568b17973a550b4f8149a45933325f0a68d869",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "native-services",
+          "packedSha256": "5bbcd2f0043199c7dbb2949aeeb221318af9d9a90c42c6b1df8f6950f9bcc670",
+          "reviewedSha256": "5bbcd2f0043199c7dbb2949aeeb221318af9d9a90c42c6b1df8f6950f9bcc670",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "errors",
+          "packedSha256": "759f31b54a56c641c2f8b46f4e0688576d3026fd7fe89bfc201deed59e8aa3b2",
+          "reviewedSha256": "759f31b54a56c641c2f8b46f4e0688576d3026fd7fe89bfc201deed59e8aa3b2",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "index",
+          "packedSha256": "0017395a2fce498bb51cf9fa9f6287cb5ce092949f435922bd6bb875d909bfc9",
+          "reviewedSha256": "0017395a2fce498bb51cf9fa9f6287cb5ce092949f435922bd6bb875d909bfc9",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "cli",
+          "packedSha256": "56a2a1d8310c529491ea82d86c941ddd9d67efa8c8a52b46e4c283574a4c7d09",
+          "reviewedSha256": "d37a549cce005c9b494dd3fed6d26c87fa4c8aacb18c6b33daba97e67efd013a",
+          "comparison": "windows-cli-crlf-normalized"
+        },
+        {
+          "module": "worker",
+          "packedSha256": "8a012f8fdae70bfabf5e836d21cb795b4a4a10ffe9b3d52e767b64ce8457bae0",
+          "reviewedSha256": "8a012f8fdae70bfabf5e836d21cb795b4a4a10ffe9b3d52e767b64ce8457bae0",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "forward-messages",
+          "packedSha256": "c253b7e9edfc18c7e1a3c3d521f80b3233b4d289ea1fe6d42339aa15c4526c13",
+          "reviewedSha256": "c253b7e9edfc18c7e1a3c3d521f80b3233b4d289ea1fe6d42339aa15c4526c13",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "received-forward",
+          "packedSha256": "448ba53e01e03a4733d85b2357b20185f2430efc38f9afd0951684d968f29828",
+          "reviewedSha256": "448ba53e01e03a4733d85b2357b20185f2430efc38f9afd0951684d968f29828",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "message-elements",
+          "packedSha256": "fd1e204f313154eb72ed2e202c78252afb3614e09549fa66418a69d470109990",
+          "reviewedSha256": "fd1e204f313154eb72ed2e202c78252afb3614e09549fa66418a69d470109990",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "inbound-messages",
+          "packedSha256": "48062d30d2d6ebcb0ef6cb0d2d77f45e7c2d5a0e1f224f63491b2a51153afbb6",
+          "reviewedSha256": "48062d30d2d6ebcb0ef6cb0d2d77f45e7c2d5a0e1f224f63491b2a51153afbb6",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "inbound-mentions",
+          "packedSha256": "8c57fc575e51937295403a8185856054ebaaea35d6ed7491f56dc8abb08dccb5",
+          "reviewedSha256": "8c57fc575e51937295403a8185856054ebaaea35d6ed7491f56dc8abb08dccb5",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "forward-resource-wire",
+          "packedSha256": "ab7b1699bea7a1673a629e81482b33a48649904a988768ad20c5c41a4afd0e55",
+          "reviewedSha256": "ab7b1699bea7a1673a629e81482b33a48649904a988768ad20c5c41a4afd0e55",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "forward-resource-transport",
+          "packedSha256": "28c22450c2b20349282cb18f8026fea06b5172fa9892675be871b4fa973e978e",
+          "reviewedSha256": "28c22450c2b20349282cb18f8026fea06b5172fa9892675be871b4fa973e978e",
+          "comparison": "exact-bytes"
+        },
+        {
+          "module": "message-query",
+          "packedSha256": "f0c70173bb0d82550f786feec61190069874c4b9989ac7123f916cd1dc210d6f",
+          "reviewedSha256": "f0c70173bb0d82550f786feec61190069874c4b9989ac7123f916cd1dc210d6f",
+          "comparison": "exact-bytes"
+        }
+      ],
+      "acceptanceLogDeepEqual": true
+    }
+  ],
+  "accountUsed": false,
+  "nativeReceivedForwardObserved": false,
+  "realNativeForwardQueryAttempted": false,
+  "realNativeMergedForwardAttempted": false,
+  "historyCaptureImplemented": true,
+  "currentLoginIdentityImplemented": true,
+  "watchObjectPolicyImplemented": true,
+  "cliRealpathEntrypointImplemented": true,
+  "nativeHistoryQueryAttempted": false,
+  "nativeForwardResourceAttempted": false,
+  "recipientDeliveryEstablished": false,
+  "signingAuthenticityEstablished": false,
+  "published": false,
+  "defaultsChanged": false,
+  "independentSupplementalReviews": [
+    {
+      "report": "windows-independent-history-module-review.json",
+      "sha256": "c86a57849ba90a46f7a72b54b38303d1761bc106aa3d03895e14179013815299",
+      "platforms": [
+        "win32-arm64"
+      ],
+      "nativeExecutedLocally": false,
+      "accountUsedLocally": false
+    }
+  ],
+  "reentrantCloseRegressionCovered": false,
+  "knownReentrantCloseGap": {
+    "scope": "synchronous close inside fake native read followed by late rejection",
+    "fakeUnhandledRejections": 1,
+    "actualNativeUsed": false,
+    "accountUsed": false,
+    "fixSixPlatformAcceptanceEstablished": false
+  }
+}

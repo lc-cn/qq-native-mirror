@@ -1,0 +1,125 @@
+{
+  "schemaVersion": 1,
+  "feature": "observe native promises returned after synchronous reentrant Session close",
+  "observedAt": "2026-10-09T21:43:53.581202+00:00",
+  "baseCommit": "55157516e200685729ef76c61e7c1080058045b8",
+  "sourceFiles": [
+    {
+      "path": "sdk/src/index.ts",
+      "sha256": "7f538a3c7f0b8f8c29e1fae18d17c614018b9e2d428aeb31807ae8293563882b"
+    },
+    {
+      "path": "sdk/src/native-services.ts",
+      "sha256": "e74f490d217f45ac6637f027cfa9a7f492af0e2c9232d65969e174900785f832"
+    },
+    {
+      "path": "sdk/src/message-query.ts",
+      "sha256": "f53e0738f433eea0e8d34f608aea5fb20931527ee98d24895a4c8cef9113ec66"
+    },
+    {
+      "path": "sdk/src/cli.ts",
+      "sha256": "c87331eecb7c3074048c72f685baa8fd6d916cc742775aa31fdc23ba46c7d1a2"
+    },
+    {
+      "path": "sdk/scripts/history-lifecycle-consumer-contract.mjs",
+      "sha256": "95ecd90011f273c94995abba0f73c349e7bd3b740fa78dbd1cecdf7ebeeea229"
+    },
+    {
+      "path": "sdk/scripts/verify-package-consumer.mjs",
+      "sha256": "aed97565c5670e6bd9ddc17d87d4609399ccede7374d0e493ff2de72363ee90a"
+    },
+    {
+      "path": "sdk/test/client-wait-for-login.test.ts",
+      "sha256": "6c3f75490512380bba82757bf5ab24f30d2bf397105b0a00cb5d6379bb057872"
+    },
+    {
+      "path": "sdk/test/history-query-input.test.ts",
+      "sha256": "28655cd8ff104ce4fa77180a632f62a56c6f1693ce0ff57ee1437b5c9befa068"
+    },
+    {
+      "path": "sdk/test/cli-watch-reconnect-policy.test.ts",
+      "sha256": "f5463dda2504b8f3493b492bc6b8565e9a9ee74dd604f5136fc9dc8512501199"
+    },
+    {
+      "path": "sdk/test/cli-entrypoint.test.ts",
+      "sha256": "ae7832cff1a1400cdc976cc9bcbf5ff723a376a46addda1571c9948a163f73ec"
+    },
+    {
+      "path": "sdk/test/history-lifecycle-services.test.ts",
+      "sha256": "be7ab24d69311f88847c6d5ca2435624c76877ab90fce67fb8ae62a1522f3cfb"
+    },
+    {
+      "path": "sdk/test/history-reentrant-close.test.ts",
+      "sha256": "179180c106fedd2387f7277d6387b889fa5787ce98aa69acca9e4c075526dfbd"
+    },
+    {
+      "path": "ci/verify-consumer.mjs",
+      "sha256": "65b102ef4165998297bde60de2a2fd371ed1c6402cd27c2428ef32f1d9817bdb"
+    },
+    {
+      "path": "tools/verify-dedup-consumer.mjs",
+      "sha256": "3a066721f1a8631570db1058697871c148043ac7577a0097509c07e1dbecaa5b"
+    },
+    {
+      "path": "tools/verify-dedup-consumer.test.mjs",
+      "sha256": "120d0637807457437de9e5ae8dedd23e3ea418d687dfa5cc84adc1d43dd03b83"
+    }
+  ],
+  "initialFailure": {
+    "fakeUnhandledRejections": 1,
+    "observationSha256": "3a352500ad17e80aa9495e7da70232c2e9542cf7b2f6134e80289f8fdb08e0e7",
+    "sixPlatformRunBeforeFix": "37994258504",
+    "accountUsed": false,
+    "nativeExecuted": false
+  },
+  "fullRegression": {
+    "tests": 559,
+    "pass": 559,
+    "fail": 0,
+    "skipped": 0,
+    "logSha256": "92fcdad3d45ee035f1f80eb23086fb2643bfbaeb352222083418a2bf8734b691"
+  },
+  "buildLogSha256": "819a2f99ef8332e62374bc44315a31f243dd85502188e29441db9dd50b6c1c41",
+  "producerContracts": {
+    "tests": 6,
+    "pass": 6,
+    "fail": 0,
+    "logSha256": "fad47fda30933d2401239380638d08e6723c4b989d431eed013eb87deafcac3f"
+  },
+  "cleanInstalledConsumer": {
+    "receiptSha256": "4352d4badfc7002ae20078c60ef368bf2becda83b22b6e55a715e3376ef8171c",
+    "package": "qq-native-client",
+    "version": "0.0.2",
+    "integrity": "sha512-bjOqSW2twsE/SLtaAXAFXhdu9KEhC7cG3TPwCob9NC6iruZPUi1CGTHuFiVAxng39TMWuvAQZgNoTyqWuoscoQ==",
+    "fileCount": 150,
+    "checks": {
+      "pendingReadCloseContract": true,
+      "reentrantReadCloseContract": true,
+      "historyInputCaptureContract": true,
+      "loginWaitIdentityContract": true,
+      "watchReconnectPolicyContract": true,
+      "installedCliEntrypointContract": true,
+      "posixNpmBinEntrypointChecked": true,
+      "nativeExecuted": false,
+      "accountUsed": false
+    }
+  },
+  "reentrantSourceSubprocessCases": [
+    "getHistory",
+    "getMessage",
+    "getMessages",
+    "uidLookup"
+  ],
+  "installedReentrantReadCases": [
+    "getHistory",
+    "getMessage",
+    "getMessages"
+  ],
+  "sixPlatformFixAcceptanceEstablished": false,
+  "accountUsed": false,
+  "actualLoginAttempted": false,
+  "nativeHistoryQueryAttempted": false,
+  "signingAuthenticityEstablished": false,
+  "published": false,
+  "defaultsChanged": false
+}
