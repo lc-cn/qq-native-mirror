@@ -178,7 +178,7 @@ test('nonlocal image input rejects without invoking native send', async () => {
 test('receive replay is deduplicated per conversation without suppressing history or other peers', async () => {
  const {services,events,listener}=fixture();
  try {
-  const raw={msgId:'42',msgSeq:'9',msgTime:'100',chatType:2,peerUid:'123',elements:[]};
+  const raw={msgId:'42',msgSeq:'9',msgTime:'100',chatType:2,peerUid:'123',peerUin:'123',senderUin:'456',elements:[]};
   listener().onRecvMsg([raw,raw]);
   listener().onRecvMsg([{...raw}, {...raw,peerUid:'456'}, {...raw,chatType:1}]);
   assert.equal(events.filter(([event])=>event==='message').length,3);
@@ -294,7 +294,7 @@ test('malformed native batches do not terminate delivery of subsequent valid mes
     assert.doesNotThrow(()=>listener().onRecvMsg([null,{chatType:1,elements:{secret:'fixture value'}}]));
     assert.doesNotThrow(()=>listener().onMsgInfoListUpdate(null));
     assert.doesNotThrow(()=>listener().onMsgInfoListUpdate([null]));
-    listener().onRecvMsg([{msgId:'42',msgSeq:'1',msgTime:'100',chatType:2,peerUid:'123',elements:[]}]);
+    listener().onRecvMsg([{msgId:'42',msgSeq:'1',msgTime:'100',chatType:2,peerUid:'123',senderUin:'456',elements:[]}]);
     assert.equal(events.filter(([name])=>name==='message').length,1);
     const diagnostics=events.filter(([name])=>name==='diagnostic');assert.equal(diagnostics.length,5);
     assert.ok(!JSON.stringify(diagnostics).includes('fixture value'),'diagnostics omit native payloads');

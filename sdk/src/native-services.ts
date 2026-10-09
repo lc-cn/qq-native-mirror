@@ -15,9 +15,10 @@ import { createImageElement, createFileElement, createReplyElement, decodeElemen
 import { createGroupOperations, type GroupOperation } from './group-operations.ts';
 import { createGroupEvents } from './group-events.ts';
 import { createRecallEvents } from './recall-events.ts';
-import { decodeResolvedElementBatches, needsMentionLookup } from './inbound-mentions.ts';
+import { needsMentionLookup } from './inbound-mentions.ts';
+import { captureNativeMessage, decodeNativeMessages, messageIdentityUids, projectNativeMessage } from './inbound-messages.ts';
 import { captureSendInput, sendUserId, sendGroupId, sentReceipt } from './send-input.ts';
-import type { Friend, Group, GroupMember, Message, MessageElement, SentMessage, NativeCallbackAudit } from './types.ts';
+import type { Friend, Group, GroupMember, Message, NativeCallbackAudit } from './types.ts';
 
 type Native = Record<string, any>;
 export interface NativePeer { chatType: 1 | 2; peerUid: string; guildId?: string }
@@ -25,18 +26,8 @@ export type ServiceOperation = 'listFriends' | 'listGroups' | 'getGroupMembers' 
 export interface NativeMessage extends Native { msgId: string; peerUid: string; chatType: number }
 interface Waiter { event: string; check: (...args: any[]) => unknown; resolve: (value: any) => void; reject: (error: Error) => void; timer: ReturnType<typeof setTimeout> }
 
-function toSent(message: Native): SentMessage {
-  return { messageId: String(message.msgId), sequence: String(message.msgSeq), time: Number(message.msgTime) };
-}
-function toMessage(message: Native, decodedElements?: MessageElement[]): Message | undefined {
-  if (message.chatType !== 1 && message.chatType !== 2) return;
-  const elements = decodedElements ?? decodeElements(message.elements ?? []);
-  return {
-    ...toSent(message),
-    peer: message.chatType === 2 ? { type: 'group', groupId: String(message.peerUid) } : { type: 'private', userId: String(message.peerUin || message.peerUid || '') },
-    sender: { userId: String(message.senderUin || message.senderUid || ''), uid: String(message.senderUid || ''), nickname: message.sendNickName ?? '' },
-    elements, raw: message,
-  };
+function toMessage(message: Native, raw: unknown = message): Message {
+  return projectNativeMessage(message, decodeElements(message.elements), new Map(), raw);
 }
 
 export function createNativeServices(session: Native, version: string, emit: (event: string, payload: unknown) => void, mediaTools?: MediaTools, recordCodec?: RecordCodec, accountId?: string, accountUid?: string, auditCallback?: (info: Pick<NativeCallbackAudit,'family'|'name'|'argumentTypes'>) => void) {
@@ -90,28 +81,18 @@ export function createNativeServices(session: Native, version: string, emit: (ev
       return result;
     } finally { lifetime.signal.removeEventListener('abort', abort!); }
   };
-  const resolvedMessages = async (messages: Native[], rawMessages = messages): Promise<(Message | undefined)[]> => {
-    const projected = messages.map((message, index) => { const value = toMessage(message); return value === undefined ? undefined : { ...value, raw: rawMessages[index] }; });
-    const elements = await decodeResolvedElementBatches(messages.map(message => message.elements ?? []), async uids => {
+  const resolvedMessages = async (messages: Native[], rawMessages = messages, live = false): Promise<(Message | undefined)[]> => {
+    return decodeNativeMessages(messages, rawMessages, async uids => {
       const value = await call(service('UixConvert'), 'getUin', uids);
       return value?.uinInfo;
-    }, lifetime.signal, stage => { if (!closed) emit('diagnostic', { stage }); });
-    lifetime.signal.throwIfAborted();
-    return projected.map((message, index) => message === undefined ? undefined : { ...message, elements: elements[index] });
+    }, lifetime.signal, stage => { if (!closed) emit('diagnostic', { stage }); }, live);
   };
   const resolvedMessage = async (message: Native) => (await resolvedMessages([message]))[0];
   let receiveQueue: Promise<void> | undefined;
-  const receiveKey = (message: Native): string | undefined => message.msgId && message.peerUid ? JSON.stringify([message.chatType, String(message.peerUid), String(message.msgId)]) : undefined;
+  const receiveKey = (message: Native): string | undefined => message.msgId && message.peerUid ? JSON.stringify([message.chatType, message.peerUid, message.msgId])
+    : message.chatType === 1 && message.msgId && message.peerUin ? JSON.stringify([1, 'uin', message.peerUin, message.msgId]) : undefined;
   const captureReceived = (raw: Native) => {
-    const elements = (raw.elements ?? []).map((element: Native) => {
-      const captured = { ...element };
-      for (const field of ['textElement', 'replyElement', 'faceElement', 'picElement', 'fileElement', 'videoElement', 'pttElement']) {
-        const value = element[field];
-        if (value && typeof value === 'object' && !Array.isArray(value)) captured[field] = { ...value };
-      }
-      return captured;
-    });
-    return { raw, message: { ...raw, elements }, key: receiveKey(raw) };
+    return { raw, message: captureNativeMessage(raw), key: receiveKey(raw) };
   };
   type Received = ReturnType<typeof captureReceived>;
   const unseenReceived = (messages: Received[]) => messages.filter(message => !message.key || !receivedMessages.has(message.key));
@@ -161,13 +142,15 @@ export function createNativeServices(session: Native, version: string, emit: (ev
     onRecvMsg: (messages: NativeMessage[]) => {
       if (closed) return;
       if (!Array.isArray(messages)) { emit('diagnostic', { stage: 'invalid-native-message-batch' }); return; }
-      const validMessages = Array.from(messages).filter(message => {
-        if (!message || typeof message !== 'object' || Array.isArray(message) || (message.elements !== undefined && (!Array.isArray(message.elements) || Array.from(message.elements).some((element: unknown) => !element || typeof element !== 'object' || Array.isArray(element))))) { emit('diagnostic', { stage: 'invalid-native-message' }); return false; }
-        return message.chatType === 1 || message.chatType === 2;
-      }).map(captureReceived);
-      if (!receiveQueue && !validMessages.some(value => needsMentionLookup(value.message.elements))) {
+      const validMessages: Received[] = [];
+      for (const message of Array.from(messages)) {
+        if (message && typeof message === 'object' && !Array.isArray(message) && message.chatType !== 1 && message.chatType !== 2) continue;
+        try { validMessages.push(captureReceived(message)); }
+        catch { emit('diagnostic', { stage: 'invalid-native-message' }); }
+      }
+      if (!receiveQueue && !validMessages.some(value => messageIdentityUids(value.message).length || needsMentionLookup(value.message.elements))) {
         const unseen = unseenReceived(validMessages);
-        deliverReceived(unseen, unseen.map(value => { const message = toMessage(value.message); return message === undefined ? undefined : { ...message, raw: value.raw }; }));
+        deliverReceived(unseen, unseen.map(value => toMessage(value.message, value.raw)));
         return;
       }
       // A UID lookup may settle after another callback. Preserve delivery order
@@ -175,7 +158,7 @@ export function createNativeServices(session: Native, version: string, emit: (ev
       const queued = (receiveQueue ?? Promise.resolve()).catch(() => {}).then(async () => {
         if (closed) return;
         const unseen = unseenReceived(validMessages);
-        deliverReceived(unseen, await resolvedMessages(unseen.map(value => value.message), unseen.map(value => value.raw)));
+        deliverReceived(unseen, await resolvedMessages(unseen.map(value => value.message), unseen.map(value => value.raw), true));
       });
       receiveQueue = queued;
       void queued.catch(() => { if (!closed) emit('diagnostic', { stage: 'invalid-native-message' }); }).finally(() => { if (receiveQueue === queued) receiveQueue = undefined; });
