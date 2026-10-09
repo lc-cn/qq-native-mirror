@@ -1,0 +1,100 @@
+name: Source-built video codec
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.20.0'
+      - name: Verify pinned official source and release signature
+        run: node sdk/scripts/prepare-video-source.mjs out/video --verify-signature
+      - uses: actions/upload-artifact@v4
+        with:
+          name: verified-video-source
+          path: |
+            out/video/*.tar.xz
+            out/video/*.asc
+            out/video/source-verification.json
+          retention-days: 14
+  build:
+    needs: source
+    name: ${{ matrix.platform }}-${{ matrix.arch }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { platform: linux, arch: x64, runner: ubuntu-24.04 }
+          - { platform: linux, arch: arm64, runner: ubuntu-24.04-arm }
+          - { platform: darwin, arch: x64, runner: macos-15-intel }
+          - { platform: darwin, arch: arm64, runner: macos-15 }
+          - { platform: win32, arch: x64, runner: windows-2022 }
+          - { platform: win32, arch: arm64, runner: windows-11-arm }
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.20.0'
+          architecture: ${{ matrix.arch }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: verified-video-source
+          path: out/video
+      - uses: msys2/setup-msys2@v2
+        if: matrix.platform == 'win32'
+        with:
+          msystem: MSYS
+          path-type: inherit
+          install: make diffutils
+      - uses: ilammy/msvc-dev-cmd@v1
+        if: matrix.platform == 'win32'
+        with:
+          arch: ${{ matrix.arch }}
+      - name: Verify actual target
+        run: node -e "if(process.platform!=='${{ matrix.platform }}'||process.arch!=='${{ matrix.arch }}')throw Error('Wrong video build target')"
+      - name: Prepare exact source
+        run: node sdk/scripts/prepare-video-source.mjs out/video
+      - name: Build static libraries and standard Node addon
+        if: matrix.platform != 'win32'
+        run: node sdk/scripts/build-video-native.mjs out/video
+      - name: Build MSVC static libraries and standard Node addon
+        if: matrix.platform == 'win32'
+        shell: msys2 {0}
+        run: node sdk/scripts/build-video-native.mjs out/video
+      - name: Compile SDK for the actual native media consumer
+        working-directory: sdk
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm exec tsc
+      - name: Actual video decoding and SDK cache contract without QQ
+        run: node sdk/scripts/verify-video-native.mjs out/video/runtime/video-codec.node sdk/test/video-fixtures out/video/runtime/consumer.json
+      - name: Fresh relink with preserved objects and static libraries
+        run: node sdk/scripts/relink-video-native.mjs out/video/relink out/video/relink out/video/relinked/video-codec.node
+      - name: Verify relinked decoder on both actual fixtures
+        run: node sdk/scripts/verify-video-native.mjs out/video/relinked/video-codec.node sdk/test/video-fixtures out/video/relink/consumer.json
+      - name: Record complete dependency inventory
+        if: matrix.platform == 'linux'
+        run: ldd out/video/runtime/video-codec.node > out/video/runtime/dependencies.txt
+      - name: Record macOS dependency inventory
+        if: matrix.platform == 'darwin'
+        run: otool -L out/video/runtime/video-codec.node > out/video/runtime/dependencies.txt
+      - name: Record Windows dependency inventory
+        if: matrix.platform == 'win32'
+        run: dumpbin /dependents out/video/runtime/video-codec.node > out/video/runtime/dependencies.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: video-${{ matrix.platform }}-${{ matrix.arch }}
+          path: |
+            out/video/runtime/
+            out/video/relink/
+          retention-days: 14
