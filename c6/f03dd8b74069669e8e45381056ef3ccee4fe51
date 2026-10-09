@@ -1,0 +1,43 @@
+ci/verify-consumer.mjs
+  s_2104cc474f1ce5::t_89222173b66e57 56-84,88
+sdk/README.md
+  s_2104cc474f1ce5::t_790fab9bb86f39 136
+sdk/docs/sdk-acceptance.md
+  s_2104cc474f1ce5::t_5003ca7502b705 366-375
+sdk/scripts/verify-package-consumer.mjs
+  s_2104cc474f1ce5::t_2f011c0f9378af 37-55,59,87-88,101,105-106
+sdk/src/cli.ts
+  s_2104cc474f1ce5::t_e3cd4eafef40d1 42,138,209
+sdk/src/index.ts
+  s_2104cc474f1ce5::t_9deaefcd726723 259-262
+sdk/src/native-services.ts
+  s_2104cc474f1ce5::t_f20387f097251c 299
+sdk/src/self-profile.ts
+  s_2104cc474f1ce5::t_a3ead97edf812a 4-6,9,16-18,54-58
+sdk/src/worker.ts
+  s_2104cc474f1ce5::t_dcb05a3a6fa89e 13
+sdk/test/cli.test.ts
+  s_2104cc474f1ce5::t_47495c3796c0db 53-65
+sdk/test/client.test.ts
+  s_2104cc474f1ce5::t_63b66aa72643f5 19-41
+sdk/test/native-services.test.ts
+  s_2104cc474f1ce5::t_8afc81f3a4ed31 35-69
+sdk/test/self-profile.test.ts
+  s_2104cc474f1ce5::t_fdf1a33967403f 4,10,56-97
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c6f03dd8b74069669e8e45381056ef3ccee4fe51",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
