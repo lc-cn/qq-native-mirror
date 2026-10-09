@@ -1,0 +1,23 @@
+.github/workflows/npm-public-consumer.yml
+  s_2104cc474f1ce5::t_ec940059fa1da8 1-54
+public-ci/fixture-test.mjs
+  s_2104cc474f1ce5::t_f3b1c180310e59 1-9
+public-ci/verify.mjs
+  s_2104cc474f1ce5::t_846ad005ec7ec0 1-52
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e406245cef27bbcee593ca5285dc29297f133938",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
