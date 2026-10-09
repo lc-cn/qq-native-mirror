@@ -1,0 +1,19 @@
+sdk/docs/sdk-acceptance.md
+  s_2104cc474f1ce5::t_9f49b292d3df58 560-561
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "8f4d1aa55fe1a53d0ba09f205ee7de99ac3f2611",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
