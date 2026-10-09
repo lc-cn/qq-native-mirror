@@ -1,19 +1,21 @@
 import { nativeResultError } from './errors.ts';
 /** Fixed NapCatQQ 26d7533e0f5800fdff865ab2f2ad7692917e1076:
  * action/go-cqhttp/SetQQProfile.ts; apis/user.ts81-95,130-131;
- * types/user.ts246-252,362-370; services/NodeIKernelProfileService.ts17-23,44.
- * Only nickname is exposed; other fields are preserved, never defaulted away.
+ * types/user.ts ModifyProfileParams, SimpleInfo and UserDetailInfoListenerArg;
+ * services/NodeIKernelProfileService.ts17-23,44.
+ * Nickname and signature updates preserve the other existing profile fields.
  */
 type Native = Record<string, any>;
-export type SelfProfileOperation = 'setNickname';
+export type SelfProfileOperation = 'setNickname' | 'setSignature';
 export function createSelfProfile(session: Native, resolveSelfUid: () => string | Promise<string>) {
   let busy = false;
   let closed = false;
   let queryInvalidated = false;
   let cancelLookup: (() => void) | undefined;
   async function invokeOperation(method: SelfProfileOperation, payload: Record<string, unknown>): Promise<void> {
-    if (method !== 'setNickname') throw new Error('Unsupported self profile operation');
-    if (typeof payload.name !== 'string' || !payload.name.trim()) throw new Error('name must be a nonempty string');
+    if (method !== 'setNickname' && method !== 'setSignature') throw new Error('Unsupported self profile operation');
+    if (method === 'setNickname' && (typeof payload.name !== 'string' || !payload.name.trim())) throw new Error('name must be a nonempty string');
+    if (method === 'setSignature' && typeof payload.text !== 'string') throw new Error('text must be a string');
     if (closed) throw new Error('Self profile module is closed');
     if (queryInvalidated) throw new Error('Self profile lookup is invalidated; recreate the Session');
     if (busy) throw new Error('A self profile update is already pending');
@@ -49,9 +51,11 @@ export function createSelfProfile(session: Native, resolveSelfUid: () => string 
       });
       if (closed) throw new Error('Self profile module is closed');
       const base = detail.simpleInfo?.baseInfo;
-      if (!base || typeof base.longNick !== 'string' || ![0, 1, 2, 255].includes(base.sex) || !['birthday_year', 'birthday_month', 'birthday_day'].every((key) => Number.isInteger(base[key]))) throw new Error('Self profile response lacks fields required to preserve existing profile');
-      const result = await service.modifyDesktopMiniProfile({ nick: payload.name, longNick: base.longNick, sex: base.sex, birthday: { birthday_year: String(base.birthday_year), birthday_month: String(base.birthday_month), birthday_day: String(base.birthday_day) }, location: undefined });
-      if (result?.result !== 0) throw nativeResultError('Native nickname update failed',result);
+      if (!base || (method === 'setNickname' && typeof base.longNick !== 'string') || ![0, 1, 2, 255].includes(base.sex) || !['birthday_year', 'birthday_month', 'birthday_day'].every((key) => Number.isInteger(base[key]))) throw new Error('Self profile response lacks fields required to preserve existing profile');
+      const nick = method === 'setNickname' ? payload.name : detail.simpleInfo?.coreInfo?.nick;
+      if (typeof nick !== 'string' || !nick.trim()) throw new Error('Self profile response lacks the existing nickname required to preserve profile');
+      const result = await service.modifyDesktopMiniProfile({ nick, longNick: method === 'setSignature' ? payload.text : base.longNick, sex: base.sex, birthday: { birthday_year: String(base.birthday_year), birthday_month: String(base.birthday_month), birthday_day: String(base.birthday_day) }, location: undefined });
+      if (result?.result !== 0) throw nativeResultError(`Native ${method === 'setSignature' ? 'signature' : 'nickname'} update failed`,result);
     } finally { busy = false; }
   }
   return { invokeOperation, close() { closed = true; cancelLookup?.(); } };

@@ -32,6 +32,41 @@ function fixture(version = '7.0.2-53644') {
   return { services: createNativeServices(session, version, (event, value) => events.push([event, value])), sentCalls, events, msg, listener: () => msgListener };
 }
 
+test('signature dispatch uses the authenticated UID and Session close cancels a pending profile mutation', async () => {
+  let profileListener: any;
+  let holdLookup = false;
+  const writes: unknown[] = [];
+  const detail = { uid: 'u_self', simpleInfo: { coreInfo: { nick: 'existing nickname' }, baseInfo: { longNick: 'old', sex: 255, birthday_year: 2000, birthday_month: 1, birthday_day: 2 } } };
+  const session = {
+    getMsgService: () => ({ addKernelMsgListener() {} }),
+    getGroupService: () => ({ addKernelGroupListener() { return 1; } }),
+    getBuddyService: () => ({ addKernelBuddyListener() { return 1; } }),
+    getProfileService: () => ({
+      addKernelProfileListener(listener: any) { profileListener = listener; return 3; },
+      removeKernelProfileListener(id: number) { assert.equal(id, 3); },
+      async fetchUserDetailInfo(store: string, uids: string[], source: number, fields: number[]) {
+        assert.deepEqual([store, uids, source, fields], ['BuddyProfileStore', ['u_self'], 1, [0]]);
+        if (!holdLookup) profileListener.onUserDetailInfoChanged(detail);
+        return { result: 0 };
+      },
+      async modifyDesktopMiniProfile(value: unknown) { writes.push(value); return { result: 0 }; },
+    }),
+  };
+  const services = createNativeServices(session, '7.0.2-53644', () => {}, undefined, undefined, '456', 'u_self');
+  try {
+    await services.invokeOperation('setSignature', { text: '' });
+    assert.deepEqual(writes, [{ nick: 'existing nickname', longNick: '', sex: 255, birthday: { birthday_year: '2000', birthday_month: '1', birthday_day: '2' }, location: undefined }]);
+    holdLookup = true;
+    const stopped = assert.rejects(services.invokeOperation('setSignature', { text: 'must not be written' }), /closed/);
+    await new Promise(resolve => setImmediate(resolve));
+    services.close();
+    await stopped;
+    profileListener.onUserDetailInfoChanged(detail);
+    await assert.rejects(services.invokeOperation('setSignature', { text: 'closed' }), /closed/);
+    assert.equal(writes.length, 1, 'late profile callbacks cannot cause a new write');
+  } finally { services.close(); }
+});
+
 test('send correlates successful native update and encodes text without mutating peer', async () => {
   const { services, sentCalls } = fixture();
   try {

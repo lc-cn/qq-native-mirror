@@ -256,6 +256,10 @@ export class QQClient extends EventEmitter<ClientEvents> {
   setGroupAdmin(groupId: string, userId: string, enabled: boolean): Promise<void> { return this.#operation('setGroupAdmin', { groupId, userId, enabled }); }
   kickGroupMember(groupId: string, userId: string, options: KickOptions = {}): Promise<void> { return this.#operation('kickGroupMember', { groupId, userId, options }); }
   setNickname(name: string): Promise<void> { return this.#operation('setNickname', { name }); }
+  async setSignature(text: string): Promise<void> {
+    if (typeof text !== 'string') throw new TypeError('signature text must be a string');
+    await this.#operation('setSignature', { text });
+  }
   listGroupNotices(groupId: string): Promise<GroupNoticePage> { return this.#operation('listGroupNotices', { groupId }); }
   publishGroupNotice(groupId: string, text: string, options?: GroupNoticeOptions): Promise<void> { return this.#operation('publishGroupNotice', { groupId, text, options }); }
   deleteGroupNotice(groupId: string, noticeId: string): Promise<void> { return this.#operation('deleteGroupNotice', { groupId, noticeId }); }

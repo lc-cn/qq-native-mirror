@@ -296,7 +296,7 @@ export function createNativeServices(session: Native, version: string, emit: (ev
           return friendRequests.invokeOperation(method, payload);
         case 'getUserProfile': case 'setFriendRemark': case 'deleteFriend':
           return contactOperations.invokeOperation(method, payload);
-        case 'setNickname': return selfProfile.invokeOperation(method,payload);
+        case 'setNickname': case 'setSignature': return selfProfile.invokeOperation(method,payload);
         case 'listGroupNotices':
           if (!accountId) throw new Error('Group notice listing requires the authenticated account identity');
           return listWebGroupNotices(guardedSession, accountId, payload.groupId, undefined, lifetime.signal);

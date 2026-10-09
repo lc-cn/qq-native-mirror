@@ -53,8 +53,37 @@ try {
  await assert.rejects(query.queryNativeMessage({getMsgsByMsgId:()=>({result:23,msgList:[]})},queryPeer,queryId),{code:23});
  const queryAction=await cli.prepareCommand('message',{kind:'private',target:'456','message-id':queryId});
  let queryArgs;assert.equal(await queryAction({getMessage:async(...args)=>{queryArgs=args;}}),null);assert.deepEqual(queryArgs,[{type:'private',userId:'456'},queryId]);
+ // Installed compiled code with a fake profile service: this checks field preservation,
+ // not a QQ-native profile mutation. Native preparation below remains a separate check.
+ const profile=await import(pathToFileURL(join(temp,'node_modules/qq-native-client/dist/self-profile.js')).href);
+ assert.equal(typeof sdk.QQClient.prototype.setSignature,'function');
+ for(const text of ['','  spaced signature  ']){
+  const action=await cli.prepareCommand('signature',{text});let actual;
+  await action({setSignature:async value=>{actual=value;}});assert.equal(actual,text);
+ }
+ const birthday={birthday_year:'2000',birthday_month:'1',birthday_day:'2'};
+ function profileFixture(missingNick=false){
+  let listener;const writes=[];
+  const service={
+   addKernelProfileListener(value){listener=value;return 1;},removeKernelProfileListener(){},
+   fetchUserDetailInfo(trace,uids,source,biz){
+    assert.equal(trace,'BuddyProfileStore');assert.deepEqual(uids,['self']);assert.equal(source,1);assert.deepEqual(biz,[0]);
+    listener.onUserDetailInfoChanged({uid:'self',simpleInfo:{coreInfo:missingNick?{}:{nick:'original nickname'},baseInfo:{longNick:'original signature',sex:255,birthday_year:2000,birthday_month:1,birthday_day:2}}});return{result:0};
+   },
+   modifyDesktopMiniProfile(value){writes.push(value);return{result:0};}
+  };
+  return{module:profile.createSelfProfile({getProfileService:()=>service},()=> 'self'),writes};
+ }
+ const nickname=profileFixture();
+ try{await nickname.module.invokeOperation('setNickname',{name:'new nickname'});assert.deepEqual(nickname.writes,[{nick:'new nickname',longNick:'original signature',sex:255,birthday,location:undefined}]);}finally{nickname.module.close();}
+ for(const text of ['new signature','']){
+  const fixture=profileFixture();
+  try{await fixture.module.invokeOperation('setSignature',{text});assert.deepEqual(fixture.writes,[{nick:'original nickname',longNick:text,sex:255,birthday,location:undefined}]);}finally{fixture.module.close();}
+ }
+ const missing=profileFixture(true);
+ try{await assert.rejects(missing.module.invokeOperation('setSignature',{text:'new'}),/nickname|preserv|profile/i);assert.equal(missing.writes.length,0);}finally{missing.module.close();}
  globalThis.fetch=()=>{throw new Error('Unexpected mirror request with installed platform package');};
  client=await sdk.createClient({dataDir:join(temp,'unused-account'),autoReconnect:false,timeoutMs:30000});
  const exports=client.nativeExports.length;if(exports<80)throw new Error('Unexpected native export inventory');await client.close();if(client.state!=='closed')throw new Error('Client did not close');
- await writeFile('out/consumer.json',JSON.stringify({platform:process.platform,arch:process.arch,node:process.version,exports,installedMainOnly:true,automaticPlatformSelection:true,tarballRequests,faceContract:true,faceDeliveryAttempted:false,messageQueryContract:true,nativeMessageQueryAttempted:false,prepared:true,closed:true,loginAttempted:false,registry:'isolated local fixture serving actual CI tarballs'},null,2));console.log(await readFile('out/consumer.json','utf8'));
+ await writeFile('out/consumer.json',JSON.stringify({platform:process.platform,arch:process.arch,node:process.version,exports,installedMainOnly:true,automaticPlatformSelection:true,tarballRequests,faceContract:true,faceDeliveryAttempted:false,messageQueryContract:true,nativeMessageQueryAttempted:false,selfProfileContract:true,profileMutationAttempted:false,prepared:true,closed:true,loginAttempted:false,registry:'isolated local fixture serving actual CI tarballs'},null,2));console.log(await readFile('out/consumer.json','utf8'));
 }finally{await client?.close();server.closeAllConnections();await new Promise(done=>server.close(done));await rm(temp,{recursive:true,force:true});}

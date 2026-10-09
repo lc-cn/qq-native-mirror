@@ -39,6 +39,7 @@ const usage = `qq-native-client <command> [options]
   watch --config FILE [--uin UIN]       Print incoming messages as JSON lines until interrupted
   send --config FILE --kind private|group --target ID (--text TEXT | --message-file JSON) [--uin UIN]
   nickname --config FILE --name TEXT
+  signature --config FILE --text TEXT   Empty text explicitly clears the signature
   profile --config FILE --target USER_ID
   requests --config FILE
   group-requests --config FILE [--doubt true|false] [--limit 20] [--before SEQUENCE]
@@ -134,6 +135,7 @@ export async function prepareCommand(command: string, flags: Record<string, stri
     case 'groups': return client => client.listGroups();
     case 'members': { const groupId = numeric(flags, 'group-id'); return client => client.getGroupMembers(groupId); }
     case 'nickname': { const name=required(flags,'name');if(!name.trim()) throw new Error('--name must not be blank');return client=>client.setNickname(name); }
+    case 'signature': { const text=required(flags,'text',true);return client=>client.setSignature(text); }
     case 'profile': { const target = numeric(flags, 'target'); return client => client.getUserProfile(target); }
     case 'requests': return client => client.listFriendRequests();
     case 'forward-history': {
@@ -204,7 +206,7 @@ async function main() {
     config: ['config'], login: ['config', 'method', 'uin', 'qr-file'],
     members: ['config', 'uin', 'group-id'], history: ['config', 'uin', 'kind', 'target', 'limit', 'before'], message: ['config', 'uin', 'kind', 'target', 'message-id'], watch: ['config', 'uin'],
     contacts: ['config', 'uin'], groups: ['config', 'uin'], send: ['config', 'kind', 'target', 'text', 'message-file', 'uin'],
-    nickname: ['config','uin','name'],
+    nickname: ['config','uin','name'], signature: ['config','uin','text'],
     profile: ['config', 'uin', 'target'], requests: ['config', 'uin'], request: ['config', 'uin', 'uid', 'time', 'accept'],
     'forward-history': ['config', 'uin', 'kind', 'target', 'root-message-id', 'parent-message-id'], forward: ['config', 'uin', 'source-kind', 'source-target', 'kind', 'target', 'message-ids'],
     'group-requests': ['config', 'uin', 'doubt', 'limit', 'before'], 'group-request': ['config', 'uin', 'group-id', 'sequence', 'type', 'accept', 'doubt', 'reason'],

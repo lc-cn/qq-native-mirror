@@ -16,6 +16,29 @@ class Worker extends EventEmitter {
   kill() { this.connected = false; queueMicrotask(() => this.emit('exit', 0, null)); return true; }
 }
 
+test('setSignature validates JavaScript input before IPC and preserves online-only error semantics', async () => {
+  const worker = new Worker(), client = new QQClient(worker as unknown as ChildProcess, 500);
+  try {
+    await assert.rejects(client.setSignature('explicit signature'), /not online/);
+    assert.equal(worker.requests.length, 0);
+    worker.emit('message', { event: 'ready', payload: { uin: '456', uid: 'u_fixture' } });
+    for (const text of [undefined, null, 42, {}, ['signature']]) {
+      await assert.rejects(client.setSignature(text as unknown as string), /must be a string/);
+    }
+    assert.equal(worker.requests.length, 0, 'invalid input never reaches the worker');
+    const clear = client.setSignature('');
+    const request = worker.requests.at(-1);
+    assert.deepEqual({ method: request.method, text: request.text }, { method: 'setSignature', text: '' });
+    worker.emit('message', { id: request.id, result: undefined });
+    assert.equal(await clear, undefined);
+    const update = client.setSignature('保持空格 ✓  ');
+    assert.equal(worker.requests.at(-1).text, '保持空格 ✓  ');
+    worker.emit('message', { id: worker.requests.at(-1).id, error: { message: 'Native signature update failed', code: 23 } });
+    await assert.rejects(update, { operation: 'setSignature', code: 23 });
+    assert.equal(worker.requests.length, 2, 'failed update is not replayed');
+  } finally { await client.close(); }
+});
+
 test('getMessage uses the public online-only RPC and preserves absent results and native error codes', async () => {
   const worker = new Worker(), client = new QQClient(worker as unknown as ChildProcess, 500);
   const peer = { type: 'group' as const, groupId: '123' }, messageId = '900719925474099312345';

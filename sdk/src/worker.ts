@@ -10,7 +10,7 @@ import { builtinRecordCodec } from './builtin-record-codec.ts';
 
 const operations = new Set(['listFriends', 'listGroups', 'getGroupMembers', 'sendPrivateMessage', 'sendGroupMessage', 'getMessage', 'getHistory', 'recallMessage', 'getForwardMessages', 'forwardMessages',
   'setGroupName', 'setGroupMute', 'setGroupMemberMute', 'setGroupMemberCard', 'setGroupAdmin', 'kickGroupMember', 'leaveGroup',
-  'setNickname', 'listGroupNotices', 'publishGroupNotice', 'deleteGroupNotice', 'downloadAttachment', 'getUserProfile', 'setFriendRemark', 'deleteFriend', 'listFriendRequests', 'handleFriendRequest', 'listGroupRequests', 'handleGroupRequest']);
+  'setNickname', 'setSignature', 'listGroupNotices', 'publishGroupNotice', 'deleteGroupNotice', 'downloadAttachment', 'getUserProfile', 'setFriendRemark', 'deleteFriend', 'listFriendRequests', 'handleFriendRequest', 'listGroupRequests', 'handleGroupRequest']);
 
 let kernel: ReturnType<typeof createKernel> | undefined;
 let releaseDataLock: (() => void) | undefined;

@@ -50,6 +50,19 @@ test('nickname CLI only dispatches an explicitly supplied nonblank name', async 
   await assert.rejects(prepareCommand('nickname',{name:' '}),/blank/);
 });
 
+test('signature CLI requires explicit text, preserves whitespace and allows deliberate clearing', async () => {
+  const calls: string[] = [];
+  const client = { setSignature: async (text: string) => { calls.push(text); } } as unknown as QQClient;
+  const update = await prepareCommand('signature', { text: '个性签名 ✓  ' });
+  const clear = await prepareCommand('signature', { text: '' });
+  assert.equal(calls.length, 0, 'preparation never changes a profile');
+  await update(client); await clear(client);
+  assert.deepEqual(calls, ['个性签名 ✓  ', '']);
+  await assert.rejects(prepareCommand('signature', {}), /--text is required/);
+  const help = spawnSync(process.execPath, ['src/cli.ts', '--help'], { encoding: 'utf8' });
+  assert.equal(help.status, 0); assert.match(help.stdout, /signature --config FILE --text TEXT/);
+});
+
 test('group notice CLI validates explicit mutations and preserves notice identifiers', async () => {
   const calls: unknown[]=[];
   const client=new Proxy({}, {get:(_,method)=>async(...args:unknown[])=>{calls.push([method,...args]);}}) as QQClient;

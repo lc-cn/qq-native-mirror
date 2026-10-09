@@ -34,9 +34,29 @@ assert.deepEqual(received,['123',mixed]);
 `);
 await writeFile(join(destination, 'faces.json'), JSON.stringify([{type:'text',text:'hello'},{type:'face',id:14},{type:'face',id:333}]));
 run(process.execPath, ['faces.mjs']);
+await writeFile(join(destination, 'self-profile.mjs'), `import assert from 'node:assert/strict';
+import {QQClient} from 'qq-native-client';
+import {createSelfProfile} from './node_modules/qq-native-client/dist/self-profile.js';
+import {prepareCommand} from './node_modules/qq-native-client/dist/cli.js';
+for(const text of ['','  spaced signature  ']){let actual;const action=await prepareCommand('signature',{text});await action({setSignature:async value=>{actual=value;}});assert.equal(actual,text);}
+assert.equal(typeof QQClient.prototype.setSignature,'function');
+function fixture(nickname='original nickname',missing=false) {
+ let listener; const writes=[];
+ const service={addKernelProfileListener(value){listener=value;return 1;},removeKernelProfileListener(){},
+  fetchUserDetailInfo(trace,uids,source,biz){assert.equal(trace,'BuddyProfileStore');assert.deepEqual(uids,['self']);assert.equal(source,1);assert.deepEqual(biz,[0]);listener.onUserDetailInfoChanged({uid:'self',simpleInfo:{coreInfo:missing?{}:{nick:nickname},baseInfo:{longNick:'original signature',sex:255,birthday_year:2000,birthday_month:1,birthday_day:2}}});return{result:0};},
+  modifyDesktopMiniProfile(payload){writes.push(payload);return{result:0};}};
+ return {module:createSelfProfile({getProfileService:()=>service},()=> 'self'),writes};
+}
+const birthday={birthday_year:'2000',birthday_month:'1',birthday_day:'2'};
+const nickname=fixture();try{await nickname.module.invokeOperation('setNickname',{name:'new nickname'});assert.deepEqual(nickname.writes,[{nick:'new nickname',longNick:'original signature',sex:255,birthday,location:undefined}]);}finally{nickname.module.close();}
+for(const text of ['new signature','']){const f=fixture();try{await f.module.invokeOperation('setSignature',{text});assert.deepEqual(f.writes,[{nick:'original nickname',longNick:text,sex:255,birthday,location:undefined}]);}finally{f.module.close();}}
+const missing=fixture('unused',true);try{await assert.rejects(missing.module.invokeOperation('setSignature',{text:'new'}),/nickname|preserv|profile/i);assert.equal(missing.writes.length,0);}finally{missing.module.close();}
+`);
+run(process.execPath, ['self-profile.mjs']);
 const help = run(process.execPath, ['node_modules/qq-native-client/dist/cli.js', '--help']);
 if (!help.includes('group-kick') || !help.includes('--message-file')) throw new Error('Installed CLI lacks commands');
 const cliEntry='node_modules/qq-native-client/dist/cli.js';
+if (!help.includes('signature')) throw new Error('Installed CLI lacks signature command');
 if (!help.includes('message --config')) throw new Error('Installed CLI lacks single-message lookup');
 await writeFile(join(destination, 'message-query.mjs'), `import assert from 'node:assert/strict';
 import {prepareCommand} from './node_modules/qq-native-client/dist/cli.js';
@@ -64,6 +84,8 @@ function subscribe(client: QQClient) {
  const remove: Promise<void> = client.deleteGroupNotice('123','notice_id');
  const notices = client.listGroupNotices('123');
  const nickname: Promise<void> = client.setNickname('example');
+ const signature: Promise<void> = client.setSignature('');
+ void signature;
  const message = client.getMessage({type:'group',groupId:'123'},'900719925474099312345');
  void message.then(value=>value?.messageId);
  void nickname;
@@ -76,8 +98,10 @@ void factory; void options; void subscribe;
 `);
 run(process.execPath, [resolve(root, 'node_modules/typescript/bin/tsc'), '--noEmit', '--strict', '--types', 'node', '--module', 'NodeNext', '--target', 'ES2023', '--typeRoots', resolve(root, 'node_modules/@types'), 'consumer.ts']);
 const receipt = { checkedAt: new Date().toISOString(), package: packed.name, version: packed.version,
-  integrity: packed.integrity, fileCount: files.length, checks: { privateFilesExcluded:true, installedImport:true, cliHelp:true, cliDefaultConfig:true, faceContract:true, messageQueryContract:true, declarations:true },
+  integrity: packed.integrity, fileCount: files.length, checks: { privateFilesExcluded:true, installedImport:true, cliHelp:true, cliDefaultConfig:true, faceContract:true, messageQueryContract:true, selfProfileContract:true, declarations:true },
   nativeExecuted:false, accountUsed:false };
 await mkdir(join(root, '.local'), {recursive:true});
 await writeFile(join(root, '.local/package-consumer-verification.json'), JSON.stringify(receipt, null, 2));
+await mkdir(join(root, '.local/research'), {recursive:true});
+await writeFile(join(root, '.local/research/signature-installed-consumer.json'), JSON.stringify(receipt, null, 2));
 console.log(JSON.stringify(receipt, null, 2));
