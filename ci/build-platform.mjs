@@ -20,6 +20,8 @@ const manifest=JSON.parse(body);
 if(manifest.schemaVersion!==1||manifest.platform!==platform||manifest.arch!==(source.sourceArch??arch))throw new Error('Source device mismatch');
 const sdk=JSON.parse(await readFile('sdk/package.json','utf8'));
 const name=`qq-native-client-${platform}-${arch}`,target=resolve('out',name);
+if(sdk.optionalDependencies[name]!==sdk.version)throw new Error('Main/auxiliary version pin mismatch');
+if(['clientVersion','appId','qua'].some(key=>source.version[key]!==manifest.version[key]))throw new Error('Source version declaration mismatch');
 await rm(target,{recursive:true,force:true});await mkdir(target,{recursive:true});
 const groups=new Map();const paths=new Set();
 for(const file of manifest.files){relative(file.path);if(paths.has(file.path))throw new Error('Duplicate manifest path');paths.add(file.path);if(!/^[a-f0-9]{64}$/.test(file.sha256))throw new Error('Invalid file hash');let list=groups.get(file.sha256);if(!list)groups.set(file.sha256,list=[]);list.push(file);}

@@ -46,7 +46,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y libx11-xcb1 libgnutls30
       - name: Install SDK build dependencies
         working-directory: sdk
-        run: npm ci --omit=optional --ignore-scripts --no-audit --no-fund
+        run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Build registration bridge and SDK
         working-directory: sdk
         run: npm run build
@@ -89,14 +89,15 @@ jobs:
             cp -R "artifacts/npm-$platform/bridges/$platform" sdk/native/
           done
           cd sdk
-          npm ci --omit=optional --ignore-scripts --no-audit --no-fund
+          npm ci --ignore-scripts --no-audit --no-fund
           npm exec tsc
           npm pack --ignore-scripts --pack-destination ..
       - name: Publish immutable platform artifacts, then main package
         shell: bash
         run: |
           set -euo pipefail
+          version=$(node -p "require('./sdk/package.json').version")
           for platform in linux-x64 linux-arm64 darwin-x64 darwin-arm64 win32-x64 win32-arm64; do
-            npm publish "artifacts/npm-$platform/qq-native-client-$platform-0.0.1.tgz" --access public --provenance
+            npm publish "artifacts/npm-$platform/qq-native-client-$platform-$version.tgz" --access public --provenance
           done
-          npm publish qq-native-client-0.0.1.tgz --access public --provenance
+          npm publish "qq-native-client-$version.tgz" --access public --provenance

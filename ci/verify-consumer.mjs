@@ -3,10 +3,11 @@ import {mkdtemp,writeFile,readFile,rm,mkdir} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join,resolve} from 'node:path';
 const temp=await mkdtemp(join(tmpdir(),'qq-ci-consumer-'));
+const {version}=JSON.parse(await readFile('sdk/package.json','utf8'));
 let client;
 try {
  await writeFile(join(temp,'package.json'),JSON.stringify({name:'qq-ci-consumer',private:true,type:'module'}));
- execFileSync('npm',['install','--ignore-scripts','--omit=optional','--no-audit','--no-fund',resolve('out/qq-native-client-0.0.1.tgz'),resolve(`out/qq-native-client-${process.platform}-${process.arch}-0.0.1.tgz`)],{cwd:temp,stdio:'inherit'});
+ execFileSync('npm',['install','--ignore-scripts','--omit=optional','--no-audit','--no-fund',resolve(`out/qq-native-client-${version}.tgz`),resolve(`out/qq-native-client-${process.platform}-${process.arch}-${version}.tgz`)],{cwd:temp,stdio:'inherit'});
  const {pathToFileURL}=await import('node:url');
  const sdk=await import(pathToFileURL(join(temp,'node_modules/qq-native-client/dist/index.js')).href);
  // Native resolution must use the installed optional bundle, with no mirror traffic.
