@@ -1,0 +1,67 @@
+ci/verify-consumer.mjs
+  s_2104cc474f1ce5::t_9a48685e6c6303 11,81-132,338
+sdk/README.md
+  s_2104cc474f1ce5::t_f03cd8293c9cb3 201
+sdk/docs/evidence/merged-forward-local.json
+  s_2104cc474f1ce5::t_6c865f67fa78e2 1-134
+sdk/docs/long-message-request-internal.md
+  s_2104cc474f1ce5::t_9eb82cfd928c2d 1-13
+sdk/docs/long-message-response.md
+  s_2104cc474f1ce5::t_1bdcd391906222 3
+sdk/docs/merged-forward-card-internal.md
+  s_2104cc474f1ce5::t_dba3c09e0a899c 1-13
+sdk/docs/merged-forward-contract.md
+  s_2104cc474f1ce5::t_9b325df4a921e1 3,11,17
+sdk/docs/merged-forward.md
+  s_2104cc474f1ce5::t_8d3bc3fd0e5b8c 1-46
+sdk/src/cli.ts
+  s_2104cc474f1ce5::t_7553778d0e7ad9 2,9-10,61-62,175-182,325-329
+sdk/src/errors.ts
+  s_2104cc474f1ce5::t_cf8207b6ca3293 6-8,11-35,49,58
+sdk/src/index.ts
+  s_2104cc474f1ce5::t_406ad694f46415 1-2,4-5,14,20-25,81,102,144,149,152,208,254-257,313
+sdk/src/long-message-request.ts
+  s_2104cc474f1ce5::t_65bada21b2d070 1-53
+sdk/src/merged-forward-card.ts
+  s_2104cc474f1ce5::t_8260269ca7df34 1-30
+sdk/src/merged-forward.ts
+  s_2104cc474f1ce5::t_9d9812c6c81aaa 1-59
+sdk/src/native-services.ts
+  s_2104cc474f1ce5::t_b8e5c8754c473c 2-3,28,275-276,293,297,389-396,458
+sdk/src/types.ts
+  s_2104cc474f1ce5::t_8607b893812d62 124-127
+sdk/src/worker.ts
+  s_2104cc474f1ce5::t_ae1c60d031f854 12
+sdk/test/errors.test.ts
+  s_2104cc474f1ce5::t_df68067b8ffc0b 3,19-33
+sdk/test/long-message-request.test.ts
+  s_2104cc474f1ce5::t_de4cc914615bf3 1-23
+sdk/test/merged-forward-card.test.ts
+  s_2104cc474f1ce5::t_acc204945cc974 1-13
+sdk/test/merged-forward-cli.test.ts
+  s_2104cc474f1ce5::t_b88d3ae5564d6d 1-53
+sdk/test/merged-forward-client.test.ts
+  s_2104cc474f1ce5::t_85b13ebc265037 1-134
+sdk/test/merged-forward-services.test.ts
+  s_2104cc474f1ce5::t_622db752923462 1-172
+tools/verify-dedup-consumer.mjs
+  s_2104cc474f1ce5::t_c9504ace60dd26 67
+tools/verify-dedup-consumer.test.mjs
+  s_2104cc474f1ce5::t_949c6135c6a69a 9,21-23
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "5469440f330541c306d92d1f4414e0074102127c",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
