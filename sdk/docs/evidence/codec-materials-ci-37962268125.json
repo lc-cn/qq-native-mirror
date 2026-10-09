@@ -1,0 +1,74 @@
+{
+  "schemaVersion": 1,
+  "runId": 37962268125,
+  "sourceCommit": "6cae1ec0a5e1bfb03cb7871083915b3d03272347",
+  "overallConclusion": "success",
+  "producerRuntimeRelinkReceiptsPassed": 12,
+  "installedConsumerReceiptsPassed": 7,
+  "fixturesPerReceipt": 3,
+  "regressions": {
+    "tests": 395,
+    "passed": 395,
+    "failed": 0
+  },
+  "sourcePgpVerified": true,
+  "sourceArchiveSha256": "8c3850283eb25fa026482078a04051e0be17347b09ef81a0849bec15a96e002e",
+  "materialsRelease": {
+    "tag": "video-npm-v0.0.2-ci-37962268125-attempt-1",
+    "releaseId": 408145859,
+    "assets": 12,
+    "npmPublished": false
+  },
+  "publicGate": {
+    "repository": "lc-cn/qq-native-mirror",
+    "commit": "6cae1ec0a5e1bfb03cb7871083915b3d03272347",
+    "runId": "37962268125",
+    "runAttempt": 1,
+    "materialsTag": "video-npm-v0.0.2-ci-37962268125-attempt-1",
+    "materialAssets": 12,
+    "onlineVerified": true,
+    "npmPublished": false
+  },
+  "candidateArchive": "success",
+  "npmPublish": "skipped",
+  "boundFiles": [
+    {
+      "path": ".local/research/video-materials-ci-first-full.log",
+      "bytes": 4339026,
+      "sha256": "52a4c8152951b7f966cd2b131b647778d0395641b5c522f8515649d6364868fa"
+    },
+    {
+      "path": ".local/research/video-materials-ci-first-state.json",
+      "bytes": 52509,
+      "sha256": "210985e6cf4474bbdaf9c98e91f7efc3043b68c3da38454f6b5c581eb7a05d3a"
+    }
+  ],
+  "coldMaterialReadback": {
+    "assets": [
+      "video-materials.json",
+      "ffmpeg-9.0.2.tar.xz",
+      "video-darwin-arm64-relink.tar.gz"
+    ],
+    "allTwelveAssetsDownloaded": false
+  },
+  "coldCandidateDownload": {
+    "tag": "npm-v0.0.2-ci-37962268125",
+    "packages": 7,
+    "proxy": "https://gh-proxy.com/",
+    "validated": true
+  },
+  "stagedNativeMirror": {
+    "tag": "native-npm-v0.0.2-ci-37962268125-attempt-1",
+    "packages": 6,
+    "deduplicatedAssets": 415,
+    "compressedBytes": 377482935,
+    "validated": true,
+    "uploaded": false,
+    "catalogChanged": false,
+    "nativeExecuted": false,
+    "contractTestsPassed": 16
+  },
+  "realAccountUsed": false,
+  "realVideoDeliveryVerified": false,
+  "signingAuthenticityVerified": false
+}

@@ -3,9 +3,9 @@ import {resolve,join,sep} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {createHash} from 'node:crypto';
 import {gzipSync} from 'node:zlib';
-import {execFileSync} from 'node:child_process';
 import {validateRelease} from './local-first-publish.mjs';
 import {verifyVideoMaterialsOnline,videoTargets} from './video-materials.mjs';
+import {readNativeTarFiles} from './native-tar-files.mjs';
 const sha=b=>createHash('sha256').update(b).digest('hex'),maxFile=512*1024*1024;
 const check=(ok,message)=>{if(!ok)throw Error(message);};
 const safe=p=>typeof p==='string'&&p.length>0&&!/[\\\0:\r\n\t]/.test(p)&&!p.startsWith('/')&&!p.split('/').some(s=>!s||s==='.'||s==='..');
@@ -40,14 +40,9 @@ export async function prepareNpmNativeMirror(releaseDir,outDir,{verifyOnline=ver
  const tag=`native-npm-v${release.version}-ci-${release.runId}-attempt-${release.runAttempt}`,packages=[],assets=new Map();
  // Build the full plan in memory before writing any candidate payload.
  for(const device of videoTargets){const row=release.packages.find(p=>p.name==='qq-native-client-'+device);check(row,'Missing native package');
-  check(safe(row.tarball),'Unsafe source tarball');const tar=join(input,row.tarball);await regular(tar);
-  const listed=execFileSync('tar',['-tf',tar],{maxBuffer:32*1024*1024}).toString().trimEnd().split('\n');
-  const verbose=execFileSync('tar',['-tvf',tar],{maxBuffer:32*1024*1024}).toString().trimEnd().split('\n');
-  check(listed.length===verbose.length,'Ambiguous tar member listing');const members=new Map();
-  for(let i=0;i<listed.length;i++){const name=listed[i].replace(/\/$/,'');check(safe(name)&&(name==='package'||name.startsWith('package/'))&&!members.has(name)&&['-','d'].includes(verbose[i][0]),'Unsafe/duplicate/nonregular tar member');members.set(name,verbose[i][0]);}
-  check(members.get('package/manifest.json')==='-','Native manifest must be a regular tar member');
-  const manifestBytes=execFileSync('tar',['-xOf',tar,'package/manifest.json'],{maxBuffer:32*1024*1024});check(sha(manifestBytes)===row.manifestSha256,'Source manifest mismatch');
-  const manifest=JSON.parse(manifestBytes),plan=planCompressedNative(manifest,device,path=>{check(members.get(`package/${path}`)==='-','Native inventory member must be regular');return execFileSync('tar',['-xOf',tar,`package/${path}`],{maxBuffer:maxFile});},{tag,version:release.version,runId:release.runId,runAttempt:release.runAttempt});
+  check(safe(row.tarball),'Unsafe source tarball');const members=await readNativeTarFiles(join(input,row.tarball));
+  const manifestBytes=members.get('package/manifest.json');check(manifestBytes&&manifestBytes.length<=32*1024*1024&&sha(manifestBytes)===row.manifestSha256,'Source manifest mismatch');
+  const manifest=JSON.parse(manifestBytes),plan=planCompressedNative(manifest,device,path=>{const bytes=members.get(`package/${path}`);check(bytes,'Native inventory member must be regular');return bytes;},{tag,version:release.version,runId:release.runId,runAttempt:release.runAttempt});
   for(const asset of plan.assets){const old=assets.get(asset.name);check(!old||old.sha256===asset.sha256,'Compressed asset collision');assets.set(asset.name,asset);}
   packages.push({platform:manifest.platform,arch:manifest.arch,version:manifest.version,sourceTarballSha256:row.sha256,sourceManifestSha256:row.manifestSha256,manifestPath:`manifests/${device}.json`,repoPath:plan.repoPath,manifestSha256:plan.manifestSha256,body:plan.body});
  }
