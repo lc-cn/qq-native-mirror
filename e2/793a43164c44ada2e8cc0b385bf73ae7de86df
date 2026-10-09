@@ -1,0 +1,35 @@
+.github/workflows/native-npm.yml
+  s_2104cc474f1ce5::t_ac87b2955084e4 43-46
+.github/workflows/windows-native.yml
+  s_2104cc474f1ce5::t_ed8a19e14d6074 1-46
+ci/prepare-windows.mjs
+  s_2104cc474f1ce5::t_d55261cda04096 1-18
+ci/sources.json
+  s_2104cc474f1ce5::t_6096fe6e2deb49 51-58,63-70
+ci/windows/build-adapter.mjs
+  s_2104cc474f1ce5::t_ac12fbb0b8e860 1-32
+ci/windows/environment-stopping.cc
+  s_2104cc474f1ce5::t_1bcebb808985b0 1-9
+ci/windows/export-windows-native.py
+  s_2104cc474f1ce5::t_c9db8d047e64d6 1-48
+ci/windows/generate-windows-forwarder.py
+  s_2104cc474f1ce5::t_9546c80f9c143a 1-14
+ci/windows/pe-inspect.py
+  s_2104cc474f1ce5::t_92d97a17f40cca 1-47
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e2793a43164c44ada2e8cc0b385bf73ae7de86df",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
