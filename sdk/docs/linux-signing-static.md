@@ -375,3 +375,17 @@ python3 scripts/linux-signing-transform-boundary.py /absolute/path/wrapper.node
 复跑通过完整 SHA、选定指令/完整函数字、unwind、静态 blob 和动态 PLT 检查。独立检查另用 ELF `PT_LOAD` 映射（区别于脚本的 section 映射），复核全部 128 个表项、378 字节 blob、18 个来源指令的系统 objdump 结果以及加工函数的全部指令；三个脚本对真实旧版二进制均以 SHA 不匹配拒绝。私有收据：`.local/research/linux-signing-instruction-evidence-verified.json` 及同名脚本 JSON。没有执行 native、provider、账号操作或改写检测结果。
 
 当前缺口已收窄到：实际指令边界/执行顺序、OR8 修改字节进入加工缓冲区的覆盖关系、加工结果布局，以及索引 2 到 `0x61` 返回对象的实际连接。尚未证明最终输出受该位影响，更未证明是假签名、服务端账号标记或踢下线机制。
+
+## 加工返回中的嵌套解释器边界
+
+继续检查 `0x434d0d4` 调用的 `0x4356f94..0x4357024`，发现它不是直接返回所分配的数据记录。该函数分配 16 字节记录：`+0` 写原始 uint32 长度参数，`+4` 写 uint16 值 32，`+8` 写数据分配指针；分配大小为 uint32 长度零扩展后的 64 位加一，而 `0x4357004` 实际 `memcpy` 的长度为 uint32 `length-1`（减法本身会在零处回绕）。记录未初始化字段的意义未知。此处上层传入的是局部缓冲区 `+2` 和原对象长度 `+8`，但其完整布局和取值范围仍未证实。
+
+`0x4357020` 恢复栈后尾调用 `0x4356e3c`，传入静态地址 `0x6f19d2e` 和刚构造的记录；因此该记录是下一层输入，不能把它等同于加工函数的最终返回值。下一层 `0x4356e3c..0x4356f94` 构造另一份 3264 字节解释器 blob，再调用已经识别的 `0x433185c`、`0x43318f8` 和同一个 consumer `0x4334048`。consumer 的 `x0` 结果保存于 `x19`，清理 workspace 后恢复到普通 `x0` 返回。这确认了嵌套解释器边界，尚未确认嵌套程序结果的记录 ABI。
+
+新 blob 的静态模板位于 `0x6c7eb40`，前 3264 字节 SHA-256 为 `44b70e204ba91b526a4bcbf426c5a4df71d304cd32c20e66118296c910af8260`。构造先复制模板前 `0xc30` 字节，随后在局部缓冲区 `[0xc30,0xc60)` 写入来自运行时全局指针的 48 字节，再从模板 `+0xc60` 复制 128 字节到局部缓冲区同一偏移；最终只复制局部缓冲区的 `0xcc0` 字节到分配的 blob。因此最后一次模板复制的末尾 32 字节不进入这次最终 blob 复制。指针来自 GOT `0x89dee08` 引用的全局地址 `0x8a077f0`；其运行时内容、初始化和语义未检查。**静态模板 SHA 不能冒充实际运行时 blob SHA**，也不能把这 48 字节命名为检测位、密钥或签名材料。
+
+```sh
+python3 scripts/linux-signing-nested-transform.py /absolute/path/wrapper.node
+```
+
+脚本固定完整 binary SHA，校验两个相邻 unwind 范围、全部 122 条反汇编指令与 ELF 字节、尾调用和普通返回边、模板及完整 128 字节 tail 来源 SHA，以及 `malloc`/`memset`/`memcpy` 的 PLT 指令和动态符号重定位。独立 ELF `PT_LOAD` 映射复核全部 122 条指令、静态来源字节及 global 重定位通过；脚本对实际旧版 binary 以 SHA 不匹配拒绝且不输出证据。私有收据位于 `.local/research/linux-signing-nested-transform-independent.json`。上述静态证据不涉及执行 provider、构造替代运行环境、恢复账号或改写检测值。它修正了一个可能误读：前层所见的输入记录和最终加工返回之间还有一段含运行时注入数据的解释器程序；最终输出受 OR8 位影响仍未证明。

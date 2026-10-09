@@ -14,6 +14,8 @@ The latest bounded static pass traces a returned length/data record through actu
 
 A further pinned static pass identifies the actual 378-byte source copied into the consumer workspace and its opcode jump table. OR8 lookup belongs to opcode `0x79`; the earlier uint32 copy belongs to `0x62`, whose byte is absent from that static blob. Crucially, opcode `0x61` has a separate byte-copy return path, so this absence cannot exclude output propagation. Opcode `0x7a` supplies a candidate object-processing edge before returning through an owner index, but actual instruction boundaries/order, changed-byte coverage and transformed record layout remain unresolved. No provider or account operation was executed. See [instruction-source and return-path evidence](linux-signing-static.md#静态指令源分发表与另一条返回路径).
 
+The processing helper's next callee constructs a length/data input record, then tail-calls another program through the same consumer. This nested program's 3264-byte blob includes 48 bytes injected from a runtime global pointer. The input record is therefore not a proven final return record, and the static template hash is not a runtime blob hash. The nested result layout and changed-byte propagation remain unproven. See [the nested boundary](linux-signing-static.md#加工返回中的嵌套解释器边界).
+
 The user clarified that this report came privately from a professional and that no public project name, issue or quotation is available. It remains an unresolved investigation hypothesis. Lack of a public citation must not be treated as evidence against it. No repeated login experiment on the user's regular account will be used to test the hypothesis.
 
 ## JavaScript initialization contract audit
