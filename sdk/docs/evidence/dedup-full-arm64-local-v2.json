@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "experimental": true,
+  "platform": "darwin",
+  "arch": "arm64",
+  "node": "v24.19.0",
+  "nativeSource": {
+    "repository": "lc-cn/qq-native-mirror",
+    "commit": "6cae1ec0a5e1bfb03cb7871083915b3d03272347",
+    "runId": "37962268125",
+    "runAttempt": 1,
+    "releaseManifestSha256": "9a362f3c4abada4c8cfc397039c20835bcb5393e0ae356873cccb518be9c8e1a",
+    "auxiliary": {
+      "tarball": "qq-native-client-darwin-arm64-0.0.2.tgz",
+      "sha256": "17df5e2ec460ff2e21209eea473030f6dd4911c43774872d6d4f33417281d586",
+      "size": 59911840,
+      "nativeManifestSha256": "a3c633ad5fc13082b5b8ffa7aa3e09b9a9d37708300bf5df3ea66bd0daa729df"
+    }
+  },
+  "candidate": {
+    "tarball": "qq-native-client-darwin-arm64-0.0.2.tgz",
+    "sha256": "8f7ef5790f9dbe993ddccc0597931415c5df85478af0f92fb06d880bf73db734",
+    "size": 54924300,
+    "nativeManifestSha256": "19fb1f7122aaab09289ff2460113ca864d0bec06fae663940d140420d8e144ba",
+    "nativePaths": 1168,
+    "objectCount": 321
+  },
+  "consumerSdk": {
+    "schemaVersion": 1,
+    "tarball": "qq-native-client-0.0.2.tgz",
+    "sha256": "b1ee2fd95cabdb409fa3d283c6798ea484285ee034d1ad43fe9c2527515fbc7e",
+    "size": 259119,
+    "storageLoaderSha256": "b03a20a5284ec1b38a6eb37a2c3364579be30db551abeba1983b89a6a3489c51",
+    "builderCommit": null,
+    "builderRunId": null,
+    "nativeSource": {
+      "repository": "lc-cn/qq-native-mirror",
+      "commit": "6cae1ec0a5e1bfb03cb7871083915b3d03272347",
+      "runId": "37962268125",
+      "runAttempt": 1,
+      "releaseManifestSha256": "9a362f3c4abada4c8cfc397039c20835bcb5393e0ae356873cccb518be9c8e1a",
+      "auxiliary": {
+        "tarball": "qq-native-client-darwin-arm64-0.0.2.tgz",
+        "sha256": "17df5e2ec460ff2e21209eea473030f6dd4911c43774872d6d4f33417281d586",
+        "size": 59911840,
+        "nativeManifestSha256": "a3c633ad5fc13082b5b8ffa7aa3e09b9a9d37708300bf5df3ea66bd0daa729df"
+      }
+    }
+  },
+  "binding": {
+    "buildReceiptSha256": "dfcd8da26793f3e50aa3ce0fa79e4471c73a2e21cf9c5e55c5dec5f7cd39c63c",
+    "consumerSdkBindingSha256": "2d936aa653ff7be582aa30dda45d973556150f0e9e1bde631244b391a398bbb0",
+    "consumerReceiptSha256": "ecce0eab230ebe82419ba54bc24c58c74b388e2295abb084b4f04c02a4981a50",
+    "videoReceiptSha256": "5349deb4eddaca570de2d7118344336f202076ab890254da1c98bc9368b3d924"
+  },
+  "originalTarballBytes": 59911840,
+  "reducedTarballBytes": 54924300,
+  "savedBytes": 4987540,
+  "distributedRegularFiles": 324,
+  "originalRuntimePaths": 1168,
+  "uniqueObjects": 321,
+  "allOriginalPathsAndBytesPreserved": true,
+  "installedMainOnly": true,
+  "installedHydrationVerified": true,
+  "warmCacheVerified": true,
+  "actualVideoClips": 3,
+  "nativeExports": 104,
+  "prepared": true,
+  "closed": true,
+  "localSdkTests": 436,
+  "accountUsed": false,
+  "accountAcceptanceEstablished": false,
+  "signingAuthenticityEstablished": false,
+  "published": false,
+  "defaultsChanged": false,
+  "ciVerified": false,
+  "consumerSdkNote": "Local uncommitted build bound by exact tarball and loader hashes; builder commit is null. Native bytes remain from immutable 6cae1ec source."
+}

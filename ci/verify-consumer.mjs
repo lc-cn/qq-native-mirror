@@ -1,11 +1,11 @@
 import {npm} from './npm.mjs';
 import {execFileSync,execFile} from 'node:child_process';
 import {promisify} from 'node:util';
-import {mkdtemp,writeFile,readFile,rm,realpath} from 'node:fs/promises';
+import {mkdtemp,writeFile,readFile,rm,realpath,stat} from 'node:fs/promises';
 import {createServer} from 'node:http';
 import {createHash} from 'node:crypto';
 import {tmpdir} from 'node:os';
-import {join,resolve} from 'node:path';
+import {join,resolve,dirname,sep} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import assert from 'node:assert/strict';
 import {verifyForwardConsumer} from '../sdk/scripts/forward-consumer-contract.mjs';
@@ -22,7 +22,7 @@ const binaries=new Map();
 const add=async(name,v,path)=>{const body=await readFile(path);binaries.set(name,{version:v,body,integrity:'sha512-'+createHash('sha512').update(body).digest('base64')});};
 await add('qq-native-client',version,`out/qq-native-client-${version}.tgz`);
 await add(platformName,version,`out/${platformName}-${version}.tgz`);
-execFileSync(npm[0],[...npm[1],'pack','--ignore-scripts','--pack-destination',resolve('out'),'--json'],{cwd:resolve('sdk/node_modules/silk-wasm'),stdio:'pipe'});
+execFileSync(npm[0],[...npm[1],'pack','--ignore-scripts','--offline','--cache',join(temp,'npm-pack-cache'),'--pack-destination',resolve('out'),'--json'],{cwd:resolve('sdk/node_modules/silk-wasm'),stdio:'pipe'});
 await add('silk-wasm','3.7.1','out/silk-wasm-3.7.1.tgz');
 const deviceNames=['linux-x64','linux-arm64','darwin-x64','darwin-arm64','win32-x64','win32-arm64'];
 const manifests=new Map();
@@ -52,12 +52,24 @@ try {
  const receivedChecks=await verifyReceivedConsumer(join(temp,'node_modules/qq-native-client'));
  const installedRoot=join(temp,'node_modules/qq-native-client');
  const {prepareNative}=await import(pathToFileURL(join(installedRoot,'dist/native-package.js')).href);
- const autoNative=await prepareNative({dataDir:join(temp,'unused-video-account')});
+ const nativeCache=join(temp,'native-cache');
+ globalThis.fetch=()=>{throw new Error('Unexpected mirror request with installed platform package');};
+ const autoNative=await prepareNative({dataDir:join(temp,'unused-video-account'),cacheDir:nativeCache});
  const installedManifest=JSON.parse(await readFile(join(temp,'node_modules',platformName,'manifest.json')));
- let installedVideo;
+ let installedVideo,installedNativeStorage;
+ if(installedManifest.npmStorage!==undefined){
+  assert.equal(installedManifest.npmStorage.format,'gzip-objects-v1');
+  const nativeRoot=dirname(autoNative.wrapperPath);
+  assert.ok(nativeRoot.startsWith((await realpath(nativeCache))+sep));
+  for(const file of installedManifest.files){const bytes=await readFile(join(nativeRoot,file.path));assert.equal(bytes.length,file.size);assert.equal(createHash('sha256').update(bytes).digest('hex'),file.sha256);}
+  const before=await stat(autoNative.wrapperPath);
+  const warm=await prepareNative({dataDir:join(temp,'unused-video-account'),cacheDir:nativeCache});
+  assert.equal(warm.wrapperPath,autoNative.wrapperPath);assert.equal((await stat(warm.wrapperPath)).mtimeMs,before.mtimeMs);
+  installedNativeStorage={format:'gzip-objects-v1',nativePaths:installedManifest.files.length,objects:installedManifest.npmStorage.objects.length,allOriginalFilesVerified:true,warmCacheReused:true,networkFallbackAttempted:false};
+ }
  if(installedManifest.videoCodec!==undefined||process.env.QQ_VIDEO_CODEC_REQUIRED==='1'){
  assert.equal(installedManifest.videoCodec,'video/video-codec.node');
- assert.equal(autoNative.videoCodecPath,join(temp,'node_modules',platformName,'video/video-codec.node'));
+ assert.equal(autoNative.videoCodecPath,join(installedManifest.npmStorage===undefined?join(temp,'node_modules',platformName):dirname(autoNative.wrapperPath),'video/video-codec.node'));
  // Run the shared real-addon verifier against installed dist, never a fake codec.
  const verifierSource=(await readFile('sdk/scripts/verify-video-native.mjs','utf8')).replaceAll("'../dist/video-codec-loader.js'",JSON.stringify(pathToFileURL(join(installedRoot,'dist/video-codec-loader.js')).href)).replaceAll("'../dist/media-send.js'",JSON.stringify(pathToFileURL(join(installedRoot,'dist/media-send.js')).href));
  const verifierPath=join(installedRoot,'installed-video-verifier.mjs');await writeFile(verifierPath,verifierSource);
@@ -268,7 +280,7 @@ let successCalls=0;const success=createNativeServices({getMsgService:()=>({addKe
 try{assert.deepEqual(await success.invokeOperation('listFriends'),[]);assert.equal(successCalls,1);}finally{success.close();}
  }
  globalThis.fetch=()=>{throw new Error('Unexpected mirror request with installed platform package');};
- client=await sdk.createClient({dataDir:join(temp,'unused-account'),autoReconnect:false,timeoutMs:30000});
+ client=await sdk.createClient({dataDir:join(temp,'unused-account'),cacheDir:nativeCache,autoReconnect:false,timeoutMs:30000});
  const exports=client.nativeExports.length;if(exports<80)throw new Error('Unexpected native export inventory');await client.close();if(client.state!=='closed')throw new Error('Client did not close');
- await writeFile('out/consumer.json',JSON.stringify({platform:process.platform,arch:process.arch,node:process.version,exports,...messageBatchChecks,...forwardChecks,...recallChecks,...mentionChecks,...sendChecks,...receivedChecks,...videoChecks,automaticVideoCodec:installedVideo!==undefined,installedVideoDecoder:installedVideo?.passed===true,installedVideoFakeCache:installedVideo?.sdkFakeCache===true,installedVideo,installedMainOnly:true,automaticPlatformSelection:true,tarballRequests,faceContract:true,faceDeliveryAttempted:false,messageQueryContract:true,historyQueryContract:true,nativeHistoryQueryAttempted:false,nativeMessageQueryAttempted:false,selfProfileContract:true,profileMutationAttempted:false,groupOperationContract:true,groupMutationAttempted:false,groupMemberQueryContract:true,groupMemberIdentityContract:true,nativeGroupMemberQueryAttempted:false,groupMetadataEventContract:true,businessWatchContract:true,nativeGroupMetadataObserved:false,friendMetadataEventContract:true,nativeFriendMetadataObserved:false,friendListQueryContract:true,friendListBatchContract:true,friendProfileQueryContract:true,groupListQueryContract:true,nativeGroupListQueryAttempted:false,nativeFriendListQueryAttempted:false,prepared:true,closed:true,loginAttempted:false,registry:'isolated local fixture serving actual CI tarballs'},null,2));console.log(await readFile('out/consumer.json','utf8'));
+ await writeFile('out/consumer.json',JSON.stringify({platform:process.platform,arch:process.arch,node:process.version,exports,installedNativeStorage,...messageBatchChecks,...forwardChecks,...recallChecks,...mentionChecks,...sendChecks,...receivedChecks,...videoChecks,automaticVideoCodec:installedVideo!==undefined,installedVideoDecoder:installedVideo?.passed===true,installedVideoFakeCache:installedVideo?.sdkFakeCache===true,installedVideo,installedMainOnly:true,automaticPlatformSelection:true,tarballRequests,faceContract:true,faceDeliveryAttempted:false,messageQueryContract:true,historyQueryContract:true,nativeHistoryQueryAttempted:false,nativeMessageQueryAttempted:false,selfProfileContract:true,profileMutationAttempted:false,groupOperationContract:true,groupMutationAttempted:false,groupMemberQueryContract:true,groupMemberIdentityContract:true,nativeGroupMemberQueryAttempted:false,groupMetadataEventContract:true,businessWatchContract:true,nativeGroupMetadataObserved:false,friendMetadataEventContract:true,nativeFriendMetadataObserved:false,friendListQueryContract:true,friendListBatchContract:true,friendProfileQueryContract:true,groupListQueryContract:true,nativeGroupListQueryAttempted:false,nativeFriendListQueryAttempted:false,prepared:true,closed:true,loginAttempted:false,registry:'isolated local fixture serving actual CI tarballs'},null,2));console.log(await readFile('out/consumer.json','utf8'));
 }finally{await client?.close();server.closeAllConnections();await new Promise(done=>server.close(done));await rm(temp,{recursive:true,force:true});}

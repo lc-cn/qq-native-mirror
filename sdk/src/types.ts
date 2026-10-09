@@ -15,8 +15,9 @@ export interface NativeManifest {
   wrapper: string;
   /** Optional bundled video addon/module, covered by the same files SHA-256 inventory. */
   videoCodec?: string;
+  npmStorage?: {format:'gzip-objects-v1';objects:Array<{path:string;sha256:string;downloadSha256:string;size:number;downloadSize:number}>};
   version: QQVersion;
-  files: Array<{ path: string; url: string; sha256: string; encoding?: 'gzip'; downloadSha256?: string }>;
+  files: Array<{ path: string; url: string; sha256: string; size?: number; encoding?: 'gzip'; downloadSha256?: string }>;
 }
 export interface ClientOptions {
   /** HTTPS native catalog; defaults to the project's GitHub mirror. */

@@ -1,3 +1,4 @@
+import {restoreInstalledNativeStorage} from './native-installed-storage.ts';
 import { createHash, randomUUID } from 'node:crypto';
 import { gunzipSync } from 'node:zlib';
 import { constants as fsConstants } from 'node:fs';
@@ -29,12 +30,13 @@ async function installedNative(options: ClientOptions): Promise<PreparedNative |
   let entry: string;
   try { entry = createRequire(import.meta.url).resolve(`${name}/manifest.json`); }
   catch (error) { if ((error as NodeJS.ErrnoException).code === 'MODULE_NOT_FOUND') return; throw error; }
-  const manifest = JSON.parse(await readFile(entry, 'utf8')) as NativeManifest;
+  const manifestBytes=await readFile(entry);
+  const manifest = JSON.parse(manifestBytes.toString('utf8')) as NativeManifest;
   if (manifest.schemaVersion !== 1 || manifest.platform !== process.platform || manifest.arch !== process.arch || !Array.isArray(manifest.files)) throw new Error('Installed native package does not match device');
   version(manifest.version);
   if (options.version && (['clientVersion','appId','qua'] as const).some(key => options.version![key] !== manifest.version[key])) return;
   verifyNodeRuntime(manifest);
-  const base = await realpath(dirname(entry));
+  const base = manifest.npmStorage===undefined?await realpath(dirname(entry)):await restoreInstalledNativeStorage(dirname(entry),manifestBytes,manifest,resolve(options.cacheDir??join(homedir(),'.cache/qq-native-client')),acquirePackageLock);
   const names = new Set<string>();
   for (const file of manifest.files) {
     const relative = safeRelative(file.path);
@@ -187,6 +189,7 @@ export async function prepareNative(options: ClientOptions): Promise<PreparedNat
   if (digest(body) !== options.manifestSha256.toLowerCase()) throw new Error('Native manifest SHA-256 mismatch');
   const manifest = JSON.parse(body.toString('utf8')) as NativeManifest;
   if (!manifest || typeof manifest !== 'object') throw new Error('Invalid native manifest');
+  if(manifest.npmStorage!==undefined)throw new Error('npmStorage is only supported for installed native packages');
   if (options.version) version(options.version);
   if (manifest.schemaVersion !== 1 || manifest.platform !== process.platform || manifest.arch !== process.arch || !Array.isArray(manifest.files)) {
     throw new Error('Unsupported native manifest schema, platform or architecture');

@@ -1,0 +1,83 @@
+name: Experimental full native object storage
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  storage-contracts:
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-latest, windows-latest, macos-15]
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.20.0'
+      - name: Run actual filesystem and process-lock fixtures without QQ
+        working-directory: sdk
+        run: node --test test/native-installed-storage.test.ts test/installed-native.test.ts
+  full-inventory-consumer:
+    needs: storage-contracts
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-15
+            arch: arm64
+            device: darwin-arm64
+          - runner: macos-15-intel
+            arch: x64
+            device: darwin-x64
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.20.0'
+          architecture: ${{ matrix.arch }}
+      - name: Require actual target
+        env:
+          EXPECTED_ARCH: ${{ matrix.arch }}
+        run: node -e "if(process.platform!=='darwin'||process.arch!==process.env.EXPECTED_ARCH||process.version!=='v24.20.0')throw Error('Wrong runner')"
+      - name: Producer contracts
+        run: node --test tools/dedup-native-npm.test.mjs
+      - name: Acquire fixed full native source with preserved permanent materials
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node sdk/scripts/download-npm-candidate.mjs npm-v0.0.2-ci-37962268125 candidate-source
+      - name: Pack complete native bytes as deduplicated objects
+        run: node tools/dedup-native-npm.mjs --device ${{ matrix.device }} --source candidate-source --out out
+      - name: Install build dependencies without lifecycle scripts
+        working-directory: sdk
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Build and pack this SDK with the new installed storage loader
+        working-directory: sdk
+        run: |
+          npm run build
+          npm pack --ignore-scripts --pack-destination ../out --json
+      - name: Bind this SDK separately from original native source
+        run: node tools/verify-dedup-consumer.mjs --bind-main out
+      - name: Install main only, restore full inventory and run codec without account
+        run: node ci/verify-consumer.mjs
+      - name: Verify installed full inventory, warm cache, preparation and actual decoding
+        run: node tools/verify-dedup-consumer.mjs --verify-consumer out
+      - uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: experimental-full-object-storage-${{ matrix.device }}
+          path: |
+            out/qq-native-client-*.tgz
+            out/dedup-build.json
+            out/native-manifest.json
+            out/source-native-manifest.json
+            out/source-release-manifest.json
+            out/consumer-sdk.json
+            out/consumer.json
+            out/installed-video.json
+            out/dedup-acceptance.json
+          retention-days: 14

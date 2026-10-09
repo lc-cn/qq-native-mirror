@@ -21,7 +21,7 @@ async function writeBundle(base: string, value: any) {
 async function installedFixture(t: any, value = manifest()) {
   const root = await realpath(await mkdtemp(join(tmpdir(), 'qq-installed-video-'))); t.after(() => rm(root, { recursive: true, force: true }));
   await mkdir(join(root, 'src'));
-  for (const name of ['native-package.ts', 'native-catalog.ts', 'process-lock.ts', 'types.ts']) await copyFile(new URL(`../src/${name}`, import.meta.url), join(root, 'src', name));
+  for (const name of ['native-installed-storage.ts','native-package.ts', 'native-catalog.ts', 'process-lock.ts', 'types.ts']) await copyFile(new URL(`../src/${name}`, import.meta.url), join(root, 'src', name));
   await writeFile(join(root, 'package.json'), JSON.stringify({ type: 'module' }));
   const base = join(root, 'node_modules', `qq-native-client-${process.platform}-${process.arch}`);
   await writeBundle(base, value);
