@@ -20,8 +20,8 @@ execFileSync('python',['ci/windows/generate-windows-forwarder.py','out/node-inte
 await writeFile('out/QQNT.def',(await readFile('out/QQNT.def','utf8'))+' "?IsEnvironmentStopping@node@@YA_NPEAVIsolate@v8@@@Z"=qq_node_environment_stopping\n');
 const vars=process.config.variables;
 if(!vars.node_use_openssl||!vars.v8_enable_inspector)throw new Error('Unexpected official Node feature configuration');
-const includes=['src','deps/v8/include','deps/uv/include','deps/openssl/openssl/include','deps/openssl/config','deps/openssl/config/archs/'+(process.arch==='x64'?'VC-WIN64A':'VC-WIN64-ARM')+'/'+(vars.openssl_no_asm?'no-asm':'asm')+'/include'];
-const args=['/nologo','/LD','/std:c++20','/Zc:__cplusplus','/EHsc','/MD','/O2','/DNOMINMAX','/D_ITERATOR_DEBUG_LEVEL=0','/DNODE_WANT_INTERNALS=1','/DHAVE_INSPECTOR=1','/DHAVE_OPENSSL=1','/DNODE_USE_V8_PLATFORM=1'];
+const includes=['src','deps/v8/include','deps/uv/include','deps/simdjson','deps/simdutf','deps/sqlite','deps/openssl/openssl/include','deps/openssl/config','deps/openssl/config/archs/'+(process.arch==='x64'?'VC-WIN64A':'VC-WIN64-ARM')+'/'+(process.arch==='arm64'||vars.openssl_no_asm?'no-asm':'asm')+'/include'];
+const args=['/nologo','/LD','/std:c++20','/Zc:__cplusplus','/EHsc','/MD','/O2','/DNOMINMAX','/D_ITERATOR_DEBUG_LEVEL=0','/DNODE_WANT_INTERNALS=1','/DHAVE_INSPECTOR=1','/DHAVE_OPENSSL=1','/DNODE_USE_V8_PLATFORM=1',`/DHAVE_SQLITE=${vars.node_use_sqlite?1:0}`,`/DHAVE_AMARO=${vars.node_use_amaro?1:0}`];
 if(vars.v8_enable_pointer_compression)args.push('/DV8_COMPRESS_POINTERS');if(vars.v8_enable_sandbox)args.push('/DV8_ENABLE_SANDBOX');
 args.push(...includes.map(p=>'/I'+join(root,p)),resolve('ci/windows/environment-stopping.cc'),'/link',resolve('out/node-internals/node.lib'),'/DEF:'+resolve('out/QQNT.def'),'/OUT:'+resolve('out/windows-source/QQNT.dll'));
 execFileSync('cl',args,{stdio:'inherit'});
