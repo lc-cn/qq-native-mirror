@@ -1,0 +1,51 @@
+ci/verify-consumer.mjs
+  s_2104cc474f1ce5::t_931b1e9073e68b 20,59,344
+sdk/README.md
+  s_2104cc474f1ce5::t_af9045f1a2d485 205-206
+sdk/docs/evidence/history-lifecycle-local.json
+  s_2104cc474f1ce5::t_37649ff18c8f03 1-105
+sdk/docs/history-lifecycle.md
+  s_2104cc474f1ce5::t_f4cd8f4a6da292 1-15
+sdk/scripts/history-lifecycle-consumer-contract.mjs
+  s_2104cc474f1ce5::t_5341ec5661512d 1-124
+sdk/scripts/verify-package-consumer.mjs
+  s_2104cc474f1ce5::t_7dedc0134a9ff6 13-15,17,35-37,276
+sdk/src/cli.ts
+  s_2104cc474f1ce5::t_d15a7a1b43997b 3,15-23,25-26,28,308,329,350-353
+sdk/src/index.ts
+  s_2104cc474f1ce5::t_d35d82b3a5e2d2 4,184-190,254-257
+sdk/src/message-query.ts
+  s_2104cc474f1ce5::t_1b1e2f859d64c8 16-42,111-117,119,122
+sdk/src/native-services.ts
+  s_2104cc474f1ce5::t_4b99b5516fe228 6,408,414,428-430
+sdk/test/cli-entrypoint.test.ts
+  s_2104cc474f1ce5::t_068e2adb85b89c 1-31
+sdk/test/cli-watch-reconnect-policy.test.ts
+  s_2104cc474f1ce5::t_82d75be0474902 1-46
+sdk/test/client-wait-for-login.test.ts
+  s_2104cc474f1ce5::t_6eeeddceef7288 1-47
+sdk/test/history-lifecycle-services.test.ts
+  s_2104cc474f1ce5::t_5ddf1472fa9d5c 1-10
+sdk/test/history-query-input.test.ts
+  s_2104cc474f1ce5::t_2cfd57f9555c86 1-52
+tools/verify-dedup-consumer.mjs
+  s_2104cc474f1ce5::t_38c34f5b9ed9a7 69-70
+tools/verify-dedup-consumer.test.mjs
+  s_2104cc474f1ce5::t_0f7dcc1aef2205 9,21-26,43
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "55157516e200685729ef76c61e7c1080058045b8",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
