@@ -79,3 +79,15 @@ node scripts/download-npm-candidate.mjs npm-v0.0.1-ci-RUN_ID /absolute/path/npm-
 这类 npm 候选归档共有十一个资产：原九个，再加 `video-materials-binding.json` 和 `video-materials.json`。下载脚本会把两份材料恢复到 `video-materials/` 下，并按照 release manifest 的 `videoMaterials.binding` / `videoMaterials.report` 路径与摘要核对。旧的九资产、无 codec 候选仍兼容。
 
 不带 `--publish` 的首发命令执行离线检查，不联网验证材料、不登录账号。启用发布后，脚本先匿名检查材料 release 的身份和全部资产的服务端摘要/大小，并下载报告核对实际字节，再进入 npm registry 查询与认证。材料缺失、篡改、不可访问或与辅包二进制不匹配时停止。此检查不重新下载所有大资产，也不证明修改后的 FFmpeg 库兼容性或 QQ 视频真实送达。新永久材料流程的远端验收尚未完成；npm 仍为 0.0.1。
+
+## 准备同批次的原生镜像
+
+已安装辅包与 catalog 回退是两条路径；构建辅包不会自动更新默认 catalog。永久材料与七包候选通过后，可在源码仓库执行：
+
+```sh
+node scripts/prepare-npm-native-mirror.mjs /absolute/path/npm-candidate /absolute/path/empty-mirror-stage
+```
+
+命令先校验七包、收据、实际 codec 字节和永久材料在线证明。随后只从 tar 的已登记普通文件读取内容，保留 vendor、bridge、codec、源码出处和许可原始字节，生成按内容摘要去重的 gzip 资产、六份 manifest 和 `mirror-plan.json`。每个文件同时声明原始 SHA256/大小与压缩 SHA256；Windows 的精确 Node 版本与构建配置约束保留。准备工具不上传资产、不加载 native、不修改 catalog。
+
+镜像上线仍需上传与远端摘要核对、六平台实际冷下载/初始化/解码/关闭及缓存复用验收，再替换默认 catalog 中同设备/QQ 版本的条目。相同版本不能同时追加两个条目，否则 SDK 会拒绝歧义。旧完整 catalog、原有 manifest 和资产须另行保留供显式回退；准备命令没有完成这些上线步骤。
