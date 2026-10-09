@@ -417,3 +417,15 @@ python3 scripts/linux-signing-global48-references.py /absolute/path/wrapper.node
 ```
 
 脚本固定 binary SHA、七个有限模式结果、局部精确指令，以及上述 callee 的 unwind 和全部 1677 条指令与系统 objdump。独立 `PT_LOAD` 检查复核了七个地址计算、176 个引用窗口指令字、callee 的全部指令/摘要/unwind 和选定别名存储字；实际旧版以 SHA 拒绝。私有收据为 `.local/research/linux-signing-global48-references.json` 和 `linux-signing-global48-references-independent.json`。没有执行 native/provider、账号操作或修改检测结果；没有建立最终签名位传播或服务端标记语义。
+
+## 两个后续 callee 的有限函数体
+
+继续检查 `0x434e76c..0x434e864` 和 `0x434e864..0x434e9c4`，分别为 62 和 88 条指令。前者保存原始对象和输入指针，在对象 `+0x40` 的 uint64 字段为零所对应的局部条件分支中，把原对象、原输入以及局部间接结果地址交给 `0x434ea5c`，随后把对象 `+0x38` 和局部结果交给 `0x42270cc`。本函数体未见直接对象存储，但这两个内部函数尚未展开，仍不能排除对原对象的修改或声称初始化后不可变。
+
+后者没有把原始 `x0` 当作对象指针使用。它将 `w3` 的 bits24/16/8/0 依次写入四字节栈上 mask，以从零递增的有符号索引读取 `x1[index]`，与 `mask[index modulo 4]` 做 XOR，并在 `0x434e980` 原地写回 `x1[index]`；循环边界为有符号 `w2`，所检查的 caller 传入 496。本函数中唯一非栈直接存储是该输入缓冲区的 STRB，外部调用只有 stack-check-failure 路径。不能排除 caller 传入的 `x1` 与 global 对象之间存在别名；也不能把四字节 XOR 命名为某个签名算法或推断最终输出语义。
+
+```sh
+python3 scripts/linux-signing-global48-mutators.py /absolute/path/wrapper.node
+```
+
+复现固定 binary SHA，核对两个 unwind 范围、全部 150 条指令、选定寄存器/内存关系以及实际 PLT 动态符号绑定。独立 `PT_LOAD` 检查复核全部指令、摘要、unwind、三个动态调用绑定（包含 PLT 地址计算及 ADD）和旧版 SHA 拒绝，私有收据为 `.local/research/linux-signing-global48-mutators.json` 与 `linux-signing-global48-mutators-independent.json`。没有执行 native/provider 或账号操作。剩余缺口包括两条新的内部调用、跨 caller 的输入别名、运行时分支顺序，以及它们与 OR8 修改和最终签名输出的连接。
