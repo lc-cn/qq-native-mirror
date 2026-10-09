@@ -6,9 +6,10 @@ if(process.platform!=='win32')throw new Error('Windows-only source preparation')
 const source=JSON.parse(await readFile('ci/sources.json','utf8')).find(s=>s.platform==='win32'&&s.arch===process.arch);
 if(!source?.installerUrl||!source.installerSha256)throw new Error('Missing pinned Windows installer');
 await mkdir('out',{recursive:true});
-const response=await fetch(source.installerUrl,{signal:AbortSignal.timeout(600000)});if(!response.ok)throw new Error('Installer download failed');
-let size=0;const chunks=[];for await(const chunk of response.body){size+=chunk.length;if(size>512*1024*1024)throw new Error('Installer too large');chunks.push(Buffer.from(chunk));}
-const body=Buffer.concat(chunks);if(createHash('sha256').update(body).digest('hex')!==source.installerSha256)throw new Error('Installer checksum mismatch');
+let cached;try{cached=await readFile('out/vendor-installer.exe');}catch{}
+const response=cached?null:await fetch(source.installerUrl,{signal:AbortSignal.timeout(600000)});if(response&&!response.ok)throw new Error('Installer download failed');
+let size=0;const chunks=[];for await(const chunk of response?.body??[]){size+=chunk.length;if(size>512*1024*1024)throw new Error('Installer too large');chunks.push(Buffer.from(chunk));}
+const body=cached??Buffer.concat(chunks);if(createHash('sha256').update(body).digest('hex')!==source.installerSha256)throw new Error('Installer checksum mismatch');
 await writeFile('out/vendor-installer.exe',body);
 execFileSync('7z',['x','-y',resolve('out/vendor-installer.exe'),`-o${resolve('out/extracted')}`],{stdio:'inherit'});
 async function find(path){for(const name of await readdir(path)){const child=join(path,name);if((await stat(child)).isDirectory()){try{await stat(join(child,'resources/app/wrapper.node'));return child;}catch{}const match=await find(child);if(match)return match;}}}

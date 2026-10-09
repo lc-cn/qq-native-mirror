@@ -27,6 +27,13 @@ jobs:
       - uses: ilammy/msvc-dev-cmd@v1
         with:
           arch: ${{ matrix.arch }}
+      - uses: actions/cache/restore@v4
+        id: sources
+        with:
+          path: |
+            out/vendor-installer.exe
+            out/node-internals/source.tar.gz
+          key: windows-native-${{ matrix.arch }}-24.20.0-9.9.33-52230
       - run: node ci/prepare-windows.mjs
       - run: node ci/windows/build-adapter.mjs
       - name: Load generated adapter and official wrapper without account login
@@ -36,11 +43,19 @@ jobs:
           node -e "const n=require('./wrapper.node');if(Object.keys(n).length<80)throw Error('Missing native exports');console.log(JSON.stringify({arch:process.arch,node:process.version,exports:Object.keys(n).length,loaded:true,loginAttempted:false}))"
           if ($LASTEXITCODE -ne 0) { throw 'Native load failed' }
           Pop-Location
+      - uses: actions/cache/save@v4
+        if: always() && steps.sources.outputs.cache-hit != 'true'
+        with:
+          path: |
+            out/vendor-installer.exe
+            out/node-internals/source.tar.gz
+          key: windows-native-${{ matrix.arch }}-24.20.0-9.9.33-52230
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: windows-adapter-${{ matrix.arch }}
           path: |
+            out/windows-stopping-transition.json
             out/windows-adapter-build.json
             out/windows-source/manifest.json
           retention-days: 14
