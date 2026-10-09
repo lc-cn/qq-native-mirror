@@ -46,4 +46,5 @@ await copyFile(join(root,'LICENSE'),'out/windows-source/NODE-LICENSE.txt');
 manifest.files.push({path:'NODE-LICENSE.txt',url:'NODE-LICENSE.txt',sha256:sha(await readFile('out/windows-source/NODE-LICENSE.txt'))});
 await writeFile('out/windows-source/manifest.json',JSON.stringify(manifest,null,2));
 await mkdir(`sdk/native/win32-${process.arch}`,{recursive:true});await copyFile('out/windows-source/QQNT.dll',`sdk/native/win32-${process.arch}/QQNT.dll`);
+await copyFile('out/windows-source/NODE-LICENSE.txt',`sdk/native/win32-${process.arch}/NODE-LICENSE.txt`);
 await writeFile('out/windows-adapter-build.json',JSON.stringify({node:process.version,arch:process.arch,sourceSha256:sourceHash,nodeConfigSha256:manifest.nodeConfigSha256,exports:report.requiredQQNTExports.length,stoppingContract:'real Environment::is_stopping(), null environment/isolate => true',runtimeVerified:false},null,2));

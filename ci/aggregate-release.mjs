@@ -22,6 +22,11 @@ for(const device of devices){
  const bridge=await readFile(join(input,'bridges',device,bridgeName));
  if(native.files.find(f=>f.path===bridgeName)?.sha256!==sha(bridge))throw Error(`Bridge mismatch: ${device}`);
  await mkdir(join('sdk/native',device),{recursive:true});await writeFile(join('sdk/native',device,bridgeName),bridge);
+ if(platform==='win32'){
+  const license=await readFile(join(input,'bridges',device,'NODE-LICENSE.txt'));
+  if(native.files.find(f=>f.path==='NODE-LICENSE.txt')?.sha256!==sha(license))throw Error(`License mismatch: ${device}`);
+  await writeFile(join('sdk/native',device,'NODE-LICENSE.txt'),license);
+ }
  await copyFile(join(input,tarball),join(release,tarball));
  const receiptPath=`evidence/${device}.consumer.json`;await writeFile(join(release,receiptPath),receiptBytes);
  packages.push({name,version:sdk.version,tarball,size:bytes.length,sha256:sha(bytes),integrity:'sha512-'+sha(bytes,'sha512','base64'),manifestSha256:sha(nativeBytes),receipt:receiptPath,receiptSha256:sha(receiptBytes)});
