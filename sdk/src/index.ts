@@ -1,5 +1,6 @@
 import { deserializeKernelError, KernelRequestError } from './errors.ts';
 import {captureMergedForward} from './merged-forward.ts';
+import {normalizeForwardResourceId} from './forward-resource-wire.ts';
 import { normalizeMessageQuery, normalizeMessageBatchQuery } from './message-query.ts';
 export { KernelRequestError, MergedForwardError } from './errors.ts';
 export type {MergedForwardFailure, MergedForwardProgress} from './errors.ts';
@@ -11,7 +12,7 @@ import { fileURLToPath } from 'node:url';
 import { mkdir } from 'node:fs/promises';
 import { prepareNative } from './native-package.ts';
 import { normalizeLoginRequest } from './login-request.ts';
-import type { Account, ClientOptions, ClientEvents, LoginRequest, ClientState, Friend, Group, GroupMember, MessageInput, SentMessage, SentMergedForward, ForwardTextNode, MergedForwardOptions, Message, Peer, HistoryOptions, KickOptions, UserProfile, DeleteFriendOptions, FriendRequest, NativeCallbackAudit } from './types.ts';
+import type { Account, ClientOptions, ClientEvents, LoginRequest, ClientState, Friend, Group, GroupMember, MessageInput, SentMessage, SentMergedForward, ForwardTextNode, MergedForwardOptions, ForwardResource, Message, Peer, HistoryOptions, KickOptions, UserProfile, DeleteFriendOptions, FriendRequest, NativeCallbackAudit } from './types.ts';
 export type * from './types.ts';
 export type { VideoCodec, VideoInfo } from './video-codec-loader.ts';
 import type { GroupNoticeOptions, GroupNoticePage } from './types.ts';
@@ -252,6 +253,10 @@ export class QQClient extends EventEmitter<ClientEvents> {
   async getForwardMessages(peer: Peer, rootMessageId: string, parentMessageId: string = rootMessageId): Promise<Message[]> {
     const root=normalizeMessageQuery(peer,rootMessageId),parent=normalizeMessageQuery(root.peer,parentMessageId);
     return this.#operation('getForwardMessages', { peer:root.peer, rootMessageId:root.messageId, parentMessageId:parent.messageId });
+  }
+  /** Fetch one resource; no synthetic message identities or implicit media/nested fetches. */
+  async getForwardResource(resourceId: string): Promise<ForwardResource> {
+    return this.#operation('getForwardResource', { resourceId:normalizeForwardResourceId(resourceId) });
   }
   /** Native submission only; this does not confirm destination receipt. */
   forwardMessages(source: Peer, destination: Peer, messageIds: string[]): Promise<void> { return this.#operation('forwardMessages', { source, destination, messageIds }); }

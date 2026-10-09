@@ -1,6 +1,6 @@
 # Resource-based merged-record download (research only)
 
-The SDK currently reads existing native card message IDs through `getForwardMessages(peer, rootMessageId, parentMessageId?)`. Recognized received cards expose a `resourceId`, but downloading records by that resource ID is not implemented. It requires a separate SSO request and record model; a resource ID cannot replace the native root/parent message IDs.
+The SDK currently reads existing native card message IDs through `getForwardMessages(peer, rootMessageId, parentMessageId?)`. Recognized received cards expose a `resourceId`, and `getForwardResource(resourceId)` implements a separate SSO read and observed record model. Native/server acceptance remains pending; a resource ID cannot replace the native root/parent message IDs.
 
 ## Fixed request and response facts
 
@@ -18,10 +18,10 @@ The response has result at field 1 and settings at field 15. Result contains str
 | [Record conversion](https://github.com/NapNeko/NapCatQQ/blob/26d7533e0f5800fdff865ab2f2ad7692917e1076/packages/napcat-core/packet/message/converter.ts) | `b7ed2a1d78e6018d4ea1e1779d043e481425db50` | `cc0364ef974531b0ef1c65966b65d01679536e67c0da4f5763cd9cfa8c4787b3` |
 | [OneBot resource/native fallback](https://github.com/NapNeko/NapCatQQ/blob/26d7533e0f5800fdff865ab2f2ad7692917e1076/packages/napcat-onebot/action/go-cqhttp/GetForwardMsg.ts) | `4141d4d24473bb668347ecde7065173ce7f2e868` | `977915cdabc32024e9efb36b0335216bf1ea3dcb597aa177b4b0d247d1016755` |
 
-## Remaining SDK contract
+## SDK record contract and remaining media work
 
 The inspected download path obtains additional image/video URLs through separate SSO commands; the resulting URL contains an authorization rKey. A successful long-message request alone therefore does not establish complete media support. The converter handles a limited set of elements and filters unsupported elements. It also supplies a fixed synthetic native message ID while constructing its compatibility result. The OneBot fallback constructs synthetic conversation context. These compatibility values must not become SDK query/recall identities.
 
-A future resource reader should return a distinct `ForwardRecord` model containing only observed author, timestamp and elements, with unknown protobuf evidence preserved. It must not fabricate a `Message.messageId`, peer or sequence. Before dispatch it should validate and capture the complete input; bound compressed and decompressed bytes, records and nesting; define strict response and unknown-field behavior; and reject on Session cancellation without replay. Media resolution and nested-resource fetching need separate bounded contracts. Actual account acceptance remains necessary for response shape and server compatibility.
+The resource reader returns a distinct `ForwardRecord` model containing only observed author, timestamp and elements, with unknown protobuf evidence preserved. It does not fabricate a `Message.messageId`, peer or sequence. Before dispatch it validates and captures the input. It bounds compressed/decompressed bytes, record and element counts; defines checked response and unknown-field behavior; and rejects on Session cancellation without replay. See [decoder and public result policy](forward-resource-decoding.md). Media resolution and nested-resource fetching need separate bounded contracts. Actual account acceptance remains necessary for response shape and server compatibility.
 
-This document closes source research for the request/response boundary. It does not claim an implemented API, real resource download, account acceptance, or signing authenticity.
+This document closes source research for the request/response boundary. The independently implemented SDK/worker/CLI read path has offline contracts, but this source research does not establish a real resource download, account acceptance or signing authenticity.

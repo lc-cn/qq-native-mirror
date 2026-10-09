@@ -514,3 +514,15 @@ test('merged-forward public query defaults first-level parent and captures exact
   assert.equal(worker.requests.length,2);
  }finally{await client.close();}
 });
+
+test('resource lookup validates before IPC, preserves the exact reference and closes pending reads without replay',async()=>{
+ const worker=new Worker(),client=new QQClient(worker as unknown as ChildProcess,500);
+ try{
+  await assert.rejects(client.getForwardResource('r'),/not online/);worker.emit('message',{event:'ready',payload:{uin:'456',uid:'u_self'}});
+  let coerced=0;for(const bad of ['',null,42,{toString(){coerced++;return 'r';}},'\ud800','界'.repeat(1366)])await assert.rejects(client.getForwardResource(bad as string));
+  assert.equal(coerced,0);assert.equal(worker.requests.length,0);
+  const exact=' 资源-0001 ';const pending=client.getForwardResource(exact);const request=worker.requests.at(-1);assert.equal(request.method,'getForwardResource');assert.equal(request.resourceId,exact);
+  const expected={resourceId:exact,records:[],raw:Buffer.from('opaque')};worker.emit('message',{id:request.id,result:expected});assert.deepEqual(await pending,expected);
+  const closing=client.getForwardResource('r');const rejection=assert.rejects(closing,/closed/);await client.close();await rejection;assert.equal(worker.requests.filter(r=>r.method==='getForwardResource').length,2);
+ }finally{await client.close();}
+});

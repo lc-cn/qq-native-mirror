@@ -219,3 +219,23 @@ test('watch rejects invalid event mode before registration or configuration/nati
   const result = spawnSync(process.execPath, ['src/cli.ts', 'watch', '--events', 'unknown', '--config', '/nonexistent-fixture-config.json'], { encoding: 'utf8' });
   assert.equal(result.status, 1); assert.match(result.stderr, /--events must be message, all or normalized/); assert.doesNotMatch(result.stderr, /ENOENT/);
 });
+
+test('forward resource CLI validates exact resource references before client creation',async()=>{
+ const calls:string[]=[];const action=await prepareCommand('forward-resource',{'resource-id':' 资源-001 '});await action({getForwardResource:async(id:string)=>{calls.push(id);return{resourceId:id,records:[],raw:Buffer.alloc(0)};}} as any);assert.deepEqual(calls,[' 资源-001 ']);
+ for(const flags of [{},{'resource-id':''},{'resource-id':'\ud800'},{'resource-id':'x'.repeat(4097)}])await assert.rejects(prepareCommand('forward-resource',flags));
+});
+
+test('actual resource CLI reaches preflight and validates before reading account configuration',()=>{
+ const config='/nonexistent-forward-resource-fixture-config.json';
+ const invalid=spawnSync(process.execPath,['src/cli.ts','forward-resource','--config',config],{encoding:'utf8'});
+ assert.equal(invalid.status,1);assert.match(invalid.stderr,/resource-id/);assert.doesNotMatch(invalid.stderr,/Unknown command|ENOENT/);
+ const valid=spawnSync(process.execPath,['src/cli.ts','forward-resource','--config',config,'--resource-id','r'],{encoding:'utf8'});
+ assert.equal(valid.status,1);assert.match(valid.stderr,/ENOENT.*nonexistent-forward-resource-fixture-config/);assert.doesNotMatch(valid.stderr,/Unknown command|Unknown option/);
+});
+test('actual batch and merged-send CLI entries reach their existing validators before account creation',()=>{
+ const config='/nonexistent-forward-cli-fixture-config.json';
+ const batch=spawnSync(process.execPath,['src/cli.ts','messages','--config',config,'--kind','group','--target','123','--message-ids','invalid'],{encoding:'utf8'});
+ assert.equal(batch.status,1);assert.match(batch.stderr,/message.?ids|numeric/i);assert.doesNotMatch(batch.stderr,/Unknown command|ENOENT/);
+ const merged=spawnSync(process.execPath,['src/cli.ts','send-forward','--config',config,'--kind','group','--target','123','--nodes-file','/nonexistent-forward-nodes-fixture.json'],{encoding:'utf8'});
+ assert.equal(merged.status,1);assert.match(merged.stderr,/ENOENT.*nonexistent-forward-nodes-fixture/);assert.doesNotMatch(merged.stderr,/Unknown command|Unknown option|nonexistent-forward-cli-fixture-config/);
+});

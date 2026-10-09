@@ -1,0 +1,120 @@
+{
+  "schemaVersion": 1,
+  "observedAt": "2026-10-09T21:12:24.613306+00:00",
+  "baseCommit": "b022cdd60285c8ba072c96b048a72bacce93b40b",
+  "feature": "bounded SSO resource read with observed records and real CLI entry validation",
+  "sourceFiles": [
+    {
+      "path": "ci/verify-consumer.mjs",
+      "sha256": "eb2b9ec0963a34273c838d977f54443961429f5610fb9e7301f3604d07a058cd"
+    },
+    {
+      "path": "sdk/README.md",
+      "sha256": "f2047126849cdff155668ea8a166cb0a9c02b9a56133b55437dd20a17b0c53eb"
+    },
+    {
+      "path": "sdk/docs/forward-resource-contract.md",
+      "sha256": "d8f9f33c85adf2053a04efcfe259425eb522595ae72cdc6570445c32f0a25edd"
+    },
+    {
+      "path": "sdk/docs/forward-resource-decoding.md",
+      "sha256": "0e5f8bbeb84dcbea53fa7cc69c98544346d0893ca0d38b9f8756cafc12642c4f"
+    },
+    {
+      "path": "sdk/docs/received-forward.md",
+      "sha256": "506bb0f624db6678a87f455c904b0ef45043e9c616aa6e9223a175edb6320e46"
+    },
+    {
+      "path": "sdk/scripts/forward-resource-consumer-contract.mjs",
+      "sha256": "f55b94cb6a422a7a3c27965d7e622f4e8317e3911ca9372897c0952e2a24daf3"
+    },
+    {
+      "path": "sdk/src/cli.ts",
+      "sha256": "00b5e6bcdd412a0b8b48ed1a56003d5e6e8707b80e1b890d91f7e12d1fb5781a"
+    },
+    {
+      "path": "sdk/src/forward-resource-transport.ts",
+      "sha256": "143ee437f7fa170ab83667fb6c36822226f87c419c1c5f159b8e9391b9f6f2f0"
+    },
+    {
+      "path": "sdk/src/forward-resource-wire.ts",
+      "sha256": "a9b88b8dfac4b48791dac98af97fe965de4fde3eb549f332ed193a24c40c501b"
+    },
+    {
+      "path": "sdk/src/index.ts",
+      "sha256": "b6e8a16f5c70dfd6995b29f80532bc770d69a2420dafc57ad3698a0df3d2fcb7"
+    },
+    {
+      "path": "sdk/src/native-services.ts",
+      "sha256": "600b533eb0f5da81c8544099edb6be6ef0d9e63f9cbeb06ec6267f5996ba81b8"
+    },
+    {
+      "path": "sdk/src/types.ts",
+      "sha256": "af24faaa81497623daa69556e131761bc92e131e84903d3e009605e0970b02df"
+    },
+    {
+      "path": "sdk/src/worker.ts",
+      "sha256": "aeb043ed363408bd9e30e8b37d131045b5a352d1dad50e71a1d5d5c04d3845f8"
+    },
+    {
+      "path": "sdk/test/cli.test.ts",
+      "sha256": "194027fb35a5da8a1cbabe5283f9c1ab96179f4f4449f353aab9134eb2a6a290"
+    },
+    {
+      "path": "sdk/test/client.test.ts",
+      "sha256": "d25421c9502cce4a3af9e32112b7cd688dc8013b6e687e5035b27785ede0459a"
+    },
+    {
+      "path": "sdk/test/forward-resource-services.test.ts",
+      "sha256": "ecf229c7674565a7c3fad56b3258756abc93b9f10a14877861e876c753b9e0f7"
+    },
+    {
+      "path": "sdk/test/forward-resource-transport.test.ts",
+      "sha256": "5b87f6eb9ac6fc24694b96ac88a98f8bfdcf10fc3dcdd0d69c6b358f9eb0c66d"
+    },
+    {
+      "path": "sdk/test/forward-resource-wire.test.ts",
+      "sha256": "c03441f65b46c79865c9619906b49597e46f05e7756fe25cb64ab5f54963d2bc"
+    },
+    {
+      "path": "tools/verify-dedup-consumer.mjs",
+      "sha256": "bcc966e4526e20c96f556ac80538ae6068f88db01e8f6473bb6ebb353f834f82"
+    },
+    {
+      "path": "tools/verify-dedup-consumer.test.mjs",
+      "sha256": "f3814724aa3b1466e50460d6dceca826adabe7b3838bbae26d1e5d29b67438bc"
+    }
+  ],
+  "localBuildPassed": true,
+  "fullSdkRegression": {
+    "tests": 527,
+    "passed": 527,
+    "failed": 0,
+    "skipped": 0,
+    "logSha256": "a504511af564963b19b25d974400b223c21a165b442e4c3cafaf899b444e1f51"
+  },
+  "typeCheckPassed": true,
+  "producerContracts": {
+    "tests": 6,
+    "passed": 6
+  },
+  "compiledConsumerContract": {
+    "forwardResourceContract": true,
+    "nativeForwardResourceAttempted": false
+  },
+  "compiledConsumerLogSha256": "f7027b0dc6888866d40b5a9c9f38ba8eb5b354e5566c634ab6babf155282b833",
+  "independentReviewFixes": [
+    "reported group nickname context without friend fallback",
+    "ordinary Buffer snapshot before response parsing",
+    "actual CLI whitelist reaches implemented resource/batch/merged commands",
+    "command preflight before reading account configuration",
+    "raw is full decompressed payload and decoder is not a complete schema validator"
+  ],
+  "accountUsed": false,
+  "nativeForwardResourceAttempted": false,
+  "resourceDownloadImplemented": true,
+  "completeForwardMediaEstablished": false,
+  "signingAuthenticityEstablished": false,
+  "published": false,
+  "defaultsChanged": false
+}

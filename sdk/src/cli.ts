@@ -7,6 +7,7 @@ import { validateDownloadMirrors } from './native-package.ts';
 import { validateFaceId } from './message-elements.ts';
 import { normalizeMessageBatchQuery } from './message-query.ts';
 import {captureMergedForward} from './merged-forward.ts';
+import {normalizeForwardResourceId} from './forward-resource-wire.ts';
 import {KernelRequestError,MergedForwardError} from './errors.ts';
 import type { ClientOptions, LoginRequest, Peer, HistoryOptions, MessageInput } from './types.ts';
 
@@ -57,6 +58,7 @@ const usage = `qq-native-client <command> [options]
   message --config FILE --kind private|group --target ID --message-id ID
   messages --config FILE --kind private|group --target ID --message-ids ID,ID
   forward-history --config FILE --kind private|group --target ID --root-message-id ID [--parent-message-id ID]
+  forward-resource --config FILE --resource-id ID [--uin UIN]
   forward --config FILE --source-kind private|group --source-target ID --kind private|group --target ID --message-ids ID,ID
   send-forward --config FILE --kind private|group --target ID --nodes-file FILE
        [--title TEXT --summary TEXT --prompt TEXT] [--uin UIN]
@@ -166,6 +168,10 @@ export async function prepareCommand(command: string, flags: Record<string, stri
       const target = peer(flags), root = numeric(flags, 'root-message-id'), parent = flags['parent-message-id'] === undefined ? root : numeric(flags, 'parent-message-id');
       return client => client.getForwardMessages(target, root, parent);
     }
+    case 'forward-resource': {
+      const resourceId=normalizeForwardResourceId(required(flags,'resource-id'));
+      return client=>client.getForwardResource(resourceId);
+    }
     case 'forward': {
       const source = peer({ kind: required(flags, 'source-kind'), target: required(flags, 'source-target') }), destination = peer(flags);
       const ids = required(flags, 'message-ids').split(',');
@@ -245,6 +251,9 @@ async function main() {
     nickname: ['config','uin','name'], signature: ['config','uin','text'],
     profile: ['config', 'uin', 'target'], requests: ['config', 'uin'], request: ['config', 'uin', 'uid', 'time', 'accept'],
     'forward-history': ['config', 'uin', 'kind', 'target', 'root-message-id', 'parent-message-id'], forward: ['config', 'uin', 'source-kind', 'source-target', 'kind', 'target', 'message-ids'],
+    messages: ['config', 'uin', 'kind', 'target', 'message-ids'],
+    'forward-resource': ['config', 'uin', 'resource-id'],
+    'send-forward': ['config', 'uin', 'kind', 'target', 'nodes-file', 'title', 'summary', 'prompt'],
     'group-requests': ['config', 'uin', 'doubt', 'limit', 'before'], 'group-request': ['config', 'uin', 'group-id', 'sequence', 'type', 'accept', 'doubt', 'reason'],
     recall: ['config', 'uin', 'kind', 'target', 'message-id'], download: ['config', 'uin', 'kind', 'target', 'message-id', 'element-id', 'destination'],
     'friend-remark': ['config', 'uin', 'target', 'remark'], 'friend-delete': ['config', 'uin', 'target', 'block', 'both'],
@@ -257,6 +266,7 @@ async function main() {
   if (!(command in allowed)) throw new Error(`Unknown command: ${command}`);
   for (const flag of Object.keys(flags)) if (!allowed[command]!.includes(flag)) throw new Error(`Unknown option for ${command}: --${flag}`);
   const watchMode = command === 'watch' ? watchEventMode(flags.events) : undefined;
+  const action = ['init', 'config', 'login', 'watch'].includes(command) ? undefined : await prepareCommand(command, flags);
   const configPath = resolve(required(flags, 'config'));
   if (command === 'init') {
     const options: ClientOptions = { dataDir: resolve(required(flags, 'data-dir')) };
@@ -284,7 +294,6 @@ async function main() {
     else if (method === 'quick') login = { method: 'quick', uin: required(flags, 'uin') };
     else if (method !== 'restore') throw new Error('--method must be qr, restore or quick');
   }
-  const action = ['login', 'watch'].includes(command) ? undefined : await prepareCommand(command, flags);
   const client = await createClient({ ...options, login: undefined });
   let qrWrite: Promise<void> = Promise.resolve();
   const qrPath = resolve(flags['qr-file'] ?? `${configPath}.qrcode.png`);

@@ -65,6 +65,7 @@ export function validateDedupInstalledReceipts(build,manifest,receipt,video){
  check(`${receipt.platform}-${receipt.arch}`===build.device&&/^v24\./.test(receipt.node)&&receipt.exports===contract.exports&&receipt.installedMainOnly===true&&receipt.automaticPlatformSelection===true&&receipt.prepared===true&&receipt.closed===true&&receipt.loginAttempted===false&&receipt.accountUsed===false,'Installed preparation/close failed');
  if(manifest.nodeVersion!==undefined)check(receipt.node===manifest.nodeVersion,'Actual consumer Node ABI mismatch');
  check(receipt.receivedForwardContract===true&&receipt.nativeReceivedForwardObserved===false,'Installed received-forward contract missing or real observation claimed');
+ check(receipt.forwardResourceContract===true&&receipt.nativeForwardResourceAttempted===false,'Installed forward-resource contract missing or real read claimed');
  check(receipt.mergedForwardClientContract===true&&receipt.mergedForwardServiceContract===true&&receipt.nativeMergedForwardAttempted===false,'Installed merged-forward contracts missing or real operation attempted');
  check(receipt.nativeMessageBatchQueryAttempted===false&&receipt.messageBatchQueryContract===true&&receipt.messageBatchCliContract===true,'Installed batch contracts missing');
  assert.deepEqual(receipt.installedNativeStorage,{format:'gzip-objects-v1',nativePaths:contract.paths,objects:contract.objects,allOriginalFilesVerified:true,warmCacheReused:true,networkFallbackAttempted:false});

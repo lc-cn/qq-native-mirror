@@ -1,6 +1,8 @@
 import { nativeResultError } from './errors.ts';
 import {captureMergedForward,sendCapturedMergedForward} from './merged-forward.ts';
 import {createLongMessageResponseTransport} from './long-message-response.ts';
+import {buildForwardResourceRequest,normalizeForwardResourceId} from './forward-resource-wire.ts';
+import {createForwardResourceTransport} from './forward-resource-transport.ts';
 import { normalizeMessageQuery, normalizeMessageBatchQuery, queryNativeMessage, queryNativeMessages, queryNativeHistory } from './message-query.ts';
 import { createSelfProfile, type SelfProfileOperation } from './self-profile.ts';
 import { listWebGroupNotices } from './web-group-notices.ts';
@@ -25,7 +27,7 @@ import type { Friend, Group, GroupMember, Message, NativeCallbackAudit } from '.
 
 type Native = Record<string, any>;
 export interface NativePeer { chatType: 1 | 2; peerUid: string; guildId?: string }
-export type ServiceOperation = 'listFriends' | 'listGroups' | 'getGroupMembers' | 'sendPrivateMessage' | 'sendGroupMessage' | 'sendMergedForward' | 'getMessage' | 'getMessages' | 'getHistory' | 'recallMessage' | 'downloadAttachment' | SelfProfileOperation | 'listGroupNotices' | GroupNoticeOperation | GroupOperation | ContactOperation | FriendRequestOperation | GroupRequestOperation | ForwardOperation;
+export type ServiceOperation = 'listFriends' | 'listGroups' | 'getGroupMembers' | 'sendPrivateMessage' | 'sendGroupMessage' | 'sendMergedForward' | 'getForwardResource' | 'getMessage' | 'getMessages' | 'getHistory' | 'recallMessage' | 'downloadAttachment' | SelfProfileOperation | 'listGroupNotices' | GroupNoticeOperation | GroupOperation | ContactOperation | FriendRequestOperation | GroupRequestOperation | ForwardOperation;
 export interface NativeMessage extends Native { msgId: string; peerUid: string; chatType: number }
 interface Waiter { event: string; check: (...args: any[]) => unknown; resolve: (value: any) => void; reject: (error: Error) => void; timer: ReturnType<typeof setTimeout> }
 
@@ -273,6 +275,7 @@ export function createNativeServices(session: Native, version: string, emit: (ev
     }));
   };
   let longMessageTransport: ReturnType<typeof createLongMessageResponseTransport> | undefined;
+  let forwardResourceTransport: ReturnType<typeof createForwardResourceTransport> | undefined;
   const sendPreparedElements = async (peer: NativePeer, elements: Native[], onDispatch?: () => void) => {
     const messages = service('Msg');
     const uniqueId = await awaitAlive(call(messages, 'generateMsgUniqueId', peer.chatType, call(service('MSF'), 'getServerTime')));
@@ -394,6 +397,12 @@ export function createNativeServices(session: Native, version: string, emit: (ev
             () => longMessageTransport ??= createLongMessageResponseTransport(service('Msg') as any),
             (card,onDispatch) => sendPreparedElements(destination,[card],onDispatch),lifetime.signal);
         }
+        case 'getForwardResource': {
+          const resourceId=normalizeForwardResourceId(payload.resourceId),selfUid=accountUid ?? '';
+          buildForwardResourceRequest(selfUid,resourceId); // Preflight before obtaining any native service.
+          lifetime.signal.throwIfAborted();
+          return (forwardResourceTransport ??= createForwardResourceTransport(service('Msg') as any)).read(selfUid,resourceId,{signal:lifetime.signal});
+        }
         case 'getMessage': {
           const query = normalizeMessageQuery(payload.peer, payload.messageId);
           const raw = await queryNativeMessage(service('Msg'), await resolvePeer(query.peer), query.messageId);
@@ -456,6 +465,7 @@ export function createNativeServices(session: Native, version: string, emit: (ev
       closed = true;
       lifetime.abort();
       longMessageTransport?.close();
+      forwardResourceTransport?.close();
       usedSendIds.clear();
       recallEvents.close();
       selfProfile.close();

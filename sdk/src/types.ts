@@ -129,6 +129,23 @@ export interface ReceivedForwardElement {
   count?: number;
   previews?: string[];
 }
+/** Observed protobuf records, separate from native messages with query/recall IDs. */
+export type ForwardResourceElement =
+  | { type: 'text'; text: string }
+  | { type: 'face'; id: number }
+  | { type: 'unknown'; fieldNumbers: number[]; raw: Buffer };
+export interface ForwardRecord {
+  sender: { userId?: string; uid?: string; nickname?: string };
+  time?: number;
+  elements: ForwardResourceElement[];
+  raw: Buffer;
+}
+export interface ForwardResource {
+  resourceId: string;
+  records: ForwardRecord[];
+  /** Complete decompressed payload, including unrecognized actions and fields. */
+  raw: Buffer;
+}
 export type MessageElement = SendableMessageElement
   | ReceivedForwardElement
   | { type: 'unknown'; nativeType: number; data: unknown };
