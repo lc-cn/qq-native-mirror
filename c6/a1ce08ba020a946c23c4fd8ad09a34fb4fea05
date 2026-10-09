@@ -1,0 +1,33 @@
+ci/windows/build-adapter.mjs
+  s_2104cc474f1ce5::t_52720edf4610e9 43-46
+.github/workflows/windows-native.yml
+  s_2104cc474f1ce5::t_672372e24a391a 43
+.github/workflows/native-npm.yml
+  s_2104cc474f1ce5::t_32947db1cd6f55 9-12,101-102,115-117,127-135
+sdk/docs/npm-first-publish.md
+  s_2104cc474f1ce5::t_82baf2112f8481 1-29
+sdk/docs/windows-native-investigation.md
+  s_2104cc474f1ce5::t_3e44b109a75135 1-105
+sdk/scripts/local-first-publish.mjs
+  s_2104cc474f1ce5::t_9085fe4b1200cb 1-89
+sdk/src/native-services.ts
+  s_2104cc474f1ce5::t_cace5627138b53 218-220
+sdk/test/native-services.test.ts
+  s_2104cc474f1ce5::t_f321298d6133fe 8,32,46-47
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c6a1ce08ba020a946c23c4fd8ad09a34fb4fea05",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
