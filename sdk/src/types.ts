@@ -60,6 +60,8 @@ export interface ClientEvents {
   'reconnect-error': [Error];
   'request.friend': [FriendRequest];
   'request.group': [GroupRequest];
+  'group-list-updated': [GroupListUpdate];
+  'group-members-updated': [GroupMemberUpdate];
   qrcode: [{ image: Buffer; url: string }];
   authenticated: [Account];
   login: [Account];
@@ -79,6 +81,20 @@ export type ClientState = 'idle' | 'connecting' | 'online' | 'disconnected' | 'c
 export interface Friend { userId: string; uid: string; nickname: string; remark: string }
 export interface Group { groupId: string; name: string; memberCount: number; maxMemberCount: number }
 export interface GroupMember { userId: string; uid: string; nickname: string; card: string; role: 'owner' | 'admin' | 'member' }
+/** Native metadata notification; optional fields remain absent when not supplied. */
+export interface GroupChange { groupId: string; name?: string; memberCount?: number; maxMemberCount?: number }
+export interface GroupListUpdate { kind: 'refresh' | 'all' | 'modified' | 'removed'; groups: GroupChange[] }
+export interface GroupMemberChange {
+  uid: string;
+  userId?: string;
+  nickname?: string;
+  card?: string;
+  role?: 'unspecified' | 'stranger' | 'member' | 'admin' | 'owner';
+  deleted?: boolean;
+  roleChanged?: boolean;
+}
+/** Metadata synchronization, not a classified member join/leave notice. */
+export interface GroupMemberUpdate { groupId: string; source: 'local' | 'remote'; members: GroupMemberChange[] }
 export type Peer = { type: 'private'; userId: string } | { type: 'group'; groupId: string };
 export type SendableMessageElement =
   | { type: 'text'; text: string }

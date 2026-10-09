@@ -130,8 +130,28 @@ try {
    assert.equal(calls,1);
   }finally{query.close();}
  }
+ // Installed metadata callbacks are normalized using fake events only.
+ const {createGroupEvents}=await import(pathToFileURL(join(temp,'node_modules/qq-native-client/dist/group-events.js')).href);
+ const groupEvents=[];const groupListener=createGroupEvents((event,payload)=>groupEvents.push([event,payload]));
+ groupListener.onGroupListUpdate(3,[{groupCode:'123'}]);
+ assert.deepEqual(groupEvents.pop(),['group-list-updated',{kind:'removed',groups:[{groupId:'123'}]}]);
+ groupListener.onMemberInfoChange('123',1,new Map([['u_fixture',{uid:'u_fixture',uin:'456',role:3,isChangeRole:true}]]));
+ assert.deepEqual(groupEvents.pop(),['group-members-updated',{groupId:'123',source:'remote',members:[{uid:'u_fixture',userId:'456',role:'admin',roleChanged:true}]}]);
+ groupListener.onGroupListUpdate(2,[{groupCode:'123',groupName:'private fixture'},{groupCode:'invalid'}]);
+ groupListener.onGroupListUpdate(2,Array(1));
+ groupListener.onMemberInfoChange('123',0,new Map([['u_valid',{nick:'private fixture'}],['u_invalid',{role:999}]]));
+ assert.deepEqual(groupEvents,[['diagnostic',{stage:'invalid-native-group-list-update'}],['diagnostic',{stage:'invalid-native-group-list-update'}],['diagnostic',{stage:'invalid-native-group-member-update'}]]);
+ assert.ok(!JSON.stringify(groupEvents).includes('private fixture'));
+ const {observeWatchEvents}=await import(pathToFileURL(join(temp,'node_modules/qq-native-client/dist/cli.js')).href);
+ const {EventEmitter}=await import('node:events');const fakeWatch=new EventEmitter();const watchLines=[];
+ const unwatch=observeWatchEvents(fakeWatch,'all',line=>watchLines.push(JSON.parse(line)));
+ fakeWatch.emit('group-list-updated',{kind:'removed',groups:[{groupId:'123'}]});
+ fakeWatch.emit('group-members-updated',{groupId:'123',source:'remote',members:[]});
+ fakeWatch.emit('msf-status',{fixture:true});fakeWatch.emit('authenticated',{fixture:true});
+ assert.deepEqual(watchLines,[{event:'group-list-updated',payload:{kind:'removed',groups:[{groupId:'123'}]}},{event:'group-members-updated',payload:{groupId:'123',source:'remote',members:[]}}]);
+ unwatch();fakeWatch.emit('group-list-updated',{kind:'all',groups:[]});assert.equal(watchLines.length,2);
  globalThis.fetch=()=>{throw new Error('Unexpected mirror request with installed platform package');};
  client=await sdk.createClient({dataDir:join(temp,'unused-account'),autoReconnect:false,timeoutMs:30000});
  const exports=client.nativeExports.length;if(exports<80)throw new Error('Unexpected native export inventory');await client.close();if(client.state!=='closed')throw new Error('Client did not close');
- await writeFile('out/consumer.json',JSON.stringify({platform:process.platform,arch:process.arch,node:process.version,exports,installedMainOnly:true,automaticPlatformSelection:true,tarballRequests,faceContract:true,faceDeliveryAttempted:false,messageQueryContract:true,nativeMessageQueryAttempted:false,selfProfileContract:true,profileMutationAttempted:false,groupOperationContract:true,groupMutationAttempted:false,groupMemberQueryContract:true,nativeGroupMemberQueryAttempted:false,prepared:true,closed:true,loginAttempted:false,registry:'isolated local fixture serving actual CI tarballs'},null,2));console.log(await readFile('out/consumer.json','utf8'));
+ await writeFile('out/consumer.json',JSON.stringify({platform:process.platform,arch:process.arch,node:process.version,exports,installedMainOnly:true,automaticPlatformSelection:true,tarballRequests,faceContract:true,faceDeliveryAttempted:false,messageQueryContract:true,nativeMessageQueryAttempted:false,selfProfileContract:true,profileMutationAttempted:false,groupOperationContract:true,groupMutationAttempted:false,groupMemberQueryContract:true,nativeGroupMemberQueryAttempted:false,groupMetadataEventContract:true,businessWatchContract:true,nativeGroupMetadataObserved:false,prepared:true,closed:true,loginAttempted:false,registry:'isolated local fixture serving actual CI tarballs'},null,2));console.log(await readFile('out/consumer.json','utf8'));
 }finally{await client?.close();server.closeAllConnections();await new Promise(done=>server.close(done));await rm(temp,{recursive:true,force:true});}

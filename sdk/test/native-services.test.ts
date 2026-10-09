@@ -140,6 +140,35 @@ test('group member query separates completed empty lists from native failure and
   } finally { services.close(); }
 });
 
+test('group metadata callbacks preserve query completion and stop after Session close', async () => {
+  let listener: any;
+  const events: [string, any][] = [];
+  const session = {
+    getMsgService: () => ({ addKernelMsgListener() {} }),
+    getBuddyService: () => ({ addKernelBuddyListener() {} }),
+    getGroupService: () => ({
+      addKernelGroupListener(value: any) { if (!listener) listener = value; },
+      getGroupList() {
+        listener.onGroupListUpdate(2, [{ groupCode: '123', groupName: 'modified' }]);
+        listener.onGroupListUpdate(1, [{ groupCode: '123', groupName: 'all', memberCount: 2, maxMember: 100 }]);
+        return { result: 0 };
+      },
+    }),
+  };
+  const services = createNativeServices(session, '7.0.2-53644', (name, value) => events.push([name, value]));
+  try {
+    assert.deepEqual(await services.invokeOperation('listGroups'), [{ groupId: '123', name: 'all', memberCount: 2, maxMemberCount: 100 }]);
+    listener.onMemberInfoChange('123', 1, new Map([['u', { uid: 'u', uin: '456', role: 3, isChangeRole: true }]]));
+    assert.deepEqual(events.map(([name]) => name), ['group-list-updated', 'group-list-updated', 'group-members-updated']);
+    assert.equal(events[0][1].kind, 'modified'); assert.equal(events[1][1].kind, 'all');
+    assert.deepEqual(events[2][1], { groupId: '123', source: 'remote', members: [{ uid: 'u', userId: '456', role: 'admin', roleChanged: true }] });
+    services.close();
+    listener.onGroupListUpdate(3, [{ groupCode: '123' }]);
+    listener.onMemberInfoChange('123', 0, new Map());
+    assert.equal(events.length, 3);
+  } finally { services.close(); }
+});
+
 test('nonlocal image input rejects without invoking native send', async () => {
   const { services, sentCalls } = fixture();
   try { await assert.rejects(services.invokeOperation('sendGroupMessage', { groupId: '123', message: [{ type: 'image', file: 'https://example.test/image.png' }] }), /absolute local file path/); assert.equal(sentCalls.length, 0); }

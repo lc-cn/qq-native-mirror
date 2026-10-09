@@ -16,6 +16,24 @@ class Worker extends EventEmitter {
   kill() { this.connected = false; queueMicrotask(() => this.emit('exit', 0, null)); return true; }
 }
 
+test('public client forwards typed group metadata without changing account state and suppresses late events', async () => {
+  const worker = new Worker(), client = new QQClient(worker as unknown as ChildProcess, 500);
+  const events: unknown[] = [];
+  client.on('group-list-updated', update => events.push(update));
+  client.on('group-members-updated', update => events.push(update));
+  const list = { kind: 'removed', groups: [{ groupId: '123' }] };
+  const members = { groupId: '123', source: 'remote', members: [{ uid: 'u', deleted: true }] };
+  worker.emit('message', { event: 'ready', payload: { uin: '456', uid: 'u_self' } });
+  worker.emit('message', { event: 'group-list-updated', payload: list });
+  worker.emit('message', { event: 'group-members-updated', payload: members });
+  assert.deepEqual(events, [list, members]);
+  assert.equal(client.state, 'online'); assert.equal(client.account?.uin, '456');
+  await client.close();
+  worker.emit('message', { event: 'group-list-updated', payload: list });
+  worker.emit('message', { event: 'group-members-updated', payload: members });
+  assert.equal(events.length, 2);
+});
+
 test('setSignature validates JavaScript input before IPC and preserves online-only error semantics', async () => {
   const worker = new Worker(), client = new QQClient(worker as unknown as ChildProcess, 500);
   try {

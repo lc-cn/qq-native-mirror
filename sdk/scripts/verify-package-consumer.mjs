@@ -84,10 +84,32 @@ try {
 } finally {module.close();}
 `);
 run(process.execPath, ['group-members.mjs']);
+await writeFile(join(destination, 'group-events.mjs'), `import assert from 'node:assert/strict';
+import {EventEmitter} from 'node:events';
+import {createGroupEvents} from './node_modules/qq-native-client/dist/group-events.js';
+import {observeWatchEvents} from './node_modules/qq-native-client/dist/cli.js';
+const client=new EventEmitter(),lines=[],diagnostics=[];
+client.on('diagnostic',value=>diagnostics.push(value));
+const listener=createGroupEvents((name,value)=>client.emit(name,value));
+const cleanup=observeWatchEvents(client,'all',line=>lines.push(JSON.parse(line)));
+listener.onGroupListUpdate(3,[{groupCode:'123'}]);
+listener.onMemberInfoChange('123',1,new Map([['u',{uid:'u',uin:'456',role:3,isChangeRole:true}]]));
+assert.deepEqual(lines,[{event:'group-list-updated',payload:{kind:'removed',groups:[{groupId:'123'}]}},{event:'group-members-updated',payload:{groupId:'123',source:'remote',members:[{uid:'u',userId:'456',role:'admin',roleChanged:true}]}}]);
+client.emit('authenticated',{credential:'fixture-secret'});client.emit('msf-status',{status:1});
+listener.onGroupListUpdate(1,Array(1));
+listener.onMemberInfoChange('123',1,new Map([['u',{uid:'different',credential:'fixture-secret'}]]));
+assert.equal(lines.length,2);assert.deepEqual(diagnostics,[{stage:'invalid-native-group-list-update'},{stage:'invalid-native-group-member-update'}]);
+assert.doesNotMatch(JSON.stringify({lines,diagnostics}),/credential|fixture-secret/);
+cleanup();listener.onGroupListUpdate(0,[]);assert.equal(lines.length,2);
+const defaults=[];const removeDefault=observeWatchEvents(client,undefined,line=>defaults.push(JSON.parse(line)));
+client.emit('message',{messageId:'42'});listener.onGroupListUpdate(0,[]);assert.deepEqual(defaults,[{messageId:'42'}]);removeDefault();
+`);
+run(process.execPath, ['group-events.mjs']);
 const help = run(process.execPath, ['node_modules/qq-native-client/dist/cli.js', '--help']);
 if (!help.includes('group-kick') || !help.includes('--message-file')) throw new Error('Installed CLI lacks commands');
 const cliEntry='node_modules/qq-native-client/dist/cli.js';
 if (!help.includes('signature')) throw new Error('Installed CLI lacks signature command');
+if (!help.includes('--events message|all')) throw new Error('Installed CLI lacks business event watch mode');
 if (!help.includes('message --config')) throw new Error('Installed CLI lacks single-message lookup');
 await writeFile(join(destination, 'message-query.mjs'), `import assert from 'node:assert/strict';
 import {prepareCommand} from './node_modules/qq-native-client/dist/cli.js';
@@ -110,6 +132,8 @@ function subscribe(client: QQClient) {
  client.on('native-callback', diagnostic => diagnostic.argumentTypes.join(','));
  client.on('kicked', info => info.args.length);
  client.on('request.group', request => request.sequence);
+ client.on('group-list-updated', update => update.groups.map(group=>group.groupId));
+ client.on('group-members-updated', update => update.members.map(member=>[member.uid,member.deleted,member.role]));
  const page = client.listGroupRequests({doubt:false,limit:20});
  const publish: Promise<void> = client.publishGroupNotice('123','example',{pinned:true,confirmRequired:false});
  const remove: Promise<void> = client.deleteGroupNotice('123','notice_id');
@@ -130,7 +154,7 @@ void factory; void options; void subscribe;
 `);
 run(process.execPath, [resolve(root, 'node_modules/typescript/bin/tsc'), '--noEmit', '--strict', '--types', 'node', '--module', 'NodeNext', '--target', 'ES2023', '--typeRoots', resolve(root, 'node_modules/@types'), 'consumer.ts']);
 const receipt = { checkedAt: new Date().toISOString(), package: packed.name, version: packed.version,
-  integrity: packed.integrity, fileCount: files.length, checks: { privateFilesExcluded:true, installedImport:true, cliHelp:true, cliDefaultConfig:true, faceContract:true, messageQueryContract:true, selfProfileContract:true, groupOperationContract:true, groupMemberQueryContract:true, declarations:true },
+  integrity: packed.integrity, fileCount: files.length, checks: { privateFilesExcluded:true, installedImport:true, cliHelp:true, cliDefaultConfig:true, faceContract:true, messageQueryContract:true, selfProfileContract:true, groupOperationContract:true, groupMemberQueryContract:true, groupMetadataEventContract:true, businessWatchContract:true, declarations:true },
   nativeExecuted:false, accountUsed:false };
 await mkdir(join(root, '.local'), {recursive:true});
 await writeFile(join(root, '.local/package-consumer-verification.json'), JSON.stringify(receipt, null, 2));
@@ -138,4 +162,5 @@ await mkdir(join(root, '.local/research'), {recursive:true});
 await writeFile(join(root, '.local/research/signature-installed-consumer.json'), JSON.stringify(receipt, null, 2));
 await writeFile(join(root, '.local/research/group-return-installed-consumer.json'), JSON.stringify(receipt, null, 2));
 await writeFile(join(root, '.local/research/group-members-installed-consumer.json'), JSON.stringify(receipt, null, 2));
+await writeFile(join(root, '.local/research/group-events-installed-consumer.json'), JSON.stringify(receipt, null, 2));
 console.log(JSON.stringify(receipt, null, 2));

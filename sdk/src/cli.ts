@@ -23,6 +23,23 @@ export function observeWatchFailures(client: QQClient, autoReconnect: boolean, f
   };
 }
 
+function watchEventMode(mode: unknown): 'message' | 'all' {
+  if (mode === undefined || mode === 'message') return 'message';
+  if (mode === 'all') return 'all';
+  throw new Error('--events must be message or all');
+}
+/** Attach business deliveries before login; return exact listener cleanup. */
+export function observeWatchEvents(client: QQClient, mode: unknown = undefined, write: (line: string) => void = console.log): () => void {
+  const selected = watchEventMode(mode);
+  const events = selected === 'message' ? ['message'] as const : ['message', 'message-recalled', 'request.friend', 'request.group', 'group-list-updated', 'group-members-updated'] as const;
+  const listeners = events.map(event => {
+    const listener = (payload: unknown) => write(JSON.stringify(selected === 'message' ? payload : { event, payload }));
+    client.on(event, listener);
+    return { event, listener };
+  });
+  return () => { for (const { event, listener } of listeners) client.off(event, listener); };
+}
+
 const usage = `qq-native-client <command> [options]
   init --config FILE --data-dir DIR [--catalog URL] [--download-mirror HTTPS_PREFIX]
        [--wrapper FILE | --manifest URL --manifest-sha256 HASH]
@@ -36,7 +53,7 @@ const usage = `qq-native-client <command> [options]
   message --config FILE --kind private|group --target ID --message-id ID
   forward-history --config FILE --kind private|group --target ID --root-message-id ID --parent-message-id ID
   forward --config FILE --source-kind private|group --source-target ID --kind private|group --target ID --message-ids ID,ID
-  watch --config FILE [--uin UIN]       Print incoming messages as JSON lines until interrupted
+  watch --config FILE [--uin UIN] [--events message|all]  Print business events as JSON lines
   send --config FILE --kind private|group --target ID (--text TEXT | --message-file JSON) [--uin UIN]
   nickname --config FILE --name TEXT
   signature --config FILE --text TEXT   Empty text explicitly clears the signature
@@ -204,7 +221,7 @@ async function main() {
   const allowed: Record<string, string[]> = {
     init: ['config', 'data-dir', 'wrapper', 'client-version', 'app-id', 'qua', 'manifest', 'manifest-sha256', 'catalog', 'download-mirror'],
     config: ['config'], login: ['config', 'method', 'uin', 'qr-file'],
-    members: ['config', 'uin', 'group-id'], history: ['config', 'uin', 'kind', 'target', 'limit', 'before'], message: ['config', 'uin', 'kind', 'target', 'message-id'], watch: ['config', 'uin'],
+    members: ['config', 'uin', 'group-id'], history: ['config', 'uin', 'kind', 'target', 'limit', 'before'], message: ['config', 'uin', 'kind', 'target', 'message-id'], watch: ['config', 'uin', 'events'],
     contacts: ['config', 'uin'], groups: ['config', 'uin'], send: ['config', 'kind', 'target', 'text', 'message-file', 'uin'],
     nickname: ['config','uin','name'], signature: ['config','uin','text'],
     profile: ['config', 'uin', 'target'], requests: ['config', 'uin'], request: ['config', 'uin', 'uid', 'time', 'accept'],
@@ -220,6 +237,7 @@ async function main() {
   };
   if (!(command in allowed)) throw new Error(`Unknown command: ${command}`);
   for (const flag of Object.keys(flags)) if (!allowed[command]!.includes(flag)) throw new Error(`Unknown option for ${command}: --${flag}`);
+  const watchMode = command === 'watch' ? watchEventMode(flags.events) : undefined;
   const configPath = resolve(required(flags, 'config'));
   if (command === 'init') {
     const options: ClientOptions = { dataDir: resolve(required(flags, 'data-dir')) };
@@ -264,9 +282,10 @@ async function main() {
   const watchDone = command === 'watch' ? new Promise<void>((resolve, reject) => { endWatch = resolve; failWatch = reject; }) : undefined;
   // Register before login so native deliveries during readiness are retained.
   let removeWatchObservers: (() => void) | undefined;
+  let removeWatchEvents: (() => void) | undefined;
   if (watchDone) {
     void watchDone.catch(() => {});
-    client.on('message', message => console.log(JSON.stringify(message)));
+    removeWatchEvents = observeWatchEvents(client, watchMode);
     removeWatchObservers = observeWatchFailures(client, options.autoReconnect === true, error => failWatch?.(error));
   }
   const stop = () => { process.exitCode = 130; endWatch?.(); void client.close().catch(() => {}).finally(() => { process.exitCode = 130; }); };
@@ -278,6 +297,7 @@ async function main() {
     else if (watchDone) await watchDone;
     else if (action) { const result = await action(client); console.log(JSON.stringify(result === undefined ? { dispatched: true } : result, null, 2)); }
   } finally {
+    removeWatchEvents?.();
     removeWatchObservers?.();
     process.removeListener('SIGINT', stop); process.removeListener('SIGTERM', stop);
     await client.close();

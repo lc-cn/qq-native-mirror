@@ -13,6 +13,7 @@ import { downloadAttachment } from './media-operations.ts';
 import { createImageElement, createFileElement, createReplyElement, decodeElements, faceElement } from './message-elements.ts';
 /** Native contracts extracted from local NapCat; this module never sends at startup. */
 import { createGroupOperations, type GroupOperation } from './group-operations.ts';
+import { createGroupEvents } from './group-events.ts';
 import type { Friend, Group, GroupMember, Message, SentMessage, NativeCallbackAudit } from './types.ts';
 
 type Native = Record<string, any>;
@@ -128,10 +129,12 @@ export function createNativeServices(session: Native, version: string, emit: (ev
     },
     onKickedOffLine: (...args: unknown[]) => { if (!closed) emit('kicked', { info: args[0], args }); },
   });
+  const groupEvents = createGroupEvents(emit);
   listener('Group', { onGroupListUpdate: (kind: unknown, groups: Native[]) => {
     if (process.env.QQ_NATIVE_TRACE_FIELDS === '1') emit('diagnostic', { stage: `group-list-update:kind-${typeof kind === 'number' || typeof kind === 'boolean' ? String(kind) : typeof kind}:count-${Array.isArray(groups) ? groups.length : 'non-array'}` });
+    groupEvents.onGroupListUpdate(kind, groups);
     dispatch('Group/onGroupListUpdate', [kind, groups]);
-  } });
+  }, onMemberInfoChange: groupEvents.onMemberInfoChange });
   const eventCall = async (event: string, check: Waiter['check'], invoke: () => any, timeoutMs = 10_000, checkReturn?: (value: any) => boolean) => {
     let waiter: Waiter;
     const result = new Promise<any>((resolve, reject) => {

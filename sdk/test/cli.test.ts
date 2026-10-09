@@ -5,7 +5,7 @@ import { mkdtemp, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { parse, prepareCommand, normalizeMessage, observeWatchFailures } from '../src/cli.ts';
+import { parse, prepareCommand, normalizeMessage, observeWatchFailures, observeWatchEvents } from '../src/cli.ts';
 import type { QQClient } from '../src/index.ts';
 
 test('single-message CLI preserves long IDs and validates before client creation', async () => {
@@ -168,4 +168,31 @@ test('CLI init supports default catalog, acceleration and local manifest metadat
  const local=run(['init','--config',join(dir,'local.json'),'--data-dir',join(dir,'local-account'),'--wrapper',join(dir,'not-loaded.node')]);assert.equal(local.status,0,local.stderr);
  const partial=run(['init','--config',join(dir,'bad.json'),'--data-dir',dir,'--client-version','1']);assert.equal(partial.status,1);assert.match(partial.stderr,/app-id/);
  const badProxy=run(['init','--config',join(dir,'unsafe.json'),'--data-dir',dir,'--download-mirror','http://unsafe.example/']);assert.equal(badProxy.status,1);assert.match(badProxy.stderr,/HTTPS/);
+});
+
+test('watch defaults to message JSON lines and removes its own delivery listener', () => {
+  const events = new EventEmitter(), lines: string[] = [];
+  const cleanup = observeWatchEvents(events as QQClient, undefined, line => lines.push(line));
+  const message = { peer: { type: 'group', groupId: '123' }, elements: [] };
+  events.emit('message', message); events.emit('group-list-updated', { groups: [] });
+  assert.deepEqual(lines, [JSON.stringify(message)]);
+  cleanup(); cleanup(); events.emit('message', message);
+  assert.equal(events.listenerCount('message'), 0); assert.equal(lines.length, 1);
+});
+test('watch all envelopes only six business event families and unbinds each', () => {
+  const events = new EventEmitter(), lines: string[] = [];
+  const cleanup = observeWatchEvents(events as QQClient, 'all', line => lines.push(line));
+  const names = ['message', 'message-recalled', 'request.friend', 'request.group', 'group-list-updated', 'group-members-updated'];
+  names.forEach((event, i) => events.emit(event, { fixture: i }));
+  events.emit('msf-status', { status: 1 }); events.emit('authenticated', { credential: 'fixture-secret' });
+  assert.deepEqual(lines.map(line => JSON.parse(line)), names.map((event, i) => ({ event, payload: { fixture: i } })));
+  cleanup(); names.forEach(event => assert.equal(events.listenerCount(event), 0));
+  events.emit('group-members-updated', {}); assert.equal(lines.length, 6);
+});
+test('watch rejects invalid event mode before registration or configuration/native setup', () => {
+  const events = new EventEmitter();
+  for (const mode of ['', 'unknown', null, 1]) assert.throws(() => observeWatchEvents(events as QQClient, mode), /--events/);
+  assert.deepEqual(events.eventNames(), []);
+  const result = spawnSync(process.execPath, ['src/cli.ts', 'watch', '--events', 'unknown', '--config', '/nonexistent-fixture-config.json'], { encoding: 'utf8' });
+  assert.equal(result.status, 1); assert.match(result.stderr, /--events must be message or all/); assert.doesNotMatch(result.stderr, /ENOENT/);
 });
