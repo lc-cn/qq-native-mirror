@@ -441,3 +441,16 @@ python3 scripts/linux-signing-global48-followup.py /absolute/path/wrapper.node
 ```
 
 脚本固定 binary SHA、两个 unwind 范围、全部 156 条指令/摘要、选定局部存储和外部调用符号。独立 `PT_LOAD` 检查复核全部指令与系统 objdump、unwind、三个动态调用绑定与完整 PLT 地址计算、旧版 SHA 拒绝。私有收据为 `.local/research/linux-signing-global48-followup.json` 与 `linux-signing-global48-followup-independent.json`。没有执行 native/provider 或账号操作；运行时分支顺序、跨 caller 别名、间接缓冲区取值及与最终签名的连接仍未证明。
+
+## 两个尾调用及局部结果构造
+
+同一固定 Linux ARM64 binary 下，继续展开 `0x4227088..0x42270cc` 和 `0x4286d08..0x4286d60`，分别 17/22 条指令。前者读取输入 `+8` 长度，在无符号 `length < start` 分支调用动态绑定的 `__throw_out_of_range_fmt`；正常路径在 `0x42270b4` 尾调用 `0x42faf7c`，传入 `x0=原x8结果指针`、`x1=原x0输入`、`x2=原x1起始偏移`、`x3=原x2计数`。该有限函数体没有直接输入或结果写入，只有自身栈存储。后者读取原输入首字节并写入自身栈，在 `0x4286d5c` 尾调用 ELF 动态绑定的 `strlen`，保留原 `x0`；所分析 caller 的输入为静态地址 `0x6ce9a1a`，返回长度用于形成 end 指针。没有赋予该字符串签名算法语义。
+
+再展开唯一新的内部尾调用 `0x42faf7c..0x42fafcc` 的全部 20 条指令。它在 `0x42faf90` 直接写 `result+0 = result+0x10`，然后检查输入长度；正常路径形成 `begin = input.data + start` 和 `end = begin + min(input.length - start, count)`，在 `0x42fafb0` 尾调用已绑定的 `basic_string::_M_construct<const char*>`，参数为结果指针及 begin/end。异常分支同样调用 `__throw_out_of_range_fmt`。本体只读输入记录和输入数据；非栈直接存储只有上述结果字段。实际缓冲区写入委托给动态 C++ 字符串构造实现。由此将这一局部链的未展开 vendor callee 收窄为已命名的动态构造边界，不能据此排除跨调用指针别名或证明 global 前 48 字节不可变。
+
+```sh
+python3 scripts/linux-signing-global48-leaf-boundaries.py /absolute/path/wrapper.node
+python3 scripts/linux-signing-global48-result-constructor.py /absolute/path/wrapper.node
+```
+
+两个脚本固定完整 binary SHA，分别验证 39/20 条指令、三段相邻 unwind 边界、全部系统 objdump 字及选定参数/存储边。独立 ELF `PT_LOAD` 检查复核全部 59 条指令/摘要、五条外部直接分支、四处动态符号绑定与完整 PLT 地址计算（包含 ADD），并确认实际旧版 binary 被 SHA 拒绝且证据 stdout 为空。私有证据为 `.local/research/linux-signing-global48-leaf-boundaries{,-independent}.json` 与 `linux-signing-global48-result-constructor{,-independent}.json`。没有执行 native/provider、账号操作或改写检测值。这仍未证明 OR8 到最终输出的传播、签名真实性、服务端账号标记或运行时 global 数据不变性。
