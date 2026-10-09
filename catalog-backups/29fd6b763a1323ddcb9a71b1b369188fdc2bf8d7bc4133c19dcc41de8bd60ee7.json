@@ -31,8 +31,8 @@
         "appId": "537391652",
         "qua": "V1_MAC_7.0.2-53644_53644_GW_B"
       },
-      "manifestUrl": "https://raw.githubusercontent.com/lc-cn/qq-native-mirror/main/packages/npm-0.0.2-ci-37962268125-attempt-1-darwin-arm64-codec-gzip-v1/667c80d0284ffcfc4e0c270a6a7b09bfbbdf34ebe2cd452dc8fe016e99c3fa56/manifest.json",
-      "manifestSha256": "667c80d0284ffcfc4e0c270a6a7b09bfbbdf34ebe2cd452dc8fe016e99c3fa56"
+      "manifestUrl": "https://raw.githubusercontent.com/lc-cn/qq-native-mirror/main/packages/7.0.2-53644-darwin-arm64/e65c57b5002e42daf59a845b92a185a57db31045e666961c904c96ba4f5c249b/manifest.json",
+      "manifestSha256": "e65c57b5002e42daf59a845b92a185a57db31045e666961c904c96ba4f5c249b"
     },
     {
       "platform": "linux",
@@ -42,8 +42,8 @@
         "appId": "537379448",
         "qua": "V1_LNX_3.2.32-52194_52194_GW_B"
       },
-      "manifestUrl": "https://raw.githubusercontent.com/lc-cn/qq-native-mirror/main/packages/npm-0.0.2-ci-37962268125-attempt-1-linux-arm64-codec-gzip-v1/628201012ea25d276667e4ac0064541534d6b3ab39e7348d75fb51d13e778b1b/manifest.json",
-      "manifestSha256": "628201012ea25d276667e4ac0064541534d6b3ab39e7348d75fb51d13e778b1b"
+      "manifestUrl": "https://raw.githubusercontent.com/lc-cn/qq-native-mirror/main/packages/3.2.32-52194-linux-arm64/11fdcdd66cb9c112a633f6efb8a8c7958e6314606d59dd7e57c4c24d286ec150/manifest.json",
+      "manifestSha256": "11fdcdd66cb9c112a633f6efb8a8c7958e6314606d59dd7e57c4c24d286ec150"
     },
     {
       "platform": "linux",
@@ -53,8 +53,8 @@
         "appId": "537379447",
         "qua": "V1_LNX_3.2.32-52194_52194_GW_B"
       },
-      "manifestUrl": "https://raw.githubusercontent.com/lc-cn/qq-native-mirror/main/packages/npm-0.0.2-ci-37962268125-attempt-1-linux-x64-codec-gzip-v1/d130b3db854cd147a96bd5cb80d9d16fcf6ce364eda546849ac06403077a9ae4/manifest.json",
-      "manifestSha256": "d130b3db854cd147a96bd5cb80d9d16fcf6ce364eda546849ac06403077a9ae4"
+      "manifestUrl": "https://raw.githubusercontent.com/lc-cn/qq-native-mirror/main/packages/3.2.32-52194-linux-x64/2bce7bc8cd052d57c1e7f73062a10d35991e252f4b3a90e07cc500c3c6c0bcd9/manifest.json",
+      "manifestSha256": "2bce7bc8cd052d57c1e7f73062a10d35991e252f4b3a90e07cc500c3c6c0bcd9"
     },
     {
       "platform": "darwin",
@@ -64,8 +64,8 @@
         "appId": "537391652",
         "qua": "V1_MAC_7.0.2-53644_53644_GW_B"
       },
-      "manifestUrl": "https://raw.githubusercontent.com/lc-cn/qq-native-mirror/main/packages/npm-0.0.2-ci-37962268125-attempt-1-darwin-x64-codec-gzip-v1/85cb263ef00cdd2e24239fb6991a7b4f71b6802e25688e1851f65ad3c3c07fa2/manifest.json",
-      "manifestSha256": "85cb263ef00cdd2e24239fb6991a7b4f71b6802e25688e1851f65ad3c3c07fa2"
+      "manifestUrl": "https://raw.githubusercontent.com/lc-cn/qq-native-mirror/main/packages/7.0.2-53644-darwin-x64-gzip-v1/9c363f0388d29025a001f1b05a748fc559816467108d7c0f909de932677a7e9c/manifest.json",
+      "manifestSha256": "9c363f0388d29025a001f1b05a748fc559816467108d7c0f909de932677a7e9c"
     },
     {
       "platform": "win32",
@@ -75,8 +75,8 @@
         "appId": "537379411",
         "qua": "V1_WIN_NQ_9.9.33_52230_GW_B"
       },
-      "manifestUrl": "https://raw.githubusercontent.com/lc-cn/qq-native-mirror/main/packages/npm-0.0.2-ci-37962268125-attempt-1-win32-x64-codec-gzip-v1/baa75f687fbefcfca1698b5555c1f3c96d50643e76f993075a883865f822197e/manifest.json",
-      "manifestSha256": "baa75f687fbefcfca1698b5555c1f3c96d50643e76f993075a883865f822197e"
+      "manifestUrl": "https://raw.githubusercontent.com/lc-cn/qq-native-mirror/main/packages/9.9.33-52230-win32-x64-gzip-v1/2caa41db2b1bcea8d317a655053821e46969be6964b412f3df979d72edd10161/manifest.json",
+      "manifestSha256": "2caa41db2b1bcea8d317a655053821e46969be6964b412f3df979d72edd10161"
     },
     {
       "platform": "win32",
@@ -86,8 +86,8 @@
         "appId": "537379423",
         "qua": "V1_WIN_NQ_9.9.33_52230_GW_B"
       },
-      "manifestUrl": "https://raw.githubusercontent.com/lc-cn/qq-native-mirror/main/packages/npm-0.0.2-ci-37962268125-attempt-1-win32-arm64-codec-gzip-v1/6bd0b50b9647222a38d1b053e21214c591f9589d5beb88ef07e9737a69df9e03/manifest.json",
-      "manifestSha256": "6bd0b50b9647222a38d1b053e21214c591f9589d5beb88ef07e9737a69df9e03"
+      "manifestUrl": "https://raw.githubusercontent.com/lc-cn/qq-native-mirror/main/packages/9.9.33-52230-win32-arm64-gzip-v1/56e7d7743379f190ba7b19e780db98e82966ca724fcf26bd491f2ac1a32df366/manifest.json",
+      "manifestSha256": "56e7d7743379f190ba7b19e780db98e82966ca724fcf26bd491f2ac1a32df366"
     }
   ]
 }

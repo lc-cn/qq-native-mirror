@@ -109,5 +109,27 @@
     "rawManifestReadbacks": 6,
     "nativeExecuted": false,
     "catalogChanged": false
+  },
+  "prospectiveMirrorConsumersCorrected": {
+    "runId": "37968322910",
+    "sourceCommit": "22ddab55d79e0073a3792042c9c8009072e25571",
+    "conclusion": "success",
+    "platforms": 6,
+    "coldActualCreateClient": true,
+    "automaticVideoCodec": true,
+    "decodedClipsPerPlatform": 3,
+    "secondPayloadRequests": 0,
+    "secondPayloadBytes": 0,
+    "noLogin": true,
+    "independentReviewSha256": "f0ac1f95d06bb8aec72c8082350b5e7547f3ea5f46b923b01001a798d90d0ca7"
+  },
+  "defaultCatalogPromotion": {
+    "catalogSha256": "ae486c9ffd96d12377f626377243baaa17b45a7afee9bfaa3134ce9fa73b9719",
+    "backupSha256": "29fd6b763a1323ddcb9a71b1b369188fdc2bf8d7bc4133c19dcc41de8bd60ee7",
+    "backupPath": "catalog-backups/29fd6b763a1323ddcb9a71b1b369188fdc2bf8d7bc4133c19dcc41de8bd60ee7.json",
+    "replacedEntries": 6,
+    "olderLinuxEntriesRetained": 2,
+    "defaultConsumers": "pending",
+    "npmPublished": false
   }
 }

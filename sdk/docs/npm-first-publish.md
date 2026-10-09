@@ -114,3 +114,9 @@ node scripts/upload-npm-native-mirror.mjs /absolute/path/npm-candidate /absolute
 首次候选镜像消费者 run `37967496003` 六平台均失败于首次 catalog 请求，尚未完成原生初始化。原因已通过只读请求复现：release catalog 资产返回 HTTP 302，而 SDK 的 catalog 请求要求直接响应。源包绑定及安装已通过，不能将此失败归因于原生平台支持。
 
 修正使用 commit `2a65a6c0f2e15fe3da207ed1bcb6d9df4a7c940d` 中的独立 `candidates/native-npm-v0.0.2-ci-37962268125-attempt-1/catalog.json`。候选 catalog 内容与已批准 `mirror-plan.json` 的 `catalogUpdates` 完全一致；六份 manifest 位于包含各自摘要的仓库路径。原 release 中的 catalog 作为审计资产保留，其下载 URL 不能直接作为本版 SDK 的 `catalogUrl`。只读绑定模式已实际通过，六份 raw manifest 实际 HTTP 200 和字节摘要全部匹配。默认 catalog 未修改。修正后的真实消费者需要重新运行，不复用首次失败结果。
+
+修正后的候选入口已通过 [run 37968322910](https://github.com/lc-cn/qq-native-mirror/actions/runs/37968322910)，六平台均真实冷下载、首次 `createClient` 初始化/关闭、自动 codec 解码三个样本和第二次 payload 零请求/零字节。六份实际收据、解码记录、完整日志及 CI 终态经过独立核对，源主包仍固定为 `6cae1ec...` 的候选。
+
+默认 `catalog.json` 现在原位替换六条同设备/QQ版本记录，指向上述已校验的 codec 镜像；两条 Linux `3.2.31-51102` 保留，没有添加歧义版本。替换后 catalog SHA256 为 `ae486c9ffd96d12377f626377243baaa17b45a7afee9bfaa3134ce9fa73b9719`。旧 catalog 原字节备份位于 `catalog-backups/29fd6b763a1323ddcb9a71b1b369188fdc2bf8d7bc4133c19dcc41de8bd60ee7.json`，旧 manifest 和资产继续保留。需要旧完整镜像时，可显式将 `catalogUrl` 指向该备份的 raw GitHub URL；这不是 SDK 自动失败回退。
+
+默认入口另行使用消费者工作流 `mode=default` 验收：实际 `createClient` 不传 wrapper、version、manifest 或 catalog；仍省略安装辅包，以确保使用默认 catalog。候选入口通过不替代这次默认路径验证。npm 保持 0.0.1，本次没有登录或发送。

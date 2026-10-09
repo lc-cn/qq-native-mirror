@@ -2,6 +2,14 @@ name: Prospective codec mirror cold consumers
 on:
   workflow_dispatch:
     inputs:
+      mode:
+        type: choice
+        options: [candidate, default]
+        default: candidate
+      catalog_backup_sha256:
+        type: string
+        default: 29fd6b763a1323ddcb9a71b1b369188fdc2bf8d7bc4133c19dcc41de8bd60ee7
+        description: SHA256 of immutable catalog-backups JSON for default mode
       source_tag:
         type: string
         default: npm-v0.0.2-ci-37962268125
@@ -48,6 +56,8 @@ jobs:
       - name: Verify immutable source and candidate mirror, decode and prepare without account
         env:
           GH_TOKEN: ${{ github.token }}
+          MIRROR_MODE: ${{ inputs.mode }}
+          CATALOG_BACKUP_SHA256: ${{ inputs.catalog_backup_sha256 }}
           SOURCE_TAG: ${{ inputs.source_tag }}
           MIRROR_TAG: ${{ inputs.mirror_tag }}
           CANDIDATE_CATALOG_COMMIT: ${{ inputs.candidate_commit }}
