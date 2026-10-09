@@ -355,3 +355,56 @@ test('core service callback diagnostics contain shapes only and stop after close
  assert.deepEqual(audits,[{family:'Msg',name:'onRecvMsg',argumentTypes:['array']},{family:'Msg',name:'onRichMediaUploadComplete',argumentTypes:['object','null','array']}]);
  assert.equal(JSON.stringify(audits).includes('credential'),false);services.close();listener.onRecvMsg([]);assert.equal(audits.length,2);
 });
+
+for (const [name, data] of [
+  ['sparse category array', Array(1)],
+  ['sparse buddy UID array', [{ buddyUids: Array(1) }]],
+] as const) {
+  test(`listFriends rejects ${name} before Profile lookup`, async () => {
+    let profileCalls = 0;
+    const services = createNativeServices({
+      getMsgService: () => ({ addKernelMsgListener() {} }),
+      getGroupService: () => ({ addKernelGroupListener() {} }),
+      getBuddyService: () => ({ addKernelBuddyListener() {}, getBuddyListV2: () => ({ result: 0, data }) }),
+      getProfileService: () => ({ getCoreAndBaseInfo() { profileCalls++; return new Map(); } }),
+    }, '7.0.2-53644', () => {});
+    try {
+      await assert.rejects(services.invokeOperation('listFriends'), /Invalid native buddy/);
+      assert.equal(profileCalls, 0);
+    } finally { services.close(); }
+  });
+}
+
+test('failed buddy profile batch cannot seed UID cache used by later private send', async () => {
+  let listener: any;
+  const conversions: string[][] = [];
+  const sends: any[][] = [];
+  const services = createNativeServices({
+    getMsgService: () => ({
+      addKernelMsgListener(value: any) { listener = value; },
+      generateMsgUniqueId: () => 'fixture-unique',
+      sendMsg(...args: any[]) {
+        sends.push(args);
+        queueMicrotask(() => listener.onMsgInfoListUpdate([
+          { guildId: 'fixture-unique', sendStatus: 2, msgId: '42', msgSeq: '9', msgTime: '100' },
+        ]));
+        return { result: 0 };
+      },
+    }),
+    getGroupService: () => ({ addKernelGroupListener() {} }),
+    getBuddyService: () => ({ addKernelBuddyListener() {}, getBuddyListV2: () => ({ result: 0, data: [{ buddyUids: ['u_partial', 'u_invalid'] }] }) }),
+    getProfileService: () => ({ getCoreAndBaseInfo: () => new Map([
+      ['u_partial', { coreInfo: { uin: '456', nick: 'fixture' } }],
+      ['u_invalid', { coreInfo: { uin: 'invalid' } }],
+    ]) }),
+    getUixConvertService: () => ({ getUid(ids: string[]) { conversions.push(ids); return { uidInfo: new Map([['456', 'u_converted']]) }; } }),
+    getMSFService: () => ({ getServerTime: () => '100' }),
+  }, '7.0.2-53644', () => {});
+  try {
+    await assert.rejects(services.invokeOperation('listFriends'), /Invalid native buddy profile/);
+    await services.invokeOperation('sendPrivateMessage', { userId: '456', message: 'fake contract only' });
+    assert.deepEqual(conversions, [['456']], 'failed query must not bypass UID conversion');
+    assert.equal(sends.length, 1);
+    assert.equal(sends[0][1].peerUid, 'u_converted');
+  } finally { services.close(); }
+});

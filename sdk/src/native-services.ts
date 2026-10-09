@@ -227,19 +227,24 @@ export function createNativeServices(session: Native, version: string, emit: (ev
           // Pinned getBuddyListV2 returns GeneralCallResult as well as data.
           // An empty data array does not establish a successful query.
           if (result?.result !== 0) throw nativeResultError('Native buddy list query failed', result);
-          if (!Array.isArray(result?.data) || result.data.some((category: Native) => !Array.isArray(category?.buddyUids))) throw new Error('Invalid native buddy list');
-          const requested = result.data.flatMap((category: Native) => category.buddyUids);
-          if (requested.some((uid: unknown) => typeof uid !== 'string' || !uid)) throw new Error('Invalid native buddy UID');
+          if (!Array.isArray(result?.data)) throw new Error('Invalid native buddy list');
+          // Materialize holes before validation; flatMap/some would skip them.
+          const categories = Array.from(result.data);
+          if (categories.some((category: any) => !Array.isArray(category?.buddyUids))) throw new Error('Invalid native buddy list');
+          const requested = categories.flatMap((category: any) => Array.from(category.buddyUids));
+          if (!requested.every((uid): uid is string => typeof uid === 'string' && uid.length > 0)) throw new Error('Invalid native buddy UID');
           const uids = [...new Set<string>(requested)];
           const profiles = await call(service('Profile'), 'getCoreAndBaseInfo', 'nodeStore', uids);
           if (!(profiles instanceof Map)) throw new Error('Invalid native profile map');
           if (uids.some(uid => !profiles.has(uid))) throw new Error('Native buddy profiles are incomplete');
-          return uids.map((uid): Friend => {
+          const friends = uids.map((uid): Friend => {
             const profile = profiles.get(uid);
             if (!profile?.coreInfo || !/^\d+$/.test(String(profile.coreInfo.uin ?? ''))) throw new Error('Invalid native buddy profile');
-            uidCache.set(String(profile.coreInfo.uin), String(uid));
             return { userId: String(profile.coreInfo.uin), uid: String(uid), nickname: profile.coreInfo.nick ?? '', remark: profile.coreInfo.remark ?? '' };
           });
+          // A rejected batch must not leave usable entries from an earlier row.
+          for (const friend of friends) uidCache.set(friend.userId, friend.uid);
+          return friends;
         }
         case 'listGroups': {
           if (groupListInvalidated) throw new Error('Group list query channel invalidated; create a new Session');

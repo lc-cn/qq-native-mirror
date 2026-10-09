@@ -129,6 +129,19 @@ for(const [result,code] of [[-1,-1],[73,73],['denied','denied'],[undefined,'inva
  const query=createNativeServices({getMsgService:()=>({addKernelMsgListener(){}}),getGroupService:()=>({addKernelGroupListener(){}}),getBuddyService:()=>({addKernelBuddyListener(){},getBuddyListV2(){buddyCalls++;return{result,data};}}),getProfileService:()=>({getCoreAndBaseInfo(){profileCalls++;throw Error('Unexpected profile query');}})},'7.0.2-53644',()=>{});
  try{await assert.rejects(query.invokeOperation('listFriends'),{code});assert.equal(buddyCalls,1);assert.equal(profileCalls,0);}finally{query.close();}
 }
+// Sparse native arrays must not become a valid empty list.
+for(const data of [Array(1),[{buddyUids:Array(1)}]]){
+ let profileCalls=0;
+ const query=createNativeServices({getMsgService:()=>({addKernelMsgListener(){}}),getGroupService:()=>({addKernelGroupListener(){}}),getBuddyService:()=>({addKernelBuddyListener(){},getBuddyListV2(){return{result:0,data};}}),getProfileService:()=>({getCoreAndBaseInfo(){profileCalls++;return new Map();}})},'7.0.2-53644',()=>{});
+ try{await assert.rejects(query.invokeOperation('listFriends'),/Invalid native buddy/);assert.equal(profileCalls,0);}finally{query.close();}
+}
+// A failed row must leave no usable UID cache entry from preceding rows.
+let conversions=0;
+const atomic=createNativeServices({getMsgService:()=>({addKernelMsgListener(){}}),getGroupService:()=>({addKernelGroupListener(){}}),getBuddyService:()=>({addKernelBuddyListener(){},getBuddyListV2(){return{result:0,data:[{buddyUids:['u_partial','u_bad']}]};}}),getProfileService:()=>({getCoreAndBaseInfo(){return new Map([['u_partial',{coreInfo:{uin:'456',nick:'fixture'}}],['u_bad',{}]]);}}),getUixConvertService:()=>({getUid(ids){assert.deepEqual(ids,['456']);conversions++;return{uidInfo:new Map()};}})},'7.0.2-53644',()=>{});
+try{await assert.rejects(atomic.invokeOperation('listFriends'),/Invalid native buddy profile/);await assert.rejects(atomic.invokeOperation('sendPrivateMessage',{userId:'456',message:'fixture'}),/Could not resolve user identifier/);assert.equal(conversions,1);}finally{atomic.close();}
+// Preserve deduplication, category order and lossless long decimal IDs.
+const complete=createNativeServices({getMsgService:()=>({addKernelMsgListener(){}}),getGroupService:()=>({addKernelGroupListener(){}}),getBuddyService:()=>({addKernelBuddyListener(){},getBuddyListV2(){return{result:0,data:[{buddyUids:['u_first','u_second']},{buddyUids:['u_first']}]};}}),getProfileService:()=>({getCoreAndBaseInfo(store,uids){assert.deepEqual([store,uids],['nodeStore',['u_first','u_second']]);return new Map([['u_first',{coreInfo:{uin:'900719925474099312345',nick:'first'}}],['u_second',{coreInfo:{uin:'456',nick:'second',remark:'remark'}}]]);}})},'7.0.2-53644',()=>{});
+try{assert.deepEqual(await complete.invokeOperation('listFriends'),[{userId:'900719925474099312345',uid:'u_first',nickname:'first',remark:''},{userId:'456',uid:'u_second',nickname:'second',remark:'remark'}]);}finally{complete.close();}
 let successCalls=0;const success=createNativeServices({getMsgService:()=>({addKernelMsgListener(){}}),getGroupService:()=>({addKernelGroupListener(){}}),getBuddyService:()=>({addKernelBuddyListener(){},getBuddyListV2(){successCalls++;return{result:0,data:[]};}}),getProfileService:()=>({getCoreAndBaseInfo(){return new Map();}})},'7.0.2-53644',()=>{});
 try{assert.deepEqual(await success.invokeOperation('listFriends'),[]);assert.equal(successCalls,1);}finally{success.close();}
 `);
@@ -183,7 +196,7 @@ void factory; void options; void subscribe;
 `);
 run(process.execPath, [resolve(root, 'node_modules/typescript/bin/tsc'), '--noEmit', '--strict', '--types', 'node', '--module', 'NodeNext', '--target', 'ES2023', '--typeRoots', resolve(root, 'node_modules/@types'), 'consumer.ts']);
 const receipt = { checkedAt: new Date().toISOString(), package: packed.name, version: packed.version,
-  integrity: packed.integrity, fileCount: files.length, checks: { privateFilesExcluded:true, installedImport:true, cliHelp:true, cliDefaultConfig:true, faceContract:true, messageQueryContract:true, selfProfileContract:true, groupOperationContract:true, groupMemberQueryContract:true, groupMetadataEventContract:true, businessWatchContract:true, friendMetadataEventContract:true, nativeFriendMetadataObserved:false, friendListQueryContract:true, nativeFriendListQueryAttempted:false, declarations:true },
+  integrity: packed.integrity, fileCount: files.length, checks: { privateFilesExcluded:true, installedImport:true, cliHelp:true, cliDefaultConfig:true, faceContract:true, messageQueryContract:true, selfProfileContract:true, groupOperationContract:true, groupMemberQueryContract:true, groupMetadataEventContract:true, businessWatchContract:true, friendMetadataEventContract:true, nativeFriendMetadataObserved:false, friendListQueryContract:true, friendListBatchContract:true, nativeFriendListQueryAttempted:false, declarations:true },
   nativeExecuted:false, accountUsed:false };
 await mkdir(join(root, '.local'), {recursive:true});
 await writeFile(join(root, '.local/package-consumer-verification.json'), JSON.stringify(receipt, null, 2));
