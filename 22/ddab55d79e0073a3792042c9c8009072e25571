@@ -1,0 +1,21 @@
+.github/workflows/codec-mirror-consumer.yml
+  s_2104cc474f1ce5::t_75b2a14d93fde0 13-16,53
+ci/codec-mirror-consumer.mjs
+  s_2104cc474f1ce5::t_d0992e9de1a151 11-12,15-16,18,20-22,24,26-33,46,51,53-55
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "22ddab55d79e0073a3792042c9c8009072e25571",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
