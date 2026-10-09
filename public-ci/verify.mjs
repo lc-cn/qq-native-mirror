@@ -1,6 +1,6 @@
 import {npm} from '../ci/npm.mjs';
 import {execFileSync} from 'node:child_process';
-import {mkdtemp,mkdir,writeFile,readFile,rm,access} from 'node:fs/promises';
+import {mkdtemp,mkdir,writeFile,readFile,rm,access,copyFile} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join,resolve} from 'node:path';
 import {createHash} from 'node:crypto';
@@ -26,7 +26,7 @@ export function validateLock(lock,manifest,platform,arch){
  for(const name of ['qq-native-client',`qq-native-client-${platform}-${arch}`]){const row=manifest.packages.find(row=>row.name===name),pkg=lock.packages?.[`node_modules/${name}`];check(pkg?.version===manifest.version&&pkg.integrity===row.integrity,'Installed lock integrity mismatch');check(new URL(pkg.resolved).origin==='https://registry.npmjs.org','Installed package did not resolve from official registry');}
 }
 async function main(){
- const [version,tag]=process.argv.slice(2);check(/^\d+\.\d+\.\d+(?:-[\w.-]+)?$/.test(version??''),'Invalid version');const match=new RegExp(`^npm-v${version.replaceAll('.','\\.')}-ci-(\\d+)$`).exec(tag??'');check(match,'Invalid candidate tag');
+ const [version,tag,mirrorFlag,...extra]=process.argv.slice(2);check(!extra.length&&(!mirrorFlag||mirrorFlag==='--mirror'),'Invalid mirror flag');check(/^\d+\.\d+\.\d+(?:-[\w.-]+)?$/.test(version??''),'Invalid version');const match=new RegExp(`^npm-v${version.replaceAll('.','\\.')}-ci-(\\d+)$`).exec(tag??'');check(match,'Invalid candidate tag');
  const runId=match[1];const api=path=>boundedJson(`https://api.github.com/repos/${repository}/${path}`,process.env.GH_TOKEN);
  const release=(await api(`releases/tags/${tag}`)).json,run=(await api(`actions/runs/${runId}`)).json;
  check(release.tag_name===tag&&release.prerelease===true&&release.draft===false&&run.status==='completed'&&run.conclusion==='success'&&['.github/workflows/native-npm.yml','.github/workflows/native-first-main.yml'].includes(run.path)&&String(run.id)===runId&&run.repository?.full_name===repository&&/^[a-f0-9]{40}$/.test(run.head_sha)&&release.target_commitish===run.head_sha,'Candidate release/CI mismatch');
@@ -47,6 +47,16 @@ async function main(){
  await writeFile(join(temp,'consumer.mjs'),consumer);execFileSync(process.execPath,['consumer.mjs'],{cwd:temp,env,stdio:'inherit',timeout:120000});
  stage='cli';const help=execFileSync(process.execPath,['node_modules/qq-native-client/dist/cli.js','--help'],{cwd:temp,env,encoding:'utf8',timeout:30000});check(help.includes('group-kick')&&help.includes('--message-file'),'CLI help is missing expected commands');
  stage='receipt';const result=JSON.parse(await readFile(join(temp,'result.json')));await mkdir('public-out',{recursive:true});await writeFile('public-out/consumer.json',JSON.stringify({version,tag,runId,commit:manifest.commit,platform:process.platform,arch:process.arch,node:process.version,registry:'https://registry.npmjs.org/',publicMetadataMatched:true,packageLockIntegrityMatched:true,freshCache:true,installedMainOnly:true,automaticPlatformSelection:true,foreignPackagesAbsent:true,mirrorFallbackForbidden:true,cliHelp:true,...result},null,2));
+ if(mirrorFlag==='--mirror'){
+  stage='mirror';await mkdir('public-out',{recursive:true});
+  await copyFile(new URL('./mirror-consumer.mjs',import.meta.url),join(temp,'mirror-consumer.mjs'));
+  const mirrorOutput=resolve('public-out/mirror-consumer.json');
+  const denyPath=resolve('first-ci/deny-symlink.cjs');
+  execFileSync(process.execPath,['mirror-consumer.mjs',mirrorOutput],{cwd:temp,env:{...env,NODE_OPTIONS:`--require ${JSON.stringify(denyPath)}`},stdio:'inherit',timeout:1200000});
+  const mirror=JSON.parse(await readFile(mirrorOutput));
+  check(mirror.completed===true&&mirror.prepared===true&&mirror.closed===true&&mirror.device===`${process.platform}-${process.arch}`&&mirror.node===process.version&&mirror.noLogin===true&&mirror.freshCold===true&&mirror.symlinkCreationDenied===true&&mirror.hashValidatedLoader===true&&mirror.cacheFilesIndependentlyHashVerified===true&&mirror.nativeExports>=80&&mirror.first?.payloadRequests>0&&mirror.first.payloadBytes>0&&mirror.second?.payloadRequests===0&&mirror.second.payloadBytes===0,'Public mirror acceptance failed');
+ }
+
  }finally{await rm(temp,{recursive:true,force:true});}
 }
-if(process.argv[1]&&pathToFileURL(resolve(process.argv[1])).href===import.meta.url)main().catch(()=>{console.error(`Public npm consumer validation failed at stage=${stage}; no login or publish performed.`);process.exitCode=1;});
+if(process.argv[1]&&pathToFileURL(resolve(process.argv[1])).href===import.meta.url)main().catch(async()=>{console.error(`Public npm consumer validation failed at stage=${stage}; no login or publish performed.`);process.exitCode=1;await mkdir('public-out',{recursive:true});const output='public-out/consumer.json';try{await access(output);}catch{await writeFile(output,JSON.stringify({completed:false,prepared:false,closed:false,loginAttempted:false,failureStage:stage,platform:process.platform,arch:process.arch,node:process.version},null,2));}});

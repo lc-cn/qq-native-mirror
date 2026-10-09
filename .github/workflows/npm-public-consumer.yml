@@ -8,7 +8,11 @@ on:
         required: true
       candidate_tag:
         type: string
-        default: npm-v0.0.1-ci-37880903538
+        default: npm-v0.0.1-ci-37886708952
+        required: true
+      verify_mirror:
+        type: boolean
+        default: true
         required: true
 permissions:
   contents: read
@@ -26,7 +30,7 @@ jobs:
           - { platform: win32, arch: x64, runner: windows-2022 }
           - { platform: win32, arch: arm64, runner: windows-11-arm }
     runs-on: ${{ matrix.runner }}
-    timeout-minutes: 15
+    timeout-minutes: 30
     defaults:
       run:
         shell: bash
@@ -46,9 +50,16 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           SDK_VERSION: ${{ inputs.version }}
           CANDIDATE_TAG: ${{ inputs.candidate_tag }}
-        run: node public-ci/verify.mjs "$SDK_VERSION" "$CANDIDATE_TAG"
+          VERIFY_MIRROR: ${{ inputs.verify_mirror }}
+        run: |
+          args=()
+          if [ "$VERIFY_MIRROR" = "true" ]; then args+=(--mirror); fi
+          node public-ci/verify.mjs "$SDK_VERSION" "$CANDIDATE_TAG" "${args[@]}"
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: public-consumer-${{ matrix.platform }}-${{ matrix.arch }}
-          path: public-out/consumer.json
+          path: |
+            public-out/consumer.json
+            public-out/mirror-consumer.json
           if-no-files-found: error

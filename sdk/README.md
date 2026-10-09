@@ -2,7 +2,7 @@
 
 TypeScript/npm QQ client SDK under development, using a QQ native kernel under ordinary Node.js. No QQ/Electron executable is launched. Native singletons run in an isolated **Node.js** child process owned by the module.
 
-Current validated environment: macOS arm64, Node 24.19.0, QQ native kernel 7.0.2-53644. Real wrapper loading (104 exports), QR generation, user-confirmed authentication and account Session readiness have passed. The installed npm tarball also passed a real mirror download and restored the authorized account from the independent native bundle. Linux 3.2.32-52194 arm64 also passed ordinary Node loading and QR generation through the public createClient API; Linux arm64 QR authentication and account Session readiness have since passed; Linux login restoration has failed and post-login read APIs remain unverified. See [Linux runtime evidence](docs/linux-runtime.md).
+Real-account baseline: macOS arm64, Node 24.19.0, QQ native kernel 7.0.2-53644. Real wrapper loading (104 exports), QR generation, user-confirmed authentication and account Session readiness have passed. The installed npm tarball also passed a real mirror download and restored the authorized account from the independent native bundle. Linux 3.2.32-52194 arm64 also passed ordinary Node loading and QR generation through the public createClient API; Linux arm64 QR authentication and account Session readiness have since passed; Linux login restoration has failed and post-login read APIs remain unverified. See [Linux runtime evidence](docs/linux-runtime.md).
 
 Platform evidence is specific to the tested native version; it is not a promise of complete compatibility.
 
@@ -10,7 +10,12 @@ Platform evidence is specific to the tested native version; it is not a promise 
 | --- | --- | --- | --- |
 | macOS arm64 / 7.0.2-53644 | Passed | QR and restore passed in prior account runs | Friends/groups/members/history and one authorized private text send/recall passed |
 | Linux arm64 / 3.2.32-52194 | Passed with current package | QR readiness passed; restore attempt failed | Post-login queries and messaging not verified |
-| Linux amd64 / 3.2.32-52194 | Passed under amd64 emulation | QR authentication and Session readiness passed; restore unverified | Latest read-only run: 3 friends, 13 groups, first-group member response empty; completeness and messaging unverified |
+| Linux amd64 / 3.2.32-52194 | Passed on native x64 CI; account runs used amd64 emulation | QR authentication and Session readiness passed; restore unverified | Latest read-only run: 3 friends, 13 groups, first-group member response empty; completeness and messaging unverified |
+| macOS x64 / 7.0.2-53644 | Passed on native x64 CI | Not verified | Not verified |
+| Windows x64 / 9.9.33-52230 | Passed on native x64 CI, Node 24.20.0 | Not verified | Not verified |
+| Windows arm64 / 9.9.33-52230 | Passed on native arm64 CI, Node 24.20.0 | Not verified | Not verified |
+
+The six native platforms also passed installed-package and mirror-cache preparation/close with symlink creation denied in [CI run 37886708952](https://github.com/lc-cn/qq-native-mirror/actions/runs/37886708952). This initialization run made no account login attempt.
 
 Security-signature authenticity remains unresolved on every platform. Quick login has a public implementation but lacks separate account acceptance; media, management and request handling require their own real-account acceptance. See [acceptance requirements](docs/sdk-acceptance.md).
 
