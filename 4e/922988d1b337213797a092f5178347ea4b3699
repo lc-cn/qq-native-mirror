@@ -1,0 +1,41 @@
+tools/verify-dedup-consumer.mjs
+  s_2104cc474f1ce5::t_47753e6eaeff18 69
+sdk/README.md
+  s_2104cc474f1ce5::t_d76e8be2fd373c 201
+sdk/docs/evidence/forward-typed-elements-local.json
+  s_2104cc474f1ce5::t_16924b93ae912a 1-128
+sdk/docs/forward-resource-decoding.md
+  s_2104cc474f1ce5::t_6631faf060536b 33-37,64-66,71,73
+sdk/scripts/forward-resource-consumer-contract.mjs
+  s_2104cc474f1ce5::t_b8697f0c1f9170 10-16,19-58,87,102
+sdk/scripts/forward-resource-type-contract.mjs
+  s_2104cc474f1ce5::t_e3d3c54c926dd7 1-87
+sdk/scripts/verify-package-consumer.mjs
+  s_2104cc474f1ce5::t_40fb8ddfb49b25 15,38,278
+sdk/src/forward-resource-wire.ts
+  s_2104cc474f1ce5::t_321088d643a2f0 44-79,105
+sdk/src/types.ts
+  s_2104cc474f1ce5::t_40daa473023de8 135-137
+sdk/test/forward-resource-services.test.ts
+  s_2104cc474f1ce5::t_7159fdc2070694 3,7-9
+sdk/test/forward-resource-wire.test.ts
+  s_2104cc474f1ce5::t_b4d6a7aa431ea0 89-148
+tools/verify-dedup-consumer.test.mjs
+  s_2104cc474f1ce5::t_fa0f9b2fe9f2b0 9,30-31
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "4e922988d1b337213797a092f5178347ea4b3699",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
