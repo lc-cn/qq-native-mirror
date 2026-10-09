@@ -1,0 +1,33 @@
+tools/verify-dedup-consumer.test.mjs
+  s_2104cc474f1ce5::t_a147ac054eb570 1-36
+.github/workflows/dedup-native-candidate.yml
+  s_2104cc474f1ce5::t_8f854d9ba964a6 29-44,46,50,55-57,67-71,73,86
+sdk/docs/evidence/dedup-six-platform-static.json
+  s_2104cc474f1ce5::t_506ceaea7bb4d2 1-136
+sdk/docs/native-size-reduction.md
+  s_2104cc474f1ce5::t_1bfdefadb2453e 133-138
+sdk/docs/sdk-acceptance.md
+  s_2104cc474f1ce5::t_ce0e6d05b70fc0 652-657
+tools/dedup-native-npm.mjs
+  s_2104cc474f1ce5::t_3d043b2cb48647 12-19,26,36,50,54-55,64
+tools/dedup-native-npm.test.mjs
+  s_2104cc474f1ce5::t_a51ec61d047eaf 5,7
+tools/verify-dedup-consumer.mjs
+  s_2104cc474f1ce5::t_a0aeb3e0962d5a 10-17,22,25,31,39-41,63-73,83
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "cd06c19c9c4b2709f011a2a33abd13cb545c3dff",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
