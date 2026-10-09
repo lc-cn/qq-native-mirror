@@ -1,0 +1,272 @@
+{
+  "schemaVersion": 1,
+  "runId": "38003259344",
+  "runUrl": "https://github.com/lc-cn/qq-native-mirror/actions/runs/38003259344",
+  "verificationCommit": "748dfe34dea6bf2bddc6be3c073cf8ceca31897f",
+  "status": "completed",
+  "conclusion": "success",
+  "workflow": ".github/workflows/pruned-current-sdk-consumer.yml",
+  "sdkCommit": "5907793ad848c68b3183ac5c2f2b06fbd1a5e0cf",
+  "sdkRunId": "38000680198",
+  "nativeCommit": "6cae1ec0a5e1bfb03cb7871083915b3d03272347",
+  "nativeRunId": "37962268125",
+  "boundaryTestsPassed": 10,
+  "parentZipMembersRechecked": 22,
+  "parentNativePathsRechecked": 116,
+  "targets": [
+    {
+      "platform": "darwin",
+      "arch": "arm64",
+      "node": "v24.20.0",
+      "zipSha256": "1b979c66cc0782224c7a783fbd79212ef5b95525458bdcb60c19ef237b414d86",
+      "mainSha256": "db2ca1c4a19f62033906e8c16a45558540d98080b1987083ffbee12c34137e12",
+      "auxiliarySha256": "3128a4741044520f7c99a89673db0d04f3183312d7ff0191d580ddb2ca816da8",
+      "auxiliaryBytes": 59326804,
+      "prunedRunId": "37971314866",
+      "nativePaths": 58,
+      "packagedPaths": 61,
+      "retainedVideoPaths": 11,
+      "exports": 104,
+      "installedMainOnly": true,
+      "automaticPlatformSelection": true,
+      "allInstalledFilesVerified": true,
+      "installedPathsReused": true,
+      "prepared": true,
+      "closed": true,
+      "currentSessionSyntheticContractPassed": true,
+      "nativeSessionLoginAttempted": false,
+      "video": {
+        "passed": true,
+        "codecSha256": "101a8eb635806b8c06fd55e3353a5a129d643c42198a3eb0dcaca7eefeab74c4",
+        "inputs": [
+          {
+            "name": "blue-64.mp4",
+            "sha256": "ced7b4e1cd47d948ecf407116095282e5b5ca4df76142b7a06826eecb92cb932",
+            "bytes": 1684,
+            "width": 64,
+            "height": 64,
+            "duration": 0.4,
+            "thumbnailWidth": 64,
+            "thumbnailHeight": 64,
+            "thumbnailSha256": "6dd6fdedccb6f2c3524b05d848d96bde56f7f10a98038104827b391f089a4646",
+            "thumbnailBytes": 12342,
+            "pattern": "blue",
+            "rowStride": 192
+          },
+          {
+            "name": "blue-1280.mp4",
+            "sha256": "1c8920f2db13e3c1b28b708bc94d3889ed8bd10f15ee5d89881d99715188b468",
+            "bytes": 1820,
+            "width": 1280,
+            "height": 720,
+            "duration": 0.4,
+            "thumbnailWidth": 640,
+            "thumbnailHeight": 360,
+            "thumbnailSha256": "f94feb9cd93a661f4e585b2d73a44856666488847a97f54643eb49939f4ca782",
+            "thumbnailBytes": 691254,
+            "pattern": "blue",
+            "rowStride": 1920
+          },
+          {
+            "name": "blue-red-65.mp4",
+            "sha256": "53a0baad6f0853d39e53263c22c847bd78435fc263e6844450878b471d13cc57",
+            "bytes": 1652,
+            "width": 65,
+            "height": 33,
+            "duration": 0.4,
+            "thumbnailWidth": 65,
+            "thumbnailHeight": 33,
+            "thumbnailSha256": "f375d0f2d4c7fc580c07b639f27897bbd20348285329f6c39cce381acb0504d5",
+            "thumbnailBytes": 6522,
+            "pattern": "blue-red",
+            "rowStride": 196
+          }
+        ]
+      },
+      "mirror": {
+        "localFixture": true,
+        "requests": {
+          "cold": {
+            "metadata": 1,
+            "payload": 33,
+            "payloadBytes": 128458994
+          },
+          "warm": {
+            "metadata": 1,
+            "payload": 0,
+            "payloadBytes": 0
+          }
+        },
+        "distinctContents": 33,
+        "allCachedFilesHashVerified": true,
+        "allWarmFileMtimesUnchanged": true
+      },
+      "audio": {
+        "realWasmEncodeDecode": true,
+        "wavSha256": "4360826c25a29422a3b0cf0122dd34ffab8d862e6ce3272243776b84d355d795",
+        "silkSha256": "40486e90c8e73276fffb48e02af0485624c6411729db5121b502879b4379f349",
+        "decodedSeconds": 0.2
+      },
+      "receiptHashes": {
+        "inputBindingSha256": "9ef43b9de39dc81e56fe5599f7fe134440e89836ee94b5cc1c98225285225d3b",
+        "consumerReceiptSha256": "912cce79b7a89196b803bbc66942c320cad6722dc378899645803a3e41a5b455",
+        "videoReceiptSha256": "cbe3fffac44e917d5932bf10843de5d0b932b537f2941ab4ab97129933eb916a",
+        "mirrorReceiptSha256": "3f193e5b61843996980a8560049445b3fc4444c55dab5359b20e8eac71a493ac"
+      },
+      "accountUsed": false,
+      "boundaryTestsPassed": 5,
+      "logReceiptsEqualArtifacts": true
+    },
+    {
+      "platform": "darwin",
+      "arch": "x64",
+      "node": "v24.20.0",
+      "zipSha256": "262b4091bdeb079b31b8fd1c36c4289527aedb206837441eb825ead0a67c0b85",
+      "mainSha256": "9aaf7449c7e13611d5c6c02e12ea2941a28dd1dd7f60bd72edaec9be0eb3c766",
+      "auxiliarySha256": "27a1b4ba476d353d538d01d3e6c5b934c91621c9bbffe75f23445a8a01ce742f",
+      "auxiliaryBytes": 65268780,
+      "prunedRunId": "37974055180",
+      "nativePaths": 58,
+      "packagedPaths": 61,
+      "retainedVideoPaths": 11,
+      "exports": 104,
+      "installedMainOnly": true,
+      "automaticPlatformSelection": true,
+      "allInstalledFilesVerified": true,
+      "installedPathsReused": true,
+      "prepared": true,
+      "closed": true,
+      "currentSessionSyntheticContractPassed": true,
+      "nativeSessionLoginAttempted": false,
+      "video": {
+        "passed": true,
+        "codecSha256": "29147dd3c7a10b6b2f16e1b5df3f5e75b10b5d09f8ebc2a3bf2202e23c09799e",
+        "inputs": [
+          {
+            "name": "blue-64.mp4",
+            "sha256": "ced7b4e1cd47d948ecf407116095282e5b5ca4df76142b7a06826eecb92cb932",
+            "bytes": 1684,
+            "width": 64,
+            "height": 64,
+            "duration": 0.4,
+            "thumbnailWidth": 64,
+            "thumbnailHeight": 64,
+            "thumbnailSha256": "6dd6fdedccb6f2c3524b05d848d96bde56f7f10a98038104827b391f089a4646",
+            "thumbnailBytes": 12342,
+            "pattern": "blue",
+            "rowStride": 192
+          },
+          {
+            "name": "blue-1280.mp4",
+            "sha256": "1c8920f2db13e3c1b28b708bc94d3889ed8bd10f15ee5d89881d99715188b468",
+            "bytes": 1820,
+            "width": 1280,
+            "height": 720,
+            "duration": 0.4,
+            "thumbnailWidth": 640,
+            "thumbnailHeight": 360,
+            "thumbnailSha256": "f94feb9cd93a661f4e585b2d73a44856666488847a97f54643eb49939f4ca782",
+            "thumbnailBytes": 691254,
+            "pattern": "blue",
+            "rowStride": 1920
+          },
+          {
+            "name": "blue-red-65.mp4",
+            "sha256": "53a0baad6f0853d39e53263c22c847bd78435fc263e6844450878b471d13cc57",
+            "bytes": 1652,
+            "width": 65,
+            "height": 33,
+            "duration": 0.4,
+            "thumbnailWidth": 65,
+            "thumbnailHeight": 33,
+            "thumbnailSha256": "f375d0f2d4c7fc580c07b639f27897bbd20348285329f6c39cce381acb0504d5",
+            "thumbnailBytes": 6522,
+            "pattern": "blue-red",
+            "rowStride": 196
+          }
+        ]
+      },
+      "mirror": {
+        "localFixture": true,
+        "requests": {
+          "cold": {
+            "metadata": 1,
+            "payload": 33,
+            "payloadBytes": 144700862
+          },
+          "warm": {
+            "metadata": 1,
+            "payload": 0,
+            "payloadBytes": 0
+          }
+        },
+        "distinctContents": 33,
+        "allCachedFilesHashVerified": true,
+        "allWarmFileMtimesUnchanged": true
+      },
+      "audio": {
+        "realWasmEncodeDecode": true,
+        "wavSha256": "4360826c25a29422a3b0cf0122dd34ffab8d862e6ce3272243776b84d355d795",
+        "silkSha256": "40486e90c8e73276fffb48e02af0485624c6411729db5121b502879b4379f349",
+        "decodedSeconds": 0.2
+      },
+      "receiptHashes": {
+        "inputBindingSha256": "11c6e4355322b26fa6b5a2f3adef851fda46c6993fcc081527f05a180a3a3fb2",
+        "consumerReceiptSha256": "74f37e9246b72c1d920fcfd2f4ebff60b62abf597f65442c622c4636a08e1710",
+        "videoReceiptSha256": "f0d4d01a3ac1db5983c6a037a9a760f21199e204e676350bd335b94bbde75f8a",
+        "mirrorReceiptSha256": "8cba5f160ea0783311d2ce703b5d99bb5802cf93c23b9978c41d537bc06a1663"
+      },
+      "accountUsed": false,
+      "boundaryTestsPassed": 5,
+      "logReceiptsEqualArtifacts": true
+    }
+  ],
+  "accountAcceptanceEstablished": false,
+  "signingAuthenticityEstablished": false,
+  "published": false,
+  "defaultsChanged": false,
+  "fullNativeFallbackPreserved": true,
+  "evidenceFiles": [
+    {
+      "path": ".local/research/current-pruned-ci-38003259344-artifacts/run.json",
+      "bytes": 12336,
+      "sha256": "9e795bb23d68f4a0841e905f461257225c361b362398a8f1cd27076b41398c75"
+    },
+    {
+      "path": ".local/research/current-pruned-ci-38003259344-artifacts/jobs.json",
+      "bytes": 6842,
+      "sha256": "dd7d357aa1f629bbc17701cbdb77a911cfd413c57a6772fa676abacc0f6792cb"
+    },
+    {
+      "path": ".local/research/current-pruned-ci-38003259344-artifacts/artifacts.json",
+      "bytes": 1433,
+      "sha256": "2814085c065de1410feac07e01195fb3d0e270e2ece2a1cd3ed509ff1b846f75"
+    },
+    {
+      "path": ".local/research/current-pruned-ci-38003259344-artifacts/logs.zip",
+      "bytes": 58874,
+      "sha256": "93a59a8c525cf8e8cad05edbb6db107ef34d0c80957d5af0a7ce6b8160d58f77"
+    },
+    {
+      "path": ".local/research/current-pruned-ci-38003259344-artifacts/download-integrity.json",
+      "bytes": 4029,
+      "sha256": "29124acf2ef25dd35838fb4f789a1d5e454130183f502d21de45a9921e44ef01"
+    },
+    {
+      "path": ".local/research/current-pruned-ci-38003259344-artifacts/independent-audit.json",
+      "bytes": 1829,
+      "sha256": "a64ff20465746b0131501a3c69b7fce850b53e4af74e0bd4cb2575bdae10c11b"
+    },
+    {
+      "path": ".local/research/current-pruned-ci-38003259344-artifacts/parent-recheck.json",
+      "bytes": 105461,
+      "sha256": "e473cff2dda6a0ffd8b4c2e9e51bf0f0ed420df3d699e4c4b26418cfab51e506"
+    }
+  ],
+  "limits": [
+    "Local loopback mirror path only; no new public mirror availability claim.",
+    "Current SDK plus pruned inventory installation, codec and initialization only; no account or business compatibility claim.",
+    "Current Session start is tested with synthetic services; actual native Session login remains unobserved.",
+    "Independent reviewers read source, artifacts, hashes and logs; they did not execute native account operations."
+  ]
+}
