@@ -37,6 +37,7 @@ export function createKernel(
   let accountMsfConnected = false;
   let closed = false;
   let initialized = false;
+  let generation = 0;
   let pending: { resolve: (account: AccountIdentity) => void; reject: (error: Error) => void } | undefined;
   let timeout: ReturnType<typeof setTimeout> | undefined;
   let poll: ReturnType<typeof setTimeout> | undefined;
@@ -45,6 +46,7 @@ export function createKernel(
   const notify = (event: string, payload: unknown) => { if (!closed) emit(event, payload); };
   const clearTimers = () => { clearTimeout(timeout); clearTimeout(poll); timeout = poll = undefined; };
   const fail = (error: Error) => {
+    generation++;
     clearTimers();
     const current = pending;
     pending = undefined;
@@ -58,6 +60,7 @@ export function createKernel(
   const noop = () => {};
   const transitionOffline = (details: Record<string, unknown>) => {
     if (closed) return;
+    generation++;
     identity = undefined;
     requesting = false;
     nativeServices?.close();
@@ -83,6 +86,13 @@ export function createKernel(
   const startAccountSession = async (account: AccountIdentity) => {
     if (closed || !pending || startingSession) return;
     startingSession = true;
+    const attempt = generation;
+    const expectedPending = pending;
+    const session = accountSession!;
+    const active = () => !closed && generation === attempt && accountSession === session;
+    const scoped = (adapter: NativeObject) => new Proxy(adapter, {
+      get(target, key) { const callback = Reflect.get(target, key); return typeof callback === 'function' ? (...args: unknown[]) => { if (active()) return callback(...args); } : callback; },
+    });
     try {
       const rawGuid = String(invoke(loginService!, 'getMachineGuid'));
       if (!/^[a-fA-F0-9]{32}$/.test(rawGuid) && !/^[a-fA-F0-9-]{36}$/.test(rawGuid)) {
@@ -92,19 +102,20 @@ export function createKernel(
         ? `${rawGuid.slice(0, 8)}-${rawGuid.slice(8, 12)}-${rawGuid.slice(12, 16)}-${rawGuid.slice(16, 20)}-${rawGuid.slice(20)}` : rawGuid;
       const downloadsDir = join(options.dataDir, 'downloads');
       await mkdir(downloadsDir, { recursive: true });
-      if (closed || !pending) return;
+      if (!active() || pending !== expectedPending) return;
       const nativePlatform = { win32: 3, darwin: 4, linux: 5 }[platform() as 'win32' | 'darwin' | 'linux'];
       const osVersion = options.device?.osVersion ?? release();
       const hostName = options.device?.hostname ?? hostname();
-      nativeSessionCallbacks = callbacks([
+      nativeSessionCallbacks = scoped(callbacks([
         'onNTSessionCreate', 'onGProSessionCreate', 'onSessionInitComplete',
         'onOpentelemetryInit', 'onUserOnlineResult', 'onGetSelfTinyId',
       ], {
         onOpentelemetryInit: (result: { is_init: boolean }) => {
-          if (closed || !pending) return;
+          if (!active() || pending !== expectedPending) return;
           if (!result?.is_init) { fail(new Error('Native account session initialization failed')); return; }
           try {
-            nativeServices = createNativeServices(accountSession!, options.version.clientVersion, (event, payload) => {
+            nativeServices = createNativeServices(session, options.version.clientVersion, (event, payload) => {
+              if (!active()) return;
               if (event === 'kicked') {
                 forcedOffline = true;
                 const kicked = payload as { info?: unknown; args?: unknown[] };
@@ -113,8 +124,9 @@ export function createKernel(
                 return;
               }
               notify(event, payload);
-            }, options.mediaTools, options.recordCodec, account.uin, account.uid, info => notify('native-callback', info));
+            }, options.mediaTools, options.recordCodec, account.uin, account.uid, info => { if (active()) notify('native-callback', info); });
           } catch (error) { fail(error instanceof Error ? error : new Error(String(error))); return; }
+          if (!active() || pending !== expectedPending) { nativeServices?.close(); nativeServices = undefined; return; }
           identity = account;
           clearTimers();
           const current = pending;
@@ -123,8 +135,8 @@ export function createKernel(
           notify('login', account);
           notify('ready', account);
         },
-      });
-      invoke(accountSession!, 'init', {
+      }));
+      invoke(session, 'init', {
         selfUin: account.uin, selfUid: account.uid,
         desktopPathConfig: { account_path: options.dataDir },
         clientVer: options.version.clientVersion,
@@ -142,7 +154,7 @@ export function createKernel(
           setMute: false, vendorType: 0,
         },
         deviceConfig: '{"appearance":{"isSplitViewMode":true},"msg":{}}',
-      }, callbacks(['onMSFStatusChange', 'onMSFSsoError', 'getGroupCode'], {
+      }, scoped(callbacks(['onMSFStatusChange', 'onMSFSsoError', 'getGroupCode'], {
         onMSFStatusChange: (status: unknown, reason: unknown, ...extra: unknown[]) => {
           lastMsfStatus = { status, reason };
           notify('msf-status', { status, reason, args: [status, reason, ...extra] });
@@ -163,17 +175,21 @@ export function createKernel(
           notify('msf-error', details);
           transitionOffline({ source: 'msf', kind: forcedOffline ? 'forced' : 'unknown', ...details });
         },
-      }, 'Depends'),
-      callbacks(['dispatchRequest', 'dispatchCall', 'dispatchCallWithJson'], {}, 'Dispatcher'), nativeSessionCallbacks);
+      }, 'Depends')),
+      scoped(callbacks(['dispatchRequest', 'dispatchCall', 'dispatchCallWithJson'], {}, 'Dispatcher')), nativeSessionCallbacks);
+      if (!active() || pending !== expectedPending) return;
       if (startupSession) invoke(startupSession, 'start');
       else {
-        try { invoke(accountSession!, 'startNT', 0); }
-        catch { invoke(accountSession!, 'startNT'); }
+        try { invoke(session, 'startNT', 0); }
+        catch { invoke(session, 'startNT'); }
       }
-    } catch (error) { fail(error instanceof Error ? error : new Error(String(error))); }
+    } catch (error) { if (active()) fail(error instanceof Error ? error : new Error(String(error))); }
   };
   const beginAuthentication = async () => {
     if (closed || !pending || !loginService || requesting) return;
+    const attempt = generation;
+    const expectedPending = pending;
+    const active = () => !closed && generation === attempt && pending === expectedPending;
     try {
       if (invoke(loginService, 'getMsfStatus') === 3) {
         poll = setTimeout(() => { void beginAuthentication(); }, 500);
@@ -187,6 +203,7 @@ export function createKernel(
         let uin = request.uin;
         if (request.method === 'restore') {
           const records = await invoke(loginService, 'getLoginList');
+          if (!active()) return;
           if (process.env.QQ_NATIVE_TRACE_FIELDS === '1') {
             const local = Array.isArray(records?.LocalLoginInfoList) ? records.LocalLoginInfoList : [];
             notify('diagnostic', { stage: `restore-records:${JSON.stringify({
@@ -211,12 +228,13 @@ export function createKernel(
           if (!/^\d+$/.test(uin!)) throw new Error('Invalid restored account number');
         }
         const result = await invoke(loginService, 'quickLoginWithUin', uin);
+        if (!active()) return;
         if (result?.result !== '0' || result?.loginErrorInfo?.errMsg) {
           throw new Error(result?.loginErrorInfo?.errMsg || `Quick login failed: ${result?.result}`);
         }
       }
     } catch (error) {
-      fail(error instanceof Error ? error : new Error(String(error)));
+      if (active()) fail(error instanceof Error ? error : new Error(String(error)));
     }
   };
   const initialize = async () => {
@@ -294,7 +312,14 @@ export function createKernel(
       onQRCodeSessionFailed: (type: number, code: number) => fail(new Error(`QR login failed (${type}, ${code})`)),
       onLoginFailed: (...details: unknown[]) => fail(new Error(`Native login failed: ${JSON.stringify(details)}`)),
       onUserLoggedIn: (uin: unknown) => fail(new Error(`Account already logged in: ${String(uin)}`)),
-      onLogoutSucceed: () => { nativeServices?.close(); nativeServices = undefined; identity = undefined; notify('logout', undefined); },
+      onLogoutSucceed: () => {
+        generation++;
+        clearTimers();
+        pending?.reject(new Error('Native account logged out during login'));
+        pending = undefined;
+        nativeServices?.close(); nativeServices = undefined; identity = undefined;
+        notify('logout', undefined);
+      },
     });
     // Local NapCat returns a no-op for newly added callbacks. Preserve that behavior
     // while keeping a strong reference for native asynchronous callback delivery.
@@ -315,6 +340,7 @@ export function createKernel(
         if (loginRequest.method !== 'qr' && loginRequest.uin !== undefined && loginRequest.uin !== identity.uin) throw new Error('Another account is already logged in');
         return identity;
       }
+      const attempt = ++generation;
       startingSession = false;
       forcedOffline = false;
       lastMsfStatus = undefined;
@@ -328,8 +354,8 @@ export function createKernel(
       timeout = setTimeout(() => fail(new Error('Login timed out')), options.loginTimeoutMs ?? 120_000);
       try {
         await prepare();
-        if (pending && !closed) { notify('diagnostic', { stage: 'login-connect' }); invoke(loginService!, 'connect'); }
-      } catch (error) { fail(error instanceof Error ? error : new Error(String(error))); }
+        if (pending && !closed && generation === attempt) { notify('diagnostic', { stage: 'login-connect' }); invoke(loginService!, 'connect'); }
+      } catch (error) { if (generation === attempt) fail(error instanceof Error ? error : new Error(String(error))); }
       return result;
     },
     async invokeOperation(method: ServiceOperation, payload: Record<string, unknown> = {}): Promise<unknown> {
@@ -340,6 +366,7 @@ export function createKernel(
     async close(): Promise<void> {
       if (closed) return;
       closed = true;
+      generation++;
       nativeServices?.close();
       clearTimers();
       pending?.reject(new Error('Client closed during login'));

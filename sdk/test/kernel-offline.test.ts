@@ -104,3 +104,54 @@ test('host callback audit records only method names and argument types', async (
     assert.equal(JSON.stringify(audits).includes('never serialize'), false);
   } finally { await f.close(); }
 });
+
+test('stale Session readiness and Depends callbacks cannot complete a new login attempt', async () => {
+  const dataDir = await mkdtemp(join(tmpdir(), 'qq-stale-session-'));
+  let loginListener: any;
+  const sessions: any[] = [];
+  let qrRequests = 0;
+  const events: string[] = [];
+  const service = {
+    initConfig() {}, addKernelLoginListener(value: any) { loginListener = value; },
+    connect() { loginListener.onLoginConnected(); }, getMsfStatus: () => 0,
+    getQRCodePicture() {
+      qrRequests++;
+      if (qrRequests === 1) loginListener.onQRCodeLoginSucceed({ uin: '123', uid: 'old' });
+      return true;
+    }, getMachineGuid: () => '0123456789abcdef0123456789abcdef',
+  };
+  const session = {
+    init(_config: any, depends: any, _dispatch: any, listener: any) { sessions.push({ depends, listener }); },
+    getMsgService: () => ({ addKernelMsgListener() {} }),
+    getGroupService: () => ({ addKernelGroupListener() {} }),
+    getBuddyService: () => ({ addKernelBuddyListener() { return 1; } }),
+  };
+  const kernel = createKernel({
+    NodeIQQNTWrapperEngine: { get: () => ({ initWithDeskTopConfig() {} }) },
+    NodeIKernelLoginService: { get: () => service },
+    NodeIQQNTStartupSessionWrapper: { create: () => ({ start() {} }) },
+    NodeIQQNTWrapperSession: { getNTWrapperSession: () => session },
+  }, { dataDir, loginTimeoutMs: 2000, version: { clientVersion: '7.0.2-53644', appId: '1', qua: 'test' } }, event => events.push(event));
+  try {
+    const first = kernel.login({ method: 'qr' });
+    while (!sessions.length) await new Promise(resolve => setImmediate(resolve));
+    loginListener.onLoginDisConnected('first interrupted');
+    await assert.rejects(first, /offline/);
+    let settled = false;
+    const second = kernel.login({ method: 'qr' }).then(result => { settled = true; return result; });
+    while (qrRequests < 2) await new Promise(resolve => setImmediate(resolve));
+    const offlineBefore = events.filter(event => event === 'offline').length;
+    sessions[0].depends.onMSFStatusChange(1, 2);
+    sessions[0].depends.onMSFSsoError(99, 'stale error');
+    sessions[0].listener.onOpentelemetryInit({ is_init: true });
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(settled, false);
+    assert.equal(events.filter(event => event === 'offline').length, offlineBefore);
+    assert.equal(events.filter(event => event === 'ready').length, 0);
+    loginListener.onQRCodeLoginSucceed({ uin: '456', uid: 'new' });
+    while (sessions.length < 2) await new Promise(resolve => setImmediate(resolve));
+    sessions[1].listener.onOpentelemetryInit({ is_init: true });
+    assert.deepEqual(await second, { uin: '456', uid: 'new' });
+    assert.equal(events.filter(event => event === 'ready').length, 1);
+  } finally { await kernel.close(); await rm(dataDir, { recursive: true, force: true }); }
+});

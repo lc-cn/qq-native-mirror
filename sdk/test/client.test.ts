@@ -367,3 +367,36 @@ test('a rejected old login cannot clear a replacement login started after discon
   assert.deepEqual(await replacement,account);
  }finally{await client.close();}
 });
+
+
+test('worker crash cancels a scheduled automatic restore while explicit reconnect remains available', async () => {
+  class ExitedWorker extends Worker { exitCode: number | null = null; signalCode = null; }
+  class RestoredWorker extends Worker {
+    override send(value: any, callback: (error: Error | null) => void) {
+      super.send(value, callback);
+      if (value.method === 'init') queueMicrotask(() => this.emit('message', { id: value.id, result: { exports: ['fixture'] } }));
+      if (value.method === 'login') queueMicrotask(() => {
+        this.emit('message', { event: 'ready', payload: { uin: '123', uid: 'u_123' } });
+        this.emit('message', { id: value.id, result: { uin: '123', uid: 'u_123' } });
+      });
+    }
+  }
+  const worker = new ExitedWorker(), replacement = new RestoredWorker();
+  let spawns = 0, terminated = 0;
+  const client = new QQClient(worker as unknown as ChildProcess, 500, { method: 'restore' }, {
+    spawn() { spawns++; return replacement as unknown as ChildProcess; }, payload: {},
+  }, { delayMs: 10, maxAttempts: 1 });
+  client.on('terminated', () => terminated++);
+  try {
+    worker.emit('message', { event: 'ready', payload: { uin: '123', uid: 'u_123' } });
+    worker.emit('message', { event: 'disconnected', payload: { retryable: true } });
+    worker.connected = false; worker.exitCode = 1; worker.emit('exit', 1, null);
+    assert.equal(client.state, 'failed');
+    await new Promise(resolve => setTimeout(resolve, 30));
+    assert.equal(spawns, 0);
+    assert.equal(client.state, 'failed'); assert.equal(terminated, 1);
+    await client.reconnect();
+    assert.equal(spawns, 1); assert.equal(client.state, 'online');
+    assert.deepEqual(replacement.requests.find(request => request.method === 'login').login, { method: 'restore', uin: '123' });
+  } finally { await client.close(); }
+});

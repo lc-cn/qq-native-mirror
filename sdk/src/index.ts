@@ -83,6 +83,7 @@ export class QQClient extends EventEmitter<ClientEvents> {
     });
     const fail = (error: Error) => {
       if (generation !== this.#generation || this.#closed) return;
+      clearTimeout(this.#autoTimer); this.#autoTimer = undefined;
       this.#closed = true;
       for (const pending of this.#pending.values()) { clearTimeout(pending.timer); pending.reject(error); }
       this.#pending.clear(); this.#account = undefined;

@@ -32,6 +32,7 @@ export function createFriendRequests(session: Native, emit: (event: string, payl
   const seen = new Set<string>();
   const waiters = new Set<{ resolve: (requests: NativeFriendRequestDTO[]) => void; reject: (error: Error) => void }>();
   let listing: Promise<NativeFriendRequestDTO[]> | undefined;
+  let queryInvalidated = false;
   const listener = new Proxy({
     onBuddyReqChange(notification: unknown) {
       if (closed) return;
@@ -58,6 +59,7 @@ export function createFriendRequests(session: Native, emit: (event: string, payl
   };
   async function list(): Promise<NativeFriendRequestDTO[]> {
     if (listing) return listing;
+    if (queryInvalidated) throw new Error('Friend request query channel is invalid after a failed query; recreate the Session');
     let waiter: { resolve: (requests: NativeFriendRequestDTO[]) => void; reject: (error: Error) => void };
     const notification = new Promise<NativeFriendRequestDTO[]>((resolve, reject) => { waiter = { resolve, reject }; waiters.add(waiter); });
     let timer: NodeJS.Timeout | undefined;
@@ -69,7 +71,12 @@ export function createFriendRequests(session: Native, emit: (event: string, payl
         }),
       ]).then(([requests]) => requests),
       new Promise<never>((_, reject) => { timer = setTimeout(() => reject(new Error('Native friend request notification timed out')), 10_000); }),
-    ]).finally(() => { clearTimeout(timer); waiters.delete(waiter!); listing = undefined; });
+    ]).catch(error => {
+      // Buddy notifications have no request ID. A failed query can still emit a
+      // late response, which must never complete a subsequent list operation.
+      queryInvalidated = true;
+      throw error;
+    }).finally(() => { clearTimeout(timer); waiters.delete(waiter!); listing = undefined; });
     return listing;
   }
   async function invokeOperation(method: FriendRequestOperation, payload: Record<string, unknown> = {}): Promise<NativeFriendRequestDTO[] | void> {

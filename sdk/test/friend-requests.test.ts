@@ -68,3 +68,33 @@ test('list errors, invalid notifications and shutdown reject rather than fabrica
   closing.operations.close(); await assert.rejects(pending, /closed/);
   await assert.rejects(closing.operations.invokeOperation('listFriendRequests'), /closed/);
 });
+
+test('timed-out friend queries reject later lists before dispatch; unsolicited events still arrive', async t => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const f = fixture();
+  try {
+    const pending = f.operations.invokeOperation('listFriendRequests');
+    const rejected = assert.rejects(pending, /timed out/);
+    await new Promise(resolve => setImmediate(resolve));
+    t.mock.timers.tick(10_001);
+    await rejected;
+    const nextRejected = assert.rejects(f.operations.invokeOperation('listFriendRequests'), /query channel is invalid.*recreate the Session/);
+    await new Promise(resolve => setImmediate(resolve));
+    // This can be the first query's late callback; it cannot identify a new query.
+    f.notify([incoming]);
+    await nextRejected;
+    assert.deepEqual(f.calls, [['get']], 'no uncorrelatable later query is dispatched');
+    assert.equal(f.emitted.length, 1, 'unsolicited requests remain observable');
+  } finally { f.operations.close(); }
+});
+
+test('native friend query failure overrides early notification and invalidates only listing', async () => {
+  const f = fixture();
+  try {
+    f.service.getBuddyReq = () => { f.calls.push(['get']); f.notify([incoming]); return { result: 73 }; };
+    await assert.rejects(f.operations.invokeOperation('listFriendRequests'), error => (error as any).code === 73);
+    await assert.rejects(f.operations.invokeOperation('listFriendRequests'), /query channel is invalid/);
+    await f.operations.invokeOperation('handleFriendRequest', { request: { uid: 'u_request', time: '123' }, accept: false });
+    assert.deepEqual(f.calls, [['get'], ['approve', { friendUid: 'u_request', reqTime: '123', accept: false }]]);
+  } finally { f.operations.close(); }
+});
