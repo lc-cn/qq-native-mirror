@@ -1,0 +1,31 @@
+.github/workflows/pruned-current-sdk-consumer.yml
+  s_2104cc474f1ce5::t_c0473f551e836d 36-37
+  s_2104cc474f1ce5::t_ced51dee596abf 1-35,38-59
+ci/verify-consumer.mjs
+  s_2104cc474f1ce5::t_ced51dee596abf 84-92
+tools/acquire-pruned-current-inputs.py
+  s_2104cc474f1ce5::t_3136cd250a3145 1-86
+tools/verify-pruned-current-consumer.test.mjs
+  s_2104cc474f1ce5::t_c0473f551e836d 1-22
+tools/verify-pruned-current-consumer.mjs
+  s_2104cc474f1ce5::t_ced51dee596abf 1-49,51-55
+  s_2104cc474f1ce5::t_dfc52db5f888b3 50
+ci/pruned-runtime-probe.mjs
+  s_2104cc474f1ce5::t_1480915b478195 1-76
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "748dfe34dea6bf2bddc6be3c073cf8ceca31897f",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
