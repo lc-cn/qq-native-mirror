@@ -1,0 +1,45 @@
+.github/workflows/native-npm.yml
+  s_2104cc474f1ce5::t_a0ab2fb3e81e33 21-22,24,45,78-81,88-89,116,130-131,139-141,167,174-177
+.github/workflows/video-codec-native.yml
+  s_2104cc474f1ce5::t_cfb736c71cfffb 4
+ci/aggregate-release.mjs
+  s_2104cc474f1ce5::t_a333e9d7359395 21-23
+ci/build-platform.mjs
+  s_2104cc474f1ce5::t_50a1b055cf2d4d 2,47
+ci/bundle-video-codec.mjs
+  s_2104cc474f1ce5::t_0e0f8874d096fb 1-37
+ci/verify-consumer.mjs
+  s_2104cc474f1ce5::t_d393c11e0f1826 51-64,271
+ci/video-release-gate.mjs
+  s_2104cc474f1ce5::t_84a48c74b4ee8d 1
+sdk/scripts/local-first-publish.mjs
+  s_2104cc474f1ce5::t_5eca0d46fa6cbc 30,44,97,100
+sdk/src/index.ts
+  s_2104cc474f1ce5::t_1bfbe1a7b48f3c 325
+sdk/src/native-package.ts
+  s_2104cc474f1ce5::t_bbcdc91e23c5e6 15-21,27,48-49,140,144-150,152,156-176,217,312
+sdk/src/types.ts
+  s_2104cc474f1ce5::t_482b7635cbbfb1 16-17,45
+sdk/test/client-video-default.test.ts
+  s_2104cc474f1ce5::t_1f1c18d4c7aa05 1-58
+sdk/test/native-video-package.test.ts
+  s_2104cc474f1ce5::t_9247864ecf744c 1-85
+sdk/test/release-receipt.test.ts
+  s_2104cc474f1ce5::t_79fc3ccf1f3983 8,46,55-71
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "d43a20a76aface337240bd71db403cea496f4f17",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
