@@ -1,0 +1,33 @@
+sdk/docs/evidence/history-lifecycle-six-ci-37994258504.json
+  s_2104cc474f1ce5::t_dd825ef7f1ec69 1-1082
+sdk/docs/evidence/history-reentrant-close-local.json
+  s_2104cc474f1ce5::t_34f37fda5f8339 1-125
+sdk/docs/history-lifecycle.md
+  s_2104cc474f1ce5::t_99000bffc50512 3,5,16-21
+sdk/scripts/history-lifecycle-consumer-contract.mjs
+  s_2104cc474f1ce5::t_8ca3beb55ecd92 41,50,107
+sdk/src/native-services.ts
+  s_2104cc474f1ce5::t_8ec5cfb661bd72 77-83,90
+sdk/test/history-reentrant-close.test.ts
+  s_2104cc474f1ce5::t_d549840fb0ed6c 1-42
+tools/verify-dedup-consumer.mjs
+  s_2104cc474f1ce5::t_266505ec23542c 70
+tools/verify-dedup-consumer.test.mjs
+  s_2104cc474f1ce5::t_1b9cbebd53eb74 9,23-24
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e073b5ca268c128985cacd9f72016c014b564637",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
