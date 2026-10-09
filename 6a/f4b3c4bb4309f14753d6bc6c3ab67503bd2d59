@@ -1,0 +1,65 @@
+.github/workflows/native-first-main.yml
+  s_2104cc474f1ce5::t_6b772f1dd93066 1-116
+README.md
+  s_2104cc474f1ce5::t_8852040fa592c8 3,7,15,17-21
+catalog-gzip-v1.json
+  s_2104cc474f1ce5::t_7d470353a731bb 36-68
+first-ci/acquire-source.py
+  s_2104cc474f1ce5::t_219df971a8d004 1-65
+first-ci/deny-symlink.cjs
+  s_2104cc474f1ce5::t_6df07290120bf8 1-13
+first-ci/finalize-release.mjs
+  s_2104cc474f1ce5::t_f5685bf059007c 1-25
+first-ci/verify-cache.mjs
+  s_2104cc474f1ce5::t_0529dbd9a2b145 1-22
+first-ci/verify-no-symlink.mjs
+  s_2104cc474f1ce5::t_5017eceed24081 1-11
+packages/7.0.2-53644-darwin-x64-gzip-v1/9c363f0388d29025a001f1b05a748fc559816467108d7c0f909de932677a7e9c/manifest.json
+  s_2104cc474f1ce5::t_b80b87003646f0 1-8113
+packages/9.9.33-52230-win32-arm64-gzip-v1/56e7d7743379f190ba7b19e780db98e82966ca724fcf26bd491f2ac1a32df366/manifest.json
+  s_2104cc474f1ce5::t_a8bdfa1daec82d 1-114
+packages/9.9.33-52230-win32-x64-gzip-v1/2caa41db2b1bcea8d317a655053821e46969be6964b412f3df979d72edd10161/manifest.json
+  s_2104cc474f1ce5::t_1c57cba1f8ec4b 1-149
+public-ci/verify.mjs
+  s_2104cc474f1ce5::t_f61d8c5b6bf88e 32
+sdk/docs/linux-signing-static.md
+  s_2104cc474f1ce5::t_925845e1503e56 246-253
+sdk/docs/npm-first-publish.md
+  s_2104cc474f1ce5::t_282988c1a5ed1c 41-52
+sdk/scripts/download-npm-candidate.mjs
+  s_2104cc474f1ce5::t_d33482021e87c4 7,17,19,40,51,95-98,102
+sdk/scripts/linux-signing-setup-helper.py
+  s_2104cc474f1ce5::t_3fb058c42641aa 1-57
+sdk/scripts/local-first-publish.mjs
+  s_2104cc474f1ce5::t_45522c6e0daec3 7,58-87
+sdk/src/data-directory-lock.ts
+  s_2104cc474f1ce5::t_efb27d346f4576 2,4,12-13,15-17,26
+sdk/src/native-package.ts
+  s_2104cc474f1ce5::t_48f1b4ea907ed5 4,10,85,92-93,97-98,111
+sdk/src/process-lock.ts
+  s_2104cc474f1ce5::t_07f77b2d44837b 1-45
+sdk/test/data-directory-lock.test.ts
+  s_2104cc474f1ce5::t_28a198ab87f679 3,17
+sdk/test/installed-native.test.ts
+  s_2104cc474f1ce5::t_95b958cf9e0a19 11
+sdk/test/native-package.test.ts
+  s_2104cc474f1ce5::t_61c3f14be271f2 2-4,17-31
+sdk/test/process-lock.test.ts
+  s_2104cc474f1ce5::t_1dc812d9f76413 1-56
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6af4b3c4bb4309f14753d6bc6c3ab67503bd2d59",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
