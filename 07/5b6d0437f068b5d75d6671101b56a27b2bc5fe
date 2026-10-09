@@ -1,0 +1,41 @@
+.github/workflows/native-version-consumer.yml
+  s_2104cc474f1ce5::t_4ec24cd58dcee1 69
+sdk/README.md
+  s_2104cc474f1ce5::t_e3394acfed3029 201-202
+sdk/docs/attachment-download.md
+  s_2104cc474f1ce5::t_2b4ce0eb32501c 1-15
+sdk/docs/evidence/attachment-download-local.json
+  s_2104cc474f1ce5::t_3ec3f73fad1c75 1-119
+sdk/scripts/download-consumer-contract.mjs
+  s_2104cc474f1ce5::t_62c2f22e1859bd 1-106
+sdk/scripts/verify-package-consumer.mjs
+  s_2104cc474f1ce5::t_1ee9b87160459d 16,39,280
+sdk/src/index.ts
+  s_2104cc474f1ce5::t_c4966209e25be9 4,278-281
+sdk/src/media-operations.ts
+  s_2104cc474f1ce5::t_c31713df0254fd 1-2,10-36,49-52,60,62-69,71,73,75-78,81-83
+sdk/src/native-services.ts
+  s_2104cc474f1ce5::t_794ffeaa734080 17,440-445
+sdk/test/download-consumer.test.ts
+  s_2104cc474f1ce5::t_ccde1345ec1452 1-8
+sdk/test/media-operations.test.ts
+  s_2104cc474f1ce5::t_37b79308d24cc2 6,57,61-102
+tools/verify-dedup-consumer.test.mjs
+  s_2104cc474f1ce5::t_cad2e56b627495 9,29-30
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "075b6d0437f068b5d75d6671101b56a27b2bc5fe",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
