@@ -1,0 +1,29 @@
+.github/workflows/dedup-native-candidate.yml
+  s_2104cc474f1ce5::t_39d15b8e9b1d49 22
+sdk/scripts/local-first-publish.mjs
+  s_2104cc474f1ce5::t_cc74d18d9d5b4a 6,20-23,26,42,47,102
+sdk/scripts/native-package-members.mjs
+  s_2104cc474f1ce5::t_283d1acc05fa28 1-11
+sdk/scripts/video-materials.mjs
+  s_2104cc474f1ce5::t_c00a7900e6674b 5,18-19,48
+sdk/test/native-package-members.test.ts
+  s_2104cc474f1ce5::t_7f0bcef60fded7 1-3
+sdk/test/video-materials.test.ts
+  s_2104cc474f1ce5::t_a36c21c2f7387a 35
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "4332638c0d1e510839c4a972d7e4f5dd8bc81b57",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
