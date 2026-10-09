@@ -27,3 +27,15 @@ node scripts/local-first-publish.mjs /absolute/path/npm-release --publish
 七个包的 Trusted Publisher 设置均使用 GitHub 用户 `lc-cn`、仓库 `qq-native-mirror`、工作流文件 `native-npm.yml`、环境 `npm-production`。设置完成后，后续版本可手动运行该工作流并启用 `publish`。默认关闭发布，push 仅构建与验收。npm 官方文档：[Trusted publishing](https://docs.npmjs.com/trusted-publishers/)。
 
 聚合 manifest 合同：根字段 `schemaVersion:1,repository,commit,runId,runAttempt,version,packages`；每个 package 包含 `name,version,tarball,size,sha256,integrity`；辅包额外包含 `manifestSha256,receipt,receiptSha256`，receipt 路径为 `evidence/<platform>-<arch>.consumer.json`。
+
+## 下载 CI 候选归档
+
+使用 Node 24 和已经可只读访问 GitHub API 的 `gh`。从成功的归档 run 获取确切 prerelease tag：
+
+```sh
+node scripts/download-npm-candidate.mjs npm-v0.0.1-ci-RUN_ID /absolute/path/npm-candidate
+```
+
+需要资产下载代理时显式添加 `--proxy=https://gh-proxy.com/`；GitHub API 始终由 `gh api` 直接查询，不传给代理。脚本固定仓库、校验 release tag/目标 commit 与成功 CI run 的 SHA、workflow、runAttempt，再核对每个 GitHub asset 的 SHA256。最多并发 3 个有界下载，临时文件校验后原子替换；正确摘要的缓存可跳过，另一 run 禁止复用此目录。代理和重定向不会收到 GitHub API 认证头；脚本不输出 token 或临时签名 URL。
+
+验收归档仅接受七个确定名称的普通 JSON 文件，允许至多一个空的 `evidence/` 目录条目，拒绝链接、其他目录、路径穿越和额外条目，然后执行同一 `validateRelease` 校验。此命令不会执行 native、登录或发布。完成后再运行上面的本地首发命令。

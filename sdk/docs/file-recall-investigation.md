@@ -1,0 +1,15 @@
+# File recall evidence
+
+The resource-pruned macOS 7.0.2-53644 candidate restored the authorized account and sent the fixed attachment to the explicitly selected peer. The first four-media batch timed out while waiting for attachment recall; the user confirmed two recall notices and that file.txt remained visible. Three native recall completions for the other media do not establish three peer-side notices.
+
+The SDK subsequently added mandatory recallMsg GeneralCallResult validation. A separately authorized one-file attempt completed send, then returned native result **-7003** from recall. The corrected SDK rejected immediately and closed normally, without retry. This is a native refusal for that attempt; the code's meaning and whether pruning contributed are unknown. Both batch markers remain reserved.
+
+The local file element uses elementType 3, empty elementId, fileName, folderId, local filePath and string fileSize. The upstream [NapCat file converter](https://github.com/NapNeko/NapCatQQ/blob/main/packages/napcat-onebot/api/file.ts) uses the same basic fields. Its [file helper](https://github.com/NapNeko/NapCatQQ/blob/main/packages/napcat-core/apis/file.ts) retains the original local path when uploadGroupFile is false. This comparison does not establish equal runtime context or successful file recall.
+
+The actual wrapper includes internal file_recall_mgr/file_recall_worker strings and c2c file recall operations. Loading and inspecting its exported class prototypes found recallMsg in NodeIKernelMsgService but no separately named file-recall entry in NodeIKernelRichMediaService. Strings and export enumeration do not identify the -7003 branch or prove another call is unnecessary.
+
+Existing callback auditing covered Login/Session rather than core Msg/Group/Buddy listeners, so the earlier file-v2 receipt has no Msg callback audit. Core listener auditing is now wired to record only callback family/name, argument types and aggregate counts; it stops after close. It does not record message bodies, contact identities, tickets or native payloads. This improves future diagnostics but does not retroactively supply missing observations or authorize another account operation.
+
+Private receipts: `.local/acceptance/media-pruned-v1/receipt.json`, `.local/acceptance/file-recall-v2/receipt.json`, `.local/research/macos-pruned-surface.json`. Remaining work includes identifying the native refusal branch and comparing full/pruned behavior under a separately approved operation plan if needed.
+
+A static ARM64 MOVN scan found two direct -7003 constants at 0x18604dc and 0x1918560 in the thinned wrapper. LLDB disassembly shows both compare the input error code against a list of errors and return a boolean. These are classification references, not identified producers of the recall error. They therefore do not establish a meaning, signing flag or pruning cause. Reproduce the constant scan with `scripts/find-macos-error-code.py WRAPPER -7003`. Receipts: `.local/research/macos-recall-code-7003.json` and `macos-recall-code-7003-disassembly.txt`. No binary was modified and no account operation occurred.

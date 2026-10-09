@@ -1,0 +1,78 @@
+# Native bundle reduction evidence
+
+The published full GitHub bundles remain the default and fallback. The macOS arm64 candidate retains all 1156 manifest paths. It deduplicates identical file contents and retains the vendor's original arm64 slice from universal Mach-O binaries. No native instructions are patched or signatures reauthored.
+
+| Package | Unique contents | Unique content bytes | Runtime paths |
+| --- | ---: | ---: | ---: |
+| Original macOS bundle | 309 | 245,273,162 | 1156 |
+| arm64 slice candidate | 309 | 115,511,882 | 1156 |
+
+Thinning eleven unique native binaries saves 129,761,280 bytes, approximately 53% of unique content. The original export also materialized duplicate framework aliases, adding 25,083,687 bytes to its logical file total. The installer now downloads identical SHA-256 contents once and hardlinks the remaining paths, reducing macOS payload requests from 1156 to 309 without deleting any runtime paths.
+
+On 2026-10-09 the candidate passed verification through an installed npm tarball under ordinary Node 24.19.0 on macOS arm64: every manifest path and SHA-256 matched, createClient prepared successfully, 104 native exports loaded, and close completed. The verifier used a fresh temporary account directory and never called login or restore. This proves integrity and initialization; QR login and read-only friend/group operations have since passed as described below; media operations remain unverified for the thinned candidate. The full-path thinned candidate is published as a separate GitHub prerelease, and is not default-selected.
+
+Reproduce after building or installing the SDK:
+
+```sh
+node scripts/verify-native-bundle.ts /absolute/bundle /absolute/receipt.json
+# To exercise a particular installed npm package:
+node scripts/verify-native-bundle.ts /absolute/bundle /absolute/receipt.json /absolute/node_modules/qq-native-client/dist/index.js
+```
+
+Generate separate candidates with `scripts/deduplicate-native-bundle.py` and `scripts/thin-macos-native.py`. Keep the original bundle for fallback. Do not infer resource files are removable from successful initialization; reducing file count requires operation-specific evidence.
+
+The SDK's accelerated default catalog path has also prepared successfully through an installed npm consumer with completed content cached, including a full wrapper separately downloaded through gh-proxy.com and hash-verified. Cold direct GitHub download verification terminated with TimeoutError after the ten-minute deadline. A fresh empty-cache accelerated verification passed in 304 seconds, including actual initialization and close. See [download acceleration evidence](download-acceleration.md).
+
+A restrictive macOS sandbox can crash both original and candidate wrappers: vendor initialization calls DASessionCreate and then releases its result without checking for null. Matched unrestricted execution passes both bundles. The reproduced crash is CFRelease(NULL), not evidence that thinning caused failure or that a vendor signing check rejected the bundle. No hardware values or signature results are fabricated.
+
+Local receipts: `.local/research/macos-thin-installed-verification.json`, `macos-thin-all-size.json`, `macos-baseline-unsandboxed.json`, `macos-dedup-unsandboxed.json`, and `macos-trap-diagnosis.json`.
+
+## Authorized QR and read-only acceptance
+
+On 2026-10-09 an installed npm consumer ran one explicitly authorized QR login using the 115,511,882-byte unique-content candidate, a new private account directory, ordinary Node 24.19.0 and macOS arm64. The user confirmed phone login success. The SDK independently observed authenticated and Session ready, returned 3 friends and 13 groups, then closed normally with no error. No messages, account mutations, restoration or automatic retry were performed. Receipt: `.local/thin-qr-readonly-v1/receipt.json`. This extends candidate evidence to QR authentication and these read-only operations, without proving media behavior or vendor signing authenticity.
+
+## Byte-preserving gzip transport
+
+A separate gzip transport candidate reduces unique download content from 115,511,882 to 48,186,949 bytes (58.3% less than the thinned package, 80.4% less than the original unique content). All 1156 runtime paths and their original SHA-256 values remain unchanged. This changes transport storage and transfer size, not native instructions or runtime file contents. Runtime disk requirements are still those of the uncompressed package.
+
+Schema-1 file entries optionally accept `encoding: "gzip"` and a mandatory `downloadSha256`. The installer verifies compressed bytes first, decompresses with a bounded 512 MiB output limit, then verifies the existing `sha256` before caching or publication. Uncompressed manifests remain compatible. The server must serve stored gzip bytes without an HTTP Content-Encoding transformation, so the downloaded compressed checksum remains meaningful.
+
+Generate a separate compressed mirror directory with `node scripts/compress-native-bundle.ts SOURCE_BUNDLE NEW_MIRROR_DIR`. Run `node scripts/verify-mirror-delivery.ts MIRROR_DIR --prepare` to download, restore, validate and initialize without login. Default delivery verification does not load native code. Local complete delivery passed 310 requests (manifest plus 309 contents); repeat installation required only one manifest request. Native preparation evidence is recorded separately. All 127 regressions pass, including transport hash mismatch, restored-byte mismatch and decoded-content cache reuse.
+
+This compressed candidate is not published or default-selected. It preserves the runtime bytes of the separately QR-verified thinned candidate; no new account login is inferred from the transport test. Removing framework resource files still requires independent operation evidence.
+
+## Framework resource removal candidate
+
+`scripts/prune-macos-resources.py` creates a separate candidate that omits framework `Resources` entries except Info.plist. Source files and default catalog remain untouched. Binary dependencies, framework aliases, metadata and code-signature records are retained. This is an experimentally validated subset, not a general claim that all UI resources are unnecessary.
+
+The resulting package contains 46 paths and 21 unique contents, compared with 1156 paths and 309 contents before pruning. Unique runtime bytes are 115,037,000; gzip transfer bytes are 47,811,872. Most savings concern paths and requests rather than byte size.
+
+On 2026-10-09 it passed full integrity checks and preparation with 104 native exports through an installed npm consumer. A subsequent separately authorized QR attempt used a fresh private account directory: the user confirmed phone success; SDK authenticated, reached Session ready, returned 3 friends and 13 groups, and closed normally without errors. No messages, mutations, restore or retry were performed. Candidate media functionality and signing authenticity remain unproven. Receipts: `.local/research/macos-pruned-prepare.json`, `.local/pruned-qr-readonly-v1/receipt.json`.
+
+The resource-pruned candidate is local-only. The earlier full-path thinned candidate is available at https://github.com/lc-cn/qq-native-mirror/releases/tag/macos-arm64-thin-v1 with 310 assets (309 contents plus manifest). Asset names, sizes and all 310 GitHub-provided SHA-256 digests matched local files. Full original bundles remain selected by the default catalog.
+
+## Linux gzip preparation
+
+Both 3.2.32-52194 Linux bundles were generated as separate byte-preserving gzip mirror candidates on 2026-10-09. x64: 7 paths/7 contents, 172,094,832 runtime bytes to 62,122,352 transfer bytes. arm64: 8 paths/8 contents, 181,287,704 runtime bytes to 63,996,855 transfer bytes. Source file hashes were checked during generation. These candidates are local-only; actual Linux compressed-mirror consumer delivery and runtime acceptance remain outstanding. This does not introduce a new account login.
+
+The separately approved resource-pruned media batch restored the prior account, completed send/recall native callbacks for image, voice and video, and completed a text-attachment send. Attachment recall timed out; its outcome is unknown and no retry occurred. The client closed normally. The user confirmed two recall notices and that file.txt remained visible; individual image/voice/video arrival is not established. This extends operation evidence but leaves file recall and comprehensive media acceptance incomplete.
+
+Peer confirmation therefore establishes an actual attachment recall failure for this batch, rather than merely an absent completion callback. The difference between three native recall completions and two observed notices remains unresolved; no automatic account action is taken to investigate it.
+
+Linux x64 compressed-mirror delivery has now passed in an isolated ordinary Node 24.20.0 installed npm consumer: all 7 gzip contents downloaded and restored, 98 native exports, environment preparation and closed state, with one-second built-in audio codec conversion. No account directory was mounted or login attempted. Receipt: `.local/research/linux-x64-gzip-consumer.log`. Linux arm64 also passed installed npm compressed-mirror download/restoration, 98 exports, preparation, one-second audio codec and normal close with no account mounted or login. Receipt: `.local/research/linux-arm64-gzip-consumer.json`.
+
+A later separately approved single-file diagnostic on the pruned candidate produced native recall result -7003 after a successful send, with normal close and no retry. This proves native rejection in that attempt; it does not prove the rejection was caused by resource pruning or signing behavior.
+
+## Published gzip mirror candidates
+
+The optional gzip catalog is published at https://raw.githubusercontent.com/lc-cn/qq-native-mirror/main/catalog-gzip-v1.json and references the `gzip-v1` prerelease. All 324 asset names, sizes and GitHub SHA-256 digests matched local compressed bytes (174,306,156 total transfer bytes). Metadata commit: b589c72. The three entries cover macOS arm64 with full resource paths, Linux x64 and Linux arm64. The public gzip catalog cold-cache installed npm consumer passed on macOS arm64 in 130,062 ms: complete download/restoration, 104 exports, preparation and normal close without login. Receipt: `.local/research/gzip-public-consumer.json`. Public Linux download remains unverified; Linux local-mirror consumers passed.
+
+Use `catalogUrl` to opt in, together with optional `downloadMirrors: ['https://gh-proxy.com/']`. Requires the current SDK's gzip manifest support. The default catalog and full original release assets remain unchanged. The 46-path resource-pruned candidate remains local and is not selected by this published catalog.
+
+## Six-platform npm distribution target
+
+The required matrix is Windows (`win32`), Linux (`linux`), and macOS (`darwin`), each on `x64` and `arm64`: six auxiliary packages plus the main SDK. The previously generated three auxiliary packages cover only available native materials, not the complete support target. On 2026-10-09 the original universal macOS closure was independently extracted into an x64 candidate, retaining all 1156 paths; its Mach-O slices are statically verified as x86_64, without account or runtime claims.
+
+GitHub Actions workflow `native-npm.yml` in `lc-cn/qq-native-mirror` uses actual six-architecture hosted runners. It downloads hash-pinned kernels, builds registration adapters, packages the artifacts, then installs and initializes ordinary Node consumers. QQ kernels themselves are closed-source vendor binaries and are not recompiled. Missing sources fail explicitly; no empty placeholder packages are published. Publishing requires all six consumers to pass and npm Trusted Publisher configuration. Initial deployed run: https://github.com/lc-cn/qq-native-mirror/actions/runs/37874741923 . Runtime results remain pending until the run completes.
+
+Run 37874921576 completed with actual installed consumer initialization/close passes on Linux x64, Linux arm64, macOS arm64 **and macOS x64**. Each job built its adapter and platform npm tarball on the corresponding architecture runner. Windows jobs failed at the missing-source gate in that revision; the publish job was skipped. The subsequent Windows-specific run 37875373609 extracts the official x64/arm64 installer sources and attempts a bridge that reads Node's real stopping state. Its runtime outcome is pending; no Windows support claim follows from the four passed jobs.

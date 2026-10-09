@@ -95,13 +95,13 @@ The abbreviated example must be extended with all dependent native files. See `s
 npm install
 npm run build
 npm test
-node scripts/probe-native.ts --bridge native/darwin-arm64/registration-bridge.node
-node scripts/login-local.ts
+node scripts/probe-native.ts
+node dist/cli.js --help
 ```
 
-Building the bridge requires clang and Node C headers. Set `QQ_NODE_INCLUDE` if the headers are not in the normal Node install locations. Packaged consumers use the prebuilt bridge for their supported architecture; `bridgePath` can select an externally built bridge.
+Local bridge builds on macOS/Linux require clang/cc and Node C headers. Set `QQ_NODE_INCLUDE` if the headers are not in the normal Node install locations. On Windows, use `npm exec tsc`; GitHub CI builds the pinned-runtime DLL with MSVC. Packaged consumers use prebuilt platform packages and need no compiler.
 
-`login-local.ts` uses an independent `.local/login` data directory and stops after QR generation by default. `--wait` waits for phone authorization; `--restore` uses existing authorization. Use `QQ_NATIVE_DIR` to test an exported dependency package instead of the installed app's resource directory. `smoke-packaged.ts` verifies a locally installed tarball, localhost mirror download and native account restoration; run it only after authorizing the test account.
+The native probe selects an installed auxiliary package or a verified mirror bundle by default, loads it in a separate process, and lists exports without account initialization or login. `--addon` selects an explicit native file. Use the public CLI for configuration and explicit QR login; `--help` performs no account operation.
 
 Native files execute native code; SHA-256 establishes correspondence to a trusted package, not that an arbitrary mirror is trustworthy. Treat login images and account directories as private. The macOS kernel queries Disk Arbitration during initialization: a restrictive sandbox can produce an upstream CFRelease(NULL) crash. The module reports worker termination; it does not suppress the native error or invent hardware data.
 
@@ -116,7 +116,7 @@ Preserve original native filenames and dependency layout when building bundles. 
 - Public APIs now include friend/group/member queries, text and group mention sending, history, recall and message events. Real macOS account testing has verified friend queries and incoming message callbacks; group/member/history queries and explicit private text sending/recall have also passed real account checks; the user confirmed seeing the message or recall notice.
 - Image/reply/file/video/record sending and attachment downloading are implemented. Video metadata/thumbnail generation and built-in WAV/SILK conversion have actual local verification; QQ media delivery remains unverified. Complete oicq-like capability parity remains unfinished.
 - See [SDK acceptance criteria](docs/sdk-acceptance.md) for the full project scope. Login success is not the SDK completion criterion.
-- This repository has not been published to npm. `qq-native-client` is the current local package name.
+- Main npm package name: `qq-native-client`; initial release version: `0.0.1`. The six native auxiliary packages use the same release version.
 
 See [research](RESEARCH.md), [registration bridge](native/README.md), and [login contract](docs/login-contract.md).
 
@@ -146,7 +146,7 @@ The npm package exposes the `qq-native-client` executable. `--help` lists config
 
 ## Signing investigation priority
 
-Further account acceptance is currently suspended while the native security signing environment is investigated. Functional login and message acknowledgements do not establish signing integrity or long-term account safety. See [signing integrity](docs/signing-integrity.md) and [community evidence](docs/signing-community-evidence.md). The SDK does not fabricate security signatures or replace detector results.
+Native security signing authenticity remains unverified. Functional login and message acknowledgements do not establish signing integrity or long-term account safety. See [signing integrity](docs/signing-integrity.md) and [community evidence](docs/signing-community-evidence.md). The SDK does not fabricate security signatures or replace detector results.
 
 Group applications and invitations are available through `listGroupRequests({ doubt?, limit?, before? })`, which returns `{ requests, next }`, and the `request.group` event. Types distinguish invitation (1), invitation requiring administrator approval (5), and join application (7). `handleGroupRequest(request, accept, reason?)` is explicit; its completion means native dispatch, not confirmed approval. CLI equivalents are `group-requests` and `group-request`. A failed list query invalidates that Session's query channel to avoid assigning a delayed result to a later page; reconnect explicitly before querying again. These operations have local contract tests; real-account approval has not been tested.
 
@@ -199,6 +199,6 @@ It covers macOS arm64 (all resource paths retained) and Linux x64/arm64. Default
 
 主包使用固定版本的 optionalDependencies，覆盖 `qq-native-client-{darwin,linux,win32}-{x64,arm64}` 六个辅包。npm 根据 os/cpu（Linux 还要求 glibc）安装对应辅包；无需 postinstall 脚本。默认 createClient 优先加载辅包，每个原生文件通过 SHA-256 校验。显式 wrapperPath、manifestUrl 或 catalogUrl 优先；指定不同内核版本或省略 optional dependencies 时，仍使用镜像目录下载。
 
-内核版本写在辅包 manifest 中，npm 包版本独立管理。更新主包时固定辅包版本，避免同一主包在不同时间安装到不同内核。完整目标为 Windows/Linux/macOS × x64/arm64，共六个辅包。GitHub Actions 在各架构 runner 上构建注册适配层、校验并打包厂商内核，再进行无账号消费者初始化；缺少素材或验证失败的平台不发布占位包。当前 Windows 适配和六平台 CI 验收仍在进行。
+内核版本写在辅包 manifest 中，npm 包版本独立管理。更新主包时固定辅包版本，避免同一主包在不同时间安装到不同内核。完整目标为 Windows/Linux/macOS × x64/arm64，共六个辅包。GitHub Actions 在各架构 runner 上构建注册适配层、校验并打包厂商内核，再进行无账号消费者初始化；缺少素材或验证失败的平台不发布占位包。六个平台已通过安装主包、自动选择辅包、初始化与关闭的 CI 验收。Windows 当前要求官方 Node `24.20.0`，并校验运行时配置；Windows 账号登录及业务 API 尚未实测。
 
 首发使用 GitHub Actions 在六个平台验收通过后汇总的 `npm-release` 产物：本地验证并依次发布六个辅包和主包，由维护者完成 npm 登录与发布验证。首发完成后再为七个包配置 Trusted Publisher。详见 [本地首发流程](docs/npm-first-publish.md)。
