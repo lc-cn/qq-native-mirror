@@ -1,0 +1,70 @@
+{
+  "schemaVersion": 1,
+  "id": "qq-3.2.32-52194-linux-arm64-gzip-v1",
+  "platform": "linux",
+  "arch": "arm64",
+  "wrapper": "wrapper.node",
+  "version": {
+    "clientVersion": "3.2.32-52194",
+    "appId": "537379448",
+    "qua": "V1_LNX_3.2.32-52194_52194_GW_B"
+  },
+  "files": [
+    {
+      "path": "libbugly.so",
+      "url": "https://github.com/lc-cn/qq-native-mirror/releases/download/gzip-v1/fa6a5dee6dbfe84bf7025608f41add043fcc277fb029a10f6e0d92b2d0026bde.gz",
+      "sha256": "573cbe3f173c31945ad8adc7f91b462ee40e92d711f049311a9ffc67ba164f08",
+      "encoding": "gzip",
+      "downloadSha256": "fa6a5dee6dbfe84bf7025608f41add043fcc277fb029a10f6e0d92b2d0026bde"
+    },
+    {
+      "path": "libcrbase.so",
+      "url": "https://github.com/lc-cn/qq-native-mirror/releases/download/gzip-v1/c63b0631840f7fc56cb252d1580e39148f9879e91d640bbb6eb822eb4d19f389.gz",
+      "sha256": "d9152f08a120fd80d106e575582425c4f9b5ceccb579681c08a1cc998d4d290a",
+      "encoding": "gzip",
+      "downloadSha256": "c63b0631840f7fc56cb252d1580e39148f9879e91d640bbb6eb822eb4d19f389"
+    },
+    {
+      "path": "libssh2.so.1",
+      "url": "https://github.com/lc-cn/qq-native-mirror/releases/download/gzip-v1/de10556cfcdd543e8e79da9e25007f89e61a0c89ca81d42ce36bf42e66333227.gz",
+      "sha256": "feb4e10c885745ff39d924e0f0d83d78f0b2a26d7900965b29eba5dc70600104",
+      "encoding": "gzip",
+      "downloadSha256": "de10556cfcdd543e8e79da9e25007f89e61a0c89ca81d42ce36bf42e66333227"
+    },
+    {
+      "path": "libunwind-aarch64.so.8",
+      "url": "https://github.com/lc-cn/qq-native-mirror/releases/download/gzip-v1/56586d1c9d5c8ac5b5375491e5022838f15e1d4db5958d3899a38fb49ed23365.gz",
+      "sha256": "b3d419fdf5146bdf1f829fa6146b8867788f57ea75adf6bd999b4791be90f196",
+      "encoding": "gzip",
+      "downloadSha256": "56586d1c9d5c8ac5b5375491e5022838f15e1d4db5958d3899a38fb49ed23365"
+    },
+    {
+      "path": "libunwind.so.8",
+      "url": "https://github.com/lc-cn/qq-native-mirror/releases/download/gzip-v1/8b78084f559fca1c5af59c6003149f25df7841f5679ad3b1e8c1008729642c30.gz",
+      "sha256": "ff7bb631cb460dfcb231d80f61e1390448244a0a6f940b12c7c03dbd1a565205",
+      "encoding": "gzip",
+      "downloadSha256": "8b78084f559fca1c5af59c6003149f25df7841f5679ad3b1e8c1008729642c30"
+    },
+    {
+      "path": "libz.so.1",
+      "url": "https://github.com/lc-cn/qq-native-mirror/releases/download/gzip-v1/e25e6c61797b3603508a430ad624375ae043b6c22ca5522d7b16865b4af33099.gz",
+      "sha256": "d7e452e38e2b8d3f47d6110e50a1c0b505477d558e56806cccc75535d0302393",
+      "encoding": "gzip",
+      "downloadSha256": "e25e6c61797b3603508a430ad624375ae043b6c22ca5522d7b16865b4af33099"
+    },
+    {
+      "path": "sharp-lib/libvips-cpp.so.42",
+      "url": "https://github.com/lc-cn/qq-native-mirror/releases/download/gzip-v1/3e44094e3e7d893902dfbf078649b10607fdf408c254baf1e2eb4b7dc52d7199.gz",
+      "sha256": "41978e127befa8d0bcd1a4042142bc4d7b4ddda0d76e389ee31c4aac30cec7f0",
+      "encoding": "gzip",
+      "downloadSha256": "3e44094e3e7d893902dfbf078649b10607fdf408c254baf1e2eb4b7dc52d7199"
+    },
+    {
+      "path": "wrapper.node",
+      "url": "https://github.com/lc-cn/qq-native-mirror/releases/download/gzip-v1/ef42f7430c6bae7a1fffc81d8fffe9b1c8a9bfea9c83242dde8048cdcfc5974b.gz",
+      "sha256": "c302361f52494de257044e912e43ed244bb29ee59f59345d25a8959327828337",
+      "encoding": "gzip",
+      "downloadSha256": "ef42f7430c6bae7a1fffc81d8fffe9b1c8a9bfea9c83242dde8048cdcfc5974b"
+    }
+  ]
+}
