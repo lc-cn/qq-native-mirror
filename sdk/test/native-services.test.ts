@@ -100,6 +100,46 @@ test('incoming message emits typed message once with raw evidence retained', () 
   assert.equal(events.length, 1);
 });
 
+test('group member query separates completed empty lists from native failure and partial lists', async () => {
+  const member = { uin: '456', uid: 'u_member', nick: 'member', cardName: '', role: 2 };
+  const complete = (infos: Map<string, unknown> = new Map()) => ({ errCode: 0, result: { infos, finish: true } });
+  let response: unknown = complete();
+  let calls = 0;
+  const session = {
+    getMsgService: () => ({ addKernelMsgListener() {} }),
+    getBuddyService: () => ({ addKernelBuddyListener() {} }),
+    getGroupService: () => ({ addKernelGroupListener() {}, getAllMemberList(groupId: string, refresh: boolean) {
+      assert.deepEqual([groupId, refresh], ['123', false]); calls++; return response;
+    } }),
+  };
+  const services = createNativeServices(session, '7.0.2-53644', () => {});
+  try {
+    assert.deepEqual(await services.invokeOperation('getGroupMembers', { groupId: '123' }), []);
+    response = complete(new Map([['u_member', member]]));
+    assert.deepEqual(await services.invokeOperation('getGroupMembers', { groupId: '123' }), [{ userId: '456', uid: 'u_member', nickname: 'member', card: '', role: 'member' }]);
+    for (const [value, code] of [
+      [{ errCode: 73, result: { infos: new Map(), finish: true } }, 73],
+      [{ errCode: 'denied', credential: 'fixture-secret', result: { infos: new Map(), finish: true } }, 'denied'],
+      [{ errCode: NaN, result: { infos: new Map(), finish: true } }, 'invalid-result'],
+      [{ result: { infos: new Map(), finish: true } }, 'invalid-result'],
+    ] as [unknown, string | number][]) {
+      response = value;
+      await assert.rejects(services.invokeOperation('getGroupMembers', { groupId: '123' }), error => {
+        assert.equal((error as Error & { code: unknown }).code, code);
+        assert.doesNotMatch(JSON.stringify(error), /fixture-secret|credential/);
+        return true;
+      });
+    }
+    for (const finish of [false, undefined, 1, 'true']) {
+      response = { errCode: 0, result: { infos: new Map([['u_member', member]]), finish } };
+      await assert.rejects(services.invokeOperation('getGroupMembers', { groupId: '123' }), /incomplete/);
+    }
+    response = { errCode: 0, result: { infos: [], finish: true } };
+    await assert.rejects(services.invokeOperation('getGroupMembers', { groupId: '123' }), /member map/);
+    assert.equal(calls, 11, 'one query per call, without automatic retries');
+  } finally { services.close(); }
+});
+
 test('nonlocal image input rejects without invoking native send', async () => {
   const { services, sentCalls } = fixture();
   try { await assert.rejects(services.invokeOperation('sendGroupMessage', { groupId: '123', message: [{ type: 'image', file: 'https://example.test/image.png' }] }), /absolute local file path/); assert.equal(sentCalls.length, 0); }

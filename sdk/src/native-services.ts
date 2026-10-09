@@ -254,8 +254,12 @@ export function createNativeServices(session: Native, version: string, emit: (ev
         }
         case 'getGroupMembers': {
           const result = await call(service('Group'), 'getAllMemberList', String(payload.groupId), payload.refresh ?? false);
+          // Pinned NodeIKernelGroupService.getAllMemberList reports errCode and
+          // finish:true. A Map alone does not establish a successful full list.
+          if (result?.errCode !== 0) throw nativeResultError('Native group member query failed', result, 'errCode');
           const infos = result?.result?.infos;
           if (!(infos instanceof Map)) throw new Error('Invalid native group member map');
+          if (result.result.finish !== true) throw Object.assign(new Error('Native group member list is incomplete'), { code: 'incomplete-result' });
           return [...infos.entries()].map(([uid, member]): GroupMember => {
             const role = ({ 4: 'owner', 3: 'admin', 2: 'member' } as const)[member.role as 2 | 3 | 4];
             if (!role) throw new Error('Unknown native group member role');

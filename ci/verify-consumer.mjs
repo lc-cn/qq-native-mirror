@@ -110,8 +110,28 @@ try {
   const operation=createGroupOperations({getGroupService:()=>({[native]:()=>{calls++;return undefined;}})},async()=> 'u_fixture');
   await assert.rejects(operation.invokeOperation(method,payload),/Native group/);assert.equal(calls,1);
  }
+ // Query contract uses only synthetic listener services, never native QQ calls.
+ const {createNativeServices:queryServices}=await import(pathToFileURL(join(temp,'node_modules/qq-native-client/dist/native-services.js')).href);
+ for(const [response,expectedCode] of [
+  [{errCode:0,result:{finish:true,infos:new Map()}},undefined],
+  [{errCode:23,result:{finish:true,infos:new Map()}},23],
+  [{errCode:'23',result:{finish:true,infos:new Map()}},'23'],
+  [{errCode:0,result:{finish:false,infos:new Map()}},'incomplete-result'],
+ ]){
+  let calls=0;
+  const query=queryServices({
+   getMsgService:()=>({addKernelMsgListener(){}}),
+   getBuddyService:()=>({addKernelBuddyListener(){}}),
+   getGroupService:()=>({addKernelGroupListener(){},getAllMemberList(group,refresh){calls++;assert.equal(group,'123');assert.equal(refresh,false);return response;}}),
+  },'7.0.2-53644',()=>{});
+  try{
+   if(expectedCode===undefined)assert.deepEqual(await query.invokeOperation('getGroupMembers',{groupId:'123'}),[]);
+   else await assert.rejects(query.invokeOperation('getGroupMembers',{groupId:'123'}),{code:expectedCode});
+   assert.equal(calls,1);
+  }finally{query.close();}
+ }
  globalThis.fetch=()=>{throw new Error('Unexpected mirror request with installed platform package');};
  client=await sdk.createClient({dataDir:join(temp,'unused-account'),autoReconnect:false,timeoutMs:30000});
  const exports=client.nativeExports.length;if(exports<80)throw new Error('Unexpected native export inventory');await client.close();if(client.state!=='closed')throw new Error('Client did not close');
- await writeFile('out/consumer.json',JSON.stringify({platform:process.platform,arch:process.arch,node:process.version,exports,installedMainOnly:true,automaticPlatformSelection:true,tarballRequests,faceContract:true,faceDeliveryAttempted:false,messageQueryContract:true,nativeMessageQueryAttempted:false,selfProfileContract:true,profileMutationAttempted:false,groupOperationContract:true,groupMutationAttempted:false,prepared:true,closed:true,loginAttempted:false,registry:'isolated local fixture serving actual CI tarballs'},null,2));console.log(await readFile('out/consumer.json','utf8'));
+ await writeFile('out/consumer.json',JSON.stringify({platform:process.platform,arch:process.arch,node:process.version,exports,installedMainOnly:true,automaticPlatformSelection:true,tarballRequests,faceContract:true,faceDeliveryAttempted:false,messageQueryContract:true,nativeMessageQueryAttempted:false,selfProfileContract:true,profileMutationAttempted:false,groupOperationContract:true,groupMutationAttempted:false,groupMemberQueryContract:true,nativeGroupMemberQueryAttempted:false,prepared:true,closed:true,loginAttempted:false,registry:'isolated local fixture serving actual CI tarballs'},null,2));console.log(await readFile('out/consumer.json','utf8'));
 }finally{await client?.close();server.closeAllConnections();await new Promise(done=>server.close(done));await rm(temp,{recursive:true,force:true});}
