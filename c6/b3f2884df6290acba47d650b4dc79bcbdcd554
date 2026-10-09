@@ -1,0 +1,59 @@
+ci/verify-consumer.mjs
+  s_2104cc474f1ce5::t_06ba2777259a45 19,57,342
+sdk/README.md
+  s_2104cc474f1ce5::t_7d45d8d00bb847 201
+sdk/docs/evidence/forward-resource-local.json
+  s_2104cc474f1ce5::t_fd353a44ba74ef 1-120
+sdk/docs/forward-resource-contract.md
+  s_2104cc474f1ce5::t_ecd2742d98292d 3,21,25,27
+sdk/docs/forward-resource-decoding.md
+  s_2104cc474f1ce5::t_0992e32ced60ee 1-65
+sdk/docs/received-forward.md
+  s_2104cc474f1ce5::t_74ecc6f193b86a 42
+sdk/scripts/forward-resource-consumer-contract.mjs
+  s_2104cc474f1ce5::t_519bd8342ab3fb 1-58
+sdk/src/cli.ts
+  s_2104cc474f1ce5::t_15b390daf987c7 10,61,171-174,254-256,269
+sdk/src/forward-resource-transport.ts
+  s_2104cc474f1ce5::t_28a7a3b8df0878 1-89
+sdk/src/forward-resource-wire.ts
+  s_2104cc474f1ce5::t_c0199d99d92862 1-78
+sdk/src/index.ts
+  s_2104cc474f1ce5::t_9400e3327638de 3,15,257-260
+sdk/src/native-services.ts
+  s_2104cc474f1ce5::t_b2933f56c9fbd1 4-5,30,278,400-405,468
+sdk/src/types.ts
+  s_2104cc474f1ce5::t_f9875d56a370c8 132-148
+sdk/src/worker.ts
+  s_2104cc474f1ce5::t_a92a1ae900c46e 12
+sdk/test/cli.test.ts
+  s_2104cc474f1ce5::t_d44f3d60bb5914 222-241
+sdk/test/client.test.ts
+  s_2104cc474f1ce5::t_632ddc9e00b853 517-528
+sdk/test/forward-resource-services.test.ts
+  s_2104cc474f1ce5::t_57e43ef4c07520 1-6
+sdk/test/forward-resource-transport.test.ts
+  s_2104cc474f1ce5::t_7a46c85c1a917c 1-92
+sdk/test/forward-resource-wire.test.ts
+  s_2104cc474f1ce5::t_e369c4f4a1b737 1-88
+tools/verify-dedup-consumer.mjs
+  s_2104cc474f1ce5::t_4355d96b8f8516 68
+tools/verify-dedup-consumer.test.mjs
+  s_2104cc474f1ce5::t_7c90d4db37dd4f 9,21-22
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c6b3f2884df6290acba47d650b4dc79bcbdcd554",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
