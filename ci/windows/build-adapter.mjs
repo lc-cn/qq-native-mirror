@@ -21,7 +21,7 @@ await writeFile('out/QQNT.def',(await readFile('out/QQNT.def','utf8'))+' "?IsEnv
 const vars=process.config.variables;
 if(!vars.node_use_openssl||!vars.v8_enable_inspector)throw new Error('Unexpected official Node feature configuration');
 const includes=['src','deps/v8/include','deps/uv/include','deps/openssl/openssl/include','deps/openssl/config','deps/openssl/config/archs/'+(process.arch==='x64'?'VC-WIN64A':'VC-WIN64-ARM')+'/asm/include'];
-const args=['/nologo','/LD','/std:c++20','/EHsc','/MD','/O2','/DNODE_WANT_INTERNALS=1','/DHAVE_INSPECTOR=1','/DHAVE_OPENSSL=1','/DNODE_USE_V8_PLATFORM=1'];
+const args=['/nologo','/LD','/std:c++20','/Zc:__cplusplus','/EHsc','/MD','/O2','/DNODE_WANT_INTERNALS=1','/DHAVE_INSPECTOR=1','/DHAVE_OPENSSL=1','/DNODE_USE_V8_PLATFORM=1'];
 if(vars.v8_enable_pointer_compression)args.push('/DV8_COMPRESS_POINTERS');if(vars.v8_enable_sandbox)args.push('/DV8_ENABLE_SANDBOX');
 args.push(...includes.map(p=>'/I'+join(root,p)),resolve('ci/windows/environment-stopping.cc'),'/link',resolve('out/node-internals/node.lib'),'/DEF:'+resolve('out/QQNT.def'),'/OUT:'+resolve('out/windows-source/QQNT.dll'));
 execFileSync('cl',args,{stdio:'inherit'});
