@@ -1,0 +1,45 @@
+ci/verify-consumer.mjs
+  s_2104cc474f1ce5::t_d36cdaf640082b 16,51,257
+sdk/README.md
+  s_2104cc474f1ce5::t_13c714bad1b1b8 197
+sdk/docs/video-codec.md
+  s_2104cc474f1ce5::t_2261764a5943f8 1-31
+sdk/scripts/verify-package-consumer.mjs
+  s_2104cc474f1ce5::t_ebb4c9da5bac88 11,226,230-234,265
+sdk/scripts/video-consumer-contract.mjs
+  s_2104cc474f1ce5::t_250a242a782fc5 1-78
+sdk/src/index.ts
+  s_2104cc474f1ce5::t_157650946a390a 14
+sdk/src/kernel.ts
+  s_2104cc474f1ce5::t_009d4a1e6deea4 4,21,137
+sdk/src/media-send.ts
+  s_2104cc474f1ce5::t_d4d8c613b575b3 4,8-9,24-54,59-76,79,81-82,86-88,90-100
+sdk/src/native-services.ts
+  s_2104cc474f1ce5::t_5ceaa6b3b9ef56 8,34,266
+sdk/src/types.ts
+  s_2104cc474f1ce5::t_332feb57cc80a6 43-44
+sdk/src/video-codec-loader.ts
+  s_2104cc474f1ce5::t_a172550dce5dfe 1-28
+sdk/src/video-thumbnail.ts
+  s_2104cc474f1ce5::t_49fe8a1d2480d6 1-36
+sdk/src/worker.ts
+  s_2104cc474f1ce5::t_6b66df62374d01 9,41-42
+sdk/test/video-codec.test.ts
+  s_2104cc474f1ce5::t_e327156eb0854e 1-83
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "fe29cc51ada50fe4c92e4b4389d15299fdb40a73",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
