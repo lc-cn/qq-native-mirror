@@ -4,6 +4,7 @@ import {tmpdir} from 'node:os';
 import {execFileSync} from 'node:child_process';
 import {pathToFileURL} from 'node:url';
 import {createHash} from 'node:crypto';
+import {validateMainSource} from './main-artifact.mjs';
 
 const sha=b=>createHash('sha256').update(b).digest('hex');
 export function validateCounts(first,second){if(!Number.isInteger(first)||first<1||second!==0)throw Error('Native payload cache verification failed');}
@@ -13,7 +14,7 @@ export async function verify(sdkOverride){
  const originalFetch=globalThis.fetch;let nativePayloadRequests=0,manifestBody,manifest,selected;
  try{
   await symlink('unused','unused').then(()=>{throw Error('Symlink denial missing');},e=>{if(e.code!=='EPERM')throw e;});receipt.symlinkCreationDenied=true;
-  const source=JSON.parse(await readFile(process.env.SOURCE_FILE,'utf8'));receipt.mainSha256=source.main.sha256;receipt.sourceRun=source.runId;
+  const source=JSON.parse(await readFile(process.env.SOURCE_FILE,'utf8'));validateMainSource(source);receipt.mainSha256=source.main.sha256;receipt.sourceRun=source.runId;receipt.sourceCommit=source.commit;receipt.sourceMode=source.mode??'published-baseline';receipt.sdkVersion=source.main.version;
   temporary=await mkdtemp(join(tmpdir(),'qq-version-runtime-'));
   const sdk=sdkOverride??await import('qq-native-client');
   const catalog=JSON.parse(await readFile(process.env.CATALOG_FILE,'utf8'));selected=catalog.packages.find(p=>p.platform===process.platform&&p.arch===process.arch&&p.version.clientVersion===process.env.TARGET_VERSION);if(!selected)throw Error('Target version missing');

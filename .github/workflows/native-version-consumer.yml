@@ -1,6 +1,15 @@
 name: Multi-version Linux mirror consumers
 on:
   workflow_dispatch:
+    inputs:
+      sdk-source:
+        description: Compile this workflow source or compare the original published SDK
+        type: choice
+        options:
+          - current-source
+          - published-baseline
+        default: current-source
+        required: true
 permissions:
   contents: read
 jobs:
@@ -15,6 +24,8 @@ jobs:
           - { version: 3.2.32-52194, arch: arm64, runner: ubuntu-24.04-arm }
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 30
+    env:
+      SDK_SOURCE_MODE: ${{ inputs.sdk-source }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -25,10 +36,22 @@ jobs:
         env:
           TARGET_ARCH: ${{ matrix.arch }}
         run: node -e "if(process.platform!=='linux'||process.arch!==process.env.TARGET_ARCH)throw Error('Incorrect runner')"
+      - name: Validate source, artifact and cache refusal contracts
+        run: |
+          node --test version-ci/main-artifact.test.mjs
+          NODE_OPTIONS="--require $(pwd)/first-ci/deny-symlink.cjs" node version-ci/offline-fixture.mjs
       - name: Acquire verified corrected main only
+        if: inputs.sdk-source == 'published-baseline'
         env:
           GH_TOKEN: ${{ github.token }}
         run: node version-ci/acquire-main.mjs
+      - name: Install current SDK build dependencies
+        if: inputs.sdk-source == 'current-source'
+        working-directory: sdk
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Compile, pack and bind current main to this exact source run
+        if: inputs.sdk-source == 'current-source'
+        run: node version-ci/build-main.mjs
       - name: Install runtime OS libraries
         run: sudo apt-get update && sudo apt-get install -y libx11-xcb1 libgnutls30
       - name: Installed main mirror fallback twice without account login

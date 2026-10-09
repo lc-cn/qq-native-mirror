@@ -1,5 +1,6 @@
 import {verify} from './consumer.mjs';
 import {validateSource,validateAsset} from './acquire-main.mjs';
+import {digest} from './main-artifact.mjs';
 import {mkdtemp,writeFile,mkdir,readFile,rm,symlink} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
@@ -9,7 +10,10 @@ const directory=await mkdtemp(join(tmpdir(),'qq-version-fixture-'));const sha=b=
 try{
  const payload=Buffer.from('actual-fixture-bytes'),manifest={version:{clientVersion:'3.2.32-52194'},files:[{path:'wrapper.node',sha256:sha(payload)}]},body=Buffer.from(JSON.stringify(manifest));
  process.env.TARGET_VERSION='3.2.32-52194';process.env.SOURCE_FILE=join(directory,'source.json');process.env.CATALOG_FILE=join(directory,'catalog.json');process.env.RECEIPT_FILE=join(directory,'receipt.json');
- await writeFile(process.env.SOURCE_FILE,JSON.stringify({runId:'fixed-source',main:{sha256:'fixture'}}));await writeFile(process.env.CATALOG_FILE,JSON.stringify({packages:[{platform:process.platform,arch:process.arch,version:manifest.version,manifestSha256:sha(body)}]}));
+ // Synthetic provenance is scoped to this fixture process; no archive is installed.
+ Object.assign(process.env,{SDK_SOURCE_MODE:'current-source',GITHUB_SHA:'a'.repeat(40),GITHUB_RUN_ID:'12345',GITHUB_RUN_ATTEMPT:'1'});
+ const source={schemaVersion:2,mode:'current-source',repository:'lc-cn/qq-native-mirror',commit:process.env.GITHUB_SHA,runId:process.env.GITHUB_RUN_ID,runAttempt:1,sdkVersion:'0.0.2',main:{name:'qq-native-client',version:'0.0.2',tarball:'qq-native-client-0.0.2.tgz',size:payload.length,sha256:sha(payload),integrity:'sha512-'+digest(payload,'sha512','base64')}};
+ await writeFile(process.env.SOURCE_FILE,JSON.stringify(source));await writeFile(process.env.CATALOG_FILE,JSON.stringify({packages:[{platform:process.platform,arch:process.arch,version:manifest.version,manifestSha256:sha(body)}]}));
  for(const secondPayload of [false,true]){
   let calls=0,networkCalls=0;
   globalThis.fetch=async url=>{networkCalls++;return new Response(url.endsWith('manifest.json')?body:payload);};
