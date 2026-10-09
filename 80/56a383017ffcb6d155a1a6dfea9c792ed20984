@@ -1,0 +1,31 @@
+.github/workflows/native-mirror-consumer.yml
+  s_2104cc474f1ce5::t_dd5fb79b5fac1d 1-49
+mirror-ci/fixture-test.mjs
+  s_2104cc474f1ce5::t_6413a6d164d89f 1-4
+mirror-ci/verify.mjs
+  s_2104cc474f1ce5::t_57e0ba16ed08e2 1-27
+public-ci/mirror-consumer.mjs
+  s_2104cc474f1ce5::t_10f63a7c12c581 11,20,33,53
+public-ci/verify.mjs
+  s_2104cc474f1ce5::t_53e2dc8a3ce7fb 55-56,58
+sdk/docs/linux-runtime.md
+  s_2104cc474f1ce5::t_af17f6770af365 177-183
+sdk/docs/multi-version-and-mirror.md
+  s_2104cc474f1ce5::t_e1814ccf58a2d7 3,184-199
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "8056a383017ffcb6d155a1a6dfea9c792ed20984",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
