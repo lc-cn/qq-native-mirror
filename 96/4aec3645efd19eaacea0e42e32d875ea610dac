@@ -1,0 +1,141 @@
+.github/workflows/native-npm.yml
+  s_2104cc474f1ce5::t_7a47bbe930521e 1-102
+.gitignore
+  s_2104cc474f1ce5::t_b1d326bda684e6 4-7
+README.md
+  s_2104cc474f1ce5::t_4d2a86f08b776d 10-15
+ci/build-platform.mjs
+  s_2104cc474f1ce5::t_5c7089cc608ad0 1-46
+ci/sources.json
+  s_2104cc474f1ce5::t_4cc979b6ddbfa9 1-58
+ci/verify-consumer.mjs
+  s_2104cc474f1ce5::t_d69489a7c4d758 1-19
+sdk/README.md
+  s_2104cc474f1ce5::t_e1291204b9cdf6 1-204
+sdk/native/README.md
+  s_2104cc474f1ce5::t_b8969eacee1dd8 1-17
+sdk/native/registration-bridge.c
+  s_2104cc474f1ce5::t_90a18e845dba0b 1-40
+sdk/package-lock.json
+  s_2104cc474f1ce5::t_d6f22c7e2dd8f5 1-535
+sdk/package.json
+  s_2104cc474f1ce5::t_86f7e0c2d8b67c 1-48
+sdk/scripts/build-native.ts
+  s_2104cc474f1ce5::t_ac360215bebe45 1-31
+sdk/src/builtin-record-codec.ts
+  s_2104cc474f1ce5::t_a8d0662983353b 1-66
+sdk/src/cli.ts
+  s_2104cc474f1ce5::t_b9a0d81345684f 1-280
+sdk/src/contact-operations.ts
+  s_2104cc474f1ce5::t_eef8ec405f9aa5 1-68
+sdk/src/data-directory-lock.ts
+  s_2104cc474f1ce5::t_4e0e80bf0819f8 1-28
+sdk/src/errors.ts
+  s_2104cc474f1ce5::t_b5ab08b34a7cf3 1-33
+sdk/src/forward-messages.ts
+  s_2104cc474f1ce5::t_559b8eb9d5e2ac 1-67
+sdk/src/friend-requests.ts
+  s_2104cc474f1ce5::t_69f4e5ca14d37b 1-97
+sdk/src/group-notices.ts
+  s_2104cc474f1ce5::t_53010031419d1b 1-84
+sdk/src/group-operations.ts
+  s_2104cc474f1ce5::t_8292b1c3d23869 1-67
+sdk/src/group-requests.ts
+  s_2104cc474f1ce5::t_a4eec17da995f4 1-139
+sdk/src/index.ts
+  s_2104cc474f1ce5::t_bcfecce3b95979 1-301
+sdk/src/kernel.ts
+  s_2104cc474f1ce5::t_bc9746d75a6838 1-351
+sdk/src/media-operations.ts
+  s_2104cc474f1ce5::t_3aed02a78e325e 1-49
+sdk/src/media-record.ts
+  s_2104cc474f1ce5::t_84b7350b425511 1-64
+sdk/src/media-send.ts
+  s_2104cc474f1ce5::t_cbdaaba78e0d91 1-52
+sdk/src/message-elements.ts
+  s_2104cc474f1ce5::t_e9167bf61846fa 1-110
+sdk/src/native-catalog.ts
+  s_2104cc474f1ce5::t_df685815e0efeb 1-30
+sdk/src/native-package.ts
+  s_2104cc474f1ce5::t_393d03d9098bfb 1-269
+sdk/src/native-services.ts
+  s_2104cc474f1ce5::t_a04d4dc9d20ef7 1-313
+sdk/src/record-codec-loader.ts
+  s_2104cc474f1ce5::t_0ea94208fdad98 1-18
+sdk/src/self-profile.ts
+  s_2104cc474f1ce5::t_95facd2cef4c45 1-58
+sdk/src/types.ts
+  s_2104cc474f1ce5::t_b22cc0af3285a5 1-133
+sdk/src/web-group-notices.ts
+  s_2104cc474f1ce5::t_fcd49e7b043e90 1-78
+sdk/src/worker.ts
+  s_2104cc474f1ce5::t_6db88bffa026f2 1-61
+sdk/test/builtin-record-codec.test.ts
+  s_2104cc474f1ce5::t_a83c7a9c53f8a5 1-59
+sdk/test/cli.test.ts
+  s_2104cc474f1ce5::t_73e2111cfd14d6 1-125
+sdk/test/client-initialization.test.ts
+  s_2104cc474f1ce5::t_16a75939549904 1-31
+sdk/test/client.test.ts
+  s_2104cc474f1ce5::t_dc73eff3a838ba 1-369
+sdk/test/contact-operations.test.ts
+  s_2104cc474f1ce5::t_f2db029a3a3ff2 1-55
+sdk/test/data-directory-lock.test.ts
+  s_2104cc474f1ce5::t_92a41301f9d1bd 1-23
+sdk/test/errors.test.ts
+  s_2104cc474f1ce5::t_6b00619bc6fdb9 1-18
+sdk/test/forward-messages.test.ts
+  s_2104cc474f1ce5::t_6a778742e62b3f 1-48
+sdk/test/friend-requests.test.ts
+  s_2104cc474f1ce5::t_c5d8dd06635879 1-70
+sdk/test/group-notices.test.ts
+  s_2104cc474f1ce5::t_05726b64677b4e 1-71
+sdk/test/group-operations.test.ts
+  s_2104cc474f1ce5::t_cdacd7d737a4a1 1-54
+sdk/test/group-requests.test.ts
+  s_2104cc474f1ce5::t_4ebe4e0cdf1d9d 1-89
+sdk/test/kernel-offline.test.ts
+  s_2104cc474f1ce5::t_e56311cc49af76 1-106
+sdk/test/kernel.test.ts
+  s_2104cc474f1ce5::t_c961e049c75c9d 1-128
+sdk/test/media-operations.test.ts
+  s_2104cc474f1ce5::t_4a6117134ae25c 1-60
+sdk/test/media-record.test.ts
+  s_2104cc474f1ce5::t_a909249a4ef295 1-58
+sdk/test/media-send.test.ts
+  s_2104cc474f1ce5::t_2479719cd8cc6f 1-47
+sdk/test/message-elements.test.ts
+  s_2104cc474f1ce5::t_e36de86a5ed55f 1-80
+sdk/test/mirror-staging.test.ts
+  s_2104cc474f1ce5::t_977d4b408145c1 1-34
+sdk/test/native-catalog.test.ts
+  s_2104cc474f1ce5::t_ce81fbcfc46705 1-27
+sdk/test/native-package.test.ts
+  s_2104cc474f1ce5::t_7ee300624e19c6 1-185
+sdk/test/native-services.test.ts
+  s_2104cc474f1ce5::t_d7a6ed33714f1f 1-222
+sdk/test/record-codec-loader.test.ts
+  s_2104cc474f1ce5::t_5d8c74d00b8c4d 1-24
+sdk/test/self-profile.test.ts
+  s_2104cc474f1ce5::t_08b65a648fc82a 1-55
+sdk/test/web-group-notices.test.ts
+  s_2104cc474f1ce5::t_9bf34f46ed8547 1-70
+sdk/tsconfig.json
+  s_2104cc474f1ce5::t_c11209304851ad 1-8
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "964aec3645efd19eaacea0e42e32d875ea610dac",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
