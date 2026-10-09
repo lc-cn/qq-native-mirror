@@ -287,3 +287,23 @@ This candidate supersedes run 37886708952 for the unpublished first main package
 
 
 The new fixed main candidate also passed independent public consumers: [default six-platform mirror run 37891347865](https://github.com/lc-cn/qq-native-mirror/actions/runs/37891347865) and [Linux two-version/two-architecture run 37891354573](https://github.com/lc-cn/qq-native-mirror/actions/runs/37891354573). Downloaded receipts were checked against source run 37890893656 and its exact main SHA-256/SHA-512. All six default devices selected their canonical latest manifests; every runtime file was independently rehashed, and second preparation made zero payload requests. The four Linux consumers prepared and closed both 3.2.31-51102 and 3.2.32-52194, with 92 and 98 exports respectively and no second payload download. No account login or restore ran. Older Linux business APIs and security-signature authenticity remain unproven.
+
+
+## Official npm first publication and six-device consumer proof (2026-10-09)
+
+All seven `0.0.1` packages are publicly available, and their `latest` tags, SHA-512 integrities, platform constraints and main optional-dependency pins were read back from the official registry and matched immutable source run 37890893656. The main package is [qq-native-client](https://www.npmjs.com/package/qq-native-client). Publication alone was not treated as consumer acceptance.
+
+[Run 37893553033](https://github.com/lc-cn/qq-native-mirror/actions/runs/37893553033), verifier commit `bbd28c067c941bfe63cac32a67b9abea8bbbc75f`, passed all six native runners. Each consumer used an independent empty npm cache and requested only the published main package from `https://registry.npmjs.org/`. The installed lock matched main/device auxiliary integrity, foreign platform packages were absent, and mirror fallback was forbidden during default native preparation. CLI help and real kernel close passed.
+
+| Device | Node version | Native exports |
+| --- | --- | ---: |
+| Linux x64 | 24.21.0 | 98 |
+| Linux arm64 | 24.21.0 | 98 |
+| macOS x64 | 24.19.0 | 104 |
+| macOS arm64 | 24.20.0 | 104 |
+| Windows x64 | 24.20.0 | 98 |
+| Windows arm64 | 24.20.0 | 98 |
+
+Every runner separately forced the explicit public compressed catalog with a configured accelerator and origin fallback. Its pinned manifest matched the canonical device entry; the loader and independent consumer checked runtime hashes. Second initialization made zero native-file requests and transferred zero native payload bytes. SDK/worker symlink creation was denied during this mirror phase. Downloaded twelve receipts were independently checked and bound to the fixed first-publication main.
+
+A fresh local macOS arm64 consumer also passed public npm installation, by-name import, 104 exports, normal close and CLI help under Node 24.19.0 without mirror fallback. These checks made no account login, restore, send or management operation. They establish official package consumption and initialization; they do not establish Windows account operations, older Linux business compatibility, complete oicq parity or security-signature authenticity. Trusted Publisher configuration remains a separate maintainer step.

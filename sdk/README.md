@@ -19,18 +19,20 @@ The six native platforms also passed installed-package and mirror-cache preparat
 
 Security-signature authenticity remains unresolved on every platform. Quick login has a public implementation but lacks separate account acceptance; media, management and request handling require their own real-account acceptance. See [acceptance requirements](docs/sdk-acceptance.md).
 
+Install the public [npm package](https://www.npmjs.com/package/qq-native-client):
+
+```sh
+npm install qq-native-client@0.0.1
+```
+
+The six optional native packages are published at the same version. Their official npm installation, automatic platform selection, preparation/close and explicit public mirror reuse passed on all six native platforms in [CI run 37893553033](https://github.com/lc-cn/qq-native-mirror/actions/runs/37893553033), without account login. npm selects the package for the current OS/architecture; local QQ installation, Docker and a supplied wrapper path are unnecessary. Windows currently requires official Node **24.20.0** exactly; macOS/Linux require Node 24 or later. Platform initialization support and real-account acceptance remain distinct, as shown above.
+
 ```ts
 import { createClient } from 'qq-native-client';
 import { writeFile } from 'node:fs/promises';
 
 const client = await createClient({
-  wrapperPath: '/path/to/native-package/wrapper.node',
   dataDir: '/path/to/my-account-data',
-  version: {
-    clientVersion: '7.0.2-53644',
-    appId: '537391652',
-    qua: 'V1_MAC_7.0.2-53644_53644_GW_B',
-  },
   login: { method: 'qr' },
   timeoutMs: 120_000,
 });

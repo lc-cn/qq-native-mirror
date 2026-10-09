@@ -50,3 +50,12 @@ node scripts/download-npm-candidate.mjs npm-v0.0.1-ci-RUN_ID /absolute/path/npm-
 该候选归档包含 25 份确定名称的 JSON：原七份验收，加上每个平台的 `installed-no-symlink.consumer.json`、`cache-no-symlink.consumer.json`、`source-provenance.json`。manifest 的 `acceptanceEvidence` 绑定新增 18 份文件摘要，`auxiliarySources` 记录原始辅包出处；下载与首发脚本会严格检查所有证据。校验通过后，同一首发脚本跳过摘要一致的已发布辅包，继续发布剩余包和修正后的主包。
 
 账号目录锁与镜像缓存锁使用先完整写入 owner 文件、再原子创建硬链接的方式发布，读取时兼容旧符号链接锁。使用的文件系统须支持同目录硬链接；不要求 Windows 创建符号链接的权限。禁用符号链接的 CI 验收验证这两条 SDK 路径，不替代账号登录或签名真实性验证。
+
+
+## 0.0.1 本地首发完成（2026-10-09）
+
+七个包均已提交发布并在官方 registry 核对成功：`qq-native-client`，以及 `qq-native-client-{linux,darwin,win32}-{x64,arm64}` 六个辅包。全部 `latest` 为 `0.0.1`，发布摘要与固定候选 [run 37890893656](https://github.com/lc-cn/qq-native-mirror/actions/runs/37890893656) 一致。主包 SHA-256 为 `346bfee5895de2e0ef236cfb25d97654c8b773a5ec5adc67568b79e81301b11a`；已发布辅包字节保持不变。npm 在命令成功后曾提示后台处理，全部入库后才确认首发完成。无需重新发布同版本。
+
+本机从官方 npm 的新缓存只安装主包，自动安装 macOS arm64 辅包；按包名导入、真实内核初始化（104 exports）、关闭和 CLI help 均通过，未触发镜像下载、登录或恢复。六平台官方 npm 安装及镜像路径的独立 [CI 37893553033](https://github.com/lc-cn/qq-native-mirror/actions/runs/37893553033) 已全部通过，回执经过独立核对：官方 metadata/安装 lock 摘要与固定首发候选一致，未安装其他平台辅包，默认内核初始化和关闭成功、CLI help 完整，且镜像第二次初始化零文件下载。Windows 使用 Node 24.20.0，Linux 使用 24.21.0，macOS x64/arm64 分别使用 24.19.0/24.20.0；本轮没有账号登录或恢复。
+
+现在可由 npm 包维护者按前文，为七个包分别配置 Trusted Publisher：GitHub 用户 `lc-cn`、仓库 `qq-native-mirror`、工作流 `native-npm.yml`、环境 `npm-production`。现有工作流默认不发布；后续版本在完整验收后才手动启用发布。首发成功不等于可信发布配置已经完成。
