@@ -235,7 +235,7 @@ const client = await createClient({
 });
 ```
 
-It covers macOS arm64 (all resource paths retained) and Linux x64/arm64. Default selection still uses the full original catalog. Prior versions of this SDK without gzip manifest support cannot consume this optional catalog. See [candidate evidence](docs/native-size-reduction.md) for operation limitations.
+The legacy opt-in catalog covers macOS arm64 and Linux x64/arm64 and remains available. The current default catalog covers all six devices with verified compressed native files and the owned video codec. The unpublished 0.0.2 main passed actual default selection, cold initialization/close, three video decodes and zero-payload cache reuse on all six targets in [CI 37969129032](https://github.com/lc-cn/qq-native-mirror/actions/runs/37969129032). Published 0.0.1 auxiliary packages retain their original codec-free bytes. A SHA-named complete [previous catalog](https://raw.githubusercontent.com/lc-cn/qq-native-mirror/main/catalog-backups/29fd6b763a1323ddcb9a71b1b369188fdc2bf8d7bc4133c19dcc41de8bd60ee7.json) is available for explicit rollback. See [bound evidence](docs/evidence/codec-default-ci-37969129032.json).
 
 ### 分平台 npm 原生包
 

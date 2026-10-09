@@ -1,0 +1,838 @@
+{
+  "schemaVersion": 1,
+  "independentReview": true,
+  "runId": 37969129032,
+  "runSourceCommit": "956f67ec88a31208b179edb0671d5ad4f025ddbb",
+  "conclusion": "success",
+  "defaultCatalogMode": true,
+  "sixActualDefaultConsumers": true,
+  "noSelectorInputs": {
+    "createClient": [
+      "catalogUrl",
+      "manifestUrl",
+      "wrapperPath",
+      "version"
+    ],
+    "prepareNative": [
+      "catalogUrl",
+      "manifestUrl",
+      "wrapperPath",
+      "version"
+    ],
+    "proof": "Default branch excludes catalogUrl conditional; remaining explicitly enumerated options contain no selectors. QQ_CANDIDATE_CATALOG_URL is auditing/proxy metadata only, not SDK options."
+  },
+  "currentCatalogSha256": "ae486c9ffd96d12377f626377243baaa17b45a7afee9bfaa3134ce9fa73b9719",
+  "currentEntries": 8,
+  "oldLinuxEntriesExactlyPreserved": 2,
+  "fullPreviousCatalogBackupEntries": 8,
+  "backupSha256": "29fd6b763a1323ddcb9a71b1b369188fdc2bf8d7bc4133c19dcc41de8bd60ee7",
+  "receipts": [
+    {
+      "consumer": {
+        "device": "win32-x64",
+        "node": "v24.20.0",
+        "noLogin": true,
+        "freshCold": true,
+        "catalog": "catalog.json",
+        "defaultCatalogMode": true,
+        "proxyConfigured": true,
+        "completed": true,
+        "symlinkCreationDenied": true,
+        "nativeExports": 98,
+        "autoVideoCodec": true,
+        "coldActualCreateClient": true,
+        "manifestId": "npm-0.0.2-ci-37962268125-attempt-1-win32-x64-codec-gzip-v1",
+        "version": {
+          "clientVersion": "9.9.33-52230",
+          "appId": "537379411",
+          "qua": "V1_WIN_NQ_9.9.33_52230_GW_B"
+        },
+        "manifestSha256": "baa75f687fbefcfca1698b5555c1f3c96d50643e76f993075a883865f822197e",
+        "expectedManifestPinned": true,
+        "hashValidatedLoader": true,
+        "cacheFilesIndependentlyHashVerified": true,
+        "first": {
+          "requests": 35,
+          "payloadRequests": 31,
+          "bytes": 66791770,
+          "payloadBytes": 66753092
+        },
+        "second": {
+          "requests": 2,
+          "payloadRequests": 0,
+          "bytes": 19339,
+          "payloadBytes": 0
+        },
+        "prepared": true,
+        "closed": true,
+        "success": true,
+        "sourceRun": "37962268125",
+        "sourceCommit": "6cae1ec0a5e1bfb03cb7871083915b3d03272347",
+        "currentRun": "37969129032",
+        "mainSha256": "ff2d8330985eb9fceb1f20d35859280a5c3799cc90e96077826a080b911d118b",
+        "installedMainOnly": true,
+        "mirrorTag": "native-npm-v0.0.2-ci-37962268125-attempt-1",
+        "mode": "default",
+        "candidateCommit": "2a65a6c0f2e15fe3da207ed1bcb6d9df4a7c940d",
+        "catalogSha256": "ae486c9ffd96d12377f626377243baaa17b45a7afee9bfaa3134ce9fa73b9719",
+        "catalogUrl": "https://raw.githubusercontent.com/lc-cn/qq-native-mirror/main/catalog.json",
+        "auditCatalogSha256": "ae059be308a1f7879ab7781db8af66976aaa49252b83edd609c798ba8a128741"
+      },
+      "video": {
+        "schemaVersion": 1,
+        "platform": "win32",
+        "arch": "x64",
+        "node": "v24.20.0",
+        "noAccount": true,
+        "noQQ": true,
+        "nativeSendAttempted": false,
+        "passed": true,
+        "inputs": [
+          {
+            "name": "blue-64.mp4",
+            "sha256": "ced7b4e1cd47d948ecf407116095282e5b5ca4df76142b7a06826eecb92cb932",
+            "bytes": 1684,
+            "width": 64,
+            "height": 64,
+            "duration": 0.4,
+            "thumbnailWidth": 64,
+            "thumbnailHeight": 64,
+            "thumbnailSha256": "6dd6fdedccb6f2c3524b05d848d96bde56f7f10a98038104827b391f089a4646",
+            "thumbnailBytes": 12342,
+            "pattern": "blue",
+            "rowStride": 192
+          },
+          {
+            "name": "blue-1280.mp4",
+            "sha256": "1c8920f2db13e3c1b28b708bc94d3889ed8bd10f15ee5d89881d99715188b468",
+            "bytes": 1820,
+            "width": 1280,
+            "height": 720,
+            "duration": 0.4,
+            "thumbnailWidth": 640,
+            "thumbnailHeight": 360,
+            "thumbnailSha256": "f94feb9cd93a661f4e585b2d73a44856666488847a97f54643eb49939f4ca782",
+            "thumbnailBytes": 691254,
+            "pattern": "blue",
+            "rowStride": 1920
+          },
+          {
+            "name": "blue-red-65.mp4",
+            "sha256": "53a0baad6f0853d39e53263c22c847bd78435fc263e6844450878b471d13cc57",
+            "bytes": 1652,
+            "width": 65,
+            "height": 33,
+            "duration": 0.4,
+            "thumbnailWidth": 65,
+            "thumbnailHeight": 33,
+            "thumbnailSha256": "f375d0f2d4c7fc580c07b639f27897bbd20348285329f6c39cce381acb0504d5",
+            "thumbnailBytes": 6522,
+            "pattern": "blue-red",
+            "rowStride": 196
+          }
+        ],
+        "binary": {
+          "sha256": "8aa259dd3fbf15d451ff52ca8f542be11ecc5a1824267e65f9dfead16d0e4424",
+          "bytes": 12058112
+        },
+        "exports": [
+          "getVideoInfo"
+        ],
+        "concurrentDecode": true,
+        "unicodeFilename": true,
+        "malformedMissingNetworkRejected": true,
+        "sourceUnchanged": true,
+        "sdkFakeCache": true
+      }
+    },
+    {
+      "consumer": {
+        "device": "darwin-arm64",
+        "node": "v24.20.0",
+        "noLogin": true,
+        "freshCold": true,
+        "catalog": "catalog.json",
+        "defaultCatalogMode": true,
+        "proxyConfigured": true,
+        "completed": true,
+        "symlinkCreationDenied": true,
+        "nativeExports": 104,
+        "autoVideoCodec": true,
+        "coldActualCreateClient": true,
+        "manifestId": "npm-0.0.2-ci-37962268125-attempt-1-darwin-arm64-codec-gzip-v1",
+        "version": {
+          "clientVersion": "7.0.2-53644",
+          "appId": "537391652",
+          "qua": "V1_MAC_7.0.2-53644_53644_GW_B"
+        },
+        "manifestSha256": "667c80d0284ffcfc4e0c270a6a7b09bfbbdf34ebe2cd452dc8fe016e99c3fa56",
+        "expectedManifestPinned": true,
+        "hashValidatedLoader": true,
+        "cacheFilesIndependentlyHashVerified": true,
+        "first": {
+          "requests": 325,
+          "payloadRequests": 321,
+          "bytes": 56145526,
+          "payloadBytes": 54872832
+        },
+        "second": {
+          "requests": 2,
+          "payloadRequests": 0,
+          "bytes": 636347,
+          "payloadBytes": 0
+        },
+        "prepared": true,
+        "closed": true,
+        "success": true,
+        "sourceRun": "37962268125",
+        "sourceCommit": "6cae1ec0a5e1bfb03cb7871083915b3d03272347",
+        "currentRun": "37969129032",
+        "mainSha256": "ff2d8330985eb9fceb1f20d35859280a5c3799cc90e96077826a080b911d118b",
+        "installedMainOnly": true,
+        "mirrorTag": "native-npm-v0.0.2-ci-37962268125-attempt-1",
+        "mode": "default",
+        "candidateCommit": "2a65a6c0f2e15fe3da207ed1bcb6d9df4a7c940d",
+        "catalogSha256": "ae486c9ffd96d12377f626377243baaa17b45a7afee9bfaa3134ce9fa73b9719",
+        "catalogUrl": "https://raw.githubusercontent.com/lc-cn/qq-native-mirror/main/catalog.json",
+        "auditCatalogSha256": "ae059be308a1f7879ab7781db8af66976aaa49252b83edd609c798ba8a128741"
+      },
+      "video": {
+        "schemaVersion": 1,
+        "platform": "darwin",
+        "arch": "arm64",
+        "node": "v24.20.0",
+        "noAccount": true,
+        "noQQ": true,
+        "nativeSendAttempted": false,
+        "passed": true,
+        "inputs": [
+          {
+            "name": "blue-64.mp4",
+            "sha256": "ced7b4e1cd47d948ecf407116095282e5b5ca4df76142b7a06826eecb92cb932",
+            "bytes": 1684,
+            "width": 64,
+            "height": 64,
+            "duration": 0.4,
+            "thumbnailWidth": 64,
+            "thumbnailHeight": 64,
+            "thumbnailSha256": "6dd6fdedccb6f2c3524b05d848d96bde56f7f10a98038104827b391f089a4646",
+            "thumbnailBytes": 12342,
+            "pattern": "blue",
+            "rowStride": 192
+          },
+          {
+            "name": "blue-1280.mp4",
+            "sha256": "1c8920f2db13e3c1b28b708bc94d3889ed8bd10f15ee5d89881d99715188b468",
+            "bytes": 1820,
+            "width": 1280,
+            "height": 720,
+            "duration": 0.4,
+            "thumbnailWidth": 640,
+            "thumbnailHeight": 360,
+            "thumbnailSha256": "f94feb9cd93a661f4e585b2d73a44856666488847a97f54643eb49939f4ca782",
+            "thumbnailBytes": 691254,
+            "pattern": "blue",
+            "rowStride": 1920
+          },
+          {
+            "name": "blue-red-65.mp4",
+            "sha256": "53a0baad6f0853d39e53263c22c847bd78435fc263e6844450878b471d13cc57",
+            "bytes": 1652,
+            "width": 65,
+            "height": 33,
+            "duration": 0.4,
+            "thumbnailWidth": 65,
+            "thumbnailHeight": 33,
+            "thumbnailSha256": "f375d0f2d4c7fc580c07b639f27897bbd20348285329f6c39cce381acb0504d5",
+            "thumbnailBytes": 6522,
+            "pattern": "blue-red",
+            "rowStride": 196
+          }
+        ],
+        "binary": {
+          "sha256": "101a8eb635806b8c06fd55e3353a5a129d643c42198a3eb0dcaca7eefeab74c4",
+          "bytes": 13167872
+        },
+        "exports": [
+          "getVideoInfo"
+        ],
+        "concurrentDecode": true,
+        "unicodeFilename": true,
+        "malformedMissingNetworkRejected": true,
+        "sourceUnchanged": true,
+        "sdkFakeCache": true
+      }
+    },
+    {
+      "consumer": {
+        "device": "linux-x64",
+        "node": "v24.20.0",
+        "noLogin": true,
+        "freshCold": true,
+        "catalog": "catalog.json",
+        "defaultCatalogMode": true,
+        "proxyConfigured": true,
+        "completed": true,
+        "symlinkCreationDenied": true,
+        "nativeExports": 98,
+        "autoVideoCodec": true,
+        "coldActualCreateClient": true,
+        "manifestId": "npm-0.0.2-ci-37962268125-attempt-1-linux-x64-codec-gzip-v1",
+        "version": {
+          "clientVersion": "3.2.32-52194",
+          "appId": "537379447",
+          "qua": "V1_LNX_3.2.32-52194_52194_GW_B"
+        },
+        "manifestSha256": "d130b3db854cd147a96bd5cb80d9d16fcf6ce364eda546849ac06403077a9ae4",
+        "expectedManifestPinned": true,
+        "hashValidatedLoader": true,
+        "cacheFilesIndependentlyHashVerified": true,
+        "first": {
+          "requests": 23,
+          "payloadRequests": 19,
+          "bytes": 70197335,
+          "payloadBytes": 70170661
+        },
+        "second": {
+          "requests": 2,
+          "payloadRequests": 0,
+          "bytes": 13337,
+          "payloadBytes": 0
+        },
+        "prepared": true,
+        "closed": true,
+        "success": true,
+        "sourceRun": "37962268125",
+        "sourceCommit": "6cae1ec0a5e1bfb03cb7871083915b3d03272347",
+        "currentRun": "37969129032",
+        "mainSha256": "ff2d8330985eb9fceb1f20d35859280a5c3799cc90e96077826a080b911d118b",
+        "installedMainOnly": true,
+        "mirrorTag": "native-npm-v0.0.2-ci-37962268125-attempt-1",
+        "mode": "default",
+        "candidateCommit": "2a65a6c0f2e15fe3da207ed1bcb6d9df4a7c940d",
+        "catalogSha256": "ae486c9ffd96d12377f626377243baaa17b45a7afee9bfaa3134ce9fa73b9719",
+        "catalogUrl": "https://raw.githubusercontent.com/lc-cn/qq-native-mirror/main/catalog.json",
+        "auditCatalogSha256": "ae059be308a1f7879ab7781db8af66976aaa49252b83edd609c798ba8a128741"
+      },
+      "video": {
+        "schemaVersion": 1,
+        "platform": "linux",
+        "arch": "x64",
+        "node": "v24.20.0",
+        "noAccount": true,
+        "noQQ": true,
+        "nativeSendAttempted": false,
+        "passed": true,
+        "inputs": [
+          {
+            "name": "blue-64.mp4",
+            "sha256": "ced7b4e1cd47d948ecf407116095282e5b5ca4df76142b7a06826eecb92cb932",
+            "bytes": 1684,
+            "width": 64,
+            "height": 64,
+            "duration": 0.4,
+            "thumbnailWidth": 64,
+            "thumbnailHeight": 64,
+            "thumbnailSha256": "6dd6fdedccb6f2c3524b05d848d96bde56f7f10a98038104827b391f089a4646",
+            "thumbnailBytes": 12342,
+            "pattern": "blue",
+            "rowStride": 192
+          },
+          {
+            "name": "blue-1280.mp4",
+            "sha256": "1c8920f2db13e3c1b28b708bc94d3889ed8bd10f15ee5d89881d99715188b468",
+            "bytes": 1820,
+            "width": 1280,
+            "height": 720,
+            "duration": 0.4,
+            "thumbnailWidth": 640,
+            "thumbnailHeight": 360,
+            "thumbnailSha256": "f94feb9cd93a661f4e585b2d73a44856666488847a97f54643eb49939f4ca782",
+            "thumbnailBytes": 691254,
+            "pattern": "blue",
+            "rowStride": 1920
+          },
+          {
+            "name": "blue-red-65.mp4",
+            "sha256": "53a0baad6f0853d39e53263c22c847bd78435fc263e6844450878b471d13cc57",
+            "bytes": 1652,
+            "width": 65,
+            "height": 33,
+            "duration": 0.4,
+            "thumbnailWidth": 65,
+            "thumbnailHeight": 33,
+            "thumbnailSha256": "f375d0f2d4c7fc580c07b639f27897bbd20348285329f6c39cce381acb0504d5",
+            "thumbnailBytes": 6522,
+            "pattern": "blue-red",
+            "rowStride": 196
+          }
+        ],
+        "binary": {
+          "sha256": "195312a9613fd716e2df52a11d409571bdb5959e1537e12f475c2048c6c9f88d",
+          "bytes": 17704104
+        },
+        "exports": [
+          "getVideoInfo"
+        ],
+        "concurrentDecode": true,
+        "unicodeFilename": true,
+        "malformedMissingNetworkRejected": true,
+        "sourceUnchanged": true,
+        "sdkFakeCache": true
+      }
+    },
+    {
+      "consumer": {
+        "device": "darwin-x64",
+        "node": "v24.20.0",
+        "noLogin": true,
+        "freshCold": true,
+        "catalog": "catalog.json",
+        "defaultCatalogMode": true,
+        "proxyConfigured": true,
+        "completed": true,
+        "symlinkCreationDenied": true,
+        "nativeExports": 104,
+        "autoVideoCodec": true,
+        "coldActualCreateClient": true,
+        "manifestId": "npm-0.0.2-ci-37962268125-attempt-1-darwin-x64-codec-gzip-v1",
+        "version": {
+          "clientVersion": "7.0.2-53644",
+          "appId": "537391652",
+          "qua": "V1_MAC_7.0.2-53644_53644_GW_B"
+        },
+        "manifestSha256": "85cb263ef00cdd2e24239fb6991a7b4f71b6802e25688e1851f65ad3c3c07fa2",
+        "expectedManifestPinned": true,
+        "hashValidatedLoader": true,
+        "cacheFilesIndependentlyHashVerified": true,
+        "first": {
+          "requests": 325,
+          "payloadRequests": 321,
+          "bytes": 61190224,
+          "payloadBytes": 59917534
+        },
+        "second": {
+          "requests": 2,
+          "payloadRequests": 0,
+          "bytes": 636345,
+          "payloadBytes": 0
+        },
+        "prepared": true,
+        "closed": true,
+        "success": true,
+        "sourceRun": "37962268125",
+        "sourceCommit": "6cae1ec0a5e1bfb03cb7871083915b3d03272347",
+        "currentRun": "37969129032",
+        "mainSha256": "ff2d8330985eb9fceb1f20d35859280a5c3799cc90e96077826a080b911d118b",
+        "installedMainOnly": true,
+        "mirrorTag": "native-npm-v0.0.2-ci-37962268125-attempt-1",
+        "mode": "default",
+        "candidateCommit": "2a65a6c0f2e15fe3da207ed1bcb6d9df4a7c940d",
+        "catalogSha256": "ae486c9ffd96d12377f626377243baaa17b45a7afee9bfaa3134ce9fa73b9719",
+        "catalogUrl": "https://raw.githubusercontent.com/lc-cn/qq-native-mirror/main/catalog.json",
+        "auditCatalogSha256": "ae059be308a1f7879ab7781db8af66976aaa49252b83edd609c798ba8a128741"
+      },
+      "video": {
+        "schemaVersion": 1,
+        "platform": "darwin",
+        "arch": "x64",
+        "node": "v24.20.0",
+        "noAccount": true,
+        "noQQ": true,
+        "nativeSendAttempted": false,
+        "passed": true,
+        "inputs": [
+          {
+            "name": "blue-64.mp4",
+            "sha256": "ced7b4e1cd47d948ecf407116095282e5b5ca4df76142b7a06826eecb92cb932",
+            "bytes": 1684,
+            "width": 64,
+            "height": 64,
+            "duration": 0.4,
+            "thumbnailWidth": 64,
+            "thumbnailHeight": 64,
+            "thumbnailSha256": "6dd6fdedccb6f2c3524b05d848d96bde56f7f10a98038104827b391f089a4646",
+            "thumbnailBytes": 12342,
+            "pattern": "blue",
+            "rowStride": 192
+          },
+          {
+            "name": "blue-1280.mp4",
+            "sha256": "1c8920f2db13e3c1b28b708bc94d3889ed8bd10f15ee5d89881d99715188b468",
+            "bytes": 1820,
+            "width": 1280,
+            "height": 720,
+            "duration": 0.4,
+            "thumbnailWidth": 640,
+            "thumbnailHeight": 360,
+            "thumbnailSha256": "f94feb9cd93a661f4e585b2d73a44856666488847a97f54643eb49939f4ca782",
+            "thumbnailBytes": 691254,
+            "pattern": "blue",
+            "rowStride": 1920
+          },
+          {
+            "name": "blue-red-65.mp4",
+            "sha256": "53a0baad6f0853d39e53263c22c847bd78435fc263e6844450878b471d13cc57",
+            "bytes": 1652,
+            "width": 65,
+            "height": 33,
+            "duration": 0.4,
+            "thumbnailWidth": 65,
+            "thumbnailHeight": 33,
+            "thumbnailSha256": "f375d0f2d4c7fc580c07b639f27897bbd20348285329f6c39cce381acb0504d5",
+            "thumbnailBytes": 6522,
+            "pattern": "blue-red",
+            "rowStride": 196
+          }
+        ],
+        "binary": {
+          "sha256": "29147dd3c7a10b6b2f16e1b5df3f5e75b10b5d09f8ebc2a3bf2202e23c09799e",
+          "bytes": 14826672
+        },
+        "exports": [
+          "getVideoInfo"
+        ],
+        "concurrentDecode": true,
+        "unicodeFilename": true,
+        "malformedMissingNetworkRejected": true,
+        "sourceUnchanged": true,
+        "sdkFakeCache": true
+      }
+    },
+    {
+      "consumer": {
+        "device": "win32-arm64",
+        "node": "v24.20.0",
+        "noLogin": true,
+        "freshCold": true,
+        "catalog": "catalog.json",
+        "defaultCatalogMode": true,
+        "proxyConfigured": true,
+        "completed": true,
+        "symlinkCreationDenied": true,
+        "nativeExports": 98,
+        "autoVideoCodec": true,
+        "coldActualCreateClient": true,
+        "manifestId": "npm-0.0.2-ci-37962268125-attempt-1-win32-arm64-codec-gzip-v1",
+        "version": {
+          "clientVersion": "9.9.33-52230",
+          "appId": "537379423",
+          "qua": "V1_WIN_NQ_9.9.33_52230_GW_B"
+        },
+        "manifestSha256": "6bd0b50b9647222a38d1b053e21214c591f9589d5beb88ef07e9737a69df9e03",
+        "expectedManifestPinned": true,
+        "hashValidatedLoader": true,
+        "cacheFilesIndependentlyHashVerified": true,
+        "first": {
+          "requests": 30,
+          "payloadRequests": 26,
+          "bytes": 54239478,
+          "payloadBytes": 54205332
+        },
+        "second": {
+          "requests": 2,
+          "payloadRequests": 0,
+          "bytes": 17073,
+          "payloadBytes": 0
+        },
+        "prepared": true,
+        "closed": true,
+        "success": true,
+        "sourceRun": "37962268125",
+        "sourceCommit": "6cae1ec0a5e1bfb03cb7871083915b3d03272347",
+        "currentRun": "37969129032",
+        "mainSha256": "ff2d8330985eb9fceb1f20d35859280a5c3799cc90e96077826a080b911d118b",
+        "installedMainOnly": true,
+        "mirrorTag": "native-npm-v0.0.2-ci-37962268125-attempt-1",
+        "mode": "default",
+        "candidateCommit": "2a65a6c0f2e15fe3da207ed1bcb6d9df4a7c940d",
+        "catalogSha256": "ae486c9ffd96d12377f626377243baaa17b45a7afee9bfaa3134ce9fa73b9719",
+        "catalogUrl": "https://raw.githubusercontent.com/lc-cn/qq-native-mirror/main/catalog.json",
+        "auditCatalogSha256": "ae059be308a1f7879ab7781db8af66976aaa49252b83edd609c798ba8a128741"
+      },
+      "video": {
+        "schemaVersion": 1,
+        "platform": "win32",
+        "arch": "arm64",
+        "node": "v24.20.0",
+        "noAccount": true,
+        "noQQ": true,
+        "nativeSendAttempted": false,
+        "passed": true,
+        "inputs": [
+          {
+            "name": "blue-64.mp4",
+            "sha256": "ced7b4e1cd47d948ecf407116095282e5b5ca4df76142b7a06826eecb92cb932",
+            "bytes": 1684,
+            "width": 64,
+            "height": 64,
+            "duration": 0.4,
+            "thumbnailWidth": 64,
+            "thumbnailHeight": 64,
+            "thumbnailSha256": "6dd6fdedccb6f2c3524b05d848d96bde56f7f10a98038104827b391f089a4646",
+            "thumbnailBytes": 12342,
+            "pattern": "blue",
+            "rowStride": 192
+          },
+          {
+            "name": "blue-1280.mp4",
+            "sha256": "1c8920f2db13e3c1b28b708bc94d3889ed8bd10f15ee5d89881d99715188b468",
+            "bytes": 1820,
+            "width": 1280,
+            "height": 720,
+            "duration": 0.4,
+            "thumbnailWidth": 640,
+            "thumbnailHeight": 360,
+            "thumbnailSha256": "f94feb9cd93a661f4e585b2d73a44856666488847a97f54643eb49939f4ca782",
+            "thumbnailBytes": 691254,
+            "pattern": "blue",
+            "rowStride": 1920
+          },
+          {
+            "name": "blue-red-65.mp4",
+            "sha256": "53a0baad6f0853d39e53263c22c847bd78435fc263e6844450878b471d13cc57",
+            "bytes": 1652,
+            "width": 65,
+            "height": 33,
+            "duration": 0.4,
+            "thumbnailWidth": 65,
+            "thumbnailHeight": 33,
+            "thumbnailSha256": "f375d0f2d4c7fc580c07b639f27897bbd20348285329f6c39cce381acb0504d5",
+            "thumbnailBytes": 6522,
+            "pattern": "blue-red",
+            "rowStride": 196
+          }
+        ],
+        "binary": {
+          "sha256": "0bc059cf78869272ea4ad79eb6e4be54d394ec4cf3a2e3cd9c9b1d83d1e7b021",
+          "bytes": 11209728
+        },
+        "exports": [
+          "getVideoInfo"
+        ],
+        "concurrentDecode": true,
+        "unicodeFilename": true,
+        "malformedMissingNetworkRejected": true,
+        "sourceUnchanged": true,
+        "sdkFakeCache": true
+      }
+    },
+    {
+      "consumer": {
+        "device": "linux-arm64",
+        "node": "v24.20.0",
+        "noLogin": true,
+        "freshCold": true,
+        "catalog": "catalog.json",
+        "defaultCatalogMode": true,
+        "proxyConfigured": true,
+        "completed": true,
+        "symlinkCreationDenied": true,
+        "nativeExports": 98,
+        "autoVideoCodec": true,
+        "coldActualCreateClient": true,
+        "manifestId": "npm-0.0.2-ci-37962268125-attempt-1-linux-arm64-codec-gzip-v1",
+        "version": {
+          "clientVersion": "3.2.32-52194",
+          "appId": "537379448",
+          "qua": "V1_LNX_3.2.32-52194_52194_GW_B"
+        },
+        "manifestSha256": "628201012ea25d276667e4ac0064541534d6b3ab39e7348d75fb51d13e778b1b",
+        "expectedManifestPinned": true,
+        "hashValidatedLoader": true,
+        "cacheFilesIndependentlyHashVerified": true,
+        "first": {
+          "requests": 24,
+          "payloadRequests": 20,
+          "bytes": 72176794,
+          "payloadBytes": 72149208
+        },
+        "second": {
+          "requests": 2,
+          "payloadRequests": 0,
+          "bytes": 13793,
+          "payloadBytes": 0
+        },
+        "prepared": true,
+        "closed": true,
+        "success": true,
+        "sourceRun": "37962268125",
+        "sourceCommit": "6cae1ec0a5e1bfb03cb7871083915b3d03272347",
+        "currentRun": "37969129032",
+        "mainSha256": "ff2d8330985eb9fceb1f20d35859280a5c3799cc90e96077826a080b911d118b",
+        "installedMainOnly": true,
+        "mirrorTag": "native-npm-v0.0.2-ci-37962268125-attempt-1",
+        "mode": "default",
+        "candidateCommit": "2a65a6c0f2e15fe3da207ed1bcb6d9df4a7c940d",
+        "catalogSha256": "ae486c9ffd96d12377f626377243baaa17b45a7afee9bfaa3134ce9fa73b9719",
+        "catalogUrl": "https://raw.githubusercontent.com/lc-cn/qq-native-mirror/main/catalog.json",
+        "auditCatalogSha256": "ae059be308a1f7879ab7781db8af66976aaa49252b83edd609c798ba8a128741"
+      },
+      "video": {
+        "schemaVersion": 1,
+        "platform": "linux",
+        "arch": "arm64",
+        "node": "v24.20.0",
+        "noAccount": true,
+        "noQQ": true,
+        "nativeSendAttempted": false,
+        "passed": true,
+        "inputs": [
+          {
+            "name": "blue-64.mp4",
+            "sha256": "ced7b4e1cd47d948ecf407116095282e5b5ca4df76142b7a06826eecb92cb932",
+            "bytes": 1684,
+            "width": 64,
+            "height": 64,
+            "duration": 0.4,
+            "thumbnailWidth": 64,
+            "thumbnailHeight": 64,
+            "thumbnailSha256": "6dd6fdedccb6f2c3524b05d848d96bde56f7f10a98038104827b391f089a4646",
+            "thumbnailBytes": 12342,
+            "pattern": "blue",
+            "rowStride": 192
+          },
+          {
+            "name": "blue-1280.mp4",
+            "sha256": "1c8920f2db13e3c1b28b708bc94d3889ed8bd10f15ee5d89881d99715188b468",
+            "bytes": 1820,
+            "width": 1280,
+            "height": 720,
+            "duration": 0.4,
+            "thumbnailWidth": 640,
+            "thumbnailHeight": 360,
+            "thumbnailSha256": "f94feb9cd93a661f4e585b2d73a44856666488847a97f54643eb49939f4ca782",
+            "thumbnailBytes": 691254,
+            "pattern": "blue",
+            "rowStride": 1920
+          },
+          {
+            "name": "blue-red-65.mp4",
+            "sha256": "53a0baad6f0853d39e53263c22c847bd78435fc263e6844450878b471d13cc57",
+            "bytes": 1652,
+            "width": 65,
+            "height": 33,
+            "duration": 0.4,
+            "thumbnailWidth": 65,
+            "thumbnailHeight": 33,
+            "thumbnailSha256": "f375d0f2d4c7fc580c07b639f27897bbd20348285329f6c39cce381acb0504d5",
+            "thumbnailBytes": 6522,
+            "pattern": "blue-red",
+            "rowStride": 196
+          }
+        ],
+        "binary": {
+          "sha256": "8eff4ebdf6b704b1a3aa4a25a328c0949ce81b1b8db220ef5bf3f310fe3ac741",
+          "bytes": 15499928
+        },
+        "exports": [
+          "getVideoInfo"
+        ],
+        "concurrentDecode": true,
+        "unicodeFilename": true,
+        "malformedMissingNetworkRejected": true,
+        "sourceUnchanged": true,
+        "sdkFakeCache": true
+      }
+    }
+  ],
+  "boundFiles": [
+    {
+      "path": ".local/research/npm-codec-default-consumers-37969129032-state.json",
+      "bytes": 11955,
+      "sha256": "d88eeec5e9a444d84e37033f6c05bff28aa5ba47a6914c7d1138cdf20a5e4dff"
+    },
+    {
+      "path": ".local/research/npm-codec-default-consumers-37969129032-full.log",
+      "bytes": 197871,
+      "sha256": "9ec0f7709ae8422662c2a9c4bf96daa8f3c6d2be26b1c81a79ef3ff79bd8d110"
+    },
+    {
+      "path": ".local/github-mirror-publish/catalog.json",
+      "bytes": 4239,
+      "sha256": "ae486c9ffd96d12377f626377243baaa17b45a7afee9bfaa3134ce9fa73b9719"
+    },
+    {
+      "path": ".local/github-mirror-publish/catalog-backups/29fd6b763a1323ddcb9a71b1b369188fdc2bf8d7bc4133c19dcc41de8bd60ee7.json",
+      "bytes": 4045,
+      "sha256": "29fd6b763a1323ddcb9a71b1b369188fdc2bf8d7bc4133c19dcc41de8bd60ee7"
+    },
+    {
+      "path": ".local/github-mirror-publish/ci/codec-mirror-consumer.mjs",
+      "bytes": 13971,
+      "sha256": "f47acb7f4a6a62000d52715b917e6e79e77f13477fc2cb64a1f101e12df95e62"
+    },
+    {
+      "path": ".local/github-mirror-publish/public-ci/mirror-consumer.mjs",
+      "bytes": 5711,
+      "sha256": "31355843a53cf610423d09b2ffdd3e76c2d7030639b4503cc6791355b4981c93"
+    },
+    {
+      "path": ".local/research/npm-codec-default-consumers-37969129032-artifacts/codec-mirror-consumer-win32-x64/codec-mirror-consumer.json",
+      "bytes": 1651,
+      "sha256": "ff6039d1c89b0bb5993a5e9de729a805a1f043d45c4a0c83886e9d8dc5935ec1"
+    },
+    {
+      "path": ".local/research/npm-codec-default-consumers-37969129032-artifacts/codec-mirror-consumer-win32-x64/codec-video.json",
+      "bytes": 1833,
+      "sha256": "f98d3d67462f93844186c21cd03de725b4d225c9858206fe688b5270b3214bc8"
+    },
+    {
+      "path": ".local/research/npm-codec-default-consumers-37969129032-artifacts/codec-mirror-consumer-darwin-arm64/codec-mirror-consumer.json",
+      "bytes": 1662,
+      "sha256": "a6d0b18b804c52847bbadc64b10daa0c7ae2d2939c79ca66eddfb84da0d82095"
+    },
+    {
+      "path": ".local/research/npm-codec-default-consumers-37969129032-artifacts/codec-mirror-consumer-darwin-arm64/codec-video.json",
+      "bytes": 1836,
+      "sha256": "cbe3fffac44e917d5932bf10843de5d0b932b537f2941ab4ab97129933eb916a"
+    },
+    {
+      "path": ".local/research/npm-codec-default-consumers-37969129032-artifacts/codec-mirror-consumer-linux-x64/codec-mirror-consumer.json",
+      "bytes": 1654,
+      "sha256": "cc7599be1fc8ea0f836e0f1e397db88e26767d2c71c29327181e5d516505c866"
+    },
+    {
+      "path": ".local/research/npm-codec-default-consumers-37969129032-artifacts/codec-mirror-consumer-linux-x64/codec-video.json",
+      "bytes": 1833,
+      "sha256": "c80cfa7f74d73c674b05b0a4ba9300b7626d75457c6c8d3338ec69d1b340d4b9"
+    },
+    {
+      "path": ".local/research/npm-codec-default-consumers-37969129032-artifacts/codec-mirror-consumer-darwin-x64/codec-mirror-consumer.json",
+      "bytes": 1658,
+      "sha256": "0a64788cd2f4822e105c037cd2b1d149895567338cdff3e86ae8c2c8a627124c"
+    },
+    {
+      "path": ".local/research/npm-codec-default-consumers-37969129032-artifacts/codec-mirror-consumer-darwin-x64/codec-video.json",
+      "bytes": 1834,
+      "sha256": "f0d4d01a3ac1db5983c6a037a9a760f21199e204e676350bd335b94bbde75f8a"
+    },
+    {
+      "path": ".local/research/npm-codec-default-consumers-37969129032-artifacts/codec-mirror-consumer-win32-arm64/codec-mirror-consumer.json",
+      "bytes": 1655,
+      "sha256": "666515641804640013741dd679297afeb39b5f3eea88edb30f2affc7df55ad07"
+    },
+    {
+      "path": ".local/research/npm-codec-default-consumers-37969129032-artifacts/codec-mirror-consumer-win32-arm64/codec-video.json",
+      "bytes": 1835,
+      "sha256": "bb34ccfdc9745d9453c1ffe9ac8452083818b8198456e9c4eba4bf641342b475"
+    },
+    {
+      "path": ".local/research/npm-codec-default-consumers-37969129032-artifacts/codec-mirror-consumer-linux-arm64/codec-mirror-consumer.json",
+      "bytes": 1658,
+      "sha256": "3f2242b13917b56e5896d9c663c89fb0d391749627b7ef1132187acd6d3f1482"
+    },
+    {
+      "path": ".local/research/npm-codec-default-consumers-37969129032-artifacts/codec-mirror-consumer-linux-arm64/codec-video.json",
+      "bytes": 1835,
+      "sha256": "b8633ed9ffbc4b8f4892f908cf0e91cf57869d8a736395785af64b75041414a0"
+    }
+  ],
+  "scope": "Offline evidence review only; no account/native execution/catalog mutation/npm publishing. Default mode proof distinct from previous prospective candidate mode.",
+  "npmLatestVerified": {
+    "packages": 7,
+    "version": "0.0.1",
+    "source": "official registry latest endpoints",
+    "evidenceSha256": "71aca6ffff02c19160f96bfba930ccf5c755b70819f9b0d0ed50ef47c0f0c37e"
+  }
+}

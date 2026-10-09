@@ -120,3 +120,5 @@ node scripts/upload-npm-native-mirror.mjs /absolute/path/npm-candidate /absolute
 默认 `catalog.json` 现在原位替换六条同设备/QQ版本记录，指向上述已校验的 codec 镜像；两条 Linux `3.2.31-51102` 保留，没有添加歧义版本。替换后 catalog SHA256 为 `ae486c9ffd96d12377f626377243baaa17b45a7afee9bfaa3134ce9fa73b9719`。旧 catalog 原字节备份位于 `catalog-backups/29fd6b763a1323ddcb9a71b1b369188fdc2bf8d7bc4133c19dcc41de8bd60ee7.json`，旧 manifest 和资产继续保留。需要旧完整镜像时，可显式将 `catalogUrl` 指向该备份的 raw GitHub URL；这不是 SDK 自动失败回退。
 
 默认入口另行使用消费者工作流 `mode=default` 验收：实际 `createClient` 不传 wrapper、version、manifest 或 catalog；仍省略安装辅包，以确保使用默认 catalog。候选入口通过不替代这次默认路径验证。npm 保持 0.0.1，本次没有登录或发送。
+
+默认入口的 [run 37969129032](https://github.com/lc-cn/qq-native-mirror/actions/runs/37969129032) 已实际全部通过，验收源码 `956f67ec88a31208b179edb0671d5ad4f025ddbb`。六平台仅安装固定候选主包、不传任何内核/catalog定位输入，真实冷初始化/关闭、自动解码三个视频样本及第二次零payload下载均通过。收据、原生解码日志、API终态与默认路径源码分支经独立核对，详见 `docs/evidence/codec-default-ci-37969129032.json`。官方npm七包latest再次只读核对仍均为0.0.1；本轮没有发包或账号操作。
