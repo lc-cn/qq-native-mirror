@@ -48,11 +48,25 @@
   {
     "platform": "win32",
     "arch": "x64",
-    "status": "source-investigation-pending"
+    "status": "native-exports-compatibility-pending",
+    "installerUrl": "https://qqdl.gtimg.cn/qqfile/QQNT/9.9.33/release/497e2f1f/QQ_9.9.33_260813_x64_01.exe",
+    "installerSha256": "b25c0d3ce9df764074a9118d0ded927e1b2d7ebf60e306112e8df18a040ec492",
+    "version": {
+      "clientVersion": "9.9.33-52230",
+      "appId": "537379411",
+      "qua": "V1_WIN_NQ_9.9.33_52230_GW_B"
+    }
   },
   {
     "platform": "win32",
     "arch": "arm64",
-    "status": "source-investigation-pending"
+    "status": "native-exports-compatibility-pending",
+    "installerUrl": "https://qqdl.gtimg.cn/qqfile/QQNT/9.9.33/release/497e2f1f/QQ_9.9.33_260813_arm64_01.exe",
+    "installerSha256": "ee77d6d8bdfc4f4c9bf9c6d2521322ff410d2614a7e8ba005aaa9703fc9ef174",
+    "version": {
+      "clientVersion": "9.9.33-52230",
+      "appId": "537379423",
+      "qua": "V1_WIN_NQ_9.9.33_52230_GW_B"
+    }
   }
 ]

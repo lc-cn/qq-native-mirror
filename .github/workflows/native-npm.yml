@@ -40,7 +40,10 @@ jobs:
       - name: Verify runner architecture and available source
         run: |
           node -e "if(process.platform!=='${{ matrix.platform }}'||process.arch!=='${{ matrix.arch }}')throw Error('Incorrect runner architecture')"
-          node -e "const s=require('./ci/sources.json').find(x=>x.platform===process.platform&&x.arch===process.arch);if(!s?.manifestUrl)throw Error('Native source not verified yet; no placeholder package permitted')"
+          node -e "const s=require('./ci/sources.json').find(x=>x.platform===process.platform&&x.arch===process.arch);if(!s?.manifestUrl&&!s?.installerUrl)throw Error('Native source not verified yet; no placeholder package permitted')"
+      - name: Extract official Windows source and verify native registration exports
+        if: matrix.platform == 'win32'
+        run: node ci/prepare-windows.mjs
       - name: Linux system dependencies
         if: matrix.platform == 'linux'
         run: sudo apt-get update && sudo apt-get install -y libx11-xcb1 libgnutls30
