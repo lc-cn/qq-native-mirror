@@ -8,6 +8,7 @@ import { verifyRecallConsumer } from './recall-consumer-contract.mjs';
 import { verifyMentionConsumer } from './mention-consumer-contract.mjs';
 import { verifySendConsumer } from './send-consumer-contract.mjs';
 import { verifyReceivedConsumer } from './received-consumer-contract.mjs';
+import { verifyVideoConsumerContract } from './video-consumer-contract.mjs';
 
 // Offline packaging check: never creates a QQ client or loads native binaries.
 const root = fileURLToPath(new URL('../', import.meta.url));
@@ -222,11 +223,15 @@ const recallChecks = await verifyRecallConsumer(join(destination,'node_modules/q
 const mentionChecks = await verifyMentionConsumer(join(destination,'node_modules/qq-native-client'));
 const sendChecks = await verifySendConsumer(join(destination,'node_modules/qq-native-client'));
 const receivedChecks = await verifyReceivedConsumer(join(destination,'node_modules/qq-native-client'));
+const videoChecks = await verifyVideoConsumerContract(join(destination,'node_modules/qq-native-client'));
 run(process.execPath,[cliEntry,'init','--config','qq.json','--data-dir','account','--download-mirror','https://gh-proxy.com/']);
 const configuration=JSON.parse(run(process.execPath,[cliEntry,'config','--config','qq.json']));
 if(configuration.wrapperPath || configuration.version || configuration.downloadMirrors?.[0]!=='https://gh-proxy.com/')throw new Error('Installed CLI default catalog configuration failed');
-await writeFile(join(destination, 'consumer.ts'), `import {createClient, type ClientOptions, type QQClient, type MessageRecall} from 'qq-native-client';
-const options: ClientOptions = {dataDir:'/account',downloadMirrors:['https://gh-proxy.com/'],autoReconnect:false};
+await writeFile(join(destination, 'consumer.ts'), `import {createClient, type ClientOptions, type QQClient, type MessageRecall, type VideoCodec, type VideoInfo} from 'qq-native-client';
+const options: ClientOptions = {dataDir:'/account',videoCodecPath:'/codec.node',downloadMirrors:['https://gh-proxy.com/'],autoReconnect:false};
+const videoInfo: VideoInfo = {width:1280,height:720,duration:2.75,format:'png',image:Buffer.alloc(0)};
+const videoCodec: VideoCodec = {getVideoInfo:async (_filePath:string):Promise<VideoInfo>=>videoInfo};
+void videoCodec;
 const factory: (options: ClientOptions) => Promise<QQClient> = createClient;
 function subscribe(client: QQClient) {
  client.on('message.recalled', (recall: MessageRecall) => { const fields: string[] = [recall.messageId,recall.sequence,recall.recallTime]; return [recall.peer,fields]; });
@@ -257,7 +262,7 @@ void factory; void options; void subscribe;
 run(process.execPath, [resolve(root, 'node_modules/typescript/bin/tsc'), '--noEmit', '--strict', '--types', 'node', '--module', 'NodeNext', '--target', 'ES2023', '--typeRoots', resolve(root, 'node_modules/@types'), 'consumer.ts']);
 const receipt = { checkedAt: new Date().toISOString(), package: packed.name, version: packed.version,
   integrity: packed.integrity, fileCount: files.length, checks: { privateFilesExcluded:true, installedImport:true, cliHelp:true, cliDefaultConfig:true, faceContract:true, messageQueryContract:true, historyQueryContract:true, nativeHistoryQueryAttempted:false, selfProfileContract:true, groupOperationContract:true, groupMemberQueryContract:true, groupMemberIdentityContract:true, groupMetadataEventContract:true, businessWatchContract:true, friendMetadataEventContract:true, nativeFriendMetadataObserved:false, friendListQueryContract:true, friendListBatchContract:true, friendProfileQueryContract:true, groupListQueryContract:true, nativeGroupListQueryAttempted:false, nativeFriendListQueryAttempted:false, declarations:true },
-  ...forwardChecks, ...recallChecks, ...mentionChecks, ...sendChecks, ...receivedChecks, nativeExecuted:false, accountUsed:false };
+  ...forwardChecks, ...recallChecks, ...mentionChecks, ...sendChecks, ...receivedChecks, ...videoChecks, nativeExecuted:false, accountUsed:false };
 await mkdir(join(root, '.local'), {recursive:true});
 await writeFile(join(root, '.local/package-consumer-verification.json'), JSON.stringify(receipt, null, 2));
 await mkdir(join(root, '.local/research'), {recursive:true});

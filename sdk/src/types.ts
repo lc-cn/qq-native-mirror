@@ -40,6 +40,8 @@ export interface ClientOptions {
   mediaTools?: { ffmpeg: string; ffprobe: string };
   /** Optional local codec override; defaults to bundled silk-wasm for PCM16 WAV/Tencent SILK. */
   recordCodecPath?: string;
+  /** Explicit local JS module or standard Node addon providing video metadata and thumbnail. */
+  videoCodecPath?: string;
   /** Positive Node timer duration in milliseconds (maximum 2147483647). */
   timeoutMs?: number;
   /** Restore only after a disconnect explicitly classified as retryable. Unknown failures and kicks never trigger automatic login. */

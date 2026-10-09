@@ -6,6 +6,7 @@ import type { ClientOptions, LoginRequest } from './types.ts';
 import type { ServiceOperation } from './native-services.ts';
 import { lockDataDirectory } from './data-directory-lock.ts';
 import { loadRecordCodec } from './record-codec-loader.ts';
+import { loadVideoCodec } from './video-codec-loader.ts';
 import { builtinRecordCodec } from './builtin-record-codec.ts';
 
 const operations = new Set(['listFriends', 'listGroups', 'getGroupMembers', 'sendPrivateMessage', 'sendGroupMessage', 'getMessage', 'getHistory', 'recallMessage', 'getForwardMessages', 'forwardMessages',
@@ -37,7 +38,8 @@ process.on('message', async (message: unknown) => {
       const native = { exports: {} };
       process.dlopen(native, options.wrapperPath!);
       const recordCodec = options.recordCodecPath === undefined ? builtinRecordCodec : await loadRecordCodec(options.recordCodecPath);
-      kernel = createKernel(native.exports, { dataDir: options.dataDir, version: options.version!, device: options.device, loginTimeoutMs: options.timeoutMs, rememberPassword: options.rememberPassword, mediaTools: options.mediaTools, recordCodec },
+      const videoCodec = options.videoCodecPath === undefined ? undefined : await loadVideoCodec(options.videoCodecPath);
+      kernel = createKernel(native.exports, { dataDir: options.dataDir, version: options.version!, device: options.device, loginTimeoutMs: options.timeoutMs, rememberPassword: options.rememberPassword, mediaTools: options.mediaTools, recordCodec, videoCodec },
         (event, payload) => send({ event, payload: payload instanceof Error ? { message: payload.message } : Buffer.isBuffer((payload as { image?: unknown })?.image)
           ? { ...(payload as object), image: (payload as { image: Buffer }).image.toString('base64') } : payload }));
       await kernel.prepare();

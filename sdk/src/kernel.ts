@@ -1,6 +1,7 @@
 import { createNativeServices, type ServiceOperation } from './native-services.ts';
 import { normalizeLoginRequest } from './login-request.ts';
 import type { LoginRequest } from './types.ts';
+import type { VideoCodec } from './video-codec-loader.ts';
 import type { RecordCodec } from './record-codec-loader.ts';
 import { mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -17,6 +18,7 @@ export interface KernelOptions {
   rememberPassword?: boolean;
   mediaTools?: { ffmpeg: string; ffprobe: string };
   recordCodec?: RecordCodec;
+  videoCodec?: VideoCodec;
 }
 export type { LoginRequest } from './types.ts';
 export interface AccountIdentity { uin: string; uid: string }
@@ -132,7 +134,7 @@ export function createKernel(
                 return;
               }
               notify(event, payload);
-            }, options.mediaTools, options.recordCodec, account.uin, account.uid, info => { if (active()) notify('native-callback', info); });
+            }, options.mediaTools, options.recordCodec, account.uin, account.uid, info => { if (active()) notify('native-callback', info); }, options.videoCodec);
           } catch (error) { fail(error instanceof Error ? error : new Error(String(error))); return; }
           if (!active() || pending !== expectedPending) { nativeServices?.close(); nativeServices = undefined; return; }
           identity = { ...account };

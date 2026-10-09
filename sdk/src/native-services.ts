@@ -5,6 +5,7 @@ import { listWebGroupNotices } from './web-group-notices.ts';
 import { createGroupNotices, type GroupNoticeOperation } from './group-notices.ts';
 import { createForwardMessages, type ForwardOperation } from './forward-messages.ts';
 import { createGroupRequests, type GroupRequestOperation } from './group-requests.ts';
+import type { VideoCodec } from './video-codec-loader.ts';
 import { createVideoElement, type MediaTools } from './media-send.ts';
 import { createRecordElement, type RecordCodec } from './media-record.ts';
 import { createFriendRequests, type FriendRequestOperation } from './friend-requests.ts';
@@ -30,7 +31,7 @@ function toMessage(message: Native, raw: unknown = message): Message {
   return projectNativeMessage(message, decodeElements(message.elements), new Map(), raw);
 }
 
-export function createNativeServices(session: Native, version: string, emit: (event: string, payload: unknown) => void, mediaTools?: MediaTools, recordCodec?: RecordCodec, accountId?: string, accountUid?: string, auditCallback?: (info: Pick<NativeCallbackAudit,'family'|'name'|'argumentTypes'>) => void) {
+export function createNativeServices(session: Native, version: string, emit: (event: string, payload: unknown) => void, mediaTools?: MediaTools, recordCodec?: RecordCodec, accountId?: string, accountUid?: string, auditCallback?: (info: Pick<NativeCallbackAudit,'family'|'name'|'argumentTypes'>) => void, videoCodec?: VideoCodec) {
   const lifetime=new AbortController();
   let closed = false;
   // Modules may retain services across awaits. Guard the actual method boundary,
@@ -262,7 +263,7 @@ export function createNativeServices(session: Native, version: string, emit: (ev
       }
       if (element.type === 'face') return faceElement(element.id);
       if (element.type === 'image') return createImageElement(element.file, service('Msg'));
-      if (element.type === 'video') return createVideoElement(element.file, service('Msg'), mediaTools);
+      if (element.type === 'video') return createVideoElement(element.file, service('Msg'), mediaTools, videoCodec, lifetime.signal);
       if (element.type === 'record') return createRecordElement(element.file, service('Msg'), recordCodec);
       if (element.type === 'file') return createFileElement(element.file, element.name);
       if (element.type === 'reply') return createReplyElement(element.messageId, peer, service('Msg'));

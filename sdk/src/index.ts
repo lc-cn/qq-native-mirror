@@ -11,6 +11,7 @@ import { prepareNative } from './native-package.ts';
 import { normalizeLoginRequest } from './login-request.ts';
 import type { Account, ClientOptions, ClientEvents, LoginRequest, ClientState, Friend, Group, GroupMember, MessageInput, SentMessage, Message, Peer, HistoryOptions, KickOptions, UserProfile, DeleteFriendOptions, FriendRequest, NativeCallbackAudit } from './types.ts';
 export type * from './types.ts';
+export type { VideoCodec, VideoInfo } from './video-codec-loader.ts';
 import type { GroupNoticeOptions, GroupNoticePage } from './types.ts';
 import type { GroupRequest, GroupRequestOptions, GroupRequestPage } from './types.ts';
 
