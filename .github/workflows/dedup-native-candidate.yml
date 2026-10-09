@@ -26,14 +26,35 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - runner: ubuntu-24.04
+            platform: linux
+            arch: x64
+            device: linux-x64
+          - runner: ubuntu-24.04-arm
+            platform: linux
+            arch: arm64
+            device: linux-arm64
+          - runner: windows-2022
+            platform: win32
+            arch: x64
+            device: win32-x64
+          - runner: windows-11-arm
+            platform: win32
+            arch: arm64
+            device: win32-arm64
           - runner: macos-15
+            platform: darwin
             arch: arm64
             device: darwin-arm64
           - runner: macos-15-intel
+            platform: darwin
             arch: x64
             device: darwin-x64
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -43,9 +64,13 @@ jobs:
       - name: Require actual target
         env:
           EXPECTED_ARCH: ${{ matrix.arch }}
-        run: node -e "if(process.platform!=='darwin'||process.arch!==process.env.EXPECTED_ARCH||process.version!=='v24.20.0')throw Error('Wrong runner')"
+          EXPECTED_PLATFORM: ${{ matrix.platform }}
+        run: node -e "if(process.platform!==process.env.EXPECTED_PLATFORM||process.arch!==process.env.EXPECTED_ARCH||process.version!=='v24.20.0')throw Error('Wrong runner')"
+      - name: Linux system dependencies
+        if: matrix.platform == 'linux'
+        run: sudo apt-get update && sudo apt-get install -y libx11-xcb1 libgnutls30
       - name: Producer contracts
-        run: node --test tools/dedup-native-npm.test.mjs
+        run: node --test tools/dedup-native-npm.test.mjs tools/verify-dedup-consumer.test.mjs
       - name: Acquire fixed full native source with preserved permanent materials
         env:
           GH_TOKEN: ${{ github.token }}
@@ -58,7 +83,7 @@ jobs:
       - name: Build and pack this SDK with the new installed storage loader
         working-directory: sdk
         run: |
-          npm run build
+          if [ '${{ matrix.platform }}' = 'win32' ]; then npm exec tsc; else npm run build; fi
           npm pack --ignore-scripts --pack-destination ../out --json
       - name: Bind this SDK separately from original native source
         run: node tools/verify-dedup-consumer.mjs --bind-main out
