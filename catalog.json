@@ -31,8 +31,8 @@
         "appId": "537391652",
         "qua": "V1_MAC_7.0.2-53644_53644_GW_B"
       },
-      "manifestUrl": "https://raw.githubusercontent.com/lc-cn/qq-native-mirror/main/packages/7.0.2-53644-darwin-arm64/cdaac27e9a5debd10b66c44016ea5b279cdcfe7008a75191d4431aab34c0d73d/manifest.json",
-      "manifestSha256": "cdaac27e9a5debd10b66c44016ea5b279cdcfe7008a75191d4431aab34c0d73d"
+      "manifestUrl": "https://raw.githubusercontent.com/lc-cn/qq-native-mirror/main/packages/7.0.2-53644-darwin-arm64/e65c57b5002e42daf59a845b92a185a57db31045e666961c904c96ba4f5c249b/manifest.json",
+      "manifestSha256": "e65c57b5002e42daf59a845b92a185a57db31045e666961c904c96ba4f5c249b"
     },
     {
       "platform": "linux",
