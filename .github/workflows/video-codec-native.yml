@@ -90,7 +90,8 @@ jobs:
         run: otool -L out/video/runtime/video-codec.node > out/video/runtime/dependencies.txt
       - name: Record Windows dependency inventory
         if: matrix.platform == 'win32'
-        run: dumpbin /dependents out/video/runtime/video-codec.node > out/video/runtime/dependencies.txt
+        shell: pwsh
+        run: dumpbin /dependents out/video/runtime/video-codec.node | Out-File -Encoding utf8 out/video/runtime/dependencies.txt
       - uses: actions/upload-artifact@v4
         with:
           name: video-${{ matrix.platform }}-${{ matrix.arch }}
