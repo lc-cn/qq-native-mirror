@@ -319,3 +319,28 @@ python3 scripts/linux-signing-lookup-origin.py /absolute/path/wrapper.node
 ```
 
 这将“返回对象”收窄为表中已有指针，但尚未确认该表项的原生类型、其 `+8` 字段的数据含义，也未证明它与 provider `+0x200` 的别名关系。因此仍不能认定 OR8 改写了最终签名或服务端可识别的标记。相邻函数未纳入本次分析；没有原生执行或账号操作。
+
+## 返回记录、数据复制与 provider 第三个区域
+
+在同一固定 Linux 3.2.32-52194 arm64 SHA 下，本轮把返回值追踪到 provider 的 `+0x200` 区域。consumer `0x4334048` 的普通 `x0` 返回经 `0x433008c`、`0x43307b8` 转发，保存到第一 helper 的局部槽 `frame+0xe8`。该返回值是记录指针 `R`：`R+0` 读取 32 位长度，`R+8` 读取数据指针。`0x4257644` 使用 `data..data+length` 调用 ELF 动态符号确认的 `std::string::_M_construct<const char*>`，写入原始 `x8` 指定的间接结果对象。provider 在 `0x4262b8c` 指定该对象为 `x29-0x80`，随后在 `0x4262bd4` 调用实际 `memcpy`，把字符串数据按长度复制到原始输出指针 `+0x200`。结合前述 callback 的三区域复制，此处建立了长度限定的数据输出关系；仍没有权威字段名说明该区域是 signature、token 或 extra。
+
+consumer 中还找到返回数据的构造与复制指令。记录通过 `malloc(16)` 分配；另一处从 lookup 对象取得的 32 位长度左移两位后传给 `malloc`，所得缓冲区写入 `R+8`，对象长度写入 `R+0`。`0x4335194..0x43351b0` 按相同索引从另一个 lookup 对象的 `+8` 数据指针读取并写入返回缓冲区，元素宽度为 32 位。因而，返回缓冲区虽为独立分配，也不能据此排除内容传播。这里的分配大小与后续字符串构造长度单位不同，不能把分配范围直接当成最终输出范围。
+
+| 待连接的路径 | 精确局部关系 | 尚缺证据 |
+| --- | --- | --- |
+| OR8 目标 | `0x4339470` 的 lookup 使用当前指令 byte1 的低 4 位；后续修改该对象数据指针 `+5` 的字节 | 与复制源是否相同或有数据转换关系 |
+| 返回数据复制源 | `0x4339644` 的 lookup 使用当前指令完整 byte1；其 `+8` 数据指针进入 32 位索引复制 | 两处指令位置和索引不能直接视为相同 |
+| 最终输出 | `R.data` 按 `R.length` 构造字符串并复制到 provider `+0x200` | 复制及输出是否覆盖改写字节、可达路径上是否先写后复制 |
+
+consumer 入口的 `frame+0x28 = *(incoming x0)+0x10`，lookup owner 则为 `incoming x0+8`。两次 lookup 都从 `frame+0x9e8` 读取指令位置，其直接定义来自 `frame+0x28`，但循环会更新该槽，因此共用解析状态不能证明读取同一指令。`0x4339b28` 将该指针加 6 后保存，未在该处解引用；不能描述成“载荷 byte6”或与数据指针混同。若复制源为相关表项且索引 1 实际复制，32 位元素会覆盖 byte4–7，可能包含改写的 byte5；字符串输出还须实际覆盖 byte5。这些是条件性范围关系，并非执行证明。
+
+完整 consumer 指令字均与系统 objdump 核对，frame 槽清单包含 `STP/LDP` 的第二槽；清单仍不能穷尽间接别名及所有混淆状态的可达关系。
+
+```sh
+python3 scripts/linux-signing-provider-third-region.py /absolute/path/wrapper.node
+python3 scripts/linux-signing-return-provenance.py /absolute/path/wrapper.node
+```
+
+两个脚本均先检查完整二进制 SHA，再输出精确局部证据。前者额外校验 39 个选定指令字、unwind 边界和字符串构造/`memcpy` 动态符号；后者需要分析主机的 `/usr/bin/objdump` 支持 AArch64 ELF，并核对 consumer 范围内每个反汇编指令字。本机复跑及独立 objdump 检查通过，私有收据保存在 `.local/research/linux-signing-provider-third-region.json`、`linux-signing-return-provenance.json` 和 `linux-signing-third-region-independent.json`。
+
+结论仍是：已确认真实输出复制链及候选内容传播入口，但没有证明 OR8 位进入最终输出，更没有证明服务端账号标记或踢下线机制。没有加载原生模块、调用 provider、恢复账号或修改检测结果。上述地址仅适用于这个固定二进制，不能推广到其他平台或版本。
