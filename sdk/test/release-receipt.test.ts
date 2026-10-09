@@ -29,7 +29,7 @@ test('schema 2 binds aggregate receipt bytes while schema 1 remains compatible',
       }
       await writeFile(join(staging, 'package/package.json'), JSON.stringify(metadata));
       const tarball = `${name}-0.0.1.tgz`;
-      execFileSync('tar', ['-czf', join(root, tarball), '-C', staging, 'package']);
+      execFileSync('tar', ['--format=ustar', '-czf', join(root, tarball), '-C', staging, 'package'], { env: { ...process.env, COPYFILE_DISABLE: '1' } });
       const bytes = await readFile(join(root, tarball));
       const row: any = { name, version: '0.0.1', tarball, size: bytes.length, sha256: digest(bytes), integrity: `sha512-${digest(bytes, 'sha512', 'base64')}` };
       if (nativeBytes) {
@@ -60,7 +60,7 @@ test('schema 2 binds aggregate receipt bytes while schema 1 remains compatible',
     execFileSync('tar', ['-xzf', row.tarball, '-C', staging], { cwd: root });
     const candidate = Buffer.from(JSON.stringify({ platform: 'linux', arch: 'x64', videoCodec: 'video/video-codec.node' }));
     await writeFile(join(staging, 'package/manifest.json'), candidate);
-    execFileSync('tar', ['-czf', row.tarball, '-C', staging, 'package'], { cwd: root });
+    execFileSync('tar', ['--format=ustar', '-czf', row.tarball, '-C', staging, 'package'], { cwd: root, env: { ...process.env, COPYFILE_DISABLE: '1' } });
     await rm(staging, { recursive: true });
     const bytes = await readFile(join(root, row.tarball));
     Object.assign(row, { size: bytes.length, sha256: digest(bytes), integrity: `sha512-${digest(bytes, 'sha512', 'base64')}`, manifestSha256: digest(candidate) });
