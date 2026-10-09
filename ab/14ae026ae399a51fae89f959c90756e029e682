@@ -1,0 +1,21 @@
+sdk/docs/evidence/message-batch-ci-37975745051.json
+  s_2104cc474f1ce5::t_621b6bc8b6952e 1-263
+sdk/docs/sdk-acceptance.md
+  s_2104cc474f1ce5::t_0675e9ddac4977 650-651
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ab14ae026ae399a51fae89f959c90756e029e682",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
