@@ -6,7 +6,8 @@ import {mkdtemp,readFile,realpath,lstat,writeFile,rm,symlink} from 'node:fs/prom
 import {tmpdir} from 'node:os';
 import {join,sep,resolve} from 'node:path';
 import {createHash} from 'node:crypto';
-const catalogUrl='https://raw.githubusercontent.com/lc-cn/qq-native-mirror/main/catalog-gzip-v1.json';
+const defaultCatalogMode=process.env.QQ_MIRROR_MODE==='default';
+const catalogUrl='https://raw.githubusercontent.com/lc-cn/qq-native-mirror/main/'+(defaultCatalogMode?'catalog.json':'catalog-gzip-v1.json');
 const downloadMirrors=['https://gh-proxy.com/'];
 const expectedManifestSha256=process.env.QQ_EXPECTED_NATIVE_MANIFEST_SHA256;
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
@@ -15,7 +16,7 @@ const output=resolve(process.argv[2]??'public-mirror-consumer.json');
 const root=await mkdtemp(join(tmpdir(),'qq-public-mirror-cold-')),cacheDir=join(root,'cache');
 const originalFetch=globalThis.fetch;let client,phase=0,stage='import',selected,manifest,manifestSha;
 const stats=[{requests:0,payloadRequests:0,bytes:0,payloadBytes:0},{requests:0,payloadRequests:0,bytes:0,payloadBytes:0}];
-const receipt={device:`${process.platform}-${process.arch}`,node:process.version,noLogin:true,freshCold:true,catalog:'catalog-gzip-v1.json',proxyConfigured:true,completed:false};
+const receipt={device:`${process.platform}-${process.arch}`,node:process.version,noLogin:true,freshCold:true,catalog:defaultCatalogMode?'catalog.json':'catalog-gzip-v1.json',defaultCatalogMode,proxyConfigured:true,completed:false};
 try {
  check(!expectedManifestSha256||/^[a-f0-9]{64}$/.test(expectedManifestSha256),'Invalid expected manifest digest');
  let denied=false;try{await symlink('nonexistent-fixture',join(root,'deny-probe'));}catch(error){denied=error.code==='EPERM';}check(denied,'Symlink denial policy missing');receipt.symlinkCreationDenied=true;
@@ -30,7 +31,7 @@ try {
    for await(const chunk of response.body){size+=chunk.length;check(size<=1024*1024,'Metadata too large');chunks.push(Buffer.from(chunk));}
    const bytes=Buffer.concat(chunks);stat.bytes+=bytes.length;const data=JSON.parse(bytes);
    if(url===catalogUrl){
-    const matches=data.packages?.filter(item=>item.platform===process.platform&&item.arch===process.arch);check(data.schemaVersion===1&&matches?.length===1,'Ambiguous device catalog selection');selected=matches[0];check(!expectedManifestSha256||selected.manifestSha256===expectedManifestSha256,'Unexpected catalog manifest digest');
+    const matches=data.packages?.filter(item=>item.platform===process.platform&&item.arch===process.arch&&(!expectedManifestSha256||item.manifestSha256===expectedManifestSha256));check(data.schemaVersion===1&&matches?.length===1,'Ambiguous device catalog selection');selected=matches[0];check(!expectedManifestSha256||selected.manifestSha256===expectedManifestSha256,'Unexpected catalog manifest digest');
    }else{
     check(selected&&url===selected.manifestUrl&&hash(bytes)===selected.manifestSha256,'Manifest digest/selection mismatch');manifest=data;manifestSha=hash(bytes);
     check(manifest.platform===process.platform&&manifest.arch===process.arch,'Manifest device mismatch');
@@ -42,7 +43,7 @@ try {
   return new Response(stream,{status:response.status,headers:response.headers});
  };
  for(phase=0;phase<2;phase++){
-  stage=phase===0?'cold-prepare':'cached-prepare';client=await createClient({catalogUrl,downloadMirrors,cacheDir,dataDir:join(root,`empty-account-${phase}`),autoReconnect:false,timeoutMs:30000});
+  stage=phase===0?'cold-prepare':'cached-prepare';client=await createClient({...(!defaultCatalogMode?{catalogUrl}:{}),downloadMirrors,cacheDir,dataDir:join(root,`empty-account-${phase}`),autoReconnect:false,timeoutMs:30000});
   const count=client.nativeExports.length;check(count>=80,'Unexpected native export count');await client.close();check(client.state==='closed','Client did not close');client=undefined;
   if(phase===0)receipt.nativeExports=count;
  }
