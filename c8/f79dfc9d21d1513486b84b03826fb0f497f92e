@@ -1,0 +1,33 @@
+ci/verify-consumer.mjs
+  s_2104cc474f1ce5::t_b06574067b6ab5 168-177,182
+sdk/README.md
+  s_2104cc474f1ce5::t_731ec268cbc69b 144-145
+sdk/docs/linux-signing-static.md
+  s_2104cc474f1ce5::t_6797d67b0bc28c 432-443
+sdk/docs/sdk-acceptance.md
+  s_2104cc474f1ce5::t_b04240441faf9c 422-429
+sdk/scripts/linux-signing-global48-followup.py
+  s_2104cc474f1ce5::t_328a83bd5a3567 1-40
+sdk/scripts/verify-package-consumer.mjs
+  s_2104cc474f1ce5::t_0c30d118fab55e 125-135,186
+sdk/src/native-services.ts
+  s_2104cc474f1ce5::t_479551c371e5ea 227-229
+sdk/test/native-services.test.ts
+  s_2104cc474f1ce5::t_b84ff0716d3ecd 29,253,259-289
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c8f79dfc9d21d1513486b84b03826fb0f497f92e",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
