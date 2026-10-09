@@ -1,0 +1,23 @@
+.github/workflows/native-npm.yml
+  s_2104cc474f1ce5::t_1db5854e1f8356 49,92,99,101,103
+ci/build-platform.mjs
+  s_2104cc474f1ce5::t_448a74ce1f9e3b 23-24
+ci/verify-consumer.mjs
+  s_2104cc474f1ce5::t_6e6349001de549 6,10
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "755c26bbcff66c5daa7f9e4fd249433d4a059078",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
