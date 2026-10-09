@@ -1,0 +1,21 @@
+sdk/docs/signing-integrity.md
+  s_2104cc474f1ce5::t_a98e0aa95a8367 79-105
+sdk/scripts/audit-host-adapters.mjs
+  s_2104cc474f1ce5::t_f266b1f38a1330 1-86
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "bbd28c067c941bfe63cac32a67b9abea8bbbc75f",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
