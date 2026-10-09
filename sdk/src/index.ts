@@ -1,4 +1,5 @@
 import { deserializeKernelError } from './errors.ts';
+import { normalizeMessageQuery } from './message-query.ts';
 export { KernelRequestError } from './errors.ts';
 import { EventEmitter } from 'node:events';
 import { fork, type ChildProcess } from 'node:child_process';
@@ -235,6 +236,7 @@ export class QQClient extends EventEmitter<ClientEvents> {
   sendPrivateMessage(userId: string, message: MessageInput): Promise<SentMessage> { return this.#operation('sendPrivateMessage', { userId, message }); }
   sendGroupMessage(groupId: string, message: MessageInput): Promise<SentMessage> { return this.#operation('sendGroupMessage', { groupId, message }); }
   getHistory(peer: Peer, options: HistoryOptions = {}): Promise<Message[]> { return this.#operation('getHistory', { peer, options }); }
+  async getMessage(peer: Peer, messageId: string): Promise<Message | undefined> { return this.#operation('getMessage', normalizeMessageQuery(peer, messageId)); }
   getForwardMessages(peer: Peer, rootMessageId: string, parentMessageId: string): Promise<Message[]> { return this.#operation('getForwardMessages', { peer, rootMessageId, parentMessageId }); }
   /** Native submission only; this does not confirm destination receipt. */
   forwardMessages(source: Peer, destination: Peer, messageIds: string[]): Promise<void> { return this.#operation('forwardMessages', { source, destination, messageIds }); }

@@ -144,6 +144,8 @@ Call read/send APIs after `await client.login(...)`. `client.state` reports idle
 ```ts
 const friends = await client.listFriends();
 const groups = await client.listGroups();
+// Unpublished source: find one message in a specific conversation (undefined if absent).
+// const message = await client.getMessage({ type: 'group', groupId }, messageId);
 client.on('message.private', message => { /* incoming private message */ });
 client.on('message.group', message => { /* incoming group message */ });
 // These methods send only when explicitly called by your application:
@@ -154,6 +156,8 @@ client.on('message.group', message => { /* incoming group message */ });
 ```
 
 The working source accepts `{type:'face',id:number}` for private/group sends and CLI `--message-file` JSON. It bundles 329 known IDs in an 8 KB metadata table, including classic, extended and animated faces. Unknown or invalid IDs reject before message submission. This addition is not in the published `0.0.1`; it has local contract verification only until a separately authorized account send confirms delivery. Dice and rock-paper-scissors use their standard face metadata, without a requested outcome. [Pinned contract and evidence](docs/sdk-acceptance.md#standard-qq-face-sending-unpublished-source-2026-10-09).
+
+Working source also provides `getMessage(peer,messageId)` and `message --config FILE --kind private|group --target ID --message-id ID`. IDs remain decimal strings, including values beyond JavaScript's safe integer range. The API returns `undefined` only for a successful empty query; the CLI prints `null`. Native errors and malformed or wrong-conversation records reject. Reply construction uses the same checked lookup. This is an unpublished addition with contract/packaging verification; real account query and reply delivery remain unverified.
 
 The npm package exposes the `qq-native-client` executable. `--help` lists configuration, login, contacts, groups, members, history, watch and explicit send commands. Configuration creation does not overwrite existing files. CLI read commands restore prior authorization; QR login is explicit. `watch` prints incoming message JSON and keeps the client running until a termination signal.
 

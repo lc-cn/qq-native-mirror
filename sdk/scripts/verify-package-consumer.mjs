@@ -37,6 +37,18 @@ run(process.execPath, ['faces.mjs']);
 const help = run(process.execPath, ['node_modules/qq-native-client/dist/cli.js', '--help']);
 if (!help.includes('group-kick') || !help.includes('--message-file')) throw new Error('Installed CLI lacks commands');
 const cliEntry='node_modules/qq-native-client/dist/cli.js';
+if (!help.includes('message --config')) throw new Error('Installed CLI lacks single-message lookup');
+await writeFile(join(destination, 'message-query.mjs'), `import assert from 'node:assert/strict';
+import {prepareCommand} from './node_modules/qq-native-client/dist/cli.js';
+import {queryNativeMessage} from './node_modules/qq-native-client/dist/message-query.js';
+const peer={chatType:2,peerUid:'123'},id='900719925474099312345';
+const action=await prepareCommand('message',{kind:'group',target:'123','message-id':id});
+let received;assert.equal(await action({getMessage:async(...args)=>{received=args;}}),null);
+assert.deepEqual(received,[{type:'group',groupId:'123'},id]);
+assert.equal(await queryNativeMessage({getMsgsByMsgId:(p,ids)=>{assert.deepEqual(p,peer);assert.deepEqual(ids,[id]);return{result:0,msgList:[]};}},peer,id),undefined);
+await assert.rejects(queryNativeMessage({getMsgsByMsgId:()=>({result:23,msgList:[]})},peer,id),{code:23});
+`);
+run(process.execPath, ['message-query.mjs']);
 run(process.execPath,[cliEntry,'init','--config','qq.json','--data-dir','account','--download-mirror','https://gh-proxy.com/']);
 const configuration=JSON.parse(run(process.execPath,[cliEntry,'config','--config','qq.json']));
 if(configuration.wrapperPath || configuration.version || configuration.downloadMirrors?.[0]!=='https://gh-proxy.com/')throw new Error('Installed CLI default catalog configuration failed');
@@ -52,6 +64,8 @@ function subscribe(client: QQClient) {
  const remove: Promise<void> = client.deleteGroupNotice('123','notice_id');
  const notices = client.listGroupNotices('123');
  const nickname: Promise<void> = client.setNickname('example');
+ const message = client.getMessage({type:'group',groupId:'123'},'900719925474099312345');
+ void message.then(value=>value?.messageId);
  void nickname;
  void notices.then(page=>page.notices.map(notice=>notice.noticeId));
  void publish; void remove;
@@ -62,7 +76,7 @@ void factory; void options; void subscribe;
 `);
 run(process.execPath, [resolve(root, 'node_modules/typescript/bin/tsc'), '--noEmit', '--strict', '--types', 'node', '--module', 'NodeNext', '--target', 'ES2023', '--typeRoots', resolve(root, 'node_modules/@types'), 'consumer.ts']);
 const receipt = { checkedAt: new Date().toISOString(), package: packed.name, version: packed.version,
-  integrity: packed.integrity, fileCount: files.length, checks: { privateFilesExcluded:true, installedImport:true, cliHelp:true, cliDefaultConfig:true, faceContract:true, declarations:true },
+  integrity: packed.integrity, fileCount: files.length, checks: { privateFilesExcluded:true, installedImport:true, cliHelp:true, cliDefaultConfig:true, faceContract:true, messageQueryContract:true, declarations:true },
   nativeExecuted:false, accountUsed:false };
 await mkdir(join(root, '.local'), {recursive:true});
 await writeFile(join(root, '.local/package-consumer-verification.json'), JSON.stringify(receipt, null, 2));

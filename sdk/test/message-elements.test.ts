@@ -41,9 +41,15 @@ test('URLs and nonimage files never invoke native allocation', async () => {
 
 test('reply uses fetched native identity and rejects nonexistent conversation message', async () => {
   const peer = { chatType: 2, peerUid: '123' };
-  const service = { getMsgsByMsgId(p: unknown, ids: unknown) { assert.deepEqual(p, peer); assert.deepEqual(ids, ['9']); return { msgList: [{ msgId: '9', msgSeq: '4', senderUin: '456', clientSeq: '3' }] }; } };
+  const service = { getMsgsByMsgId(p: unknown, ids: unknown) { assert.deepEqual(p, peer); assert.deepEqual(ids, ['9']); return { result: 0, msgList: [{ msgId: '9', msgSeq: '4', senderUin: '456', clientSeq: '3', ...peer, elements: [] }] }; } };
   assert.deepEqual(await createReplyElement('9', peer, service), { elementType: 7, elementId: '', replyElement: { replayMsgSeq: '4', replayMsgId: '9', senderUin: '456', senderUinStr: '456', replyMsgClientSeq: '3', _replyMsgPeer: peer } });
-  await assert.rejects(createReplyElement('10', peer, { getMsgsByMsgId: () => ({ msgList: [] }) }), /not found/);
+  await assert.rejects(createReplyElement('10', peer, { getMsgsByMsgId: () => ({ result: 0, msgList: [] }) }), /not found/);
+});
+
+test('reply rejects native query failure and wrong-conversation records before constructing a reference', async () => {
+  const peer = { chatType: 2, peerUid: '123' };
+  await assert.rejects(createReplyElement('9', peer, { getMsgsByMsgId: () => ({ result: 23, msgList: [{ msgId: '9' }] }) }), { code: 23 });
+  await assert.rejects(createReplyElement('9', peer, { getMsgsByMsgId: () => ({ result: 0, msgList: [{ msgId: '9', chatType: 2, peerUid: '456', elements: [] }] }) }), /mismatched/);
 });
 
 test('inbound decode preserves all media and unknown element payloads', () => {

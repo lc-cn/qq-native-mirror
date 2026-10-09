@@ -1,4 +1,5 @@
 import { nativeResultError } from './errors.ts';
+import { normalizeMessageQuery, queryNativeMessage } from './message-query.ts';
 import { createSelfProfile, type SelfProfileOperation } from './self-profile.ts';
 import { listWebGroupNotices } from './web-group-notices.ts';
 import { createGroupNotices, type GroupNoticeOperation } from './group-notices.ts';
@@ -16,7 +17,7 @@ import type { Friend, Group, GroupMember, Message, SentMessage, NativeCallbackAu
 
 type Native = Record<string, any>;
 export interface NativePeer { chatType: 1 | 2; peerUid: string; guildId?: string }
-export type ServiceOperation = 'listFriends' | 'listGroups' | 'getGroupMembers' | 'sendPrivateMessage' | 'sendGroupMessage' | 'getHistory' | 'recallMessage' | 'downloadAttachment' | SelfProfileOperation | 'listGroupNotices' | GroupNoticeOperation | GroupOperation | ContactOperation | FriendRequestOperation | GroupRequestOperation | ForwardOperation;
+export type ServiceOperation = 'listFriends' | 'listGroups' | 'getGroupMembers' | 'sendPrivateMessage' | 'sendGroupMessage' | 'getMessage' | 'getHistory' | 'recallMessage' | 'downloadAttachment' | SelfProfileOperation | 'listGroupNotices' | GroupNoticeOperation | GroupOperation | ContactOperation | FriendRequestOperation | GroupRequestOperation | ForwardOperation;
 export interface NativeMessage extends Native { msgId: string; peerUid: string; chatType: number }
 interface Waiter { event: string; check: (...args: any[]) => unknown; resolve: (value: any) => void; reject: (error: Error) => void; timer: ReturnType<typeof setTimeout> }
 
@@ -264,6 +265,12 @@ export function createNativeServices(session: Native, version: string, emit: (ev
         }
         case 'sendPrivateMessage': return send({ chatType: 1, peerUid: await uidFor(String(payload.userId)) }, payload.message);
         case 'sendGroupMessage': return send({ chatType: 2, peerUid: String(payload.groupId) }, payload.message);
+        case 'getMessage': {
+          const query = normalizeMessageQuery(payload.peer, payload.messageId);
+          const raw = await queryNativeMessage(service('Msg'), await resolvePeer(query.peer), query.messageId);
+          lifetime.signal.throwIfAborted();
+          return raw === undefined ? undefined : toMessage(raw);
+        }
         case 'getHistory': {
           const peer = await resolvePeer(payload.peer);
           const options = payload.options ?? {};

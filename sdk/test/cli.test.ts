@@ -8,6 +8,18 @@ import { spawnSync } from 'node:child_process';
 import { parse, prepareCommand, normalizeMessage, observeWatchFailures } from '../src/cli.ts';
 import type { QQClient } from '../src/index.ts';
 
+test('single-message CLI preserves long IDs and validates before client creation', async () => {
+  const id = '900719925474099312345';
+  const action = await prepareCommand('message', { kind: 'private', target: '456', 'message-id': id });
+  const calls: unknown[] = [];
+  const result = await action({ getMessage: async (...args: unknown[]) => { calls.push(args); return undefined; } } as unknown as QQClient);
+  assert.equal(result, null);
+  assert.deepEqual(calls, [[{ type: 'private', userId: '456' }, id]]);
+  for (const flags of [{ kind: 'group', target: '123' }, { kind: 'private', target: 'bad', 'message-id': id }, { kind: 'group', target: '123', 'message-id': '1.5' }]) {
+    await assert.rejects(prepareCommand('message', flags));
+  }
+});
+
 test('face JSON validates before client creation and preserves mixed message order', async t => {
   const dir = await mkdtemp(join(tmpdir(), 'qq-cli-face-')); t.after(() => rm(dir, { recursive: true, force: true }));
   const file = join(dir, 'faces.json');

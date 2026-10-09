@@ -3,6 +3,7 @@ import { readFile, stat, mkdir, copyFile } from 'node:fs/promises';
 import { basename, dirname, isAbsolute } from 'node:path';
 import type { MessageElement } from './types.ts';
 import { qqFaceRows } from './qq-faces.ts';
+import { queryNativeMessage } from './message-query.ts';
 
 type Native = Record<string, any>;
 const faces = new Map(qqFaceRows.map(([id, text, stickerType, packId, stickerId]) => [id, { text, stickerType, packId, stickerId }]));
@@ -88,10 +89,7 @@ export async function createFileElement(file: string, name?: string): Promise<Na
   return { elementType: 3, elementId: '', fileElement: { fileName: name ?? basename(file), folderId: '', filePath: file, fileSize: String(info.size) } };
 }
 export async function createReplyElement(messageId: string, peer: Native, msgService: Native): Promise<Native> {
-  if (typeof messageId !== 'string' || !messageId) throw new Error('Reply requires messageId');
-  if (typeof msgService.getMsgsByMsgId !== 'function') throw new Error('Native service is missing getMsgsByMsgId');
-  const result = await msgService.getMsgsByMsgId(peer, [messageId]);
-  const original = result?.msgList?.find((message: Native) => String(message.msgId) === messageId);
+  const original = await queryNativeMessage(msgService, peer as { chatType: 1 | 2; peerUid: string }, messageId);
   if (!original) throw new Error('Referenced message was not found in the target conversation');
   for (const field of ['msgSeq', 'msgId', 'senderUin', 'clientSeq']) {
     if (original[field] === undefined || original[field] === null) throw new Error(`Referenced message is missing ${field}`);

@@ -46,8 +46,15 @@ try {
  await writeFile(join(temp,'faces.json'),JSON.stringify(mixed));
  const faceAction=await cli.prepareCommand('send',{kind:'group',target:'123','message-file':join(temp,'faces.json')});
  let faceArgs;await faceAction({sendGroupMessage:async(...args)=>{faceArgs=args;}});assert.deepEqual(faceArgs,['123',mixed]);
+ const query=await import(pathToFileURL(join(temp,'node_modules/qq-native-client/dist/message-query.js')).href);
+ const queryId='900719925474099312345',queryPeer={chatType:1,peerUid:'u_fixture'};
+ assert.equal(typeof sdk.QQClient.prototype.getMessage,'function');
+ assert.equal(await query.queryNativeMessage({getMsgsByMsgId:(peer,ids)=>{assert.deepEqual(peer,queryPeer);assert.deepEqual(ids,[queryId]);return{result:0,msgList:[]};}},queryPeer,queryId),undefined);
+ await assert.rejects(query.queryNativeMessage({getMsgsByMsgId:()=>({result:23,msgList:[]})},queryPeer,queryId),{code:23});
+ const queryAction=await cli.prepareCommand('message',{kind:'private',target:'456','message-id':queryId});
+ let queryArgs;assert.equal(await queryAction({getMessage:async(...args)=>{queryArgs=args;}}),null);assert.deepEqual(queryArgs,[{type:'private',userId:'456'},queryId]);
  globalThis.fetch=()=>{throw new Error('Unexpected mirror request with installed platform package');};
  client=await sdk.createClient({dataDir:join(temp,'unused-account'),autoReconnect:false,timeoutMs:30000});
  const exports=client.nativeExports.length;if(exports<80)throw new Error('Unexpected native export inventory');await client.close();if(client.state!=='closed')throw new Error('Client did not close');
- await writeFile('out/consumer.json',JSON.stringify({platform:process.platform,arch:process.arch,node:process.version,exports,installedMainOnly:true,automaticPlatformSelection:true,tarballRequests,faceContract:true,faceDeliveryAttempted:false,prepared:true,closed:true,loginAttempted:false,registry:'isolated local fixture serving actual CI tarballs'},null,2));console.log(await readFile('out/consumer.json','utf8'));
+ await writeFile('out/consumer.json',JSON.stringify({platform:process.platform,arch:process.arch,node:process.version,exports,installedMainOnly:true,automaticPlatformSelection:true,tarballRequests,faceContract:true,faceDeliveryAttempted:false,messageQueryContract:true,nativeMessageQueryAttempted:false,prepared:true,closed:true,loginAttempted:false,registry:'isolated local fixture serving actual CI tarballs'},null,2));console.log(await readFile('out/consumer.json','utf8'));
 }finally{await client?.close();server.closeAllConnections();await new Promise(done=>server.close(done));await rm(temp,{recursive:true,force:true});}

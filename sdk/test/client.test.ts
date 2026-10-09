@@ -16,6 +16,27 @@ class Worker extends EventEmitter {
   kill() { this.connected = false; queueMicrotask(() => this.emit('exit', 0, null)); return true; }
 }
 
+test('getMessage uses the public online-only RPC and preserves absent results and native error codes', async () => {
+  const worker = new Worker(), client = new QQClient(worker as unknown as ChildProcess, 500);
+  const peer = { type: 'group' as const, groupId: '123' }, messageId = '900719925474099312345';
+  try {
+    await assert.rejects(client.getMessage(peer, messageId), /not online/);
+    assert.equal(worker.requests.length, 0);
+    worker.emit('message', { event: 'ready', payload: { uin: '456', uid: 'u_fixture' } });
+    await assert.rejects(client.getMessage(peer, 123 as unknown as string), /numeric string/);
+    assert.equal(worker.requests.length, 0, 'invalid JavaScript input does not reach IPC');
+    const absent = client.getMessage(peer, messageId);
+    const request = worker.requests.at(-1);
+    assert.deepEqual({ method: request.method, peer: request.peer, messageId: request.messageId }, { method: 'getMessage', peer, messageId });
+    worker.emit('message', { id: request.id, result: undefined });
+    assert.equal(await absent, undefined);
+    const rejected = client.getMessage(peer, messageId);
+    worker.emit('message', { id: worker.requests.at(-1).id, error: { message: 'Native query failed', code: 23 } });
+    await assert.rejects(rejected, { operation: 'getMessage', code: 23 });
+    assert.equal(worker.requests.length, 2);
+  } finally { await client.close(); }
+});
+
 test('synchronous IPC send failure clears the login timer instead of killing a later request', async () => {
   class ThrowOnce extends Worker {
     first=true;

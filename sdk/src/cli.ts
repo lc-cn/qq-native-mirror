@@ -33,6 +33,7 @@ const usage = `qq-native-client <command> [options]
   groups --config FILE [--uin UIN]      Restore login and list groups
   members --config FILE --group-id ID [--uin UIN]
   history --config FILE --kind private|group --target ID [--limit 20] [--before MESSAGE_ID] [--uin UIN]
+  message --config FILE --kind private|group --target ID --message-id ID
   forward-history --config FILE --kind private|group --target ID --root-message-id ID --parent-message-id ID
   forward --config FILE --source-kind private|group --source-target ID --kind private|group --target ID --message-ids ID,ID
   watch --config FILE [--uin UIN]       Print incoming messages as JSON lines until interrupted
@@ -165,6 +166,7 @@ export async function prepareCommand(command: string, flags: Record<string, stri
       if (flags.before !== undefined) options.before = numeric(flags, 'before');
       return client => client.getHistory(target, options);
     }
+    case 'message': { const target = peer(flags); const messageId = numeric(flags, 'message-id'); return async client => (await client.getMessage(target, messageId)) ?? null; }
     case 'send': {
       const target = peer(flags);
       if ((flags.text !== undefined) === (flags['message-file'] !== undefined)) throw new Error('Provide exactly one of --text or --message-file');
@@ -200,7 +202,7 @@ async function main() {
   const allowed: Record<string, string[]> = {
     init: ['config', 'data-dir', 'wrapper', 'client-version', 'app-id', 'qua', 'manifest', 'manifest-sha256', 'catalog', 'download-mirror'],
     config: ['config'], login: ['config', 'method', 'uin', 'qr-file'],
-    members: ['config', 'uin', 'group-id'], history: ['config', 'uin', 'kind', 'target', 'limit', 'before'], watch: ['config', 'uin'],
+    members: ['config', 'uin', 'group-id'], history: ['config', 'uin', 'kind', 'target', 'limit', 'before'], message: ['config', 'uin', 'kind', 'target', 'message-id'], watch: ['config', 'uin'],
     contacts: ['config', 'uin'], groups: ['config', 'uin'], send: ['config', 'kind', 'target', 'text', 'message-file', 'uin'],
     nickname: ['config','uin','name'],
     profile: ['config', 'uin', 'target'], requests: ['config', 'uin'], request: ['config', 'uin', 'uid', 'time', 'accept'],
