@@ -1,7 +1,7 @@
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
-import { resolve, join } from 'node:path';
+import { resolve, join, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 const root = fileURLToPath(new URL('../', import.meta.url));
 const pin = JSON.parse(await readFile(join(root,'native/video/ffmpeg-source.json'),'utf8'));
@@ -30,7 +30,8 @@ if(process.argv.includes('--verify-signature')) {
   if(valid.length!==1||!valid[0].split(' ').includes(pin.keyFingerprint))throw Error('Unexpected FFmpeg signing key');
   pgpVerified=true;
 }
-execFileSync('tar',['-xf',archive,'-C',directory],{stdio:'inherit'});
+// GNU tar treats a Windows drive colon in -f as a remote host; use a local filename.
+execFileSync('tar',['-xf',basename(archive)],{cwd:directory,stdio:'inherit'});
 const source=join(directory,`ffmpeg-${pin.version}`);
 if(sha(await readFile(join(source,'configure')))!==pin.configureSha256)throw Error('Pinned configure does not match release source');
 await writeFile(join(directory,'source-verification.json'),JSON.stringify({version:pin.version,commit:pin.commit,archiveSha256:pin.sha256,configureSha256:pin.configureSha256,pgpVerified,keyFingerprint:pgpVerified?pin.keyFingerprint:undefined},null,2)+'\n');

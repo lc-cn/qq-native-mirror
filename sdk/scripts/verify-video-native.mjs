@@ -14,7 +14,7 @@ const [addonPath, fixtureDirectory, receiptPath] = args.map(path => resolve(path
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
 const receipt = { schemaVersion: 1, platform: process.platform, arch: process.arch, node: process.version, noAccount: true, noQQ: true, nativeSendAttempted: false, passed: false, inputs: [] };
 let stage = 'binary', scratch;
-function bmp(image, width, height) {
+function bmp(image, width, height, pattern = 'blue') {
   assert.ok(Buffer.isBuffer(image)); assert.equal(image.toString('ascii', 0, 2), 'BM');
   assert.equal(image.readUInt32LE(2), image.length); assert.equal(image.readUInt32LE(10), 54); assert.equal(image.readUInt32LE(14), 40);
   assert.equal(image.readInt32LE(18), width); assert.equal(image.readInt32LE(22), -height);
@@ -23,7 +23,11 @@ function bmp(image, width, height) {
   assert.equal(image.length, 54 + stride * height); assert.equal(image.readUInt32LE(34), stride * height);
   // FFmpeg YUV conversion may round blue slightly; verify every pixel's color.
   for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) { const offset = 54 + y * stride + x * 3; assert.ok(image[offset] >= 200 && image[offset + 1] <= 40 && image[offset + 2] <= 40, 'Expected decoded blue BGR pixel'); }
+    for (let x = 0; x < width; x++) {
+      const offset = 54 + y * stride + x * 3;
+      if (pattern === 'blue' || y < Math.floor(height / 3)) assert.ok(image[offset] >= 200 && image[offset + 1] <= 40 && image[offset + 2] <= 40, 'Expected top blue BGR pixel');
+      else if (y >= Math.ceil(height * 2 / 3)) assert.ok(image[offset] <= 40 && image[offset + 1] <= 40 && image[offset + 2] >= 200, 'Expected bottom red BGR pixel');
+    }
     for (let x = width * 3; x < stride; x++) assert.equal(image[54 + y * stride + x], 0);
   }
 }
@@ -33,13 +37,14 @@ try {
   const codec = await loadVideoCodec(addonPath);
   scratch = await mkdtemp(join(tmpdir(), 'qq-owned-video-'));
   stage = 'decode';
-  for (const [name, width, height, coverWidth, coverHeight, expectedSha] of [['blue-64.mp4', 64, 64, 64, 64, 'ced7b4e1cd47d948ecf407116095282e5b5ca4df76142b7a06826eecb92cb932'], ['blue-1280.mp4', 1280, 720, 640, 360, '1c8920f2db13e3c1b28b708bc94d3889ed8bd10f15ee5d89881d99715188b468']]) {
+  for (const [name, width, height, coverWidth, coverHeight, expectedSha, pattern] of [['blue-64.mp4', 64, 64, 64, 64, 'ced7b4e1cd47d948ecf407116095282e5b5ca4df76142b7a06826eecb92cb932'], ['blue-1280.mp4', 1280, 720, 640, 360, '1c8920f2db13e3c1b28b708bc94d3889ed8bd10f15ee5d89881d99715188b468'], ['blue-red-65.mp4', 65, 33, 65, 33, '53a0baad6f0853d39e53263c22c847bd78435fc263e6844450878b471d13cc57', 'blue-red']]) {
     const file = join(fixtureDirectory, name), original = await readFile(file), digest = sha(original);
     assert.equal(digest, expectedSha, 'Synthetic fixture source changed');
     const decoded = await codec.getVideoInfo(file);
     assert.equal(decoded.width, width); assert.equal(decoded.height, height); assert.equal(decoded.format, 'bmp24');
     assert.ok(Number.isFinite(decoded.duration) && Math.abs(decoded.duration - 0.4) <= 0.08);
-    bmp(decoded.image, coverWidth, coverHeight);
+    bmp(decoded.image, coverWidth, coverHeight, pattern);
+    if (pattern === 'blue-red') assert.equal(decoded.image.length, 6522);
     const concurrent = await Promise.all([codec.getVideoInfo(file), codec.getVideoInfo(file)]);
     for (const value of concurrent) { assert.equal(value.width, width); assert.equal(value.height, height); assert.deepEqual(value.image, decoded.image); assert.equal(value.duration, decoded.duration); }
     const unicode = join(scratch, `蓝色视频-${width}.mp4`); await copyFile(file, unicode);
@@ -51,7 +56,7 @@ try {
     assert.ok(Math.abs(element.videoElement.fileTime - 0.4) <= 0.08); assert.equal(element.videoElement.fileSize, String(original.length));
     assert.ok(element.videoElement.thumbPath instanceof Map); assert.deepEqual(await readFile(element.videoElement.thumbPath.get(0)), decoded.image);
     assert.equal(sha(await readFile(file)), digest); assert.equal(sha(await readFile(unicode)), digest); assert.equal(sha(await readFile(destination)), digest);
-    receipt.inputs.push({ name, sha256: digest, bytes: original.length, width, height, duration: decoded.duration, thumbnailWidth: coverWidth, thumbnailHeight: coverHeight, thumbnailSha256: sha(decoded.image), thumbnailBytes: decoded.image.length });
+    receipt.inputs.push({ name, sha256: digest, bytes: original.length, width, height, duration: decoded.duration, thumbnailWidth: coverWidth, thumbnailHeight: coverHeight, thumbnailSha256: sha(decoded.image), thumbnailBytes: decoded.image.length, pattern: pattern ?? 'blue', rowStride: Math.ceil(coverWidth * 3 / 4) * 4 });
     stage = 'decode';
   }
   stage = 'rejections';

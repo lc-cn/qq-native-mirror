@@ -34,7 +34,7 @@ async function nodeArtifact(name,output) {
   if(sha(data)!==expected)throw Error('Node artifact checksum mismatch');await writeFile(output,data);return expected;
 }
 const headerArchive=`node-${process.version}-headers.tar.gz`;const nodeHeadersSha256=await nodeArtifact(headerArchive,join(headers,'headers.tar.gz'));
-run('tar',['-xzf',join(headers,'headers.tar.gz'),'-C',headers]);
+run('tar',['-xzf','headers.tar.gz'],{cwd:headers});
 const include=join(headers,`node-${process.version}`,'include/node');
 const object=join(directory,'relink','video-codec'+(process.platform==='win32'?'.obj':'.o'));
 const output=join(directory,'runtime','video-codec.node');
