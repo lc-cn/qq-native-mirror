@@ -1,0 +1,29 @@
+ci/verify-consumer.mjs
+  s_2104cc474f1ce5::t_c77d79240afa29 176-188,195
+sdk/README.md
+  s_2104cc474f1ce5::t_9ba9be45d1f2af 144
+sdk/docs/sdk-acceptance.md
+  s_2104cc474f1ce5::t_b626cc62d44d33 434-441
+sdk/scripts/verify-package-consumer.mjs
+  s_2104cc474f1ce5::t_c9b2d741f2896c 132-144,199
+sdk/src/native-services.ts
+  s_2104cc474f1ce5::t_2d23070b979c1a 230-235,240,245-247
+sdk/test/native-services.test.ts
+  s_2104cc474f1ce5::t_90ce7246036a78 358-410
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "2765a968ec4b5b5023321166264a0a51f34cedcd",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
