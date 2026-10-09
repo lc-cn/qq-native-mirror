@@ -1,4 +1,4 @@
-# Resource-based merged-record download (research only)
+# Resource-based merged-record download: source contract and acceptance limits
 
 The SDK currently reads existing native card message IDs through `getForwardMessages(peer, rootMessageId, parentMessageId?)`. Recognized received cards expose a `resourceId`, and `getForwardResource(resourceId)` implements a separate SSO read and observed record model. Native/server acceptance remains pending; a resource ID cannot replace the native root/parent message IDs.
 
@@ -8,7 +8,7 @@ Sources are pinned to NapCatQQ commit `26d7533e0f5800fdff865ab2f2ad7692917e1076`
 
 The command is `trpc.group.long_msg_interface.MsgService.SsoRecvLongMsg`. Its protobuf request contains field 1 (receive info) and field 15 (settings). Receive info contains field 1 (UID message, with string UID at field 2), field 2 (string resource ID), and field 3 (boolean acquire = true). Settings fields 1–4 are respectively 2, 0, 0, 0. The transformer constructs the direct protobuf body; it does not add an OIDB wrapper.
 
-The response has result at field 1 and settings at field 15. Result contains string resource ID at field 3 and gzip payload bytes at field 4. Decompressed `LongMsgResult` has repeated actions at field 2: each action has a command string at field 1 and action data at field 2, which in turn contains repeated `PushMsgBody` records at field 1. The inspected implementation selects the `MultiMsg` action. These source definitions do not establish an explicit error-code field or require equality between the requested and returned resource IDs. A future SDK decoder must define and test its own checked response policy rather than silently assuming server behavior.
+The response has result at field 1 and settings at field 15. Result contains string resource ID at field 3 and gzip payload bytes at field 4. Decompressed `LongMsgResult` has repeated actions at field 2: each action has a command string at field 1 and action data at field 2, which in turn contains repeated `PushMsgBody` records at field 1. The inspected implementation selects the `MultiMsg` action. These source definitions do not establish an explicit error-code field or require equality between the requested and returned resource IDs. The SDK decoder requires the returned resource ID to equal the requested ID; this is an explicit local response policy, not a proven server requirement. Its bounded parser and opaque-field retention are described in [the decoding contract](forward-resource-decoding.md).
 
 | Primary source | Git blob | SHA256 |
 | --- | --- | --- |
