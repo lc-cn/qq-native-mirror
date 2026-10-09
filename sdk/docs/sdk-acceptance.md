@@ -249,4 +249,22 @@ Actual GitHub run [37886708952](https://github.com/lc-cn/qq-native-mirror/action
 
 The six auxiliary tarballs are byte-identical to successful original run 37880903538; the corrected main is 230,041 bytes, SHA-256 `0e51e6dee2a99503c8bd0849483394e5979961b01d29826cdcfd08302affd556`. The candidate has seven tarballs and 25 explicitly bound evidence files, including original auxiliary provenance and fresh per-platform installed/cache receipts. Local download validation checked GitHub run/release identity, asset hashes, all package integrities and all 25 evidence files.
 
-This establishes real native package and cache preparation under denied symlink creation. It does not establish public npm installation, a cold public-mirror download for the three newly added device entries, Windows account functionality or authentic security signing. Those gates need separate evidence. No login, restore, messaging or account mutation ran in this CI.
+This establishes real native package and cache preparation under denied symlink creation. It does not establish public npm installation, Windows account functionality or authentic security signing. Public compressed mirror cold downloads have separate evidence below. Those gates need separate evidence. No login, restore, messaging or account mutation ran in this CI.
+
+
+## Six-platform public compressed mirror acceptance (2026-10-09)
+
+[Run 37889421789](https://github.com/lc-cn/qq-native-mirror/actions/runs/37889421789) passed on six actual native runners under Node 24.20.0. Each fresh consumer installed the fixed corrected main tarball from source run 37886708952 with all optional auxiliary packages omitted, imported by package name, and explicitly selected the public `catalog-gzip-v1.json`. The configured download accelerator was `https://gh-proxy.com/`; origin fallback remained enabled. This is not a direct-origin-only benchmark or public npm installation proof.
+
+| Device | Native exports | First payload bytes observed | Second payload requests / bytes |
+| --- | ---: | ---: | ---: |
+| darwin-arm64 | 104 | 48,186,949 | 0 / 0 |
+| darwin-x64 | 104 | 52,288,283 | 0 / 0 |
+| linux-arm64 | 98 | 63,996,855 | 0 / 0 |
+| linux-x64 | 98 | 62,122,352 | 0 / 0 |
+| win32-arm64 | 98 | 46,360,957 | 0 / 0 |
+| win32-x64 | 98 | 58,927,406 | 0 / 0 |
+
+All receipts bound the expected public manifest digest to the checked-out catalog before downloading native files. The SDK verified compressed and restored byte hashes; the consumer independently rehashed every cached runtime file. Both initialization passes prepared and closed the real kernel with symlink creation denied. No account login, restore, send or management operation ran. Signing authenticity remains unresolved.
+
+The default catalog now also includes the three verified macOS x64 and Windows x64/arm64 compressed entries, preserving the original five macOS arm64/Linux full-bundle rows. [Run 37890258044](https://github.com/lc-cn/qq-native-mirror/actions/runs/37890258044), commit `0acc260b2a139b1f398ac028e47699302adc2223`, subsequently passed all six native runners with `catalogUrl`, `version`, `manifestUrl` and `wrapperPath` omitted. Each receipt selected the exact latest device row in the default catalog, verified all cache files independently and showed zero payload requests/bytes on second preparation. It used the same fixed main candidate, omitted all optional auxiliaries, denied symlink creation and configured the download accelerator with origin fallback. No account activity occurred; public npm installation remains a separate gate.

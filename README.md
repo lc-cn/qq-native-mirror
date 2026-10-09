@@ -19,3 +19,6 @@ CI run [37880903538](https://github.com/lc-cn/qq-native-mirror/actions/runs/3788
 Before the main npm first publication, ordinary Windows users were found to be affected by symlink-based account/cache locks. `native-first-main.yml` reuses the six original auxiliary tarballs byte for byte, compiles the corrected main, and runs installed-package and native-cache consumers on all six platforms with symlink creation denied. It archives 25 bound evidence files and never publishes npm. Existing published auxiliary versions must not be rebuilt or replaced.
 
 `npm-public-consumer.yml` separately verifies all seven official npm package integrities and fresh main-only installation on six platforms after local first publication. Trusted publishing remains a separate maintainer configuration step.
+
+
+All six implicit default catalog paths passed actual native preparation and zero-payload cache reuse in [run 37890258044](https://github.com/lc-cn/qq-native-mirror/actions/runs/37890258044). The installed fixed main candidate omitted all optional auxiliary packages and supplied no wrapper, version, manifest or catalog override. A download accelerator with origin fallback was configured. No account login occurred. Public npm installation and vendor signature authenticity remain separate evidence gates.

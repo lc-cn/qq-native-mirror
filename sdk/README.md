@@ -15,7 +15,7 @@ Platform evidence is specific to the tested native version; it is not a promise 
 | Windows x64 / 9.9.33-52230 | Passed on native x64 CI, Node 24.20.0 | Not verified | Not verified |
 | Windows arm64 / 9.9.33-52230 | Passed on native arm64 CI, Node 24.20.0 | Not verified | Not verified |
 
-The six native platforms also passed installed-package and mirror-cache preparation/close with symlink creation denied in [CI run 37886708952](https://github.com/lc-cn/qq-native-mirror/actions/runs/37886708952). This initialization run made no account login attempt.
+The six native platforms also passed installed-package and mirror-cache preparation/close with symlink creation denied in [CI run 37886708952](https://github.com/lc-cn/qq-native-mirror/actions/runs/37886708952). This initialization run made no account login attempt. All six public compressed mirror paths also passed fresh downloads, native preparation and second-pass zero-payload cache reuse in [CI run 37889421789](https://github.com/lc-cn/qq-native-mirror/actions/runs/37889421789). It used the fixed main candidate with optional native packages omitted and an explicitly configured download accelerator.
 
 Security-signature authenticity remains unresolved on every platform. Quick login has a public implementation but lacks separate account acceptance; media, management and request handling require their own real-account acceptance. See [acceptance requirements](docs/sdk-acceptance.md).
 
@@ -117,7 +117,7 @@ Preserve original native filenames and dependency layout when building bundles. 
 - Implemented: local native loading, mirror download/cache, registration bridge, QR/quick/restore login adapters, Session readiness lifecycle, explicit close and native crash isolation.
 - Verified with real native kernel: loading, QR authentication, account Session readiness and restoration using a standalone native package.
 - Verified packaged consumer path: npm tarball installation, import by package name, 1157 localhost mirror requests (manifest plus 1156 native files), SHA-256 validation, restored account readiness.
-- The public GitHub mirror is published; full default download initialization validation is still in progress.
+- The public GitHub mirror covers all six devices. Public compressed mirror cold preparation passed on all six native runners; implicit default-catalog selection and cache reuse also passed on all six native runners in [CI run 37890258044](https://github.com/lc-cn/qq-native-mirror/actions/runs/37890258044), with a configured accelerator and no account login.
 - Public APIs now include friend/group/member queries, text and group mention sending, history, recall and message events. Real macOS account testing has verified friend queries and incoming message callbacks; group/member/history queries and explicit private text sending/recall have also passed real account checks; the user confirmed seeing the message or recall notice.
 - Image/reply/file/video/record sending and attachment downloading are implemented. Video metadata/thumbnail generation and built-in WAV/SILK conversion have actual local verification; QQ media delivery remains unverified. Complete oicq-like capability parity remains unfinished.
 - See [SDK acceptance criteria](docs/sdk-acceptance.md) for the full project scope. Login success is not the SDK completion criterion.
