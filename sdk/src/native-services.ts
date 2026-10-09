@@ -239,8 +239,12 @@ export function createNativeServices(session: Native, version: string, emit: (ev
           if (uids.some(uid => !profiles.has(uid))) throw new Error('Native buddy profiles are incomplete');
           const friends = uids.map((uid): Friend => {
             const profile = profiles.get(uid);
-            if (!profile?.coreInfo || !/^\d+$/.test(String(profile.coreInfo.uin ?? ''))) throw new Error('Invalid native buddy profile');
-            return { userId: String(profile.coreInfo.uin), uid: String(uid), nickname: profile.coreInfo.nick ?? '', remark: profile.coreInfo.remark ?? '' };
+            const core = profile?.coreInfo;
+            if (!core || typeof core !== 'object' || Array.isArray(core)
+              || typeof core.uid !== 'string' || !core.uid.trim() || core.uid !== uid
+              || typeof core.uin !== 'string' || !/^\d+$/.test(core.uin)
+              || typeof core.remark !== 'string' || (core.nick !== undefined && typeof core.nick !== 'string')) throw new Error('Invalid native buddy profile');
+            return { userId: core.uin, uid, nickname: core.nick ?? '', remark: core.remark };
           });
           // A rejected batch must not leave usable entries from an earlier row.
           for (const friend of friends) uidCache.set(friend.userId, friend.uid);
@@ -255,7 +259,13 @@ export function createNativeServices(session: Native, version: string, emit: (ev
           // update kinds can carry partial or empty deltas. Never return those.
           if (update !== 0 && update !== 1) return undefined;
           if (!Array.isArray(groups)) throw new Error('Invalid native group list');
-          return groups.map((group): Group => ({ groupId: String(group.groupCode), name: group.groupName, memberCount: group.memberCount, maxMemberCount: group.maxMember }));
+          return Array.from(groups, (group): Group => {
+            if (!group || typeof group !== 'object' || Array.isArray(group)
+              || typeof group.groupCode !== 'string' || !/^\d+$/.test(group.groupCode) || typeof group.groupName !== 'string'
+              || !Number.isSafeInteger(group.memberCount) || group.memberCount < 0
+              || !Number.isSafeInteger(group.maxMember) || group.maxMember < 0) throw new Error('Invalid native group list');
+            return { groupId: group.groupCode, name: group.groupName, memberCount: group.memberCount, maxMemberCount: group.maxMember };
+          });
         },
           () => call(service('Group'), 'getGroupList', payload.refresh ?? true),10_000,value=>value?.result===0);
           groupListRequest=request;
