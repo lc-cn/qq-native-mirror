@@ -2,7 +2,9 @@
 
 历史设计记录：2026-09-30。截至 2026-10-09，schemaVersion=1 的 catalog 自动按 OS/CPU 选最新版、精确版本选择、npm 平台辅包、文件校验和缓存已实现。下文的 schemaVersion=2、独立 driver 注册表和元数据签名仍是设计草案；历史运行记录保留其当时的证据范围。最新实证见本文末节。
 
-## 当前证据与结论
+## 2026-09-30 取样时的证据与结论
+
+本节表格记录早期取样状态；不代表目前的平台运行状态。当前源码对应的原生 runner 验证见本文后续实证章节。
 
 macOS arm64 / QQ 7.0.2-53644 / Node 24.19.0 已验证普通 Node 加载、扫码授权、账号 Session readiness、独立包和镜像下载后的恢复登录。当前 wrapper 同时有 x64 切片，但 x64 尚未运行验证。其他版本/平台的具体取样结果见 version-research-macos.md 和 version-research-platforms.md。
 
@@ -204,3 +206,19 @@ node scripts/record-native-profile.ts /path/to/wrapper.node \
 [CI 37890258044](https://github.com/lc-cn/qq-native-mirror/actions/runs/37890258044) 的六个原生 Windows/Linux/macOS x64/arm64 runner 全部通过。消费者安装同一修正主包候选，并省略全部原生辅包；按包名导入后，`createClient` 不传 `wrapperPath`、`version`、`manifestUrl` 或 `catalogUrl`，实际从公共默认目录自动选择当前设备的最新版本。配置了 `https://gh-proxy.com/` 加速和源站回退，因此它不代表纯源站直连的网络表现。
 
 默认目录保留原来的五条完整包记录，并加入已通过公共冷下载的 macOS x64、Windows x64/arm64 压缩记录，覆盖六种设备组合。每个 runner 都验证固定主包字节、设备对应 manifest 摘要、每个运行文件摘要、初始化/关闭以及第二次零原生文件下载；符号链接创建被禁用。Linux 两种架构均自动选中较新的 3.2.32-52194。该验收没有登录、恢复或账号业务操作，也不证明 npm 官方安装路径或签名真实性。
+
+
+## 2026-10-10 当前源码与 Linux 两版本实证
+
+[CI 37998959637](https://github.com/lc-cn/qq-native-mirror/actions/runs/37998959637) 使用源码 `075b6d0437f068b5d75d6671101b56a27b2bc5fe`，四个独立原生 Linux runner、Node 24.20.0，通过包名导入本轮源码实际打出的主包。安装省略平台辅包，走公共 catalog 镜像解析；旧版指定精确版本，新版使用自动最新选择。四项均完成原生初始化、冷缓存下载、暖缓存复用和关闭，无账号、无登录。
+
+| 内核 | CPU | 导出数 | 校验文件数 | 首轮原生请求次数 | 第二轮原生请求次数 |
+| --- | --- | --- | --- | --- | --- |
+| 3.2.31-51102 | x64 | 92 | 7 | 14 | 0 |
+| 3.2.31-51102 | arm64 | 92 | 8 | 16 | 0 |
+| 3.2.32-52194 | x64 | 98 | 19 | 38 | 0 |
+| 3.2.32-52194 | arm64 | 98 | 20 | 40 | 0 |
+
+首轮请求次数统计下载尝试，不等于唯一文件数量。实际下载并核对四份 CI ZIP、主包 SHA-256/SHA-512、运行回执及当前 manifest；主包内 72 份 JavaScript 模块和 8 份公开声明均与冻结的本地构建逐字节一致。证据见 [current-linux-versions-ci-37998959637.json](evidence/current-linux-versions-ci-37998959637.json)。
+
+旧内核 `3.2.31` 的 `listFriends` 版本门禁继续保留，原生包也未声明自带视频 codec。初始化通过不能据此宣称其好友、媒体、登录、签名或其他业务能力通过；本轮没有修改默认版本，也没有 npm 发布。
