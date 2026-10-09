@@ -1,0 +1,166 @@
+{
+  "schemaVersion": 1,
+  "scope": "Actual macOS arm64 installed current SDK with retained 58-path resource-pruned native auxiliary; local mirror cache and audio codec acceptance.",
+  "sdk": {
+    "sourceCommit": "5907793ad848c68b3183ac5c2f2b06fbd1a5e0cf",
+    "sourceRunId": "38000680198",
+    "tarballSha256": "db2ca1c4a19f62033906e8c16a45558540d98080b1987083ffbee12c34137e12"
+  },
+  "native": {
+    "sourceCommit": "6cae1ec0a5e1bfb03cb7871083915b3d03272347",
+    "sourceRunId": "37962268125",
+    "pruningRunId": "37971314866",
+    "tarballSha256": "3128a4741044520f7c99a89673db0d04f3183312d7ff0191d580ddb2ca816da8",
+    "tarballBytes": 59326804,
+    "manifestSha256": "cb9f2aefdcb03c2f550460840ce071a6bb26ce85436d927711c379221d07d370",
+    "paths": 58,
+    "distinctContents": 33,
+    "retainedVideoFiles": 11,
+    "allRetainedBytesEqualOriginal": true
+  },
+  "platform": "darwin",
+  "arch": "arm64",
+  "node": "v24.19.0",
+  "actualInstalledAcceptance": {
+    "automaticPlatformSelection": true,
+    "installedMainOnly": true,
+    "exports": 104,
+    "storage": {
+      "format": "plain-installed",
+      "nativePaths": 58,
+      "allInstalledFilesVerified": true,
+      "installedPathsReused": true,
+      "networkFallbackAttempted": false
+    },
+    "videoClips": 3,
+    "actualVideoDecodePassed": true,
+    "prepared": true,
+    "closed": true,
+    "sessionStrategySyntheticContractPassed": true,
+    "nativeSessionStrategyLoginAttempted": false
+  },
+  "localMirrorAcceptance": {
+    "schemaVersion": 1,
+    "platform": "darwin",
+    "arch": "arm64",
+    "node": "v24.19.0",
+    "mainSha256": "db2ca1c4a19f62033906e8c16a45558540d98080b1987083ffbee12c34137e12",
+    "auxiliarySha256": "3128a4741044520f7c99a89673db0d04f3183312d7ff0191d580ddb2ca816da8",
+    "nativeManifestSha256": "cb9f2aefdcb03c2f550460840ce071a6bb26ce85436d927711c379221d07d370",
+    "nativeFiles": 58,
+    "distinctNativeContents": 33,
+    "allNativeBytesEqualOriginal": true,
+    "allInstalledMainBytesEqualTarball": true,
+    "requests": {
+      "cold": {
+        "metadata": 1,
+        "payload": 33,
+        "payloadBytes": 128458994
+      },
+      "warm": {
+        "metadata": 1,
+        "payload": 0,
+        "payloadBytes": 0
+      }
+    },
+    "allCachedFilesHashVerified": true,
+    "warmCacheReused": true,
+    "allWarmFileMtimesUnchanged": true,
+    "installedAuxiliaryUsed": false,
+    "localMirrorFixture": true,
+    "externalFetchAttempted": false,
+    "audio": {
+      "realWasmEncodeDecode": true,
+      "wavSha256": "4360826c25a29422a3b0cf0122dd34ffab8d862e6ce3272243776b84d355d795",
+      "silkSha256": "40486e90c8e73276fffb48e02af0485624c6411729db5121b502879b4379f349",
+      "decodedSeconds": 0.2
+    },
+    "accountUsed": false,
+    "loginAttempted": false,
+    "nativeSendAttempted": false,
+    "signingAuthenticityEstablished": false,
+    "published": false,
+    "defaultsChanged": false
+  },
+  "firstProbeFailure": {
+    "code": "ERR_ASSERTION",
+    "actualPayloadRequests": 33,
+    "incorrectExpectedPayloadRequests": 58,
+    "cause": "Verifier counted paths rather than native loader SHA-256 content groups.",
+    "repair": "Expected unique SHA groups and their bytes; retained all 58 path checks; used new empty cache directory."
+  },
+  "accountAcceptanceEstablished": false,
+  "signingAuthenticityEstablished": false,
+  "x64CurrentSdkPrunedAcceptanceEstablished": false,
+  "published": false,
+  "defaultsChanged": false,
+  "fullNativeFallbackPreserved": true,
+  "boundFiles": [
+    {
+      "path": ".local/research/current-pruned-arm64-runtime/input-binding.json",
+      "bytes": 784,
+      "sha256": "84ef19668e6b5e35326a2846b53c800eb8ce1b7c0b23f8d9b034ccadaa225409"
+    },
+    {
+      "path": ".local/research/current-pruned-arm64-runtime/ci/verify-consumer.mjs",
+      "bytes": 40661,
+      "sha256": "e3a92d6c2e701a54177db1a016c2db599a8ea0f8e65f36386b30fc037b7c54f9"
+    },
+    {
+      "path": ".local/research/current-pruned-arm64-runtime/installed-consumer.log",
+      "bytes": 5409,
+      "sha256": "af81cb9a16de0e2c27ce69f93cb34cb66315fd763f0e14b402c02fda738a6638"
+    },
+    {
+      "path": ".local/research/current-pruned-arm64-runtime/out/consumer.json",
+      "bytes": 5380,
+      "sha256": "e5fe996e34ff710393439d6bc01d60c1e10ab9a6bf9d95a182b1f65340f44dc8"
+    },
+    {
+      "path": ".local/research/current-pruned-arm64-runtime/out/installed-video.json",
+      "bytes": 1836,
+      "sha256": "5349deb4eddaca570de2d7118344336f202076ab890254da1c98bc9368b3d924"
+    },
+    {
+      "path": ".local/research/current-pruned-arm64-runtime/out/pruning-profile.json",
+      "bytes": 12232,
+      "sha256": "d07c1e30fabbdf97c3335d96a4aeac45f399103617482c40dba066fdeaa592a9"
+    },
+    {
+      "path": ".local/research/current-pruned-arm64-runtime/out/pruning-build.json",
+      "bytes": 1966,
+      "sha256": "2e4cb3c8af4e1c5f1e2a7f426aabe5f7f6609b110407e5848886b7967c009386"
+    },
+    {
+      "path": ".local/research/current-pruned-arm64-runtime/mirror-probe-attempt1.mjs",
+      "bytes": 5725,
+      "sha256": "d54f45428e0dfb17ff3a1ace2e24c7f19bb70745c37bcbdd21064d254856ffef"
+    },
+    {
+      "path": ".local/research/current-pruned-arm64-runtime/mirror-probe.log",
+      "bytes": 408,
+      "sha256": "d7922d266e055eed110022d9ad4ff9e8e8396df7840d8547abdb6c5a9b1dd41d"
+    },
+    {
+      "path": ".local/research/current-pruned-arm64-runtime/mirror-probe.mjs",
+      "bytes": 5864,
+      "sha256": "bdabd83545f75f6100d297a6b8b70a147094de3ce136944d93757a4d84c17a76"
+    },
+    {
+      "path": ".local/research/current-pruned-arm64-runtime/mirror-probe-v2.log",
+      "bytes": 1122,
+      "sha256": "7a6546bbd216a2b2050417c416724bd47ff2b09f4fc8d3f2837fae9e44ed76af"
+    },
+    {
+      "path": ".local/research/current-pruned-arm64-runtime/out/mirror-cache-audio.json",
+      "bytes": 1323,
+      "sha256": "f41587373c575833fb325b1256259b99dee9f9e7b3565bc04af47aa70d992fc0"
+    }
+  ],
+  "independentReview": {
+    "path": ".local/research/current-pruned-arm64-independent-review.json",
+    "sha256": "6cb39a9b4c6384309fecf7cd830c6262fa899c3a1abae43905df7af7bedaf4f7",
+    "reviewerExecutedNative": false,
+    "allRetainedBytesAndCachedFilesRechecked": true
+  }
+}
