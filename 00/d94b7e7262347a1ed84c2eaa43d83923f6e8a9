@@ -1,0 +1,23 @@
+sdk/docs/sdk-acceptance.md
+  s_2104cc474f1ce5::t_08e205edd2b5d5 357
+sdk/src/message-elements.ts
+  s_2104cc474f1ce5::t_4f445f2099ebc3 95
+sdk/test/message-elements.test.ts
+  s_2104cc474f1ce5::t_f33a3a4d3f6f91 55-64
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "00d94b7e7262347a1ed84c2eaa43d83923f6e8a9",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
