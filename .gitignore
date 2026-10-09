@@ -1,5 +1,7 @@
 assets/
 remaining-assets/
-uploaded-assets.json
-extra-assets.json
 gzip-assets/
+sdk/node_modules/
+sdk/dist/
+sdk/native/*-*/
+out/

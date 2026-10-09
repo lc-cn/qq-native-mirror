@@ -1,0 +1,102 @@
+name: Native npm packages
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: Publish all six platform packages after every consumer passes
+        type: boolean
+        default: false
+  push:
+    paths:
+      - '.github/workflows/native-npm.yml'
+      - 'ci/**'
+      - 'sdk/**'
+permissions:
+  contents: read
+jobs:
+  build:
+    name: ${{ matrix.platform }}-${{ matrix.arch }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { platform: linux, arch: x64, runner: ubuntu-24.04 }
+          - { platform: linux, arch: arm64, runner: ubuntu-24.04-arm }
+          - { platform: darwin, arch: x64, runner: macos-15-intel }
+          - { platform: darwin, arch: arm64, runner: macos-15 }
+          - { platform: win32, arch: x64, runner: windows-2022 }
+          - { platform: win32, arch: arm64, runner: windows-11-arm }
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          architecture: ${{ matrix.arch }}
+      - name: Verify runner architecture and available source
+        run: |
+          node -e "if(process.platform!=='${{ matrix.platform }}'||process.arch!=='${{ matrix.arch }}')throw Error('Incorrect runner architecture')"
+          node -e "const s=require('./ci/sources.json').find(x=>x.platform===process.platform&&x.arch===process.arch);if(!s?.manifestUrl)throw Error('Native source not verified yet; no placeholder package permitted')"
+      - name: Linux system dependencies
+        if: matrix.platform == 'linux'
+        run: sudo apt-get update && sudo apt-get install -y libx11-xcb1 libgnutls30
+      - name: Install SDK build dependencies
+        working-directory: sdk
+        run: npm ci --omit=optional --ignore-scripts --no-audit --no-fund
+      - name: Build registration bridge and SDK
+        working-directory: sdk
+        run: npm run build
+      - name: Download pinned native files and build platform npm tarball
+        run: node ci/build-platform.mjs
+      - name: Pack main SDK
+        working-directory: sdk
+        run: npm pack --ignore-scripts --pack-destination ../out
+      - name: Installed consumer initialization and close without account login
+        run: node ci/verify-consumer.mjs
+      - uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: npm-${{ matrix.platform }}-${{ matrix.arch }}
+          path: out/
+          retention-days: 14
+  publish:
+    if: github.event_name == 'workflow_dispatch' && inputs.publish
+    needs: build
+    runs-on: ubuntu-24.04
+    environment: npm-production
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          registry-url: https://registry.npmjs.org
+      - run: npm install -g npm@latest
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - name: Aggregate all platform bridges into the main SDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          for platform in linux-x64 linux-arm64 darwin-x64 darwin-arm64 win32-x64 win32-arm64; do
+            cp -R "artifacts/npm-$platform/bridges/$platform" sdk/native/
+          done
+          cd sdk
+          npm ci --omit=optional --ignore-scripts --no-audit --no-fund
+          npm exec tsc
+          npm pack --ignore-scripts --pack-destination ..
+      - name: Publish immutable platform artifacts, then main package
+        shell: bash
+        run: |
+          set -euo pipefail
+          for platform in linux-x64 linux-arm64 darwin-x64 darwin-arm64 win32-x64 win32-arm64; do
+            npm publish "artifacts/npm-$platform/qq-native-client-$platform-0.0.1.tgz" --access public --provenance
+          done
+          npm publish qq-native-client-0.0.1.tgz --access public --provenance

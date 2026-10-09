@@ -1,0 +1,48 @@
+{
+  "name": "qq-native-client",
+  "version": "0.0.1",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "native",
+    "README.md"
+  ],
+  "scripts": {
+    "probe": "node scripts/probe-native.ts",
+    "build": "node scripts/build-native.ts && tsc",
+    "test": "node --test test/*.test.ts",
+    "prepack": "npm run build"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.0",
+    "typescript": "^7.0.2"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "bin": {
+    "qq-native-client": "./dist/cli.js"
+  },
+  "dependencies": {
+    "silk-wasm": "3.7.1"
+  },
+  "optionalDependencies": {
+    "qq-native-client-darwin-arm64": "0.0.1",
+    "qq-native-client-linux-x64": "0.0.1",
+    "qq-native-client-linux-arm64": "0.0.1",
+    "qq-native-client-darwin-x64": "0.0.1",
+    "qq-native-client-win32-x64": "0.0.1",
+    "qq-native-client-win32-arm64": "0.0.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lc-cn/qq-native-mirror.git",
+    "directory": "sdk"
+  }
+}
