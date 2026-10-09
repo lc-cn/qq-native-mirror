@@ -1,0 +1,23 @@
+sdk/docs/evidence/merged-forward-six-ci-37985572940.json
+  s_2104cc474f1ce5::t_99253d62f20ff6 1-682
+sdk/docs/merged-forward.md
+  s_2104cc474f1ce5::t_6afd1af07c5aca 47-48
+sdk/scripts/verify-merged-forward-v1.ts
+  s_2104cc474f1ce5::t_a13d3be8335133 1-76
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "96b657751bc78892157ca2d6fadf53bfb68c6fa3",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
