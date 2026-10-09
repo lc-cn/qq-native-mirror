@@ -40,6 +40,10 @@ if(!JSON.parse(transition).passed)throw new Error('Real stopping transition fail
 const manifest=JSON.parse(await readFile('out/windows-source/manifest.json','utf8'));
 manifest.nodeVersion=process.version;manifest.nodeConfigSha256=sha(JSON.stringify(process.config));
 manifest.files.push({path:'QQNT.dll',url:'QQNT.dll',sha256:sha(await readFile('out/windows-source/QQNT.dll'))});
+// The adapter incorporates Node internal headers and its bundled simdjson source.
+// Preserve the exact source distribution's third-party copyright/license notices.
+await copyFile(join(root,'LICENSE'),'out/windows-source/NODE-LICENSE.txt');
+manifest.files.push({path:'NODE-LICENSE.txt',url:'NODE-LICENSE.txt',sha256:sha(await readFile('out/windows-source/NODE-LICENSE.txt'))});
 await writeFile('out/windows-source/manifest.json',JSON.stringify(manifest,null,2));
 await mkdir(`sdk/native/win32-${process.arch}`,{recursive:true});await copyFile('out/windows-source/QQNT.dll',`sdk/native/win32-${process.arch}/QQNT.dll`);
 await writeFile('out/windows-adapter-build.json',JSON.stringify({node:process.version,arch:process.arch,sourceSha256:sourceHash,nodeConfigSha256:manifest.nodeConfigSha256,exports:report.requiredQQNTExports.length,stoppingContract:'real Environment::is_stopping(), null environment/isolate => true',runtimeVerified:false},null,2));

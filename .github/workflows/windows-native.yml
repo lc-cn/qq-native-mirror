@@ -40,7 +40,7 @@ jobs:
         shell: pwsh
         run: |
           Push-Location out/windows-source
-          node -e "const n=require('./wrapper.node');if(Object.keys(n).length<80)throw Error('Missing native exports');console.log(JSON.stringify({arch:process.arch,node:process.version,exports:Object.keys(n).length,loaded:true,loginAttempted:false}))"
+          node -e "const n=require('./wrapper.node');if(Object.keys(n).length<80)throw Error('Missing native exports');console.log(JSON.stringify({arch:process.arch,node:process.version,exports:Object.keys(n).length,loaded:true,loginAttempted:false,dedicatedLoadProbe:true,normalCloseVerified:false}));process.exit(0)"
           if ($LASTEXITCODE -ne 0) { throw 'Native load failed' }
           Pop-Location
       - uses: actions/cache/save@v4

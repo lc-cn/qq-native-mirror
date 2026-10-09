@@ -6,6 +6,10 @@ on:
         description: Publish all six platform packages after every consumer passes
         type: boolean
         default: false
+      archive:
+        description: Save the seven-package candidate as a GitHub prerelease for local first publication
+        type: boolean
+        default: false
   push:
     paths:
       - '.github/workflows/native-npm.yml'
@@ -94,6 +98,8 @@ jobs:
   aggregate:
     needs: build
     runs-on: ubuntu-24.04
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -106,6 +112,9 @@ jobs:
       - name: Install main SDK build dependencies
         working-directory: sdk
         run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Run SDK regression tests
+        working-directory: sdk
+        run: npm test
       - name: Aggregate seven immutable packages and acceptance records
         run: node ci/aggregate-release.mjs
       - name: Verify aggregated main package on Linux
@@ -115,6 +124,15 @@ jobs:
           cp release/*.tgz out/
           node ci/verify-consumer.mjs
           cp out/consumer.json release/evidence/aggregated-main.consumer.json
+      - name: Archive verified candidate for accelerated local download
+        if: github.event_name == 'workflow_dispatch' && inputs.archive
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version=$(node -p "require('./release/release-manifest.json').version")
+          tar -czf release/acceptance-evidence.tar.gz -C release evidence
+          printf 'CI-built candidates for local first publication. No npm publish was performed. Source commit: %s. Acceptance: https://github.com/%s/actions/runs/%s\n' "$GITHUB_SHA" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID" > release/notes.md
+          gh release create "npm-v$version-ci-$GITHUB_RUN_ID" release/*.tgz release/release-manifest.json release/acceptance-evidence.tar.gz --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease --latest=false --title "npm $version CI candidate $GITHUB_RUN_ID" --notes-file release/notes.md
       - uses: actions/upload-artifact@v4
         with:
           name: npm-release

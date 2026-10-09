@@ -5,7 +5,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createNativeServices } from '../src/native-services.ts';
 
-function fixture() {
+function fixture(version = '7.0.2-53644') {
   let msgListener: any;
   const groupListeners: any[] = [];
   const sentCalls: any[][] = [];
@@ -29,7 +29,7 @@ function fixture() {
     getBuddyService: () => ({ addKernelBuddyListener() { return 1; }, getBuddyListV2(...args: any[]) { assert.deepEqual(args, ['0', true, 0]); return { data: [{ buddyUids: ['u_a'] }] }; } }),
     getProfileService: () => ({ getCoreAndBaseInfo(store: string, uids: string[]) { assert.equal(store, 'nodeStore'); assert.deepEqual(uids, ['u_a']); return new Map([['u_a', { coreInfo: { uin: '456', nick: 'friend', remark: 'remark' } }]]); } }),
   };
-  return { services: createNativeServices(session, '7.0.2-53644', (event, value) => events.push([event, value])), sentCalls, events, msg, listener: () => msgListener };
+  return { services: createNativeServices(session, version, (event, value) => events.push([event, value])), sentCalls, events, msg, listener: () => msgListener };
 }
 
 test('send correlates successful native update and encodes text without mutating peer', async () => {
@@ -43,8 +43,8 @@ test('send correlates successful native update and encodes text without mutating
   } finally { services.close(); }
 });
 
-test('read-only lists and history map contract fields', async () => {
-  const { services } = fixture();
+for (const version of ['7.0.2-53644', '3.2.32-52194', '9.9.33-52230']) test(`read-only lists and history map contract fields for ${version}`, async () => {
+  const { services } = fixture(version);
   try {
     assert.deepEqual(await services.invokeOperation('listFriends'), [{ userId: '456', uid: 'u_a', nickname: 'friend', remark: 'remark' }]);
     assert.deepEqual(await services.invokeOperation('listGroups'), [{ groupId: '123', name: 'group', memberCount: 2, maxMemberCount: 100 }]);
