@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "batch": "sdk-002-readonly-v3",
+  "planSha256": "64d0a3b1aa5e71911d152def500585075e5168aaf96c6c24bbc442bb8ed7060c",
+  "executorSha256": "8d5f22a4c0d07417065f25dd94e0596afd652f86e29612099fae545071b77a92",
+  "independentReviewSha256": "2e0e0f395d8ac4dc68a003daf21e39251f30a527e694cd9f09982b08aad9dba2",
+  "sdkSourceCommit": "5907793ad848c68b3183ac5c2f2b06fbd1a5e0cf",
+  "sdkSourceRunId": "38000680198",
+  "nativeSourceCommit": "6cae1ec0a5e1bfb03cb7871083915b3d03272347",
+  "nativeSourceRunId": "37962268125",
+  "installedFiles": 1336,
+  "nativeFiles": 1168,
+  "emptyAccountPrepared": true,
+  "emptyAccountClosed": true,
+  "emptyAccountExports": 104,
+  "emptyAccountNativeExecuted": true,
+  "accountBatchExecuted": false,
+  "accountUsed": false,
+  "authorizationPending": true,
+  "signingAuthenticityEstablished": false
+}
