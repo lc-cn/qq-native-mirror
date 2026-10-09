@@ -66,6 +66,8 @@ jobs:
           - { platform: win32, arch: arm64, runner: windows-11-arm }
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 30
+    env:
+      NATIVE_DOWNLOAD_PROXY: https://gh-proxy.com/
     defaults:
       run:
         shell: bash
@@ -106,6 +108,8 @@ jobs:
         working-directory: sdk
         run: |
           if [ '${{ matrix.platform }}' = 'win32' ]; then npm exec tsc; else npm run build; fi
+      - name: Pinned native download contracts
+        run: node --test ci/verified-download.test.mjs
       - uses: actions/download-artifact@v4
         with:
           name: video-${{ matrix.platform }}-${{ matrix.arch }}
@@ -115,6 +119,7 @@ jobs:
           name: video-materials-binding
           path: out/video-materials
       - name: Download pinned native files and build platform npm tarball
+        # Read-only fallback always verifies the same pinned bytes.
         run: node ci/build-platform.mjs
       - name: Pack main SDK
         working-directory: sdk

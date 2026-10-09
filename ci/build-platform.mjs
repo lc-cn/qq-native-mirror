@@ -1,3 +1,4 @@
+import {verifiedDownload} from './verified-download.mjs';
 import {npm} from './npm.mjs';
 import {bundleVideoCodec} from './bundle-video-codec.mjs';
 import {readFile,writeFile,mkdir,copyFile,rm} from 'node:fs/promises';
@@ -11,13 +12,8 @@ const platform=process.platform,arch=process.arch;
 const sources=JSON.parse(await readFile('ci/sources.json','utf8'));
 const source=sources.find(s=>s.platform===platform&&s.arch===arch);
 if(!source?.manifestUrl&&!source?.installerUrl)throw new Error(`No verified native source yet for ${platform}-${arch}; no placeholder package is produced`);
-async function download(url,max=512*1024*1024){
- const parsed=new URL(url);if(parsed.protocol!=='https:'||parsed.username||parsed.password)throw new Error('HTTPS source required');
- const response=await fetch(url,{signal:AbortSignal.timeout(600000)});
- if(!response.ok||!response.body)throw new Error(`Download failed ${response.status}`);
- let size=0;const chunks=[];for await(const chunk of response.body){size+=chunk.length;if(size>max)throw new Error('Download too large');chunks.push(Buffer.from(chunk));}return Buffer.concat(chunks);
-}
-const body=platform==='win32'?await readFile('out/windows-source/manifest.json'):await download(source.manifestUrl,1024*1024);if(platform!=='win32'&&sha(body)!==source.manifestSha256)throw new Error('Manifest hash mismatch');
+const download=(url,expectedSha256,maxBytes=512*1024*1024,stage='native-payload')=>verifiedDownload(url,expectedSha256,{maxBytes,stage,proxy:process.env.NATIVE_DOWNLOAD_PROXY||undefined});
+const body=platform==='win32'?await readFile('out/windows-source/manifest.json'):await download(source.manifestUrl,source.manifestSha256,1024*1024,'source-manifest');if(platform!=='win32'&&sha(body)!==source.manifestSha256)throw new Error('Manifest hash mismatch');
 const manifest=JSON.parse(body);
 if(manifest.schemaVersion!==1||manifest.platform!==platform||manifest.arch!==(source.sourceArch??arch))throw new Error('Source device mismatch');
 const sdk=JSON.parse(await readFile('sdk/package.json','utf8'));
@@ -26,10 +22,10 @@ if(sdk.optionalDependencies[name]!==sdk.version)throw new Error('Main/auxiliary 
 if(['clientVersion','appId','qua'].some(key=>source.version[key]!==manifest.version[key]))throw new Error('Source version declaration mismatch');
 await rm(target,{recursive:true,force:true});await mkdir(target,{recursive:true});
 const groups=new Map();const paths=new Set();
-for(const file of manifest.files){relative(file.path);if(paths.has(file.path))throw new Error('Duplicate manifest path');paths.add(file.path);if(!/^[a-f0-9]{64}$/.test(file.sha256))throw new Error('Invalid file hash');let list=groups.get(file.sha256);if(!list)groups.set(file.sha256,list=[]);list.push(file);}
+for(const file of manifest.files){relative(file.path);if(file.encoding!==undefined&&file.encoding!=='gzip')throw new Error('Unsupported encoding');if(file.encoding==='gzip'&&!/^[a-f0-9]{64}$/.test(file.downloadSha256))throw new Error('Invalid compressed file hash');if(paths.has(file.path))throw new Error('Duplicate manifest path');paths.add(file.path);if(!/^[a-f0-9]{64}$/.test(file.sha256))throw new Error('Invalid file hash');let list=groups.get(file.sha256);if(!list)groups.set(file.sha256,list=[]);list.push(file);}
 if(!paths.has(relative(manifest.wrapper)))throw new Error('Missing wrapper');
 const queue=[...groups];
-await Promise.all(Array.from({length:4},async()=>{while(queue.length){const [hash,files]=queue.shift(),file=files[0];let data=platform==='win32'?await readFile(join('out/windows-source',relative(file.path))):await download(new URL(file.url,source.manifestUrl).href);if(file.encoding==='gzip'){if(sha(data)!==file.downloadSha256)throw new Error('Compressed checksum mismatch');data=gunzipSync(data,{maxOutputLength:512*1024*1024});}else if(file.encoding!==undefined)throw new Error('Unsupported encoding');if(sha(data)!==hash)throw new Error('Native checksum mismatch');for(const entry of files){const output=join(target,entry.path);await mkdir(dirname(output),{recursive:true});await writeFile(output,data);}}}));
+await Promise.all(Array.from({length:4},async()=>{while(queue.length){const [hash,files]=queue.shift(),file=files[0];let data=platform==='win32'?await readFile(join('out/windows-source',relative(file.path))):await download(new URL(file.url,source.manifestUrl).href,file.encoding==='gzip'?file.downloadSha256:hash);if(file.encoding==='gzip'){if(sha(data)!==file.downloadSha256)throw new Error('Compressed checksum mismatch');data=gunzipSync(data,{maxOutputLength:512*1024*1024});}else if(file.encoding!==undefined)throw new Error('Unsupported encoding');if(sha(data)!==hash)throw new Error('Native checksum mismatch');for(const entry of files){const output=join(target,entry.path);await mkdir(dirname(output),{recursive:true});await writeFile(output,data);}}}));
 if(platform==='darwin'){
  for(const files of groups.values()){
   const path=join(target,files[0].path);const bytes=await readFile(path);
