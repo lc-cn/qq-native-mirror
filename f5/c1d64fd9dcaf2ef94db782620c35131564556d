@@ -1,0 +1,33 @@
+ci/prepare-video-materials.mjs
+  s_2104cc474f1ce5::t_e77d774cdecf01 1-82
+ci/verify-consumer.mjs
+  s_2104cc474f1ce5::t_7c5d22e7cb5b06 4,17
+sdk/README.md
+  s_2104cc474f1ce5::t_4247be2a79b3c4 197
+sdk/docs/sdk-acceptance.md
+  s_2104cc474f1ce5::t_4ecc9373ed2c4a 585-600
+sdk/docs/video-codec.md
+  s_2104cc474f1ce5::t_5e28d78d92d14d 3,23
+sdk/docs/video-native-source.md
+  s_2104cc474f1ce5::t_a6861cd6722a4f 15
+sdk/src/index.ts
+  s_2104cc474f1ce5::t_4366dc94972c91 325
+sdk/test/client-video-default.test.ts
+  s_2104cc474f1ce5::t_46f498dce87e6b 32,45-48,50,52,54
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "f5c1d64fd9dcaf2ef94db782620c35131564556d",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
