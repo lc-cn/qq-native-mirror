@@ -46,3 +46,55 @@ test('native errors, malformed lists, missing messages and undecodable content r
   const operations = createForwardMessages({ getMsgService: () => ({ forwardMsg: () => undefined }) }, resolvePeer, () => undefined);
   await assert.rejects(operations.invokeOperation('forwardMessages', { source: { type: 'group', groupId: '123' }, destination: { type: 'group', groupId: '456' }, messageIds: ['10'] }), /failed/);
 });
+
+test('sparse forward identifiers reject before any resolver or native call', async () => {
+  let calls = 0;
+  const operations = createForwardMessages({getMsgService(){calls++;return{forwardMsg(){calls++;return{result:0};}};}}, async p => {calls++;return resolvePeer(p);}, () => undefined);
+  for (const messageIds of [Array(1), ['10', ...Array(1)]]) {
+    await assert.rejects(operations.invokeOperation('forwardMessages', {source:{type:'group',groupId:'123'},destination:{type:'group',groupId:'456'},messageIds}));
+  }
+  assert.equal(calls,0);
+});
+
+for (const [label, invalid] of [
+  ['sparse messages', Array(1)],
+  ['numeric message ID', [{msgId:99,chatType:1,elements:[]}]],
+  ['absent elements', [{msgId:'99',chatType:1}]],
+  ['sparse elements', [{msgId:'99',chatType:1,elements:Array(1)}]],
+  ['invalid element object', [{msgId:'99',chatType:1,elements:[[]]}]],
+] as const) test(`merged-forward rejects ${label} without decoding a partial batch`, async () => {
+  let decoded=0;
+  const first={msgId:'10',chatType:2,elements:[]};
+  const msgList=label==='sparse messages'?invalid:[first,...invalid];
+  const operations=createForwardMessages({getMsgService:()=>({getMultiMsg:()=>({result:0,msgList})})},resolvePeer, raw=>{decoded++;return {messageId:String(raw.msgId)} as Message;});
+  await assert.rejects(operations.invokeOperation('getForwardMessages',{peer:{type:'group',groupId:'123'},rootMessageId:'10',parentMessageId:'20'}));
+  assert.equal(decoded,0);
+});
+
+test('merged-forward preserves empty success, mixed source conversations, order and long IDs', async () => {
+  const messages=[{msgId:'900719925474099312345',chatType:2,elements:[]},{msgId:'2',chatType:1,elements:[{elementType:1}]}];
+  for(const msgList of [[],messages]){
+    const operations=createForwardMessages({getMsgService:()=>({getMultiMsg:()=>({result:0,msgList})})},resolvePeer,raw=>({messageId:raw.msgId} as Message));
+    const result=await operations.invokeOperation('getForwardMessages',{peer:{type:'group',groupId:'123'},rootMessageId:'10',parentMessageId:'20'});
+    assert.deepEqual((result as Message[]).map(message=>message.messageId),msgList.map(raw=>raw.msgId));
+  }
+});
+
+for(const method of ['getForwardMessages','forwardMessages'] as const) test(`${method} does not return a late native result after shutdown`, async () => {
+  const controller=new AbortController();let finish!: (value:unknown)=>void, started!:()=>void,calls=0;
+  const began=new Promise<void>(resolve=>{started=resolve;}),delayed=new Promise(resolve=>{finish=resolve;});
+  const native=()=>{calls++;started();return delayed;};
+  const operations=createForwardMessages({getMsgService:()=>({getMultiMsg:native,forwardMsg:native})},resolvePeer,raw=>({messageId:raw.msgId} as Message),controller.signal);
+  const payload=method==='getForwardMessages'?{peer:{type:'group',groupId:'123'},rootMessageId:'10',parentMessageId:'20'}:{source:{type:'group',groupId:'123'},destination:{type:'group',groupId:'456'},messageIds:['10']};
+  const pending=operations.invokeOperation(method,payload);await began;controller.abort();finish({result:0,msgList:[]});
+  await assert.rejects(pending,/abort/i);assert.equal(calls,1);
+});
+
+test('shutdown during source resolution prevents destination lookup and forward mutation', async () => {
+  const controller=new AbortController();let finish!:(value:Awaited<ReturnType<typeof resolvePeer>>)=>void,started!:()=>void,resolutions=0,mutations=0;
+  const began=new Promise<void>(resolve=>{started=resolve;}),delayed=new Promise<Awaited<ReturnType<typeof resolvePeer>>>(resolve=>{finish=resolve;});
+  const operations=createForwardMessages({getMsgService:()=>({forwardMsg(){mutations++;return{result:0};}})},async()=>{resolutions++;started();return delayed;},()=>undefined,controller.signal);
+  const pending=operations.invokeOperation('forwardMessages',{source:{type:'group',groupId:'123'},destination:{type:'group',groupId:'456'},messageIds:['10']});
+  await began;controller.abort();finish({chatType:2,peerUid:'123'});
+  await assert.rejects(pending,/abort/i);assert.equal(resolutions,1);assert.equal(mutations,0);
+});

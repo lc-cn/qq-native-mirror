@@ -24,6 +24,10 @@ jobs:
         run: node --test tools/prune-native-npm.test.mjs
       - name: Require original successful six-platform CI
         run: node tools/archive-npm-candidate.mjs --preflight
+      - uses: actions/checkout@v4
+        with:
+          ref: b4b2e4eab5e44f99126e2efc68d6701ac7658833
+          path: source-runtime
       - name: Download only pinned source packages and manifest
         run: |
           mkdir candidate-source
@@ -31,10 +35,13 @@ jobs:
       - name: Build a separate byte-preserving experimental auxiliary
         run: node tools/prune-native-npm.mjs
       - name: Install only SDK verification dependencies
-        working-directory: sdk
+        working-directory: source-runtime/sdk
         run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Install main only and verify matching-device candidate without login
-        run: node ci/verify-consumer.mjs
+        run: |
+          cp -R out source-runtime/out
+          (cd source-runtime && node ci/verify-consumer.mjs)
+          cp source-runtime/out/consumer.json out/consumer.json
       - name: Bind consumer receipt to candidate and original source
         run: |
           node tools/prune-native-npm.mjs --verify-consumer

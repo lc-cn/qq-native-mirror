@@ -174,7 +174,7 @@ export function createNativeServices(session: Native, version: string, emit: (ev
     if (peer?.type === 'private') return { chatType: 1, peerUid: await uidFor(String(peer.userId ?? peer.id)) };
     throw new Error('Unsupported peer type');
   };
-  const forwardMessages = createForwardMessages(guardedSession, resolvePeer, toMessage);
+  const forwardMessages = createForwardMessages(guardedSession, resolvePeer, toMessage, lifetime.signal);
   const elementsFor = async (input: unknown, peer: NativePeer): Promise<Native[]> => {
     const elements = typeof input === 'string' ? [{ type: 'text', text: input }] : input;
     if (!Array.isArray(elements) || !elements.length) throw new Error('Message must contain elements');

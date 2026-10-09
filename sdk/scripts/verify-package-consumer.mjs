@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
+import { verifyForwardConsumer } from './forward-consumer-contract.mjs';
 
 // Offline packaging check: never creates a QQ client or loads native binaries.
 const root = fileURLToPath(new URL('../', import.meta.url));
@@ -212,6 +213,7 @@ const closing=createNativeServices({getMsgService:()=>({addKernelMsgListener(){}
 const pending=closing.invokeOperation('getHistory',payload);await began;closing.close();finish({result:0,msgList:[]});await assert.rejects(pending,/abort|closed/i);assert.equal(calls,1);
 `);
 run(process.execPath, ['history-query.mjs']);
+const forwardChecks = await verifyForwardConsumer(join(destination,'node_modules/qq-native-client'));
 run(process.execPath,[cliEntry,'init','--config','qq.json','--data-dir','account','--download-mirror','https://gh-proxy.com/']);
 const configuration=JSON.parse(run(process.execPath,[cliEntry,'config','--config','qq.json']));
 if(configuration.wrapperPath || configuration.version || configuration.downloadMirrors?.[0]!=='https://gh-proxy.com/')throw new Error('Installed CLI default catalog configuration failed');
@@ -246,7 +248,7 @@ void factory; void options; void subscribe;
 run(process.execPath, [resolve(root, 'node_modules/typescript/bin/tsc'), '--noEmit', '--strict', '--types', 'node', '--module', 'NodeNext', '--target', 'ES2023', '--typeRoots', resolve(root, 'node_modules/@types'), 'consumer.ts']);
 const receipt = { checkedAt: new Date().toISOString(), package: packed.name, version: packed.version,
   integrity: packed.integrity, fileCount: files.length, checks: { privateFilesExcluded:true, installedImport:true, cliHelp:true, cliDefaultConfig:true, faceContract:true, messageQueryContract:true, historyQueryContract:true, nativeHistoryQueryAttempted:false, selfProfileContract:true, groupOperationContract:true, groupMemberQueryContract:true, groupMemberIdentityContract:true, groupMetadataEventContract:true, businessWatchContract:true, friendMetadataEventContract:true, nativeFriendMetadataObserved:false, friendListQueryContract:true, friendListBatchContract:true, friendProfileQueryContract:true, groupListQueryContract:true, nativeGroupListQueryAttempted:false, nativeFriendListQueryAttempted:false, declarations:true },
-  nativeExecuted:false, accountUsed:false };
+  ...forwardChecks, nativeExecuted:false, accountUsed:false };
 await mkdir(join(root, '.local'), {recursive:true});
 await writeFile(join(root, '.local/package-consumer-verification.json'), JSON.stringify(receipt, null, 2));
 await mkdir(join(root, '.local/research'), {recursive:true});
@@ -254,4 +256,5 @@ await writeFile(join(root, '.local/research/signature-installed-consumer.json'),
 await writeFile(join(root, '.local/research/group-return-installed-consumer.json'), JSON.stringify(receipt, null, 2));
 await writeFile(join(root, '.local/research/group-members-installed-consumer.json'), JSON.stringify(receipt, null, 2));
 await writeFile(join(root, '.local/research/group-events-installed-consumer.json'), JSON.stringify(receipt, null, 2));
+await writeFile(join(root, '.local/research/forward-installed-consumer.json'), JSON.stringify(receipt, null, 2));
 console.log(JSON.stringify(receipt, null, 2));
