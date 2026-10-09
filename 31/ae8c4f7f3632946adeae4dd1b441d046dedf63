@@ -1,0 +1,46 @@
+.github/workflows/dedup-native-candidate.yml
+  s_2104cc474f1ce5::t_c4bb517b06dab6 1-83
+tools/verify-dedup-consumer.mjs
+  s_2104cc474f1ce5::t_6b8d808347f751 1-72
+  s_2104cc474f1ce5::t_92ad465430de3e 73-74
+ci/verify-consumer.mjs
+  s_2104cc474f1ce5::t_e888654531d228 4,8,25,55-57,59-69,72,283,285
+sdk/docs/evidence/dedup-full-arm64-local-v2.json
+  s_2104cc474f1ce5::t_bd56fea46bda4b 1-78
+sdk/docs/native-size-reduction.md
+  s_2104cc474f1ce5::t_5938102d7049cf 121-130
+sdk/docs/sdk-acceptance.md
+  s_2104cc474f1ce5::t_2e2528e0296cdb 638-647
+sdk/src/native-installed-storage.ts
+  s_2104cc474f1ce5::t_0164e89fa655a8 1-39
+sdk/src/native-package.ts
+  s_2104cc474f1ce5::t_fc3d4b1029d0a6 1,33-34,39,192
+sdk/src/types.ts
+  s_2104cc474f1ce5::t_bf7e7f787193c6 18,20
+sdk/test/installed-native.test.ts
+  s_2104cc474f1ce5::t_b2fc0ad6bd4215 3,7-9,14,31-32,41-73
+sdk/test/native-installed-storage.test.ts
+  s_2104cc474f1ce5::t_d65a929e42965e 1-11
+sdk/test/native-video-package.test.ts
+  s_2104cc474f1ce5::t_304120a4fe6fe1 24
+tools/dedup-native-npm.mjs
+  s_2104cc474f1ce5::t_b7895f9b230398 1-56
+tools/dedup-native-npm.test.mjs
+  s_2104cc474f1ce5::t_d4b7cf57198a43 1-6
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "31ae8c4f7f3632946adeae4dd1b441d046dedf63",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
