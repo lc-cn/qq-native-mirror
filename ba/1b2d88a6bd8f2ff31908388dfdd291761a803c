@@ -1,0 +1,45 @@
+ci/verify-consumer.mjs
+  s_2104cc474f1ce5::t_930e9065f54579 153-168,172
+sdk/README.md
+  s_2104cc474f1ce5::t_71978bc6a3fe61 140-142
+sdk/docs/linux-signing-static.md
+  s_2104cc474f1ce5::t_1beadd874e641c 406-419
+sdk/docs/sdk-acceptance.md
+  s_2104cc474f1ce5::t_158c56c60e2d38 410-419
+sdk/scripts/linux-signing-global48-references.py
+  s_2104cc474f1ce5::t_1281716130bb22 1-43
+sdk/scripts/verify-package-consumer.mjs
+  s_2104cc474f1ce5::t_053d69496966db 108-124,151,175
+sdk/src/cli.ts
+  s_2104cc474f1ce5::t_abbf498a51f3d7 34
+sdk/src/friend-events.ts
+  s_2104cc474f1ce5::t_3e27ad46a6e668 1-39
+sdk/src/friend-requests.ts
+  s_2104cc474f1ce5::t_5e469ae5670c39 2,37,39-41
+sdk/src/types.ts
+  s_2104cc474f1ce5::t_dc9a88c13b5585 63,83-87
+sdk/test/cli.test.ts
+  s_2104cc474f1ce5::t_8245c7b08eb5dd 185,190
+sdk/test/client.test.ts
+  s_2104cc474f1ce5::t_eda7753fdde77c 19-30
+sdk/test/friend-events.test.ts
+  s_2104cc474f1ce5::t_8c5781bd58bc31 1-49
+sdk/test/friend-requests.test.ts
+  s_2104cc474f1ce5::t_f995da87c74f46 5-32
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ba1b2d88a6bd8f2ff31908388dfdd291761a803c",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
