@@ -199,6 +199,6 @@ It covers macOS arm64 (all resource paths retained) and Linux x64/arm64. Default
 
 主包使用固定版本的 optionalDependencies：`qq-native-client-darwin-arm64`、`qq-native-client-linux-x64`、`qq-native-client-linux-arm64`。npm 根据 os/cpu（Linux 还要求 glibc）安装对应辅包；无需 postinstall 脚本。默认 createClient 优先加载辅包，每个原生文件通过 SHA-256 校验。显式 wrapperPath、manifestUrl 或 catalogUrl 优先；指定不同内核版本或省略 optional dependencies 时，仍使用镜像目录下载。
 
-内核版本写在辅包 manifest 中，npm 包版本独立管理。更新主包时固定辅包版本，避免同一主包在不同时间安装到不同内核。Windows 尚无可发布包。
+内核版本写在辅包 manifest 中，npm 包版本独立管理。更新主包时固定辅包版本，避免同一主包在不同时间安装到不同内核。完整目标为 Windows/Linux/macOS × x64/arm64，共六个辅包。GitHub Actions 在各架构 runner 上构建注册适配层、校验并打包厂商内核，再进行无账号消费者初始化；缺少素材或验证失败的平台不发布占位包。当前 Windows 适配和六平台 CI 验收仍在进行。
 
 维护者运行 `node scripts/build-platform-packages.ts` 生成辅包到 `.local/npm-platform-packages/`，先发布三个辅包，再发布主包。生成目录仅复制 manifest 中经过校验的文件，不包含账号目录。

@@ -35,15 +35,21 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '24'
+          node-version: ${{ matrix.platform == 'win32' && '24.20.0' || '24' }}
           architecture: ${{ matrix.arch }}
       - name: Verify runner architecture and available source
         run: |
           node -e "if(process.platform!=='${{ matrix.platform }}'||process.arch!=='${{ matrix.arch }}')throw Error('Incorrect runner architecture')"
           node -e "const s=require('./ci/sources.json').find(x=>x.platform===process.platform&&x.arch===process.arch);if(!s?.manifestUrl&&!s?.installerUrl)throw Error('Native source not verified yet; no placeholder package permitted')"
+      - uses: ilammy/msvc-dev-cmd@v1
+        if: matrix.platform == 'win32'
+        with:
+          arch: ${{ matrix.arch }}
       - name: Extract official Windows source and verify native registration exports
         if: matrix.platform == 'win32'
-        run: node ci/prepare-windows.mjs
+        run: |
+          node ci/prepare-windows.mjs
+          node ci/windows/build-adapter.mjs
       - name: Linux system dependencies
         if: matrix.platform == 'linux'
         run: sudo apt-get update && sudo apt-get install -y libx11-xcb1 libgnutls30
@@ -52,7 +58,8 @@ jobs:
         run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Build registration bridge and SDK
         working-directory: sdk
-        run: npm run build
+        run: |
+          if [ '${{ matrix.platform }}' = 'win32' ]; then npm exec tsc; else npm run build; fi
       - name: Download pinned native files and build platform npm tarball
         run: node ci/build-platform.mjs
       - name: Pack main SDK

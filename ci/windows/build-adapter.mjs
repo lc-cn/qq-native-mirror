@@ -1,4 +1,4 @@
-import {readFile,writeFile,mkdir,readdir} from 'node:fs/promises';
+import {readFile,writeFile,mkdir,readdir,copyFile} from 'node:fs/promises';
 import {join,resolve,basename} from 'node:path';
 import {createHash} from 'node:crypto';
 import {execFileSync} from 'node:child_process';
@@ -17,7 +17,7 @@ const report=JSON.parse(await readFile('out/windows-source/dependency-report.jso
 const filter={...report,requiredQQNTExports:report.requiredQQNTExports.filter(n=>n!=='?IsEnvironmentStopping@node@@YA_NPEAVIsolate@v8@@@Z')};
 await writeFile('out/node-internals/forwarder-report.json',JSON.stringify(filter));
 execFileSync('python',['ci/windows/generate-windows-forwarder.py','out/node-internals/forwarder-report.json',process.execPath,'out/QQNT.def'],{stdio:'inherit'});
-await writeFile('out/QQNT.def',(await readFile('out/QQNT.def','utf8'))+' "?IsEnvironmentStopping@node@@YA_NPEAVIsolate@v8@@@Z"=qq_node_environment_stopping\n');
+await writeFile('out/QQNT.def',(await readFile('out/QQNT.def','utf8'))+' ?IsEnvironmentStopping@node@@YA_NPEAVIsolate@v8@@@Z=qq_node_environment_stopping\n');
 const vars=process.config.variables;
 if(!vars.node_use_openssl||!vars.v8_enable_inspector)throw new Error('Unexpected official Node feature configuration');
 const includes=['src','deps/v8/include','deps/uv/include','deps/simdjson','deps/simdutf','deps/sqlite','deps/openssl/openssl/include','deps/openssl/config','deps/openssl/config/archs/'+(process.arch==='x64'?'VC-WIN64A':'VC-WIN64-ARM')+'/'+(process.arch==='arm64'||vars.openssl_no_asm?'no-asm':'asm')+'/include'];
@@ -34,4 +34,5 @@ const manifest=JSON.parse(await readFile('out/windows-source/manifest.json','utf
 manifest.nodeVersion=process.version;manifest.nodeConfigSha256=sha(JSON.stringify(process.config));
 manifest.files.push({path:'QQNT.dll',url:'QQNT.dll',sha256:sha(await readFile('out/windows-source/QQNT.dll'))});
 await writeFile('out/windows-source/manifest.json',JSON.stringify(manifest,null,2));
+await mkdir(`sdk/native/win32-${process.arch}`,{recursive:true});await copyFile('out/windows-source/QQNT.dll',`sdk/native/win32-${process.arch}/QQNT.dll`);
 await writeFile('out/windows-adapter-build.json',JSON.stringify({node:process.version,arch:process.arch,sourceSha256:sourceHash,nodeConfigSha256:manifest.nodeConfigSha256,exports:report.requiredQQNTExports.length,stoppingContract:'real Environment::is_stopping(), null environment/isolate => true',runtimeVerified:false},null,2));

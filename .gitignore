@@ -5,3 +5,6 @@ sdk/node_modules/
 sdk/dist/
 sdk/native/*-*/
 out/
+sdk/node_modules
+extra-assets.json
+uploaded-assets.json
