@@ -1,3 +1,4 @@
+import {npm} from './npm.mjs';
 import {readFile,writeFile,mkdir,copyFile,rm} from 'node:fs/promises';
 import {dirname,join,resolve,isAbsolute} from 'node:path';
 import {createHash} from 'node:crypto';
@@ -44,5 +45,5 @@ await copyFile(bridge,join(target,bridgeName));manifest.files.push({path:bridgeN
 await writeFile(join(target,'manifest.json'),JSON.stringify(manifest,null,2)+'\n');
 await writeFile(join(target,'package.json'),JSON.stringify({name,version:sdk.version,description:`QQ native runtime for ${platform} ${arch}`,os:[platform],cpu:[arch],...(platform==='linux'?{libc:['glibc']}:{}),engines:{node:'>=24'},exports:{'./manifest.json':'./manifest.json'},files:manifest.files.map(f=>f.path).concat('manifest.json','README.md'),repository:{type:'git',url:'git+https://github.com/lc-cn/qq-native-mirror.git'},license:'UNLICENSED'},null,2)+'\n');
 await writeFile(join(target,'README.md'),`# ${name}\n\nKernel ${manifest.version.clientVersion}. Built and byte-verified by GitHub Actions. Proprietary vendor binaries.\n`);
-execFileSync('npm',['pack','--ignore-scripts','--pack-destination',resolve('out'),'--json'],{cwd:target,stdio:'inherit'});
+execFileSync(npm[0],[...npm[1],'pack','--ignore-scripts','--pack-destination',resolve('out'),'--json'],{cwd:target,stdio:'inherit'});
 await writeFile('out/build.json',JSON.stringify({platform,arch,name,sdkVersion:sdk.version,kernelVersion:manifest.version.clientVersion,sourceManifestSha256:source.manifestSha256,files:manifest.files.length},null,2));

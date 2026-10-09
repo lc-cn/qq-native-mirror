@@ -11,6 +11,11 @@ import { resolveNativeCatalog } from './native-catalog.ts';
 const digest = (data: Uint8Array) => createHash('sha256').update(data).digest('hex');
 const installations = new Map<string, Promise<void>>();
 const hashPattern = /^[a-f0-9]{64}$/i;
+function verifyNodeRuntime(manifest: NativeManifest): void {
+  if (manifest.nodeVersion === undefined && manifest.nodeConfigSha256 === undefined) return;
+  if (typeof manifest.nodeVersion !== 'string' || !/^v\d+\.\d+\.\d+$/.test(manifest.nodeVersion) || typeof manifest.nodeConfigSha256 !== 'string' || !hashPattern.test(manifest.nodeConfigSha256)) throw new Error('Invalid native Node runtime constraint');
+  if (manifest.nodeVersion !== process.version || manifest.nodeConfigSha256.toLowerCase() !== digest(Buffer.from(JSON.stringify(process.config)))) throw new Error(`Native internal-ABI adapter requires matching Node ${manifest.nodeVersion} and build configuration`);
+}
 async function installedNative(options: ClientOptions): Promise<{wrapperPath:string;version:QQVersion}|undefined> {
   const name = `qq-native-client-${process.platform}-${process.arch}`;
   let entry: string;
@@ -20,6 +25,7 @@ async function installedNative(options: ClientOptions): Promise<{wrapperPath:str
   if (manifest.schemaVersion !== 1 || manifest.platform !== process.platform || manifest.arch !== process.arch || !Array.isArray(manifest.files)) throw new Error('Installed native package does not match device');
   version(manifest.version);
   if (options.version && (['clientVersion','appId','qua'] as const).some(key => options.version![key] !== manifest.version[key])) return;
+  verifyNodeRuntime(manifest);
   const base = await realpath(dirname(entry));
   const names = new Set<string>();
   for (const file of manifest.files) {
@@ -125,9 +131,17 @@ export async function prepareNative(options: ClientOptions): Promise<{ wrapperPa
   const mirrors=validateDownloadMirrors(options.downloadMirrors);
   if (options.wrapperPath && options.manifestUrl) throw new Error('Choose wrapperPath or manifestUrl');
   if (options.wrapperPath) {
+    if (options.version) {
+      const adjacent = await readFile(join(dirname(options.wrapperPath), 'manifest.json'), 'utf8').catch(error => {
+        if ((error as NodeJS.ErrnoException).code === 'ENOENT') return undefined;
+        throw error;
+      });
+      if (adjacent !== undefined) verifyNodeRuntime(JSON.parse(adjacent) as NativeManifest);
+    }
     if (!options.version) {
       const local = JSON.parse(await readFile(join(dirname(options.wrapperPath), 'manifest.json'), 'utf8')) as NativeManifest;
       if (local.schemaVersion !== 1 || local.platform !== process.platform || local.arch !== process.arch || await realpath(join(dirname(options.wrapperPath),safeRelative(local.wrapper))) !== await realpath(options.wrapperPath)) throw new Error('Local manifest does not match wrapper or device');
+      verifyNodeRuntime(local);
       options = {...options,version:local.version};
     }
     version(options.version);
@@ -150,6 +164,7 @@ export async function prepareNative(options: ClientOptions): Promise<{ wrapperPa
     throw new Error('Unsupported native manifest schema, platform or architecture');
   }
   version(manifest.version);
+  verifyNodeRuntime(manifest);
   if (options.version && (['clientVersion', 'appId', 'qua'] as const).some(field => options.version![field] !== manifest.version[field])) {
     throw new Error('Requested QQ version configuration does not match the trusted native manifest');
   }

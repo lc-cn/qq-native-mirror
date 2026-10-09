@@ -5,6 +5,9 @@ export interface QQVersion {
 }
 export type LoginRequest = { method: 'qr' } | { method: 'quick'; uin: string } | { method: 'restore'; uin?: string };
 export interface NativeManifest {
+  /** Required for a bundle that uses a Node internal-ABI adapter. */
+  nodeVersion?: string;
+  nodeConfigSha256?: string;
   schemaVersion: 1;
   id: string;
   platform: NodeJS.Platform;

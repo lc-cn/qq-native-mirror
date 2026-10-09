@@ -64,7 +64,10 @@ jobs:
         if: success()
         with:
           name: npm-${{ matrix.platform }}-${{ matrix.arch }}
-          path: out/
+          path: |
+            out/*.tgz
+            out/*.json
+            out/bridges/
           retention-days: 14
   publish:
     if: github.event_name == 'workflow_dispatch' && inputs.publish
