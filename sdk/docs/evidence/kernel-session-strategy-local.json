@@ -1,0 +1,134 @@
+{
+  "schemaVersion": 1,
+  "observedAt": "2026-10-09T22:42:14.981131+00:00",
+  "baseCommit": "23c40388e5b2b3b6fbf01e01ba84ca7d458b0a96",
+  "feature": "Native Session strategy chosen before factories; no error-based fallback or signature retry; readiness waits for successful chosen startup return",
+  "sourceFiles": [
+    {
+      "path": "ci/verify-consumer.mjs",
+      "sha256": "7c42917fc73a2fdcacc76a1905dbfb3ed0f1d1f19fac9a89c05598b4f9045c12",
+      "bytes": 39822
+    },
+    {
+      "path": "sdk/README.md",
+      "sha256": "20d8aef461a1f8a5753658c6c9fb186d7e2a79142b9c7503ca703578e9acc7af",
+      "bytes": 36698
+    },
+    {
+      "path": "sdk/docs/version-research-platforms.md",
+      "sha256": "67d7d13dc50c3e595cbb3eb27da5a17d76ac2874ccf60a923c3de9cd5ada0578",
+      "bytes": 11510
+    },
+    {
+      "path": "sdk/docs/session-strategy.md",
+      "sha256": "108f4d55374b65bda6e15dd61599f7a6b42142dd9382ca15d16d8f623dcc3e59",
+      "bytes": 3429
+    },
+    {
+      "path": "sdk/scripts/verify-package-consumer.mjs",
+      "sha256": "77e443148c7fb6b2bd16781c5f3389ed09b3b8019a9dce281e97c6eb5984c37a",
+      "bytes": 34232
+    },
+    {
+      "path": "sdk/scripts/kernel-session-consumer-contract.mjs",
+      "sha256": "672d4e5f337455a7a2d2c31ca83c2022191584bbf3f1043b710e94a213b7f826",
+      "bytes": 5598
+    },
+    {
+      "path": "sdk/src/kernel.ts",
+      "sha256": "bb88c63233625eaa0026192a7e85f09f49ab42c0c4eb2a4b5f944dad7337f65a",
+      "bytes": 22480
+    },
+    {
+      "path": "sdk/test/kernel-session-strategy.test.ts",
+      "sha256": "7f974413a63891353b90277f9805a49f165ad79774635ca509d1e525aa9758c3",
+      "bytes": 8460
+    },
+    {
+      "path": "tools/verify-dedup-consumer.mjs",
+      "sha256": "83337ad9cebadb5fda780eb298a91f328433d5c9f202dc05e8af8e9d1bec7ad3",
+      "bytes": 11725
+    },
+    {
+      "path": "tools/verify-dedup-consumer.test.mjs",
+      "sha256": "49d35b6b294721cb5edded571a3b1f337eae2043131c1c8e07b673d7dbe59355",
+      "bytes": 4897
+    }
+  ],
+  "regression": {
+    "tests": 585,
+    "pass": 585,
+    "fail": 0,
+    "skipped": 0
+  },
+  "focusedKernelTests": {
+    "tests": 51,
+    "pass": 51,
+    "fail": 0,
+    "skipped": 0
+  },
+  "producerAndVersionArtifactTests": {
+    "tests": 9,
+    "pass": 9,
+    "fail": 0,
+    "skipped": 0
+  },
+  "initialStrategyRegression": {
+    "tests": 5,
+    "pass": 0,
+    "fail": 5
+  },
+  "preRepairReentrantRegression": {
+    "tests": 11,
+    "pass": 5,
+    "fail": 6
+  },
+  "logs": [
+    {
+      "path": "kernel-session-strategy-before.log",
+      "sha256": "64ad0e05a1e9703051f889c78ade9b83b54075ff5ed0db2c495e3ceb12c550a0"
+    },
+    {
+      "path": "kernel-session-reentrant-before.log",
+      "sha256": "db2e8a80d3f196b7d90f860ecca66fa55c3e73510a913f7d66118ff5df65ec8a"
+    },
+    {
+      "path": "kernel-session-strategy-focused-final.log",
+      "sha256": "903454e0adf53060c97d81269beda3c14dc5494a482e0912f93a068ba69c21cb"
+    },
+    {
+      "path": "kernel-session-strategy-all-tests-final.log",
+      "sha256": "ec67e0addd512af7e82c915ad30fb5a138c0effcaf717d46940086f3b267a215"
+    },
+    {
+      "path": "kernel-session-strategy-installed-final-v2.log",
+      "sha256": "68939e824cc143dfc5c4261b6652764e5df6a881a2aed2fbfebce7770ed3b511"
+    },
+    {
+      "path": "kernel-session-strategy-producer-version-final.log",
+      "sha256": "cd725d103bff80005a0c5127151c0027cdf600535e04975cb9e49932dbae202b"
+    }
+  ],
+  "installedConsumerReceiptSha256": "925e3c0181ea75c27ccf86f7d53b08f5241bebf17135cd1389c5450d9917331a",
+  "compiledKernelSha256": "8471b1a1930de1212a320ec9bbb1829d18520c3f9fbd7b487e154d5ba6385035",
+  "staticBinaryReviewSha256": "791feb3350de15a2d40749265e68db5c9f5182347a8fd79bda39ed7f01aadcc2",
+  "initialIndependentReviewSha256": "b2b4b9a0bdb5fe5f56d7ce49166521d95658c99753658db621cdb065295db161",
+  "postrepairIndependentReviewSha256": "fc795f44d05894ae1a6a0dce1abc3952336469f05a154c5d5f8d8feef8fb2ff3",
+  "independentTests": {
+    "pass": 15,
+    "fail": 0
+  },
+  "sessionStrategyContract": true,
+  "nativeSessionStrategyLoginAttempted": false,
+  "nativeExecuted": false,
+  "accountUsed": false,
+  "signingAuthenticityEstablished": false,
+  "published": false,
+  "defaultsChanged": false,
+  "limits": [
+    "Synthetic services and isolated local files, no authenticated native Session startup.",
+    "Eight binary assertion-string observations are static evidence only.",
+    "Direct startNT(0) retains existing compatibility contract; native direct ABI has not been independently established.",
+    "Dispatched native work is not cancelled; late fulfillment cannot publish stale readiness."
+  ]
+}

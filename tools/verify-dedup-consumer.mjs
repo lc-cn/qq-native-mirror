@@ -68,6 +68,7 @@ export function validateDedupInstalledReceipts(build,manifest,receipt,video){
  check(receipt.forwardResourceContract===true&&receipt.nativeForwardResourceAttempted===false,'Installed forward-resource contract missing or real read claimed');
  check(receipt.forwardResourceTypedElementsContract===true&&receipt.forwardResourceDeclarationsContract===true,'Installed forward-resource element or declaration contract missing');
  check(receipt.attachmentDownloadContract===true&&receipt.nativeAttachmentDownloadAttempted===false,'Installed attachment download contract missing or real download claimed');
+ check(receipt.sessionStrategyContract===true&&receipt.nativeSessionStrategyLoginAttempted===false,'Installed Session strategy contract missing or real login claimed');
  check(receipt.historyInputCaptureContract===true&&receipt.loginWaitIdentityContract===true&&receipt.watchReconnectPolicyContract===true&&receipt.nativeHistoryQueryAttempted===false,'Installed history lifecycle contracts missing or real read claimed');
  check(receipt.pendingReadCloseContract===true&&receipt.reentrantReadCloseContract===true,'Installed pending or reentrant read close contract missing');
  check(receipt.installedCliEntrypointContract===true&&receipt.posixNpmBinEntrypointChecked===(receipt.platform!=='win32'),'Installed CLI entrypoint contract missing');

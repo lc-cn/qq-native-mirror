@@ -130,7 +130,7 @@ Preserve original native filenames and dependency layout when building bundles. 
 - Main npm package name: `qq-native-client`; initial release version: `0.0.1`. The six native auxiliary packages use the same release version.
 - Working source is the `0.0.2` candidate with six matching auxiliary version pins. Public npm remains `0.0.1` until a separately reviewed local release. See [candidate preparation and evidence binding](docs/npm-first-publish.md#002-候选准备); newer query/event contracts below remain unpublished.
 
-See [research](RESEARCH.md), [registration bridge](native/README.md), and [login contract](docs/login-contract.md).
+See [research](RESEARCH.md), [registration bridge](native/README.md), [login contract](docs/login-contract.md), and [Session creation/startup](docs/session-strategy.md).
 
 Group notices use `publishGroupNotice(groupId, text, { imagePath?, pinned?, confirmRequired? })` and `deleteGroupNotice(groupId, noticeId)`. CLI commands are `group-notice-publish` and `group-notice-delete`. Images require a local file; account tickets stay inside the worker. Publication checks the native result, while a void deletion return means dispatch only. `listGroupNotices(groupId)` (`group-notices` CLI) uses a native ticket plus Node HTTP and returns `{notices,raw}`. It uses the fixed upstream list request and does not guarantee complete pagination. Native bulletin-list callbacks remain unresolved; this HTTP implementation is explicitly a separate path. All notice operations have contract tests but no real account acceptance yet.
 

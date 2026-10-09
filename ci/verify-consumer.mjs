@@ -19,6 +19,7 @@ import {verifyReceivedForwardConsumer} from '../sdk/scripts/received-forward-con
 import {verifyForwardResourceConsumer} from '../sdk/scripts/forward-resource-consumer-contract.mjs';
 import {verifyForwardResourceTypes} from '../sdk/scripts/forward-resource-type-contract.mjs';
 import {verifyDownloadConsumer} from '../sdk/scripts/download-consumer-contract.mjs';
+import {verifyKernelSessionConsumer} from '../sdk/scripts/kernel-session-consumer-contract.mjs';
 import {verifyHistoryLifecycleConsumer} from '../sdk/scripts/history-lifecycle-consumer-contract.mjs';
 import {verifyVideoConsumerContract} from '../sdk/scripts/video-consumer-contract.mjs';
 const execute=promisify(execFile),temp=await realpath(await mkdtemp(join(tmpdir(),'qq-ci-consumer-')));
@@ -59,6 +60,7 @@ try {
  const receivedForwardChecks=await verifyReceivedForwardConsumer(join(temp,'node_modules/qq-native-client'));
  const forwardResourceChecks=await verifyForwardResourceConsumer(join(temp,'node_modules/qq-native-client'));
  Object.assign(forwardResourceChecks,await verifyDownloadConsumer(join(temp,'node_modules/qq-native-client')));
+ Object.assign(forwardResourceChecks,await verifyKernelSessionConsumer(join(temp,'node_modules/qq-native-client')));
  const forwardResourceTypeChecks=await verifyForwardResourceTypes(join(temp,'node_modules/qq-native-client'),resolve('sdk/node_modules/typescript'),[resolve('sdk/node_modules/@types')]);
  Object.assign(forwardResourceChecks,{forwardResourceDeclarationsContract:forwardResourceTypeChecks.success,forwardResourceTypeChecks});
  const historyLifecycleChecks=await verifyHistoryLifecycleConsumer(join(temp,'node_modules/qq-native-client'));

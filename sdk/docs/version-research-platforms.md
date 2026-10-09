@@ -104,6 +104,8 @@ Both NapCatv4.10.7 and current fixed commit use:
 
 This verifies the **same compatibility fallback in two source snapshots**, not the behavior of every QQ native version. Separate artifact descriptors should pin exact platform, architecture, QQ version/appid/qua, bridge type, tested Node version, dependency manifest and native file hashes. Do not mark Linux/Windows ready merely because initialization names agree in upstream TypeScript.
 
+The SDK now chooses a complete creation path from callable exports before invoking it. Factory/start errors propagate without selecting another path or retrying a different signature; the older upstream fallback described above is historical source evidence. See [current Session strategy](session-strategy.md). The direct `startNT(0)` path remains compatibility code, without a newly verified Windows argument contract or account-start claim.
+
 ## Next runtime evidence needed
 
 Linux: using the acquired 3.2.32 arm64 and amd64 archives, extract without install, inspect ELF NEEDED/imported registration and symbols, use a disposable `node:24` container with read-only native volume and network disabled for export-load proof only. Windows: test captured package on Windows under Node22.11 first, then target Node version; prove load+exports before QR; do not claim system GUI/library dependencies disappear because no QQ window is opened. Cross-account login remains human authorized.

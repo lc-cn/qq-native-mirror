@@ -38,6 +38,7 @@ export function createKernel(
   let listener: NativeObject | undefined;
   let startupSession: NativeObject | undefined;
   let accountSession: NativeObject | undefined;
+  let sessionStrategy: 'startup' | 'direct' | undefined;
   let identity: AccountIdentity | undefined;
   let nativeServices: ReturnType<typeof createNativeServices> | undefined;
   let startingSession = false;
@@ -100,6 +101,32 @@ export function createKernel(
     const expectedPending = pending;
     const session = accountSession!;
     const active = () => !closed && generation === attempt && accountSession === session;
+    let nativeReady = false;
+    let startReturned = false;
+    const completeSession = () => {
+      if (!nativeReady || !startReturned || !active() || pending !== expectedPending) return;
+      try {
+        nativeServices = createNativeServices(session, options.version.clientVersion, (event, payload) => {
+          if (!active()) return;
+          if (event === 'kicked') {
+            forcedOffline = true;
+            const kicked = payload as { info?: unknown; args?: unknown[] };
+            const info = transitionOffline({ source: 'kicked', kind: 'forced', kickedInfo: kicked.info, args: kicked.args ?? [] });
+            if (info) notify('kicked', info);
+            return;
+          }
+          notify(event, payload);
+        }, options.mediaTools, options.recordCodec, account.uin, account.uid, info => { if (active()) notify('native-callback', info); }, options.videoCodec);
+      } catch (error) { fail(error instanceof Error ? error : new Error(String(error))); return; }
+      if (!active() || pending !== expectedPending) { nativeServices?.close(); nativeServices = undefined; return; }
+      identity = { ...account };
+      clearTimers();
+      const current = pending;
+      pending = undefined;
+      current.resolve({ ...account });
+      notify('login', { ...account });
+      if (active()) notify('ready', { ...account });
+    };
     const scoped = (adapter: NativeObject) => new Proxy(adapter, {
       get(target, key) { const callback = Reflect.get(target, key); return typeof callback === 'function' ? (...args: unknown[]) => { if (active()) return callback(...args); } : callback; },
     });
@@ -123,27 +150,8 @@ export function createKernel(
         onOpentelemetryInit: (result: { is_init: boolean }) => {
           if (!active() || pending !== expectedPending) return;
           if (!result?.is_init) { fail(new Error('Native account session initialization failed')); return; }
-          try {
-            nativeServices = createNativeServices(session, options.version.clientVersion, (event, payload) => {
-              if (!active()) return;
-              if (event === 'kicked') {
-                forcedOffline = true;
-                const kicked = payload as { info?: unknown; args?: unknown[] };
-                const info = transitionOffline({ source: 'kicked', kind: 'forced', kickedInfo: kicked.info, args: kicked.args ?? [] });
-                if (info) notify('kicked', info);
-                return;
-              }
-              notify(event, payload);
-            }, options.mediaTools, options.recordCodec, account.uin, account.uid, info => { if (active()) notify('native-callback', info); }, options.videoCodec);
-          } catch (error) { fail(error instanceof Error ? error : new Error(String(error))); return; }
-          if (!active() || pending !== expectedPending) { nativeServices?.close(); nativeServices = undefined; return; }
-          identity = { ...account };
-          clearTimers();
-          const current = pending;
-          pending = undefined;
-          current.resolve({ ...account });
-          notify('login', { ...account });
-          if (active()) notify('ready', { ...account });
+          nativeReady = true;
+          completeSession();
         },
       }));
       invoke(session, 'init', {
@@ -188,11 +196,11 @@ export function createKernel(
       }, 'Depends')),
       scoped(callbacks(['dispatchRequest', 'dispatchCall', 'dispatchCallWithJson'], {}, 'Dispatcher')), nativeSessionCallbacks);
       if (!active() || pending !== expectedPending) return;
-      if (startupSession) invoke(startupSession, 'start');
-      else {
-        try { invoke(session, 'startNT', 0); }
-        catch { invoke(session, 'startNT'); }
-      }
+      if (sessionStrategy === 'startup') await invoke(startupSession!, 'start');
+      else await invoke(session, 'startNT', 0);
+      if (!active() || pending !== expectedPending) return;
+      startReturned = true;
+      completeSession();
     } catch (error) { if (active()) fail(error instanceof Error ? error : new Error(String(error))); }
   };
   const beginAuthentication = async () => {
@@ -263,12 +271,19 @@ export function createKernel(
     notify('diagnostic', { stage: 'login-service-get' });
     loginService = invoke(wrapper.NodeIKernelLoginService ?? {}, 'get');
     notify('diagnostic', { stage: 'session-create' });
-    try {
-      startupSession = invoke(wrapper.NodeIQQNTStartupSessionWrapper ?? {}, 'create');
-      accountSession = invoke(wrapper.NodeIQQNTWrapperSession ?? {}, 'getNTWrapperSession', 'nt_1');
-    } catch {
-      accountSession = invoke(wrapper.NodeIQQNTWrapperSession ?? {}, 'create');
-    }
+    const startupFactory = wrapper.NodeIQQNTStartupSessionWrapper;
+    const accountFactory = wrapper.NodeIQQNTWrapperSession;
+    // Choose from the exported surface before dispatching either factory.
+    // A thrown native call may already have effects; never use it as a probe
+    // for another signature or Session strategy.
+    if (typeof startupFactory?.create === 'function' && typeof accountFactory?.getNTWrapperSession === 'function') {
+      sessionStrategy = 'startup';
+      startupSession = invoke(startupFactory, 'create');
+      accountSession = invoke(accountFactory, 'getNTWrapperSession', 'nt_1');
+    } else if (typeof accountFactory?.create === 'function') {
+      sessionStrategy = 'direct';
+      accountSession = invoke(accountFactory, 'create');
+    } else throw new Error('Native kernel has no supported Session creation surface');
     // Retain session instances; native login initialization may depend on them.
     void startupSession;
     void accountSession;
