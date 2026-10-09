@@ -1,0 +1,23 @@
+sdk/docs/evidence/received-forward-local.json
+  s_2104cc474f1ce5::t_630a201c7992d1 29,53,98,117-118
+sdk/scripts/received-forward-consumer-contract.mjs
+  s_2104cc474f1ce5::t_c1ab7132c36fde 53,56,58
+sdk/src/message-elements.ts
+  s_2104cc474f1ce5::t_bfbd994ddf5b25 132-133,135
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "5614d03189d9af36a58d280bf35f4173eb1f1a28",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
