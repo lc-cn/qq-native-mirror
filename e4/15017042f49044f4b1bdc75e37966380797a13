@@ -1,0 +1,27 @@
+.github/workflows/npm-public-consumer.yml
+  s_2104cc474f1ce5::t_c3e080403cf837 11-15,33,53-57,59,62-64
+public-ci/mirror-consumer.mjs
+  s_2104cc474f1ce5::t_89c99196df9290 1-53
+public-ci/verify.mjs
+  s_2104cc474f1ce5::t_2cadc6a85ee946 3,29,50-59,62
+sdk/README.md
+  s_2104cc474f1ce5::t_8d4adbae051de6 5,13-18
+sdk/docs/sdk-acceptance.md
+  s_2104cc474f1ce5::t_119522dd751e28 242-252
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e415017042f49044f4b1bdc75e37966380797a13",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
