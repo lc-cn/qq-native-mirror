@@ -27,6 +27,7 @@ export async function validateRelease(directory) {
   requireThat(Array.isArray(manifest.packages) && manifest.packages.length === 7, 'Exactly seven packages required');
   requireThat(typeof manifest.runId === 'string' && Number.isInteger(manifest.runAttempt) && manifest.runAttempt > 0, 'Invalid CI run attempt');
   const packages = [];
+  let videoMaterialsPending = false;
   for (const name of names) {
     const rows = manifest.packages.filter(row => row.name === name);
     requireThat(rows.length === 1, `Missing or duplicate package: ${name}`);
@@ -40,6 +41,7 @@ export async function validateRelease(directory) {
       const target = name.slice('qq-native-client-'.length); const [platform, arch] = target.split('-');
       requireThat(JSON.stringify(pkg.os) === JSON.stringify([platform]) && JSON.stringify(pkg.cpu) === JSON.stringify([arch]), `Packed OS/CPU mismatch: ${name}`);
       const native = tarJson(file.path, 'package/manifest.json');
+      if (native.json.videoCodec !== undefined) videoMaterialsPending = true;
       requireThat(native.json.platform === platform && native.json.arch === arch, `Native manifest platform mismatch: ${name}`);
       requireThat(row.manifestSha256 === hash(native.bytes, 'sha256', 'hex'), `Native manifest digest mismatch: ${target}`);
       requireThat(row.receipt === `evidence/${target}.consumer.json`, `Invalid receipt path: ${target}`);
@@ -92,9 +94,10 @@ export async function validateRelease(directory) {
   }
   const mainReceipt = JSON.parse(mainReceiptBytes);
   requireThat(mainReceipt.platform === 'linux' && mainReceipt.arch === 'x64' && mainReceipt.installedMainOnly === true && mainReceipt.automaticPlatformSelection === true && mainReceipt.prepared === true && mainReceipt.closed === true && mainReceipt.loginAttempted === false && Number.isInteger(mainReceipt.exports) && mainReceipt.exports >= 80 && /^v24\./.test(mainReceipt.node), 'Aggregate main consumer failed');
-  return { manifest, packages };
+  return { manifest, packages, videoMaterialsPending };
 }
 export function publishValidated(release, run = spawnSync) {
+  requireThat(release.videoMaterialsPending !== true, 'Video runtime candidate lacks permanent corresponding-source/relink distribution; publication is unavailable until those materials are bound');
   requireThat(process.stdin.isTTY && process.stdout.isTTY, '--publish requires an interactive terminal for npm authentication/2FA');
   for (const pkg of release.packages) {
     // Read-only registry lookup. Only a structured E404 allows a new publish.

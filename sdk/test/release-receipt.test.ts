@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
-import { validateRelease } from '../scripts/local-first-publish.mjs';
+import { validateRelease, publishValidated } from '../scripts/local-first-publish.mjs';
 
 const digest = (bytes: Buffer, algorithm = 'sha256', encoding: 'hex' | 'base64' = 'hex') => createHash(algorithm).update(bytes).digest(encoding);
 test('schema 2 binds aggregate receipt bytes while schema 1 remains compatible', async () => {
@@ -43,7 +43,7 @@ test('schema 2 binds aggregate receipt bytes while schema 1 remains compatible',
     await writeFile(join(root, path), original);
     const manifest: any = { schemaVersion: 1, repository: 'lc-cn/qq-native-mirror', commit: 'a'.repeat(40), runId: '123', runAttempt: 1, version: '0.0.1', packages };
     const save = () => writeFile(join(root, 'release-manifest.json'), JSON.stringify(manifest));
-    await save(); await validateRelease(root);
+    await save(); assert.equal((await validateRelease(root)).videoMaterialsPending, false);
     await writeFile(join(root, path), Buffer.concat([original, Buffer.from(' ')])); await validateRelease(root);
     await writeFile(join(root, path), original);
     manifest.schemaVersion = 2; manifest.aggregateReceipt = { path, sha256: digest(original) }; await save(); await validateRelease(root);
@@ -52,5 +52,22 @@ test('schema 2 binds aggregate receipt bytes while schema 1 remains compatible',
     manifest.aggregateReceipt = { path, sha256: digest(original) }; await save();
     await writeFile(join(root, path), Buffer.concat([original, Buffer.from(' ')]));
     await assert.rejects(validateRelease(root), /Aggregate receipt digest mismatch/);
+    await writeFile(join(root, path), original);
+    // A checksum-bound candidate may be inspected, but its new static component
+    // cannot enter registry lookup/publication before permanent materials exist.
+    const row = packages[0], staging = join(root, 'staging');
+    await mkdir(staging);
+    execFileSync('tar', ['-xzf', row.tarball, '-C', staging], { cwd: root });
+    const candidate = Buffer.from(JSON.stringify({ platform: 'linux', arch: 'x64', videoCodec: 'video/video-codec.node' }));
+    await writeFile(join(staging, 'package/manifest.json'), candidate);
+    execFileSync('tar', ['-czf', row.tarball, '-C', staging, 'package'], { cwd: root });
+    await rm(staging, { recursive: true });
+    const bytes = await readFile(join(root, row.tarball));
+    Object.assign(row, { size: bytes.length, sha256: digest(bytes), integrity: `sha512-${digest(bytes, 'sha512', 'base64')}`, manifestSha256: digest(candidate) });
+    await save();
+    const pending = await validateRelease(root); assert.equal(pending.videoMaterialsPending, true);
+    let commands = 0;
+    assert.throws(() => publishValidated(pending, () => { commands++; throw new Error('Unexpected command'); }), /permanent corresponding-source\/relink/);
+    assert.equal(commands, 0);
   } finally { await rm(root, { recursive: true, force: true }); }
 });

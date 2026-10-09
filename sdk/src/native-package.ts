@@ -12,12 +12,19 @@ import {publishProcessLock,readProcessLock,removeOwnedProcessLock} from './proce
 const digest = (data: Uint8Array) => createHash('sha256').update(data).digest('hex');
 const installations = new Map<string, Promise<void>>();
 const hashPattern = /^[a-f0-9]{64}$/i;
+interface PreparedNative { wrapperPath: string; version: QQVersion; videoCodecPath?: string }
+function declaredVideoCodec(manifest: NativeManifest, names: Set<string>): string | undefined {
+  if (manifest.videoCodec === undefined) return;
+  const path = safeRelative(manifest.videoCodec);
+  if (!names.has(path)) throw new Error('Video codec is missing from native manifest files');
+  return path;
+}
 function verifyNodeRuntime(manifest: NativeManifest): void {
   if (manifest.nodeVersion === undefined && manifest.nodeConfigSha256 === undefined) return;
   if (typeof manifest.nodeVersion !== 'string' || !/^v\d+\.\d+\.\d+$/.test(manifest.nodeVersion) || typeof manifest.nodeConfigSha256 !== 'string' || !hashPattern.test(manifest.nodeConfigSha256)) throw new Error('Invalid native Node runtime constraint');
   if (manifest.nodeVersion !== process.version || manifest.nodeConfigSha256.toLowerCase() !== digest(Buffer.from(JSON.stringify(process.config)))) throw new Error(`Native internal-ABI adapter requires matching Node ${manifest.nodeVersion} and build configuration`);
 }
-async function installedNative(options: ClientOptions): Promise<{wrapperPath:string;version:QQVersion}|undefined> {
+async function installedNative(options: ClientOptions): Promise<PreparedNative | undefined> {
   const name = `qq-native-client-${process.platform}-${process.arch}`;
   let entry: string;
   try { entry = createRequire(import.meta.url).resolve(`${name}/manifest.json`); }
@@ -38,7 +45,8 @@ async function installedNative(options: ClientOptions): Promise<{wrapperPath:str
     if (!actual.startsWith(base + sep) || !(await lstat(path)).isFile() || digest(await readFile(path)) !== file.sha256.toLowerCase()) throw new Error(`Installed native file failed verification: ${relative}`);
   }
   if (!names.has(safeRelative(manifest.wrapper))) throw new Error('Installed native wrapper is missing');
-  return {wrapperPath:join(base,manifest.wrapper),version:manifest.version};
+  const codec = declaredVideoCodec(manifest, names);
+  return {wrapperPath:join(base,manifest.wrapper),version:manifest.version,...(codec === undefined ? {} : {videoCodecPath:join(base,codec)})};
 }
 function version(value: unknown): asserts value is QQVersion {
   const v = value as QQVersion | undefined;
@@ -129,25 +137,43 @@ export function validateDownloadMirrors(value: unknown): string[] {
   }
   return mirrors;
 }
-export async function prepareNative(options: ClientOptions): Promise<{ wrapperPath: string; version: QQVersion }> {
+export async function prepareNative(options: ClientOptions): Promise<PreparedNative> {
   const mirrors=validateDownloadMirrors(options.downloadMirrors);
   if (options.wrapperPath && options.manifestUrl) throw new Error('Choose wrapperPath or manifestUrl');
   if (options.wrapperPath) {
-    if (options.version) {
-      const adjacent = await readFile(join(dirname(options.wrapperPath), 'manifest.json'), 'utf8').catch(error => {
-        if ((error as NodeJS.ErrnoException).code === 'ENOENT') return undefined;
-        throw error;
-      });
-      if (adjacent !== undefined) verifyNodeRuntime(JSON.parse(adjacent) as NativeManifest);
-    }
+    const wrapperPath = options.wrapperPath;
+    const adjacent = await readFile(join(dirname(wrapperPath), 'manifest.json'), 'utf8').catch(error => {
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT' && options.version) return undefined;
+      throw error;
+    });
+    const local = adjacent === undefined ? undefined : JSON.parse(adjacent) as NativeManifest;
+    if (local !== undefined) verifyNodeRuntime(local);
     if (!options.version) {
-      const local = JSON.parse(await readFile(join(dirname(options.wrapperPath), 'manifest.json'), 'utf8')) as NativeManifest;
-      if (local.schemaVersion !== 1 || local.platform !== process.platform || local.arch !== process.arch || await realpath(join(dirname(options.wrapperPath),safeRelative(local.wrapper))) !== await realpath(options.wrapperPath)) throw new Error('Local manifest does not match wrapper or device');
-      verifyNodeRuntime(local);
+      if (!local || local.schemaVersion !== 1 || local.platform !== process.platform || local.arch !== process.arch || await realpath(join(dirname(wrapperPath),safeRelative(local.wrapper))) !== await realpath(wrapperPath)) throw new Error('Local manifest does not match wrapper or device');
       options = {...options,version:local.version};
     }
     version(options.version);
-    return { wrapperPath: await realpath(options.wrapperPath!), version: options.version };
+    let codec: string | undefined;
+    // Legacy explicit wrappers remain usable without an inventory. Automatic codec
+    // discovery requires a complete matching bundle and verified regular files.
+    if (local?.videoCodec !== undefined) {
+      const base = await realpath(dirname(wrapperPath));
+      if (local.schemaVersion !== 1 || local.platform !== process.platform || local.arch !== process.arch || !Array.isArray(local.files) || await realpath(join(base,safeRelative(local.wrapper))) !== await realpath(wrapperPath)) throw new Error('Local manifest does not match wrapper or device');
+      version(local.version);
+      if ((['clientVersion','appId','qua'] as const).some(key => options.version![key] !== local.version[key])) throw new Error('Local manifest version does not match requested version');
+      const names = new Set<string>();
+      for (const file of local.files) {
+        if (!file || typeof file !== 'object' || typeof file.sha256 !== 'string') throw new Error('Invalid local native manifest');
+        const relative = safeRelative(file.path);
+        if (names.has(relative) || !hashPattern.test(file.sha256)) throw new Error('Invalid local native manifest');
+        names.add(relative);
+        const path = join(base,relative);
+        if (!(await realpath(path)).startsWith(base + sep) || !(await lstat(path)).isFile() || digest(await readFile(path)) !== file.sha256.toLowerCase()) throw new Error(`Local native file failed verification: ${relative}`);
+      }
+      if (!names.has(safeRelative(local.wrapper))) throw new Error('Local native wrapper is missing');
+      codec = join(base, declaredVideoCodec(local, names)!);
+    }
+    return { wrapperPath: await realpath(wrapperPath), version: options.version, ...(codec === undefined ? {} : {videoCodecPath:codec}) };
   }
   if (!options.manifestUrl && !options.catalogUrl) {
     const installed = await installedNative(options);
@@ -188,6 +214,7 @@ export async function prepareNative(options: ClientOptions): Promise<{ wrapperPa
     }
   }
   if (!names.has(manifest.wrapper)) throw new Error('Wrapper is missing from manifest files');
+  const codec = declaredVideoCodec(manifest, names);
   const requestedBase = resolve(options.cacheDir ?? join(homedir(), '.cache/qq-native-client'));
   await mkdir(requestedBase, { recursive: true });
   const base = await realpath(requestedBase);
@@ -282,5 +309,5 @@ export async function prepareNative(options: ClientOptions): Promise<{ wrapperPa
   installations.set(target, installation);
   try { await installation; }
   finally { if (installations.get(target) === installation) installations.delete(target); }
-  return { wrapperPath: join(target, manifest.wrapper), version: manifest.version };
+  return { wrapperPath: join(target, manifest.wrapper), version: manifest.version, ...(codec === undefined ? {} : {videoCodecPath:join(target,codec)}) };
 }

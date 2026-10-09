@@ -18,7 +18,10 @@ on:
 permissions:
   contents: read
 jobs:
+  video:
+    uses: ./.github/workflows/video-codec-native.yml
   build:
+    needs: video
     name: ${{ matrix.platform }}-${{ matrix.arch }}
     strategy:
       fail-fast: false
@@ -39,7 +42,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.platform == 'win32' && '24.20.0' || '24' }}
+          node-version: '24.20.0'
           architecture: ${{ matrix.arch }}
       - name: Verify runner architecture and available source
         run: |
@@ -72,12 +75,18 @@ jobs:
         working-directory: sdk
         run: |
           if [ '${{ matrix.platform }}' = 'win32' ]; then npm exec tsc; else npm run build; fi
+      - uses: actions/download-artifact@v4
+        with:
+          name: video-${{ matrix.platform }}-${{ matrix.arch }}
+          path: out/video-codec
       - name: Download pinned native files and build platform npm tarball
         run: node ci/build-platform.mjs
       - name: Pack main SDK
         working-directory: sdk
         run: npm pack --ignore-scripts --pack-destination ../out
       - name: Installed consumer initialization and close without account login
+        env:
+          QQ_VIDEO_CODEC_REQUIRED: '1'
         run: node ci/verify-consumer.mjs
       - uses: actions/cache/save@v4
         if: always() && matrix.platform == 'win32' && steps.windows-sources.outputs.cache-hit != 'true'
@@ -104,7 +113,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '24'
+          node-version: '24.20.0'
       - uses: actions/download-artifact@v4
         with:
           pattern: npm-*
@@ -118,6 +127,8 @@ jobs:
       - name: Aggregate seven immutable packages and acceptance records
         run: node ci/aggregate-release.mjs
       - name: Verify aggregated main package on Linux
+        env:
+          QQ_VIDEO_CODEC_REQUIRED: '1'
         run: |
           sudo apt-get update && sudo apt-get install -y libx11-xcb1 libgnutls30
           mkdir -p out
@@ -125,6 +136,9 @@ jobs:
           node ci/verify-consumer.mjs
           cp out/consumer.json release/evidence/aggregated-main.consumer.json
           node ci/finalize-release.mjs
+      - name: Permanent video source and relink release gate
+        if: github.event_name == 'workflow_dispatch' && (inputs.publish || inputs.archive)
+        run: node ci/video-release-gate.mjs
       - name: Archive verified candidate for accelerated local download
         if: github.event_name == 'workflow_dispatch' && inputs.archive
         env:
@@ -150,13 +164,17 @@ jobs:
     steps:
       - uses: actions/setup-node@v4
         with:
-          node-version: '24'
+          node-version: '24.20.0'
           registry-url: https://registry.npmjs.org
       - run: npm install -g npm@latest
       - uses: actions/download-artifact@v4
         with:
           name: npm-release
           path: release
+      - name: Block publication until permanent video materials are bound
+        run: |
+          echo "Permanent corresponding source/relink release closure is not implemented; candidate artifacts only." >&2
+          exit 1
       - name: Publish platform packages, then main package
         shell: bash
         run: |

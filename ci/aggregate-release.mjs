@@ -18,6 +18,9 @@ for(const device of devices){
  if(pkg.name!==name||pkg.version!==sdk.version||pkg.os?.[0]!==platform||pkg.cpu?.[0]!==arch||native.platform!==platform||native.arch!==arch||sdk.optionalDependencies[name]!==sdk.version)throw Error(`Package identity mismatch: ${device}`);
  const receiptBytes=await readFile(join(input,'consumer.json')),receipt=JSON.parse(receiptBytes);
  if(receipt.platform!==platform||receipt.arch!==arch||receipt.exports<80||!receipt.installedMainOnly||!receipt.automaticPlatformSelection||!receipt.prepared||!receipt.closed||receipt.loginAttempted!==false)throw Error(`Consumer failed: ${device}`);
+ if(native.videoCodec!=='video/video-codec.node'||receipt.automaticVideoCodec!==true||receipt.installedVideoDecoder!==true||receipt.installedVideoFakeCache!==true||receipt.installedVideo?.noQQ!==true||receipt.installedVideo?.noAccount!==true||receipt.installedVideo?.nativeSendAttempted!==false||receipt.installedVideo?.inputs?.length!==3)throw Error(`Automatic installed codec failed: ${device}`);
+ const codecFile=native.files.find(f=>f.path===native.videoCodec);
+ if(!codecFile||codecFile.sha256!==receipt.installedVideo.binary?.sha256)throw Error(`Installed video binary receipt mismatch: ${device}`);
  const bridgeName=platform==='win32'?'QQNT.dll':'registration-bridge.node';
  const bridge=await readFile(join(input,'bridges',device,bridgeName));
  if(native.files.find(f=>f.path===bridgeName)?.sha256!==sha(bridge))throw Error(`Bridge mismatch: ${device}`);

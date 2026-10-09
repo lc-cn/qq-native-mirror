@@ -13,6 +13,8 @@ export interface NativeManifest {
   platform: NodeJS.Platform;
   arch: string;
   wrapper: string;
+  /** Optional bundled video addon/module, covered by the same files SHA-256 inventory. */
+  videoCodec?: string;
   version: QQVersion;
   files: Array<{ path: string; url: string; sha256: string; encoding?: 'gzip'; downloadSha256?: string }>;
 }
@@ -40,7 +42,7 @@ export interface ClientOptions {
   mediaTools?: { ffmpeg: string; ffprobe: string };
   /** Optional local codec override; defaults to bundled silk-wasm for PCM16 WAV/Tencent SILK. */
   recordCodecPath?: string;
-  /** Explicit local JS module or standard Node addon providing video metadata and thumbnail. */
+  /** Local video codec override; otherwise uses the verified native bundle's declaration. */
   videoCodecPath?: string;
   /** Positive Node timer duration in milliseconds (maximum 2147483647). */
   timeoutMs?: number;

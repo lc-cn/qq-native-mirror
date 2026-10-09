@@ -1,4 +1,5 @@
 import {npm} from './npm.mjs';
+import {bundleVideoCodec} from './bundle-video-codec.mjs';
 import {readFile,writeFile,mkdir,copyFile,rm} from 'node:fs/promises';
 import {dirname,join,resolve,isAbsolute} from 'node:path';
 import {createHash} from 'node:crypto';
@@ -43,6 +44,7 @@ const bridge=join('sdk/native',`${platform}-${arch}`,bridgeName);
 await mkdir(join('out','bridges',`${platform}-${arch}`),{recursive:true});await copyFile(bridge,join('out','bridges',`${platform}-${arch}`,bridgeName));
 if(platform==='win32')await copyFile(join('sdk/native',`${platform}-${arch}`,'NODE-LICENSE.txt'),join('out','bridges',`${platform}-${arch}`,'NODE-LICENSE.txt'));
 await copyFile(bridge,join(target,bridgeName));if(!manifest.files.some(f=>f.path===bridgeName))manifest.files.push({path:bridgeName,url:bridgeName,sha256:sha(await readFile(bridge))});
+await bundleVideoCodec(target,manifest);
 await writeFile(join(target,'manifest.json'),JSON.stringify(manifest,null,2)+'\n');
 await writeFile(join(target,'package.json'),JSON.stringify({name,version:sdk.version,description:`QQ native runtime for ${platform} ${arch}`,os:[platform],cpu:[arch],...(platform==='linux'?{libc:['glibc']}:{}),engines:{node:manifest.nodeVersion?.slice(1)??'>=24'},exports:{'./manifest.json':'./manifest.json'},files:manifest.files.map(f=>f.path).concat('manifest.json','README.md'),repository:{type:'git',url:'git+https://github.com/lc-cn/qq-native-mirror.git'},license:'UNLICENSED'},null,2)+'\n');
 await writeFile(join(target,'README.md'),`# ${name}\n\nKernel ${manifest.version.clientVersion}. Built and byte-verified by GitHub Actions. Proprietary vendor binaries.\n`);

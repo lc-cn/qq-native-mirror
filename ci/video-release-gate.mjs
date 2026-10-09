@@ -1,0 +1,1 @@
+throw new Error('Candidate only: permanent version-bound FFmpeg corresponding source, addon source and six-platform relink materials must be archived and digest-bound before archive or npm publication. Temporary Actions artifacts do not satisfy this gate.');

@@ -322,7 +322,7 @@ export async function createClient(options: ClientOptions): Promise<QQClient> {
   const env = { ...process.env }; delete env.ELECTRON_RUN_AS_NODE;
   const spawnWorker = () => fork(fileURLToPath(workerUrl), [], { cwd: dataDir, env, execPath: process.execPath, execArgv: [], serialization: 'advanced' as const, stdio: ['ignore', 'pipe', 'pipe', 'ipc'] });
   const worker = spawnWorker();
-  const payload = { options: { ...options, ...native, bridgePath, dataDir } };
+  const payload = { options: { ...options, ...native, videoCodecPath: options.videoCodecPath ?? native.videoCodecPath, bridgePath, dataDir } };
   const client = new QQClient(worker, options.timeoutMs ?? 120_000, options.login, { spawn: spawnWorker, payload }, options.autoReconnect);
   try {
     const result = await client.request('init', payload);
