@@ -1,0 +1,59 @@
+name: Current SDK with pruned macOS runtime
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  consume:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x64
+            runner: macos-15-intel
+          - arch: arm64
+            runner: macos-15
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.20.0'
+          architecture: ${{ matrix.arch }}
+      - name: Require actual device
+        env:
+          EXPECTED_ARCH: ${{ matrix.arch }}
+        run: node -e "if(process.platform!=='darwin'||process.arch!==process.env.EXPECTED_ARCH||process.version!=='v24.20.0')throw Error('Wrong native runner')"
+      - name: Install verifier dependencies without lifecycle scripts
+        working-directory: sdk
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Acquire separately bound actual main and pruned auxiliary
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tools/acquire-pruned-current-inputs.py ${{ matrix.arch }} out
+      - name: Source and account proof boundary contracts
+        run: node --test tools/verify-pruned-current-consumer.test.mjs
+      - name: Installed current SDK contracts and actual codec prepare close
+        run: node ci/verify-consumer.mjs
+      - name: Empty and warm local mirror cache and actual audio
+        run: node ci/pruned-runtime-probe.mjs out
+      - name: Verify complete source and runtime receipts
+        run: node tools/verify-pruned-current-consumer.mjs out
+      - uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: current-pruned-darwin-${{ matrix.arch }}
+          path: |
+            out/qq-native-client-*.tgz
+            out/input-binding.json
+            out/consumer-sdk.json
+            out/pruning-profile.json
+            out/pruning-build.json
+            out/source-release-manifest.json
+            out/consumer.json
+            out/installed-video.json
+            out/pruned-runtime-cache-audio.json
+            out/pruned-current-acceptance.json
+          retention-days: 14

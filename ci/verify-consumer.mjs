@@ -81,6 +81,15 @@ try {
   assert.equal(warm.wrapperPath,autoNative.wrapperPath);assert.equal((await stat(warm.wrapperPath)).mtimeMs,before.mtimeMs);
   installedNativeStorage={format:'gzip-objects-v1',nativePaths:installedManifest.files.length,objects:installedManifest.npmStorage.objects.length,allOriginalFilesVerified:true,warmCacheReused:true,networkFallbackAttempted:false};
  }
+ if(installedManifest.npmStorage===undefined){
+  const nativeRoot=dirname(autoNative.wrapperPath);
+  assert.equal(nativeRoot,await realpath(join(temp,'node_modules',platformName)));
+  for(const file of installedManifest.files){const bytes=await readFile(join(nativeRoot,file.path));if(file.size!==undefined)assert.equal(bytes.length,file.size);assert.equal(createHash('sha256').update(bytes).digest('hex'),file.sha256);}
+  const before=await stat(autoNative.wrapperPath);
+  const warm=await prepareNative({dataDir:join(temp,'unused-video-account'),cacheDir:nativeCache});
+  assert.deepEqual(warm,autoNative);assert.equal((await stat(warm.wrapperPath)).mtimeMs,before.mtimeMs);
+  installedNativeStorage={format:'plain-installed',nativePaths:installedManifest.files.length,allInstalledFilesVerified:true,installedPathsReused:true,networkFallbackAttempted:false};
+ }
  if(installedManifest.videoCodec!==undefined||process.env.QQ_VIDEO_CODEC_REQUIRED==='1'){
  assert.equal(installedManifest.videoCodec,'video/video-codec.node');
  assert.equal(autoNative.videoCodecPath,join(installedManifest.npmStorage===undefined?join(temp,'node_modules',platformName):dirname(autoNative.wrapperPath),'video/video-codec.node'));
