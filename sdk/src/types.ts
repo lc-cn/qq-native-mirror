@@ -121,6 +121,10 @@ export type MessageElement = SendableMessageElement
   | { type: 'unknown'; nativeType: number; data: unknown };
 export type MessageInput = string | SendableMessageElement[];
 export interface SentMessage { messageId: string; sequence: string; time: number }
+/** Text-only merged record; time is an explicit Unix timestamp in seconds. */
+export interface ForwardTextNode { userId: string; nickname: string; time: number; text: string }
+export interface MergedForwardOptions { title?: string; summary?: string; prompt?: string }
+export interface SentMergedForward extends SentMessage { resourceId: string }
 export interface Message extends SentMessage {
   peer: Peer;
   sender: { userId: string; uid: string; nickname: string };

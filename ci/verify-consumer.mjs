@@ -8,6 +8,7 @@ import {tmpdir} from 'node:os';
 import {join,resolve,dirname,sep} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import assert from 'node:assert/strict';
+import {EventEmitter as MergedForwardEmitter} from 'node:events';
 import {verifyForwardConsumer} from '../sdk/scripts/forward-consumer-contract.mjs';
 import {verifyMessageBatchConsumer} from '../sdk/scripts/message-batch-consumer-contract.mjs';
 import {verifyRecallConsumer} from '../sdk/scripts/recall-consumer-contract.mjs';
@@ -77,6 +78,58 @@ try {
  installedVideo=JSON.parse(await readFile('out/installed-video.json'));assert.equal(installedVideo.passed,true);assert.equal(installedVideo.inputs.length,3);assert.equal(installedVideo.sdkFakeCache,true);
  }
  const videoChecks=await verifyVideoConsumerContract(join(temp,'node_modules/qq-native-client'));
+ const mergedForwardChecks=await (async()=>{
+  // Installed compiled SDK only. The complete pipeline uses owned synthetic services,
+  // never the real native session used by the separate preparation/close probe.
+  const {createNativeServices}=await import(pathToFileURL(join(temp,'node_modules/qq-native-client/dist/native-services.js')).href);
+  const {serializeKernelError}=await import(pathToFileURL(join(temp,'node_modules/qq-native-client/dist/errors.js')).href);
+  assert.equal(typeof sdk.QQClient.prototype.sendMergedForward,'function');
+  let listener,failCard=false;const steps=[],uploads=[],sends=[];
+  const services=createNativeServices({
+   getMsgService:()=>({addKernelMsgListener(value){listener=value;},
+    sendSsoCmdReqByContend(command,data){steps.push('upload');uploads.push([command,Buffer.from(data)]);return{rspbuffer:Buffer.from('12031a0172','hex')};},
+    generateMsgUniqueId(){steps.push('generate');return`fixture-native-token-${sends.length}`;},
+    sendMsg(...args){steps.push('send');sends.push(args);if(failCard)return{result:23};
+     listener.onMsgInfoListUpdate([{guildId:args[1].guildId,chatType:1,peerUid:'u_456',sendStatus:1},
+      {guildId:args[1].guildId,chatType:1,peerUid:'u_456',sendStatus:2,msgId:'42',msgSeq:'9',msgTime:'100'}]);return{result:0};}}),
+   getUixConvertService:()=>({getUid(ids){steps.push('uid');assert.deepEqual(ids,['456']);return{uidInfo:new Map([['456','u_456']])};}}),
+   getGroupService:()=>({addKernelGroupListener(){}}),getBuddyService:()=>({addKernelBuddyListener(){}}),
+   getMSFService:()=>({getServerTime:()=> '100'}),
+  },'7.0.2-53644',()=>{},undefined,undefined,'789','u_self');
+  class MergedWorker extends MergedForwardEmitter {
+   connected=true;stdout=new MergedForwardEmitter();stderr=new MergedForwardEmitter();requests=[];
+   send(request,callback){this.requests.push(request);callback(null);
+    if(request.method==='close'){services.close();queueMicrotask(()=>this.emit('message',{id:request.id,result:null}));return;}
+    Promise.resolve().then(()=>services.invokeOperation(request.method,request)).then(result=>this.emit('message',{id:request.id,result}),error=>this.emit('message',{id:request.id,error:serializeKernelError(error)}));
+   }
+   kill(){this.connected=false;queueMicrotask(()=>this.emit('exit',0,null));return true;}
+  }
+  const worker=new MergedWorker(),client=new sdk.QQClient(worker,1000);
+  const peer={type:'private',userId:'456'},nodes=[{userId:'456',nickname:'fixture',time:100,text:'fixture text'}];
+  try{
+   await assert.rejects(client.sendMergedForward(peer,nodes),/not online/);
+   worker.emit('message',{event:'ready',payload:{uin:'789',uid:'u_self'}});
+   await assert.rejects(client.sendMergedForward(peer,[...nodes,{...nodes[0],text:{}}]));
+   assert.equal(worker.requests.length,0);assert.deepEqual(steps,[]);
+   assert.deepEqual(await client.sendMergedForward(peer,nodes,{title:'fixture title'}),{messageId:'42',sequence:'9',time:100,resourceId:'r'});
+   assert.deepEqual(steps,['uid','upload','generate','send']);assert.equal(uploads.length,1);assert.equal(sends.length,1);
+   assert.equal(uploads[0][0],'trpc.group.long_msg_interface.MsgService.SsoSendLongMsg');assert.ok(Buffer.isBuffer(uploads[0][1]));
+   assert.deepEqual(sends[0].slice(0,2),['0',{chatType:1,peerUid:'u_456',guildId:'fixture-native-token-0'}]);
+   assert.equal(sends[0][2].length,1);assert.equal(sends[0][2][0].elementType,10);
+   const card=JSON.parse(sends[0][2][0].arkElement.bytesData);
+   assert.equal(card.meta.detail.resid,'r');assert.equal(card.meta.detail.source,'fixture title');
+   assert.equal(card.extra.filename,card.meta.detail.uniseq);
+   assert.match(card.extra.filename,/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
+   assert.notEqual(card.extra.filename,'r');assert.notEqual(card.extra.filename,sends[0][1].guildId);
+   failCard=true;
+   await assert.rejects(client.sendMergedForward(peer,nodes),error=>{
+    assert.equal(error.code,23);assert.equal(error.operation,'sendMergedForward');
+    assert.deepEqual(error.mergedForward,{phase:'card',uploadCompletion:'resource-received',cardCompletion:'unknown',resourceId:'r'});return true;
+   });
+   assert.equal(uploads.length,2);assert.equal(sends.length,2);assert.equal(worker.requests.length,2);
+  }finally{await client.close();services.close();}
+  return{mergedForwardClientContract:true,mergedForwardServiceContract:true,nativeMergedForwardAttempted:false};
+ })();
  const cli=await import(pathToFileURL(join(temp,'node_modules/qq-native-client/dist/cli.js')).href);
  const elements=await import(pathToFileURL(join(temp,'node_modules/qq-native-client/dist/message-elements.js')).href);
  const mixed=[{type:'text',text:'fixture'},{type:'face',id:14},{type:'face',id:428}];
@@ -282,5 +335,5 @@ try{assert.deepEqual(await success.invokeOperation('listFriends'),[]);assert.equ
  globalThis.fetch=()=>{throw new Error('Unexpected mirror request with installed platform package');};
  client=await sdk.createClient({dataDir:join(temp,'unused-account'),cacheDir:nativeCache,autoReconnect:false,timeoutMs:30000});
  const exports=client.nativeExports.length;if(exports<80)throw new Error('Unexpected native export inventory');await client.close();if(client.state!=='closed')throw new Error('Client did not close');
- await writeFile('out/consumer.json',JSON.stringify({platform:process.platform,arch:process.arch,node:process.version,exports,installedNativeStorage,...messageBatchChecks,...forwardChecks,...recallChecks,...mentionChecks,...sendChecks,...receivedChecks,...videoChecks,automaticVideoCodec:installedVideo!==undefined,installedVideoDecoder:installedVideo?.passed===true,installedVideoFakeCache:installedVideo?.sdkFakeCache===true,installedVideo,installedMainOnly:true,automaticPlatformSelection:true,tarballRequests,faceContract:true,faceDeliveryAttempted:false,messageQueryContract:true,historyQueryContract:true,nativeHistoryQueryAttempted:false,nativeMessageQueryAttempted:false,selfProfileContract:true,profileMutationAttempted:false,groupOperationContract:true,groupMutationAttempted:false,groupMemberQueryContract:true,groupMemberIdentityContract:true,nativeGroupMemberQueryAttempted:false,groupMetadataEventContract:true,businessWatchContract:true,nativeGroupMetadataObserved:false,friendMetadataEventContract:true,nativeFriendMetadataObserved:false,friendListQueryContract:true,friendListBatchContract:true,friendProfileQueryContract:true,groupListQueryContract:true,nativeGroupListQueryAttempted:false,nativeFriendListQueryAttempted:false,prepared:true,closed:true,loginAttempted:false,registry:'isolated local fixture serving actual CI tarballs'},null,2));console.log(await readFile('out/consumer.json','utf8'));
+ await writeFile('out/consumer.json',JSON.stringify({platform:process.platform,arch:process.arch,node:process.version,exports,installedNativeStorage,...messageBatchChecks,...forwardChecks,...recallChecks,...mentionChecks,...sendChecks,...receivedChecks,...videoChecks,...mergedForwardChecks,automaticVideoCodec:installedVideo!==undefined,installedVideoDecoder:installedVideo?.passed===true,installedVideoFakeCache:installedVideo?.sdkFakeCache===true,installedVideo,installedMainOnly:true,automaticPlatformSelection:true,tarballRequests,faceContract:true,faceDeliveryAttempted:false,messageQueryContract:true,historyQueryContract:true,nativeHistoryQueryAttempted:false,nativeMessageQueryAttempted:false,selfProfileContract:true,profileMutationAttempted:false,groupOperationContract:true,groupMutationAttempted:false,groupMemberQueryContract:true,groupMemberIdentityContract:true,nativeGroupMemberQueryAttempted:false,groupMetadataEventContract:true,businessWatchContract:true,nativeGroupMetadataObserved:false,friendMetadataEventContract:true,nativeFriendMetadataObserved:false,friendListQueryContract:true,friendListBatchContract:true,friendProfileQueryContract:true,groupListQueryContract:true,nativeGroupListQueryAttempted:false,nativeFriendListQueryAttempted:false,prepared:true,closed:true,loginAttempted:false,registry:'isolated local fixture serving actual CI tarballs'},null,2));console.log(await readFile('out/consumer.json','utf8'));
 }finally{await client?.close();server.closeAllConnections();await new Promise(done=>server.close(done));await rm(temp,{recursive:true,force:true});}

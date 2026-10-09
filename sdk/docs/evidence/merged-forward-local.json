@@ -1,0 +1,134 @@
+{
+  "schemaVersion": 1,
+  "observedAt": "2026-10-09T20:12:46.750130+00:00",
+  "baseCommit": "5c0ceada26f3e1979dadb14034c620be8a428a6c",
+  "feature": "text-only merged-forward public API, worker and CLI",
+  "sourceFiles": [
+    {
+      "path": "ci/verify-consumer.mjs",
+      "sha256": "5fa98eeff9eedd4f95d884c9003bf0571150ca70cf0b4d70c8e97a736975ffcc"
+    },
+    {
+      "path": "sdk/README.md",
+      "sha256": "a93225d2de2354195cb20a2bb7c371c9ec6062be6ff63ced6532186fadf1b7d2"
+    },
+    {
+      "path": "sdk/docs/long-message-response.md",
+      "sha256": "845b734ba0de0d40df110a936895114733d22abec775ab9acdbbb45ea8ce7b64"
+    },
+    {
+      "path": "sdk/docs/merged-forward-contract.md",
+      "sha256": "4ae2ef610389a4e07dab093722390852fb6584935eebbdfe88adba0b9c292aae"
+    },
+    {
+      "path": "sdk/src/cli.ts",
+      "sha256": "dd1095510fb7bbc46c658de1dd69ea29fab1b3d6a5f33bf3a564fc066d8e2e35"
+    },
+    {
+      "path": "sdk/src/errors.ts",
+      "sha256": "d9766bd86e982b2316627a7f1f473a9cacdf7658ef45005596e7d7c861636fe6"
+    },
+    {
+      "path": "sdk/src/index.ts",
+      "sha256": "5c7cc4dcb6c5c63957d7896084ea4be9f6d9682bf05239b2d24be9d3433ebb90"
+    },
+    {
+      "path": "sdk/src/native-services.ts",
+      "sha256": "7943e22a4433a2522d8ecb40a39c8def0338deee633573cf0befa62b7868204c"
+    },
+    {
+      "path": "sdk/src/types.ts",
+      "sha256": "e443197ec5d7020beacb9830f9f825456b985001830f6407d1663000b11ccfbe"
+    },
+    {
+      "path": "sdk/src/worker.ts",
+      "sha256": "f09f3e0dfbadd9c0781653f3a9694350591537b3cf1dd72232d977a54cd43562"
+    },
+    {
+      "path": "sdk/test/errors.test.ts",
+      "sha256": "eee1eb84c4285b72e789987699aa86e9d256280cc4fc0a898366987f0f1d69ef"
+    },
+    {
+      "path": "tools/verify-dedup-consumer.mjs",
+      "sha256": "29f47570d56e887d3a292e6a82f4434af445d54fbaee79d378aa01b6f7d334a8"
+    },
+    {
+      "path": "tools/verify-dedup-consumer.test.mjs",
+      "sha256": "8acae06c2dee569f358c59c140957a513629d27476536e3d9887a384d75938e3"
+    },
+    {
+      "path": "sdk/docs/long-message-request-internal.md",
+      "sha256": "e0eaaed5977ab310dea4128eaa57c6553e1c018a489e28e3f00fd2d9da2614cb"
+    },
+    {
+      "path": "sdk/docs/merged-forward-card-internal.md",
+      "sha256": "ddb7ea71da4bd384a2adead643464c6095be19756316a7cb8fe4da1bf25cb783"
+    },
+    {
+      "path": "sdk/docs/merged-forward.md",
+      "sha256": "8d27e1b787d03c17d374da41f1e4bb3246a62f8f75327b679640fe1f14279fa0"
+    },
+    {
+      "path": "sdk/src/long-message-request.ts",
+      "sha256": "5a1b0bcfc96e518a23934dd5c12ff6ca075ad910e5fae4e945c0752b2b4e6ca4"
+    },
+    {
+      "path": "sdk/src/merged-forward-card.ts",
+      "sha256": "bf417616caf09870e4f3f5f89f2f3cfe77c4be4b19f08008f1df5f092665a0df"
+    },
+    {
+      "path": "sdk/src/merged-forward.ts",
+      "sha256": "e5fbbec434519ae151e92b692e9be8754c7170d5f20ad72e9ad7418890c18ff6"
+    },
+    {
+      "path": "sdk/test/long-message-request.test.ts",
+      "sha256": "338bdfb7d5b3a34655ed303245dfbc32050835f3bb804f0f08a572e0696c3339"
+    },
+    {
+      "path": "sdk/test/merged-forward-card.test.ts",
+      "sha256": "c7a2c6cda8617a853aed3a788f8f1ddb30307b9fad52d567a793686d609e904b"
+    },
+    {
+      "path": "sdk/test/merged-forward-cli.test.ts",
+      "sha256": "88e706aa490d4140458235bbf52e7820885af5c6a4c24cf35e51c4a320f54376"
+    },
+    {
+      "path": "sdk/test/merged-forward-client.test.ts",
+      "sha256": "8fda99308674ab697c56d729dad27e15ad6d28ab2e81fedb0e6296353f764f93"
+    },
+    {
+      "path": "sdk/test/merged-forward-services.test.ts",
+      "sha256": "41866e5d60e8900eb297853c8b847d81f5ca7ca4919051423ba78c54d3ec562c"
+    }
+  ],
+  "localBuildPassed": true,
+  "fullSdkRegression": {
+    "tests": 484,
+    "passed": 484,
+    "failed": 0,
+    "skipped": 0,
+    "logSha256": "1247ce46ec59016038f676be3fbab31c8be0aa1e0919f9893245c3eb6757dcf3"
+  },
+  "finalUtf8AndErrorRegression": {
+    "tests": 10,
+    "passed": 10,
+    "failed": 0,
+    "skipped": 0,
+    "logSha256": "8f02f840c9781763d90cba3ce9dbb5395e6b410ff0cc4409ba1ec16a58027757"
+  },
+  "producerContracts": {
+    "tests": 6,
+    "passed": 6
+  },
+  "typeCheckPassed": true,
+  "independentReviewFixes": [
+    "unknown progress preserved on parent IPC lifecycle failures",
+    "4096 UTF-8 byte resource ID bound"
+  ],
+  "realNativeUploadAttempted": false,
+  "accountUsed": false,
+  "recipientDeliveryEstablished": false,
+  "signingAuthenticityEstablished": false,
+  "published": false,
+  "defaultNativeCatalogChanged": false
+}

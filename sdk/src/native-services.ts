@@ -1,4 +1,6 @@
 import { nativeResultError } from './errors.ts';
+import {captureMergedForward,sendCapturedMergedForward} from './merged-forward.ts';
+import {createLongMessageResponseTransport} from './long-message-response.ts';
 import { normalizeMessageQuery, normalizeMessageBatchQuery, queryNativeMessage, queryNativeMessages, queryNativeHistory } from './message-query.ts';
 import { createSelfProfile, type SelfProfileOperation } from './self-profile.ts';
 import { listWebGroupNotices } from './web-group-notices.ts';
@@ -23,7 +25,7 @@ import type { Friend, Group, GroupMember, Message, NativeCallbackAudit } from '.
 
 type Native = Record<string, any>;
 export interface NativePeer { chatType: 1 | 2; peerUid: string; guildId?: string }
-export type ServiceOperation = 'listFriends' | 'listGroups' | 'getGroupMembers' | 'sendPrivateMessage' | 'sendGroupMessage' | 'getMessage' | 'getMessages' | 'getHistory' | 'recallMessage' | 'downloadAttachment' | SelfProfileOperation | 'listGroupNotices' | GroupNoticeOperation | GroupOperation | ContactOperation | FriendRequestOperation | GroupRequestOperation | ForwardOperation;
+export type ServiceOperation = 'listFriends' | 'listGroups' | 'getGroupMembers' | 'sendPrivateMessage' | 'sendGroupMessage' | 'sendMergedForward' | 'getMessage' | 'getMessages' | 'getHistory' | 'recallMessage' | 'downloadAttachment' | SelfProfileOperation | 'listGroupNotices' | GroupNoticeOperation | GroupOperation | ContactOperation | FriendRequestOperation | GroupRequestOperation | ForwardOperation;
 export interface NativeMessage extends Native { msgId: string; peerUid: string; chatType: number }
 interface Waiter { event: string; check: (...args: any[]) => unknown; resolve: (value: any) => void; reject: (error: Error) => void; timer: ReturnType<typeof setTimeout> }
 
@@ -270,8 +272,8 @@ export function createNativeServices(session: Native, version: string, emit: (ev
       throw new Error(`Unsupported message element: ${String(element.type)}`);
     }));
   };
-  const send = async (peer: NativePeer, input: unknown) => {
-    const elements = await elementsFor(input, peer);
+  let longMessageTransport: ReturnType<typeof createLongMessageResponseTransport> | undefined;
+  const sendPreparedElements = async (peer: NativePeer, elements: Native[], onDispatch?: () => void) => {
     const messages = service('Msg');
     const uniqueId = await awaitAlive(call(messages, 'generateMsgUniqueId', peer.chatType, call(service('MSF'), 'getServerTime')));
     lifetime.signal.throwIfAborted();
@@ -288,10 +290,11 @@ export function createNativeServices(session: Native, version: string, emit: (ev
       if (matching.some(message => message.sendStatus === 0)) throw new Error('Native message send failed');
       return undefined;
     },
-      () => call(messages, 'sendMsg', '0', destination, elements, new Map()), 10_000, value => value?.result === 0);
+      () => { lifetime.signal.throwIfAborted(); onDispatch?.(); return call(messages, 'sendMsg', '0', destination, elements, new Map()); }, 10_000, value => value?.result === 0);
     lifetime.signal.throwIfAborted();
     return sent;
   };
+  const send = async (peer: NativePeer, input: unknown) => sendPreparedElements(peer, await elementsFor(input, peer));
   return {
     async invokeOperation(method: ServiceOperation, payload: Native = {}): Promise<unknown> {
       if (closed) throw new Error('Native services are closed');
@@ -383,6 +386,14 @@ export function createNativeServices(session: Native, version: string, emit: (ev
           const input = captureSendInput(payload.message, true);
           return send({ chatType: 2, peerUid: groupId }, input);
         }
+        case 'sendMergedForward': {
+          const captured=captureMergedForward(payload.peer,payload.nodes,payload.options);
+          const destination=await resolvePeer(captured.peer);
+          lifetime.signal.throwIfAborted();
+          return sendCapturedMergedForward(captured,accountUid ?? '',
+            () => longMessageTransport ??= createLongMessageResponseTransport(service('Msg') as any),
+            (card,onDispatch) => sendPreparedElements(destination,[card],onDispatch),lifetime.signal);
+        }
         case 'getMessage': {
           const query = normalizeMessageQuery(payload.peer, payload.messageId);
           const raw = await queryNativeMessage(service('Msg'), await resolvePeer(query.peer), query.messageId);
@@ -444,6 +455,7 @@ export function createNativeServices(session: Native, version: string, emit: (ev
     close() {
       closed = true;
       lifetime.abort();
+      longMessageTransport?.close();
       usedSendIds.clear();
       recallEvents.close();
       selfProfile.close();

@@ -1,11 +1,13 @@
 #!/usr/bin/env node
-import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, stat } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { createClient, type QQClient } from './index.ts';
 import { validateDownloadMirrors } from './native-package.ts';
 import { validateFaceId } from './message-elements.ts';
 import { normalizeMessageBatchQuery } from './message-query.ts';
+import {captureMergedForward} from './merged-forward.ts';
+import {KernelRequestError,MergedForwardError} from './errors.ts';
 import type { ClientOptions, LoginRequest, Peer, HistoryOptions, MessageInput } from './types.ts';
 
 /** Watch only remains open across explicitly retryable, enabled reconnects. */
@@ -56,6 +58,8 @@ const usage = `qq-native-client <command> [options]
   messages --config FILE --kind private|group --target ID --message-ids ID,ID
   forward-history --config FILE --kind private|group --target ID --root-message-id ID --parent-message-id ID
   forward --config FILE --source-kind private|group --source-target ID --kind private|group --target ID --message-ids ID,ID
+  send-forward --config FILE --kind private|group --target ID --nodes-file FILE
+       [--title TEXT --summary TEXT --prompt TEXT] [--uin UIN]
   watch --config FILE [--uin UIN] [--events message|all|normalized]  Print business events as JSON lines
   send --config FILE --kind private|group --target ID (--text TEXT | --message-file JSON) [--uin UIN]
   nickname --config FILE --name TEXT
@@ -167,6 +171,14 @@ export async function prepareCommand(command: string, flags: Record<string, stri
       const ids = required(flags, 'message-ids').split(',');
       if (!ids.length || ids.some(id => !/^\d+$/.test(id))) throw new Error('--message-ids must be comma-separated numeric IDs');
       return client => client.forwardMessages(source, destination, ids);
+    }
+    case 'send-forward': {
+      const file=resolve(required(flags,'nodes-file')),info=await stat(file);
+      if(!info.isFile()||info.size>2*1024*1024)throw Error('--nodes-file must be a regular JSON file of at most 2 MiB');
+      const bytes=await readFile(file);if(bytes.length>2*1024*1024)throw Error('--nodes-file exceeds 2 MiB');
+      const options=Object.fromEntries(['title','summary','prompt'].filter(key=>flags[key]!==undefined).map(key=>[key,flags[key]]));
+      const input=captureMergedForward(peer(flags),JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes)),options);
+      return client=>client.sendMergedForward(input.peer,input.nodes,input.options);
     }
     case 'group-requests': {
       const limit = flags.limit === undefined ? 20 : Number(numeric(flags, 'limit'));
@@ -310,4 +322,8 @@ async function main() {
     await client.close();
   }
 }
-if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) void main().catch(error => { console.error(error instanceof Error ? error.message : String(error)); if (process.exitCode !== 130) process.exitCode = 1; });
+export function formatCliError(error:unknown):string {
+  const progress=error instanceof MergedForwardError?{phase:error.phase,...error.progress}:error instanceof KernelRequestError?error.mergedForward:undefined;
+  return progress?JSON.stringify({error:error instanceof Error?error.message:'Merged-forward failed',mergedForward:progress,...(typeof (error as KernelRequestError).code==='string'||typeof (error as KernelRequestError).code==='number'?{code:(error as KernelRequestError).code}:{})}):error instanceof Error?error.message:String(error);
+}
+if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) void main().catch(error => { console.error(formatCliError(error)); if (process.exitCode !== 130) process.exitCode = 1; });

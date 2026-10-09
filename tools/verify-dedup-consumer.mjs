@@ -64,6 +64,7 @@ export function validateDedupInstalledReceipts(build,manifest,receipt,video){
  const contract=deviceContracts[build.device];check(contract,'Unsupported consumer device');
  check(`${receipt.platform}-${receipt.arch}`===build.device&&/^v24\./.test(receipt.node)&&receipt.exports===contract.exports&&receipt.installedMainOnly===true&&receipt.automaticPlatformSelection===true&&receipt.prepared===true&&receipt.closed===true&&receipt.loginAttempted===false&&receipt.accountUsed===false,'Installed preparation/close failed');
  if(manifest.nodeVersion!==undefined)check(receipt.node===manifest.nodeVersion,'Actual consumer Node ABI mismatch');
+ check(receipt.mergedForwardClientContract===true&&receipt.mergedForwardServiceContract===true&&receipt.nativeMergedForwardAttempted===false,'Installed merged-forward contracts missing or real operation attempted');
  check(receipt.nativeMessageBatchQueryAttempted===false&&receipt.messageBatchQueryContract===true&&receipt.messageBatchCliContract===true,'Installed batch contracts missing');
  assert.deepEqual(receipt.installedNativeStorage,{format:'gzip-objects-v1',nativePaths:contract.paths,objects:contract.objects,allOriginalFilesVerified:true,warmCacheReused:true,networkFallbackAttempted:false});
  assert.deepEqual(receipt.tarballRequests.slice().sort(),['qq-native-client','qq-native-client-'+build.device,'silk-wasm'].sort());

@@ -1,6 +1,8 @@
-import { deserializeKernelError } from './errors.ts';
+import { deserializeKernelError, KernelRequestError } from './errors.ts';
+import {captureMergedForward} from './merged-forward.ts';
 import { normalizeMessageQuery, normalizeMessageBatchQuery } from './message-query.ts';
-export { KernelRequestError } from './errors.ts';
+export { KernelRequestError, MergedForwardError } from './errors.ts';
+export type {MergedForwardFailure, MergedForwardProgress} from './errors.ts';
 import { EventEmitter } from 'node:events';
 import { fork, type ChildProcess } from 'node:child_process';
 import { resolve, dirname, join } from 'node:path';
@@ -9,11 +11,17 @@ import { fileURLToPath } from 'node:url';
 import { mkdir } from 'node:fs/promises';
 import { prepareNative } from './native-package.ts';
 import { normalizeLoginRequest } from './login-request.ts';
-import type { Account, ClientOptions, ClientEvents, LoginRequest, ClientState, Friend, Group, GroupMember, MessageInput, SentMessage, Message, Peer, HistoryOptions, KickOptions, UserProfile, DeleteFriendOptions, FriendRequest, NativeCallbackAudit } from './types.ts';
+import type { Account, ClientOptions, ClientEvents, LoginRequest, ClientState, Friend, Group, GroupMember, MessageInput, SentMessage, SentMergedForward, ForwardTextNode, MergedForwardOptions, Message, Peer, HistoryOptions, KickOptions, UserProfile, DeleteFriendOptions, FriendRequest, NativeCallbackAudit } from './types.ts';
 export type * from './types.ts';
 export type { VideoCodec, VideoInfo } from './video-codec-loader.ts';
 import type { GroupNoticeOptions, GroupNoticePage } from './types.ts';
 import type { GroupRequest, GroupRequestOptions, GroupRequestPage } from './types.ts';
+
+/** A parent-side failure after IPC submission cannot identify the native phase. */
+function requestFailure(method:string,error:Error):Error {
+  if(method!=='sendMergedForward'||(error instanceof KernelRequestError&&error.mergedForward))return error;
+  return new KernelRequestError(method,error.message,undefined,error.name,{phase:'operation',uploadCompletion:'unknown',cardCompletion:'unknown'});
+}
 
 export class QQClient extends EventEmitter<ClientEvents> {
   readonly nativeExports: string[] = [];
@@ -70,7 +78,7 @@ export class QQClient extends EventEmitter<ClientEvents> {
           for (const [id, pending] of this.#pending) {
             if (pending.method === 'close') continue;
             clearTimeout(pending.timer); this.#pending.delete(id);
-            pending.reject(new Error(`QQ account became offline (${message.event}); request was not replayed`));
+            pending.reject(requestFailure(pending.method,new Error(`QQ account became offline (${message.event}); request was not replayed`)));
           }
           if (message.event === 'disconnected' && message.payload?.retryable !== true) { clearTimeout(this.#autoTimer); this.#autoTimer = undefined; }
           if (message.event !== 'disconnected') { clearTimeout(this.#autoTimer); this.#autoTimer = undefined; this.#lastAccount = undefined; }
@@ -91,7 +99,7 @@ export class QQClient extends EventEmitter<ClientEvents> {
       if (generation !== this.#generation || this.#closed) return;
       clearTimeout(this.#autoTimer); this.#autoTimer = undefined;
       this.#closed = true;
-      for (const pending of this.#pending.values()) { clearTimeout(pending.timer); pending.reject(error); }
+      for (const pending of this.#pending.values()) { clearTimeout(pending.timer); pending.reject(requestFailure(pending.method,error)); }
       this.#pending.clear(); this.#account = undefined;
       this.#setState(this.#closing ? 'closed' : 'failed');
       if (!this.#closing) this.emit('terminated', error);
@@ -133,15 +141,15 @@ export class QQClient extends EventEmitter<ClientEvents> {
         if(method==='login') {
           // A timed-out authorization must not later make this generation online.
           this.#closed=true;this.#account=undefined;this.#setState('failed');
-          for(const pending of this.#pending.values()){clearTimeout(pending.timer);pending.reject(error);}
+          for(const pending of this.#pending.values()){clearTimeout(pending.timer);pending.reject(requestFailure(pending.method,error));}
           this.#pending.clear();
           try {await this.#stopWorker();}
           catch(cleanupError){reject(new AggregateError([error,cleanupError],'QQ login timeout and worker cleanup failed'));return;}
         }
-        reject(error);
+        reject(requestFailure(method,error));
       }, timeoutMs);
       this.#pending.set(id, { method, resolve, reject, timer });
-      const sendFailed=(error:Error)=>{clearTimeout(timer);this.#pending.delete(id);reject(error);};
+      const sendFailed=(error:Error)=>{clearTimeout(timer);this.#pending.delete(id);reject(requestFailure(method,error));};
       try {
         this.#worker.send({ id, method, ...payload }, error => {if(error) sendFailed(error);});
       } catch(error) {sendFailed(error instanceof Error?error:new Error(String(error)));}
@@ -197,7 +205,7 @@ export class QQClient extends EventEmitter<ClientEvents> {
   async #restartAndLogin(login: LoginRequest): Promise<Account> {
     if (this.#closing || this.#state === 'closed') throw new Error('QQ client is closed');
     this.#setState('connecting'); this.#account = undefined; this.#login = undefined;
-    for (const pending of this.#pending.values()) { clearTimeout(pending.timer); pending.reject(new Error('QQ client reconnecting; request was not replayed')); }
+    for (const pending of this.#pending.values()) { clearTimeout(pending.timer); pending.reject(requestFailure(pending.method,new Error('QQ client reconnecting; request was not replayed'))); }
     this.#pending.clear();
     const previous = this.#worker;
     ++this.#generation;
@@ -243,6 +251,10 @@ export class QQClient extends EventEmitter<ClientEvents> {
   getForwardMessages(peer: Peer, rootMessageId: string, parentMessageId: string): Promise<Message[]> { return this.#operation('getForwardMessages', { peer, rootMessageId, parentMessageId }); }
   /** Native submission only; this does not confirm destination receipt. */
   forwardMessages(source: Peer, destination: Peer, messageIds: string[]): Promise<void> { return this.#operation('forwardMessages', { source, destination, messageIds }); }
+  /** Text-only composition; upload and card dispatch are never automatically retried. */
+  async sendMergedForward(peer: Peer, nodes: readonly ForwardTextNode[], options: MergedForwardOptions = {}): Promise<SentMergedForward> {
+    return this.#operation('sendMergedForward', captureMergedForward(peer,nodes,options));
+  }
   recallMessage(peer: Peer, messageId: string): Promise<void> { return this.#operation('recallMessage', { peer, messageId }); }
   downloadAttachment(peer: Peer, messageId: string, elementId: string, destination: string): Promise<{ file: string }> { return this.#operation('downloadAttachment', { peer, messageId, elementId, destination }); }
   getUserProfile(userId: string): Promise<UserProfile> { return this.#operation('getUserProfile', { userId }); }
@@ -298,7 +310,7 @@ export class QQClient extends EventEmitter<ClientEvents> {
     this.#closing = true; this.#setState('closing');
     try { await this.request('close', {}, 2000); } finally {
       this.#closed = true; this.#account = undefined;
-      for (const pending of this.#pending.values()) { clearTimeout(pending.timer); pending.reject(new Error('QQ client closed')); }
+      for (const pending of this.#pending.values()) { clearTimeout(pending.timer); pending.reject(requestFailure(pending.method,new Error('QQ client closed'))); }
       this.#pending.clear();
       try { await this.#stopWorker(); this.#setState('closed'); }
       catch (error) { this.#setState('failed'); throw error; }

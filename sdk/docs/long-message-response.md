@@ -1,6 +1,6 @@
 # Internal long-message response adapter
 
-`src/long-message-response.ts` is independently written, internal, and disconnected from the public API and worker. It does not construct requests or establish real upload, account or signing acceptance.
+`src/long-message-response.ts` is independently written and internal. The unpublished public `sendMergedForward` pipeline now uses it through the worker and the current Session MsgService. It does not construct requests itself or establish real upload, account or signing acceptance. The earlier evidence at commit `cbf219bd0fbe930f71d6e9e1be89a76e453d4e59` tested the adapter before that integration.
 
 ## Fixed primary facts
 
