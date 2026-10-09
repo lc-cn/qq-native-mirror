@@ -1,0 +1,27 @@
+.gitignore
+  s_2104cc474f1ce5::t_4bfda3ec29ca79 5
+catalog-gzip-v1.json
+  s_2104cc474f1ce5::t_03d87bb51a81e2 1-38
+packages/3.2.32-52194-linux-arm64-gzip-v1/84d61aca429377e9fd6717327c23d3a5e06d6655e520fc60b1adc12378b2848a/manifest.json
+  s_2104cc474f1ce5::t_62238c1586f66a 1-70
+packages/3.2.32-52194-linux-x64-gzip-v1/be9da51b924212050965ff61b640d8bc1d70c675c2ab6f786ab43143f06375cf/manifest.json
+  s_2104cc474f1ce5::t_fd555ce7ad60f0 1-63
+packages/7.0.2-53644-darwin-arm64-gzip-v1/9907a7993e8c276291f8e4f490fa675adbc8799e0bd392416b889ea6ee8e683a/manifest.json
+  s_2104cc474f1ce5::t_a914376c036830 1-8106
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b589c726e85a2fc700bdad17118346e4030323b6",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
