@@ -4,6 +4,8 @@
 
 需要加速下载时，维护者可手动运行 `native-npm.yml`，启用 `archive` 并保持 `publish=false`。全部验收通过后，CI 会在 GitHub 创建 `npm-v<version>-ci-<runId>` 预发布，上传七个包、manifest 和 `acceptance-evidence.tar.gz`。包和 evidence 解压后放在同一独立目录，可使用相同校验脚本；下载经过代理也必须通过全部摘要校验。
 
+若完整构建已成功但尚未归档，可手动运行 `archive-npm-candidate.yml`，填写该成功 `native-npm.yml` 的 `source-run-id` 与确切 `source-sha`。GitHub runner 下载原 `npm-release` artifact，校验七包、schema 2 的全部收据摘要及 run/attempt/commit，并再次确认源 run 仍成功且身份未变，再生成同一源 run 的候选 tag。归档工作流的执行编号与源构建编号分别记录；不重新打包 npm tarball、不初始化内核、不登录或发布 npm。校验失败或身份不符时不创建归档。
+
 ```sh
 node scripts/local-first-publish.mjs /absolute/path/npm-release
 ```
@@ -65,3 +67,7 @@ node scripts/download-npm-candidate.mjs npm-v0.0.1-ci-RUN_ID /absolute/path/npm-
 源码版本与六个辅包的精确 pin 已提升到 `0.0.2`；已发布版本仍为 `0.0.1`。候选包含首发后的 SDK 查询、事件与生命周期修复，仍需同一次六平台构建、聚合消费者和 schema 2 摘要校验完成后才可本地发布。归档不等于 npm 发布，账号验收与签名真实性也不由构建成功证明。
 
 在辅包尚未发布时，源码 lock 的六个 QQ 辅包条目仅声明目标版本、optional、os/cpu，不填写尚未知的 resolved/integrity，也不沿用 0.0.1 的字节摘要。锁定的其他依赖保持原有真实摘要。独立 macOS arm64 构建目录已验证在线及缓存齐备后的离线 `npm ci --ignore-scripts`；此时六个未发布 QQ 辅包没有安装，编译依赖完整。六平台候选 CI 会从固定源逐文件验证并构建辅包，通过独立本地 registry 安装主包验收，release manifest 绑定实际生成包的摘要。七包发布并逐一核对入库后，再用官方 registry 生成这些辅包的完整 lock；这项准备不宣称未知原生包具有已验证的 registry 完整性。
+
+[CI 37925080425](https://github.com/lc-cn/qq-native-mirror/actions/runs/37925080425) 已完成六平台和聚合验收，源 commit 为 `b4b2e4eab5e44f99126e2efc68d6701ac7658833`。296 项回归通过，七份实际安装消费者记录及完整日志已独立核对，schema 2 聚合摘要绑定成功，npm 发布跳过。另一归档 run `37925110570` 两次 macOS arm64 原生文件下载返回 HTTP 500；其失败产物不用于候选。后续归档使用成功 run 的原始产物，并保留其源码及 run 身份。
+
+[候选归档 npm-v0.0.2-ci-37925080425](https://github.com/lc-cn/qq-native-mirror/releases/tag/npm-v0.0.2-ci-37925080425) 已由补归档 [run 37926819590](https://github.com/lc-cn/qq-native-mirror/actions/runs/37926819590) 完成。九个 GitHub 资产完整：七包、manifest、证据压缩包；每个 tarball 的资产摘要与成功源 CI 原始文件一致。七包共 347,739,307 字节，主包 277,406 字节，主包 SHA-256 为 `3fb41d3dab3fe7f0dd225f7413b3cb7dbfdf0c80e9efb11bda1ed948020ca908`。本地完整校验通过，七个 receipt 对象逐一与原始 CI 日志匹配；使用 `gh-proxy.com` 的下载校验也通过（已缓存七包，只新下载证据归档，不宣称本轮进行了七包冷下载）。本轮未执行账号操作或 npm 发布，候选的源码身份仍为 `b4b2e4e...`，不是归档工具所在的 commit。
