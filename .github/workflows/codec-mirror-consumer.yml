@@ -1,0 +1,57 @@
+name: Prospective codec mirror cold consumers
+on:
+  workflow_dispatch:
+    inputs:
+      source_tag:
+        type: string
+        default: npm-v0.0.2-ci-37962268125
+        required: true
+      mirror_tag:
+        type: string
+        default: native-npm-v0.0.2-ci-37962268125-attempt-1
+        required: true
+permissions:
+  contents: read
+  actions: read
+jobs:
+  consumer:
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { platform: linux, arch: x64, runner: ubuntu-24.04 }
+          - { platform: linux, arch: arm64, runner: ubuntu-24.04-arm }
+          - { platform: darwin, arch: x64, runner: macos-15-intel }
+          - { platform: darwin, arch: arm64, runner: macos-15 }
+          - { platform: win32, arch: x64, runner: windows-2022 }
+          - { platform: win32, arch: arm64, runner: windows-11-arm }
+    runs-on: ${{ matrix.runner }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.20.0'
+          architecture: ${{ matrix.arch }}
+      - name: Verify runner
+        run: node -e "if(process.platform!=='${{ matrix.platform }}'||process.arch!=='${{ matrix.arch }}')throw Error('Incorrect runner')"
+      - name: Linux system dependencies
+        if: matrix.platform == 'linux'
+        run: sudo apt-get update && sudo apt-get install -y libx11-xcb1 libgnutls30
+      - name: Verify immutable source and candidate mirror, decode and prepare without account
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_TAG: ${{ inputs.source_tag }}
+          MIRROR_TAG: ${{ inputs.mirror_tag }}
+        run: node ci/codec-mirror-consumer.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: codec-mirror-consumer-${{ matrix.platform }}-${{ matrix.arch }}
+          path: |
+            out/codec-mirror-consumer.json
+            out/codec-video.json
+          if-no-files-found: error
