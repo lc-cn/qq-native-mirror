@@ -1,0 +1,33 @@
+.github/workflows/codec-mirror-consumer.yml
+  s_2104cc474f1ce5::t_0b9ff0da1c7dd8 5-12,59-60
+catalog-backups/29fd6b763a1323ddcb9a71b1b369188fdc2bf8d7bc4133c19dcc41de8bd60ee7.json
+  s_2104cc474f1ce5::t_bf49160cc4e7ec 1-93
+catalog.json
+  s_2104cc474f1ce5::t_d93c9bf0ffab47 34-35,45-46,56-57,67-68,78-79,89-90
+ci/codec-mirror-consumer.mjs
+  s_2104cc474f1ce5::t_b436bc5c2647b3 15,33-43,59,62-64
+sdk/docs/evidence/codec-materials-ci-37962268125.json
+  s_2104cc474f1ce5::t_cd63d2f8f765e6 112-133
+sdk/docs/npm-first-publish.md
+  s_2104cc474f1ce5::t_93207a0633549a 117-122
+sdk/scripts/prepare-native-catalog-promotion.mjs
+  s_2104cc474f1ce5::t_79b687d3e61e2d 1-33
+sdk/test/prepare-native-catalog-promotion.test.ts
+  s_2104cc474f1ce5::t_6eed1a1b7f57cd 1-6
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "956f67ec88a31208b179edb0671d5ad4f025ddbb",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
