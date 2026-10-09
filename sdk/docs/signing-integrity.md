@@ -16,6 +16,8 @@ A further pinned static pass identifies the actual 378-byte source copied into t
 
 The processing helper's next callee constructs a length/data input record, then tail-calls another program through the same consumer. This nested program's 3264-byte blob includes 48 bytes injected from a runtime global pointer. The input record is therefore not a proven final return record, and the static template hash is not a runtime blob hash. The nested result layout and changed-byte propagation remain unproven. See [the nested boundary](linux-signing-static.md#加工返回中的嵌套解释器边界).
 
+The injected bytes now have a verified initialization source: an 88-byte allocation whose first 48 bytes are copied from a pinned static template, with the pointer stored into the same global. The preceding caller uses a `pthread_once` path and saves the initializer address in TLS. Independent ELF mapping checks confirmed the full local wrapper/initializer instructions, static source and dynamic symbol bindings. Later writes and indirect external callback dispatch remain unexamined; this does not establish unchanged runtime bytes, detector semantics or signing authenticity. See [the initialization evidence](linux-signing-static.md#注入的-48-字节的初始化来源).
+
 The user clarified that this report came privately from a professional and that no public project name, issue or quotation is available. It remains an unresolved investigation hypothesis. Lack of a public citation must not be treated as evidence against it. No repeated login experiment on the user's regular account will be used to test the hypothesis.
 
 ## JavaScript initialization contract audit

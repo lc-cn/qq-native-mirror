@@ -389,3 +389,17 @@ python3 scripts/linux-signing-nested-transform.py /absolute/path/wrapper.node
 ```
 
 脚本固定完整 binary SHA，校验两个相邻 unwind 范围、全部 122 条反汇编指令与 ELF 字节、尾调用和普通返回边、模板及完整 128 字节 tail 来源 SHA，以及 `malloc`/`memset`/`memcpy` 的 PLT 指令和动态符号重定位。独立 ELF `PT_LOAD` 映射复核全部 122 条指令、静态来源字节及 global 重定位通过；脚本对实际旧版 binary 以 SHA 不匹配拒绝且不输出证据。私有收据位于 `.local/research/linux-signing-nested-transform-independent.json`。上述静态证据不涉及执行 provider、构造替代运行环境、恢复账号或改写检测值。它修正了一个可能误读：前层所见的输入记录和最终加工返回之间还有一段含运行时注入数据的解释器程序；最终输出受 OR8 位影响仍未证明。
+
+## 注入的 48 字节的初始化来源
+
+同一固定 binary 下，找到向 global `0x8a077f0` 写入指针的 initializer `0x42f9558..0x42f95ac`。它在 `0x42f9564` 调用动态绑定的 `_Znwm`，分配 `0x58`（88）字节；从静态地址 `0x6c7ded2` 读取 48 字节，再在 `0x42f9588/0x42f958c` 写入分配对象的 `[0,48)`。静态来源 SHA-256 为 `f88007f6ee01e966ee287956f490dac8edc6bc53a54a13bdeb02a9730340248d`。它还初始化对象的若干后续字段，但这些字段的意义未命名。`0x42f95a0` 经 GOT `0x89dee08` 将对象指针写入 `0x8a077f0`，与前节嵌套 blob 构造读取的 global 一致。
+
+嵌套构造中的 `0x4356ea4→0x42f9378` 位于读取该指针之前。调用者传入的 `x0` 来自 GOT `0x89dc900`，重定位指向相邻地址 `0x8a077f8`。`0x42f9378..0x42f9558` 保存原始 `x0`，把 initializer 地址 `0x42f9558` 存入 TLS 槽，并在 `0x42f94b4` 调用 `pthread_once`；其 `x1` 来自 GOT `0x89debc8`，动态符号绑定为 `__once_proxy`。两处外部调用的 PLT 指令、JUMP_SLOT 重定位和动态符号均已核对。尚未展开外部 `__once_proxy` 的间接分派或穷尽对象后续写入，不能据此声称这 48 字节在每次构造时都等于静态初始值。
+
+```sh
+python3 scripts/linux-signing-global48-origin.py /absolute/path/wrapper.node
+```
+
+脚本固定 binary 和静态来源 SHA，检查两个 unwind 范围、wrapper 的全部 120 条指令、initializer 指令、选定来源/存储边，以及上述动态符号绑定。独立检查用 ELF `PT_LOAD` 映射复核 wrapper 和 initializer 的全部 141 条指令与系统 objdump、静态 48 字节、五条重定位绑定及两个 PLT；实际旧版 binary 被 SHA 拒绝且证据 stdout 为空。私有收据为 `.local/research/linux-signing-global48-origin.json` 和 `linux-signing-global48-origin-independent.json`。本轮没有执行 native/provider 或账号操作。
+
+这将数据来源从“未知运行时 global”收窄为“具有已确认静态初始值的分配对象”。后续可变性、嵌套解释器指令顺序、OR8 字节传播及最终输出布局仍未证明；不能把来源字节命名为检测位、密钥、假签名材料或服务端账号标记。
