@@ -1,0 +1,23 @@
+sdk/docs/evidence/forward-resource-six-ci-37992061390.json
+  s_2104cc474f1ce5::t_42a08e314e31fa 1-1002
+sdk/docs/forward-resource-contract.md
+  s_2104cc474f1ce5::t_eff0555e6476a0 1,11
+sdk/docs/forward-resource-decoding.md
+  s_2104cc474f1ce5::t_05ed6be5267a44 65-67
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "df718fdf08bd92c318c6d8b25a5a2c5ae2fa3ca0",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
