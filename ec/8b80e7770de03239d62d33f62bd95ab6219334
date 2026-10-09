@@ -1,0 +1,23 @@
+sdk/docs/linux-signing-static.md
+  s_2104cc474f1ce5::t_3591412627f2b5 378-391
+sdk/docs/signing-integrity.md
+  s_2104cc474f1ce5::t_4f59d8480be5f2 17-18
+sdk/scripts/linux-signing-nested-transform.py
+  s_2104cc474f1ce5::t_8eef70da612a11 1-95
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ec8b80e7770de03239d62d33f62bd95ab6219334",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
