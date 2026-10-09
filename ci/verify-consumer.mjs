@@ -7,6 +7,7 @@ import {createHash} from 'node:crypto';
 import {tmpdir} from 'node:os';
 import {join,resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
+import assert from 'node:assert/strict';
 const execute=promisify(execFile),temp=await mkdtemp(join(tmpdir(),'qq-ci-consumer-'));
 const {version}=JSON.parse(await readFile('sdk/package.json','utf8'));
 const platformName=`qq-native-client-${process.platform}-${process.arch}`;
@@ -36,8 +37,17 @@ try {
  const foreign=tarballRequests.filter(name=>name.startsWith('qq-native-client-')&&name!==platformName);if(foreign.length||!tarballRequests.includes(platformName))throw new Error('npm did not install exactly the matching native auxiliary package');
  for(const device of deviceNames){if(`qq-native-client-${device}`!==platformName){try{await readFile(join(temp,'node_modules',`qq-native-client-${device}`,'package.json'));throw new Error('Foreign auxiliary package installed');}catch(error){if(error.code!=='ENOENT')throw error;}}}
  const sdk=await import(pathToFileURL(join(temp,'node_modules/qq-native-client/dist/index.js')).href);
+ const cli=await import(pathToFileURL(join(temp,'node_modules/qq-native-client/dist/cli.js')).href);
+ const elements=await import(pathToFileURL(join(temp,'node_modules/qq-native-client/dist/message-elements.js')).href);
+ const mixed=[{type:'text',text:'fixture'},{type:'face',id:14},{type:'face',id:428}];
+ assert.deepEqual(cli.normalizeMessage(mixed),mixed);
+ assert.deepEqual(elements.faceElement(428),{elementType:6,elementId:'',faceElement:{faceIndex:428,faceType:2,faceText:'/收到',sourceType:1,stickerType:0,packId:'0',stickerId:'0'}});
+ assert.throws(()=>cli.normalizeMessage([{type:'face',id:99999}]),/Unsupported QQ face/);
+ await writeFile(join(temp,'faces.json'),JSON.stringify(mixed));
+ const faceAction=await cli.prepareCommand('send',{kind:'group',target:'123','message-file':join(temp,'faces.json')});
+ let faceArgs;await faceAction({sendGroupMessage:async(...args)=>{faceArgs=args;}});assert.deepEqual(faceArgs,['123',mixed]);
  globalThis.fetch=()=>{throw new Error('Unexpected mirror request with installed platform package');};
  client=await sdk.createClient({dataDir:join(temp,'unused-account'),autoReconnect:false,timeoutMs:30000});
  const exports=client.nativeExports.length;if(exports<80)throw new Error('Unexpected native export inventory');await client.close();if(client.state!=='closed')throw new Error('Client did not close');
- await writeFile('out/consumer.json',JSON.stringify({platform:process.platform,arch:process.arch,node:process.version,exports,installedMainOnly:true,automaticPlatformSelection:true,tarballRequests,prepared:true,closed:true,loginAttempted:false,registry:'isolated local fixture serving actual CI tarballs'},null,2));console.log(await readFile('out/consumer.json','utf8'));
+ await writeFile('out/consumer.json',JSON.stringify({platform:process.platform,arch:process.arch,node:process.version,exports,installedMainOnly:true,automaticPlatformSelection:true,tarballRequests,faceContract:true,faceDeliveryAttempted:false,prepared:true,closed:true,loginAttempted:false,registry:'isolated local fixture serving actual CI tarballs'},null,2));console.log(await readFile('out/consumer.json','utf8'));
 }finally{await client?.close();server.closeAllConnections();await new Promise(done=>server.close(done));await rm(temp,{recursive:true,force:true});}

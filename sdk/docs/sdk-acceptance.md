@@ -62,7 +62,7 @@ node src/cli.ts contacts --config ./qq.json
 node src/cli.ts groups --config ./qq.json
 ```
 
-`send` requires an explicit command with `--kind private|group`, `--target ID` and `--text TEXT`. Listing commands never send messages. This project's automated development checks must not invoke send or any account mutation. CLI QR writes and restoration are login actions; the user retains control of phone confirmation.
+`send` requires an explicit command with `--kind private|group`, `--target ID` and exactly one of `--text TEXT` or `--message-file JSON`. Listing commands never send messages. This project's automated development checks must not invoke real sends or any account mutation. CLI QR writes and restoration are login actions; the user retains control of phone confirmation.
 
 ## Release gates
 
@@ -335,3 +335,13 @@ Build and all 181 local regressions passed, including 24 new focused identity/cl
 
 
 [Fixed-source six-platform CI 37896779539](https://github.com/lc-cn/qq-native-mirror/actions/runs/37896779539), commit `04030e7024edce3454c3808970eab1a9b2bfbb11`, passed all six native runner builds and the aggregate. Independent parsing of its complete job log confirmed every matching-device consumer plus final Linux aggregate prepared and closed using the actual CI tarballs and automatic auxiliary selection; macOS exposed 104 exports, Linux/Windows 98. The aggregate passed all 181 regressions, with publication skipped. This is current-source native preparation evidence through isolated registry fixtures, distinct from the earlier public npm `0.0.1` acceptance. No new account login or restore, messaging or management operation occurred.
+
+## Standard QQ face sending (unpublished source, 2026-10-09)
+
+`SendableMessageElement` now includes `{type:'face',id:number}`. Private/group sends and CLI JSON support mixing faces with text in the original order. The constructor uses only 329 known catalog IDs, rejecting nonnumeric, negative, fractional, unsafe or unknown IDs before native message ID generation and submission. Private numeric-target UID resolution can still precede element validation. CLI payload preparation rejects an invalid face before client creation. Native submission errors retain their result code and cause no retry.
+
+The contract is pinned to NapCatQQ commit `26d7533e0f5800fdff865ab2f2ad7692917e1076`: [standard face converter](https://github.com/NapNeko/NapCatQQ/blob/26d7533e0f5800fdff865ab2f2ad7692917e1076/packages/napcat-onebot/api/msg.ts#L707-L748), [face metadata](https://github.com/NapNeko/NapCatQQ/blob/26d7533e0f5800fdff865ab2f2ad7692917e1076/packages/napcat-core/external/face_config.json), and [native enums](https://github.com/NapNeko/NapCatQQ/blob/26d7533e0f5800fdff865ab2f2ad7692917e1076/packages/napcat-core/types/msg.ts). Downloaded bytes were independently checked against Git blob IDs `055227c97203b6ccb496dc1de0e6d12ea33acf75`, `ba937ea96f315235c80e34039d5c039f9b8e2d3c` and `8b1278e679f520a5e8a9916adc9fb473dca70c7d` respectively. `scripts/generate-qq-faces.mjs` verifies the exact catalog blob, unique IDs and field types before deterministic projection; `--check` verifies the generated source. No runtime metadata download or UI asset is added. The projected TS source is 8,084 bytes.
+
+The native payload uses element type 6, name and source type 1. IDs below 222 default to classic face type 1 and later IDs to type 2; truthy animation type overrides to type 3. Sticker type, pack ID and sticker ID retain exact values, including the zero-valued metadata of ID 428. The table has 123 type-1, 104 type-2 and 102 type-3 entries. Standard dice/rock-paper-scissors IDs use this same converter; selected outcomes and specialized game-result fields are not exposed.
+
+Thirteen fake-native tests cover exact classic/extended/animated/zero-sticker metadata, private and group mixed order, invalid-ID dispatch prevention and native rejection code 23 without retry. A CLI regression verifies payload rejection before client creation. Offline installed-tarball verification checks compiled metadata, CLI dispatch through a fake client and the public TypeScript send signature. These checks use no native library or account. The fixed upstream catalog does not establish every ID's compatibility with every QQ version. Real face arrival, Windows account behavior and signing authenticity remain unverified. Published npm `0.0.1` remains unchanged.

@@ -9,7 +9,7 @@ import { createRecordElement, type RecordCodec } from './media-record.ts';
 import { createFriendRequests, type FriendRequestOperation } from './friend-requests.ts';
 import { createContactOperations, type ContactOperation } from './contact-operations.ts';
 import { downloadAttachment } from './media-operations.ts';
-import { createImageElement, createFileElement, createReplyElement, decodeElements } from './message-elements.ts';
+import { createImageElement, createFileElement, createReplyElement, decodeElements, faceElement } from './message-elements.ts';
 /** Native contracts extracted from local NapCat; this module never sends at startup. */
 import { createGroupOperations, type GroupOperation } from './group-operations.ts';
 import type { Friend, Group, GroupMember, Message, SentMessage, NativeCallbackAudit } from './types.ts';
@@ -189,6 +189,7 @@ export function createNativeServices(session: Native, version: string, emit: (ev
           atUid: id, atTinyId: '', atNtUid: all ? 'all' : await uidFor(id),
         } };
       }
+      if (element.type === 'face') return faceElement(element.id);
       if (element.type === 'image') return createImageElement(element.file, service('Msg'));
       if (element.type === 'video') return createVideoElement(element.file, service('Msg'), mediaTools);
       if (element.type === 'record') return createRecordElement(element.file, service('Msg'), recordCodec);

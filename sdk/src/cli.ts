@@ -4,6 +4,7 @@ import { dirname, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { createClient, type QQClient } from './index.ts';
 import { validateDownloadMirrors } from './native-package.ts';
+import { validateFaceId } from './message-elements.ts';
 import type { ClientOptions, LoginRequest, Peer, HistoryOptions, MessageInput } from './types.ts';
 
 /** Watch only remains open across explicitly retryable, enabled reconnects. */
@@ -115,6 +116,7 @@ export function normalizeMessage(value: unknown): MessageInput {
       case 'at': if (typeof e.userId !== 'string' || !(e.userId === 'all' || /^\d+$/.test(e.userId))) throw new Error('at requires numeric userId or all');
         if (e.text !== undefined && typeof e.text !== 'string') throw new Error('at text must be a string');
         return { type: 'at', userId: e.userId, ...(e.text !== undefined ? { text: e.text as string } : {}) };
+      case 'face': validateFaceId(e.id); return { type: 'face', id: e.id };
       case 'video': case 'record': if (typeof e.file !== 'string' || !e.file) throw new Error(`${e.type} requires a local file path`); return { type: e.type, file: resolve(e.file) };
       case 'image': case 'file': if (typeof e.file !== 'string' || !e.file) throw new Error(`${e.type} requires a local file path`);
         if (e.type === 'file' && e.name !== undefined && typeof e.name !== 'string') throw new Error('file name must be a string');

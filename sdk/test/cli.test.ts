@@ -8,6 +8,27 @@ import { spawnSync } from 'node:child_process';
 import { parse, prepareCommand, normalizeMessage, observeWatchFailures } from '../src/cli.ts';
 import type { QQClient } from '../src/index.ts';
 
+test('face JSON validates before client creation and preserves mixed message order', async t => {
+  const dir = await mkdtemp(join(tmpdir(), 'qq-cli-face-')); t.after(() => rm(dir, { recursive: true, force: true }));
+  const file = join(dir, 'faces.json');
+  const message = [{ type: 'text', text: 'hello' }, { type: 'face', id: 0 }, { type: 'face', id: 333 }];
+  await writeFile(file, JSON.stringify(message));
+  const action = await prepareCommand('send', { kind: 'group', target: '123', 'message-file': file });
+  let sent: unknown;
+  await action({ sendGroupMessage: async (...args: unknown[]) => { sent = args; } } as unknown as QQClient);
+  assert.deepEqual(sent, ['123', message]);
+  for (const id of [undefined, null, '14', -1, 1.5, NaN, Infinity, Number.MAX_SAFE_INTEGER + 1, 99999]) {
+    assert.throws(() => normalizeMessage([{ type: 'face', id }]), /Face id|Unsupported QQ face/);
+  }
+  await writeFile(file, '[{"type":"face","id":99999}]');
+  const config = join(dir, 'qq.json');
+  await writeFile(config, JSON.stringify({ dataDir: join(dir, 'unused-account'), wrapperPath: join(dir, 'absent-wrapper.node'), version: { clientVersion: '7.0.2-53644', appId: 'fixture', qua: 'fixture' } }));
+  const invalid = spawnSync(process.execPath, ['src/cli.ts', 'send', '--config', config, '--kind', 'group', '--target', '123', '--message-file', file], { encoding: 'utf8' });
+  assert.equal(invalid.status, 1);
+  assert.match(invalid.stderr, /Unsupported QQ face id/);
+  assert.doesNotMatch(invalid.stderr, /ENOENT/);
+});
+
 test('nickname CLI only dispatches an explicitly supplied nonblank name', async () => {
   const calls:string[]=[];
   const action=await prepareCommand('nickname',{name:'新昵称 ✓'});

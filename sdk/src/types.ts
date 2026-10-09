@@ -83,13 +83,13 @@ export type Peer = { type: 'private'; userId: string } | { type: 'group'; groupI
 export type SendableMessageElement =
   | { type: 'text'; text: string }
   | { type: 'at'; userId: string; text?: string }
+  | { type: 'face'; id: number }
   | { type: 'image'; file: string }
   | { type: 'video'; file: string; elementId?: string }
   | { type: 'record'; file: string; elementId?: string }
   | { type: 'reply'; messageId: string }
   | { type: 'file'; file: string; name?: string; size?: string; elementId?: string };
 export type MessageElement = SendableMessageElement
-  | { type: 'face'; id: number }
   | { type: 'unknown'; nativeType: number; data: unknown };
 export type MessageInput = string | SendableMessageElement[];
 export interface SentMessage { messageId: string; sequence: string; time: number }

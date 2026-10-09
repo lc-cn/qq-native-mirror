@@ -149,7 +149,11 @@ client.on('message.group', message => { /* incoming group message */ });
 // These methods send only when explicitly called by your application:
 // await client.sendPrivateMessage(userId, 'hello');
 // await client.sendGroupMessage(groupId, [{ type: 'text', text: 'hello' }]);
+// Unpublished source also supports standard QQ faces in mixed messages:
+// await client.sendPrivateMessage(userId, [{ type: 'text', text: 'hello' }, { type: 'face', id: 14 }]);
 ```
+
+The working source accepts `{type:'face',id:number}` for private/group sends and CLI `--message-file` JSON. It bundles 329 known IDs in an 8 KB metadata table, including classic, extended and animated faces. Unknown or invalid IDs reject before message submission. This addition is not in the published `0.0.1`; it has local contract verification only until a separately authorized account send confirms delivery. Dice and rock-paper-scissors use their standard face metadata, without a requested outcome. [Pinned contract and evidence](docs/sdk-acceptance.md#standard-qq-face-sending-unpublished-source-2026-10-09).
 
 The npm package exposes the `qq-native-client` executable. `--help` lists configuration, login, contacts, groups, members, history, watch and explicit send commands. Configuration creation does not overwrite existing files. CLI read commands restore prior authorization; QR login is explicit. `watch` prints incoming message JSON and keeps the client running until a termination signal.
 
