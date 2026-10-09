@@ -1,0 +1,23 @@
+sdk/docs/evidence/dedup-ci-37977995467.json
+  s_2104cc474f1ce5::t_e6f0f7f08692f6 1-261
+sdk/docs/native-size-reduction.md
+  s_2104cc474f1ce5::t_036e9a582cc359 131-132
+sdk/docs/sdk-acceptance.md
+  s_2104cc474f1ce5::t_71063ce833de31 648-649
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "465ee217496821fe2f193bf6ab087e1efd7b3301",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
