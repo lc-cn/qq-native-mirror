@@ -1,0 +1,27 @@
+.github/workflows/windows-native.yml
+  s_2104cc474f1ce5::t_4c97d045296851 30-36,46-52,58
+ci/prepare-windows.mjs
+  s_2104cc474f1ce5::t_d19fe4c2029b0f 9-12
+ci/windows/build-adapter.mjs
+  s_2104cc474f1ce5::t_f95b5ac618bfee 9,23-24,28-32
+ci/windows/environment-stopping.cc
+  s_2104cc474f1ce5::t_e01408060376fc 4-5
+ci/windows/verify-stopping.cc
+  s_2104cc474f1ce5::t_746896ba6b9a3b 1-76
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ce2d4c14a02db2fe4a5cd97921b8920ae48be578",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
