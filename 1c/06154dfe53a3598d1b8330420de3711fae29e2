@@ -1,0 +1,23 @@
+sdk/docs/native-size-reduction.md
+  s_2104cc474f1ce5::t_457a0126edb0ef 79-90
+sdk/docs/sdk-acceptance.md
+  s_2104cc474f1ce5::t_432f0274d8dadf 474-483
+sdk/scripts/verify-sdk-002-readonly.ts
+  s_2104cc474f1ce5::t_c7fe7323813f7e 1-101
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "1c06154dfe53a3598d1b8330420de3711fae29e2",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
