@@ -45,6 +45,14 @@ jobs:
         if: matrix.platform == 'win32'
         with:
           arch: ${{ matrix.arch }}
+      - uses: actions/cache/restore@v4
+        if: matrix.platform == 'win32'
+        id: windows-sources
+        with:
+          path: |
+            out/vendor-installer.exe
+            out/node-internals/source.tar.gz
+          key: windows-native-${{ matrix.arch }}-24.20.0-9.9.33-52230
       - name: Extract official Windows source and verify native registration exports
         if: matrix.platform == 'win32'
         run: |
@@ -67,6 +75,13 @@ jobs:
         run: npm pack --ignore-scripts --pack-destination ../out
       - name: Installed consumer initialization and close without account login
         run: node ci/verify-consumer.mjs
+      - uses: actions/cache/save@v4
+        if: always() && matrix.platform == 'win32' && steps.windows-sources.outputs.cache-hit != 'true'
+        with:
+          path: |
+            out/vendor-installer.exe
+            out/node-internals/source.tar.gz
+          key: windows-native-${{ matrix.arch }}-24.20.0-9.9.33-52230
       - uses: actions/upload-artifact@v4
         if: success()
         with:
