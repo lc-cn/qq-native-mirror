@@ -19,7 +19,7 @@ jobs:
           node-version: '24.20.0'
       - name: Run actual filesystem and process-lock fixtures without QQ
         working-directory: sdk
-        run: node --test test/native-installed-storage.test.ts test/installed-native.test.ts
+        run: node --test test/native-installed-storage.test.ts test/installed-native.test.ts test/native-package-members.test.ts
   full-inventory-consumer:
     needs: storage-contracts
     strategy:

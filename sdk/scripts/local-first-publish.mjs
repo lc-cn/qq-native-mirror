@@ -3,6 +3,7 @@ import { resolve, join, sep } from 'node:path';
 import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
+import { readNativePackageMembers } from './native-package-members.mjs';
 import { validateVideoMaterials, verifyVideoMaterialsOnline } from './video-materials.mjs';
 export { verifyVideoMaterialsOnline } from './video-materials.mjs';
 const targets = ['linux-x64','linux-arm64','darwin-x64','darwin-arm64','win32-x64','win32-arm64'];
@@ -16,12 +17,13 @@ async function localFile(root, path) {
   requireThat(file.startsWith(root + sep) && (await lstat(file)).isFile(), 'Artifact escapes directory or is not a file');
   return { path: file, bytes: await readFile(file) };
 }
-function tarJson(path, member) {
-  const ret = spawnSync('tar', ['-xOf', path, member], { encoding: 'utf8', maxBuffer: 32 * 1024 * 1024 });
-  requireThat(ret.status === 0, `Cannot inspect ${member}`);
-  return { bytes: Buffer.from(ret.stdout), json: JSON.parse(ret.stdout) };
+async function tarJson(path,member,cache){
+ const files=await readNativePackageMembers(path,cache),bytes=files.get(member);
+ requireThat(Buffer.isBuffer(bytes)&&bytes.length<=32*1024*1024,`Cannot inspect ${member}`);
+ return {bytes,json:JSON.parse(bytes)};
 }
 export async function validateRelease(directory) {
+  const tarMembersCache=new Map();
   const root = await realpath(resolve(directory));
   const manifest = JSON.parse((await localFile(root, 'release-manifest.json')).bytes);
   requireThat([1, 2].includes(manifest.schemaVersion) && /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/.test(manifest.version), 'Invalid release version/schema');
@@ -37,12 +39,12 @@ export async function validateRelease(directory) {
     requireThat(row.version === manifest.version && row.tarball === `${name}-${row.version}.tgz`, `Package name/version mismatch: ${name}`);
     const file = await localFile(root, row.tarball);
     requireThat(row.size === file.bytes.length && row.sha256 === hash(file.bytes, 'sha256', 'hex') && row.integrity === `sha512-${hash(file.bytes, 'sha512', 'base64')}`, `Tarball digest/size mismatch: ${name}`);
-    const pkg = tarJson(file.path, 'package/package.json').json;
+    const pkg = (await tarJson(file.path, 'package/package.json',tarMembersCache)).json;
     requireThat(pkg.name === name && pkg.version === row.version, `Packed metadata mismatch: ${name}`);
     if (name !== 'qq-native-client') {
       const target = name.slice('qq-native-client-'.length); const [platform, arch] = target.split('-');
       requireThat(JSON.stringify(pkg.os) === JSON.stringify([platform]) && JSON.stringify(pkg.cpu) === JSON.stringify([arch]), `Packed OS/CPU mismatch: ${name}`);
-      const native = tarJson(file.path, 'package/manifest.json');
+      const native = await tarJson(file.path, 'package/manifest.json',tarMembersCache);
 
       requireThat(native.json.platform === platform && native.json.arch === arch, `Native manifest platform mismatch: ${name}`);
       requireThat(row.manifestSha256 === hash(native.bytes, 'sha256', 'hex'), `Native manifest digest mismatch: ${target}`);
@@ -97,7 +99,7 @@ export async function validateRelease(directory) {
   }
   const mainReceipt = JSON.parse(mainReceiptBytes);
   requireThat(mainReceipt.platform === 'linux' && mainReceipt.arch === 'x64' && mainReceipt.installedMainOnly === true && mainReceipt.automaticPlatformSelection === true && mainReceipt.prepared === true && mainReceipt.closed === true && mainReceipt.loginAttempted === false && Number.isInteger(mainReceipt.exports) && mainReceipt.exports >= 80 && /^v24\./.test(mainReceipt.node), 'Aggregate main consumer failed');
-  const videoMaterials = await validateVideoMaterials(root, manifest, nativePackages);
+  const videoMaterials = await validateVideoMaterials(root, manifest, nativePackages,{tarMembersCache});
   return { manifest, packages, videoMaterials, videoMaterialsPending: videoMaterials?.pending === true };
 }
 export function publishValidated(release, run = spawnSync) {
