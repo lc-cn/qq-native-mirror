@@ -1,0 +1,25 @@
+.github/workflows/pruned-codec-native-candidate.yml
+  s_2104cc474f1ce5::t_9828fba73ff28f 1-54
+tools/profiles/darwin-arm64-resources-codec-v2.json
+  s_2104cc474f1ce5::t_3c2d7adff4e876 1-345
+tools/prune-codec-native-npm.mjs
+  s_2104cc474f1ce5::t_5107a544c14af3 1-148
+tools/prune-codec-native-npm.test.mjs
+  s_2104cc474f1ce5::t_d048610a059400 1-18
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "47667990e7c237f7d628338f96c1f531fc47df64",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
