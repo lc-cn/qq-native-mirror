@@ -1,0 +1,389 @@
+{
+  "schemaVersion": 1,
+  "run": 37953717980,
+  "source": "055c113eb347405e3782f35214091000fd7426f9",
+  "conclusion": "success",
+  "node": "v24.20.0",
+  "sourcePgpVerified": true,
+  "ffmpeg": {
+    "version": "9.0.2",
+    "commit": "946fcce07b6dcd0331c8cc609192aeff5e1924f8",
+    "url": "https://ffmpeg.org/releases/ffmpeg-9.0.2.tar.xz",
+    "sha256": "8c3850283eb25fa026482078a04051e0be17347b09ef81a0849bec15a96e002e",
+    "signatureUrl": "https://ffmpeg.org/releases/ffmpeg-9.0.2.tar.xz.asc",
+    "keyUrl": "https://ffmpeg.org/ffmpeg-devel.asc",
+    "keyFingerprint": "FCF986EA15E6E293A5644F10B4322F04D67658D8",
+    "configureSha256": "5b281b249ad5ad859030b4da0a24ec105b5abff7b3d87a65b302df8bf5fd9833"
+  },
+  "completeLogSha256": "46618df2b55c021e2fdc95235087f65f1d03a0f91d1249a598237ed129c0c3f4",
+  "stateSha256": "ff6a2974096847474e7aeec11f7ce0d39d9caafa8f8dd25af56a39da041d1451",
+  "nativeRuntimeAndRelinkReceipts": 12,
+  "fixturesPerReceipt": 3,
+  "accountUsed": false,
+  "qqWrapperLoaded": false,
+  "nativeSendAttempted": false,
+  "npmPublicationAttempted": false,
+  "defaultCodecSelectionImplemented": false,
+  "platforms": [
+    {
+      "platform": "linux",
+      "arch": "x64",
+      "binaryBytes": 17704104,
+      "binarySha256": "195312a9613fd716e2df52a11d409571bdb5959e1537e12f475c2048c6c9f88d",
+      "compiledAddonSourceSha256": "ce1363f0b45d387f3c8bacbf681e7c9e0b6cdd270f4aaff14458e557a35ad2b5",
+      "repositoryAddonSourceSha256": "ce1363f0b45d387f3c8bacbf681e7c9e0b6cdd270f4aaff14458e557a35ad2b5",
+      "checkoutCRLFCount": 0,
+      "dependencyInventorySha256": "cbf6a741c48bc760feaed67367578ead7f2a760ced809dd3588edfcf0bbabe00",
+      "buildReceiptSha256": "1c38d65fc6e52e4dee92c5024ecb70845ec4b4a82a4d0a9d7a61cab933a5157e",
+      "runtimeRelinkInputsMatch": true,
+      "fixtures": [
+        {
+          "name": "blue-64.mp4",
+          "sha256": "ced7b4e1cd47d948ecf407116095282e5b5ca4df76142b7a06826eecb92cb932",
+          "bytes": 1684,
+          "width": 64,
+          "height": 64,
+          "duration": 0.4,
+          "thumbnailWidth": 64,
+          "thumbnailHeight": 64,
+          "thumbnailSha256": "6dd6fdedccb6f2c3524b05d848d96bde56f7f10a98038104827b391f089a4646",
+          "thumbnailBytes": 12342,
+          "pattern": "blue",
+          "rowStride": 192
+        },
+        {
+          "name": "blue-1280.mp4",
+          "sha256": "1c8920f2db13e3c1b28b708bc94d3889ed8bd10f15ee5d89881d99715188b468",
+          "bytes": 1820,
+          "width": 1280,
+          "height": 720,
+          "duration": 0.4,
+          "thumbnailWidth": 640,
+          "thumbnailHeight": 360,
+          "thumbnailSha256": "f94feb9cd93a661f4e585b2d73a44856666488847a97f54643eb49939f4ca782",
+          "thumbnailBytes": 691254,
+          "pattern": "blue",
+          "rowStride": 1920
+        },
+        {
+          "name": "blue-red-65.mp4",
+          "sha256": "53a0baad6f0853d39e53263c22c847bd78435fc263e6844450878b471d13cc57",
+          "bytes": 1652,
+          "width": 65,
+          "height": 33,
+          "duration": 0.4,
+          "thumbnailWidth": 65,
+          "thumbnailHeight": 33,
+          "thumbnailSha256": "f375d0f2d4c7fc580c07b639f27897bbd20348285329f6c39cce381acb0504d5",
+          "thumbnailBytes": 6522,
+          "pattern": "blue-red",
+          "rowStride": 196
+        }
+      ],
+      "relinkedBinary": {
+        "sha256": "195312a9613fd716e2df52a11d409571bdb5959e1537e12f475c2048c6c9f88d",
+        "bytes": 17704104
+      }
+    },
+    {
+      "platform": "linux",
+      "arch": "arm64",
+      "binaryBytes": 15499928,
+      "binarySha256": "8eff4ebdf6b704b1a3aa4a25a328c0949ce81b1b8db220ef5bf3f310fe3ac741",
+      "compiledAddonSourceSha256": "ce1363f0b45d387f3c8bacbf681e7c9e0b6cdd270f4aaff14458e557a35ad2b5",
+      "repositoryAddonSourceSha256": "ce1363f0b45d387f3c8bacbf681e7c9e0b6cdd270f4aaff14458e557a35ad2b5",
+      "checkoutCRLFCount": 0,
+      "dependencyInventorySha256": "7f0d151c0d99c98d121df9c8e61c33fab89bffb80e2320961a5251bcdd207923",
+      "buildReceiptSha256": "4f9c0d579a8f4e2d8ad81fd2df1a21c9384e9eb2fe19aafb616f8249a7566cf2",
+      "runtimeRelinkInputsMatch": true,
+      "fixtures": [
+        {
+          "name": "blue-64.mp4",
+          "sha256": "ced7b4e1cd47d948ecf407116095282e5b5ca4df76142b7a06826eecb92cb932",
+          "bytes": 1684,
+          "width": 64,
+          "height": 64,
+          "duration": 0.4,
+          "thumbnailWidth": 64,
+          "thumbnailHeight": 64,
+          "thumbnailSha256": "6dd6fdedccb6f2c3524b05d848d96bde56f7f10a98038104827b391f089a4646",
+          "thumbnailBytes": 12342,
+          "pattern": "blue",
+          "rowStride": 192
+        },
+        {
+          "name": "blue-1280.mp4",
+          "sha256": "1c8920f2db13e3c1b28b708bc94d3889ed8bd10f15ee5d89881d99715188b468",
+          "bytes": 1820,
+          "width": 1280,
+          "height": 720,
+          "duration": 0.4,
+          "thumbnailWidth": 640,
+          "thumbnailHeight": 360,
+          "thumbnailSha256": "f94feb9cd93a661f4e585b2d73a44856666488847a97f54643eb49939f4ca782",
+          "thumbnailBytes": 691254,
+          "pattern": "blue",
+          "rowStride": 1920
+        },
+        {
+          "name": "blue-red-65.mp4",
+          "sha256": "53a0baad6f0853d39e53263c22c847bd78435fc263e6844450878b471d13cc57",
+          "bytes": 1652,
+          "width": 65,
+          "height": 33,
+          "duration": 0.4,
+          "thumbnailWidth": 65,
+          "thumbnailHeight": 33,
+          "thumbnailSha256": "f375d0f2d4c7fc580c07b639f27897bbd20348285329f6c39cce381acb0504d5",
+          "thumbnailBytes": 6522,
+          "pattern": "blue-red",
+          "rowStride": 196
+        }
+      ],
+      "relinkedBinary": {
+        "sha256": "8eff4ebdf6b704b1a3aa4a25a328c0949ce81b1b8db220ef5bf3f310fe3ac741",
+        "bytes": 15499928
+      }
+    },
+    {
+      "platform": "darwin",
+      "arch": "x64",
+      "binaryBytes": 14826672,
+      "binarySha256": "29147dd3c7a10b6b2f16e1b5df3f5e75b10b5d09f8ebc2a3bf2202e23c09799e",
+      "compiledAddonSourceSha256": "ce1363f0b45d387f3c8bacbf681e7c9e0b6cdd270f4aaff14458e557a35ad2b5",
+      "repositoryAddonSourceSha256": "ce1363f0b45d387f3c8bacbf681e7c9e0b6cdd270f4aaff14458e557a35ad2b5",
+      "checkoutCRLFCount": 0,
+      "dependencyInventorySha256": "9377bca4e295c8af9a1031bb7fc3be6d3d52cd8cbebc54c96ff4ab23a4b0e2cc",
+      "buildReceiptSha256": "65a7bd579ad4a6a63055798b1ca32029361c61f1d75e8d9234313e941e70f98c",
+      "runtimeRelinkInputsMatch": true,
+      "fixtures": [
+        {
+          "name": "blue-64.mp4",
+          "sha256": "ced7b4e1cd47d948ecf407116095282e5b5ca4df76142b7a06826eecb92cb932",
+          "bytes": 1684,
+          "width": 64,
+          "height": 64,
+          "duration": 0.4,
+          "thumbnailWidth": 64,
+          "thumbnailHeight": 64,
+          "thumbnailSha256": "6dd6fdedccb6f2c3524b05d848d96bde56f7f10a98038104827b391f089a4646",
+          "thumbnailBytes": 12342,
+          "pattern": "blue",
+          "rowStride": 192
+        },
+        {
+          "name": "blue-1280.mp4",
+          "sha256": "1c8920f2db13e3c1b28b708bc94d3889ed8bd10f15ee5d89881d99715188b468",
+          "bytes": 1820,
+          "width": 1280,
+          "height": 720,
+          "duration": 0.4,
+          "thumbnailWidth": 640,
+          "thumbnailHeight": 360,
+          "thumbnailSha256": "f94feb9cd93a661f4e585b2d73a44856666488847a97f54643eb49939f4ca782",
+          "thumbnailBytes": 691254,
+          "pattern": "blue",
+          "rowStride": 1920
+        },
+        {
+          "name": "blue-red-65.mp4",
+          "sha256": "53a0baad6f0853d39e53263c22c847bd78435fc263e6844450878b471d13cc57",
+          "bytes": 1652,
+          "width": 65,
+          "height": 33,
+          "duration": 0.4,
+          "thumbnailWidth": 65,
+          "thumbnailHeight": 33,
+          "thumbnailSha256": "f375d0f2d4c7fc580c07b639f27897bbd20348285329f6c39cce381acb0504d5",
+          "thumbnailBytes": 6522,
+          "pattern": "blue-red",
+          "rowStride": 196
+        }
+      ],
+      "relinkedBinary": {
+        "sha256": "9c90d99c51d694fc12ffe88bbf49bdb07c43fb3aadfdb64a9540e06f8651b644",
+        "bytes": 14826672
+      }
+    },
+    {
+      "platform": "darwin",
+      "arch": "arm64",
+      "binaryBytes": 13167872,
+      "binarySha256": "101a8eb635806b8c06fd55e3353a5a129d643c42198a3eb0dcaca7eefeab74c4",
+      "compiledAddonSourceSha256": "ce1363f0b45d387f3c8bacbf681e7c9e0b6cdd270f4aaff14458e557a35ad2b5",
+      "repositoryAddonSourceSha256": "ce1363f0b45d387f3c8bacbf681e7c9e0b6cdd270f4aaff14458e557a35ad2b5",
+      "checkoutCRLFCount": 0,
+      "dependencyInventorySha256": "9377bca4e295c8af9a1031bb7fc3be6d3d52cd8cbebc54c96ff4ab23a4b0e2cc",
+      "buildReceiptSha256": "0087351e8a08c5fbec1f0afe84962652a4e4faad56be2628b7f288d10a4c7846",
+      "runtimeRelinkInputsMatch": true,
+      "fixtures": [
+        {
+          "name": "blue-64.mp4",
+          "sha256": "ced7b4e1cd47d948ecf407116095282e5b5ca4df76142b7a06826eecb92cb932",
+          "bytes": 1684,
+          "width": 64,
+          "height": 64,
+          "duration": 0.4,
+          "thumbnailWidth": 64,
+          "thumbnailHeight": 64,
+          "thumbnailSha256": "6dd6fdedccb6f2c3524b05d848d96bde56f7f10a98038104827b391f089a4646",
+          "thumbnailBytes": 12342,
+          "pattern": "blue",
+          "rowStride": 192
+        },
+        {
+          "name": "blue-1280.mp4",
+          "sha256": "1c8920f2db13e3c1b28b708bc94d3889ed8bd10f15ee5d89881d99715188b468",
+          "bytes": 1820,
+          "width": 1280,
+          "height": 720,
+          "duration": 0.4,
+          "thumbnailWidth": 640,
+          "thumbnailHeight": 360,
+          "thumbnailSha256": "f94feb9cd93a661f4e585b2d73a44856666488847a97f54643eb49939f4ca782",
+          "thumbnailBytes": 691254,
+          "pattern": "blue",
+          "rowStride": 1920
+        },
+        {
+          "name": "blue-red-65.mp4",
+          "sha256": "53a0baad6f0853d39e53263c22c847bd78435fc263e6844450878b471d13cc57",
+          "bytes": 1652,
+          "width": 65,
+          "height": 33,
+          "duration": 0.4,
+          "thumbnailWidth": 65,
+          "thumbnailHeight": 33,
+          "thumbnailSha256": "f375d0f2d4c7fc580c07b639f27897bbd20348285329f6c39cce381acb0504d5",
+          "thumbnailBytes": 6522,
+          "pattern": "blue-red",
+          "rowStride": 196
+        }
+      ],
+      "relinkedBinary": {
+        "sha256": "5f3c32c8343138148d04430a15256768eb53676efc28bee5e3f9a41a051e048f",
+        "bytes": 13167872
+      }
+    },
+    {
+      "platform": "win32",
+      "arch": "x64",
+      "binaryBytes": 12058112,
+      "binarySha256": "3a0ee3e46013e162303f3edf24e4125a167d3eda60112240f6a754a96d66c841",
+      "compiledAddonSourceSha256": "64a9745cb8bf24bfc812bf3caf49ea922c203ffee4e0d6b0cdf9465e6cd33c04",
+      "repositoryAddonSourceSha256": "ce1363f0b45d387f3c8bacbf681e7c9e0b6cdd270f4aaff14458e557a35ad2b5",
+      "checkoutCRLFCount": 157,
+      "dependencyInventorySha256": "affac8ae2f39c8e9fee3d84d6003f8051e7555f3facfe59d71885ba3301a3509",
+      "buildReceiptSha256": "3461ef3f2bb85b203e17b0104663aae45e82966368c55feaf5345dde9d9a2aa1",
+      "runtimeRelinkInputsMatch": true,
+      "fixtures": [
+        {
+          "name": "blue-64.mp4",
+          "sha256": "ced7b4e1cd47d948ecf407116095282e5b5ca4df76142b7a06826eecb92cb932",
+          "bytes": 1684,
+          "width": 64,
+          "height": 64,
+          "duration": 0.4,
+          "thumbnailWidth": 64,
+          "thumbnailHeight": 64,
+          "thumbnailSha256": "6dd6fdedccb6f2c3524b05d848d96bde56f7f10a98038104827b391f089a4646",
+          "thumbnailBytes": 12342,
+          "pattern": "blue",
+          "rowStride": 192
+        },
+        {
+          "name": "blue-1280.mp4",
+          "sha256": "1c8920f2db13e3c1b28b708bc94d3889ed8bd10f15ee5d89881d99715188b468",
+          "bytes": 1820,
+          "width": 1280,
+          "height": 720,
+          "duration": 0.4,
+          "thumbnailWidth": 640,
+          "thumbnailHeight": 360,
+          "thumbnailSha256": "f94feb9cd93a661f4e585b2d73a44856666488847a97f54643eb49939f4ca782",
+          "thumbnailBytes": 691254,
+          "pattern": "blue",
+          "rowStride": 1920
+        },
+        {
+          "name": "blue-red-65.mp4",
+          "sha256": "53a0baad6f0853d39e53263c22c847bd78435fc263e6844450878b471d13cc57",
+          "bytes": 1652,
+          "width": 65,
+          "height": 33,
+          "duration": 0.4,
+          "thumbnailWidth": 65,
+          "thumbnailHeight": 33,
+          "thumbnailSha256": "f375d0f2d4c7fc580c07b639f27897bbd20348285329f6c39cce381acb0504d5",
+          "thumbnailBytes": 6522,
+          "pattern": "blue-red",
+          "rowStride": 196
+        }
+      ],
+      "relinkedBinary": {
+        "sha256": "490509cd507f1c0a4044cc1edd414b4286866e0ad3a4087a586f548c7d789273",
+        "bytes": 12058112
+      }
+    },
+    {
+      "platform": "win32",
+      "arch": "arm64",
+      "binaryBytes": 11209728,
+      "binarySha256": "68e056451520efd4d53d72c8d6482a893fefd7bd638a6cc1c7cdf9f42192976f",
+      "compiledAddonSourceSha256": "64a9745cb8bf24bfc812bf3caf49ea922c203ffee4e0d6b0cdf9465e6cd33c04",
+      "repositoryAddonSourceSha256": "ce1363f0b45d387f3c8bacbf681e7c9e0b6cdd270f4aaff14458e557a35ad2b5",
+      "checkoutCRLFCount": 157,
+      "dependencyInventorySha256": "235ccfe69caf36081143bd307f3c03ff00f74d2fc44ab2f2d2a6ae2d75441f19",
+      "buildReceiptSha256": "d4c0d056bad41fd17e9a646fb247573e61f898bb17e263700e200aafff8f089a",
+      "runtimeRelinkInputsMatch": true,
+      "fixtures": [
+        {
+          "name": "blue-64.mp4",
+          "sha256": "ced7b4e1cd47d948ecf407116095282e5b5ca4df76142b7a06826eecb92cb932",
+          "bytes": 1684,
+          "width": 64,
+          "height": 64,
+          "duration": 0.4,
+          "thumbnailWidth": 64,
+          "thumbnailHeight": 64,
+          "thumbnailSha256": "6dd6fdedccb6f2c3524b05d848d96bde56f7f10a98038104827b391f089a4646",
+          "thumbnailBytes": 12342,
+          "pattern": "blue",
+          "rowStride": 192
+        },
+        {
+          "name": "blue-1280.mp4",
+          "sha256": "1c8920f2db13e3c1b28b708bc94d3889ed8bd10f15ee5d89881d99715188b468",
+          "bytes": 1820,
+          "width": 1280,
+          "height": 720,
+          "duration": 0.4,
+          "thumbnailWidth": 640,
+          "thumbnailHeight": 360,
+          "thumbnailSha256": "f94feb9cd93a661f4e585b2d73a44856666488847a97f54643eb49939f4ca782",
+          "thumbnailBytes": 691254,
+          "pattern": "blue",
+          "rowStride": 1920
+        },
+        {
+          "name": "blue-red-65.mp4",
+          "sha256": "53a0baad6f0853d39e53263c22c847bd78435fc263e6844450878b471d13cc57",
+          "bytes": 1652,
+          "width": 65,
+          "height": 33,
+          "duration": 0.4,
+          "thumbnailWidth": 65,
+          "thumbnailHeight": 33,
+          "thumbnailSha256": "f375d0f2d4c7fc580c07b639f27897bbd20348285329f6c39cce381acb0504d5",
+          "thumbnailBytes": 6522,
+          "pattern": "blue-red",
+          "rowStride": 196
+        }
+      ],
+      "relinkedBinary": {
+        "sha256": "47bfc75c239c5ab029aac2982003e616bdcd8744e68b46fb9334c63a31571e2d",
+        "bytes": 11209728
+      }
+    }
+  ]
+}
