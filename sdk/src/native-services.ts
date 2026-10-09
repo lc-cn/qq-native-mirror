@@ -271,12 +271,20 @@ export function createNativeServices(session: Native, version: string, emit: (ev
           const infos = result?.result?.infos;
           if (!(infos instanceof Map)) throw new Error('Invalid native group member map');
           if (result.result.finish !== true) throw Object.assign(new Error('Native group member list is incomplete'), { code: 'incomplete-result' });
-          return [...infos.entries()].map(([uid, member]): GroupMember => {
+          const members = [...infos.entries()].map(([uid, member]): GroupMember => {
+            // Pinned GroupMember identity and display fields are strings. Do not
+            // invent an identity by coercing a number/object or substituting keys.
+            if (typeof uid !== 'string' || !uid.trim() || !member || typeof member !== 'object' || Array.isArray(member)
+              || member.uid !== uid || typeof member.uin !== 'string' || !/^\d+$/.test(member.uin)
+              || typeof member.nick !== 'string' || typeof member.cardName !== 'string') throw new Error('Invalid native group member');
+            if (typeof member.role !== 'number') throw new Error('Unknown native group member role');
             const role = ({ 4: 'owner', 3: 'admin', 2: 'member' } as const)[member.role as 2 | 3 | 4];
             if (!role) throw new Error('Unknown native group member role');
-            uidCache.set(String(member.uin), String(member.uid || uid));
-            return { userId: String(member.uin), uid: String(member.uid || uid), nickname: member.nick ?? '', card: member.cardName ?? '', role };
+            return { userId: member.uin, uid, nickname: member.nick, card: member.cardName, role };
           });
+          // Commit only a complete validated query; failures leave no partial cache.
+          for (const member of members) uidCache.set(member.userId, member.uid);
+          return members;
         }
         case 'sendPrivateMessage': return send({ chatType: 1, peerUid: await uidFor(String(payload.userId)) }, payload.message);
         case 'sendGroupMessage': return send({ chatType: 2, peerUid: String(payload.groupId) }, payload.message);

@@ -408,3 +408,71 @@ test('failed buddy profile batch cannot seed UID cache used by later private sen
     assert.equal(sends[0][1].peerUid, 'u_converted');
   } finally { services.close(); }
 });
+
+function invalidMemberFixture(infos: Map<string, any>) {
+  let listener: any;
+  const conversions: string[][] = [];
+  const sends: any[][] = [];
+  const services = createNativeServices({
+    getMsgService: () => ({
+      addKernelMsgListener(value: any) { listener = value; },
+      generateMsgUniqueId: () => 'member-fixture',
+      sendMsg(...args: any[]) {
+        sends.push(args);
+        queueMicrotask(() => listener.onMsgInfoListUpdate([{ guildId: 'member-fixture', sendStatus: 2, msgId: '42', msgSeq: '9', msgTime: '100' }]));
+        return { result: 0 };
+      },
+    }),
+    getGroupService: () => ({ addKernelGroupListener() {}, getAllMemberList: () => ({ errCode: 0, result: { finish: true, infos } }) }),
+    getBuddyService: () => ({ addKernelBuddyListener() {} }),
+    getUixConvertService: () => ({ getUid(ids: string[]) { conversions.push(ids); return { uidInfo: new Map([['456', 'u_converted']]) }; } }),
+    getMSFService: () => ({ getServerTime: () => '100' }),
+  }, '7.0.2-53644', () => {});
+  return { services, conversions, sends };
+}
+
+test('failed group member batch cannot seed UID cache used by later private send', async () => {
+  const f = invalidMemberFixture(new Map([
+    ['u_partial', { uin: '456', uid: 'u_partial', role: 2, nick: 'fixture', cardName: '' }],
+    ['u_invalid', { uin: '789', uid: 'u_invalid', role: 999, nick: 'fixture', cardName: '' }],
+  ]));
+  try {
+    await assert.rejects(f.services.invokeOperation('getGroupMembers', { groupId: '123' }), /role|member/i);
+    await f.services.invokeOperation('sendPrivateMessage', { userId: '456', message: 'fake contract only' });
+    assert.deepEqual(f.conversions, [['456']], 'failed member query must not bypass UID conversion');
+    assert.equal(f.sends[0][1].peerUid, 'u_converted');
+  } finally { f.services.close(); }
+});
+
+const validGroupMember = { uin: '456', uid: 'u_member', role: 2, nick: 'fixture', cardName: '' };
+for (const [label, key, change, missing] of [
+  ['numeric user ID', 'u_member', { uin: 456 }, undefined],
+  ['object user ID', 'u_member', { uin: { toString: () => '456' } }, undefined],
+  ['mismatched UID', 'u_member', { uid: 'u_other' }, undefined],
+  ['invalid nickname', 'u_member', { nick: { private: true } }, undefined],
+  ['invalid card', 'u_member', { cardName: 123 }, undefined],
+  ['missing UID', 'u_member', {}, 'uid'],
+  ['missing nickname', 'u_member', {}, 'nick'],
+  ['missing card', 'u_member', {}, 'cardName'],
+  ['invalid Map key', '', {}, undefined],
+  ['string role', 'u_member', { role: '2' }, undefined],
+  ['unspecified role', 'u_member', { role: 0 }, undefined],
+  ['stranger role', 'u_member', { role: 1 }, undefined],
+] as const) {
+  test(`group member query rejects ${label} instead of exposing a malformed DTO`, async () => {
+    const member: Record<string, unknown> = { ...validGroupMember, ...change };
+    if (missing) delete member[missing];
+    const f = invalidMemberFixture(new Map([[key, member]]));
+    try {
+      await assert.rejects(f.services.invokeOperation('getGroupMembers', { groupId: '123' }), /invalid|member|UID|user|nickname|card|role/i);
+    } finally { f.services.close(); }
+  });
+}
+
+test('group member query preserves long decimal IDs and normalizes all three membership roles', async () => {
+  const infos = new Map([2, 3, 4].map(role => [`u_${role}`, { uin: `90071992547409931234${role}`, uid: `u_${role}`, nick: `name${role}`, cardName: '', role }]));
+  const f = invalidMemberFixture(infos);
+  try {
+    assert.deepEqual(await f.services.invokeOperation('getGroupMembers', { groupId: '123' }), [2, 3, 4].map(role => ({ userId: `90071992547409931234${role}`, uid: `u_${role}`, nickname: `name${role}`, card: '', role: ({ 2: 'member', 3: 'admin', 4: 'owner' } as const)[role as 2 | 3 | 4] })));
+  } finally { f.services.close(); }
+});
