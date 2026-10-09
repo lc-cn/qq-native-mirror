@@ -70,5 +70,31 @@
   },
   "realAccountUsed": false,
   "realVideoDeliveryVerified": false,
-  "signingAuthenticityVerified": false
+  "signingAuthenticityVerified": false,
+  "mirrorUpload": {
+    "tag": "native-npm-v0.0.2-ci-37962268125-attempt-1",
+    "releaseId": 408168480,
+    "sourceRelease": {
+      "commit": "6cae1ec0a5e1bfb03cb7871083915b3d03272347",
+      "runId": "37962268125",
+      "runAttempt": 1,
+      "version": "0.0.2",
+      "releaseManifestSha256": "9a362f3c4abada4c8cfc397039c20835bcb5393e0ae356873cccb518be9c8e1a"
+    },
+    "remoteMetadataVerified": true,
+    "smallAssetReadbackVerified": true,
+    "uploaded": true,
+    "catalogChanged": false,
+    "nativeExecuted": false,
+    "candidateCatalogUrl": "https://github.com/lc-cn/qq-native-mirror/releases/download/native-npm-v0.0.2-ci-37962268125-attempt-1/catalog-candidate.json",
+    "assets": 423,
+    "receiptSha256": "432828f8e32d3f6a5a5567081663e4dcdca6b441a74ca518006dbf27e0497cfb"
+  },
+  "prospectiveMirrorConsumers": {
+    "runId": "37967496003",
+    "sourceCommit": "69c9af88dc3be9182925816f96b6222f38a6beb7",
+    "statusAtDispatch": "in_progress",
+    "conclusion": null,
+    "url": "https://github.com/lc-cn/qq-native-mirror/actions/runs/37967496003"
+  }
 }

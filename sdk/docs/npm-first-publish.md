@@ -107,4 +107,6 @@ node scripts/upload-npm-native-mirror.mjs /absolute/path/npm-candidate /absolute
 
 第二个命令默认仅输出计划；加 `--upload` 才创建独立 prerelease。上传工具在重新校验后，把全部已批准字节复制到私有临时目录，再交给 `gh`，避免上传期间重新读取变化的 stage 文件。它仅尝试一次创建；失败须只读核对远端状态，不自动重试或覆盖。成功后核对所有资产元数据和八份小文件实际下载摘要。候选 catalog 指向该 release 的不可变 manifest；工具不修改默认 catalog，也不发布 npm。六平台镜像冷消费者验收、默认 catalog 提升、真实账号视频送达及签名真实性仍待各自的实际证据。
 
-候选镜像的真实六平台消费者使用 `codec-mirror-consumer.yml`，固定绑定成功源 run `37962268125` 和同批次镜像 tag。它只安装该候选的主包并省略辅包，让首次 `createClient` 从独立空缓存按实际设备选择镜像；关闭后实际解码三个视频样本，再初始化和关闭一次，要求第二次所有原生 payload（包括 JSON 资源）零下载。Windows 固定 Node 24.20.0，六平台均禁用符号链接创建。脚本不登录、恢复或发送；新增工作流和生成消费者已通过语法检查，尚未 dispatch，不宣称实际运行通过。
+候选镜像的真实六平台消费者使用 `codec-mirror-consumer.yml`，固定绑定成功源 run `37962268125` 和同批次镜像 tag。它只安装该候选的主包并省略辅包，让首次 `createClient` 从独立空缓存按实际设备选择镜像；关闭后实际解码三个视频样本，再初始化和关闭一次，要求第二次所有原生 payload（包括 JSON 资源）零下载。Windows 固定 Node 24.20.0，六平台均禁用符号链接创建。脚本不登录、恢复或发送；新增工作流和生成消费者已通过语法检查；实际验收已启动为 run 37967496003，当前记录为运行中，不宣称已通过。
+
+候选镜像 [native-npm-v0.0.2-ci-37962268125-attempt-1](https://github.com/lc-cn/qq-native-mirror/releases/tag/native-npm-v0.0.2-ci-37962268125-attempt-1) 已完成一次上传：423 个资产的远端 SHA256/大小/URL 和八份小文件实际下载摘要均一致。六平台消费者 [run 37967496003](https://github.com/lc-cn/qq-native-mirror/actions/runs/37967496003) 使用工具 commit `69c9af88dc3be9182925816f96b6222f38a6beb7`，实际主包与原生字节仍绑定成功源 `6cae1ec0a5e1bfb03cb7871083915b3d03272347`。默认 catalog 保持原样；须等待这次消费者结果再提升，不把上传成功视为运行通过。
