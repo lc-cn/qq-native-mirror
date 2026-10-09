@@ -179,7 +179,7 @@ test('watch defaults to message JSON lines and removes its own delivery listener
   cleanup(); cleanup(); events.emit('message', message);
   assert.equal(events.listenerCount('message'), 0); assert.equal(lines.length, 1);
 });
-test('watch all envelopes only six business event families and unbinds each', () => {
+test('watch all envelopes seven legacy business event families and unbinds each', () => {
   const events = new EventEmitter(), lines: string[] = [];
   const cleanup = observeWatchEvents(events as QQClient, 'all', line => lines.push(line));
   const names = ['message', 'message-recalled', 'request.friend', 'request.group', 'friend-list-updated', 'group-list-updated', 'group-members-updated'];
@@ -189,10 +189,22 @@ test('watch all envelopes only six business event families and unbinds each', ()
   cleanup(); names.forEach(event => assert.equal(events.listenerCount(event), 0));
   events.emit('group-members-updated', {}); assert.equal(lines.length, 7);
 });
+test('watch normalized uses typed recall metadata once and preserves legacy all mode', () => {
+  const events = new EventEmitter(), lines: string[] = [];
+  const cleanup = observeWatchEvents(events as QQClient, 'normalized', line => lines.push(line));
+  const payload = { peer: { type: 'private', userId: '456' }, messageId: '42', sequence: '9', recallTime: '101' };
+  events.emit('message-recalled', { credential: 'fixture-secret' });
+  events.emit('message.recalled', payload);
+  events.emit('friend-list-updated', { categories: [] });
+  assert.deepEqual(lines.map(line => JSON.parse(line)), [{ event: 'message.recalled', payload }, { event: 'friend-list-updated', payload: { categories: [] } }]);
+  cleanup(); cleanup(); events.emit('message.recalled', payload);
+  assert.equal(events.listenerCount('message.recalled'), 0); assert.equal(events.listenerCount('message-recalled'), 0);
+  assert.equal(lines.length, 2); assert.doesNotMatch(lines.join(''), /fixture-secret/);
+});
 test('watch rejects invalid event mode before registration or configuration/native setup', () => {
   const events = new EventEmitter();
   for (const mode of ['', 'unknown', null, 1]) assert.throws(() => observeWatchEvents(events as QQClient, mode), /--events/);
   assert.deepEqual(events.eventNames(), []);
   const result = spawnSync(process.execPath, ['src/cli.ts', 'watch', '--events', 'unknown', '--config', '/nonexistent-fixture-config.json'], { encoding: 'utf8' });
-  assert.equal(result.status, 1); assert.match(result.stderr, /--events must be message or all/); assert.doesNotMatch(result.stderr, /ENOENT/);
+  assert.equal(result.status, 1); assert.match(result.stderr, /--events must be message, all or normalized/); assert.doesNotMatch(result.stderr, /ENOENT/);
 });

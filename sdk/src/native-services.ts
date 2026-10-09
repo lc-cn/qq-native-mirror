@@ -14,6 +14,7 @@ import { createImageElement, createFileElement, createReplyElement, decodeElemen
 /** Native contracts extracted from local NapCat; this module never sends at startup. */
 import { createGroupOperations, type GroupOperation } from './group-operations.ts';
 import { createGroupEvents } from './group-events.ts';
+import { createRecallEvents } from './recall-events.ts';
 import type { Friend, Group, GroupMember, Message, SentMessage, NativeCallbackAudit } from './types.ts';
 
 type Native = Record<string, any>;
@@ -64,6 +65,7 @@ export function createNativeServices(session: Native, version: string, emit: (ev
   const listeners: Native[] = [];
   const uidCache = new Map<string, string>();
   const receivedMessages = new Set<string>();
+  const recallEvents = createRecallEvents(emit);
   let groupListRequest: Promise<unknown> | undefined;
   let groupListInvalidated = false;
   const call = (object: Native, name: string, ...args: any[]) => {
@@ -124,6 +126,7 @@ export function createNativeServices(session: Native, version: string, emit: (ev
       if (validMessages.length !== messages.length) emit('diagnostic', { stage: 'invalid-native-message-update' });
       dispatch('Msg/onMsgInfoListUpdate', [validMessages]);
       for (const message of validMessages) {
+        recallEvents.onMessageUpdate(message);
         if (message.recallTime && message.recallTime !== '0') emit('message-recalled', message);
       }
     },
@@ -344,6 +347,7 @@ export function createNativeServices(session: Native, version: string, emit: (ev
     close() {
       closed = true;
       lifetime.abort();
+      recallEvents.close();
       selfProfile.close();
       friendRequests.close();
       groupRequests.close();

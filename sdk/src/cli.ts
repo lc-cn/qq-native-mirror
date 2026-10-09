@@ -23,15 +23,16 @@ export function observeWatchFailures(client: QQClient, autoReconnect: boolean, f
   };
 }
 
-function watchEventMode(mode: unknown): 'message' | 'all' {
+function watchEventMode(mode: unknown): 'message' | 'all' | 'normalized' {
   if (mode === undefined || mode === 'message') return 'message';
   if (mode === 'all') return 'all';
-  throw new Error('--events must be message or all');
+  if (mode === 'normalized') return 'normalized';
+  throw new Error('--events must be message, all or normalized');
 }
 /** Attach business deliveries before login; return exact listener cleanup. */
 export function observeWatchEvents(client: QQClient, mode: unknown = undefined, write: (line: string) => void = console.log): () => void {
   const selected = watchEventMode(mode);
-  const events = selected === 'message' ? ['message'] as const : ['message', 'message-recalled', 'request.friend', 'request.group', 'friend-list-updated', 'group-list-updated', 'group-members-updated'] as const;
+  const events = selected === 'message' ? ['message'] as const : ['message', selected === 'normalized' ? 'message.recalled' : 'message-recalled', 'request.friend', 'request.group', 'friend-list-updated', 'group-list-updated', 'group-members-updated'] as const;
   const listeners = events.map(event => {
     const listener = (payload: unknown) => write(JSON.stringify(selected === 'message' ? payload : { event, payload }));
     client.on(event, listener);
@@ -53,7 +54,7 @@ const usage = `qq-native-client <command> [options]
   message --config FILE --kind private|group --target ID --message-id ID
   forward-history --config FILE --kind private|group --target ID --root-message-id ID --parent-message-id ID
   forward --config FILE --source-kind private|group --source-target ID --kind private|group --target ID --message-ids ID,ID
-  watch --config FILE [--uin UIN] [--events message|all]  Print business events as JSON lines
+  watch --config FILE [--uin UIN] [--events message|all|normalized]  Print business events as JSON lines
   send --config FILE --kind private|group --target ID (--text TEXT | --message-file JSON) [--uin UIN]
   nickname --config FILE --name TEXT
   signature --config FILE --text TEXT   Empty text explicitly clears the signature

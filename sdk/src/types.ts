@@ -53,6 +53,7 @@ export interface ClientEvents {
   'message.private': [Message];
   'message.group': [Message];
   'message-recalled': [unknown];
+  'message.recalled': [MessageRecall];
   kicked: [OfflineInfo];
   offline: [OfflineInfo];
   'msf-status': [{ status: number; reason: number; args: unknown[] }];
@@ -120,6 +121,13 @@ export interface Message extends SentMessage {
   sender: { userId: string; uid: string; nickname: string };
   elements: MessageElement[];
   raw: unknown;
+}
+/** Passive recall metadata. The native timestamp string's unit and operator are unverified. */
+export interface MessageRecall {
+  peer: Peer;
+  messageId: string;
+  sequence: string;
+  recallTime: string;
 }
 export interface HistoryOptions { before?: string; limit?: number }
 export interface KickOptions { rejectRejoin?: boolean; reason?: string }
