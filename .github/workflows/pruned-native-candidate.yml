@@ -1,0 +1,53 @@
+name: Experimental pruned native npm candidate
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  macos-arm64:
+    runs-on: macos-15
+    timeout-minutes: 20
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SOURCE_RUN_ID: '37925080425'
+      SOURCE_SHA: b4b2e4eab5e44f99126e2efc68d6701ac7658833
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          architecture: arm64
+      - name: Require actual target device
+        run: node -e "if(process.platform!=='darwin'||process.arch!=='arm64')throw Error('Incorrect pruning runner')"
+      - name: Validate pruning refusal contracts
+        run: node --test tools/prune-native-npm.test.mjs
+      - name: Require original successful six-platform CI
+        run: node tools/archive-npm-candidate.mjs --preflight
+      - name: Download only pinned source packages and manifest
+        run: |
+          mkdir candidate-source
+          gh release download npm-v0.0.2-ci-37925080425 --repo lc-cn/qq-native-mirror --dir candidate-source --pattern qq-native-client-0.0.2.tgz --pattern qq-native-client-darwin-arm64-0.0.2.tgz --pattern release-manifest.json
+      - name: Build a separate byte-preserving experimental auxiliary
+        run: node tools/prune-native-npm.mjs
+      - name: Install only SDK verification dependencies
+        working-directory: sdk
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Install main only and verify matching-device candidate without login
+        run: node ci/verify-consumer.mjs
+      - name: Bind consumer receipt to candidate and original source
+        run: |
+          node tools/prune-native-npm.mjs --verify-consumer
+          node tools/archive-npm-candidate.mjs --preflight
+      - uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: experimental-darwin-arm64-resources-v1
+          path: |
+            out/qq-native-client-*.tgz
+            out/pruning-build.json
+            out/pruning-profile.json
+            out/source-release-manifest.json
+            out/consumer.json
+            out/pruning-acceptance.json
+          retention-days: 14
