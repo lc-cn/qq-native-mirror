@@ -1,0 +1,27 @@
+ci/aggregate-release.mjs
+  s_2104cc474f1ce5::t_4a5d6699acbe48 1-4,6-29
+  s_2104cc474f1ce5::t_67e3fa32df8cfc 35
+  s_2104cc474f1ce5::t_14dde3756fd8ca 5,30-34,36
+.github/workflows/native-npm.yml
+  s_2104cc474f1ce5::t_507e604f84114c 79-107,110,124-126,130,132,134
+ci/windows/build-adapter.mjs
+  s_2104cc474f1ce5::t_5b74a974787f74 24-27,31
+sdk/README.md
+  s_2104cc474f1ce5::t_dcf6d1dee6cb79 200,204
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "4038b9ff6e9699c6dec3c604811dea7c3c1c4801",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
