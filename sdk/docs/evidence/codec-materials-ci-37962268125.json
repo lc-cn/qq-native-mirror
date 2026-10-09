@@ -94,7 +94,20 @@
     "runId": "37967496003",
     "sourceCommit": "69c9af88dc3be9182925816f96b6222f38a6beb7",
     "statusAtDispatch": "in_progress",
-    "conclusion": null,
-    "url": "https://github.com/lc-cn/qq-native-mirror/actions/runs/37967496003"
+    "conclusion": "failure",
+    "url": "https://github.com/lc-cn/qq-native-mirror/actions/runs/37967496003",
+    "status": "completed",
+    "failureStage": "cold-prepare",
+    "rootCause": "release catalog HTTP 302 rejected by catalog redirect:error",
+    "nativePreparationCompleted": false
+  },
+  "rawCandidateCatalog": {
+    "commit": "2a65a6c0f2e15fe3da207ed1bcb6d9df4a7c940d",
+    "path": "candidates/native-npm-v0.0.2-ci-37962268125-attempt-1/catalog.json",
+    "sha256": "9a08870837f196206f894b7767de76b94a004f8a8e429890de898315c55397a3",
+    "bindingOnlyPassed": true,
+    "rawManifestReadbacks": 6,
+    "nativeExecuted": false,
+    "catalogChanged": false
   }
 }

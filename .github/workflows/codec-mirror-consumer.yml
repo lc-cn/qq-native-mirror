@@ -10,6 +10,10 @@ on:
         type: string
         default: native-npm-v0.0.2-ci-37962268125-attempt-1
         required: true
+      candidate_commit:
+        type: string
+        required: true
+        description: Immutable commit containing prospective catalog and six manifests
 permissions:
   contents: read
   actions: read
@@ -46,6 +50,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           SOURCE_TAG: ${{ inputs.source_tag }}
           MIRROR_TAG: ${{ inputs.mirror_tag }}
+          CANDIDATE_CATALOG_COMMIT: ${{ inputs.candidate_commit }}
         run: node ci/codec-mirror-consumer.mjs
       - uses: actions/upload-artifact@v4
         if: always()

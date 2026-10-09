@@ -110,3 +110,7 @@ node scripts/upload-npm-native-mirror.mjs /absolute/path/npm-candidate /absolute
 候选镜像的真实六平台消费者使用 `codec-mirror-consumer.yml`，固定绑定成功源 run `37962268125` 和同批次镜像 tag。它只安装该候选的主包并省略辅包，让首次 `createClient` 从独立空缓存按实际设备选择镜像；关闭后实际解码三个视频样本，再初始化和关闭一次，要求第二次所有原生 payload（包括 JSON 资源）零下载。Windows 固定 Node 24.20.0，六平台均禁用符号链接创建。脚本不登录、恢复或发送；新增工作流和生成消费者已通过语法检查；实际验收已启动为 run 37967496003，当前记录为运行中，不宣称已通过。
 
 候选镜像 [native-npm-v0.0.2-ci-37962268125-attempt-1](https://github.com/lc-cn/qq-native-mirror/releases/tag/native-npm-v0.0.2-ci-37962268125-attempt-1) 已完成一次上传：423 个资产的远端 SHA256/大小/URL 和八份小文件实际下载摘要均一致。六平台消费者 [run 37967496003](https://github.com/lc-cn/qq-native-mirror/actions/runs/37967496003) 使用工具 commit `69c9af88dc3be9182925816f96b6222f38a6beb7`，实际主包与原生字节仍绑定成功源 `6cae1ec0a5e1bfb03cb7871083915b3d03272347`。默认 catalog 保持原样；须等待这次消费者结果再提升，不把上传成功视为运行通过。
+
+首次候选镜像消费者 run `37967496003` 六平台均失败于首次 catalog 请求，尚未完成原生初始化。原因已通过只读请求复现：release catalog 资产返回 HTTP 302，而 SDK 的 catalog 请求要求直接响应。源包绑定及安装已通过，不能将此失败归因于原生平台支持。
+
+修正使用 commit `2a65a6c0f2e15fe3da207ed1bcb6d9df4a7c940d` 中的独立 `candidates/native-npm-v0.0.2-ci-37962268125-attempt-1/catalog.json`。候选 catalog 内容与已批准 `mirror-plan.json` 的 `catalogUpdates` 完全一致；六份 manifest 位于包含各自摘要的仓库路径。原 release 中的 catalog 作为审计资产保留，其下载 URL 不能直接作为本版 SDK 的 `catalogUrl`。只读绑定模式已实际通过，六份 raw manifest 实际 HTTP 200 和字节摘要全部匹配。默认 catalog 未修改。修正后的真实消费者需要重新运行，不复用首次失败结果。
