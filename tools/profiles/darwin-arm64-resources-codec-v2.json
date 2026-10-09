@@ -1,0 +1,345 @@
+{
+  "schemaVersion": 1,
+  "id": "darwin-arm64-resources-codec-v2",
+  "experimental": true,
+  "platform": "darwin",
+  "arch": "arm64",
+  "sdkVersion": "0.0.2",
+  "version": {
+    "clientVersion": "7.0.2-53644",
+    "appId": "537391652",
+    "qua": "V1_MAC_7.0.2-53644_53644_GW_B"
+  },
+  "source": {
+    "repository": "lc-cn/qq-native-mirror",
+    "runId": "37962268125",
+    "runAttempt": 1,
+    "commit": "6cae1ec0a5e1bfb03cb7871083915b3d03272347",
+    "tag": "npm-v0.0.2-ci-37962268125",
+    "releaseManifestSha256": "9a362f3c4abada4c8cfc397039c20835bcb5393e0ae356873cccb518be9c8e1a",
+    "nativeManifestSha256": "a3c633ad5fc13082b5b8ffa7aa3e09b9a9d37708300bf5df3ea66bd0daa729df",
+    "nativePaths": 1168,
+    "main": {
+      "tarball": "qq-native-client-0.0.2.tgz",
+      "sha256": "ff2d8330985eb9fceb1f20d35859280a5c3799cc90e96077826a080b911d118b",
+      "size": 319380
+    },
+    "auxiliary": {
+      "tarball": "qq-native-client-darwin-arm64-0.0.2.tgz",
+      "sha256": "17df5e2ec460ff2e21209eea473030f6dd4911c43774872d6d4f33417281d586",
+      "size": 59911840
+    },
+    "schemaVersion": 2,
+    "materials": {
+      "binding": {
+        "path": "video-materials/video-materials-binding.json",
+        "sha256": "82a34f21c4b92f7ad41d0b56946b636a75acac3215a27be3b61721c252a5db58"
+      },
+      "report": {
+        "path": "video-materials/video-materials.json",
+        "sha256": "3766c0f68c97256ca35dca205eb7a42c0b38f234166bdb44dbf3b4d2cb06e1aa"
+      }
+    }
+  },
+  "files": [
+    {
+      "path": "ClipBoard.framework/ClipBoard",
+      "sha256": "cef3846ff41c124f2a8360a771fc8932c1a8e479b21d16668e29f412b7a28527",
+      "size": 94128
+    },
+    {
+      "path": "ClipBoard.framework/Resources/Info.plist",
+      "sha256": "d3e43ba0580b1b18eb564a2a643912f40269ae4276d4cd2394b145e096ad7850",
+      "size": 1282
+    },
+    {
+      "path": "ClipBoard.framework/Versions/A/ClipBoard",
+      "sha256": "cef3846ff41c124f2a8360a771fc8932c1a8e479b21d16668e29f412b7a28527",
+      "size": 94128
+    },
+    {
+      "path": "ClipBoard.framework/Versions/A/Resources/Info.plist",
+      "sha256": "d3e43ba0580b1b18eb564a2a643912f40269ae4276d4cd2394b145e096ad7850",
+      "size": 1282
+    },
+    {
+      "path": "ClipBoard.framework/Versions/A/_CodeSignature/CodeResources",
+      "sha256": "8a14f398834b41d09f8b828bd328748112212e7c573d7a0b98a3766b8bdc67fd",
+      "size": 2442
+    },
+    {
+      "path": "ClipBoard.framework/Versions/Current/ClipBoard",
+      "sha256": "cef3846ff41c124f2a8360a771fc8932c1a8e479b21d16668e29f412b7a28527",
+      "size": 94128
+    },
+    {
+      "path": "ClipBoard.framework/Versions/Current/Resources/Info.plist",
+      "sha256": "d3e43ba0580b1b18eb564a2a643912f40269ae4276d4cd2394b145e096ad7850",
+      "size": 1282
+    },
+    {
+      "path": "ClipBoard.framework/Versions/Current/_CodeSignature/CodeResources",
+      "sha256": "8a14f398834b41d09f8b828bd328748112212e7c573d7a0b98a3766b8bdc67fd",
+      "size": 2442
+    },
+    {
+      "path": "JTRecordSDK.framework/JTRecordSDK",
+      "sha256": "c0223e012f5ad1084084cbfac2ca087ae2d311305ca75876129cbef3f4dcf587",
+      "size": 524640
+    },
+    {
+      "path": "JTRecordSDK.framework/Resources/Info.plist",
+      "sha256": "05550a869601232170b576b75b7f87377264dc025d9db87cc896bfa53646511d",
+      "size": 1442
+    },
+    {
+      "path": "JTRecordSDK.framework/Versions/A/JTRecordSDK",
+      "sha256": "c0223e012f5ad1084084cbfac2ca087ae2d311305ca75876129cbef3f4dcf587",
+      "size": 524640
+    },
+    {
+      "path": "JTRecordSDK.framework/Versions/A/Resources/Info.plist",
+      "sha256": "05550a869601232170b576b75b7f87377264dc025d9db87cc896bfa53646511d",
+      "size": 1442
+    },
+    {
+      "path": "JTRecordSDK.framework/Versions/A/_CodeSignature/CodeResources",
+      "sha256": "6e9965d755a5f9d13b49aa48233ffa6e541b7fb358687b57a7f8787119cf201d",
+      "size": 75222
+    },
+    {
+      "path": "JTRecordSDK.framework/Versions/Current/JTRecordSDK",
+      "sha256": "c0223e012f5ad1084084cbfac2ca087ae2d311305ca75876129cbef3f4dcf587",
+      "size": 524640
+    },
+    {
+      "path": "JTRecordSDK.framework/Versions/Current/Resources/Info.plist",
+      "sha256": "05550a869601232170b576b75b7f87377264dc025d9db87cc896bfa53646511d",
+      "size": 1442
+    },
+    {
+      "path": "JTRecordSDK.framework/Versions/Current/_CodeSignature/CodeResources",
+      "sha256": "6e9965d755a5f9d13b49aa48233ffa6e541b7fb358687b57a7f8787119cf201d",
+      "size": 75222
+    },
+    {
+      "path": "LightQuic.framework/LightQuic",
+      "sha256": "e078dcf06166e44e61ffa8fd219f5bcea9a414633c25404f702f7f572be22ff3",
+      "size": 3811312
+    },
+    {
+      "path": "LightQuic.framework/Resources/Info.plist",
+      "sha256": "c2c890ea0aa65323a6768cd3373c56c04be21fcfd55bba07a9961b46474e5405",
+      "size": 658
+    },
+    {
+      "path": "LightQuic.framework/Versions/A/LightQuic",
+      "sha256": "e078dcf06166e44e61ffa8fd219f5bcea9a414633c25404f702f7f572be22ff3",
+      "size": 3811312
+    },
+    {
+      "path": "LightQuic.framework/Versions/A/Resources/Info.plist",
+      "sha256": "c2c890ea0aa65323a6768cd3373c56c04be21fcfd55bba07a9961b46474e5405",
+      "size": 658
+    },
+    {
+      "path": "LightQuic.framework/Versions/A/_CodeSignature/CodeResources",
+      "sha256": "5cc55e2425388b662da9ad22e9e7e8f97127f0b927bb7d7a8f3fcb066b15e174",
+      "size": 2442
+    },
+    {
+      "path": "LightQuic.framework/Versions/Current/LightQuic",
+      "sha256": "e078dcf06166e44e61ffa8fd219f5bcea9a414633c25404f702f7f572be22ff3",
+      "size": 3811312
+    },
+    {
+      "path": "LightQuic.framework/Versions/Current/Resources/Info.plist",
+      "sha256": "c2c890ea0aa65323a6768cd3373c56c04be21fcfd55bba07a9961b46474e5405",
+      "size": 658
+    },
+    {
+      "path": "LightQuic.framework/Versions/Current/_CodeSignature/CodeResources",
+      "sha256": "5cc55e2425388b662da9ad22e9e7e8f97127f0b927bb7d7a8f3fcb066b15e174",
+      "size": 2442
+    },
+    {
+      "path": "LongCaptureFramework.framework/LongCaptureFramework",
+      "sha256": "9cec3c297f46511dcf3d51fa8241e5eeaaddaf7df6250e798925a4c86a8b7fd0",
+      "size": 1042256
+    },
+    {
+      "path": "LongCaptureFramework.framework/Resources/Info.plist",
+      "sha256": "d6c4c5f551cace0d9ecc71213e416ec4a21afe76a8f7c0d5322a89a408d6aa08",
+      "size": 1314
+    },
+    {
+      "path": "LongCaptureFramework.framework/Versions/A/LongCaptureFramework",
+      "sha256": "9cec3c297f46511dcf3d51fa8241e5eeaaddaf7df6250e798925a4c86a8b7fd0",
+      "size": 1042256
+    },
+    {
+      "path": "LongCaptureFramework.framework/Versions/A/Resources/Info.plist",
+      "sha256": "d6c4c5f551cace0d9ecc71213e416ec4a21afe76a8f7c0d5322a89a408d6aa08",
+      "size": 1314
+    },
+    {
+      "path": "LongCaptureFramework.framework/Versions/A/_CodeSignature/CodeResources",
+      "sha256": "b5d1cac024aed3a94a0b6fff9c9457a9ef9bcf254ce49822a1be569e5de24973",
+      "size": 51154
+    },
+    {
+      "path": "LongCaptureFramework.framework/Versions/Current/LongCaptureFramework",
+      "sha256": "9cec3c297f46511dcf3d51fa8241e5eeaaddaf7df6250e798925a4c86a8b7fd0",
+      "size": 1042256
+    },
+    {
+      "path": "LongCaptureFramework.framework/Versions/Current/Resources/Info.plist",
+      "sha256": "d6c4c5f551cace0d9ecc71213e416ec4a21afe76a8f7c0d5322a89a408d6aa08",
+      "size": 1314
+    },
+    {
+      "path": "LongCaptureFramework.framework/Versions/Current/_CodeSignature/CodeResources",
+      "sha256": "b5d1cac024aed3a94a0b6fff9c9457a9ef9bcf254ce49822a1be569e5de24973",
+      "size": 51154
+    },
+    {
+      "path": "ScreenCaptureAgent.framework/Resources/Info.plist",
+      "sha256": "1c61652d82238dd424d320e4400657cf8d21bd641e1c1906d88a81c1ad1a74d9",
+      "size": 1306
+    },
+    {
+      "path": "ScreenCaptureAgent.framework/ScreenCaptureAgent",
+      "sha256": "006b727325df30e81fdff3baac001c9e7fc1af4d513d71e1e9c02ad6db89bf60",
+      "size": 90496
+    },
+    {
+      "path": "ScreenCaptureAgent.framework/Versions/A/Resources/Info.plist",
+      "sha256": "1c61652d82238dd424d320e4400657cf8d21bd641e1c1906d88a81c1ad1a74d9",
+      "size": 1306
+    },
+    {
+      "path": "ScreenCaptureAgent.framework/Versions/A/ScreenCaptureAgent",
+      "sha256": "006b727325df30e81fdff3baac001c9e7fc1af4d513d71e1e9c02ad6db89bf60",
+      "size": 90496
+    },
+    {
+      "path": "ScreenCaptureAgent.framework/Versions/A/_CodeSignature/CodeResources",
+      "sha256": "df548d54720c71f2216662acedf870aaa95f533ba396f2f939da0b9bcab6c636",
+      "size": 2442
+    },
+    {
+      "path": "ScreenCaptureAgent.framework/Versions/Current/Resources/Info.plist",
+      "sha256": "1c61652d82238dd424d320e4400657cf8d21bd641e1c1906d88a81c1ad1a74d9",
+      "size": 1306
+    },
+    {
+      "path": "ScreenCaptureAgent.framework/Versions/Current/ScreenCaptureAgent",
+      "sha256": "006b727325df30e81fdff3baac001c9e7fc1af4d513d71e1e9c02ad6db89bf60",
+      "size": 90496
+    },
+    {
+      "path": "ScreenCaptureAgent.framework/Versions/Current/_CodeSignature/CodeResources",
+      "sha256": "df548d54720c71f2216662acedf870aaa95f533ba396f2f939da0b9bcab6c636",
+      "size": 2442
+    },
+    {
+      "path": "libGuildIpcBroadcast.dylib",
+      "sha256": "674c1fdbf2704ffbcc5bb2cb8529c29ed1a1ce39629db27cb9c87b6a7c059ee7",
+      "size": 1601616
+    },
+    {
+      "path": "libavif_convert.dylib",
+      "sha256": "cdab13341415a6948711c216e8e34bb18c78e14e00d4b6ab277d1d6ba6141b0c",
+      "size": 1781232
+    },
+    {
+      "path": "libcrypto.dylib",
+      "sha256": "a533575b22917a7ae614a0cb3c1e3232a1930814820889f1145786f81381abbb",
+      "size": 941920
+    },
+    {
+      "path": "libssl.dylib",
+      "sha256": "85312d0256eca747cc286a5209e1e58ab8844934b7aedc9832baba2ad8c0b7a5",
+      "size": 369360
+    },
+    {
+      "path": "registration-bridge.node",
+      "sha256": "f2d1ce7d463431d659525f3b3b1781f38da42f931f66183e9c6edb99e250673d",
+      "size": 50888
+    },
+    {
+      "path": "sharp-lib/libvips-cpp.42.dylib",
+      "sha256": "ccc1e4f693f9f21baea3db992487e1a1bff0056cefe34a6c84421fe06a177726",
+      "size": 15157664
+    },
+    {
+      "path": "wrapper.node",
+      "sha256": "fbc8ad9b328d05e16784d76b0181dda894c17001179dbf8c0d5dd00dc6271358",
+      "size": 89482672
+    },
+    {
+      "path": "video/ADDON-LICENSE.txt",
+      "sha256": "642dd80631bd63618a5b9c1a77d5644e437a2f7ba2b4603088282a6dce36c973",
+      "size": 1086
+    },
+    {
+      "path": "video/FFMPEG-COPYING.LGPLv2.1",
+      "sha256": "246041b6ecf9bc32d718a62c57877c78b5eb397b6467e74ed7ae2626ab189c30",
+      "size": 26517
+    },
+    {
+      "path": "video/FFMPEG-LICENSE.md",
+      "sha256": "2e1d16c72fd74e12063776371da757322f8b77589386532f4fd8634bde7de1af",
+      "size": 4346
+    },
+    {
+      "path": "video/NODE-LICENSE.txt",
+      "sha256": "5888dbb9a1d2b18f2c3e6c5f6af1b39de658372b402a0577b002777f14c62ace",
+      "size": 157609
+    },
+    {
+      "path": "video/NOTICE.txt",
+      "sha256": "6d92d277200104c1bb7ea3ad395e8f5e0365c642d38405b5da438d300ab9aa56",
+      "size": 364
+    },
+    {
+      "path": "video/build.json",
+      "sha256": "0087351e8a08c5fbec1f0afe84962652a4e4faad56be2628b7f288d10a4c7846",
+      "size": 3321
+    },
+    {
+      "path": "video/consumer.json",
+      "sha256": "cbe3fffac44e917d5932bf10843de5d0b932b537f2941ab4ab97129933eb916a",
+      "size": 1836
+    },
+    {
+      "path": "video/dependencies.txt",
+      "sha256": "9377bca4e295c8af9a1031bb7fc3be6d3d52cd8cbebc54c96ff4ab23a4b0e2cc",
+      "size": 731
+    },
+    {
+      "path": "video/video-codec.node",
+      "sha256": "101a8eb635806b8c06fd55e3353a5a129d643c42198a3eb0dcaca7eefeab74c4",
+      "size": 13167872
+    },
+    {
+      "path": "video/SOURCE-PROVENANCE.json",
+      "sha256": "d79c04b45454a488750dab0cce59ed473878875e58fce06f166632f6a6037ef7",
+      "size": 5380
+    },
+    {
+      "path": "video/SOURCE-AND-RELINK.txt",
+      "sha256": "74fa604033233343b186c1588137aa94b5ef075c48585faa52831ba0fb889994",
+      "size": 2044
+    }
+  ],
+  "videoCodec": "video/video-codec.node",
+  "sourceReleaseSchemaVersion": 2,
+  "referenceOldProfile": {
+    "path": "tools/profiles/darwin-arm64-resources-v1.json",
+    "sha256": "424e225ee2ccb5e9e45c50d399fd0b20a00b29162e91e7990fa2a6614f2429f6",
+    "paths": 47
+  },
+  "accountAcceptanceEstablished": false,
+  "signingAuthenticityEstablished": false
+}

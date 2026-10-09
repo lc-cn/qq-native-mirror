@@ -1,0 +1,54 @@
+name: Experimental pruned native codec candidate
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  macos-arm64:
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.20.0'
+          architecture: arm64
+      - name: Require actual target
+        run: node -e "if(process.platform!=='darwin'||process.arch!=='arm64'||process.version!=='v24.20.0')throw Error('Wrong runner')"
+      - name: Pruning contracts
+        run: node --test tools/prune-codec-native-npm.test.mjs
+      - name: Acquire complete hash-validated fixed source and receipts
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node sdk/scripts/download-npm-candidate.mjs npm-v0.0.2-ci-37962268125 candidate-source
+      - name: Validate permanent materials online and build separate candidate
+        run: node tools/prune-codec-native-npm.mjs
+      - uses: actions/checkout@v4
+        with:
+          ref: 6cae1ec0a5e1bfb03cb7871083915b3d03272347
+          path: source-runtime
+      - name: Install verifier dependencies without lifecycle scripts
+        working-directory: source-runtime/sdk
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Consume original main and private pruned auxiliary without account
+        run: |
+          cp -R out source-runtime/out
+          (cd source-runtime && node ci/verify-consumer.mjs)
+          cp source-runtime/out/consumer.json out/consumer.json
+          cp source-runtime/out/installed-video.json out/installed-video.json
+      - name: Verify source-bound preparation and actual three-clip decoding
+        run: node tools/prune-codec-native-npm.mjs --verify-consumer
+      - uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: experimental-darwin-arm64-resources-codec-v2
+          path: |
+            out/qq-native-client-*.tgz
+            out/pruning-build.json
+            out/pruning-profile.json
+            out/source-release-manifest.json
+            out/consumer.json
+            out/installed-video.json
+            out/pruning-acceptance.json
+          retention-days: 14

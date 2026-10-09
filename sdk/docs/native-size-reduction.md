@@ -1,6 +1,6 @@
 # Native bundle reduction evidence
 
-The published full GitHub bundles remain the default and fallback. The macOS arm64 candidate retains all 1156 manifest paths. It deduplicates identical file contents and retains the vendor's original arm64 slice from universal Mach-O binaries. No native instructions are patched or signatures reauthored.
+The current six-platform default catalog retains the full registered runtime inventory plus the owned codec; original complete bundles and the SHA-named previous catalog remain available for explicit fallback. The macOS arm64 candidate retains all 1156 manifest paths. It deduplicates identical file contents and retains the vendor's original arm64 slice from universal Mach-O binaries. No native instructions are patched or signatures reauthored.
 
 | Package | Unique contents | Unique content bytes | Runtime paths |
 | --- | ---: | ---: | ---: |
@@ -100,3 +100,11 @@ The resulting tarball is 52,655,978 bytes, SHA-256 `ed5c9dade1c2ce0acfbc5c8f9e1d
 The actual CI artifact was downloaded and inspected independently: exactly 50 auxiliary files, all 47 native paths/hashes/sizes, unchanged original main bytes, source manifest/profile identity, builder/source provenance, and raw build/consumer receipt hashes bound by `pruning-acceptance.json`. All logged receipt objects match downloaded files. No native initialization or account operation was repeated during this inspection. Evidence: `.local/research/pruned-ci-profile-local-verified.json`, `pruned-ci-profile-verified.json`, `verify-pruned-ci-profile.py`, `pruned-ci-profile-full.log` and `.local/releases/pruned-native-ci-37931128712/`.
 
 This closes the experimental CI packaging/initialization gate for this macOS arm64 profile. The full default package remains selected; login, business/media acceptance for this generated candidate, other-platform pruning and signing authenticity remain outstanding. The pending full-package `0.0.2` read batch has not been executed or replaced.
+
+## Full codec default and a new 58-path experimental profile (2026-10-10)
+
+The full codec-bearing default mirror passed all six actual cold consumers in [CI 37969129032](https://github.com/lc-cn/qq-native-mirror/actions/runs/37969129032). Both macOS inventories currently contain 1,168 paths; the resource-pruned profiles are experimental and do not replace them. Original complete manifests/assets and the exact prior eight-entry catalog are preserved. See [bound default evidence](evidence/codec-default-ci-37969129032.json).
+
+A new macOS arm64 profile is bound to source `6cae1ec0a5e1bfb03cb7871083915b3d03272347` / successful run `37962268125`. Every one of the old 47 retained vendor/bridge paths matches this source by SHA256 and actual size. Keeping those exact files plus all eleven `video/` files yields 58 native paths and 61 npm package files. Only the old profile's 1,110 resource paths are omitted; no new vendor/security file is selected for removal, and no binary bytes or signatures are rewritten. Source/relink/provenance/license closure is retained and verified before packing.
+
+The separate local candidate was actually packed and independently re-read: all 58 original file bytes and the original main tarball match their approved hashes, with eleven video files retained. Tarball size is 59,326,804 bytes versus 59,911,840 for the full source, saving 585,036 bytes; file-count reduction is substantial but byte saving is small. SHA256 is `3128a4741044520f7c99a89673db0d04f3183312d7ff0191d580ddb2ca816da8`. The new helper has two refusal/receipt contracts and the manual-only `pruned-codec-native-candidate.yml` requires actual installed main-only preparation/close and three native codec decodes on the original runtime source. No account operation, publication, default replacement or runtime acceptance for this new candidate has occurred yet. Prior 47-path account evidence is not treated as evidence for this new packaged candidate or signing authenticity.
