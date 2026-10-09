@@ -54,6 +54,8 @@ try {
 
 Omit `login` to prepare/load the native kernel only, then call `client.login({method:'qr'})` explicitly. To restore an account previously authorized in the same data directory, use `login: {method:'restore'}` (verified with a real macOS arm64 account; Linux restore has not passed). Restore without an account number requires exactly one eligible record; otherwise provide `uin`. `login: {method:'quick',uin:'...'}` explicitly requests native quick login. Password login is not implemented.
 
+Login requests are copied when supplied. `method` must be `qr`, `quick` or `restore`; quick login requires a decimal-string `uin`, and restore accepts an optional decimal-string `uin`. Malformed requests reject before native preparation or account replacement. Concurrent calls for the same reconnect request share one promise; a different target rejects. Closing during reconnect waits for the worker's actual exit and prevents the replacement from starting authorization.
+
 A parent-side login timeout retires the worker and ignores late readiness. Retry with explicit `reconnect(...)`; it does not automatically repeat authorization. Account files are preserved. Business-operation timeouts report an unknown completion outcome and do not imply cancellation of the native mutation; never automatically replay a timed-out send or management action.
 
 Worker failures reject with exported `KernelRequestError`: `operation` identifies the request, `code` preserves an explicitly supplied native/system code, and `originalName` preserves the worker error name. Errors without a supplied code leave it undefined. Arbitrary native objects, causes and stack traces are not copied through this error serializer. Error codes are not interpreted as detection or safe-retry signals.

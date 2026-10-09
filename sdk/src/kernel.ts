@@ -1,4 +1,6 @@
 import { createNativeServices, type ServiceOperation } from './native-services.ts';
+import { normalizeLoginRequest } from './login-request.ts';
+import type { LoginRequest } from './types.ts';
 import type { RecordCodec } from './record-codec-loader.ts';
 import { mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -16,7 +18,7 @@ export interface KernelOptions {
   mediaTools?: { ffmpeg: string; ffprobe: string };
   recordCodec?: RecordCodec;
 }
-export type LoginRequest = { method: 'qr' } | { method: 'quick'; uin: string } | { method: 'restore'; uin?: string };
+export type { LoginRequest } from './types.ts';
 export interface AccountIdentity { uin: string; uid: string }
 
 export function createKernel(
@@ -335,6 +337,7 @@ export function createKernel(
     prepare,
     async login(loginRequest: LoginRequest): Promise<AccountIdentity> {
       if (closed) throw new Error('Client is closed');
+      loginRequest = normalizeLoginRequest(loginRequest);
       if (pending) throw new Error('Login is already in progress');
       if (identity) {
         if (loginRequest.method !== 'qr' && loginRequest.uin !== undefined && loginRequest.uin !== identity.uin) throw new Error('Another account is already logged in');
@@ -345,7 +348,6 @@ export function createKernel(
       forcedOffline = false;
       lastMsfStatus = undefined;
       accountMsfConnected = false;
-      if (loginRequest.method !== 'qr' && loginRequest.uin !== undefined && !/^\d+$/.test(loginRequest.uin)) throw new Error('Invalid account number');
       request = loginRequest;
       requesting = false;
       const result = new Promise<AccountIdentity>((resolve, reject) => { pending = { resolve, reject }; });

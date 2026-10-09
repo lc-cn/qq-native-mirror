@@ -7,6 +7,7 @@ import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { mkdir } from 'node:fs/promises';
 import { prepareNative } from './native-package.ts';
+import { normalizeLoginRequest } from './login-request.ts';
 import type { Account, ClientOptions, ClientEvents, LoginRequest, ClientState, Friend, Group, GroupMember, MessageInput, SentMessage, Message, Peer, HistoryOptions, KickOptions, UserProfile, DeleteFriendOptions, FriendRequest, NativeCallbackAudit } from './types.ts';
 export type * from './types.ts';
 import type { GroupNoticeOptions, GroupNoticePage } from './types.ts';
@@ -19,6 +20,7 @@ export class QQClient extends EventEmitter<ClientEvents> {
   #closed = false;
   #closing = false;
   #closePromise?: Promise<void>;
+  #retiringWorker = false;
   #callbackAudit = new Map<string, NativeCallbackAudit>();
   #state: ClientState = 'idle';
   #account?: Account;
@@ -30,12 +32,13 @@ export class QQClient extends EventEmitter<ClientEvents> {
   #generation = 0;
   #lastAccount?: Account;
   #reconnecting?: Promise<Account>;
+  #reconnectRequest?: LoginRequest;
   #restart?: { spawn(): ChildProcess; payload: object };
   #auto?: { maxAttempts: number; delayMs: number };
   #autoTimer?: NodeJS.Timeout;
   #autoAttempts = 0;
   constructor(worker: ChildProcess, timeout: number, defaultLogin: LoginRequest = { method: 'qr' }, restart?: { spawn(): ChildProcess; payload: object }, autoReconnect?: ClientOptions['autoReconnect']) {
-    super(); this.#worker = worker; this.#timeout = timeout; this.#defaultLogin = defaultLogin;
+    super(); this.#worker = worker; this.#timeout = timeout; this.#defaultLogin = normalizeLoginRequest(defaultLogin);
     this.#restart = restart;
     if (autoReconnect) this.#auto = { maxAttempts: typeof autoReconnect === 'object' ? autoReconnect.maxAttempts ?? 3 : 3, delayMs: typeof autoReconnect === 'object' ? autoReconnect.delayMs ?? 1000 : 1000 };
     this.#attach(worker);
@@ -143,6 +146,8 @@ export class QQClient extends EventEmitter<ClientEvents> {
   }
   login(request: LoginRequest = this.#defaultLogin): Promise<Account> {
     if (this.#closing || this.#closed) return Promise.reject(new Error('QQ client is closed'));
+    try { request = normalizeLoginRequest(request); }
+    catch (error) { return Promise.reject(error); }
     if (this.#account) {
       if ('uin' in request && request.uin !== undefined && request.uin !== this.#account.uin) return Promise.reject(new Error('A different account is online; use reconnect() to change accounts'));
       return Promise.resolve({ ...this.#account });
@@ -168,13 +173,21 @@ export class QQClient extends EventEmitter<ClientEvents> {
   /** Restart the isolated native process and restore authorization. Requests are never replayed. */
   reconnect(login: LoginRequest = { method: 'restore', ...(this.#lastAccount ? { uin: this.#lastAccount.uin } : {}) }): Promise<Account> {
     if (this.#closing || this.#state === 'closed') return Promise.reject(new Error('QQ client is closed'));
+    try { login = normalizeLoginRequest(login); }
+    catch (error) { return Promise.reject(error); }
     if (!this.#restart) return Promise.reject(new Error('Worker restart is unavailable for this client'));
-    if (this.#reconnecting) return this.#reconnecting;
+    if (this.#reconnecting) {
+      if (login.method !== this.#reconnectRequest?.method || ('uin' in login ? login.uin : undefined) !== (this.#reconnectRequest && 'uin' in this.#reconnectRequest ? this.#reconnectRequest.uin : undefined)) {
+        return Promise.reject(new Error('A different reconnect request is already in progress'));
+      }
+      return this.#reconnecting;
+    }
     clearTimeout(this.#autoTimer); this.#autoTimer = undefined;
+    this.#reconnectRequest = login;
     this.#reconnecting = Promise.resolve().then(() => this.#restartAndLogin(login)).catch(error => {
       if (!this.#closing) { this.#closed = true; this.#setState('failed'); }
       throw error;
-    }).finally(() => { this.#reconnecting = undefined; });
+    }).finally(() => { this.#reconnecting = undefined; this.#reconnectRequest = undefined; });
     this.#setState('connecting');
     return this.#reconnecting;
   }
@@ -185,15 +198,18 @@ export class QQClient extends EventEmitter<ClientEvents> {
     this.#pending.clear();
     const previous = this.#worker;
     ++this.#generation;
-    if (previous.exitCode == null && previous.signalCode == null) {
-      await new Promise<void>((resolve, reject) => {
-        const exit = () => { clearTimeout(force); clearTimeout(deadline); resolve(); };
-        previous.once('exit', exit);
-        const force = setTimeout(() => previous.kill('SIGKILL'), 2000);
-        const deadline = setTimeout(() => { previous.removeListener('exit', exit); clearTimeout(force); reject(new Error('Previous native worker did not exit')); }, 4000);
-        previous.kill();
-      });
-    }
+    this.#retiringWorker = true;
+    try {
+      if (previous.exitCode == null && previous.signalCode == null) {
+        await new Promise<void>((resolve, reject) => {
+          const exit = () => { clearTimeout(force); clearTimeout(deadline); resolve(); };
+          previous.once('exit', exit);
+          const force = setTimeout(() => previous.kill('SIGKILL'), 2000);
+          const deadline = setTimeout(() => { previous.removeListener('exit', exit); clearTimeout(force); reject(new Error('Previous native worker did not exit')); }, 4000);
+          previous.kill();
+        });
+      }
+    } finally { this.#retiringWorker = false; }
     if (this.#closing) throw new Error('QQ client closed during reconnect');
     this.#closed = false;
     this.#worker = this.#restart!.spawn(); this.#attach(this.#worker);
@@ -258,6 +274,12 @@ export class QQClient extends EventEmitter<ClientEvents> {
   async #finishClose(): Promise<void> {
     clearTimeout(this.#autoTimer); this.#autoTimer = undefined;
     if (this.#closing) return;
+    if (this.#retiringWorker) {
+      this.#closing = true; this.#closed = true; this.#account = undefined; this.#setState('closing');
+      try { await this.#stopWorker(); this.#setState('closed'); }
+      catch (error) { this.#setState('failed'); throw error; }
+      return;
+    }
     if (this.#closed) { this.#closing = true; await this.#stopWorker(); this.#setState('closed'); return; }
     this.#closing = true; this.#setState('closing');
     try { await this.request('close', {}, 2000); } finally {
@@ -272,6 +294,7 @@ export class QQClient extends EventEmitter<ClientEvents> {
 
 export async function createClient(options: ClientOptions): Promise<QQClient> {
   if (!options.dataDir) throw new Error('dataDir is required');
+  options = { ...options, login: options.login === undefined ? undefined : normalizeLoginRequest(options.login) };
   if (options.timeoutMs !== undefined && (!Number.isSafeInteger(options.timeoutMs) || options.timeoutMs < 1 || options.timeoutMs > 2_147_483_647)) throw new Error('timeoutMs must be an integer between 1 and 2147483647 milliseconds');
   if (typeof options.autoReconnect === 'object') {
     const { maxAttempts = 3, delayMs = 1000 } = options.autoReconnect;
