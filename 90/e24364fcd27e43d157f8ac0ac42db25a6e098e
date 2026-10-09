@@ -1,0 +1,23 @@
+sdk/docs/evidence/pruned-codec-x64-ci-37974055180.json
+  s_2104cc474f1ce5::t_1183c3ffd080df 1-282
+sdk/docs/native-size-reduction.md
+  s_2104cc474f1ce5::t_335c8920ccf6ae 118-120
+sdk/docs/sdk-acceptance.md
+  s_2104cc474f1ce5::t_4245a72048bac8 630-633
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "90e24364fcd27e43d157f8ac0ac42db25a6e098e",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
