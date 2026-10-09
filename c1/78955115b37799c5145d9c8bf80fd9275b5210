@@ -1,0 +1,41 @@
+ci/verify-consumer.mjs
+  s_2104cc474f1ce5::t_24c765549f0a6b 10,40-48,52
+sdk/README.md
+  s_2104cc474f1ce5::t_c1adb90109c50d 152-153,156-157
+sdk/docs/sdk-acceptance.md
+  s_2104cc474f1ce5::t_bb3aeaafd7bd0c 65,338-347
+sdk/scripts/generate-qq-faces.mjs
+  s_2104cc474f1ce5::t_b015025259067b 1-50
+sdk/scripts/verify-package-consumer.mjs
+  s_2104cc474f1ce5::t_0359932c82aa9d 1-69
+sdk/src/cli.ts
+  s_2104cc474f1ce5::t_0ceb30bf827c08 7,119
+sdk/src/message-elements.ts
+  s_2104cc474f1ce5::t_9ac26b3fd52070 5,8-25
+sdk/src/native-services.ts
+  s_2104cc474f1ce5::t_a5eff87ed32515 12,192
+sdk/src/qq-faces.ts
+  s_2104cc474f1ce5::t_ea28e6f5802884 1-336
+sdk/src/types.ts
+  s_2104cc474f1ce5::t_79aee25d2b66d9 86
+sdk/test/cli.test.ts
+  s_2104cc474f1ce5::t_924030deebcbd0 11-31
+sdk/test/face-send.test.ts
+  s_2104cc474f1ce5::t_e6740a99780c45 1-100
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c178955115b37799c5145d9c8bf80fd9275b5210",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
