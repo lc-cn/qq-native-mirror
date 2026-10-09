@@ -1,0 +1,35 @@
+.github/workflows/native-npm.yml
+  s_2104cc474f1ce5::t_f85440d4900ea9 127
+ci/finalize-release.mjs
+  s_2104cc474f1ce5::t_61f54ed6a347ac 1-33
+sdk/README.md
+  s_2104cc474f1ce5::t_0987af19f33cf6 131
+sdk/docs/npm-first-publish.md
+  s_2104cc474f1ce5::t_6c8d0bf0a1684a 29,62-67
+sdk/docs/sdk-acceptance.md
+  s_2104cc474f1ce5::t_530ca3a47b6202 472-473
+sdk/package-lock.json
+  s_2104cc474f1ce5::t_8d2a66408cbf5f 3,9,24-29,442,449,452,462,472,479,482,489,492,499
+sdk/package.json
+  s_2104cc474f1ce5::t_8d32debfd9a1b1 3,37-42
+sdk/scripts/local-first-publish.mjs
+  s_2104cc474f1ce5::t_014f13dad37a9c 25,88-93
+sdk/test/release-receipt.test.ts
+  s_2104cc474f1ce5::t_7fd22fe20977ef 1-56
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b4b2e4eab5e44f99126e2efc68d6701ac7658833",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
