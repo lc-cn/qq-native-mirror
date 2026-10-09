@@ -1,0 +1,31 @@
+candidates/native-npm-v0.0.2-ci-37962268125-attempt-1/catalog.json
+  s_2104cc474f1ce5::t_b3d137f15ea1e9 1-71
+packages/npm-0.0.2-ci-37962268125-attempt-1-darwin-arm64-codec-gzip-v1/667c80d0284ffcfc4e0c270a6a7b09bfbbdf34ebe2cd452dc8fe016e99c3fa56/manifest.json
+  s_2104cc474f1ce5::t_81de41a41774b5 1-9359
+packages/npm-0.0.2-ci-37962268125-attempt-1-darwin-x64-codec-gzip-v1/85cb263ef00cdd2e24239fb6991a7b4f71b6802e25688e1851f65ad3c3c07fa2/manifest.json
+  s_2104cc474f1ce5::t_8eebaaa269d13b 1-9359
+packages/npm-0.0.2-ci-37962268125-attempt-1-linux-arm64-codec-gzip-v1/628201012ea25d276667e4ac0064541534d6b3ab39e7348d75fb51d13e778b1b/manifest.json
+  s_2104cc474f1ce5::t_7a0c988f6208dd 1-175
+packages/npm-0.0.2-ci-37962268125-attempt-1-linux-x64-codec-gzip-v1/d130b3db854cd147a96bd5cb80d9d16fcf6ce364eda546849ac06403077a9ae4/manifest.json
+  s_2104cc474f1ce5::t_c03763180eaa89 1-167
+packages/npm-0.0.2-ci-37962268125-attempt-1-win32-arm64-codec-gzip-v1/6bd0b50b9647222a38d1b053e21214c591f9589d5beb88ef07e9737a69df9e03/manifest.json
+  s_2104cc474f1ce5::t_4d3985949e4a21 1-233
+packages/npm-0.0.2-ci-37962268125-attempt-1-win32-x64-codec-gzip-v1/baa75f687fbefcfca1698b5555c1f3c96d50643e76f993075a883865f822197e/manifest.json
+  s_2104cc474f1ce5::t_2256d1a112fcac 1-273
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "2a65a6c0f2e15fe3da207ed1bcb6d9df4a7c940d",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
