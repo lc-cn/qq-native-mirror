@@ -13,6 +13,21 @@ export function normalizeMessageQuery(peer: unknown, messageId: unknown): { peer
   throw new Error('Message query peer requires a private userId or group groupId numeric string');
 }
 
+function messageIds(value: unknown): string[] {
+  if (!Array.isArray(value) || value.length < 1 || value.length > 100) throw new Error('messageIds requires between 1 and 100 IDs');
+  const ids = Array.from(value, id => {
+    if (typeof id !== 'string' || !/^\d+$/.test(id)) throw new Error('messageIds must contain numeric strings');
+    return id;
+  });
+  if (new Set(ids).size !== ids.length) throw new Error('messageIds must not contain duplicate IDs');
+  return ids;
+}
+
+export function normalizeMessageBatchQuery(peer: unknown, ids: unknown): { peer: Peer; messageIds: string[] } {
+  const captured = messageIds(ids);
+  return { peer: normalizeMessageQuery(peer, captured[0]).peer, messageIds: captured };
+}
+
 /** Reject a malformed queried batch before projecting or dropping any record. */
 function queriedMessage(value: unknown, peer: NativePeer, method: string, expectedId?: string): Native {
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error(`Native ${method} returned an invalid message`);
@@ -39,6 +54,27 @@ export async function queryNativeMessage(msgService: Native, peer: NativePeer, m
   const message = result.msgList[0];
   if (result.msgList.length === 0) return undefined;
   return queriedMessage(message, peer, 'getMsgsByMsgId', messageId);
+}
+
+/** Same pinned getMsgsByMsgId contract, queried once. Ordering, the 100-ID
+ * ceiling and duplicate refusal are SDK policy, not native ordering claims.
+ * A missing item means absent from this successful response only.
+ */
+export async function queryNativeMessages(msgService: Native, peer: NativePeer, ids: unknown): Promise<(Native | undefined)[]> {
+  const captured = messageIds(ids);
+  if (!peer || (peer.chatType !== 1 && peer.chatType !== 2) || typeof peer.peerUid !== 'string' || !peer.peerUid) throw new Error('Invalid native message query peer');
+  const expectedPeer = { chatType: peer.chatType, peerUid: peer.peerUid };
+  if (typeof msgService?.getMsgsByMsgId !== 'function') throw new Error('Native service is missing getMsgsByMsgId');
+  const result = await msgService.getMsgsByMsgId({ ...expectedPeer }, [...captured]);
+  if (!result || typeof result !== 'object' || result.result !== 0) throw nativeResultError('Native getMsgsByMsgId failed (invalid or rejected result)', result);
+  if (!Array.isArray(result.msgList)) throw new Error('Native getMsgsByMsgId returned an invalid message list');
+  const requested = new Set(captured), found = new Map<string, Native>();
+  for (const raw of result.msgList) {
+    const message = queriedMessage(raw, expectedPeer, 'getMsgsByMsgId');
+    if (!requested.has(message.msgId) || found.has(message.msgId)) throw new Error('Native getMsgsByMsgId returned an unexpected or duplicate message ID');
+    found.set(message.msgId, message);
+  }
+  return captured.map(id => found.get(id));
 }
 
 /** Pinned getMsgsIncludeSelf returns GeneralCallResult & {msgList: RawMessage[]}.

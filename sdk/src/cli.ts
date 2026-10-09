@@ -5,6 +5,7 @@ import { pathToFileURL } from 'node:url';
 import { createClient, type QQClient } from './index.ts';
 import { validateDownloadMirrors } from './native-package.ts';
 import { validateFaceId } from './message-elements.ts';
+import { normalizeMessageBatchQuery } from './message-query.ts';
 import type { ClientOptions, LoginRequest, Peer, HistoryOptions, MessageInput } from './types.ts';
 
 /** Watch only remains open across explicitly retryable, enabled reconnects. */
@@ -52,6 +53,7 @@ const usage = `qq-native-client <command> [options]
   members --config FILE --group-id ID [--uin UIN]
   history --config FILE --kind private|group --target ID [--limit 20] [--before MESSAGE_ID] [--uin UIN]
   message --config FILE --kind private|group --target ID --message-id ID
+  messages --config FILE --kind private|group --target ID --message-ids ID,ID
   forward-history --config FILE --kind private|group --target ID --root-message-id ID --parent-message-id ID
   forward --config FILE --source-kind private|group --source-target ID --kind private|group --target ID --message-ids ID,ID
   watch --config FILE [--uin UIN] [--events message|all|normalized]  Print business events as JSON lines
@@ -187,6 +189,10 @@ export async function prepareCommand(command: string, flags: Record<string, stri
       return client => client.getHistory(target, options);
     }
     case 'message': { const target = peer(flags); const messageId = numeric(flags, 'message-id'); return async client => (await client.getMessage(target, messageId)) ?? null; }
+    case 'messages': {
+      const query = normalizeMessageBatchQuery(peer(flags), required(flags, 'message-ids').split(','));
+      return async client => (await client.getMessages(query.peer, query.messageIds)).map(message => message ?? null);
+    }
     case 'send': {
       const target = peer(flags);
       if ((flags.text !== undefined) === (flags['message-file'] !== undefined)) throw new Error('Provide exactly one of --text or --message-file');

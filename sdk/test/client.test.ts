@@ -16,6 +16,26 @@ class Worker extends EventEmitter {
   kill() { this.connected = false; queueMicrotask(() => this.emit('exit', 0, null)); return true; }
 }
 
+test('public batch lookup captures input before IPC and close rejects the pending request', async () => {
+  const worker = new Worker(), client = new QQClient(worker as unknown as ChildProcess, 500);
+  try {
+    await assert.rejects(client.getMessages({ type: 'group', groupId: '123' }, ['1']), /not online/);
+    worker.emit('message', { event: 'ready', payload: { uin: '456', uid: 'u_self' } });
+    await assert.rejects(client.getMessages({ type: 'group', groupId: '123' }, ['1', '1']), /duplicate/);
+    assert.equal(worker.requests.length, 0);
+    const ids = ['900719925474099312345', '2'], peer = { type: 'group' as const, groupId: '123' };
+    const request = client.getMessages(peer, ids); ids[0] = '999'; peer.groupId = '999';
+    const sent = worker.requests.at(-1);
+    assert.deepEqual({ method: sent.method, peer: sent.peer, messageIds: sent.messageIds }, { method: 'getMessages', peer: { type: 'group', groupId: '123' }, messageIds: ['900719925474099312345', '2'] });
+    worker.emit('message', { id: sent.id, result: [undefined, undefined] });
+    assert.deepEqual(await request, [undefined, undefined]);
+    const pending = client.getMessages({ type: 'group', groupId: '123' }, ['1']);
+    const rejected = assert.rejects(pending, /closed/);
+    await client.close(); await rejected;
+    assert.equal(worker.requests.filter(r => r.method === 'getMessages').length, 2);
+  } finally { await client.close(); }
+});
+
 test('public client exposes friend metadata and suppresses delivery after close', async () => {
   const worker = new Worker(), client = new QQClient(worker as unknown as ChildProcess, 500);
   const events: unknown[] = [], update = { categories: [{ categoryId: 0, name: '', memberCount: 0, friends: [] }] };

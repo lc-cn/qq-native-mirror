@@ -1,0 +1,117 @@
+{
+  "schemaVersion": 1,
+  "scope": "local source and compiled installed consumer; no real native batch lookup",
+  "tests": 428,
+  "failed": 0,
+  "focusedTests": 74,
+  "nativeBatchQueryExecuted": false,
+  "accountUsed": false,
+  "published": false,
+  "sourceHashes": {
+    "src/message-query.ts": "db56ee652bc728698e332ed64594d3b6a903323caadb51b00dab3b8646868e42",
+    "src/index.ts": "5a744bb85b4c2bb286137f246e9023ab19497de1a79527eeee04cfdd1bd9c76d",
+    "src/native-services.ts": "747a9c49b1554128221a2567e06fdf27658e5eb942d0534332e3c4908996304a",
+    "src/worker.ts": "623895b6d92f886bf0ccbc8a4b37225509cc3a8782aacba3af501d989ca2e35b",
+    "src/cli.ts": "5c0a114e6fec078a039814b0ca1ec3e0ee82f03ed2cf8cc49af881351d5df5ee",
+    "test/message-batch-query.test.ts": "ca0f0085de169ed12932124f3645a33c93adce2a9835eb79441cf8ed6e952788",
+    "test/client.test.ts": "17d69b0b124350439cbf7f9138230102f8c7b9298b320e4044c8b3075c67001d",
+    "test/cli.test.ts": "8db179116c5813cca1bebdf4de0b353b9a24a431863f12fd7b088d4ffe27b836",
+    "scripts/message-batch-consumer-contract.mjs": "980454e55d248f67fb77b98df9c8e9acf93d5a2aa66c7345a38084cb0e0358de",
+    "scripts/verify-package-consumer.mjs": "c987c1c5c3fe68ebfc370f25bc6d9c09d04f6328e922600c6955f232f0e5dbd7"
+  },
+  "boundFiles": [
+    {
+      "path": ".local/research/message-batch-focused.log",
+      "bytes": 7040,
+      "sha256": "df2d080e8ca902b070ee19342fc1ed9f0f9dfecf31211fe3988a18470450c9ab"
+    },
+    {
+      "path": ".local/research/message-batch-all-tests-unsandboxed.log",
+      "bytes": 39665,
+      "sha256": "6964012070eb22af5252137ce574e29922842952d4ac8dab414badc43cbafb2e"
+    },
+    {
+      "path": ".local/research/message-batch-package-consumer.log",
+      "bytes": 1715,
+      "sha256": "33b460968edcd9d84c7ec5c73b7ad75922a92ac6ff435e52497f32dc70ef3fe9"
+    },
+    {
+      "path": ".local/package-consumer-verification.json",
+      "bytes": 1714,
+      "sha256": "804e3a5086fbec443b764a692d7577bf8d3c828dd7b5fa2cd8e6bf14ddd40e35"
+    }
+  ],
+  "installedConsumer": {
+    "checkedAt": "2026-10-09T18:23:51.589Z",
+    "package": "qq-native-client",
+    "version": "0.0.2",
+    "integrity": "sha512-j0lcJ/biep1D/Yo1fPFL2CdUBGxB3c7ShFDxpKr7AYnwSXVhC7LUgbn8GelkJqG9xGZNAlz/KZI6ARfQ1h5RGw==",
+    "fileCount": 110,
+    "checks": {
+      "privateFilesExcluded": true,
+      "installedImport": true,
+      "cliHelp": true,
+      "cliDefaultConfig": true,
+      "faceContract": true,
+      "messageQueryContract": true,
+      "historyQueryContract": true,
+      "nativeHistoryQueryAttempted": false,
+      "selfProfileContract": true,
+      "groupOperationContract": true,
+      "groupMemberQueryContract": true,
+      "groupMemberIdentityContract": true,
+      "groupMetadataEventContract": true,
+      "businessWatchContract": true,
+      "friendMetadataEventContract": true,
+      "nativeFriendMetadataObserved": false,
+      "friendListQueryContract": true,
+      "friendListBatchContract": true,
+      "friendProfileQueryContract": true,
+      "groupListQueryContract": true,
+      "nativeGroupListQueryAttempted": false,
+      "nativeFriendListQueryAttempted": false,
+      "declarations": true
+    },
+    "messageBatchQueryContract": true,
+    "messageBatchCliContract": true,
+    "nativeMessageBatchQueryAttempted": false,
+    "forwardMessageContract": true,
+    "nativeForwardQueryAttempted": false,
+    "forwardSubmissionAttempted": false,
+    "normalizedRecallContract": true,
+    "nativeRecallObserved": false,
+    "accountUsed": false,
+    "inboundMentionContract": true,
+    "nativeMentionLookupAttempted": false,
+    "sendMessageContract": true,
+    "nativeSendAttempted": false,
+    "receivedMessageContract": true,
+    "nativeReceivedIdentityLookupAttempted": false,
+    "videoCodecContract": true,
+    "nativeVideoSendAttempted": false,
+    "nativeExecuted": false
+  },
+  "primarySources": [
+    {
+      "path": ".local/research/message-query-service-pinned.ts",
+      "commit": "26d7533e0f5800fdff865ab2f2ad7692917e1076",
+      "gitBlob": "f2c646b6ded83fe665547bb4937e8de681a8ae7f",
+      "sha256": "8fda9b0805cb0d94e6dcf8f6fe12e741be3727cc8aaf97986e2c10e971f12132",
+      "bytes": 23542
+    },
+    {
+      "path": ".local/research/message-query-api-pinned.ts",
+      "commit": "26d7533e0f5800fdff865ab2f2ad7692917e1076",
+      "gitBlob": "be65d9fb9df14088d742786c9e3b4f5136a29d38",
+      "sha256": "85ca04ec8c2535d413f82b17fdd025fcb5d6c4f8cccb6484b4b50844ccee5414",
+      "bytes": 11820
+    },
+    {
+      "path": ".local/research/message-query-common-pinned.ts",
+      "commit": "26d7533e0f5800fdff865ab2f2ad7692917e1076",
+      "gitBlob": "c7c8e0abc6b5df3349991abf10e118b6aba0e161",
+      "sha256": "c39189d2a246752e89467363c22ee1398425be45d9a375048805c3bc84d23639",
+      "bytes": 309
+    }
+  ]
+}

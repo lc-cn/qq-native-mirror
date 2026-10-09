@@ -8,6 +8,14 @@ import { spawnSync } from 'node:child_process';
 import { parse, prepareCommand, normalizeMessage, observeWatchFailures, observeWatchEvents } from '../src/cli.ts';
 import type { QQClient } from '../src/index.ts';
 
+test('batch-message CLI validates IDs before login and emits null for missing positions', async () => {
+  const action = await prepareCommand('messages', { kind: 'group', target: '123', 'message-ids': '900719925474099312345,2' });
+  let calls: unknown[] = [];
+  assert.deepEqual(await action({ getMessages: async (...args: unknown[]) => { calls = args; return [{ messageId: '900719925474099312345' }, undefined]; } } as unknown as QQClient), [{ messageId: '900719925474099312345' }, null]);
+  assert.deepEqual(calls, [{ type: 'group', groupId: '123' }, ['900719925474099312345', '2']]);
+  for (const ids of ['', '1,1', '1,', '1,2.5']) await assert.rejects(prepareCommand('messages', { kind: 'group', target: '123', 'message-ids': ids }));
+});
+
 test('single-message CLI preserves long IDs and validates before client creation', async () => {
   const id = '900719925474099312345';
   const action = await prepareCommand('message', { kind: 'private', target: '456', 'message-id': id });

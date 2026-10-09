@@ -1,5 +1,5 @@
 import { nativeResultError } from './errors.ts';
-import { normalizeMessageQuery, queryNativeMessage, queryNativeHistory } from './message-query.ts';
+import { normalizeMessageQuery, normalizeMessageBatchQuery, queryNativeMessage, queryNativeMessages, queryNativeHistory } from './message-query.ts';
 import { createSelfProfile, type SelfProfileOperation } from './self-profile.ts';
 import { listWebGroupNotices } from './web-group-notices.ts';
 import { createGroupNotices, type GroupNoticeOperation } from './group-notices.ts';
@@ -23,7 +23,7 @@ import type { Friend, Group, GroupMember, Message, NativeCallbackAudit } from '.
 
 type Native = Record<string, any>;
 export interface NativePeer { chatType: 1 | 2; peerUid: string; guildId?: string }
-export type ServiceOperation = 'listFriends' | 'listGroups' | 'getGroupMembers' | 'sendPrivateMessage' | 'sendGroupMessage' | 'getMessage' | 'getHistory' | 'recallMessage' | 'downloadAttachment' | SelfProfileOperation | 'listGroupNotices' | GroupNoticeOperation | GroupOperation | ContactOperation | FriendRequestOperation | GroupRequestOperation | ForwardOperation;
+export type ServiceOperation = 'listFriends' | 'listGroups' | 'getGroupMembers' | 'sendPrivateMessage' | 'sendGroupMessage' | 'getMessage' | 'getMessages' | 'getHistory' | 'recallMessage' | 'downloadAttachment' | SelfProfileOperation | 'listGroupNotices' | GroupNoticeOperation | GroupOperation | ContactOperation | FriendRequestOperation | GroupRequestOperation | ForwardOperation;
 export interface NativeMessage extends Native { msgId: string; peerUid: string; chatType: number }
 interface Waiter { event: string; check: (...args: any[]) => unknown; resolve: (value: any) => void; reject: (error: Error) => void; timer: ReturnType<typeof setTimeout> }
 
@@ -388,6 +388,21 @@ export function createNativeServices(session: Native, version: string, emit: (ev
           const raw = await queryNativeMessage(service('Msg'), await resolvePeer(query.peer), query.messageId);
           lifetime.signal.throwIfAborted();
           return raw === undefined ? undefined : resolvedMessage(raw);
+        }
+        case 'getMessages': {
+          const query = normalizeMessageBatchQuery(payload.peer, payload.messageIds);
+          const raw = await queryNativeMessages(service('Msg'), await resolvePeer(query.peer), query.messageIds);
+          lifetime.signal.throwIfAborted();
+          const present = raw.filter((message): message is Native => message !== undefined);
+          const decoded = await resolvedMessages(present);
+          lifetime.signal.throwIfAborted();
+          const found = new Map<string, Message>();
+          for (let index = 0; index < present.length; index++) {
+            const message = decoded[index];
+            if (!message || message.messageId !== present[index]!.msgId) throw new Error('Invalid decoded message query batch');
+            found.set(message.messageId, message);
+          }
+          return query.messageIds.map(id => found.get(id));
         }
         case 'getHistory': {
           const peer = await resolvePeer(payload.peer);
