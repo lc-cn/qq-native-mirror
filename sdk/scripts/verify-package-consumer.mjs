@@ -189,6 +189,29 @@ assert.equal(await queryNativeMessage({getMsgsByMsgId:(p,ids)=>{assert.deepEqual
 await assert.rejects(queryNativeMessage({getMsgsByMsgId:()=>({result:23,msgList:[]})},peer,id),{code:23});
 `);
 run(process.execPath, ['message-query.mjs']);
+await writeFile(join(destination, 'history-query.mjs'), `import assert from 'node:assert/strict';
+import {createNativeServices} from './node_modules/qq-native-client/dist/native-services.js';
+import {prepareCommand} from './node_modules/qq-native-client/dist/cli.js';
+import {queryNativeMessage} from './node_modules/qq-native-client/dist/message-query.js';
+const peer={chatType:2,peerUid:'123'},id='900719925474099312345';
+const raw={msgId:id,msgSeq:'9',msgTime:'100',chatType:2,peerUid:'123',peerUin:'123',senderUin:'456',senderUid:'u_friend',sendNickName:'fixture',elements:[{elementType:1,textElement:{content:'fixture',atType:0}}]};
+function fixture(response){let calls=0;const services=createNativeServices({getMsgService:()=>({addKernelMsgListener(){},getMsgsIncludeSelf(...args){calls++;assert.deepEqual(args,[peer,'42',2,false]);return response;}}),getBuddyService:()=>({addKernelBuddyListener(){}}),getGroupService:()=>({addKernelGroupListener(){}})},'7.0.2-53644',()=>{});return{services,calls:()=>calls};}
+const payload={peer:{type:'group',groupId:'123'},options:{before:'42',limit:2}};
+for(const [result,code] of [[-1,-1],[73,73],['denied','denied'],[undefined,'invalid-result'],[NaN,'invalid-result']])for(const msgList of [[],[raw]]){
+ const{services,calls}=fixture({result,msgList,errMsg:'must-not-leak'});try{await assert.rejects(services.invokeOperation('getHistory',payload),error=>{assert.equal(error.code,code);assert.ok(!error.message.includes('must-not-leak'));return true;});assert.equal(calls(),1);}finally{services.close();}
+}
+for(const msgList of [Array(1),[{...raw,chatType:1}],[{...raw,chatType:99}],[{...raw,peerUid:'999'}],[{...raw,msgId:123}],[{...raw,elements:Array(1)}]]){
+ const{services,calls}=fixture({result:0,msgList});try{await assert.rejects(services.invokeOperation('getHistory',payload),/invalid|mismatched/i);assert.equal(calls(),1);}finally{services.close();}
+}
+for(const msgList of [[],[{...raw,msgId:'3'},raw]]){
+ const{services,calls}=fixture({result:0,msgList});try{const action=await prepareCommand('history',{kind:'group',target:'123',before:'42',limit:'2'});const records=await action({getHistory:(p,options)=>services.invokeOperation('getHistory',{peer:p,options})});assert.deepEqual(records.map(r=>r.messageId),msgList.map(r=>r.msgId));for(const record of records)assert.deepEqual(record.elements,[{type:'text',text:'fixture'}]);assert.equal(calls(),1);}finally{services.close();}
+}
+await assert.rejects(queryNativeMessage({getMsgsByMsgId:()=>({result:0,msgList:[{...raw,elements:Array(1)}]})},peer,id),/elements/i);
+let finish,begin,calls=0;const began=new Promise(resolve=>{begin=resolve;});const delayed=new Promise(resolve=>{finish=resolve;});
+const closing=createNativeServices({getMsgService:()=>({addKernelMsgListener(){},getMsgsIncludeSelf(){calls++;begin();return delayed;}}),getBuddyService:()=>({addKernelBuddyListener(){}}),getGroupService:()=>({addKernelGroupListener(){}})},'7.0.2-53644',()=>{});
+const pending=closing.invokeOperation('getHistory',payload);await began;closing.close();finish({result:0,msgList:[]});await assert.rejects(pending,/abort|closed/i);assert.equal(calls,1);
+`);
+run(process.execPath, ['history-query.mjs']);
 run(process.execPath,[cliEntry,'init','--config','qq.json','--data-dir','account','--download-mirror','https://gh-proxy.com/']);
 const configuration=JSON.parse(run(process.execPath,[cliEntry,'config','--config','qq.json']));
 if(configuration.wrapperPath || configuration.version || configuration.downloadMirrors?.[0]!=='https://gh-proxy.com/')throw new Error('Installed CLI default catalog configuration failed');
@@ -222,7 +245,7 @@ void factory; void options; void subscribe;
 `);
 run(process.execPath, [resolve(root, 'node_modules/typescript/bin/tsc'), '--noEmit', '--strict', '--types', 'node', '--module', 'NodeNext', '--target', 'ES2023', '--typeRoots', resolve(root, 'node_modules/@types'), 'consumer.ts']);
 const receipt = { checkedAt: new Date().toISOString(), package: packed.name, version: packed.version,
-  integrity: packed.integrity, fileCount: files.length, checks: { privateFilesExcluded:true, installedImport:true, cliHelp:true, cliDefaultConfig:true, faceContract:true, messageQueryContract:true, selfProfileContract:true, groupOperationContract:true, groupMemberQueryContract:true, groupMemberIdentityContract:true, groupMetadataEventContract:true, businessWatchContract:true, friendMetadataEventContract:true, nativeFriendMetadataObserved:false, friendListQueryContract:true, friendListBatchContract:true, friendProfileQueryContract:true, groupListQueryContract:true, nativeGroupListQueryAttempted:false, nativeFriendListQueryAttempted:false, declarations:true },
+  integrity: packed.integrity, fileCount: files.length, checks: { privateFilesExcluded:true, installedImport:true, cliHelp:true, cliDefaultConfig:true, faceContract:true, messageQueryContract:true, historyQueryContract:true, nativeHistoryQueryAttempted:false, selfProfileContract:true, groupOperationContract:true, groupMemberQueryContract:true, groupMemberIdentityContract:true, groupMetadataEventContract:true, businessWatchContract:true, friendMetadataEventContract:true, nativeFriendMetadataObserved:false, friendListQueryContract:true, friendListBatchContract:true, friendProfileQueryContract:true, groupListQueryContract:true, nativeGroupListQueryAttempted:false, nativeFriendListQueryAttempted:false, declarations:true },
   nativeExecuted:false, accountUsed:false };
 await mkdir(join(root, '.local'), {recursive:true});
 await writeFile(join(root, '.local/package-consumer-verification.json'), JSON.stringify(receipt, null, 2));

@@ -20,7 +20,7 @@ function fixture(version = '7.0.2-53644') {
       queueMicrotask(() => msgListener.onMsgInfoListUpdate([{ guildId: 'unique', sendStatus: 2, msgId: '42', msgSeq: '9', msgTime: '100' }]));
       return Promise.resolve({ result: 0 });
     },
-    getMsgsIncludeSelf(peer: any, before: string, count: number, reverse: boolean) { assert.equal(peer.peerUid, '123'); assert.equal(before, '42'); assert.equal(count, 2); assert.equal(reverse, false); return { msgList: [] }; },
+    getMsgsIncludeSelf(peer: any, before: string, count: number, reverse: boolean) { assert.equal(peer.peerUid, '123'); assert.equal(before, '42'); assert.equal(count, 2); assert.equal(reverse, false); return { result: 0, msgList: [] }; },
   };
   const session = {
     getMsgService: () => msg,
@@ -568,4 +568,62 @@ test('friend profile query preserves long decimal ID and accepts omitted optiona
   }, '7.0.2-53644', () => {});
   try { assert.deepEqual(await services.invokeOperation('listFriends'), [{ uid: 'u_friend', userId: validFriendCore.uin, nickname: '', remark: '' }]); }
   finally { services.close(); }
+});
+
+function historyQueryFixture(response: unknown) {
+  const calls: unknown[][] = [];
+  const services = createNativeServices({
+    getMsgService: () => ({ addKernelMsgListener() {}, getMsgsIncludeSelf(...args: unknown[]) { calls.push(args); return response; } }),
+    getGroupService: () => ({ addKernelGroupListener() {} }),
+    getBuddyService: () => ({ addKernelBuddyListener() {} }),
+  }, '7.0.2-53644', () => {});
+  return { services, calls };
+}
+function historyRawMessage() {
+  return { msgId: '900719925474099312345', msgSeq: '9', msgTime: '100', chatType: 2, peerUid: '123', peerUin: '123',
+    senderUin: '456', senderUid: 'u_friend', sendNickName: 'fixture',
+    elements: [{ elementType: 1, textElement: { content: 'fixture only', atType: 0 } }] };
+}
+const historyQuery = { peer: { type: 'group', groupId: '123' }, options: { limit: 2 } };
+for (const [result, code] of [[-1, -1], [73, 73], ['denied', 'denied'], [undefined, 'invalid-result'], [NaN, 'invalid-result']] as [unknown, string | number][]) {
+  for (const nonempty of [false, true]) {
+    test(`history native error ${String(result)} rejects ${nonempty ? 'nonempty' : 'empty'} data without retry`, async () => {
+      const f = historyQueryFixture({ result, msgList: nonempty ? [historyRawMessage()] : [] });
+      try {
+        await assert.rejects(f.services.invokeOperation('getHistory', historyQuery), { code });
+        assert.equal(f.calls.length, 1);
+      } finally { f.services.close(); }
+    });
+  }
+}
+for (const [label, rows] of [
+  ['sparse message list', Array(1)],
+  ['mismatched chat type', [historyRawMessage(), { ...historyRawMessage(), chatType: 1 }]],
+  ['mismatched peer UID', [historyRawMessage(), { ...historyRawMessage(), peerUid: '999' }]],
+  ['unsupported chat type', [historyRawMessage(), { ...historyRawMessage(), chatType: 99 }]],
+  ['invalid elements', [historyRawMessage(), { ...historyRawMessage(), elements: Array(1) }]],
+] as [string, unknown[]][]) {
+  test(`history query rejects ${label} instead of a partial or wrong-session result`, async () => {
+    const f = historyQueryFixture({ result: 0, msgList: rows });
+    try {
+      await assert.rejects(f.services.invokeOperation('getHistory', historyQuery), /invalid|mismatched|elements/i);
+      assert.equal(f.calls.length, 1);
+    } finally { f.services.close(); }
+  });
+}
+test('history query accepts successful empty list and preserves normalized long message ID with raw evidence', async () => {
+  for (const rows of [[], [historyRawMessage()]]) {
+    const f = historyQueryFixture({ result: 0, msgList: rows });
+    try {
+      const messages = await f.services.invokeOperation('getHistory', historyQuery) as any[];
+      assert.equal(messages.length, rows.length);
+      if (rows.length) {
+        assert.equal(messages[0].messageId, rows[0].msgId);
+        assert.deepEqual(messages[0].peer, historyQuery.peer);
+        assert.equal(messages[0].raw, rows[0]);
+        assert.deepEqual(messages[0].elements, [{ type: 'text', text: 'fixture only' }]);
+      }
+      assert.deepEqual(f.calls, [[{ chatType: 2, peerUid: '123' }, '0', 2, false]]);
+    } finally { f.services.close(); }
+  }
 });

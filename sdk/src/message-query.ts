@@ -13,6 +13,16 @@ export function normalizeMessageQuery(peer: unknown, messageId: unknown): { peer
   throw new Error('Message query peer requires a private userId or group groupId numeric string');
 }
 
+/** Reject a malformed queried batch before projecting or dropping any record. */
+function queriedMessage(value: unknown, peer: NativePeer, method: string, expectedId?: string): Native {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error(`Native ${method} returned an invalid message`);
+  const message = value as Native;
+  if (typeof message.msgId !== 'string' || !/^\d+$/.test(message.msgId)) throw new Error(`Native ${method} returned an invalid message ID`);
+  if ((expectedId !== undefined && message.msgId !== expectedId) || message.chatType !== peer.chatType || message.peerUid !== peer.peerUid) throw new Error(`Native ${method} returned a mismatched message or conversation`);
+  if (!Array.isArray(message.elements) || Array.from(message.elements).some((element: unknown) => !element || typeof element !== 'object' || Array.isArray(element))) throw new Error(`Native ${method} returned invalid message elements`);
+  return message;
+}
+
 /** NapCatQQ 26d7533e0f5800fdff865ab2f2ad7692917e1076:
  * NodeIKernelMsgService.ts:195 and apis/msg.ts:55-59.
  * getMsgsByMsgId(peer, ids) returns GeneralCallResult & {msgList: RawMessage[]}.
@@ -28,8 +38,17 @@ export async function queryNativeMessage(msgService: Native, peer: NativePeer, m
   if (result.msgList.length > 1) throw new Error('Native getMsgsByMsgId returned an invalid message list: multiple records for one ID');
   const message = result.msgList[0];
   if (result.msgList.length === 0) return undefined;
-  if (!message || typeof message !== 'object' || Array.isArray(message)) throw new Error('Native getMsgsByMsgId returned an invalid message');
-  if (message.msgId !== messageId || message.chatType !== peer.chatType || message.peerUid !== peer.peerUid) throw new Error('Native getMsgsByMsgId returned a mismatched message or conversation');
-  if (!Array.isArray(message.elements) || message.elements.some((element: unknown) => !element || typeof element !== 'object' || Array.isArray(element))) throw new Error('Native getMsgsByMsgId returned invalid message elements');
-  return message;
+  return queriedMessage(message, peer, 'getMsgsByMsgId', messageId);
+}
+
+/** Pinned getMsgsIncludeSelf returns GeneralCallResult & {msgList: RawMessage[]}.
+ * Keep native ordering; an error or malformed record is not an empty history.
+ */
+export async function queryNativeHistory(msgService: Native, peer: NativePeer, before: string, count: number, reverse: boolean): Promise<Native[]> {
+  if (!peer || (peer.chatType !== 1 && peer.chatType !== 2) || typeof peer.peerUid !== 'string' || !peer.peerUid) throw new Error('Invalid native history query peer');
+  if (typeof msgService?.getMsgsIncludeSelf !== 'function') throw new Error('Native service is missing getMsgsIncludeSelf');
+  const result = await msgService.getMsgsIncludeSelf(peer, before, count, reverse);
+  if (result?.result !== 0) throw nativeResultError('Native getMsgsIncludeSelf failed (invalid or rejected result)', result);
+  if (!Array.isArray(result.msgList)) throw new Error('Native getMsgsIncludeSelf returned an invalid message list');
+  return Array.from(result.msgList, message => queriedMessage(message, peer, 'getMsgsIncludeSelf'));
 }

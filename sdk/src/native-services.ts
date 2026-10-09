@@ -1,5 +1,5 @@
 import { nativeResultError } from './errors.ts';
-import { normalizeMessageQuery, queryNativeMessage } from './message-query.ts';
+import { normalizeMessageQuery, queryNativeMessage, queryNativeHistory } from './message-query.ts';
 import { createSelfProfile, type SelfProfileOperation } from './self-profile.ts';
 import { listWebGroupNotices } from './web-group-notices.ts';
 import { createGroupNotices, type GroupNoticeOperation } from './group-notices.ts';
@@ -309,9 +309,9 @@ export function createNativeServices(session: Native, version: string, emit: (ev
           const options = payload.options ?? {};
           const count = options.limit ?? options.count ?? 20;
           if (!Number.isInteger(count) || count < 1 || count > 100) throw new Error('History count must be between 1 and 100');
-          const result = await call(service('Msg'), 'getMsgsIncludeSelf', peer, String(options.before ?? options.messageId ?? '0'), count, options.reverse ?? false);
-          if (!Array.isArray(result?.msgList)) throw new Error('Invalid native history message list');
-          return result.msgList.map(toMessage).filter(Boolean);
+          const messages = await queryNativeHistory(service('Msg'), peer, String(options.before ?? options.messageId ?? '0'), count, options.reverse ?? false);
+          lifetime.signal.throwIfAborted();
+          return messages.map(message => toMessage(message)!);
         }
         case 'downloadAttachment': return downloadAttachment(service('Msg'), await resolvePeer(payload.peer), { messageId: payload.messageId, elementId: payload.elementId, destination: payload.destination }, eventCall, lifetime.signal);
         case 'recallMessage': {

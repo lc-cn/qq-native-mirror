@@ -71,6 +71,7 @@ for (const [name, result] of [
   ['wrong conversation', { result: 0, msgList: [{ ...rawMessage(), peerUid: '999' }] }],
   ['wrong ID', { result: 0, msgList: [{ ...rawMessage(), msgId: 'other' }] }],
   ['invalid elements', { result: 0, msgList: [{ ...rawMessage(), elements: {} }] }],
+  ['sparse elements', { result: 0, msgList: [{ ...rawMessage(), elements: Array(1) }] }],
 ] as const) {
   test(`getMessage rejects ${name} as invalid native response`, async () => {
     const f = fixture(result);
@@ -93,3 +94,23 @@ for (const [peer, id] of [
     } finally { f.services.close(); }
   });
 }
+
+
+test('close rejects a pending history result without a follow-up native call', async () => {
+  let finish!: (result: unknown) => void;
+  let started!: () => void;
+  let calls = 0;
+  const called = new Promise<void>(resolve => { started = resolve; });
+  const pending = new Promise(resolve => { finish = resolve; });
+  const services = createNativeServices({
+    getMsgService: () => ({ addKernelMsgListener() {}, getMsgsIncludeSelf() { calls++; started(); return pending; } }),
+    getGroupService: () => ({ addKernelGroupListener() {} }),
+    getBuddyService: () => ({ addKernelBuddyListener() {} }),
+  }, '7.0.2-53644', () => {});
+  const request = services.invokeOperation('getHistory', { peer: { type: 'group', groupId: '123' } });
+  await called;
+  services.close();
+  finish({ result: 0, msgList: [] });
+  await assert.rejects(request, /closed|abort/i);
+  assert.equal(calls, 1);
+});
