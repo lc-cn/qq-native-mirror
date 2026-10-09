@@ -1,0 +1,23 @@
+sdk/docs/linux-signing-static.md
+  s_2104cc474f1ce5::t_2b48040ac39fd7 420-431
+sdk/docs/sdk-acceptance.md
+  s_2104cc474f1ce5::t_baacb857ae47f2 420-421
+sdk/scripts/linux-signing-global48-mutators.py
+  s_2104cc474f1ce5::t_4773268b86bed5 1-58
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b6bbebb353f5b5815b62a140515a2246b9f10666",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
