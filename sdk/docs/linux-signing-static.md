@@ -307,3 +307,15 @@ python3 scripts/linux-signing-next-vector-search.py /absolute/path/wrapper.node
 本函数保存传入的 range begin 和 target 指针，读取并比较两个 64 位值；迭代位置按 8 字节推进，剩余数出现 `(end-current)>>3`，返回 `x0` 从保存的当前位置间接读取。唯一直接调用为既已通过 ELF 符号表确认的 stack-check failure，未出现间接调用。这些局部关系符合“查找 8 字节元素并返回位置”的解释，补强上一节调用者把返回指针差转换为元素 index/count 的判断。它们不证明所有混淆分支的执行关系，也不能据此认定这是签名数据或检测位。
 
 这一有限步骤仍未建立 OR8 lookup 对象与 provider `+0x200` 的别名或传递路径；不能把 `+0x200` 直接命名为已确认的 owner 字段。服务端标记、签名输出含义和纯 Node 环境与官方宿主的真实性等价仍未知。脚本仅读取二进制，不加载或执行原生模块。
+
+## 有界补充：OR8 目标对象的查找入口
+
+同一固定 SHA 下，OR8 路径此前保存的返回值来自 `0x4339470→0x4331760`。本次仅检查 unwind 有界函数 `0x4331760..0x4331848`，并独立复核完整 SHA、指令字和系统 objdump 结果。该函数读取 `owner+0x10` 的 8 字节索引表、`owner+0x18` 的字节表和 `owner+0x20` 的指针表。
+
+当 `byteTable[index]` 的 bit0 为零时返回空指针；否则先在 `0x433182c` 读取 `indexTable[index]`，再在 `0x4331810` 返回 `pointerTable[indexTable[index]]`。这是两级索引取得已有表项的关系。函数没有直接或间接调用，没有分配和外部内存写入；其写入均为局部栈存储。没有在此函数中确认索引边界检查。
+
+```sh
+python3 scripts/linux-signing-lookup-origin.py /absolute/path/wrapper.node
+```
+
+这将“返回对象”收窄为表中已有指针，但尚未确认该表项的原生类型、其 `+8` 字段的数据含义，也未证明它与 provider `+0x200` 的别名关系。因此仍不能认定 OR8 改写了最终签名或服务端可识别的标记。相邻函数未纳入本次分析；没有原生执行或账号操作。
