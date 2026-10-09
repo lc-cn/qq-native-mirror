@@ -1,0 +1,175 @@
+{
+  "schemaVersion": 1,
+  "id": "npm-0.0.2-ci-37962268125-attempt-1-linux-arm64-codec-gzip-v1",
+  "platform": "linux",
+  "arch": "arm64",
+  "wrapper": "wrapper.node",
+  "version": {
+    "clientVersion": "3.2.32-52194",
+    "appId": "537379448",
+    "qua": "V1_LNX_3.2.32-52194_52194_GW_B"
+  },
+  "files": [
+    {
+      "path": "libbugly.so",
+      "url": "https://github.com/lc-cn/qq-native-mirror/releases/download/native-npm-v0.0.2-ci-37962268125-attempt-1/573cbe3f173c31945ad8adc7f91b462ee40e92d711f049311a9ffc67ba164f08.gz",
+      "sha256": "573cbe3f173c31945ad8adc7f91b462ee40e92d711f049311a9ffc67ba164f08",
+      "size": 5267744,
+      "encoding": "gzip",
+      "downloadSha256": "fa6a5dee6dbfe84bf7025608f41add043fcc277fb029a10f6e0d92b2d0026bde"
+    },
+    {
+      "path": "libcrbase.so",
+      "url": "https://github.com/lc-cn/qq-native-mirror/releases/download/native-npm-v0.0.2-ci-37962268125-attempt-1/d9152f08a120fd80d106e575582425c4f9b5ceccb579681c08a1cc998d4d290a.gz",
+      "sha256": "d9152f08a120fd80d106e575582425c4f9b5ceccb579681c08a1cc998d4d290a",
+      "size": 14811688,
+      "encoding": "gzip",
+      "downloadSha256": "c63b0631840f7fc56cb252d1580e39148f9879e91d640bbb6eb822eb4d19f389"
+    },
+    {
+      "path": "libssh2.so.1",
+      "url": "https://github.com/lc-cn/qq-native-mirror/releases/download/native-npm-v0.0.2-ci-37962268125-attempt-1/feb4e10c885745ff39d924e0f0d83d78f0b2a26d7900965b29eba5dc70600104.gz",
+      "sha256": "feb4e10c885745ff39d924e0f0d83d78f0b2a26d7900965b29eba5dc70600104",
+      "size": 268168,
+      "encoding": "gzip",
+      "downloadSha256": "de10556cfcdd543e8e79da9e25007f89e61a0c89ca81d42ce36bf42e66333227"
+    },
+    {
+      "path": "libunwind-aarch64.so.8",
+      "url": "https://github.com/lc-cn/qq-native-mirror/releases/download/native-npm-v0.0.2-ci-37962268125-attempt-1/b3d419fdf5146bdf1f829fa6146b8867788f57ea75adf6bd999b4791be90f196.gz",
+      "sha256": "b3d419fdf5146bdf1f829fa6146b8867788f57ea75adf6bd999b4791be90f196",
+      "size": 153552,
+      "encoding": "gzip",
+      "downloadSha256": "56586d1c9d5c8ac5b5375491e5022838f15e1d4db5958d3899a38fb49ed23365"
+    },
+    {
+      "path": "libunwind.so.8",
+      "url": "https://github.com/lc-cn/qq-native-mirror/releases/download/native-npm-v0.0.2-ci-37962268125-attempt-1/ff7bb631cb460dfcb231d80f61e1390448244a0a6f940b12c7c03dbd1a565205.gz",
+      "sha256": "ff7bb631cb460dfcb231d80f61e1390448244a0a6f940b12c7c03dbd1a565205",
+      "size": 199112,
+      "encoding": "gzip",
+      "downloadSha256": "8b78084f559fca1c5af59c6003149f25df7841f5679ad3b1e8c1008729642c30"
+    },
+    {
+      "path": "libz.so.1",
+      "url": "https://github.com/lc-cn/qq-native-mirror/releases/download/native-npm-v0.0.2-ci-37962268125-attempt-1/d7e452e38e2b8d3f47d6110e50a1c0b505477d558e56806cccc75535d0302393.gz",
+      "sha256": "d7e452e38e2b8d3f47d6110e50a1c0b505477d558e56806cccc75535d0302393",
+      "size": 104824,
+      "encoding": "gzip",
+      "downloadSha256": "e25e6c61797b3603508a430ad624375ae043b6c22ca5522d7b16865b4af33099"
+    },
+    {
+      "path": "sharp-lib/libvips-cpp.so.42",
+      "url": "https://github.com/lc-cn/qq-native-mirror/releases/download/native-npm-v0.0.2-ci-37962268125-attempt-1/41978e127befa8d0bcd1a4042142bc4d7b4ddda0d76e389ee31c4aac30cec7f0.gz",
+      "sha256": "41978e127befa8d0bcd1a4042142bc4d7b4ddda0d76e389ee31c4aac30cec7f0",
+      "size": 15921144,
+      "encoding": "gzip",
+      "downloadSha256": "3e44094e3e7d893902dfbf078649b10607fdf408c254baf1e2eb4b7dc52d7199"
+    },
+    {
+      "path": "wrapper.node",
+      "url": "https://github.com/lc-cn/qq-native-mirror/releases/download/native-npm-v0.0.2-ci-37962268125-attempt-1/c302361f52494de257044e912e43ed244bb29ee59f59345d25a8959327828337.gz",
+      "sha256": "c302361f52494de257044e912e43ed244bb29ee59f59345d25a8959327828337",
+      "size": 144561472,
+      "encoding": "gzip",
+      "downloadSha256": "ef42f7430c6bae7a1fffc81d8fffe9b1c8a9bfea9c83242dde8048cdcfc5974b"
+    },
+    {
+      "path": "registration-bridge.node",
+      "url": "https://github.com/lc-cn/qq-native-mirror/releases/download/native-npm-v0.0.2-ci-37962268125-attempt-1/646d987a8b735cbca04ebe3ab3bfd197f3c2767db5a1843decb29999a51efd8b.gz",
+      "sha256": "646d987a8b735cbca04ebe3ab3bfd197f3c2767db5a1843decb29999a51efd8b",
+      "size": 70560,
+      "encoding": "gzip",
+      "downloadSha256": "75417c83051f33b7db8ed857f1a3005d405d7a6582c9883cfda034035e62ca26"
+    },
+    {
+      "path": "video/ADDON-LICENSE.txt",
+      "url": "https://github.com/lc-cn/qq-native-mirror/releases/download/native-npm-v0.0.2-ci-37962268125-attempt-1/642dd80631bd63618a5b9c1a77d5644e437a2f7ba2b4603088282a6dce36c973.gz",
+      "sha256": "642dd80631bd63618a5b9c1a77d5644e437a2f7ba2b4603088282a6dce36c973",
+      "size": 1086,
+      "encoding": "gzip",
+      "downloadSha256": "94c870a30e79cd44316bea520990175a6c6f34c2c0e5d8b807f14f658c8f5f74"
+    },
+    {
+      "path": "video/FFMPEG-COPYING.LGPLv2.1",
+      "url": "https://github.com/lc-cn/qq-native-mirror/releases/download/native-npm-v0.0.2-ci-37962268125-attempt-1/246041b6ecf9bc32d718a62c57877c78b5eb397b6467e74ed7ae2626ab189c30.gz",
+      "sha256": "246041b6ecf9bc32d718a62c57877c78b5eb397b6467e74ed7ae2626ab189c30",
+      "size": 26517,
+      "encoding": "gzip",
+      "downloadSha256": "273b93ea8ffaac99cac971cf6f00a8f46998abc4185b13036897e098739044d7"
+    },
+    {
+      "path": "video/FFMPEG-LICENSE.md",
+      "url": "https://github.com/lc-cn/qq-native-mirror/releases/download/native-npm-v0.0.2-ci-37962268125-attempt-1/2e1d16c72fd74e12063776371da757322f8b77589386532f4fd8634bde7de1af.gz",
+      "sha256": "2e1d16c72fd74e12063776371da757322f8b77589386532f4fd8634bde7de1af",
+      "size": 4346,
+      "encoding": "gzip",
+      "downloadSha256": "53d1526f4328273b5215cbc3d0d4dadc0c297d5ea6ed83fd9c5a50b8333389ec"
+    },
+    {
+      "path": "video/NODE-LICENSE.txt",
+      "url": "https://github.com/lc-cn/qq-native-mirror/releases/download/native-npm-v0.0.2-ci-37962268125-attempt-1/5888dbb9a1d2b18f2c3e6c5f6af1b39de658372b402a0577b002777f14c62ace.gz",
+      "sha256": "5888dbb9a1d2b18f2c3e6c5f6af1b39de658372b402a0577b002777f14c62ace",
+      "size": 157609,
+      "encoding": "gzip",
+      "downloadSha256": "468f58bf345ac2d898a13f0038f452e44bab7ef6dcf35e2fca1e1436834d041c"
+    },
+    {
+      "path": "video/NOTICE.txt",
+      "url": "https://github.com/lc-cn/qq-native-mirror/releases/download/native-npm-v0.0.2-ci-37962268125-attempt-1/6d92d277200104c1bb7ea3ad395e8f5e0365c642d38405b5da438d300ab9aa56.gz",
+      "sha256": "6d92d277200104c1bb7ea3ad395e8f5e0365c642d38405b5da438d300ab9aa56",
+      "size": 364,
+      "encoding": "gzip",
+      "downloadSha256": "72c7730b6ec9dc8489943e0d908f58f8b78b3ea14347b5f067ddcfc196c389c7"
+    },
+    {
+      "path": "video/build.json",
+      "url": "https://github.com/lc-cn/qq-native-mirror/releases/download/native-npm-v0.0.2-ci-37962268125-attempt-1/4f9c0d579a8f4e2d8ad81fd2df1a21c9384e9eb2fe19aafb616f8249a7566cf2.gz",
+      "sha256": "4f9c0d579a8f4e2d8ad81fd2df1a21c9384e9eb2fe19aafb616f8249a7566cf2",
+      "size": 3085,
+      "encoding": "gzip",
+      "downloadSha256": "e1bade862e2f0903e47a06dff68008b9f035c6cbf2158b4f21bcc9402e994a8e"
+    },
+    {
+      "path": "video/consumer.json",
+      "url": "https://github.com/lc-cn/qq-native-mirror/releases/download/native-npm-v0.0.2-ci-37962268125-attempt-1/b8633ed9ffbc4b8f4892f908cf0e91cf57869d8a736395785af64b75041414a0.gz",
+      "sha256": "b8633ed9ffbc4b8f4892f908cf0e91cf57869d8a736395785af64b75041414a0",
+      "size": 1835,
+      "encoding": "gzip",
+      "downloadSha256": "d56d4fe032f9fce8fcbe64eec69dec242067ddde78e6adb8e40e47bd2991a50e"
+    },
+    {
+      "path": "video/dependencies.txt",
+      "url": "https://github.com/lc-cn/qq-native-mirror/releases/download/native-npm-v0.0.2-ci-37962268125-attempt-1/bd68f6299c0d7e54ff64764eef1303027f8f1e3e35e0f0da629aecaed97124de.gz",
+      "sha256": "bd68f6299c0d7e54ff64764eef1303027f8f1e3e35e0f0da629aecaed97124de",
+      "size": 377,
+      "encoding": "gzip",
+      "downloadSha256": "2cae8ae614a4aef655e0de8095e6752d60e98cb94330bc806780c6e33f6ecbec"
+    },
+    {
+      "path": "video/video-codec.node",
+      "url": "https://github.com/lc-cn/qq-native-mirror/releases/download/native-npm-v0.0.2-ci-37962268125-attempt-1/8eff4ebdf6b704b1a3aa4a25a328c0949ce81b1b8db220ef5bf3f310fe3ac741.gz",
+      "sha256": "8eff4ebdf6b704b1a3aa4a25a328c0949ce81b1b8db220ef5bf3f310fe3ac741",
+      "size": 15499928,
+      "encoding": "gzip",
+      "downloadSha256": "8ab5cce38d98c2420e5e997ceb5c1e6b40c91ad6685de5a62113e90102583d73"
+    },
+    {
+      "path": "video/SOURCE-PROVENANCE.json",
+      "url": "https://github.com/lc-cn/qq-native-mirror/releases/download/native-npm-v0.0.2-ci-37962268125-attempt-1/07585bd533a6a6e38a4b2450f9fa368cc082ad9a877615ab543bca4f13d3a095.gz",
+      "sha256": "07585bd533a6a6e38a4b2450f9fa368cc082ad9a877615ab543bca4f13d3a095",
+      "size": 5378,
+      "encoding": "gzip",
+      "downloadSha256": "79a47f9032edfa306e2bfc8504d155d339e450fa7bbc256e0b28691aede74c67"
+    },
+    {
+      "path": "video/SOURCE-AND-RELINK.txt",
+      "url": "https://github.com/lc-cn/qq-native-mirror/releases/download/native-npm-v0.0.2-ci-37962268125-attempt-1/c5a56e7f108ef71f15d6be76b718450d7f5e2d21d8f3715a1caa97644bc0b47d.gz",
+      "sha256": "c5a56e7f108ef71f15d6be76b718450d7f5e2d21d8f3715a1caa97644bc0b47d",
+      "size": 2042,
+      "encoding": "gzip",
+      "downloadSha256": "cbeeb7d5c7d7028c41cc80f40fa71016ab6b0ffbd891b67497fcb4b5b5f7fadc"
+    }
+  ],
+  "videoCodec": "video/video-codec.node"
+}
