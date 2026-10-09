@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "sourceCommit": "cbf219bd0fbe930f71d6e9e1be89a76e453d4e59",
+  "scope": "Internal response adapter, disconnected from public API and worker",
+  "tests": {
+    "passed": 446,
+    "failed": 0,
+    "skipped": 0,
+    "logSha256": "9e93ce3b488d08ebc89e74041466f5b3aadbeb144c0818ffbd49a235de0f799e",
+    "buildLogSha256": "819a2f99ef8332e62374bc44315a31f243dd85502188e29441db9dd50b6c1c41",
+    "buildPassed": true
+  },
+  "files": [
+    {
+      "path": "src/long-message-response.ts",
+      "sha256": "a6ce7f39c64457cae8f226ed614c5e88042a51c334f7959354f200e2dcf40779"
+    },
+    {
+      "path": "test/long-message-response.test.ts",
+      "sha256": "de93f7b5519470feb2a592e7f9bb348ba158f228a2345b21183b9f257dc457f4"
+    },
+    {
+      "path": "docs/long-message-response.md",
+      "sha256": "34f3160c011faa529b7364d067c7c04d6cded1e2ea2723c0b7c7cde94b0f7338"
+    }
+  ],
+  "nativeExecuted": false,
+  "accountUsed": false,
+  "networkAccessedByAdapter": false,
+  "uploadAcceptanceEstablished": false,
+  "signingAuthenticityEstablished": false,
+  "published": false
+}
