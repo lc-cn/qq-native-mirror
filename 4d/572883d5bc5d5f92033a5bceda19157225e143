@@ -1,0 +1,33 @@
+.github/workflows/native-npm.yml
+  s_2104cc474f1ce5::t_acc314bd6ef1df 67-70
+README.md
+  s_2104cc474f1ce5::t_b984c7d1a92332 16-17
+ci/build-platform.mjs
+  s_2104cc474f1ce5::t_f7b661357bc809 1,48
+ci/npm.mjs
+  s_2104cc474f1ce5::t_3723e09ce6e09c 1-6
+ci/verify-consumer.mjs
+  s_2104cc474f1ce5::t_2cd8821b03edf0 1-6,9-10,12-31,33,35-37,41-43
+sdk/src/native-package.ts
+  s_2104cc474f1ce5::t_23e2117e53edac 14-18,28,134-140,144,167
+sdk/src/types.ts
+  s_2104cc474f1ce5::t_b3929a1b9c18bc 8-10
+sdk/test/installed-native.test.ts
+  s_2104cc474f1ce5::t_d56aa2ef8c180f 1-37
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "4d572883d5bc5d5f92033a5bceda19157225e143",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
