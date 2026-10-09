@@ -1,0 +1,48 @@
+name: Multi-version Linux mirror consumers
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { version: 3.2.31-51102, arch: x64, runner: ubuntu-24.04 }
+          - { version: 3.2.31-51102, arch: arm64, runner: ubuntu-24.04-arm }
+          - { version: 3.2.32-52194, arch: x64, runner: ubuntu-24.04 }
+          - { version: 3.2.32-52194, arch: arm64, runner: ubuntu-24.04-arm }
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.20.0'
+          architecture: ${{ matrix.arch }}
+      - name: Assert real Linux runner
+        env:
+          TARGET_ARCH: ${{ matrix.arch }}
+        run: node -e "if(process.platform!=='linux'||process.arch!==process.env.TARGET_ARCH)throw Error('Incorrect runner')"
+      - name: Acquire verified corrected main only
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node version-ci/acquire-main.mjs
+      - name: Install runtime OS libraries
+        run: sudo apt-get update && sudo apt-get install -y libx11-xcb1 libgnutls30
+      - name: Installed main mirror fallback twice without account login
+        env:
+          TARGET_VERSION: ${{ matrix.version }}
+        shell: bash
+        run: NODE_OPTIONS="--require $(pwd)/first-ci/deny-symlink.cjs" node version-ci/verify.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: version-${{ matrix.version }}-linux-${{ matrix.arch }}
+          path: |
+            out/version-consumer.json
+            out/main-source.json
+            out/version-consumer-driver-error.json
+          if-no-files-found: warn
+          retention-days: 30
