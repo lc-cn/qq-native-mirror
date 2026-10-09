@@ -1,0 +1,39 @@
+ci/verify-consumer.mjs
+  s_2104cc474f1ce5::t_a7716d3e765257 22,63
+sdk/README.md
+  s_2104cc474f1ce5::t_f549dff8611b78 133
+sdk/docs/evidence/kernel-session-strategy-local.json
+  s_2104cc474f1ce5::t_ba0c89c02424b7 1-134
+sdk/docs/session-strategy.md
+  s_2104cc474f1ce5::t_b809ce161558ae 1-19
+sdk/docs/version-research-platforms.md
+  s_2104cc474f1ce5::t_1901f843e920aa 107-108
+sdk/scripts/kernel-session-consumer-contract.mjs
+  s_2104cc474f1ce5::t_094a76b9710430 1-96
+sdk/scripts/verify-package-consumer.mjs
+  s_2104cc474f1ce5::t_6a13be3a99cab1 17,41,282
+sdk/src/kernel.ts
+  s_2104cc474f1ce5::t_b665a944559afe 41,104-129,153-154,199-203,274-286
+sdk/test/kernel-session-strategy.test.ts
+  s_2104cc474f1ce5::t_5009ddb1c3b9ce 1-142
+tools/verify-dedup-consumer.mjs
+  s_2104cc474f1ce5::t_b466b30276f211 71
+tools/verify-dedup-consumer.test.mjs
+  s_2104cc474f1ce5::t_fb1ab295678c7f 9,29-30
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "5907793ad848c68b3183ac5c2f2b06fbd1a5e0cf",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
