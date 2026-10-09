@@ -1,0 +1,28 @@
+ci/verified-download.test.mjs
+  s_2104cc474f1ce5::t_fb8bc9ed7aa68c 1-19
+ci/verified-download.mjs
+  s_2104cc474f1ce5::t_fb8bc9ed7aa68c 1-31
+.github/workflows/native-npm.yml
+  s_2104cc474f1ce5::t_fb8bc9ed7aa68c 69-70,122
+  s_2104cc474f1ce5::t_f66b0e3d28da4b 111-112
+ci/build-platform.mjs
+  s_2104cc474f1ce5::t_d7af3c61cc62d4 1,15-16,25,28
+sdk/docs/sdk-acceptance.md
+  s_2104cc474f1ce5::t_98ce3e8a9a5260 634-637
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ce2d2785aa35f21d539a2dce4a34c1f98feb95c7",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
