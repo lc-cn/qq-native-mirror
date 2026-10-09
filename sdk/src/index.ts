@@ -48,6 +48,7 @@ export class QQClient extends EventEmitter<ClientEvents> {
     worker.on('message', (message: any) => {
       if (generation !== this.#generation || this.#closed) return;
       if (message.event) {
+        if (this.#closing) return;
         if (message.event === 'native-callback') {
           const { family, name, argumentTypes } = message.payload ?? {};
           if (typeof family === 'string' && typeof name === 'string' && Array.isArray(argumentTypes) && argumentTypes.every(value => typeof value === 'string')) {

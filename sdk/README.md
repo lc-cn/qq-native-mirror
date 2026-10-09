@@ -56,6 +56,8 @@ Omit `login` to prepare/load the native kernel only, then call `client.login({me
 
 Login requests are copied when supplied. `method` must be `qr`, `quick` or `restore`; quick login requires a decimal-string `uin`, and restore accepts an optional decimal-string `uin`. Malformed requests reject before native preparation or account replacement. Concurrent calls for the same reconnect request share one promise; a different target rejects. Closing during reconnect waits for the worker's actual exit and prevents the replacement from starting authorization.
 
+Quick/restore authentication must identify the account actually selected for the request; a mismatch rejects before its account Session is initialized. Identity events and returned account objects are copies. Once shutdown starts, late account events cannot move the client out of `closing` or restore its online identity.
+
 A parent-side login timeout retires the worker and ignores late readiness. Retry with explicit `reconnect(...)`; it does not automatically repeat authorization. Account files are preserved. Business-operation timeouts report an unknown completion outcome and do not imply cancellation of the native mutation; never automatically replay a timed-out send or management action.
 
 Worker failures reject with exported `KernelRequestError`: `operation` identifies the request, `code` preserves an explicitly supplied native/system code, and `originalName` preserves the worker error name. Errors without a supplied code leave it undefined. Arbitrary native objects, causes and stack traces are not copied through this error serializer. Error codes are not interpreted as detection or safe-retry signals.

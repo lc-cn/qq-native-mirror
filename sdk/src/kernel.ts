@@ -21,6 +21,12 @@ export interface KernelOptions {
 export type { LoginRequest } from './types.ts';
 export interface AccountIdentity { uin: string; uid: string }
 
+function nativeAccountNumber(value: unknown): string | undefined {
+  if (typeof value === 'string' && /^\d+$/.test(value)) return value;
+  if (typeof value === 'number' && Number.isSafeInteger(value) && value >= 0) return String(value);
+  return undefined;
+}
+
 export function createKernel(
   wrapper: NativeObject,
   options: KernelOptions,
@@ -40,7 +46,7 @@ export function createKernel(
   let closed = false;
   let initialized = false;
   let generation = 0;
-  let pending: { resolve: (account: AccountIdentity) => void; reject: (error: Error) => void } | undefined;
+  let pending: { method: LoginRequest['method']; targetUin?: string; authenticationIssued: boolean; resolve: (account: AccountIdentity) => void; reject: (error: Error) => void } | undefined;
   let timeout: ReturnType<typeof setTimeout> | undefined;
   let poll: ReturnType<typeof setTimeout> | undefined;
   let request: LoginRequest;
@@ -129,13 +135,13 @@ export function createKernel(
             }, options.mediaTools, options.recordCodec, account.uin, account.uid, info => { if (active()) notify('native-callback', info); });
           } catch (error) { fail(error instanceof Error ? error : new Error(String(error))); return; }
           if (!active() || pending !== expectedPending) { nativeServices?.close(); nativeServices = undefined; return; }
-          identity = account;
+          identity = { ...account };
           clearTimers();
           const current = pending;
           pending = undefined;
-          current.resolve(account);
-          notify('login', account);
-          notify('ready', account);
+          current.resolve({ ...account });
+          notify('login', { ...account });
+          if (active()) notify('ready', { ...account });
         },
       }));
       invoke(session, 'init', {
@@ -199,6 +205,7 @@ export function createKernel(
       }
       requesting = true;
       if (request.method === 'qr') {
+        expectedPending.authenticationIssued = true;
         const accepted = invoke(loginService, 'getQRCodePicture');
         if (accepted === false) throw new Error('Native login service rejected QR request');
       } else {
@@ -219,16 +226,18 @@ export function createKernel(
           const eligible = Array.isArray(records?.LocalLoginInfoList)
             ? records.LocalLoginInfoList.filter((record: NativeObject) => record.isQuickLogin === true) : [];
           if (uin) {
-            if (!eligible.some((record: NativeObject) => String(record.uin) === uin)) {
+            if (!eligible.some((record: NativeObject) => nativeAccountNumber(record.uin) === uin)) {
               throw new Error('Requested account has no restorable login record');
             }
           } else {
             if (eligible.length !== 1) throw new Error(eligible.length === 0
               ? 'No restorable login record' : 'Multiple restorable accounts; specify uin');
-            uin = String(eligible[0].uin);
+            uin = nativeAccountNumber(eligible[0].uin);
           }
-          if (!/^\d+$/.test(uin!)) throw new Error('Invalid restored account number');
+          if (uin === undefined) throw new Error('Invalid restored account number');
         }
+        expectedPending.targetUin = uin;
+        expectedPending.authenticationIssued = true;
         const result = await invoke(loginService, 'quickLoginWithUin', uin);
         if (!active()) return;
         if (result?.result !== '0' || result?.loginErrorInfo?.errMsg) {
@@ -306,9 +315,18 @@ export function createKernel(
       onQRCodeSessionUserScaned: () => notify('qr-scanned', undefined),
       onQRCodeLoginSucceed: (account: AccountIdentity) => {
         if (!pending) return;
-        if (!account || !account.uid || !account.uin) { fail(new Error('Invalid native login identity')); return; }
-        const accountIdentity = { uid: String(account.uid), uin: String(account.uin) };
-        notify('authenticated', accountIdentity);
+        const authentication = pending;
+        const attempt = generation;
+        const uin = nativeAccountNumber(account?.uin);
+        if (uin === undefined || typeof account?.uid !== 'string' || !account.uid.trim()) { fail(new Error('Invalid native login identity')); return; }
+        if (!pending.authenticationIssued) { fail(new Error('Native authentication arrived before the login request was issued')); return; }
+        if (pending.method !== 'qr' && (pending.targetUin === undefined || uin !== pending.targetUin)) {
+          fail(new Error('Native login account does not match the requested account'));
+          return;
+        }
+        const accountIdentity = { uid: account.uid, uin };
+        notify('authenticated', { ...accountIdentity });
+        if (closed || generation !== attempt || pending !== authentication) return;
         void startAccountSession(accountIdentity);
       },
       onQRCodeSessionFailed: (type: number, code: number) => fail(new Error(`QR login failed (${type}, ${code})`)),
@@ -341,7 +359,7 @@ export function createKernel(
       if (pending) throw new Error('Login is already in progress');
       if (identity) {
         if (loginRequest.method !== 'qr' && loginRequest.uin !== undefined && loginRequest.uin !== identity.uin) throw new Error('Another account is already logged in');
-        return identity;
+        return { ...identity };
       }
       const attempt = ++generation;
       startingSession = false;
@@ -350,7 +368,7 @@ export function createKernel(
       accountMsfConnected = false;
       request = loginRequest;
       requesting = false;
-      const result = new Promise<AccountIdentity>((resolve, reject) => { pending = { resolve, reject }; });
+      const result = new Promise<AccountIdentity>((resolve, reject) => { pending = { method: loginRequest.method, authenticationIssued: false, resolve, reject }; });
       // Attach rejection handling immediately while asynchronous setup runs.
       void result.catch(() => {});
       timeout = setTimeout(() => fail(new Error('Login timed out')), options.loginTimeoutMs ?? 120_000);
