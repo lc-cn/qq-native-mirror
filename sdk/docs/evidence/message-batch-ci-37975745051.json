@@ -1,0 +1,263 @@
+{
+  "schemaVersion": 1,
+  "runId": "37975745051",
+  "sourceCommit": "ce2d2785aa35f21d539a2dce4a34c1f98feb95c7",
+  "url": "https://github.com/lc-cn/qq-native-mirror/actions/runs/37975745051",
+  "conclusion": "success",
+  "regressions": {
+    "tests": 428,
+    "pass": 428,
+    "fail": 0
+  },
+  "actualInstalledConsumers": 7,
+  "actualTarballArtifactsVerified": true,
+  "packages": [
+    {
+      "name": "qq-native-client-linux-x64",
+      "nativeFiles": 19,
+      "nativeManifestSha256": "61dd00e6a06c963365c87c70a451451c7bba8519647c4b77c0407621dbcbdfd2",
+      "sha256": "f49790f2d1b777d4323bbdd3edeb7e870317cc43690103ddb7901754d6143079",
+      "bytes": 70030005
+    },
+    {
+      "name": "qq-native-client-linux-arm64",
+      "nativeFiles": 20,
+      "nativeManifestSha256": "a4699e354b2c84efdd869c402e88abbf0d8d6eaf2f12bd383d1ef33af4532363",
+      "sha256": "ada2ab469fdc1ef9f024307d8f490d88049df65523b6f911b601a4d2964bd5ac",
+      "bytes": 72005537
+    },
+    {
+      "name": "qq-native-client-darwin-x64",
+      "nativeFiles": 1168,
+      "nativeManifestSha256": "4e98d8c58553e333df1e889ee338b91839d8d2a9fef5863ade9654b2cdf4ea2c",
+      "sha256": "f0963ca5a33440881b139655de336da4338a06b76fb076b416d747877d2d86cb",
+      "bytes": 65852286
+    },
+    {
+      "name": "qq-native-client-darwin-arm64",
+      "nativeFiles": 1168,
+      "nativeManifestSha256": "4468126fbfe3141e0e6b11c182f3fa34cce1a67c1cc04d75dd3a88494db71111",
+      "sha256": "1ef0ac7161b27a343f067846e43cceef284e9aead7ed575654e28c51b9d59291",
+      "bytes": 59911817
+    },
+    {
+      "name": "qq-native-client-win32-x64",
+      "nativeFiles": 32,
+      "nativeManifestSha256": "0244f9275bc37ab6bbbfeafd9a9023283b6cb11c3d65bb16d0fff1a679424ff3",
+      "sha256": "0ada5faac4c0035dbd580d1f017317ac8034636fca86cc280b9981b9f5094e04",
+      "bytes": 66610914
+    },
+    {
+      "name": "qq-native-client-win32-arm64",
+      "nativeFiles": 27,
+      "nativeManifestSha256": "7391731b902b8163ec1cd6983846e06b32edccc974a358350419c10a6010a589",
+      "sha256": "6870a36a32423009faa23bf15b5de456ba05ed79c8d12620ce05c755495bb3b3",
+      "bytes": 54122192
+    },
+    {
+      "name": "qq-native-client",
+      "sha256": "e70e3f53b1bbbcaef5d1aa0d1696764b49fa57c3dc43eb388df4979861950578",
+      "bytes": 337854
+    }
+  ],
+  "platforms": [
+    {
+      "job": "darwin-arm64",
+      "platform": "darwin",
+      "arch": "arm64",
+      "node": "v24.20.0",
+      "exports": 104,
+      "prepared": true,
+      "closed": true,
+      "installedMainOnly": true,
+      "batchQueryContract": true,
+      "batchCliContract": true,
+      "actualVideoClips": 3,
+      "nativeMessageBatchQueryAttempted": false,
+      "accountUsed": false
+    },
+    {
+      "job": "linux-x64",
+      "platform": "linux",
+      "arch": "x64",
+      "node": "v24.20.0",
+      "exports": 98,
+      "prepared": true,
+      "closed": true,
+      "installedMainOnly": true,
+      "batchQueryContract": true,
+      "batchCliContract": true,
+      "actualVideoClips": 3,
+      "nativeMessageBatchQueryAttempted": false,
+      "accountUsed": false
+    },
+    {
+      "job": "win32-arm64",
+      "platform": "win32",
+      "arch": "arm64",
+      "node": "v24.20.0",
+      "exports": 98,
+      "prepared": true,
+      "closed": true,
+      "installedMainOnly": true,
+      "batchQueryContract": true,
+      "batchCliContract": true,
+      "actualVideoClips": 3,
+      "nativeMessageBatchQueryAttempted": false,
+      "accountUsed": false
+    },
+    {
+      "job": "win32-x64",
+      "platform": "win32",
+      "arch": "x64",
+      "node": "v24.20.0",
+      "exports": 98,
+      "prepared": true,
+      "closed": true,
+      "installedMainOnly": true,
+      "batchQueryContract": true,
+      "batchCliContract": true,
+      "actualVideoClips": 3,
+      "nativeMessageBatchQueryAttempted": false,
+      "accountUsed": false
+    },
+    {
+      "job": "darwin-x64",
+      "platform": "darwin",
+      "arch": "x64",
+      "node": "v24.20.0",
+      "exports": 104,
+      "prepared": true,
+      "closed": true,
+      "installedMainOnly": true,
+      "batchQueryContract": true,
+      "batchCliContract": true,
+      "actualVideoClips": 3,
+      "nativeMessageBatchQueryAttempted": false,
+      "accountUsed": false
+    },
+    {
+      "job": "linux-arm64",
+      "platform": "linux",
+      "arch": "arm64",
+      "node": "v24.20.0",
+      "exports": 98,
+      "prepared": true,
+      "closed": true,
+      "installedMainOnly": true,
+      "batchQueryContract": true,
+      "batchCliContract": true,
+      "actualVideoClips": 3,
+      "nativeMessageBatchQueryAttempted": false,
+      "accountUsed": false
+    },
+    {
+      "job": "aggregate",
+      "platform": "linux",
+      "arch": "x64",
+      "node": "v24.20.0",
+      "exports": 98,
+      "prepared": true,
+      "closed": true,
+      "installedMainOnly": true,
+      "batchQueryContract": true,
+      "batchCliContract": true,
+      "actualVideoClips": 3,
+      "nativeMessageBatchQueryAttempted": false,
+      "accountUsed": false
+    }
+  ],
+  "boundFiles": [
+    {
+      "path": "message-batch-ci-37975745051-independent-state.json",
+      "bytes": 53541,
+      "sha256": "fce5dc126e97789cafd748a95d7f75a94b8acf0230ff693323833789b4f42e64"
+    },
+    {
+      "path": "message-batch-ci-37975745051-full.log",
+      "bytes": 4398219,
+      "sha256": "dde50eae24509a9231c71a92346631dd31505e31da3a9d7dac936b09cf764e4f"
+    },
+    {
+      "path": "release-manifest.json",
+      "bytes": 4702,
+      "sha256": "8ec5157f2f2a2afc8963cc22b5d9265eaa3f360c18bc39e0bfb12dbeecd01c30"
+    },
+    {
+      "path": "qq-native-client-linux-x64-0.0.2.tgz",
+      "bytes": 70030005,
+      "sha256": "f49790f2d1b777d4323bbdd3edeb7e870317cc43690103ddb7901754d6143079"
+    },
+    {
+      "path": "evidence/linux-x64.consumer.json",
+      "bytes": 3954,
+      "sha256": "c07d426629963d8caed15d1db1dcdc56c8f53e69755d8ee3ed7407eee21a4776"
+    },
+    {
+      "path": "qq-native-client-linux-arm64-0.0.2.tgz",
+      "bytes": 72005537,
+      "sha256": "ada2ab469fdc1ef9f024307d8f490d88049df65523b6f911b601a4d2964bd5ac"
+    },
+    {
+      "path": "evidence/linux-arm64.consumer.json",
+      "bytes": 3960,
+      "sha256": "7dbb7818baf2299c4bf24013854d67f4efe37eb4ba14383d7511c5a9adc164b7"
+    },
+    {
+      "path": "qq-native-client-darwin-x64-0.0.2.tgz",
+      "bytes": 65852286,
+      "sha256": "f0963ca5a33440881b139655de336da4338a06b76fb076b416d747877d2d86cb"
+    },
+    {
+      "path": "evidence/darwin-x64.consumer.json",
+      "bytes": 3958,
+      "sha256": "b42b5d1832aa1e27c05f8249aa87c76bbdc856f26873d849753aaa5fd4233681"
+    },
+    {
+      "path": "qq-native-client-darwin-arm64-0.0.2.tgz",
+      "bytes": 59911817,
+      "sha256": "1ef0ac7161b27a343f067846e43cceef284e9aead7ed575654e28c51b9d59291"
+    },
+    {
+      "path": "evidence/darwin-arm64.consumer.json",
+      "bytes": 3964,
+      "sha256": "15c10646d3394c008f0a6d80553e9f8c91a641632f69feb1757eccc0f876b886"
+    },
+    {
+      "path": "qq-native-client-win32-x64-0.0.2.tgz",
+      "bytes": 66610914,
+      "sha256": "0ada5faac4c0035dbd580d1f017317ac8034636fca86cc280b9981b9f5094e04"
+    },
+    {
+      "path": "evidence/win32-x64.consumer.json",
+      "bytes": 3954,
+      "sha256": "a9898408b9c15fe5f848ad58644476fadf716eb9a440bcca24fc8c1ccd6c3598"
+    },
+    {
+      "path": "qq-native-client-win32-arm64-0.0.2.tgz",
+      "bytes": 54122192,
+      "sha256": "6870a36a32423009faa23bf15b5de456ba05ed79c8d12620ce05c755495bb3b3"
+    },
+    {
+      "path": "evidence/win32-arm64.consumer.json",
+      "bytes": 3960,
+      "sha256": "9fe744c05b0a737993e177ce2af5d7e0f6386b7168a05c319249c83209cd83f9"
+    },
+    {
+      "path": "qq-native-client-0.0.2.tgz",
+      "bytes": 337854,
+      "sha256": "e70e3f53b1bbbcaef5d1aa0d1696764b49fa57c3dc43eb388df4979861950578"
+    },
+    {
+      "path": "evidence/aggregated-main.consumer.json",
+      "bytes": 3954,
+      "sha256": "d2cd10d803a5ac0c8ce7509f247d32db213c0f780a800b2b69d13b42eafbd6e2"
+    }
+  ],
+  "bindingsParentRechecked": 17,
+  "independentReviewSha256": "d7347da92397d4ccd2cf9dff1b391c7280b4a9e94b75e55d4f7225056067f990",
+  "published": false,
+  "accountUsed": false,
+  "nativeMessageBatchQueryAttempted": false,
+  "scope": "Six-platform and aggregate actual installed preparation/close with batch query and CLI synthetic native contracts. This ce2 batch SDK is distinct from 31ae object-storage CI; it does not establish new account queries or signing authenticity."
+}
