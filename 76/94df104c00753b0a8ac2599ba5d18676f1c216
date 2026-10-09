@@ -1,0 +1,33 @@
+.github/workflows/video-codec-native.yml
+  s_2104cc474f1ce5::t_369796cb849980 1-100
+sdk/native/video/LICENSE
+  s_2104cc474f1ce5::t_15d646a4802669 1-21
+sdk/native/video/ffmpeg-source.json
+  s_2104cc474f1ce5::t_ea47fd56039850 1-10
+sdk/native/video/video-codec.cc
+  s_2104cc474f1ce5::t_64bb66856d8a63 1-157
+sdk/scripts/build-video-native.mjs
+  s_2104cc474f1ce5::t_147fdd0f14370d 1-82
+sdk/scripts/prepare-video-source.mjs
+  s_2104cc474f1ce5::t_02e7f3814148b7 1-37
+sdk/scripts/relink-video-native.mjs
+  s_2104cc474f1ce5::t_124dc3805b7f95 1-23
+sdk/scripts/verify-video-native.mjs
+  s_2104cc474f1ce5::t_e042eab9580725 1-66
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "7694df104c00753b0a8ac2599ba5d18676f1c216",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
