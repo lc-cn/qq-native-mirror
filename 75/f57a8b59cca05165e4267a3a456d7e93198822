@@ -1,0 +1,23 @@
+sdk/scripts/build-video-native.mjs
+  s_2104cc474f1ce5::t_41d3e9833ab729 37
+sdk/scripts/prepare-video-source.mjs
+  s_2104cc474f1ce5::t_9a678ccba81e73 4,33-34
+sdk/scripts/verify-video-native.mjs
+  s_2104cc474f1ce5::t_8a4a246481b604 17,26-30,40,46-47,59
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "75f57a8b59cca05165e4267a3a456d7e93198822",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
