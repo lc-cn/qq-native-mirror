@@ -12,7 +12,7 @@ The manual `video-codec-native.yml` workflow covers native Linux, macOS and Wind
 
 Local macOS arm64 / Node 24.19.0 built the owned addon from the pinned archive and passed all three fixtures, including a separate fresh relink. The runtime addon was 13,254,096 bytes (approximately 6.6 MB gzip in this local measurement). It depends on system macOS libraries/frameworks, not QQ or external FFmpeg libraries. These results do not prove QQ video upload/peer receipt, account signing authenticity, all native codecs or the remaining platforms.
 
-After complete six-target producer validation, the source-built codec can be attached to versioned native auxiliary packages and selected automatically. At this revision it remains an explicit `videoCodecPath` input; no npm release or default installation of the codec has occurred. Existing explicit `mediaTools` and supplied codecs continue to work.
+Source `d43a20a76aface337240bd71db403cea496f4f17` now attaches the source-built runtime to codec-bearing auxiliary candidates and sets `manifest.videoCodec`. The installer returns the verified absolute codec path from installed packages, trusted mirrors/caches and complete adjacent local manifests. Explicit `videoCodecPath` takes precedence and remains selected on reconnect. Without that override, explicitly configured `mediaTools` retain their executable route ahead of a bundled default. The current public npm 0.0.1 still has no codec; no new npm release has occurred. Existing explicit `mediaTools`, supplied codecs and old manifests continue to work. Six-platform installed-candidate CI is a separate gate from the earlier standalone producer CI below.
 
 ## Six-platform source-build evidence
 

@@ -1,6 +1,6 @@
 # Local video preparation
 
-`createClient({ dataDir, videoCodecPath: '/absolute/video-codec.node' })` loads an explicitly supplied codec in the ordinary Node worker. JS named exports and a default object are supported; standard `.node` addons use Node's CommonJS loader. This option also works in the CLI JSON configuration. The module is executable consumer-supplied code and must match the running OS, architecture and Node ABI. The SDK does not fetch it or install external tools.
+`createClient({ dataDir, videoCodecPath: '/absolute/video-codec.node' })` loads an explicitly supplied codec in the ordinary Node worker. JS named exports and a default object are supported; standard `.node` addons use Node's CommonJS loader. This option also works in the CLI JSON configuration. The module is executable consumer-supplied code and must match the running OS, architecture and Node ABI. When a selected native bundle declares `videoCodec`, the SDK verifies its file inventory and automatically uses that bundled path. The optional explicit path overrides the default, including on reconnect. Explicit `mediaTools` take precedence over a bundled default when no explicit codec path is supplied. It does not install external tools. Published 0.0.1 bundles do not include the codec.
 
 The codec interface is:
 
@@ -20,7 +20,7 @@ Outgoing video input remains an absolute, nonempty local `.mp4` path. The codec 
 
 A codec may downsample its cover. The encoded thumbnail dimensions need not equal the video's measured dimensions. The fixed upstream legacy native converter populates the confusingly named `thumbWidth` and `thumbHeight` with the original video dimensions; this SDK preserves that contract without inventing fields. JPEG, PNG and BMP use matching cache filename extensions, and thumbnail MD5/size come from the actual copied bytes. The original video is preserved.
 
-An explicit codec takes precedence over `mediaTools`. Codec exceptions, invalid metadata and missing modules fail without an executable fallback or fabricated cover. Without `videoCodecPath`, explicitly configured absolute `ffmpeg` and `ffprobe` paths remain supported. Decoder and native staging waits have a 30-second deadline; Session close stops waiting and prevents subsequent staging/send. Already dispatched native decoder work cannot be cancelled; its late result is ignored. Local file operations already in progress may finish during cancellation.
+An explicit codec takes precedence over `mediaTools`. Codec exceptions, invalid metadata and missing modules fail without an executable fallback or fabricated cover. Without an explicit or bundled codec, explicitly configured absolute `ffmpeg` and `ffprobe` paths remain supported. Decoder and native staging waits have a 30-second deadline; Session close stops waiting and prevents subsequent staging/send. Already dispatched native decoder work cannot be cancelled; its late result is ignored. Local file operations already in progress may finish during cancellation.
 
 ## Evidence and remaining work
 

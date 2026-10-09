@@ -1,7 +1,7 @@
 import {npm} from './npm.mjs';
 import {execFileSync,execFile} from 'node:child_process';
 import {promisify} from 'node:util';
-import {mkdtemp,writeFile,readFile,rm} from 'node:fs/promises';
+import {mkdtemp,writeFile,readFile,rm,realpath} from 'node:fs/promises';
 import {createServer} from 'node:http';
 import {createHash} from 'node:crypto';
 import {tmpdir} from 'node:os';
@@ -14,7 +14,7 @@ import {verifyMentionConsumer} from '../sdk/scripts/mention-consumer-contract.mj
 import {verifySendConsumer} from '../sdk/scripts/send-consumer-contract.mjs';
 import {verifyReceivedConsumer} from '../sdk/scripts/received-consumer-contract.mjs';
 import {verifyVideoConsumerContract} from '../sdk/scripts/video-consumer-contract.mjs';
-const execute=promisify(execFile),temp=await mkdtemp(join(tmpdir(),'qq-ci-consumer-'));
+const execute=promisify(execFile),temp=await realpath(await mkdtemp(join(tmpdir(),'qq-ci-consumer-')));
 const {version}=JSON.parse(await readFile('sdk/package.json','utf8'));
 const platformName=`qq-native-client-${process.platform}-${process.arch}`;
 const binaries=new Map();

@@ -29,7 +29,7 @@ class FakeVideoWorker extends EventEmitter {
   kill() { this.connected = false; this.exitCode = 0; queueMicrotask(() => this.emit('exit', 0, null)); return true; }
 }
 
-test('createClient chooses explicit video codec over manifest default and preserves selection on fake reconnect', async t => {
+test('createClient preserves explicit codec/tools precedence over bundled codec on fake reconnect', async t => {
   const root = await realpath(await mkdtemp(join(tmpdir(), 'qq-video-client-')));
   t.after(() => rm(root, { recursive: true, force: true }));
   const wrapperPath = join(root, 'wrapper.node'), discovered = join(root, 'discovered.node'), explicit = join(root, 'explicit-codec.mjs');
@@ -42,12 +42,16 @@ test('createClient chooses explicit video codec over manifest default and preser
   childProcess.fork = (() => { const worker = new FakeVideoWorker(); workers.push(worker); return worker as unknown as ChildProcess; }) as typeof childProcess.fork;
   syncBuiltinESMExports();
   t.after(() => { childProcess.fork = original; syncBuiltinESMExports(); });
-  for (const videoCodecPath of [undefined, explicit]) {
+  const tools = { ffmpeg: join(root,'explicit-ffmpeg'), ffprobe: join(root,'explicit-ffprobe') };
+  const cases = [{}, {videoCodecPath:explicit}, {mediaTools:tools}, {videoCodecPath:explicit,mediaTools:tools}];
+  for (const options of cases) {
+    const {videoCodecPath,mediaTools} = options;
     const before = workers.length;
-    const client = await createClient({ wrapperPath, dataDir: join(root, videoCodecPath ? 'explicit-unused' : 'default-unused'), videoCodecPath, autoReconnect: false, timeoutMs: 1000 });
+    const client = await createClient({ wrapperPath, dataDir: join(root, 'unused-'+before), videoCodecPath, mediaTools, autoReconnect: false, timeoutMs: 1000 });
     try {
-      const expected = videoCodecPath ?? discovered;
+      const expected = videoCodecPath ?? (mediaTools === undefined ? discovered : undefined);
       assert.equal(workers[before].requests.find(request => request.method === 'init').options.videoCodecPath, expected);
+      assert.deepEqual(workers[before].requests.find(request => request.method === 'init').options.mediaTools, mediaTools);
       assert.equal(client.account, undefined);
       // A synthetic worker answers reconnect; no real authorization/native call occurs.
       await client.reconnect({ method: 'restore', uin: '456' });
