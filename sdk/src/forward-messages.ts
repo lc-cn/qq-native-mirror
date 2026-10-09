@@ -29,8 +29,9 @@ function check(result: unknown, method: string): asserts result is Native {
 export function createForwardMessages(
   session: Native,
   resolvePeer: (peer: Peer) => Promise<NativePeer>,
-  decodeMessage: (message: Native) => Message | undefined,
+  decodeMessage: (message: Native) => Message | undefined | Promise<Message | undefined>,
   signal?: AbortSignal,
+  decodeMessages?: (messages: Native[]) => Promise<(Message | undefined)[]>,
 ) {
   const call = (method: string, ...args: unknown[]) => {
     signal?.throwIfAborted();
@@ -59,8 +60,10 @@ export function createForwardMessages(
         if (!Array.isArray(record.elements) || Array.from(record.elements).some(element => !element || typeof element !== 'object' || Array.isArray(element))) throw new Error('Native getMultiMsg returned invalid message elements');
         return record;
       });
-      return messages.map(raw => {
-        const decoded = decodeMessage(raw);
+      const decodedMessages = decodeMessages ? await decodeMessages(messages) : await Promise.all(messages.map(decodeMessage));
+      signal?.throwIfAborted();
+      if (decodedMessages.length !== messages.length) throw new Error('Invalid decoded forwarded message batch');
+      return Array.from(decodedMessages, decoded => {
         if (!decoded) throw new Error('Native forwarded message has an unsupported conversation type');
         return decoded;
       });

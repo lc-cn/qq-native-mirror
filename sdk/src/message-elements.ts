@@ -103,12 +103,32 @@ export async function createReplyElement(messageId: string, peer: Native, msgSer
 
 /** Decode only fields supported by the public contract; preserve every other
  * native element intact instead of silently dropping media or notifications. */
-export function decodeElements(native: Native[]): MessageElement[] {
-  return native.map(element => {
+export function mentionUserId(value: unknown): string | undefined {
+  if (typeof value !== 'string' || !/^-?\d+$/.test(value)) return;
+  const number = BigInt(value);
+  if (number > 0n) return value;
+  if (number >= -2147483648n && number < 0n) return String(number + 4294967296n);
+}
+export function mentionLookupUid(element: Native): string | undefined {
+  const text = element.textElement;
+  if (!text || typeof text !== 'object' || Array.isArray(text) || typeof text.content !== 'string' || (text.atType !== 2 && text.atType !== 4)) return;
+  if (text.atUid !== undefined && text.atUid !== '' && !(typeof text.atUid === 'string' && /^0+$/.test(text.atUid))) return;
+  if (typeof text.atNtUid === 'string' && text.atNtUid.trim() && !text.atNtUid.includes('*')) return text.atNtUid;
+}
+export function decodeElements(native: Native[], resolvedUins: ReadonlyMap<string, string> = new Map()): MessageElement[] {
+  return Array.from(native, element => {
+    if (!element || typeof element !== 'object' || Array.isArray(element)) throw new Error('Invalid native message element');
+    const unknown: MessageElement = { type: 'unknown', nativeType: Number(element.elementType), data: element };
     const text = element.textElement;
     if (text) {
-      if (text.atType === 1 || text.atType === 2) return { type: 'at', userId: text.atType === 1 ? 'all' : String(text.atUid), text: text.content };
-      return { type: 'text', text: text.content };
+      if (typeof text !== 'object' || Array.isArray(text) || typeof text.content !== 'string') return unknown;
+      if (text.atType === 0 || (text.atType === undefined && !text.atUid && !text.atNtUid)) return { type: 'text', text: text.content };
+      if (text.atType === 1) return { type: 'at', userId: 'all', text: text.content };
+      if (text.atType !== 2 && text.atType !== 4) return unknown;
+      const uid = mentionLookupUid(element);
+      const resolved = uid === undefined ? undefined : resolvedUins.get(uid);
+      const userId = mentionUserId(text.atUid) ?? (typeof resolved === 'string' && /^\d+$/.test(resolved) && /[1-9]/.test(resolved) ? resolved : undefined);
+      return userId === undefined ? unknown : { type: 'at', userId, text: text.content };
     }
     if (element.replyElement?.replayMsgId) return { type: 'reply', messageId: String(element.replyElement.replayMsgId) };
     if (element.faceElement && Number.isInteger(element.faceElement.faceIndex)) return { type: 'face', id: element.faceElement.faceIndex };
@@ -122,6 +142,6 @@ export function decodeElements(native: Native[]): MessageElement[] {
         return { type, file: media.filePath, elementId: String(element.elementId ?? ''), ...(type === 'file' ? { name: media.fileName, size: media.fileSize } : {}) };
       }
     }
-    return { type: 'unknown', nativeType: Number(element.elementType), data: element };
+    return unknown;
   });
 }

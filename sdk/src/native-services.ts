@@ -15,7 +15,8 @@ import { createImageElement, createFileElement, createReplyElement, decodeElemen
 import { createGroupOperations, type GroupOperation } from './group-operations.ts';
 import { createGroupEvents } from './group-events.ts';
 import { createRecallEvents } from './recall-events.ts';
-import type { Friend, Group, GroupMember, Message, SentMessage, NativeCallbackAudit } from './types.ts';
+import { decodeResolvedElementBatches, needsMentionLookup } from './inbound-mentions.ts';
+import type { Friend, Group, GroupMember, Message, MessageElement, SentMessage, NativeCallbackAudit } from './types.ts';
 
 type Native = Record<string, any>;
 export interface NativePeer { chatType: 1 | 2; peerUid: string; guildId?: string }
@@ -26,9 +27,9 @@ interface Waiter { event: string; check: (...args: any[]) => unknown; resolve: (
 function toSent(message: Native): SentMessage {
   return { messageId: String(message.msgId), sequence: String(message.msgSeq), time: Number(message.msgTime) };
 }
-function toMessage(message: Native): Message | undefined {
+function toMessage(message: Native, decodedElements?: MessageElement[]): Message | undefined {
   if (message.chatType !== 1 && message.chatType !== 2) return;
-  const elements = decodeElements(message.elements ?? []);
+  const elements = decodedElements ?? decodeElements(message.elements ?? []);
   return {
     ...toSent(message),
     peer: message.chatType === 2 ? { type: 'group', groupId: String(message.peerUid) } : { type: 'private', userId: String(message.peerUin || message.peerUid || '') },
@@ -74,6 +75,47 @@ export function createNativeServices(session: Native, version: string, emit: (ev
     return object[name](...args);
   };
   const service = (name: string): Native => call(guardedSession, `get${name}Service`);
+  const resolvedMessages = async (messages: Native[], rawMessages = messages): Promise<(Message | undefined)[]> => {
+    const projected = messages.map((message, index) => { const value = toMessage(message); return value === undefined ? undefined : { ...value, raw: rawMessages[index] }; });
+    const elements = await decodeResolvedElementBatches(messages.map(message => message.elements ?? []), async uids => {
+      const value = await call(service('UixConvert'), 'getUin', uids);
+      return value?.uinInfo;
+    }, lifetime.signal, stage => { if (!closed) emit('diagnostic', { stage }); });
+    lifetime.signal.throwIfAborted();
+    return projected.map((message, index) => message === undefined ? undefined : { ...message, elements: elements[index] });
+  };
+  const resolvedMessage = async (message: Native) => (await resolvedMessages([message]))[0];
+  let receiveQueue: Promise<void> | undefined;
+  const receiveKey = (message: Native): string | undefined => message.msgId && message.peerUid ? JSON.stringify([message.chatType, String(message.peerUid), String(message.msgId)]) : undefined;
+  const captureReceived = (raw: Native) => {
+    const elements = (raw.elements ?? []).map((element: Native) => {
+      const captured = { ...element };
+      for (const field of ['textElement', 'replyElement', 'faceElement', 'picElement', 'fileElement', 'videoElement', 'pttElement']) {
+        const value = element[field];
+        if (value && typeof value === 'object' && !Array.isArray(value)) captured[field] = { ...value };
+      }
+      return captured;
+    });
+    return { raw, message: { ...raw, elements }, key: receiveKey(raw) };
+  };
+  type Received = ReturnType<typeof captureReceived>;
+  const unseenReceived = (messages: Received[]) => messages.filter(message => !message.key || !receivedMessages.has(message.key));
+  const deliverReceived = (messages: Received[], decoded: (Message | undefined)[]) => {
+    if (closed) return;
+    messages.forEach((message, index) => {
+      if (closed) return;
+      const converted = decoded[index];
+      if (!converted) return;
+      const key = message.key;
+      if (key && receivedMessages.has(key)) return;
+      if (key) {
+        receivedMessages.add(key);
+        if (receivedMessages.size > 10_000) receivedMessages.delete(receivedMessages.values().next().value!);
+      }
+      emit('message', converted);
+    });
+    dispatch('Msg/onRecvMsg', [messages.map(message => message.raw)]);
+  };
   const dispatch = (event: string, args: any[]) => {
     for (const waiter of [...waiters]) {
       if (waiter.event !== event) continue;
@@ -104,20 +146,24 @@ export function createNativeServices(session: Native, version: string, emit: (ev
     onRecvMsg: (messages: NativeMessage[]) => {
       if (closed) return;
       if (!Array.isArray(messages)) { emit('diagnostic', { stage: 'invalid-native-message-batch' }); return; }
-      for (const message of messages) {
-        if (!message || typeof message !== 'object' || (message.elements !== undefined && (!Array.isArray(message.elements) || message.elements.some((element: unknown) => !element || typeof element !== 'object')))) { emit('diagnostic', { stage: 'invalid-native-message' }); continue; }
-        const converted = toMessage(message);
-        if (converted) {
-          const key = message.msgId && message.peerUid ? JSON.stringify([message.chatType, String(message.peerUid), String(message.msgId)]) : undefined;
-          if (key && receivedMessages.has(key)) continue;
-          if (key) {
-            receivedMessages.add(key);
-            if (receivedMessages.size > 10_000) receivedMessages.delete(receivedMessages.values().next().value!);
-          }
-          emit('message', converted);
-        }
+      const validMessages = Array.from(messages).filter(message => {
+        if (!message || typeof message !== 'object' || Array.isArray(message) || (message.elements !== undefined && (!Array.isArray(message.elements) || Array.from(message.elements).some((element: unknown) => !element || typeof element !== 'object' || Array.isArray(element))))) { emit('diagnostic', { stage: 'invalid-native-message' }); return false; }
+        return message.chatType === 1 || message.chatType === 2;
+      }).map(captureReceived);
+      if (!receiveQueue && !validMessages.some(value => needsMentionLookup(value.message.elements))) {
+        const unseen = unseenReceived(validMessages);
+        deliverReceived(unseen, unseen.map(value => { const message = toMessage(value.message); return message === undefined ? undefined : { ...message, raw: value.raw }; }));
+        return;
       }
-      dispatch('Msg/onRecvMsg', [messages]);
+      // A UID lookup may settle after another callback. Preserve delivery order
+      // across the entire callback batch and every subsequent queued batch.
+      const queued = (receiveQueue ?? Promise.resolve()).catch(() => {}).then(async () => {
+        if (closed) return;
+        const unseen = unseenReceived(validMessages);
+        deliverReceived(unseen, await resolvedMessages(unseen.map(value => value.message), unseen.map(value => value.raw)));
+      });
+      receiveQueue = queued;
+      void queued.catch(() => { if (!closed) emit('diagnostic', { stage: 'invalid-native-message' }); }).finally(() => { if (receiveQueue === queued) receiveQueue = undefined; });
     },
     onMsgInfoListUpdate: (messages: NativeMessage[]) => {
       if (closed) return;
@@ -177,7 +223,7 @@ export function createNativeServices(session: Native, version: string, emit: (ev
     if (peer?.type === 'private') return { chatType: 1, peerUid: await uidFor(String(peer.userId ?? peer.id)) };
     throw new Error('Unsupported peer type');
   };
-  const forwardMessages = createForwardMessages(guardedSession, resolvePeer, toMessage, lifetime.signal);
+  const forwardMessages = createForwardMessages(guardedSession, resolvePeer, resolvedMessage, lifetime.signal, resolvedMessages);
   const elementsFor = async (input: unknown, peer: NativePeer): Promise<Native[]> => {
     const elements = typeof input === 'string' ? [{ type: 'text', text: input }] : input;
     if (!Array.isArray(elements) || !elements.length) throw new Error('Message must contain elements');
@@ -305,7 +351,7 @@ export function createNativeServices(session: Native, version: string, emit: (ev
           const query = normalizeMessageQuery(payload.peer, payload.messageId);
           const raw = await queryNativeMessage(service('Msg'), await resolvePeer(query.peer), query.messageId);
           lifetime.signal.throwIfAborted();
-          return raw === undefined ? undefined : toMessage(raw);
+          return raw === undefined ? undefined : resolvedMessage(raw);
         }
         case 'getHistory': {
           const peer = await resolvePeer(payload.peer);
@@ -314,7 +360,7 @@ export function createNativeServices(session: Native, version: string, emit: (ev
           if (!Number.isInteger(count) || count < 1 || count > 100) throw new Error('History count must be between 1 and 100');
           const messages = await queryNativeHistory(service('Msg'), peer, String(options.before ?? options.messageId ?? '0'), count, options.reverse ?? false);
           lifetime.signal.throwIfAborted();
-          return messages.map(message => toMessage(message)!);
+          return (await resolvedMessages(messages)) as Message[];
         }
         case 'downloadAttachment': return downloadAttachment(service('Msg'), await resolvePeer(payload.peer), { messageId: payload.messageId, elementId: payload.elementId, destination: payload.destination }, eventCall, lifetime.signal);
         case 'recallMessage': {

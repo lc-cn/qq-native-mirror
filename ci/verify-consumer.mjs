@@ -10,6 +10,7 @@ import {pathToFileURL} from 'node:url';
 import assert from 'node:assert/strict';
 import {verifyForwardConsumer} from '../sdk/scripts/forward-consumer-contract.mjs';
 import {verifyRecallConsumer} from '../sdk/scripts/recall-consumer-contract.mjs';
+import {verifyMentionConsumer} from '../sdk/scripts/mention-consumer-contract.mjs';
 const execute=promisify(execFile),temp=await mkdtemp(join(tmpdir(),'qq-ci-consumer-'));
 const {version}=JSON.parse(await readFile('sdk/package.json','utf8'));
 const platformName=`qq-native-client-${process.platform}-${process.arch}`;
@@ -41,6 +42,7 @@ try {
  const sdk=await import(pathToFileURL(join(temp,'node_modules/qq-native-client/dist/index.js')).href);
  const forwardChecks=await verifyForwardConsumer(join(temp,'node_modules/qq-native-client'));
  const recallChecks=await verifyRecallConsumer(join(temp,'node_modules/qq-native-client'));
+ const mentionChecks=await verifyMentionConsumer(join(temp,'node_modules/qq-native-client'));
  const cli=await import(pathToFileURL(join(temp,'node_modules/qq-native-client/dist/cli.js')).href);
  const elements=await import(pathToFileURL(join(temp,'node_modules/qq-native-client/dist/message-elements.js')).href);
  const mixed=[{type:'text',text:'fixture'},{type:'face',id:14},{type:'face',id:428}];
@@ -246,5 +248,5 @@ try{assert.deepEqual(await success.invokeOperation('listFriends'),[]);assert.equ
  globalThis.fetch=()=>{throw new Error('Unexpected mirror request with installed platform package');};
  client=await sdk.createClient({dataDir:join(temp,'unused-account'),autoReconnect:false,timeoutMs:30000});
  const exports=client.nativeExports.length;if(exports<80)throw new Error('Unexpected native export inventory');await client.close();if(client.state!=='closed')throw new Error('Client did not close');
- await writeFile('out/consumer.json',JSON.stringify({platform:process.platform,arch:process.arch,node:process.version,exports,...forwardChecks,...recallChecks,installedMainOnly:true,automaticPlatformSelection:true,tarballRequests,faceContract:true,faceDeliveryAttempted:false,messageQueryContract:true,historyQueryContract:true,nativeHistoryQueryAttempted:false,nativeMessageQueryAttempted:false,selfProfileContract:true,profileMutationAttempted:false,groupOperationContract:true,groupMutationAttempted:false,groupMemberQueryContract:true,groupMemberIdentityContract:true,nativeGroupMemberQueryAttempted:false,groupMetadataEventContract:true,businessWatchContract:true,nativeGroupMetadataObserved:false,friendMetadataEventContract:true,nativeFriendMetadataObserved:false,friendListQueryContract:true,friendListBatchContract:true,friendProfileQueryContract:true,groupListQueryContract:true,nativeGroupListQueryAttempted:false,nativeFriendListQueryAttempted:false,prepared:true,closed:true,loginAttempted:false,registry:'isolated local fixture serving actual CI tarballs'},null,2));console.log(await readFile('out/consumer.json','utf8'));
+ await writeFile('out/consumer.json',JSON.stringify({platform:process.platform,arch:process.arch,node:process.version,exports,...forwardChecks,...recallChecks,...mentionChecks,installedMainOnly:true,automaticPlatformSelection:true,tarballRequests,faceContract:true,faceDeliveryAttempted:false,messageQueryContract:true,historyQueryContract:true,nativeHistoryQueryAttempted:false,nativeMessageQueryAttempted:false,selfProfileContract:true,profileMutationAttempted:false,groupOperationContract:true,groupMutationAttempted:false,groupMemberQueryContract:true,groupMemberIdentityContract:true,nativeGroupMemberQueryAttempted:false,groupMetadataEventContract:true,businessWatchContract:true,nativeGroupMetadataObserved:false,friendMetadataEventContract:true,nativeFriendMetadataObserved:false,friendListQueryContract:true,friendListBatchContract:true,friendProfileQueryContract:true,groupListQueryContract:true,nativeGroupListQueryAttempted:false,nativeFriendListQueryAttempted:false,prepared:true,closed:true,loginAttempted:false,registry:'isolated local fixture serving actual CI tarballs'},null,2));console.log(await readFile('out/consumer.json','utf8'));
 }finally{await client?.close();server.closeAllConnections();await new Promise(done=>server.close(done));await rm(temp,{recursive:true,force:true});}

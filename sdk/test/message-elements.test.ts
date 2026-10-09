@@ -94,3 +94,24 @@ test('inbound file video and record local paths retain element identifiers', () 
     { type: 'record', file: '/tmp/a.silk', elementId: '3' },
   ]);
 });
+
+test('inbound mentions preserve decimal identity and correct signed int32 IDs without Number truncation', () => {
+  assert.deepEqual(decodeElements([
+    { elementType: 1, textElement: { atType: 1, content: '@all' } },
+    { elementType: 1, textElement: { atType: 2, atUid: '-1', content: '@friend' } },
+    { elementType: 1, textElement: { atType: 2, atUid: '900719925474099312345', content: '@long' } },
+  ]), [{ type: 'at', userId: 'all', text: '@all' }, { type: 'at', userId: '4294967295', text: '@friend' }, { type: 'at', userId: '900719925474099312345', text: '@long' }]);
+});
+
+test('unresolved, unsupported or malformed mentions retain their native element instead of false IDs or plain text', () => {
+  for (const textElement of [
+    { atType: 2, content: '@friend' }, { atType: 2, atUid: '0', atNtUid: 'u_friend', content: '@friend' },
+    { atType: 2, atUid: {}, content: '@friend' }, { atType: 2, atUid: '1.2', content: '@friend' },
+    { atType: 2, atUid: '-2147483649', content: '@friend' },
+    { atType: 512, atUid: '456', content: '@category' }, { atType: 8, atUid: '456', content: '@role' },
+    { atType: 2, atUid: '456', content: {} },
+  ]) {
+    const raw = { elementType: 1, textElement };
+    assert.deepEqual(decodeElements([raw]), [{ type: 'unknown', nativeType: 1, data: raw }]);
+  }
+});
