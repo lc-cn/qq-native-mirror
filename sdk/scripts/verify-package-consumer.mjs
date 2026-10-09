@@ -6,6 +6,7 @@ import { execFileSync } from 'node:child_process';
 import { verifyForwardConsumer } from './forward-consumer-contract.mjs';
 import { verifyRecallConsumer } from './recall-consumer-contract.mjs';
 import { verifyMentionConsumer } from './mention-consumer-contract.mjs';
+import { verifySendConsumer } from './send-consumer-contract.mjs';
 
 // Offline packaging check: never creates a QQ client or loads native binaries.
 const root = fileURLToPath(new URL('../', import.meta.url));
@@ -218,6 +219,7 @@ run(process.execPath, ['history-query.mjs']);
 const forwardChecks = await verifyForwardConsumer(join(destination,'node_modules/qq-native-client'));
 const recallChecks = await verifyRecallConsumer(join(destination,'node_modules/qq-native-client'));
 const mentionChecks = await verifyMentionConsumer(join(destination,'node_modules/qq-native-client'));
+const sendChecks = await verifySendConsumer(join(destination,'node_modules/qq-native-client'));
 run(process.execPath,[cliEntry,'init','--config','qq.json','--data-dir','account','--download-mirror','https://gh-proxy.com/']);
 const configuration=JSON.parse(run(process.execPath,[cliEntry,'config','--config','qq.json']));
 if(configuration.wrapperPath || configuration.version || configuration.downloadMirrors?.[0]!=='https://gh-proxy.com/')throw new Error('Installed CLI default catalog configuration failed');
@@ -253,7 +255,7 @@ void factory; void options; void subscribe;
 run(process.execPath, [resolve(root, 'node_modules/typescript/bin/tsc'), '--noEmit', '--strict', '--types', 'node', '--module', 'NodeNext', '--target', 'ES2023', '--typeRoots', resolve(root, 'node_modules/@types'), 'consumer.ts']);
 const receipt = { checkedAt: new Date().toISOString(), package: packed.name, version: packed.version,
   integrity: packed.integrity, fileCount: files.length, checks: { privateFilesExcluded:true, installedImport:true, cliHelp:true, cliDefaultConfig:true, faceContract:true, messageQueryContract:true, historyQueryContract:true, nativeHistoryQueryAttempted:false, selfProfileContract:true, groupOperationContract:true, groupMemberQueryContract:true, groupMemberIdentityContract:true, groupMetadataEventContract:true, businessWatchContract:true, friendMetadataEventContract:true, nativeFriendMetadataObserved:false, friendListQueryContract:true, friendListBatchContract:true, friendProfileQueryContract:true, groupListQueryContract:true, nativeGroupListQueryAttempted:false, nativeFriendListQueryAttempted:false, declarations:true },
-  ...forwardChecks, ...recallChecks, ...mentionChecks, nativeExecuted:false, accountUsed:false };
+  ...forwardChecks, ...recallChecks, ...mentionChecks, ...sendChecks, nativeExecuted:false, accountUsed:false };
 await mkdir(join(root, '.local'), {recursive:true});
 await writeFile(join(root, '.local/package-consumer-verification.json'), JSON.stringify(receipt, null, 2));
 await mkdir(join(root, '.local/research'), {recursive:true});

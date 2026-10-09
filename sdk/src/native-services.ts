@@ -16,6 +16,7 @@ import { createGroupOperations, type GroupOperation } from './group-operations.t
 import { createGroupEvents } from './group-events.ts';
 import { createRecallEvents } from './recall-events.ts';
 import { decodeResolvedElementBatches, needsMentionLookup } from './inbound-mentions.ts';
+import { captureSendInput, sendUserId, sendGroupId, sentReceipt } from './send-input.ts';
 import type { Friend, Group, GroupMember, Message, MessageElement, SentMessage, NativeCallbackAudit } from './types.ts';
 
 type Native = Record<string, any>;
@@ -66,6 +67,7 @@ export function createNativeServices(session: Native, version: string, emit: (ev
   const listeners: Native[] = [];
   const uidCache = new Map<string, string>();
   const receivedMessages = new Set<string>();
+  const usedSendIds = new Set<string>();
   const recallEvents = createRecallEvents(emit);
   let groupListRequest: Promise<unknown> | undefined;
   let groupListInvalidated = false;
@@ -75,6 +77,19 @@ export function createNativeServices(session: Native, version: string, emit: (ev
     return object[name](...args);
   };
   const service = (name: string): Native => call(guardedSession, `get${name}Service`);
+  const awaitAlive = async <T>(value: T | PromiseLike<T>): Promise<T> => {
+    lifetime.signal.throwIfAborted();
+    let abort: () => void;
+    const stopped = new Promise<never>((_, reject) => {
+      abort = () => reject(new Error('Native services closed during operation'));
+      lifetime.signal.addEventListener('abort', abort, { once: true });
+    });
+    try {
+      const result = await Promise.race([Promise.resolve(value), stopped]);
+      lifetime.signal.throwIfAborted();
+      return result;
+    } finally { lifetime.signal.removeEventListener('abort', abort!); }
+  };
   const resolvedMessages = async (messages: Native[], rawMessages = messages): Promise<(Message | undefined)[]> => {
     const projected = messages.map((message, index) => { const value = toMessage(message); return value === undefined ? undefined : { ...value, raw: rawMessages[index] }; });
     const elements = await decodeResolvedElementBatches(messages.map(message => message.elements ?? []), async uids => {
@@ -121,8 +136,8 @@ export function createNativeServices(session: Native, version: string, emit: (ev
       if (waiter.event !== event) continue;
       try {
         const result = waiter.check(...args);
-        if (result !== undefined) { waiters.delete(waiter); clearTimeout(waiter.timer); waiter.resolve(result); }
-      } catch (error) { waiters.delete(waiter); clearTimeout(waiter.timer); waiter.reject(error as Error); }
+        if (result !== undefined) { waiters.delete(waiter); waiter.resolve(result); }
+      } catch (error) { waiters.delete(waiter); waiter.reject(error as Error); }
     }
   };
   const listener = (family: string, overrides: Native) => {
@@ -185,25 +200,45 @@ export function createNativeServices(session: Native, version: string, emit: (ev
     dispatch('Group/onGroupListUpdate', [kind, groups]);
   }, onMemberInfoChange: groupEvents.onMemberInfoChange });
   const eventCall = async (event: string, check: Waiter['check'], invoke: () => any, timeoutMs = 10_000, checkReturn?: (value: any) => boolean) => {
+    lifetime.signal.throwIfAborted();
     let waiter: Waiter;
+    let stop: (error: Error) => void;
+    const stopped = new Promise<never>((_, reject) => { stop = reject; });
+    const abort = () => stop(new Error('Client closed during native operation'));
+    lifetime.signal.addEventListener('abort', abort, { once: true });
     const result = new Promise<any>((resolve, reject) => {
-      waiter = { event, check, resolve, reject, timer: setTimeout(() => { waiters.delete(waiter); reject(new Error(`Native operation timed out: ${event}`)); }, timeoutMs) };
+      waiter = { event, check, resolve, reject, timer: setTimeout(() => {
+        waiters.delete(waiter);
+        const error = new Error(`Native operation timed out: ${event}`);
+        reject(error); stop(error);
+      }, timeoutMs) };
       waiters.add(waiter);
     });
     void result.catch(() => {});
     try {
-      const returned = await invoke();
+      // Callback success alone cannot bypass a native rejection. Only a waiter
+      // failure (close/deadline/callback failure) may interrupt pending invoke.
+      const failed = result.then(() => new Promise<never>(() => {}));
+      // The executor captures synchronous throws while preserving immediate
+      // dispatch for callback channels such as a coalesced group-list query.
+      const returned = await Promise.race([new Promise<any>(resolve => resolve(invoke())), failed, stopped]);
+      lifetime.signal.throwIfAborted();
       if (checkReturn && !checkReturn(returned)) throw nativeResultError(`Native operation rejected: ${event}`, returned);
+      const value = await Promise.race([result, stopped]);
+      lifetime.signal.throwIfAborted();
+      return value;
     } catch (error) {
-      waiters.delete(waiter!); clearTimeout(waiter!.timer); waiter!.reject(error instanceof Error ? error : new Error(String(error)));
+      waiter!.reject(error instanceof Error ? error : new Error(String(error)));
       throw error;
+    } finally {
+      waiters.delete(waiter!); clearTimeout(waiter!.timer);
+      lifetime.signal.removeEventListener('abort', abort);
     }
-    return result;
   };
   const uidFor = async (id: string): Promise<string> => {
     if (id.startsWith('u_')) return id;
     if (uidCache.has(id)) return uidCache.get(id)!;
-    const converted = await call(service('UixConvert'), 'getUid', [id]);
+    const converted = await awaitAlive(call(service('UixConvert'), 'getUid', [id]));
     const uid = converted?.uidInfo?.get(id);
     if (typeof uid !== 'string' || !uid || uid.includes('*')) throw new Error('Could not resolve user identifier');
     return uid;
@@ -254,15 +289,24 @@ export function createNativeServices(session: Native, version: string, emit: (ev
   const send = async (peer: NativePeer, input: unknown) => {
     const elements = await elementsFor(input, peer);
     const messages = service('Msg');
-    const uniqueId = await call(messages, 'generateMsgUniqueId', peer.chatType, call(service('MSF'), 'getServerTime'));
+    const uniqueId = await awaitAlive(call(messages, 'generateMsgUniqueId', peer.chatType, call(service('MSF'), 'getServerTime')));
+    lifetime.signal.throwIfAborted();
+    if (typeof uniqueId !== 'string' || !uniqueId.trim()) throw new Error('Invalid native send correlation identifier');
+    if (usedSendIds.has(uniqueId)) throw new Error('Duplicate native send correlation identifier');
+    usedSendIds.add(uniqueId);
     const destination = { ...peer, guildId: uniqueId };
     const sent = await eventCall('Msg/onMsgInfoListUpdate', (updates: NativeMessage[]) => {
-      const message = updates.find(message => message.guildId === uniqueId);
-      if (message?.sendStatus === 0) throw new Error('Native message send failed');
-      return message?.sendStatus === 2 ? message : undefined;
+      const matching = updates.filter(message => message.guildId === uniqueId
+        && (message.chatType === undefined || message.chatType === peer.chatType)
+        && (message.peerUid === undefined || message.peerUid === peer.peerUid));
+      const message = matching.find(message => message.sendStatus === 2);
+      if (message) return sentReceipt(message);
+      if (matching.some(message => message.sendStatus === 0)) throw new Error('Native message send failed');
+      return undefined;
     },
       () => call(messages, 'sendMsg', '0', destination, elements, new Map()), 10_000, value => value?.result === 0);
-    return toSent(sent);
+    lifetime.signal.throwIfAborted();
+    return sent;
   };
   return {
     async invokeOperation(method: ServiceOperation, payload: Native = {}): Promise<unknown> {
@@ -345,8 +389,16 @@ export function createNativeServices(session: Native, version: string, emit: (ev
           for (const member of members) uidCache.set(member.userId, member.uid);
           return members;
         }
-        case 'sendPrivateMessage': return send({ chatType: 1, peerUid: await uidFor(String(payload.userId)) }, payload.message);
-        case 'sendGroupMessage': return send({ chatType: 2, peerUid: String(payload.groupId) }, payload.message);
+        case 'sendPrivateMessage': {
+          const userId = sendUserId(payload.userId);
+          const input = captureSendInput(payload.message, false);
+          return send({ chatType: 1, peerUid: await uidFor(userId) }, input);
+        }
+        case 'sendGroupMessage': {
+          const groupId = sendGroupId(payload.groupId);
+          const input = captureSendInput(payload.message, true);
+          return send({ chatType: 2, peerUid: groupId }, input);
+        }
         case 'getMessage': {
           const query = normalizeMessageQuery(payload.peer, payload.messageId);
           const raw = await queryNativeMessage(service('Msg'), await resolvePeer(query.peer), query.messageId);
@@ -393,6 +445,7 @@ export function createNativeServices(session: Native, version: string, emit: (ev
     close() {
       closed = true;
       lifetime.abort();
+      usedSendIds.clear();
       recallEvents.close();
       selfProfile.close();
       friendRequests.close();
