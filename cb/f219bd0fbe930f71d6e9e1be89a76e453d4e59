@@ -1,0 +1,27 @@
+sdk/docs/long-message-response.md
+  s_2104cc474f1ce5::t_e058fbc7f386fe 1-29
+sdk/docs/merged-forward-contract.md
+  s_2104cc474f1ce5::t_b11287b7e6ba3c 11,18-60
+sdk/src/long-message-response.ts
+  s_2104cc474f1ce5::t_c64327c276a682 1-112
+sdk/test/long-message-response.test.ts
+  s_2104cc474f1ce5::t_a85260c7fbeb23 1-73
+sdk/test/release-receipt.test.ts
+  s_2104cc474f1ce5::t_40832bae8bb74e 32,63
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "cbf219bd0fbe930f71d6e9e1be89a76e453d4e59",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
