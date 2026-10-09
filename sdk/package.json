@@ -17,7 +17,7 @@
   "scripts": {
     "probe": "node scripts/probe-native.ts",
     "build": "node scripts/build-native.ts && tsc",
-    "test": "node --test test/*.test.ts",
+    "test": "node --test test/*.test.ts test/*.test.mjs",
     "prepack": "npm run build"
   },
   "devDependencies": {

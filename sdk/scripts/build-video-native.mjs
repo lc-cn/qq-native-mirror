@@ -4,12 +4,18 @@ import { createHash } from 'node:crypto';
 import { resolve,join,dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { availableParallelism } from 'node:os';
+import { downloadNodeLicense } from './node-license-download.mjs';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const directory=resolve(process.argv[2]??join(root,'.local/video-source-build'));
 const pin=JSON.parse(await readFile(join(root,'native/video/ffmpeg-source.json'),'utf8'));
 const source=join(directory,`ffmpeg-${pin.version}`),build=join(directory,'ffmpeg-build'),prefix=join(directory,'ffmpeg-install');
 const sha=b=>createHash('sha256').update(b).digest('hex');
 if(sha(await readFile(join(source,'configure')))!==pin.configureSha256||sha(await readFile(join(directory,`ffmpeg-${pin.version}.tar.xz`)))!==pin.sha256)throw Error('FFmpeg source identity mismatch');
+// Resolve this small, hash-pinned build dependency before expensive compilation.
+const nodeLicense=await downloadNodeLicense(process.version);
+const nodeLicenseDownloader=await readFile(join(root,'scripts/node-license-download.mjs'));
+const nodeLicenseDownloaderSha256=sha(nodeLicenseDownloader);
+const nodeLicenseDownloaderNormalizedSha256=sha(Buffer.from(nodeLicenseDownloader.toString('utf8').replaceAll('\r\n','\n')));
 for(const p of [build,prefix,join(directory,'runtime'),join(directory,'relink')])await mkdir(p,{recursive:true});
 const run=(command,args,options={})=>execFileSync(command,args,{stdio:'inherit',...options});
 const flags=['--disable-autodetect','--disable-gpl','--disable-nonfree','--disable-version3','--disable-asm','--disable-debug','--disable-doc','--disable-programs','--disable-shared','--enable-static','--enable-pic','--disable-network','--disable-avdevice','--disable-avfilter','--disable-swresample','--disable-encoders','--disable-muxers','--disable-demuxers','--enable-demuxer=mov','--disable-protocols','--enable-protocol=file','--disable-hwaccels'];
@@ -65,11 +71,8 @@ if(process.platform==='win32') {
   if(process.platform==='darwin')run('codesign',['--force','--sign','-',output]);
 }
 await copyFile(src,join(directory,'relink','video-codec.cc'));
-for(const script of ['build-video-native.mjs','prepare-video-source.mjs','relink-video-native.mjs'])await copyFile(join(root,'scripts',script),join(directory,'relink',script));
+for(const script of ['build-video-native.mjs','prepare-video-source.mjs','relink-video-native.mjs','node-license-download.mjs'])await copyFile(join(root,'scripts',script),join(directory,'relink',script));
 await copyFile(join(headers,'headers.tar.gz'),join(directory,'relink','node-headers.tar.gz'));
-const nodeLicenseResponse=await fetch(`https://raw.githubusercontent.com/nodejs/node/${process.version}/LICENSE`,{signal:AbortSignal.timeout(60_000)});
-if(!nodeLicenseResponse.ok)throw Error('Node license notice unavailable');
-const nodeLicense=Buffer.from(await nodeLicenseResponse.arrayBuffer());
 await writeFile(join(directory,'runtime','NODE-LICENSE.txt'),nodeLicense);
 await copyFile(join(root,'native/video/ffmpeg-source.json'),join(directory,'relink','ffmpeg-source.json'));
 await copyFile(join(root,'native/video/LICENSE'),join(directory,'relink','ADDON-LICENSE.txt'));await copyFile(join(root,'native/video/LICENSE'),join(directory,'runtime','ADDON-LICENSE.txt'));
@@ -77,6 +80,6 @@ for(const file of ['LICENSE.md','COPYING.LGPLv2.1'])await copyFile(join(source,f
 await writeFile(join(directory,'runtime','NOTICE.txt'),'Includes FFmpeg '+pin.version+' under LGPL-2.1-or-later; the addon glue is MIT. This software is based in part on the work of the Independent JPEG Group. No changes were made to FFmpeg jfdctfst.c, jfdctint_template.c or jrevdct.c. Corresponding source and relink materials must accompany distribution. Native video decoding does not prove QQ upload or signing authenticity.\n');
 for(const file of await readdir(join(prefix,'lib')))if(/\.(a|lib)$/.test(file))await copyFile(join(prefix,'lib',file),join(directory,'relink',file));
 for(const file of ['config.h','config_components.h','ffbuild/config.mak']){const target=join(directory,'relink',file.replaceAll('/','-'));await copyFile(join(build,file),target);}
-const receipt={platform:process.platform,arch:process.arch,node:process.version,napiVersion:8,ffmpegVersion:pin.version,ffmpegCommit:pin.commit,sourceArchiveSha256:pin.sha256,addonSourceSha256:sha(await readFile(src)),binarySha256:sha(await readFile(output)),binaryBytes:(await readFile(output)).length,nodeHeadersSha256,nodeImportSha256,nodeLicenseSha256:sha(nodeLicense),configureArgs,compileArgs:compile,linkArgs:link,systemLinkFlags:extra,configurationSha256:sha(config),accountUsed:false,qqWrapperLoaded:false,nativeSendAttempted:false};
+const receipt={platform:process.platform,arch:process.arch,node:process.version,napiVersion:8,ffmpegVersion:pin.version,ffmpegCommit:pin.commit,sourceArchiveSha256:pin.sha256,addonSourceSha256:sha(await readFile(src)),binarySha256:sha(await readFile(output)),binaryBytes:(await readFile(output)).length,nodeHeadersSha256,nodeImportSha256,nodeLicenseSha256:sha(nodeLicense),nodeLicenseDownloaderSha256,nodeLicenseDownloaderNormalizedSha256,configureArgs,compileArgs:compile,linkArgs:link,systemLinkFlags:extra,configurationSha256:sha(config),accountUsed:false,qqWrapperLoaded:false,nativeSendAttempted:false};
 await writeFile(join(directory,'runtime','build.json'),JSON.stringify(receipt,null,2)+'\n');await writeFile(join(directory,'relink','build.json'),JSON.stringify(receipt,null,2)+'\n');
 console.log(JSON.stringify({binary:output,binaryBytes:receipt.binaryBytes,platform:process.platform,arch:process.arch}));

@@ -47,6 +47,12 @@ for(const device of devices){
  assert.equal(sha(await regular(join(relink,'config.h'))),build.configurationSha256);
  assert.deepEqual(JSON.parse(await regular(join(relink,'ffmpeg-source.json'))),pin);
  assert.equal(sha(await regular(join(runtime,'NODE-LICENSE.txt'))),build.nodeLicenseSha256);
+ if(build.nodeLicenseDownloaderSha256!==undefined||build.nodeLicenseDownloaderNormalizedSha256!==undefined){
+  const helper=await regular(join(relink,'node-license-download.mjs'));
+  assert.equal(sha(helper),build.nodeLicenseDownloaderSha256);
+  assert.equal(sha(Buffer.from(normalized(helper))),build.nodeLicenseDownloaderNormalizedSha256);
+  assert.equal(build.nodeLicenseDownloaderNormalizedSha256,sha(await regular(join(repo,'sdk/scripts/node-license-download.mjs'))));
+ }
  for(const name of ['NOTICE.txt','ADDON-LICENSE.txt','FFMPEG-LICENSE.md','FFMPEG-COPYING.LGPLv2.1'])assert.ok((await regular(join(runtime,name))).length);
  assert.equal(normalized(await regular(join(runtime,'ADDON-LICENSE.txt'))),normalized(await regular(join(repo,'sdk/native/video/LICENSE'))));
  const receipts={};for(const kind of ['runtime','relink']){
@@ -69,7 +75,7 @@ try{
  for(const name of sourceNames){await copyFile(join(source,name),join(out,name));await asset(name);}
  const addon=join(scratch,'addon');await mkdir(join(addon,'native/video'),{recursive:true});
  const nativeFiles=await inventory(join(repo,'sdk/native/video'));await copyInventory(join(repo,'sdk/native/video'),join(addon,'native/video'),nativeFiles);
- await mkdir(join(addon,'scripts'));for(const name of ['build-video-native.mjs','prepare-video-source.mjs','relink-video-native.mjs'])await writeFile(join(addon,'scripts',name),await regular(join(repo,'sdk/scripts',name)));
+ await mkdir(join(addon,'scripts'));for(const name of ['build-video-native.mjs','prepare-video-source.mjs','relink-video-native.mjs','node-license-download.mjs'])await writeFile(join(addon,'scripts',name),await regular(join(repo,'sdk/scripts',name)));
  await writeFile(join(addon,'README.md'),'# Video addon source\n\nRequires Node 24 and the platform compiler/GNU make tools. From this directory run `node scripts/prepare-video-source.mjs build --verify-signature`, then `node scripts/build-video-native.mjs build`. The native/video and scripts layout is intentional. FFmpeg is obtained from the pinned official source.\n\nPlatform relink archives retain a flat relink directory: `node relink/relink-video-native.mjs relink FFMPEG_LIBRARY_DIRECTORY output/video-codec.node`. Use the preserved objects and compatible FFmpeg static libraries/toolchain/CRT; consult build.json for flags. Fresh relink receipts verify the original preserved libraries, not modified-library compatibility or byte-identical output.\n');
  const addonMembers=await archive('video-addon-source.tar.gz',addon);
  const platforms=[];for(const item of validated){

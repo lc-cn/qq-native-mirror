@@ -9,7 +9,7 @@ import { validateVideoMaterials,verifyVideoMaterialsOnline,videoTargets,videoAss
 import { publishValidated } from '../scripts/local-first-publish.mjs';
 const hash=(bytes:any)=>createHash('sha256').update(bytes).digest('hex');
 const fixtures=['ced7b4e1cd47d948ecf407116095282e5b5ca4df76142b7a06826eecb92cb932','1c8920f2db13e3c1b28b708bc94d3889ed8bd10f15ee5d89881d99715188b468','53a0baad6f0853d39e53263c22c847bd78435fc263e6844450878b471d13cc57'];
-async function fixture(t:any){
+async function fixture(t:any,{licenseDownloader=false}={}){
  const root=await mkdtemp(join(tmpdir(),'qq-video-materials-'));t.after(()=>rm(root,{recursive:true,force:true}));await mkdir(join(root,'video-materials'));
  const pin=JSON.parse(await readFile(new URL('../native/video/ffmpeg-source.json',import.meta.url),'utf8'));
  const manifest:any={repository:'lc-cn/qq-native-mirror',commit:'a'.repeat(40),runId:'123',runAttempt:1,version:'0.0.3'};
@@ -29,6 +29,10 @@ async function fixture(t:any){
   platform.addonSourceSha256='e'.repeat(64);platform.build.addonSourceSha256='e'.repeat(64);
   platform.members.find((row:any)=>row.path==='relink/video-codec.cc').sha256='e'.repeat(64);
  }
+ if(licenseDownloader){
+  report.addonMembers.push(member('scripts/node-license-download.mjs','7'.repeat(64)));
+  for(const platform of report.platforms){const raw=platform.platform==='win32'?'8'.repeat(64):'7'.repeat(64);platform.build.nodeLicenseDownloaderSha256=raw;platform.build.nodeLicenseDownloaderNormalizedSha256='7'.repeat(64);platform.members.push(member('relink/node-license-download.mjs',raw));}
+ }
  const nativePackages:any[]=[];
  const save=async()=>{const bytes=Buffer.from(JSON.stringify(report));const asset=binding.assets.find((row:any)=>row.name==='video-materials.json');asset.sha256=hash(bytes);asset.size=bytes.length;const b=Buffer.from(JSON.stringify(binding));await writeFile(join(root,'video-materials/video-materials.json'),bytes);await writeFile(join(root,'video-materials/video-materials-binding.json'),b);manifest.videoMaterials={binding:{path:'video-materials/video-materials-binding.json',sha256:hash(b)},report:{path:'video-materials/video-materials.json',sha256:hash(bytes)}};};
  await save();
@@ -39,6 +43,18 @@ test('complete six-platform video source closure validates offline and requires 
  const f=await fixture(t),materials=await validateVideoMaterials(f.root,f.manifest,f.nativePackages);assert.equal(materials.pending,false);let commands=0;
  assert.throws(()=>publishValidated({videoMaterials:materials,packages:[]},()=>{commands++;}),/verified online/);assert.equal(commands,0);
  let requests=0;await verifyVideoMaterialsOnline(materials,{fetch:async(url:any)=>{requests++;if(String(url).startsWith('https://api.github.com/'))return new Response(JSON.stringify({id:456,draft:false,prerelease:true,target_commitish:f.manifest.commit,tag_name:f.binding.tag,assets:f.binding.assets.map((row:any)=>({name:row.name,size:row.size,digest:`sha256:${row.sha256}`,browser_download_url:row.url}))}));return new Response(JSON.stringify(f.report));}});assert.equal(materials.onlineVerified,true);assert.equal(requests,2);
+});
+test('new license downloader retains corresponding source including Windows line ending identity',async t=>{
+ const f=await fixture(t,{licenseDownloader:true});assert.equal((await validateVideoMaterials(f.root,f.manifest,f.nativePackages)).pending,false);
+});
+test('rehashed build proof cannot omit or alter a recorded license downloader source',async t=>{
+ for(const kind of ['relink','addon','raw','normalized']){const f=await fixture(t,{licenseDownloader:true});
+  if(kind==='relink')f.report.platforms[0].members=f.report.platforms[0].members.filter((r:any)=>r.path!=='relink/node-license-download.mjs');
+  if(kind==='addon')f.report.addonMembers=f.report.addonMembers.filter((r:any)=>r.path!=='scripts/node-license-download.mjs');
+  if(kind==='raw')f.report.platforms[0].build.nodeLicenseDownloaderSha256='9'.repeat(64);
+  if(kind==='normalized')delete f.report.platforms[0].build.nodeLicenseDownloaderNormalizedSha256;
+  await f.save();await assert.rejects(validateVideoMaterials(f.root,f.manifest,f.nativePackages),/downloader/);
+ }
 });
 test('codec-free is compatible and absent closure stays blocked; bad partial/digest declaration rejects',async t=>{
  const f=await fixture(t);assert.equal(await validateVideoMaterials(f.root,{},[]),undefined);assert.deepEqual(await validateVideoMaterials(f.root,{},f.nativePackages),{pending:true});
