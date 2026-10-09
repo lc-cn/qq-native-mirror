@@ -50,11 +50,12 @@ export async function checkReceivedForwardServices({createNativeServices,buildMe
   Object.defineProperty({},'elementType',{get(){accessorReads++;return 10;},enumerable:true}),
   {elementType:{valueOf(){coercions++;return 10;}},arkElement:card().arkElement},
   {elementType:16,multiForwardMsgElement:Object.defineProperty({fileName:'f',xmlContent:''},'resId',{get(){accessorReads++;return 'r';},enumerable:true})},
+  ...['10','1e1','16'].map(elementType=>Object.defineProperty({elementType,arkElement:card().arkElement},'textElement',{get(){accessorReads++;return{content:'invalid-card-type',atType:0};},enumerable:true})),
  ];
  for(const method of ['getMessage','getHistory','getForwardMessages']){
-  const f=fixture([unsafe]);try{const value=await f.services.invokeOperation(method,{...payload,messageId:'5'});const message=Array.isArray(value)?value[0]:value;assert.deepEqual(message.elements.map(e=>e.type),Array(5).fill('unknown'));for(let i=0;i<5;i++)assert.equal(message.elements[i].data,unsafe.elements[i]);assert.equal(accessorReads,0);assert.equal(coercions,0);assert.equal(f.lookups.length,0);}finally{f.services.close();}
+  const f=fixture([unsafe]);try{const value=await f.services.invokeOperation(method,{...payload,messageId:'5'});const message=Array.isArray(value)?value[0]:value;assert.deepEqual(message.elements.map(e=>e.type),Array(unsafe.elements.length).fill('unknown'));for(let i=0;i<unsafe.elements.length;i++)assert.equal(message.elements[i].data,unsafe.elements[i]);assert.equal(accessorReads,0);assert.equal(coercions,0);assert.equal(f.lookups.length,0);}finally{f.services.close();}
  }
- const unsafeLive=fixture();try{unsafeLive.listener().onRecvMsg([unsafe]);await flush();const messages=unsafeLive.events.filter(([event])=>event==='message');assert.equal(messages.length,1);assert.deepEqual(messages[0][1].elements.map(e=>e.type),Array(5).fill('unknown'));assert.equal(accessorReads,0);assert.equal(coercions,0);}finally{unsafeLive.services.close();}
+ const unsafeLive=fixture();try{unsafeLive.listener().onRecvMsg([unsafe]);await flush();const messages=unsafeLive.events.filter(([event])=>event==='message');assert.equal(messages.length,1);assert.deepEqual(messages[0][1].elements.map(e=>e.type),Array(unsafe.elements.length).fill('unknown'));assert.equal(accessorReads,0);assert.equal(coercions,0);}finally{unsafeLive.services.close();}
  let finish;const pending=new Promise(resolve=>{finish=resolve;});const queued=fixture([],()=>pending);
  try{
   const first=raw('2',true),second=raw('3');queued.listener().onRecvMsg([first]);await flush();queued.listener().onRecvMsg([second]);

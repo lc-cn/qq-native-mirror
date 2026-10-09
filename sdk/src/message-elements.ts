@@ -129,9 +129,10 @@ export function decodeElements(native: Native[], resolvedUins: ReadonlyMap<strin
     if (!element || typeof element !== 'object' || Array.isArray(element)) throw new Error('Invalid native message element');
     const typeDescriptor = Object.getOwnPropertyDescriptor(element, 'elementType');
     const nativeType = typeDescriptor && 'value' in typeDescriptor ? typeDescriptor.value : undefined;
-    const unknown: MessageElement = { type: 'unknown', nativeType: typeof nativeType === 'number' || typeof nativeType === 'string' ? Number(nativeType) : NaN, data: element };
+    const typeNumber = typeof nativeType === 'number' || typeof nativeType === 'string' ? Number(nativeType) : NaN;
+    const unknown: MessageElement = { type: 'unknown', nativeType: typeNumber, data: element };
     if (!typeDescriptor || !('value' in typeDescriptor) || (typeof nativeType !== 'number' && typeof nativeType !== 'string')) return unknown;
-    if (nativeType === 10 || nativeType === 16) return decodeReceivedForward(element) ?? unknown;
+    if (typeNumber === 10 || typeNumber === 16) return decodeReceivedForward(element) ?? unknown;
     const text = element.textElement;
     if (text) {
       if (typeof text !== 'object' || Array.isArray(text) || typeof text.content !== 'string') return unknown;

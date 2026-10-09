@@ -26,7 +26,7 @@
     },
     {
       "path": "sdk/scripts/received-forward-consumer-contract.mjs",
-      "sha256": "dfdcc6dff0e8733cf5c20f2b8337462b05de7fc6bc6702239cb74d5c03687664"
+      "sha256": "6aab8db763fe8dbb0d6dc6eb7f881a0fdff2c3dafec9f8ba33fd29630ba8791b"
     },
     {
       "path": "sdk/src/cli.ts",
@@ -50,7 +50,7 @@
     },
     {
       "path": "sdk/src/message-elements.ts",
-      "sha256": "0e0ab82a1bcc47c7a4edaacaa6e3d2c30b8fdf07d1c0ecf2be9c849a4b413c75"
+      "sha256": "1fc2891782435f60663c4dcd6e7645f650977efa35215ee6c14202ac18a989d9"
     },
     {
       "path": "sdk/src/received-forward.ts",
@@ -95,7 +95,7 @@
     "passed": 501,
     "failed": 0,
     "skipped": 0,
-    "logSha256": "f400c918aa128db2326bce3d4bf9606273d60ef92ba6ae8847aee7a29952f963"
+    "logSha256": "3f159d5d71c0a4a7041b4fe01cb84b5a87bf2b7fd2a3c7a3ef25f525cee0250a"
   },
   "typeCheckPassed": true,
   "producerContracts": {
@@ -114,7 +114,8 @@
     "capture forward fields without invoking accessors",
     "do not coerce native type objects",
     "verify getter rejection through three query paths and live callback",
-    "promptly reject stalled forwarding promises on Session close without replay"
+    "promptly reject stalled forwarding promises on Session close without replay",
+    "invalid string card types cannot enter the legacy text decoder"
   ],
   "accountUsed": false,
   "nativeReceivedForwardObserved": false,
