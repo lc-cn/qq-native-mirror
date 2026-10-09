@@ -1,0 +1,33 @@
+ci/prepare-video-materials.mjs
+  s_2104cc474f1ce5::t_fd8ca888128b14 50-55,78
+sdk/docs/sdk-acceptance.md
+  s_2104cc474f1ce5::t_46e1c4317bccc4 701-709
+sdk/package.json
+  s_2104cc474f1ce5::t_7681ab2485ce57 20
+sdk/scripts/build-video-native.mjs
+  s_2104cc474f1ce5::t_37b777505efe99 7,14-18,74,83
+sdk/scripts/node-license-download.mjs
+  s_2104cc474f1ce5::t_95f5ba4066a8b8 1-74
+sdk/scripts/video-materials.mjs
+  s_2104cc474f1ce5::t_cb9c4aa7839d0c 45-47
+sdk/test/node-license-download.test.mjs
+  s_2104cc474f1ce5::t_dd8c8933d02997 1-44
+sdk/test/video-materials.test.ts
+  s_2104cc474f1ce5::t_44c1b9c0efabc5 12,32-35,47-58
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "7ec1a309da4137c5eef190482c731889f6341392",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
