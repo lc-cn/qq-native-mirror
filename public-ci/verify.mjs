@@ -52,9 +52,10 @@ async function main(){
   await copyFile(new URL('./mirror-consumer.mjs',import.meta.url),join(temp,'mirror-consumer.mjs'));
   const mirrorOutput=resolve('public-out/mirror-consumer.json');
   const denyPath=resolve('first-ci/deny-symlink.cjs');
-  execFileSync(process.execPath,['mirror-consumer.mjs',mirrorOutput],{cwd:temp,env:{...env,NODE_OPTIONS:`--require ${JSON.stringify(denyPath)}`},stdio:'inherit',timeout:1200000});
+  const catalog=JSON.parse(await readFile('catalog-gzip-v1.json'));const matching=catalog.packages.filter(p=>p.platform===process.platform&&p.arch===process.arch);check(matching.length===1,'Ambiguous expected mirror');
+  execFileSync(process.execPath,['mirror-consumer.mjs',mirrorOutput],{cwd:temp,env:{...env,QQ_EXPECTED_NATIVE_MANIFEST_SHA256:matching[0].manifestSha256,NODE_OPTIONS:`--require ${JSON.stringify(denyPath)}`},stdio:'inherit',timeout:1200000});
   const mirror=JSON.parse(await readFile(mirrorOutput));
-  check(mirror.completed===true&&mirror.prepared===true&&mirror.closed===true&&mirror.device===`${process.platform}-${process.arch}`&&mirror.node===process.version&&mirror.noLogin===true&&mirror.freshCold===true&&mirror.symlinkCreationDenied===true&&mirror.hashValidatedLoader===true&&mirror.cacheFilesIndependentlyHashVerified===true&&mirror.nativeExports>=80&&mirror.first?.payloadRequests>0&&mirror.first.payloadBytes>0&&mirror.second?.payloadRequests===0&&mirror.second.payloadBytes===0,'Public mirror acceptance failed');
+  check(mirror.expectedManifestPinned===true&&mirror.manifestSha256===matching[0].manifestSha256&&mirror.completed===true&&mirror.prepared===true&&mirror.closed===true&&mirror.device===`${process.platform}-${process.arch}`&&mirror.node===process.version&&mirror.noLogin===true&&mirror.freshCold===true&&mirror.symlinkCreationDenied===true&&mirror.hashValidatedLoader===true&&mirror.cacheFilesIndependentlyHashVerified===true&&mirror.nativeExports>=80&&mirror.first?.payloadRequests>0&&mirror.first.payloadBytes>0&&mirror.second?.payloadRequests===0&&mirror.second.payloadBytes===0,'Public mirror acceptance failed');
  }
 
  }finally{await rm(temp,{recursive:true,force:true});}

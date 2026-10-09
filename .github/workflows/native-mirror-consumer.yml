@@ -1,0 +1,49 @@
+name: Public native mirror cold consumers
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  consumer:
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { platform: linux, arch: x64, runner: ubuntu-24.04 }
+          - { platform: linux, arch: arm64, runner: ubuntu-24.04-arm }
+          - { platform: darwin, arch: x64, runner: macos-15-intel }
+          - { platform: darwin, arch: arm64, runner: macos-15 }
+          - { platform: win32, arch: x64, runner: windows-2022 }
+          - { platform: win32, arch: arm64, runner: windows-11-arm }
+    runs-on: ${{ matrix.runner }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.20.0'
+          architecture: ${{ matrix.arch }}
+      - name: Verify runner
+        run: node -e "if(process.platform!=='${{ matrix.platform }}'||process.arch!=='${{ matrix.arch }}')throw Error('Incorrect runner')"
+      - name: Linux system dependencies
+        if: matrix.platform == 'linux'
+        run: sudo apt-get update && sudo apt-get install -y libx11-xcb1 libgnutls30
+      - name: Acquire byte-verified corrected main
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node version-ci/acquire-main.mjs
+      - name: Public mirror cold preparation and cache reuse without login
+        run: node mirror-ci/verify.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mirror-consumer-${{ matrix.platform }}-${{ matrix.arch }}
+          path: |
+            out/mirror-consumer.json
+            out/main-source.json
+            out/version-consumer.json
+          if-no-files-found: error

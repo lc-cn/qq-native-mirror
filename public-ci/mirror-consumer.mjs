@@ -8,6 +8,7 @@ import {join,sep,resolve} from 'node:path';
 import {createHash} from 'node:crypto';
 const catalogUrl='https://raw.githubusercontent.com/lc-cn/qq-native-mirror/main/catalog-gzip-v1.json';
 const downloadMirrors=['https://gh-proxy.com/'];
+const expectedManifestSha256=process.env.QQ_EXPECTED_NATIVE_MANIFEST_SHA256;
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 const check=(condition,message)=>{if(!condition)throw Error(message);};
 const output=resolve(process.argv[2]??'public-mirror-consumer.json');
@@ -16,6 +17,7 @@ const originalFetch=globalThis.fetch;let client,phase=0,stage='import',selected,
 const stats=[{requests:0,payloadRequests:0,bytes:0,payloadBytes:0},{requests:0,payloadRequests:0,bytes:0,payloadBytes:0}];
 const receipt={device:`${process.platform}-${process.arch}`,node:process.version,noLogin:true,freshCold:true,catalog:'catalog-gzip-v1.json',proxyConfigured:true,completed:false};
 try {
+ check(!expectedManifestSha256||/^[a-f0-9]{64}$/.test(expectedManifestSha256),'Invalid expected manifest digest');
  let denied=false;try{await symlink('nonexistent-fixture',join(root,'deny-probe'));}catch(error){denied=error.code==='EPERM';}check(denied,'Symlink denial policy missing');receipt.symlinkCreationDenied=true;
  const {createClient}=await import('qq-native-client');
  globalThis.fetch=async(input,init)=>{
@@ -28,7 +30,7 @@ try {
    for await(const chunk of response.body){size+=chunk.length;check(size<=1024*1024,'Metadata too large');chunks.push(Buffer.from(chunk));}
    const bytes=Buffer.concat(chunks);stat.bytes+=bytes.length;const data=JSON.parse(bytes);
    if(url===catalogUrl){
-    const matches=data.packages?.filter(item=>item.platform===process.platform&&item.arch===process.arch);check(data.schemaVersion===1&&matches?.length===1,'Ambiguous device catalog selection');selected=matches[0];
+    const matches=data.packages?.filter(item=>item.platform===process.platform&&item.arch===process.arch);check(data.schemaVersion===1&&matches?.length===1,'Ambiguous device catalog selection');selected=matches[0];check(!expectedManifestSha256||selected.manifestSha256===expectedManifestSha256,'Unexpected catalog manifest digest');
    }else{
     check(selected&&url===selected.manifestUrl&&hash(bytes)===selected.manifestSha256,'Manifest digest/selection mismatch');manifest=data;manifestSha=hash(bytes);
     check(manifest.platform===process.platform&&manifest.arch===process.arch,'Manifest device mismatch');
@@ -48,6 +50,6 @@ try {
  const target=await realpath(join(cacheDir,manifestSha));
  for(const file of manifest.files){check(typeof file.path==='string'&&!file.path.split(/[\\/]/).includes('..'),'Invalid manifest path');const path=await realpath(join(target,file.path));check(path.startsWith(target+sep)&&(await lstat(path)).isFile()&&hash(await readFile(path))===file.sha256.toLowerCase(),'Cached native file integrity mismatch');}
  check(stats[1].payloadRequests===0&&stats[1].payloadBytes===0,'Cached preparation repeated payload download');
- Object.assign(receipt,{manifestId:manifest.id,version:manifest.version,manifestSha256:manifestSha,hashValidatedLoader:true,cacheFilesIndependentlyHashVerified:true,first:stats[0],second:stats[1],prepared:true,closed:true,completed:true});
+ Object.assign(receipt,{manifestId:manifest.id,version:manifest.version,manifestSha256:manifestSha,expectedManifestPinned:Boolean(expectedManifestSha256),hashValidatedLoader:true,cacheFilesIndependentlyHashVerified:true,first:stats[0],second:stats[1],prepared:true,closed:true,completed:true});
 }catch{receipt.failureStage=stage;process.exitCode=1;}
 finally{globalThis.fetch=originalFetch;try{await client?.close();}catch{receipt.completed=false;receipt.failureStage='close';process.exitCode=1;}await writeFile(output,JSON.stringify(receipt,null,2)+'\n');await rm(root,{recursive:true,force:true});}
