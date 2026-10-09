@@ -1,0 +1,21 @@
+tools/archive-npm-candidate.mjs
+  s_2104cc474f1ce5::t_7007c2dd6c3b8e 1-53
+tools/archive-npm-candidate.test.mjs
+  s_2104cc474f1ce5::t_2d7d4240cb9204 1-39
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "0b2cd03b7d214615adeb44a014fb6a344d8e65c2",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
