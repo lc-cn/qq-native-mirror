@@ -1,0 +1,54 @@
+name: Public npm installed consumers
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        type: string
+        default: '0.0.1'
+        required: true
+      candidate_tag:
+        type: string
+        default: npm-v0.0.1-ci-37880903538
+        required: true
+permissions:
+  contents: read
+  actions: read
+jobs:
+  consumer:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { platform: linux, arch: x64, runner: ubuntu-24.04 }
+          - { platform: linux, arch: arm64, runner: ubuntu-24.04-arm }
+          - { platform: darwin, arch: x64, runner: macos-15-intel }
+          - { platform: darwin, arch: arm64, runner: macos-15 }
+          - { platform: win32, arch: x64, runner: windows-2022 }
+          - { platform: win32, arch: arm64, runner: windows-11-arm }
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 15
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.platform == 'win32' && '24.20.0' || '24' }}
+          architecture: ${{ matrix.arch }}
+      - name: Verify runner
+        run: node -e "if(process.platform!=='${{ matrix.platform }}'||process.arch!=='${{ matrix.arch }}')throw Error('Incorrect runner')"
+      - name: Linux system dependencies
+        if: matrix.platform == 'linux'
+        run: sudo apt-get update && sudo apt-get install -y libx11-xcb1 libgnutls30
+      - name: Verify official npm installation without account login
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SDK_VERSION: ${{ inputs.version }}
+          CANDIDATE_TAG: ${{ inputs.candidate_tag }}
+        run: node public-ci/verify.mjs "$SDK_VERSION" "$CANDIDATE_TAG"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: public-consumer-${{ matrix.platform }}-${{ matrix.arch }}
+          path: public-out/consumer.json
+          if-no-files-found: error
