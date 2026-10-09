@@ -24,7 +24,7 @@ An explicit codec takes precedence over `mediaTools`. Codec exceptions, invalid 
 
 ## Evidence and remaining work
 
-The independent [FFmpeg Node addon](https://github.com/NapNeko/ffmpegAddon/tree/0894e271dc587b6306ae13b67e2f238cdb3666bd) exposes `getVideoInfo`. Its source separates original video dimensions from a potentially downsampled JPEG cover. The [fixed QQ converter](https://github.com/NapNeko/NapCatQQ/blob/26d7533e0f5800fdff865ab2f2ad7692917e1076/packages/napcat-onebot/api/file.ts#L159-L185) supplies the legacy native video element contract.
+The independent [FFmpeg Node addon](https://github.com/NapNeko/ffmpegAddon/tree/0894e271dc587b6306ae13b67e2f238cdb3666bd) exposes `getVideoInfo`. Its source separates original video dimensions from a potentially downsampled JPEG cover. The [fixed NapCat converter](https://github.com/NapNeko/NapCatQQ/blob/26d7533e0f5800fdff865ab2f2ad7692917e1076/packages/napcat-onebot/api/file.ts#L159-L185) supplies the legacy native video element contract.
 
 A pinned Darwin arm64 addon from NapCat's separate FFmpeg assets was verified against its Git blob. The original lacked a macOS code signature; a research copy with a local ad-hoc signature loaded in ordinary Node 24.19.0 and measured the fixed 64×64 H264 synthetic clip as 0.4 seconds, yielding a 678-byte JPEG. Original and derived hashes are recorded separately in private evidence. No QQ wrapper, account or network send was used for this probe.
 
