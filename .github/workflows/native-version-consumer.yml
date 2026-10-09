@@ -66,6 +66,7 @@ jobs:
           path: |
             out/version-consumer.json
             out/main-source.json
+            out/qq-native-client-*.tgz
             out/version-consumer-driver-error.json
           if-no-files-found: warn
           retention-days: 30

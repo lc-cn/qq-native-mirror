@@ -14,7 +14,7 @@ import { createVideoElement, type MediaTools } from './media-send.ts';
 import { createRecordElement, type RecordCodec } from './media-record.ts';
 import { createFriendRequests, type FriendRequestOperation } from './friend-requests.ts';
 import { createContactOperations, type ContactOperation } from './contact-operations.ts';
-import { downloadAttachment } from './media-operations.ts';
+import { downloadAttachment, captureDownloadPayload } from './media-operations.ts';
 import { createImageElement, createFileElement, createReplyElement, decodeElements, faceElement } from './message-elements.ts';
 /** Native contracts extracted from local NapCat; this module never sends at startup. */
 import { createGroupOperations, type GroupOperation } from './group-operations.ts';
@@ -437,7 +437,12 @@ export function createNativeServices(session: Native, version: string, emit: (ev
           lifetime.signal.throwIfAborted();
           return (await resolvedMessages(messages)) as Message[];
         }
-        case 'downloadAttachment': return downloadAttachment(service('Msg'), await resolvePeer(payload.peer), { messageId: payload.messageId, elementId: payload.elementId, destination: payload.destination }, eventCall, lifetime.signal);
+        case 'downloadAttachment': {
+          const captured=captureDownloadPayload(payload);
+          const peer=await resolvePeer(captured.peer);
+          lifetime.signal.throwIfAborted();
+          return downloadAttachment(service('Msg'),peer,captured,eventCall,lifetime.signal);
+        }
         case 'recallMessage': {
           const peer = await resolvePeer(payload.peer);
           const msgId = String(payload.messageId);

@@ -1,0 +1,119 @@
+{
+  "schemaVersion": 1,
+  "feature": "captured attachment identities, checked completion, private native paths and exclusive filesystem publication",
+  "observedAt": "2026-10-09T22:22:38.253913+00:00",
+  "baseCommit": "67f77cea8115eeb38a2513f99221484ba56c265b",
+  "sourceFiles": [
+    {
+      "path": ".github/workflows/native-version-consumer.yml",
+      "sha256": "be3b1a9dc312cbdc977918bcde38ba3b2bcbac1addb01def711a162b3ae4bca6",
+      "bytes": 2829
+    },
+    {
+      "path": "ci/verify-consumer.mjs",
+      "sha256": "0426de32e100b84a22ae75b68d85dc79723f866b31ca2327f1c0ff78663b2964",
+      "bytes": 39608
+    },
+    {
+      "path": "sdk/README.md",
+      "sha256": "6921ad2d924549c541b4cad98134a431307c4f514118185fd4e874987f5e0a41",
+      "bytes": 36644
+    },
+    {
+      "path": "sdk/docs/attachment-download.md",
+      "sha256": "9bed11272a0f4c304892504f841ff38633242ab9f71f4fd812b96427baa745f7",
+      "bytes": 3907
+    },
+    {
+      "path": "sdk/scripts/download-consumer-contract.mjs",
+      "sha256": "3d75bfd10026df1c2b47cd8a613609f959ad638cfbf8696d2743b8650ef91cb2",
+      "bytes": 8501
+    },
+    {
+      "path": "sdk/scripts/verify-package-consumer.mjs",
+      "sha256": "a293b5c2c680b18a6a6999db648dfe273c136224a77293261ac562e89e2a7ba0",
+      "bytes": 34003
+    },
+    {
+      "path": "sdk/src/index.ts",
+      "sha256": "5e37cbba753827ef29e0e3efe0108139051357044a1f59bb9671cfc0488592be",
+      "bytes": 25643
+    },
+    {
+      "path": "sdk/src/media-operations.ts",
+      "sha256": "ca9622b7e140e59e3cb3351d4a05de560b8b5706616674e55c099ecb11f1235c",
+      "bytes": 6053
+    },
+    {
+      "path": "sdk/src/native-services.ts",
+      "sha256": "cba4b529d282b96b42b925edfc63780b3654837dfc2dfb95b623012ade61c47a",
+      "bytes": 31408
+    },
+    {
+      "path": "sdk/test/download-consumer.test.ts",
+      "sha256": "b0a8dad5a4b63941248e9ea3580474d1c9320aee4ee33e64999eab02f036bf98",
+      "bytes": 465
+    },
+    {
+      "path": "sdk/test/media-operations.test.ts",
+      "sha256": "f6c61e1597caeb1fba0e4e1b92e65fa33c35c92e4f432b620e558ad6f00a6be2",
+      "bytes": 8607
+    },
+    {
+      "path": "tools/verify-dedup-consumer.mjs",
+      "sha256": "9adff0e7ada6cc742072c9eab73b871fbbb5bac7a823d4dd187274acd9026e21",
+      "bytes": 11556
+    },
+    {
+      "path": "tools/verify-dedup-consumer.test.mjs",
+      "sha256": "d1e7a00aeed34a12b01555d7e8134d58a19c2e510f4024e0da58b9c5c06f38ce",
+      "bytes": 4722
+    }
+  ],
+  "regression": {
+    "tests": 570,
+    "pass": 570,
+    "fail": 0,
+    "skipped": 0
+  },
+  "producerAndVersionArtifactTests": {
+    "tests": 9,
+    "pass": 9,
+    "fail": 0,
+    "skipped": 0
+  },
+  "logs": [
+    {
+      "path": "attachment-download-all-tests-final.log",
+      "sha256": "cfefa845fc25c74b7153f7dc44ab1446e30724134c5d3c6ba5ab6e1512ef3532",
+      "bytes": 53832
+    },
+    {
+      "path": "attachment-download-package-consumer-final.log",
+      "sha256": "13ff6246a4313aeda062bf639fada6a2a3427c1836822ffa43c822b01c147edd",
+      "bytes": 2766
+    },
+    {
+      "path": "attachment-download-producer-version.log",
+      "sha256": "7cc37b5e2209fe1843322877c94a5abb2442d949f6842322404a7bae3e00dfb9",
+      "bytes": 1025
+    }
+  ],
+  "installedConsumerReceiptSha256": "802cc3b6f37f57e689e485779ed73d3229eb7bdf75861ccdce94a4b5292ac084",
+  "attachmentDownloadContract": true,
+  "nativeAttachmentDownloadAttempted": false,
+  "initialReproductionSha256": "62a250e18d08bdefdd47f57b2c5c835e9d3cfcd6379512c1dfdbd4beeafb9e6b",
+  "independentPostrepairReviewSha256": "8e6d5437c41fd1736d0023b0008cc77d5cf3c9105d55169bd9a4dbee233c2b01",
+  "nativePathLeaksRejected": true,
+  "closeDuringCopyRejectedWithDestinationRetained": true,
+  "accountUsed": false,
+  "nativeExecuted": false,
+  "signingAuthenticityEstablished": false,
+  "published": false,
+  "defaultsChanged": false,
+  "limits": [
+    "Synthetic services and actual temporary local files, not QQ server downloads",
+    "Native completion permits a different absolute cache file path; no message metadata content hash check",
+    "An already dispatched filesystem copy can leave a file after close; it is retained and the result rejects"
+  ]
+}

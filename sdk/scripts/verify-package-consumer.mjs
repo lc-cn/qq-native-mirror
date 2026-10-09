@@ -13,6 +13,7 @@ import { verifyMessageBatchConsumer } from './message-batch-consumer-contract.mj
 import { verifyHistoryLifecycleConsumer } from './history-lifecycle-consumer-contract.mjs';
 import { verifyForwardResourceConsumer } from './forward-resource-consumer-contract.mjs';
 import { verifyForwardResourceTypes } from './forward-resource-type-contract.mjs';
+import { verifyDownloadConsumer } from './download-consumer-contract.mjs';
 import { verifyReceivedForwardConsumer } from './received-forward-consumer-contract.mjs';
 
 // Offline packaging check: fake workers/services only; never starts a native worker or loads native binaries.
@@ -35,6 +36,7 @@ run(process.execPath, ['import.mjs']);
 const messageBatchChecks = await verifyMessageBatchConsumer(join(destination, 'node_modules/qq-native-client'));
 const historyLifecycleChecks = await verifyHistoryLifecycleConsumer(join(destination, 'node_modules/qq-native-client'));
 const forwardResourceChecks = await verifyForwardResourceConsumer(join(destination, 'node_modules/qq-native-client'));
+const downloadChecks = await verifyDownloadConsumer(join(destination, 'node_modules/qq-native-client'));
 const forwardResourceTypeChecks = await verifyForwardResourceTypes(join(destination, 'node_modules/qq-native-client'),resolve(root,'node_modules/typescript'),[resolve(root,'node_modules/@types')]);
 const receivedForwardChecks = await verifyReceivedForwardConsumer(join(destination, 'node_modules/qq-native-client'));
 await writeFile(join(destination, 'faces.mjs'), `import assert from 'node:assert/strict';
@@ -275,7 +277,7 @@ void factory; void options; void subscribe;
 run(process.execPath, [resolve(root, 'node_modules/typescript/bin/tsc'), '--noEmit', '--strict', '--types', 'node', '--module', 'NodeNext', '--target', 'ES2023', '--typeRoots', resolve(root, 'node_modules/@types'), 'consumer.ts']);
 const receipt = { checkedAt: new Date().toISOString(), package: packed.name, version: packed.version,
   integrity: packed.integrity, fileCount: files.length, checks: { privateFilesExcluded:true, installedImport:true, cliHelp:true, cliDefaultConfig:true, faceContract:true, messageQueryContract:true, historyQueryContract:true, nativeHistoryQueryAttempted:false, selfProfileContract:true, groupOperationContract:true, groupMemberQueryContract:true, groupMemberIdentityContract:true, groupMetadataEventContract:true, businessWatchContract:true, friendMetadataEventContract:true, nativeFriendMetadataObserved:false, friendListQueryContract:true, friendListBatchContract:true, friendProfileQueryContract:true, groupListQueryContract:true, nativeGroupListQueryAttempted:false, nativeFriendListQueryAttempted:false, declarations:true },
-  ...messageBatchChecks, ...historyLifecycleChecks, ...forwardResourceChecks, forwardResourceDeclarationsContract:forwardResourceTypeChecks.success, forwardResourceTypeChecks, ...receivedForwardChecks, ...forwardChecks, ...recallChecks, ...mentionChecks, ...sendChecks, ...receivedChecks, ...videoChecks, nativeExecuted:false, accountUsed:false };
+  ...downloadChecks, ...messageBatchChecks, ...historyLifecycleChecks, ...forwardResourceChecks, forwardResourceDeclarationsContract:forwardResourceTypeChecks.success, forwardResourceTypeChecks, ...receivedForwardChecks, ...forwardChecks, ...recallChecks, ...mentionChecks, ...sendChecks, ...receivedChecks, ...videoChecks, nativeExecuted:false, accountUsed:false };
 await mkdir(join(root, '.local'), {recursive:true});
 await writeFile(join(root, '.local/package-consumer-verification.json'), JSON.stringify(receipt, null, 2));
 await mkdir(join(root, '.local/research'), {recursive:true});

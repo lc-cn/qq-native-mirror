@@ -1,6 +1,7 @@
 import { deserializeKernelError, KernelRequestError } from './errors.ts';
 import {captureMergedForward} from './merged-forward.ts';
 import {normalizeForwardResourceId} from './forward-resource-wire.ts';
+import {captureDownloadRequest} from './media-operations.ts';
 import { normalizeMessageQuery, normalizeMessageBatchQuery, normalizeHistoryQuery } from './message-query.ts';
 export { KernelRequestError, MergedForwardError } from './errors.ts';
 export type {MergedForwardFailure, MergedForwardProgress} from './errors.ts';
@@ -274,7 +275,10 @@ export class QQClient extends EventEmitter<ClientEvents> {
     return this.#operation('sendMergedForward', captureMergedForward(peer,nodes,options));
   }
   recallMessage(peer: Peer, messageId: string): Promise<void> { return this.#operation('recallMessage', { peer, messageId }); }
-  downloadAttachment(peer: Peer, messageId: string, elementId: string, destination: string): Promise<{ file: string }> { return this.#operation('downloadAttachment', { peer, messageId, elementId, destination }); }
+  async downloadAttachment(peer: Peer, messageId: string, elementId: string, destination: string): Promise<{ file: string }> {
+    const captured=captureDownloadRequest(peer,messageId,elementId,destination);
+    return this.#operation('downloadAttachment',captured);
+  }
   getUserProfile(userId: string): Promise<UserProfile> { return this.#operation('getUserProfile', { userId }); }
   setFriendRemark(userId: string, remark: string): Promise<void> { return this.#operation('setFriendRemark', { userId, remark }); }
   deleteFriend(userId: string, options: DeleteFriendOptions = {}): Promise<void> { return this.#operation('deleteFriend', { userId, options }); }
