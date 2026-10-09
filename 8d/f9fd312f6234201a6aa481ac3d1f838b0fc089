@@ -1,0 +1,57 @@
+sdk/README.md
+  s_2104cc474f1ce5::t_c57d3de942bb21 98-99,102,104,119,149,202
+sdk/docs/download-acceleration.md
+  s_2104cc474f1ce5::t_72829e599a05cf 1-15
+sdk/docs/file-recall-investigation.md
+  s_2104cc474f1ce5::t_5404823c0e310d 1-15
+sdk/docs/group-notice-native-list-research.md
+  s_2104cc474f1ce5::t_3c01de6d286033 1-53
+sdk/docs/linux-archives.md
+  s_2104cc474f1ce5::t_9112909e7c7e66 1-38
+sdk/docs/linux-runtime.md
+  s_2104cc474f1ce5::t_24ac1d937a6dfb 1-176
+sdk/docs/linux-signing-static.md
+  s_2104cc474f1ce5::t_4cfa5e4a156ecf 1-271
+sdk/docs/login-contract.md
+  s_2104cc474f1ce5::t_d8583c473ac6e2 1-115
+sdk/docs/multi-version-and-mirror.md
+  s_2104cc474f1ce5::t_dd8bc2fccf2728 1-183
+sdk/docs/native-size-reduction.md
+  s_2104cc474f1ce5::t_ec6c5206af3620 1-78
+sdk/docs/npm-first-publish.md
+  s_2104cc474f1ce5::t_2bc97c001acd9e 30-41
+sdk/docs/sdk-acceptance.md
+  s_2104cc474f1ce5::t_75cb5c83da1b63 1-241
+sdk/docs/signing-community-evidence.md
+  s_2104cc474f1ce5::t_d752ac2b4a0599 1-48
+sdk/docs/signing-integrity.md
+  s_2104cc474f1ce5::t_21c6036e5482d0 1-78
+sdk/docs/version-research-macos.md
+  s_2104cc474f1ce5::t_7b829666bfe1ef 1-38
+sdk/docs/version-research-platforms.md
+  s_2104cc474f1ce5::t_bae296028468e5 1-109
+sdk/package.json
+  s_2104cc474f1ce5::t_45cefdf5ea3a53 14
+sdk/scripts/download-npm-candidate.mjs
+  s_2104cc474f1ce5::t_15be80d01e9b4e 1-111
+sdk/scripts/probe-native.ts
+  s_2104cc474f1ce5::t_bc26bc384d5aa2 1-56
+sdk/scripts/stage-native-mirror.ts
+  s_2104cc474f1ce5::t_677a7cba449477 1-54
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "8df9fd312f6234201a6aa481ac3d1f838b0fc089",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
