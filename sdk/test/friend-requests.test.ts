@@ -2,6 +2,34 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createFriendRequests } from '../src/friend-requests.ts';
 const incoming = { friendUid: 'u_request', reqTime: '123', friendNick: 'nick', extWords: 'hello', isDecide: false, isUnread: true };
+test('friend metadata shares the Buddy listener without completing or invalidating request queries', async () => {
+  let listener: any, registrations = 0, queries = 0;
+  const removed: number[] = [], events: [string, any][] = [];
+  const operations = createFriendRequests({ getBuddyService: () => ({
+    addKernelBuddyListener(value: any) { registrations++; listener = value; return 7; },
+    removeKernelBuddyListener(id: number) { removed.push(id); },
+    getBuddyReq() { queries++; return { result: 0 }; },
+  }) }, (name, value) => events.push([name, value]));
+  try {
+    let resolved = false;
+    const query = operations.invokeOperation('listFriendRequests').then(value => { resolved = true; return value; });
+    await new Promise(resolve => setImmediate(resolve));
+    listener.onBuddyListChange([{ categoryId: 0, categoryName: '', categoryMbCount: 0, buddyList: [] }]);
+    listener.onBuddyListChange([{ categoryId: 0, buddyList: [] }]);
+    listener.onBuddyListChangedV2({ credential: 'fixture-secret' });
+    listener.onBuddyInfoChange({ credential: 'fixture-secret' });
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(resolved, false);
+    listener.onBuddyReqChange({ buddyReqs: [incoming] });
+    assert.equal((await query as any[]).length, 1);
+    assert.deepEqual(events.map(([name]) => name), ['friend-list-updated', 'diagnostic', 'friend-request']);
+    assert.equal(registrations, 1); assert.equal(queries, 1);
+    operations.close();
+    listener.onBuddyListChange([]); listener.onBuddyReqChange({ buddyReqs: [{ ...incoming, reqTime: '124' }] });
+    assert.equal(events.length, 3); assert.deepEqual(removed, [7]);
+    assert.doesNotMatch(JSON.stringify(events), /credential|fixture-secret/);
+  } finally { operations.close(); }
+});
 function fixture() {
   let listener: any;
   const emitted: { event: string; payload: any }[] = [];

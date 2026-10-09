@@ -1,4 +1,5 @@
 import { nativeResultError } from './errors.ts';
+import { createFriendEvents } from './friend-events.ts';
 /** Pinned NapCatQQ 26d7533e0f5800fdff865ab2f2ad7692917e1076:
  * https://github.com/NapNeko/NapCatQQ/blob/26d7533e0f5800fdff865ab2f2ad7692917e1076/packages/napcat-core/types/notify.ts#L136-L160
  * https://github.com/NapNeko/NapCatQQ/blob/26d7533e0f5800fdff865ab2f2ad7692917e1076/packages/napcat-core/apis/friend.ts#L87-L103
@@ -33,7 +34,11 @@ export function createFriendRequests(session: Native, emit: (event: string, payl
   const waiters = new Set<{ resolve: (requests: NativeFriendRequestDTO[]) => void; reject: (error: Error) => void }>();
   let listing: Promise<NativeFriendRequestDTO[]> | undefined;
   let queryInvalidated = false;
+  const friendEvents = createFriendEvents(emit);
   const listener = new Proxy({
+    onBuddyListChange(values: unknown) {
+      if (!closed) friendEvents.onBuddyListChange(values);
+    },
     onBuddyReqChange(notification: unknown) {
       if (closed) return;
       try {

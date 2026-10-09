@@ -16,6 +16,18 @@ class Worker extends EventEmitter {
   kill() { this.connected = false; queueMicrotask(() => this.emit('exit', 0, null)); return true; }
 }
 
+test('public client exposes friend metadata and suppresses delivery after close', async () => {
+  const worker = new Worker(), client = new QQClient(worker as unknown as ChildProcess, 500);
+  const events: unknown[] = [], update = { categories: [{ categoryId: 0, name: '', memberCount: 0, friends: [] }] };
+  client.on('friend-list-updated', value => events.push(value));
+  worker.emit('message', { event: 'ready', payload: { uin: '456', uid: 'u_self' } });
+  worker.emit('message', { event: 'friend-list-updated', payload: update });
+  assert.deepEqual(events, [update]); assert.equal(client.state, 'online');
+  await client.close();
+  worker.emit('message', { event: 'friend-list-updated', payload: update });
+  assert.equal(events.length, 1);
+});
+
 test('public client forwards typed group metadata without changing account state and suppresses late events', async () => {
   const worker = new Worker(), client = new QQClient(worker as unknown as ChildProcess, 500);
   const events: unknown[] = [];

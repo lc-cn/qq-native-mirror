@@ -403,3 +403,17 @@ python3 scripts/linux-signing-global48-origin.py /absolute/path/wrapper.node
 脚本固定 binary 和静态来源 SHA，检查两个 unwind 范围、wrapper 的全部 120 条指令、initializer 指令、选定来源/存储边，以及上述动态符号绑定。独立检查用 ELF `PT_LOAD` 映射复核 wrapper 和 initializer 的全部 141 条指令与系统 objdump、静态 48 字节、五条重定位绑定及两个 PLT；实际旧版 binary 被 SHA 拒绝且证据 stdout 为空。私有收据为 `.local/research/linux-signing-global48-origin.json` 和 `linux-signing-global48-origin-independent.json`。本轮没有执行 native/provider 或账号操作。
 
 这将数据来源从“未知运行时 global”收窄为“具有已确认静态初始值的分配对象”。后续可变性、嵌套解释器指令顺序、OR8 字节传播及最终输出布局仍未证明；不能把来源字节命名为检测位、密钥、假签名材料或服务端账号标记。
+
+## Global 对象的有界引用与后续调用
+
+在同一固定 binary 的 `.text` 中，扫描 ADRP 加同基址 immediate uint64 LDR 的近邻模式，限定最多六条后续指令，并在选定分支或保守的寄存器覆写判定处停止。得到七处对 GOT `0x89dee08` 的载入：`0x4265d1c`、`0x43325dc`、`0x433642c`、`0x4338188`、`0x43394c8`、`0x4356ec0`、`0x4888c2c`。它不是完整地址/别名分析；已确认的 initializer 引用间隔为七条，故特意不在本扫描范围内，不能以这七处冒充全部引用。
+
+其中 `0x43325e4` 和 `0x4336440` 将该 global 指向的对象作为原始 `x0` 传给 `0x4332614..0x4334048`。入口把对象指针保存到 frame `+0x28`，把对象 `+0x30/+0x34` 地址保存到 frame `+0x8/+0x10`。已检查的局部别名路径在 `0x433377c` 写对象 `+0x30` 的 byte 为一，在 `0x433378c` 写对象 `+0x34` 的 uint32 为零，两处均在前 48 字节之外。这不代表前 48 字节不可变，也未证明混淆控制流中的执行顺序。
+
+仍有两个具体的未展开调用：`0x4332ad8→0x434e76c` 收到保存的原对象指针；`0x43336d0→0x434e864` 也收到原对象指针，以及外部输入指针、uint32 值 496 和保存的原参数。这些函数体、间接调用和其他别名写入尚未检查，因而是继续核对数据可变性的明确入口。
+
+```sh
+python3 scripts/linux-signing-global48-references.py /absolute/path/wrapper.node
+```
+
+脚本固定 binary SHA、七个有限模式结果、局部精确指令，以及上述 callee 的 unwind 和全部 1677 条指令与系统 objdump。独立 `PT_LOAD` 检查复核了七个地址计算、176 个引用窗口指令字、callee 的全部指令/摘要/unwind 和选定别名存储字；实际旧版以 SHA 拒绝。私有收据为 `.local/research/linux-signing-global48-references.json` 和 `linux-signing-global48-references-independent.json`。没有执行 native/provider、账号操作或修改检测结果；没有建立最终签名位传播或服务端标记语义。

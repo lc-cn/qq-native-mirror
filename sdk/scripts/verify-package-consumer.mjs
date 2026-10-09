@@ -105,6 +105,23 @@ const defaults=[];const removeDefault=observeWatchEvents(client,undefined,line=>
 client.emit('message',{messageId:'42'});listener.onGroupListUpdate(0,[]);assert.deepEqual(defaults,[{messageId:'42'}]);removeDefault();
 `);
 run(process.execPath, ['group-events.mjs']);
+await writeFile(join(destination, 'friend-events.mjs'), `import assert from 'node:assert/strict';
+import {EventEmitter} from 'node:events';
+import {createFriendEvents} from './node_modules/qq-native-client/dist/friend-events.js';
+import {observeWatchEvents} from './node_modules/qq-native-client/dist/cli.js';
+const events=[];const listener=createFriendEvents((event,payload)=>events.push([event,payload]));
+const expected={categories:[{categoryId:1,name:'fixture',memberCount:1,friends:[{uid:'u_friend',userId:'900719925474099312345',nickname:'friend',remark:'remark'}]}]};
+listener.onBuddyListChange([{categoryId:1,categoryName:'fixture',categoryMbCount:1,buddyList:[{uid:'u_friend',uin:'900719925474099312345',nick:'friend',remark:'remark',secret:'must-not-leak'}],secret:'must-not-leak'}]);
+assert.deepEqual(events.pop(),['friend-list-updated',expected]);
+listener.onBuddyListChange([{categoryId:2,categoryName:'empty',categoryMbCount:0,buddyList:[]}]);
+assert.deepEqual(events.pop(),['friend-list-updated',{categories:[{categoryId:2,name:'empty',memberCount:0,friends:[]}]}]);
+listener.onBuddyListChange([{categoryId:1,categoryName:'private',categoryMbCount:0,buddyList:[]},{categoryId:'bad',categoryName:'bad',categoryMbCount:0,buddyList:[]}]);
+assert.deepEqual(events,[['diagnostic',{stage:'invalid-native-friend-list-update'}]]);assert.ok(!JSON.stringify(events).includes('private'));
+const client=new EventEmitter(),lines=[];const cleanup=observeWatchEvents(client,'all',line=>lines.push(JSON.parse(line)));
+client.emit('friend-list-updated',expected);assert.deepEqual(lines,[{event:'friend-list-updated',payload:expected}]);cleanup();client.emit('friend-list-updated',expected);assert.equal(lines.length,1);
+const plain=[];const cleanDefault=observeWatchEvents(client,undefined,line=>plain.push(JSON.parse(line)));client.emit('friend-list-updated',expected);client.emit('message',{fixture:true});assert.deepEqual(plain,[{fixture:true}]);cleanDefault();
+`);
+run(process.execPath, ['friend-events.mjs']);
 const help = run(process.execPath, ['node_modules/qq-native-client/dist/cli.js', '--help']);
 if (!help.includes('group-kick') || !help.includes('--message-file')) throw new Error('Installed CLI lacks commands');
 const cliEntry='node_modules/qq-native-client/dist/cli.js';
@@ -131,6 +148,7 @@ const factory: (options: ClientOptions) => Promise<QQClient> = createClient;
 function subscribe(client: QQClient) {
  client.on('native-callback', diagnostic => diagnostic.argumentTypes.join(','));
  client.on('kicked', info => info.args.length);
+ client.on('friend-list-updated', update => update.categories.map(category => category.friends.map(friend => friend.userId)));
  client.on('request.group', request => request.sequence);
  client.on('group-list-updated', update => update.groups.map(group=>group.groupId));
  client.on('group-members-updated', update => update.members.map(member=>[member.uid,member.deleted,member.role]));
@@ -154,7 +172,7 @@ void factory; void options; void subscribe;
 `);
 run(process.execPath, [resolve(root, 'node_modules/typescript/bin/tsc'), '--noEmit', '--strict', '--types', 'node', '--module', 'NodeNext', '--target', 'ES2023', '--typeRoots', resolve(root, 'node_modules/@types'), 'consumer.ts']);
 const receipt = { checkedAt: new Date().toISOString(), package: packed.name, version: packed.version,
-  integrity: packed.integrity, fileCount: files.length, checks: { privateFilesExcluded:true, installedImport:true, cliHelp:true, cliDefaultConfig:true, faceContract:true, messageQueryContract:true, selfProfileContract:true, groupOperationContract:true, groupMemberQueryContract:true, groupMetadataEventContract:true, businessWatchContract:true, declarations:true },
+  integrity: packed.integrity, fileCount: files.length, checks: { privateFilesExcluded:true, installedImport:true, cliHelp:true, cliDefaultConfig:true, faceContract:true, messageQueryContract:true, selfProfileContract:true, groupOperationContract:true, groupMemberQueryContract:true, groupMetadataEventContract:true, businessWatchContract:true, friendMetadataEventContract:true, nativeFriendMetadataObserved:false, declarations:true },
   nativeExecuted:false, accountUsed:false };
 await mkdir(join(root, '.local'), {recursive:true});
 await writeFile(join(root, '.local/package-consumer-verification.json'), JSON.stringify(receipt, null, 2));

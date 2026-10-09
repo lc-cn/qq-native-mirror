@@ -182,12 +182,12 @@ test('watch defaults to message JSON lines and removes its own delivery listener
 test('watch all envelopes only six business event families and unbinds each', () => {
   const events = new EventEmitter(), lines: string[] = [];
   const cleanup = observeWatchEvents(events as QQClient, 'all', line => lines.push(line));
-  const names = ['message', 'message-recalled', 'request.friend', 'request.group', 'group-list-updated', 'group-members-updated'];
+  const names = ['message', 'message-recalled', 'request.friend', 'request.group', 'friend-list-updated', 'group-list-updated', 'group-members-updated'];
   names.forEach((event, i) => events.emit(event, { fixture: i }));
   events.emit('msf-status', { status: 1 }); events.emit('authenticated', { credential: 'fixture-secret' });
   assert.deepEqual(lines.map(line => JSON.parse(line)), names.map((event, i) => ({ event, payload: { fixture: i } })));
   cleanup(); names.forEach(event => assert.equal(events.listenerCount(event), 0));
-  events.emit('group-members-updated', {}); assert.equal(lines.length, 6);
+  events.emit('group-members-updated', {}); assert.equal(lines.length, 7);
 });
 test('watch rejects invalid event mode before registration or configuration/native setup', () => {
   const events = new EventEmitter();

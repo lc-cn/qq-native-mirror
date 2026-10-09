@@ -60,6 +60,7 @@ export interface ClientEvents {
   'reconnect-error': [Error];
   'request.friend': [FriendRequest];
   'request.group': [GroupRequest];
+  'friend-list-updated': [FriendListUpdate];
   'group-list-updated': [GroupListUpdate];
   'group-members-updated': [GroupMemberUpdate];
   qrcode: [{ image: Buffer; url: string }];
@@ -79,6 +80,11 @@ export interface ClientEvents {
 
 export type ClientState = 'idle' | 'connecting' | 'online' | 'disconnected' | 'closing' | 'closed' | 'failed';
 export interface Friend { userId: string; uid: string; nickname: string; remark: string }
+/** Projected Buddy metadata; optional remarks remain absent when not supplied. */
+export interface FriendChange { userId: string; uid: string; nickname: string; remark?: string }
+export interface FriendCategoryChange { categoryId: number; name: string; memberCount: number; friends: FriendChange[] }
+/** Native categorized metadata, without a completeness marker or inferred add/remove cause. */
+export interface FriendListUpdate { categories: FriendCategoryChange[] }
 export interface Group { groupId: string; name: string; memberCount: number; maxMemberCount: number }
 export interface GroupMember { userId: string; uid: string; nickname: string; card: string; role: 'owner' | 'admin' | 'member' }
 /** Native metadata notification; optional fields remain absent when not supplied. */
