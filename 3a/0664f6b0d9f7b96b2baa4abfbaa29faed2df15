@@ -1,0 +1,21 @@
+ci/windows/build-adapter.mjs
+  s_2104cc474f1ce5::t_47e478f84fbd5e 24,26,28
+ci/windows/environment-stopping.cc
+  s_2104cc474f1ce5::t_118ef0d5ec1361 8-10
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "3a0664f6b0d9f7b96b2baa4abfbaa29faed2df15",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
