@@ -1,0 +1,23 @@
+ci/build-platform.mjs
+  s_2104cc474f1ce5::t_e25ab2dc74013a 44
+ci/aggregate-release.mjs
+  s_2104cc474f1ce5::t_e25ab2dc74013a 25-29
+ci/windows/build-adapter.mjs
+  s_2104cc474f1ce5::t_e25ab2dc74013a 49
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e021f17e5870818b3d595b45aa558d2bd2c37c25",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
