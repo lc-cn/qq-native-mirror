@@ -1,0 +1,23 @@
+sdk/scripts/prepare-npm-native-mirror.mjs
+  s_2104cc474f1ce5::t_d55adba79162bd 1-60
+sdk/test/prepare-npm-native-mirror.test.ts
+  s_2104cc474f1ce5::t_64273ec37bf25e 1-12
+sdk/docs/npm-first-publish.md
+  s_2104cc474f1ce5::t_059c2bd61642c8 82-93
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "540cdd2f9d06e8b260cfe163d6164ed99eadcc2c",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
