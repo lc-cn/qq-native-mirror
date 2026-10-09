@@ -52,6 +52,16 @@ test('reply rejects native query failure and wrong-conversation records before c
   await assert.rejects(createReplyElement('9', peer, { getMsgsByMsgId: () => ({ result: 0, msgList: [{ msgId: '9', chatType: 2, peerUid: '456', elements: [] }] }) }), /mismatched/);
 });
 
+test('reply never constructs native references with malformed sequence or sender metadata', async () => {
+  const peer = { chatType: 2, peerUid: '123' };
+  const raw = { msgId: '9', msgSeq: '4', senderUin: '456', clientSeq: '3', ...peer, elements: [] };
+  for (const field of ['msgSeq', 'senderUin', 'clientSeq']) {
+    for (const value of [undefined, null, {}, false, [], 123, '']) {
+      await assert.rejects(createReplyElement('9', peer, { getMsgsByMsgId: () => ({ result: 0, msgList: [{ ...raw, [field]: value }] }) }), new RegExp(field));
+    }
+  }
+});
+
 test('inbound decode preserves all media and unknown element payloads', () => {
   const native = [{ elementType: 6, faceElement: { faceIndex: 1 } }, { elementType: 7, replyElement: { replayMsgId: '9' } }, { elementType: 2, picElement: { filePath: '/tmp/x.png' } }, { elementType: 4, pttElement: { fileUuid: 'opaque' } }, { elementType: 3, fileElement: { fileName: 'attachment' } }];
   const result = decodeElements(native);

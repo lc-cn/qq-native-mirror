@@ -92,7 +92,7 @@ export async function createReplyElement(messageId: string, peer: Native, msgSer
   const original = await queryNativeMessage(msgService, peer as { chatType: 1 | 2; peerUid: string }, messageId);
   if (!original) throw new Error('Referenced message was not found in the target conversation');
   for (const field of ['msgSeq', 'msgId', 'senderUin', 'clientSeq']) {
-    if (original[field] === undefined || original[field] === null) throw new Error(`Referenced message is missing ${field}`);
+    if (typeof original[field] !== 'string' || !original[field]) throw new Error(`Referenced message requires a nonempty string ${field}`);
   }
   return { elementType: 7, elementId: '', replyElement: {
     replayMsgSeq: original.msgSeq, replayMsgId: original.msgId,
