@@ -5,7 +5,7 @@ import {tmpdir} from 'node:os';import {join,resolve} from 'node:path';import {cr
 const check=(condition,message)=>{if(!condition)throw Error(message);};
 export function validateInstalled(lock,source,receipt){
  const main=source.main;
- check(source.repository==='lc-cn/qq-native-mirror'&&source.runId==='37886708952'&&source.tag==='npm-v0.0.1-ci-37886708952'&&source.commit==='6af4b3c4bb4309f14753d6bc6c3ab67503bd2d59'&&main?.name==='qq-native-client'&&main.version==='0.0.1'&&main.size===230041&&main.sha256==='0e51e6dee2a99503c8bd0849483394e5979961b01d29826cdcfd08302affd556','Corrected main source mismatch');
+ check(source.repository==='lc-cn/qq-native-mirror'&&source.runId==='37890893656'&&source.tag==='npm-v0.0.1-ci-37890893656'&&source.commit==='9237a3a50329e5ce8d247c3f153003501cb7c349'&&main?.name==='qq-native-client'&&main.version==='0.0.1'&&main.size===236137&&main.sha256==='346bfee5895de2e0ef236cfb25d97654c8b773a5ec5adc67568b79e81301b11a','Corrected main source mismatch');
  check(lock.packages?.['node_modules/qq-native-client']?.integrity===main.integrity&&lock.packages['node_modules/qq-native-client'].version===main.version,'Installed main lock integrity mismatch');
  if(receipt)check(receipt.completed===true&&receipt.prepared===true&&receipt.closed===true&&receipt.device===`${process.platform}-${process.arch}`&&receipt.node===process.version&&receipt.noLogin===true&&receipt.freshCold===true&&receipt.symlinkCreationDenied===true&&receipt.hashValidatedLoader===true&&receipt.cacheFilesIndependentlyHashVerified===true&&receipt.nativeExports>=80&&receipt.first?.payloadRequests>0&&receipt.first.payloadBytes>0&&receipt.second?.payloadRequests===0&&receipt.second.payloadBytes===0,'Mirror cold/cache receipt failed');
 }

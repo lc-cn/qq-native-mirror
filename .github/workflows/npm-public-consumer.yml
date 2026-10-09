@@ -8,7 +8,7 @@ on:
         required: true
       candidate_tag:
         type: string
-        default: npm-v0.0.1-ci-37886708952
+        default: npm-v0.0.1-ci-37890893656
         required: true
       verify_mirror:
         type: boolean

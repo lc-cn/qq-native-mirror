@@ -19,8 +19,8 @@ try{
  console.log('Full fake consumer success and pre-fetch second-payload rejection passed');
 }finally{await rm(directory,{recursive:true,force:true});}
 
-const commit='6af4b3c4bb4309f14753d6bc6c3ab67503bd2d59',runId='37886708952',tag='npm-v0.0.1-ci-'+runId;
-const sourceMain={name:'qq-native-client',version:'0.0.1',tarball:'qq-native-client-0.0.1.tgz',size:230041,sha256:'0e51e6dee2a99503c8bd0849483394e5979961b01d29826cdcfd08302affd556'};
+const commit='9237a3a50329e5ce8d247c3f153003501cb7c349',runId='37890893656',tag='npm-v0.0.1-ci-'+runId;
+const sourceMain={name:'qq-native-client',version:'0.0.1',tarball:'qq-native-client-0.0.1.tgz',size:236137,sha256:'346bfee5895de2e0ef236cfb25d97654c8b773a5ec5adc67568b79e81301b11a'};
 const release={tag_name:tag,draft:false,prerelease:true,target_commitish:commit};
 const run={id:Number(runId),repository:{full_name:'lc-cn/qq-native-mirror'},status:'completed',conclusion:'success',head_sha:commit,run_attempt:1,path:'.github/workflows/native-first-main.yml'};
 const manifest={schemaVersion:1,repository:'lc-cn/qq-native-mirror',commit,runId,runAttempt:1,version:'0.0.1',packages:[sourceMain,...['linux-x64','linux-arm64','darwin-x64','darwin-arm64','win32-x64','win32-arm64'].map(target=>({name:'qq-native-client-'+target,version:'0.0.1'}))]};

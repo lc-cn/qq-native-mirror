@@ -294,3 +294,16 @@ Combined with the already checked caller `0x43324f4..0x43324fc`, this newly esta
 The four PLT labels in this latest pass were independently checked against `.rela.plt` GOT relocations and `.dynsym`/`.dynstr` bytes from the same pinned ELF: vector emplacement at `0x83a460`, memset at `0x83a5f0`, free at `0x83c7b0`, stack-check failure at `0x83d540`. The script now rejects a dynamic-symbol mismatch. The vector's exact mangled label is `_ZNSt6vectorIlSaIlEE12emplace_backIJRlEEES3_DpOT_`. On the analysis host, `/usr/bin/objdump --disassemble --start-address=0x83a460 --stop-address=0x83a470 /absolute/path/wrapper.node` independently printed that `.plt` label and its GOT load.
 
 Run `python3 scripts/linux-signing-setup-callees.py /absolute/path/wrapper.node` from the source checkout with the exact matching ARM64 ELF to reproduce this finite pass. It reads binary bytes; it does not import or invoke the native module.
+
+
+## 有界补充：setup 的 8 字节元素查找 callee
+
+固定 Linux arm64 wrapper SHA-256 `c302361f52494de257044e912e43ed244bb29ee59f59345d25a8959327828337` 下，`0x434dda0..0x434e45c` 的 unwind 边界、选定指令字以及全部直接/间接调用位置已独立复核。可复现命令：
+
+```sh
+python3 scripts/linux-signing-next-vector-search.py /absolute/path/wrapper.node
+```
+
+本函数保存传入的 range begin 和 target 指针，读取并比较两个 64 位值；迭代位置按 8 字节推进，剩余数出现 `(end-current)>>3`，返回 `x0` 从保存的当前位置间接读取。唯一直接调用为既已通过 ELF 符号表确认的 stack-check failure，未出现间接调用。这些局部关系符合“查找 8 字节元素并返回位置”的解释，补强上一节调用者把返回指针差转换为元素 index/count 的判断。它们不证明所有混淆分支的执行关系，也不能据此认定这是签名数据或检测位。
+
+这一有限步骤仍未建立 OR8 lookup 对象与 provider `+0x200` 的别名或传递路径；不能把 `+0x200` 直接命名为已确认的 owner 字段。服务端标记、签名输出含义和纯 Node 环境与官方宿主的真实性等价仍未知。脚本仅读取二进制，不加载或执行原生模块。
