@@ -344,3 +344,34 @@ python3 scripts/linux-signing-return-provenance.py /absolute/path/wrapper.node
 两个脚本均先检查完整二进制 SHA，再输出精确局部证据。前者额外校验 39 个选定指令字、unwind 边界和字符串构造/`memcpy` 动态符号；后者需要分析主机的 `/usr/bin/objdump` 支持 AArch64 ELF，并核对 consumer 范围内每个反汇编指令字。本机复跑及独立 objdump 检查通过，私有收据保存在 `.local/research/linux-signing-provider-third-region.json`、`linux-signing-return-provenance.json` 和 `linux-signing-third-region-independent.json`。
 
 结论仍是：已确认真实输出复制链及候选内容传播入口，但没有证明 OR8 位进入最终输出，更没有证明服务端账号标记或踢下线机制。没有加载原生模块、调用 provider、恢复账号或修改检测结果。上述地址仅适用于这个固定二进制，不能推广到其他平台或版本。
+
+## 静态指令源、分发表与另一条返回路径
+
+同一固定 Linux arm64 SHA 下，caller 在 `0x43300e4` 分配 378 字节，在 `0x43300f8` 从静态地址 `0x6c7e29c` 复制同样长度。构造函数 `0x433185c` 在 `0x4331870` 把复制品指针存入 `workspace+0`，并将 blob 首个 `uint16`（值 18）传给 owner 初始化。consumer 在 `0x43340b8` 读取该指针，在 `0x43340c8` 加 `0x10` 作为入口指令位置。其余 header 字段尚未命名。整个 blob SHA-256 为 `fe1623668335f3f6dce1065e72349da9d71262bd31ba61f7be42e1da1aa8d976`。
+
+consumer 的 `0x4337340` 从当前指令位置读取 byte0。bit7 置位走已识别的退出分支；其他值通过静态地址 `0x6c7e59e` 的 128 项 `uint16` 表，计算 `0x4334230 + table[opcode]*4` 并跳转。256 字节表的 SHA-256 为 `0e5b7d0e329515863b5e947f409f7d2cc7b5bed5e777ad584070b1da08079a3f`。
+
+| opcode | 表项得到的入口 | 已检查的局部关系 | blob 中的裸字节位置 |
+| --- | --- | --- | --- |
+| `0x79` | `0x4339460` | 低四位 operand lookup，进入此前 OR8 对象路径 | 362 |
+| `0x7a` | `0x4336d00` | lookup 对象进入加工函数，结果经 `0x4332380` 回存 owner 索引 | 368 |
+| `0x61` | `0x4336e1c` | 另一条按字节复制的返回记录路径 | 376 |
+| `0x62` | `0x4339638` | 前述按 uint32 索引复制的返回路径 | 整个 blob 均无此字节 |
+
+这些是精确表项与裸字节候选位置，不能把裸字节搜索等同于指令解码。setup 已识别的直接 workspace 写入没有覆盖 `workspace+0`；consumer 的 239 个单基本块指令指针载入窗口也未发现通过所追踪指针直接写 blob。然而，该有限检查未覆盖跨块别名及全部间接 callee，故没有证明运行时 blob 不变或指令位置始终位于它内部。`0x62` 的缺席仅在这些前提成立时限制该 opcode；**不能据此排除返回数据复制**。
+
+`0x61` 的局部指令另有 `malloc(16)` 返回记录 `R` 和 `malloc(sourceLength+1)` 数据缓冲区；`0x4338758` 调用实际 `memcpy`，从 lookup 对象的 `+8` 数据指针按首个 uint32 字节长度复制。后续在 `R+0` 写长度、`R+8` 写数据指针，记录经 frame158、`x1/x20` 和 frame170 转存，接入前述普通返回链。因此先前 `0x62` 的 32 位元素复制路径不是唯一返回候选。这些仍是局部数据边，未穷尽所有混淆状态的可达顺序。
+
+`0x7a` 从 byte1 低四位 lookup 对象；byte2 参与读取 owner 索引表。`0x433a9d4` 调用 `0x434c4c0`，传入该对象、索引表的 uint32 值和一个保存的 uint32 参数。返回值再作为 `x2` 交给 `0x4332380(owner, byte2, result, 0, -1)`。候选位置的 operand `07/02` 与“查索引 7 的对象、加工结果回存索引 2”相符，但仍以指令边界和执行可达为前提，不能认定它是直接或无损复制。
+
+加工函数 `0x434c4c0..0x434d2e0` 的 904 条指令已完整复核。其原对象 `+8` 数据指针参与逐字节读取，在 `0x434cdcc` 写入一份局部缓冲区；另一个内部调用 `0x434d0d4→0x4356f94` 收到“局部缓冲区 +2”和“原对象 uint32 长度 +8”，其普通返回值经局部槽转存成为该加工函数的 `x0` 返回。其他内部调用以及缓冲区完整布局、加工返回记录 ABI 未被穷尽确认。不能从这些边推断算法名、最终输出的具体位值或服务端检测语义。
+
+```sh
+python3 scripts/linux-signing-instruction-source.py /absolute/path/wrapper.node
+python3 scripts/linux-signing-opcode-map.py /absolute/path/wrapper.node
+python3 scripts/linux-signing-transform-boundary.py /absolute/path/wrapper.node
+```
+
+复跑通过完整 SHA、选定指令/完整函数字、unwind、静态 blob 和动态 PLT 检查。独立检查另用 ELF `PT_LOAD` 映射（区别于脚本的 section 映射），复核全部 128 个表项、378 字节 blob、18 个来源指令的系统 objdump 结果以及加工函数的全部指令；三个脚本对真实旧版二进制均以 SHA 不匹配拒绝。私有收据：`.local/research/linux-signing-instruction-evidence-verified.json` 及同名脚本 JSON。没有执行 native、provider、账号操作或改写检测结果。
+
+当前缺口已收窄到：实际指令边界/执行顺序、OR8 修改字节进入加工缓冲区的覆盖关系、加工结果布局，以及索引 2 到 `0x61` 返回对象的实际连接。尚未证明最终输出受该位影响，更未证明是假签名、服务端账号标记或踢下线机制。
