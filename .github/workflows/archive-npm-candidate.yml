@@ -1,0 +1,43 @@
+name: Archive existing successful npm candidate
+on:
+  workflow_dispatch:
+    inputs:
+      source-run-id:
+        description: Completed successful native-npm run ID
+        required: true
+        type: string
+      source-sha:
+        description: Exact 40-character source commit SHA
+        required: true
+        type: string
+permissions:
+  contents: read
+jobs:
+  archive:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      actions: read
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SOURCE_RUN_ID: ${{ inputs.source-run-id }}
+      SOURCE_SHA: ${{ inputs.source-sha }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Verify archive identity and refusal contracts
+        run: node --test tools/archive-npm-candidate.test.mjs
+      - name: Verify existing successful native CI identity
+        run: node tools/archive-npm-candidate.mjs --preflight
+      - uses: actions/download-artifact@v4
+        with:
+          name: npm-release
+          repository: lc-cn/qq-native-mirror
+          run-id: ${{ inputs.source-run-id }}
+          github-token: ${{ github.token }}
+          path: release
+      - name: Validate immutable packages and archive original source candidate
+        run: node tools/archive-npm-candidate.mjs
