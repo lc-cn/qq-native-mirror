@@ -28,7 +28,9 @@ const args=['/nologo','/LD','/std:c++20','/Zc:__cplusplus','/Zc:inline','/EHsc',
 if(vars.v8_enable_pointer_compression)args.push('/DV8_COMPRESS_POINTERS');if(vars.v8_enable_sandbox)args.push('/DV8_ENABLE_SANDBOX');
 // MSVC command-line defaults /Zc:inline off. Suppress unreferenced inline COMDATs
 // before linking; /OPT:REF alone does not prevent their unresolved references.
-args.push(...includes.map(p=>'/I'+join(root,p)),resolve('ci/windows/environment-stopping.cc'),'/link','/OPT:REF',resolve('out/node-internals/node.lib'),'/DEF:'+resolve('out/QQNT.def'),'/OUT:'+resolve('out/windows-source/QQNT.dll'));
+// Internal Node headers retain simdjson inline references even with /Zc:inline.
+// Link the genuine implementation from this same checksum-verified Node source.
+args.push(...includes.map(p=>'/I'+join(root,p)),resolve('ci/windows/environment-stopping.cc'),join(root,'deps/simdjson/simdjson.cpp'),'/link','/OPT:REF',resolve('out/node-internals/node.lib'),'/DEF:'+resolve('out/QQNT.def'),'/OUT:'+resolve('out/windows-source/QQNT.dll'));
 execFileSync('cl',args,{stdio:'inherit'});
 const probeArgs=['/nologo','/LD','/std:c++20','/Zc:__cplusplus','/Zc:inline','/EHsc','/MD','/O2','/Gy','/Gw','/DNOMINMAX','/D_ITERATOR_DEBUG_LEVEL=0','/DBUILDING_NODE_EXTENSION=1',...includes.map(p=>'/I'+join(root,p)),resolve('ci/windows/verify-stopping.cc'),'/link','/OPT:REF',resolve('out/node-internals/node.lib'),'/OUT:'+resolve('out/verify-stopping.node')];
 execFileSync('cl',probeArgs,{stdio:'inherit'});
