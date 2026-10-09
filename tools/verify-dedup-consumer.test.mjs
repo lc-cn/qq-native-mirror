@@ -6,7 +6,7 @@ function windowsArm(){
  const build={device:'win32-arm64'};
  const manifest={nodeVersion:'v24.20.0',videoCodec:'video/video-codec.node',files:[{path:'video/video-codec.node',sha256:'a'.repeat(64),size:19}]};
  const video={passed:true,noAccount:true,noQQ:true,nativeSendAttempted:false,platform:'win32',arch:'arm64',node:'v24.20.0',binary:{sha256:'a'.repeat(64),bytes:19},sdkFakeCache:true,inputs:fixtures.map(sha256=>({sha256}))};
- const receipt={platform:'win32',arch:'arm64',node:'v24.20.0',exports:98,installedMainOnly:true,automaticPlatformSelection:true,prepared:true,closed:true,loginAttempted:false,accountUsed:false,nativeMessageBatchQueryAttempted:false,installedCliEntrypointContract:true,posixNpmBinEntrypointChecked:false,pendingReadCloseContract:true,reentrantReadCloseContract:true,historyInputCaptureContract:true,loginWaitIdentityContract:true,watchReconnectPolicyContract:true,nativeHistoryQueryAttempted:false,forwardResourceContract:true,nativeForwardResourceAttempted:false,receivedForwardContract:true,nativeReceivedForwardObserved:false,mergedForwardClientContract:true,mergedForwardServiceContract:true,nativeMergedForwardAttempted:false,messageBatchQueryContract:true,messageBatchCliContract:true,installedNativeStorage:{format:'gzip-objects-v1',nativePaths:27,objects:26,allOriginalFilesVerified:true,warmCacheReused:true,networkFallbackAttempted:false},tarballRequests:['qq-native-client','qq-native-client-win32-arm64','silk-wasm']};
+ const receipt={platform:'win32',arch:'arm64',node:'v24.20.0',exports:98,installedMainOnly:true,automaticPlatformSelection:true,prepared:true,closed:true,loginAttempted:false,accountUsed:false,nativeMessageBatchQueryAttempted:false,installedCliEntrypointContract:true,posixNpmBinEntrypointChecked:false,pendingReadCloseContract:true,reentrantReadCloseContract:true,historyInputCaptureContract:true,loginWaitIdentityContract:true,watchReconnectPolicyContract:true,nativeHistoryQueryAttempted:false,forwardResourceContract:true,forwardResourceTypedElementsContract:true,forwardResourceDeclarationsContract:true,nativeForwardResourceAttempted:false,receivedForwardContract:true,nativeReceivedForwardObserved:false,mergedForwardClientContract:true,mergedForwardServiceContract:true,nativeMergedForwardAttempted:false,messageBatchQueryContract:true,messageBatchCliContract:true,installedNativeStorage:{format:'gzip-objects-v1',nativePaths:27,objects:26,allOriginalFilesVerified:true,warmCacheReused:true,networkFallbackAttempted:false},tarballRequests:['qq-native-client','qq-native-client-win32-arm64','silk-wasm']};
  return{build,manifest,receipt,video};
 }
 test('Windows ARM64 acceptance requires exact ABI, platform inventory, genuine codec and no account scope',()=>{
@@ -27,6 +27,8 @@ test('Windows ARM64 acceptance requires exact ABI, platform inventory, genuine c
   x=>x.receipt.watchReconnectPolicyContract=false,
   x=>x.receipt.nativeHistoryQueryAttempted=true,
   x=>delete x.receipt.forwardResourceContract,
+  x=>delete x.receipt.forwardResourceTypedElementsContract,
+  x=>x.receipt.forwardResourceDeclarationsContract=false,
   x=>x.receipt.nativeForwardResourceAttempted=true,
   x=>delete x.receipt.receivedForwardContract,
   x=>x.receipt.nativeReceivedForwardObserved=true,

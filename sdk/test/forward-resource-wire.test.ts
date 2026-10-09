@@ -86,3 +86,63 @@ test('response accepts regular Buffers only without overridden buffer method cal
  assert.throws(()=>parseForwardResourceResponse(inherited,'r'),/size\/type/);assert.equal(calls,0);
  assert.deepEqual(parseForwardResourceResponse(response(payload([])),'r').records,[]);
 });
+function mention(extra:Buffer,additional=Buffer.alloc(0)){return b(1,Buffer.concat([s(1,'@fixture'),b(12,extra),additional]));}
+function common(service:number,inner:Buffer,business=0){return b(53,Buffer.concat([i(1,service),b(2,inner),i(3,business)]));}
+function decodedElement(element:Buffer){return parseForwardResourceResponse(response(payload([record([element])])),'r').records[0].elements[0];}
+test('manual mentions preserve all, UID-only, UIN-only and both identities without lookup',()=>{
+ const fixtures=[
+  [mention(Buffer.concat([i(3,1),i(4,0),i(5,0),s(9,'')])),{userId:'all'}],
+  [mention(Buffer.concat([i(3,2),i(4,0),i(5,0),s(9,'u_exact')])),{uid:'u_exact'}],
+  [mention(Buffer.concat([i(3,2),i(4,4294967295)])),{userId:'4294967295'}],
+  [mention(Buffer.concat([i(3,2),i(4,123),s(9,'u_exact')])),{userId:'123',uid:'u_exact'}],
+ ] as const;
+ for(const [raw,identity] of fixtures)assert.deepEqual(decodedElement(raw),{type:'at',text:'@fixture',...identity,raw});
+ const raw=payload([record([text,fixtures[1][0],face])]);
+ assert.deepEqual(parseForwardResourceResponse(response(raw),'r').records[0].elements.map(e=>e.type),['text','at','face']);
+ for(const raw of [mention(i(3,2)),mention(i(3,9)),mention(Buffer.concat([i(3,2),i(4,0)])),mention(Buffer.concat([i(3,1),i(99,1)])),mention(i(3,1),b(3,h('0000000000000000000000')))])assert.equal(decodedElement(raw).type,'unknown');
+});
+test('extended face33/37 accept zero IDs and retain metadata raw without animation claims',()=>{
+ const small=common(33,Buffer.concat([i(1,0),s(2,'preview'),s(3,'preview2')]),1);
+ const big=common(37,Buffer.concat([s(1,'pack'),s(2,'sticker'),i(3,333),i(4,1),i(5,0),s(6,'result'),s(7,'preview'),i(9,1)]),1);
+ assert.deepEqual(decodedElement(small),{type:'face',id:0,serviceType:33,businessType:1,raw:small});
+ assert.deepEqual(decodedElement(big),{type:'face',id:333,serviceType:37,businessType:1,raw:big});
+ assert.equal((decodedElement(common(37,i(3,0))) as {id:number}).id,0);
+ for(const raw of [common(99,i(1,1)),common(33,Buffer.alloc(0)),common(33,Buffer.concat([i(1,2),i(99,1)]))])assert.deepEqual(decodedElement(raw),{type:'unknown',fieldNumbers:[53],raw});
+ const input=response(payload([record([big])]));const projected=parseForwardResourceResponse(input,'r').records[0].elements[0];input.fill(0);assert.deepEqual('raw' in projected?projected.raw:undefined,big);
+});
+test('projected mention/extended face reject duplicate/wrong wire/UTF8/range without partial output',()=>{
+ const invalid=[
+  mention(Buffer.concat([i(3,1),i(3,1)])),mention(s(3,'1')),
+  mention(Buffer.concat([i(3,2),i(4,4294967296)])),mention(Buffer.concat([i(3,2),b(9,h('ff'))])),
+  mention(Buffer.concat([i(3,2),s(9,'u'.repeat(4097))])),mention(Buffer.concat([i(3,1),i(5,2147483648)])),
+  common(33,Buffer.concat([i(1,1),i(1,2)])),common(33,s(1,'1')),
+  common(33,i(1,4294967296)),common(37,i(3,2147483648)),common(37,i(3,18446744073709551615n)),
+  common(37,Buffer.concat([i(3,2),b(1,h('ff'))])),
+ ];
+ for(const raw of invalid)assert.throws(()=>parseForwardResourceResponse(response(payload([record([text,raw])])),'r'));
+ const negativeMetadata=common(37,Buffer.concat([i(3,14),i(5,18446744073709551615n)]));assert.equal(decodedElement(negativeMetadata).type,'face');
+});
+test('mention raw is independent and unknown extra text/common metadata is not discarded',()=>{
+ const raw=mention(Buffer.concat([i(3,2),i(4,123),s(9,'u_exact')]));
+ const input=response(payload([record([raw])]));const result=parseForwardResourceResponse(input,'r');
+ const at=result.records[0].elements[0];assert.equal(at.type,'at');assert.notEqual('raw' in at?at.raw:undefined,raw);
+ input.fill(0);result.raw.fill(0);result.records[0].raw.fill(0);assert.deepEqual('raw' in at?at.raw:undefined,raw);
+ const extraText=mention(i(3,1),s(2,'lint'));
+ const extraCommon=b(53,Buffer.concat([i(1,33),b(2,i(1,14)),i(99,0)]));
+ for(const element of [extraText,extraCommon])assert.deepEqual(decodedElement(element),{type:'unknown',fieldNumbers:element===extraText?[1]:[53],raw:element});
+});
+test('duplicate reserve/common scalars and invalid signed service/unsigned business reject',()=>{
+ const invalid=[
+  b(1,Buffer.concat([s(1,'@A'),b(12,i(3,1)),b(12,i(3,1))])),
+  b(53,Buffer.concat([i(1,33),i(1,33),b(2,i(1,14))])),
+  b(53,Buffer.concat([i(1,33),b(2,i(1,14)),i(3,1),i(3,1)])),
+  b(53,Buffer.concat([i(1,33),b(2,i(1,14)),s(3,'1')])),
+  b(53,Buffer.concat([i(1,2147483648),b(2,i(1,14))])),
+  b(53,Buffer.concat([s(1,'33'),b(2,i(1,14))])),
+  common(33,i(1,14),4294967296),
+ ];
+ for(const element of invalid)assert.throws(()=>parseForwardResourceResponse(response(payload([record([text,element])])),'r'));
+ // A valid negative int32 is an unsupported service, not a fabricated face.
+ const unsupported=b(53,Buffer.concat([i(1,18446744073709551615n),b(2,i(1,14))]));
+ assert.deepEqual(decodedElement(unsupported),{type:'unknown',fieldNumbers:[53],raw:unsupported});
+});

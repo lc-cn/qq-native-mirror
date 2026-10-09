@@ -41,6 +41,42 @@ function singular(fields:Field[],numbers:number[]):void {for(const n of numbers)
 function buf(field:Field):Buffer {if(field.wire!==2)fail('expected nested bytes');return field.value as Buffer;}
 function str(field:Field):string {try{return utf8.decode(buf(field));}catch{return fail('invalid UTF-8');}}
 function uint(field:Field,max=0xffffffffn):number {if(field.wire!==0||typeof field.value!=='bigint'||field.value>max)fail('invalid unsigned integer');return Number(field.value);}
+function int32(field:Field):number {
+ if(field.wire!==0||typeof field.value!=='bigint')fail('invalid int32');
+ if(field.value<=0x7fffffffn)return Number(field.value);
+ if(field.value>=0xffffffff80000000n)return Number(field.value-0x10000000000000000n);
+ return fail('invalid int32 range');
+}
+function typedElement(reader:Reader,raw:Buffer,parts:Field[]):ForwardResourceElement|undefined {
+ if(parts.length!==1)return;
+ if(parts[0].number===1){
+  const text=reader.fields(buf(parts[0]),9);singular(text,[1,2,3,4,11,12]);const value=one(text,1,2),reserve=one(text,12,2);
+  if(text.length===1&&value)return {type:'text',text:str(value)};
+  if(!reserve)return;
+  const fields=reader.fields(buf(reserve),10);singular(fields,[3,4,5,9]);
+  const type=one(fields,3,0),uin=one(fields,4,0),extra=one(fields,5,0),uidField=one(fields,9,2);
+  const kind=type?int32(type):undefined,userId=uin?uint(uin):undefined;
+  if(extra)int32(extra);const uid=uidField?validString(str(uidField),4096):undefined;
+  if(!value||text.some(f=>f.number!==1&&f.number!==12)||fields.some(f=>![3,4,5,9].includes(f.number)))return;
+  const content=str(value);
+  if(kind===1)return {type:'at',text:content,userId:'all',...(uid?{uid}:{}),raw:Buffer.from(raw)};
+  if(kind===2&&(userId||uid))return {type:'at',text:content,...(userId?{userId:String(userId)}:{}),...(uid?{uid}:{}),raw:Buffer.from(raw)};
+  return;
+ }
+ if(parts[0].number===2){const face=reader.fields(buf(parts[0]),9);singular(face,[1,2,11]);const value=one(face,1,0);if(face.length===1&&value)return {type:'face',id:uint(value,0x7fffffffn)};return;}
+ if(parts[0].number===53){
+  const common=reader.fields(buf(parts[0]),9);singular(common,[1,2,3]);const service=one(common,1,0),payload=one(common,2,2),business=one(common,3,0);
+  const serviceType=service?int32(service):undefined,businessType=business?uint(business):undefined;
+  if((serviceType!==33&&serviceType!==37)||!payload)return;
+  const fields=reader.fields(buf(payload),10),known=serviceType===33?[1,2,3]:[1,2,3,4,5,6,7,9];singular(fields,known);
+  const integers=serviceType===33?[1]:[3,4,5,9],strings=serviceType===33?[2,3]:[1,2,6,7];
+  for(const n of integers){const f=one(fields,n,0);if(f){if(serviceType===33)uint(f);else int32(f);}}
+  for(const n of strings){const f=one(fields,n,2);if(f)str(f);}
+  const idField=one(fields,serviceType===33?1:3,0);if(!idField||common.some(f=>![1,2,3].includes(f.number))||fields.some(f=>!known.includes(f.number)))return;
+  const id=serviceType===33?uint(idField):int32(idField);if(id<0)fail('negative extended face ID');
+  return {type:'face',id,serviceType,...(businessType===undefined?{}:{businessType}),raw:Buffer.from(raw)};
+ }
+}
 function crc32(b:Buffer):number {let crc=0xffffffff;for(const byte of b){crc^=byte;for(let k=0;k<8;k++)crc=(crc>>>1)^((crc&1)?0xedb88320:0);}return (crc^0xffffffff)>>>0;}
 /** Exactly one gzip member: bounded inflate, trailer CRC/ISIZE and no trailing bytes. */
 function inflate(data:Buffer):Buffer {
@@ -66,9 +102,7 @@ export function parseForwardResourceResponse(input:Buffer,expectedResourceId:str
   }
   let time:number|undefined;const content=one(record,2,2);if(content){const fields=reader.fields(buf(content),6);singular(fields,[1,2,3,4,5,6,7,8,9,10,12,15]);const f=one(fields,6,0);if(f)time=uint(f);}
   const elements:ForwardResourceElement[]=[];const body=one(record,3,2);if(body){const fields=reader.fields(buf(body),6);singular(fields,[1,2,3]);const rich=one(fields,1,2);if(rich){const fields=reader.fields(buf(rich),7);singular(fields,[1,3,4]);for(const f of fields){
-   if(f.number===2){const elementRaw=buf(f),parts=reader.fields(elementRaw,8);singular(parts,[1,2,3,4,5,6,8,9,12,13,16,19,21,31,37,45,51,53]);let projected:ForwardResourceElement|undefined;
-    if(parts.length===1&&parts[0].number===1){const text=reader.fields(buf(parts[0]),9);singular(text,[1,2,3,4,11,12]);const value=one(text,1,2);if(text.length===1&&value)projected={type:'text',text:str(value)};}
-    if(parts.length===1&&parts[0].number===2){const face=reader.fields(buf(parts[0]),9);singular(face,[1,2,11]);const value=one(face,1,0);if(face.length===1&&value)projected={type:'face',id:uint(value,0x7fffffffn)};}
+   if(f.number===2){const elementRaw=buf(f),parts=reader.fields(elementRaw,8);singular(parts,[1,2,3,4,5,6,8,9,12,13,16,19,21,31,37,45,51,53]);const projected=typedElement(reader,elementRaw,parts);
     elements.push(projected??unknown(elementRaw,parts));
    }else elements.push(unknown(f.raw,[f]));
    if(elements.length>1000||++totalElements>10000)fail('element count');

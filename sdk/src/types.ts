@@ -132,7 +132,9 @@ export interface ReceivedForwardElement {
 /** Observed protobuf records, separate from native messages with query/recall IDs. */
 export type ForwardResourceElement =
   | { type: 'text'; text: string }
-  | { type: 'face'; id: number }
+  | { type: 'at'; text: string; userId?: string; uid?: string; raw: Buffer }
+  | { type: 'face'; id: number; serviceType?: never; businessType?: never; raw?: never }
+  | { type: 'face'; id: number; serviceType: 33 | 37; businessType?: number; raw: Buffer }
   | { type: 'unknown'; fieldNumbers: number[]; raw: Buffer };
 export interface ForwardRecord {
   sender: { userId?: string; uid?: string; nickname?: string };

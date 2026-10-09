@@ -1,0 +1,128 @@
+{
+  "schemaVersion": 1,
+  "feature": "typed resource mentions and extended faces with public declaration and installed consumer contracts",
+  "observedAt": "2026-10-09T22:02:49.043842+00:00",
+  "baseCommit": "8758caf82525ddadf901dc83571d3e3cc0e96b4e",
+  "sourceFiles": [
+    {
+      "path": "ci/verify-consumer.mjs",
+      "sha256": "9366344ab80bdd8f11a61b7fa2a63e4f09b4407d8db5ed543b70afc43e24928a",
+      "bytes": 39410
+    },
+    {
+      "path": "sdk/README.md",
+      "sha256": "3d9737893bbdeef672ec13d0dd2bd309dab210214d2c4bfdc3b7c909bf9e9161",
+      "bytes": 36376
+    },
+    {
+      "path": "sdk/docs/forward-resource-decoding.md",
+      "sha256": "5c40b624c54f2580ecc86d1912ff768cc6f54ce1ee5cad09312030a9f42699af",
+      "bytes": 12684
+    },
+    {
+      "path": "sdk/scripts/forward-resource-consumer-contract.mjs",
+      "sha256": "fa6f2d08423a33a972c382013505cc56f7699d65e12fcb801cdaffd1bc1ced63",
+      "bytes": 10538
+    },
+    {
+      "path": "sdk/scripts/forward-resource-type-contract.mjs",
+      "sha256": "2019969adb51d8295c7fc3d01853e0080d0e7a80d8f7679cbf7df29f1fb82177",
+      "bytes": 5574
+    },
+    {
+      "path": "sdk/scripts/verify-package-consumer.mjs",
+      "sha256": "f178c000e9f710730568602f9d8e163433ec376039badd1e31d0512fb5513d12",
+      "bytes": 33804
+    },
+    {
+      "path": "sdk/src/forward-resource-wire.ts",
+      "sha256": "2c01ff202fb8dd54ea7ba0674e109b2717a0e19aeaa958a5c2e410d4830bd452",
+      "bytes": 11773
+    },
+    {
+      "path": "sdk/src/types.ts",
+      "sha256": "c806c29b7eecaf329d6c30934fb04011f28e70cd2dd04014201445bf95f854a6",
+      "bytes": 9453
+    },
+    {
+      "path": "sdk/test/forward-resource-services.test.ts",
+      "sha256": "9a3126545926197ea23239a8c7aa0755fe4ba944dab704c88f213319421a22a9",
+      "bytes": 615
+    },
+    {
+      "path": "sdk/test/forward-resource-wire.test.ts",
+      "sha256": "4f157f2e5253f1e0121293ef53597c24575fb08ad00528f95b5f437c17e34d21",
+      "bytes": 12768
+    },
+    {
+      "path": "tools/verify-dedup-consumer.mjs",
+      "sha256": "0a8d838d16c5f65477d85c07e63eac98bd7b15b7273a339e285f298549fa941e",
+      "bytes": 11380
+    },
+    {
+      "path": "tools/verify-dedup-consumer.test.mjs",
+      "sha256": "35f36878aeaa1da90e7b2d8faa36a9a9dac335b0f47468828d8968ead1b09d97",
+      "bytes": 4545
+    }
+  ],
+  "sdkRegression": {
+    "tests": 565,
+    "pass": 565,
+    "fail": 0,
+    "skipped": 0
+  },
+  "producerRegression": {
+    "tests": 6,
+    "pass": 6,
+    "fail": 0,
+    "skipped": 0
+  },
+  "logs": [
+    {
+      "file": "forward-typed-elements-all-tests-unsandboxed.log",
+      "sha256": "b43ccb9f8b58c94fdd43e6e8553963c05824d6641f620dd1b3525eb972662c90",
+      "bytes": 53299
+    },
+    {
+      "file": "forward-typed-elements-build.log",
+      "sha256": "819a2f99ef8332e62374bc44315a31f243dd85502188e29441db9dd50b6c1c41",
+      "bytes": 148
+    },
+    {
+      "file": "forward-typed-elements-package-consumer.log",
+      "sha256": "6443dea8dfe489708ba4e5ba3b6d815a7b32c8bdafa3659d898fbda7335058b7",
+      "bytes": 2682
+    },
+    {
+      "file": "forward-typed-elements-producer.log",
+      "sha256": "739b82674848ae1cf399d86dadaa3214eb74c6431001a22d1f1a4640c8f13a4e",
+      "bytes": 739
+    }
+  ],
+  "installedConsumerReceiptSha256": "598d576871fa4cf2c57e6a69f11fd4242ada78f46a095e61fc1be961d2abbde5",
+  "typeContract": {
+    "success": true,
+    "noEmit": true,
+    "runtimeImported": false,
+    "publicPackage": "qq-native-client",
+    "version": "0.0.2",
+    "publicDeclaration": "./dist/index.d.ts",
+    "packageJsonSha256": "c4b06e281b14c19c87919272c1ce8ef43bfc2bff2759f98e41a0070f07b9ca12",
+    "declarationSha256": "d670d3f64f30f8c3b377a361c56271ac1bdcc8e8571844049790ab7a793e89ed"
+  },
+  "independentParserReviewSha256": "bab8e7f67cbbfff8c00c7e884806961560052ef4aa3adb4e77ff4dc3144dcb35",
+  "forwardResourceTypedElementsContract": true,
+  "forwardResourceDeclarationsContract": true,
+  "accountUsed": false,
+  "nativeExecuted": false,
+  "nativeForwardResourceAttempted": false,
+  "serverCompatibilityEstablished": false,
+  "signingAuthenticityEstablished": false,
+  "published": false,
+  "defaultsChanged": false,
+  "limits": [
+    "Fixed schema and builder field facts plus independently authored wire fixtures; no observed native resource response",
+    "Standard text/face remain structurally compatible with sendable elements; whole record/resource unions are not message input",
+    "Sandbox first regression had two loopback listen EPERM errors; full run outside sandbox passed without source/test weakening"
+  ]
+}
