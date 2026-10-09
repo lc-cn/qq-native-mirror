@@ -224,6 +224,9 @@ export function createNativeServices(session: Native, version: string, emit: (ev
           // upstream implementation; account-level Windows validation is pending.
           if (!['7.0.2-53644', '3.2.32-52194', '9.9.33-52230'].includes(version)) throw new Error('Buddy list signature not verified for this native version');
           const result = await call(service('Buddy'), 'getBuddyListV2', '0', true, 0);
+          // Pinned getBuddyListV2 returns GeneralCallResult as well as data.
+          // An empty data array does not establish a successful query.
+          if (result?.result !== 0) throw nativeResultError('Native buddy list query failed', result);
           if (!Array.isArray(result?.data) || result.data.some((category: Native) => !Array.isArray(category?.buddyUids))) throw new Error('Invalid native buddy list');
           const requested = result.data.flatMap((category: Native) => category.buddyUids);
           if (requested.some((uid: unknown) => typeof uid !== 'string' || !uid)) throw new Error('Invalid native buddy UID');

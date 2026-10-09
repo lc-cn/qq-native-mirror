@@ -429,3 +429,15 @@ python3 scripts/linux-signing-global48-mutators.py /absolute/path/wrapper.node
 ```
 
 复现固定 binary SHA，核对两个 unwind 范围、全部 150 条指令、选定寄存器/内存关系以及实际 PLT 动态符号绑定。独立 `PT_LOAD` 检查复核全部指令、摘要、unwind、三个动态调用绑定（包含 PLT 地址计算及 ADD）和旧版 SHA 拒绝，私有收据为 `.local/research/linux-signing-global48-mutators.json` 与 `linux-signing-global48-mutators-independent.json`。没有执行 native/provider 或账号操作。剩余缺口包括两条新的内部调用、跨 caller 的输入别名、运行时分支顺序，以及它们与 OR8 修改和最终签名输出的连接。
+
+## 两条内部调用的对象与缓冲区边界
+
+`0x434ea5c..0x434ec08` 和 `0x42270cc..0x4227190` 的全部 107/49 条指令已继续核对。前者保存原始 `x1` 输入和间接结果 `x8`；原始 `x0` 未用作对象指针，也未传给其直接内部调用。它读取输入的 `+0/+8` 字段，执行与 byte `0x2f` 的搜索比较，并向调用者提供的局部结果写入数据，涉及动态绑定的 `basic_string::_M_construct<const char*>` 调用。内部 `0x4227088` 接收输入、搜索位置和结果地址；`0x4286d08` 接收静态地址 `0x6ce9a1a`。两者函数体尚未展开，不赋予输入或搜索条件签名算法语义。
+
+后者保留 destination/source 指针；所检查的 caller 将 global 对象 `+0x38` 和局部结果传入。直接 destination 字段写入只落在 global 对象 `+0x38/+0x40/+0x48`，未直接覆盖前 48 字节。但函数还通过 `*destination`/`*source` 进行缓冲区字节写入、终止符写入或 `memcpy`，并转移指针字段。initializer 将 destination 的数据指针设为对象 `+0x48`，仅能说明初始布局；尚未证明所有后续指针取值和输入/结果都不与前 48 字节重叠。因此不能把“没有直接字段存储”升级为运行时不可变证明。
+
+```sh
+python3 scripts/linux-signing-global48-followup.py /absolute/path/wrapper.node
+```
+
+脚本固定 binary SHA、两个 unwind 范围、全部 156 条指令/摘要、选定局部存储和外部调用符号。独立 `PT_LOAD` 检查复核全部指令与系统 objdump、unwind、三个动态调用绑定与完整 PLT 地址计算、旧版 SHA 拒绝。私有收据为 `.local/research/linux-signing-global48-followup.json` 与 `linux-signing-global48-followup-independent.json`。没有执行 native/provider 或账号操作；运行时分支顺序、跨 caller 别名、间接缓冲区取值及与最终签名的连接仍未证明。

@@ -122,6 +122,17 @@ client.emit('friend-list-updated',expected);assert.deepEqual(lines,[{event:'frie
 const plain=[];const cleanDefault=observeWatchEvents(client,undefined,line=>plain.push(JSON.parse(line)));client.emit('friend-list-updated',expected);client.emit('message',{fixture:true});assert.deepEqual(plain,[{fixture:true}]);cleanDefault();
 `);
 run(process.execPath, ['friend-events.mjs']);
+await writeFile(join(destination, 'friend-query.mjs'), `import assert from 'node:assert/strict';
+import {createNativeServices} from './node_modules/qq-native-client/dist/native-services.js';
+for(const [result,code] of [[-1,-1],[73,73],['denied','denied'],[undefined,'invalid-result'],[NaN,'invalid-result']])for(const data of [[],[{buddyUids:['u_fixture']}]] ){
+ let buddyCalls=0,profileCalls=0;
+ const query=createNativeServices({getMsgService:()=>({addKernelMsgListener(){}}),getGroupService:()=>({addKernelGroupListener(){}}),getBuddyService:()=>({addKernelBuddyListener(){},getBuddyListV2(){buddyCalls++;return{result,data};}}),getProfileService:()=>({getCoreAndBaseInfo(){profileCalls++;throw Error('Unexpected profile query');}})},'7.0.2-53644',()=>{});
+ try{await assert.rejects(query.invokeOperation('listFriends'),{code});assert.equal(buddyCalls,1);assert.equal(profileCalls,0);}finally{query.close();}
+}
+let successCalls=0;const success=createNativeServices({getMsgService:()=>({addKernelMsgListener(){}}),getGroupService:()=>({addKernelGroupListener(){}}),getBuddyService:()=>({addKernelBuddyListener(){},getBuddyListV2(){successCalls++;return{result:0,data:[]};}}),getProfileService:()=>({getCoreAndBaseInfo(){return new Map();}})},'7.0.2-53644',()=>{});
+try{assert.deepEqual(await success.invokeOperation('listFriends'),[]);assert.equal(successCalls,1);}finally{success.close();}
+`);
+run(process.execPath, ['friend-query.mjs']);
 const help = run(process.execPath, ['node_modules/qq-native-client/dist/cli.js', '--help']);
 if (!help.includes('group-kick') || !help.includes('--message-file')) throw new Error('Installed CLI lacks commands');
 const cliEntry='node_modules/qq-native-client/dist/cli.js';
@@ -172,7 +183,7 @@ void factory; void options; void subscribe;
 `);
 run(process.execPath, [resolve(root, 'node_modules/typescript/bin/tsc'), '--noEmit', '--strict', '--types', 'node', '--module', 'NodeNext', '--target', 'ES2023', '--typeRoots', resolve(root, 'node_modules/@types'), 'consumer.ts']);
 const receipt = { checkedAt: new Date().toISOString(), package: packed.name, version: packed.version,
-  integrity: packed.integrity, fileCount: files.length, checks: { privateFilesExcluded:true, installedImport:true, cliHelp:true, cliDefaultConfig:true, faceContract:true, messageQueryContract:true, selfProfileContract:true, groupOperationContract:true, groupMemberQueryContract:true, groupMetadataEventContract:true, businessWatchContract:true, friendMetadataEventContract:true, nativeFriendMetadataObserved:false, declarations:true },
+  integrity: packed.integrity, fileCount: files.length, checks: { privateFilesExcluded:true, installedImport:true, cliHelp:true, cliDefaultConfig:true, faceContract:true, messageQueryContract:true, selfProfileContract:true, groupOperationContract:true, groupMemberQueryContract:true, groupMetadataEventContract:true, businessWatchContract:true, friendMetadataEventContract:true, nativeFriendMetadataObserved:false, friendListQueryContract:true, nativeFriendListQueryAttempted:false, declarations:true },
   nativeExecuted:false, accountUsed:false };
 await mkdir(join(root, '.local'), {recursive:true});
 await writeFile(join(root, '.local/package-consumer-verification.json'), JSON.stringify(receipt, null, 2));

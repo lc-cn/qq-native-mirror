@@ -26,7 +26,7 @@ function fixture(version = '7.0.2-53644') {
     getMsgService: () => msg,
     getGroupService: () => ({ addKernelGroupListener(listener: any) { groupListeners.push(listener); return groupListeners.length; }, removeKernelGroupListener(id: number) { groupListeners[id - 1] = undefined; }, getGroupList() { for (const listener of groupListeners.filter(Boolean)) { listener.onGroupListUpdate(4, []); listener.onGroupListUpdate(2, []); listener.onGroupListUpdate(1, [{ groupCode: '123', groupName: 'group', memberCount: 2, maxMember: 100 }]); } return {result:0}; } }),
     getMSFService: () => ({ getServerTime: () => '100' }),
-    getBuddyService: () => ({ addKernelBuddyListener() { return 1; }, getBuddyListV2(...args: any[]) { assert.deepEqual(args, ['0', true, 0]); return { data: [{ buddyUids: ['u_a'] }] }; } }),
+    getBuddyService: () => ({ addKernelBuddyListener() { return 1; }, getBuddyListV2(...args: any[]) { assert.deepEqual(args, ['0', true, 0]); return { result: 0, data: [{ buddyUids: ['u_a'] }] }; } }),
     getProfileService: () => ({ getCoreAndBaseInfo(store: string, uids: string[]) { assert.equal(store, 'nodeStore'); assert.deepEqual(uids, ['u_a']); return new Map([['u_a', { coreInfo: { uin: '456', nick: 'friend', remark: 'remark' } }]]); } }),
   };
   return { services: createNativeServices(session, version, (event, value) => events.push([event, value])), sentCalls, events, msg, listener: () => msgListener };
@@ -250,10 +250,41 @@ test('close during local image preparation prevents native staging and send', as
 
 test('friend listing rejects incomplete profiles rather than returning partial success', async () => {
   const session={getMsgService:()=>({addKernelMsgListener(){}}),getGroupService:()=>({addKernelGroupListener(){}}),
-    getBuddyService:()=>({addKernelBuddyListener(){},getBuddyListV2(){return {data:[{buddyUids:['u_a','u_b']}]};}}),
+    getBuddyService:()=>({addKernelBuddyListener(){},getBuddyListV2(){return {result:0,data:[{buddyUids:['u_a','u_b']}]};}}),
     getProfileService:()=>({getCoreAndBaseInfo(){return new Map([['u_a',{coreInfo:{uin:'456',nick:'fixture'}}]]);}})};
   const services=createNativeServices(session,'7.0.2-53644',()=>{});
   try {await assert.rejects(services.invokeOperation('listFriends'),/incomplete/);} finally {services.close();}
+});
+
+test('friend listing rejects native query errors before profiles and preserves successful empty lists', async () => {
+  let response: unknown = { result: 73, data: [] }, queries = 0, profileReads = 0;
+  const services = createNativeServices({
+    getMsgService: () => ({ addKernelMsgListener() {} }),
+    getGroupService: () => ({ addKernelGroupListener() {} }),
+    getBuddyService: () => ({ addKernelBuddyListener() {}, getBuddyListV2(...args: unknown[]) {
+      assert.deepEqual(args, ['0', true, 0]); queries++; return response;
+    } }),
+    getProfileService: () => ({ getCoreAndBaseInfo() { profileReads++; return new Map(); } }),
+  }, '7.0.2-53644', () => {});
+  try {
+    for (const [value, code] of [
+      [{ result: -1, data: [] }, -1], [{ result: 73, data: [] }, 73], [{ result: 'denied', data: [{ buddyUids: ['u_private'] }], errMsg: 'fixture-secret' }, 'denied'],
+      [{ result: '0', data: [] }, '0'], [{ data: [] }, 'invalid-result'],
+      [{ result: NaN, data: [] }, 'invalid-result'], [{ result: Infinity, data: [] }, 'invalid-result'],
+    ] as [unknown, string | number][]) {
+      response = value;
+      await assert.rejects(services.invokeOperation('listFriends'), error => {
+        assert.equal((error as any).code, code);
+        assert.doesNotMatch((error as Error).message, /fixture-secret|u_private/);
+        return true;
+      });
+    }
+    assert.equal(profileReads, 0, 'a failed buddy query cannot initiate profile reads');
+    assert.equal(queries, 7, 'one query per explicit request, with no retry');
+    response = { result: 0, data: [] };
+    assert.deepEqual(await services.invokeOperation('listFriends'), []);
+    assert.equal(queries, 8);
+  } finally { services.close(); }
 });
 
 test('malformed native batches do not terminate delivery of subsequent valid messages', () => {
