@@ -1,0 +1,25 @@
+sdk/docs/evidence/dedup-six-ci-37982302926.json
+  s_2104cc474f1ce5::t_5ddaf799f0a5e0 1-454
+sdk/docs/evidence/long-message-response-local.json
+  s_2104cc474f1ce5::t_6699676dc5ac2b 1-33
+sdk/docs/native-size-reduction.md
+  s_2104cc474f1ce5::t_3b3deee646318a 138-149
+sdk/docs/sdk-acceptance.md
+  s_2104cc474f1ce5::t_50c988b53f8399 657-673
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "5c0ceada26f3e1979dadb14034c620be8a428a6c",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
