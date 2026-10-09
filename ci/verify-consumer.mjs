@@ -82,8 +82,36 @@ try {
  }
  const missing=profileFixture(true);
  try{await assert.rejects(missing.module.invokeOperation('setSignature',{text:'new'}),/nickname|preserv|profile/i);assert.equal(missing.writes.length,0);}finally{missing.module.close();}
+ // Installed compiled contract only: synthetic services, no QQ group mutation.
+ const {createGroupOperations}=await import(pathToFileURL(join(temp,'node_modules/qq-native-client/dist/group-operations.js')).href);
+ const voidCases=[
+  ['setGroupMemberCard','modifyMemberCardName',{groupId:'123',userId:'456',card:''},['123','u_fixture','']],
+  ['setGroupAdmin','modifyMemberRole',{groupId:'123',userId:'456',enabled:true},['123','u_fixture',3]],
+  ['kickGroupMember','kickMember',{groupId:'123',userId:'456',options:{rejectRejoin:true,reason:'fixture'}},['123',['u_fixture'],true,'fixture']],
+  ['leaveGroup','quitGroup',{groupId:'123'},['123']],
+ ];
+ for(const [method,native,payload,expected] of voidCases){
+  let calls=0;
+  const invoke=(...args)=>{calls++;assert.deepEqual(args,expected);return undefined;};
+  const operation=createGroupOperations({getGroupService:()=>({[native]:native==='kickMember'?async(...args)=>invoke(...args):invoke})},async()=> 'u_fixture');
+  await operation.invokeOperation(method,payload);assert.equal(calls,1);
+  for(const [result,code] of [['0','invalid-result'],[0,'invalid-result'],[{result:23},23],[{result:'23'},'23'],[{result:NaN},'invalid-result'],[{result:Infinity},'invalid-result']]){
+   let failures=0;
+   const rejected=createGroupOperations({getGroupService:()=>({[native]:()=>{failures++;return result;}})},async()=> 'u_fixture');
+   await assert.rejects(rejected.invokeOperation(method,payload),{code});assert.equal(failures,1);
+  }
+ }
+ for(const [method,native,payload] of [
+  ['setGroupName','modifyGroupName',{groupId:'123',name:'fixture'}],
+  ['setGroupMute','setGroupShutUp',{groupId:'123',enabled:true}],
+  ['setGroupMemberMute','setMemberShutUp',{groupId:'123',userId:'456',seconds:0}],
+ ]){
+  let calls=0;
+  const operation=createGroupOperations({getGroupService:()=>({[native]:()=>{calls++;return undefined;}})},async()=> 'u_fixture');
+  await assert.rejects(operation.invokeOperation(method,payload),/Native group/);assert.equal(calls,1);
+ }
  globalThis.fetch=()=>{throw new Error('Unexpected mirror request with installed platform package');};
  client=await sdk.createClient({dataDir:join(temp,'unused-account'),autoReconnect:false,timeoutMs:30000});
  const exports=client.nativeExports.length;if(exports<80)throw new Error('Unexpected native export inventory');await client.close();if(client.state!=='closed')throw new Error('Client did not close');
- await writeFile('out/consumer.json',JSON.stringify({platform:process.platform,arch:process.arch,node:process.version,exports,installedMainOnly:true,automaticPlatformSelection:true,tarballRequests,faceContract:true,faceDeliveryAttempted:false,messageQueryContract:true,nativeMessageQueryAttempted:false,selfProfileContract:true,profileMutationAttempted:false,prepared:true,closed:true,loginAttempted:false,registry:'isolated local fixture serving actual CI tarballs'},null,2));console.log(await readFile('out/consumer.json','utf8'));
+ await writeFile('out/consumer.json',JSON.stringify({platform:process.platform,arch:process.arch,node:process.version,exports,installedMainOnly:true,automaticPlatformSelection:true,tarballRequests,faceContract:true,faceDeliveryAttempted:false,messageQueryContract:true,nativeMessageQueryAttempted:false,selfProfileContract:true,profileMutationAttempted:false,groupOperationContract:true,groupMutationAttempted:false,prepared:true,closed:true,loginAttempted:false,registry:'isolated local fixture serving actual CI tarballs'},null,2));console.log(await readFile('out/consumer.json','utf8'));
 }finally{await client?.close();server.closeAllConnections();await new Promise(done=>server.close(done));await rm(temp,{recursive:true,force:true});}

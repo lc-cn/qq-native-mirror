@@ -53,6 +53,26 @@ for(const text of ['new signature','']){const f=fixture();try{await f.module.inv
 const missing=fixture('unused',true);try{await assert.rejects(missing.module.invokeOperation('setSignature',{text:'new'}),/nickname|preserv|profile/i);assert.equal(missing.writes.length,0);}finally{missing.module.close();}
 `);
 run(process.execPath, ['self-profile.mjs']);
+await writeFile(join(destination, 'group-operations.mjs'), `import assert from 'node:assert/strict';
+import {QQClient} from 'qq-native-client';
+import {createGroupOperations} from './node_modules/qq-native-client/dist/group-operations.js';
+import {prepareCommand} from './node_modules/qq-native-client/dist/cli.js';
+const calls=[];
+const service={modifyMemberRole:(...args)=>{calls.push(['role',args]);},modifyMemberCardName:(...args)=>{calls.push(['card',args]);},kickMember:async(...args)=>{calls.push(['kick',args]);},quitGroup:(...args)=>{calls.push(['quit',args]);}};
+const module=createGroupOperations({getGroupService:()=>service},async()=> 'u_fixture');
+const client={};
+for(const method of ['setGroupAdmin','setGroupMemberCard','kickGroupMember','leaveGroup']){assert.equal(typeof QQClient.prototype[method],'function');}
+client.setGroupAdmin=(groupId,userId,enabled)=>module.invokeOperation('setGroupAdmin',{groupId,userId,enabled});
+client.setGroupMemberCard=(groupId,userId,card)=>module.invokeOperation('setGroupMemberCard',{groupId,userId,card});
+client.kickGroupMember=(groupId,userId,options)=>module.invokeOperation('kickGroupMember',{groupId,userId,options});
+client.leaveGroup=groupId=>module.invokeOperation('leaveGroup',{groupId});
+for(const [command,flags] of [['member-admin',{'user-id':'456',enabled:'true'}],['member-card',{'user-id':'456',card:''}],['group-kick',{'user-id':'456'}],['group-leave',{}]]){await (await prepareCommand(command,{'group-id':'123',...flags}))(client);}
+assert.deepEqual(calls,[['role',['123','u_fixture',3]],['card',['123','u_fixture','']],['kick',['123',['u_fixture'],false,'']],['quit',['123']]]);
+const strict=createGroupOperations({getGroupService:()=>({modifyGroupName(){},setGroupShutUp(){},setMemberShutUp(){}})},async()=> 'u_fixture');
+for(const [method,payload] of [['setGroupName',{name:'name'}],['setGroupMute',{enabled:true}],['setGroupMemberMute',{userId:'456',seconds:0}]]){await assert.rejects(strict.invokeOperation(method,{groupId:'123',...payload}),{code:'invalid-result'});}
+for(const [result,code] of [[{result:'denied'},'denied'],[{result:73},73],[{result:NaN},'invalid-result'],[{},'invalid-result']]){let attempts=0;const rejection=createGroupOperations({getGroupService:()=>({quitGroup(){attempts++;return result;}})},async()=> 'u_fixture');await assert.rejects(rejection.invokeOperation('leaveGroup',{groupId:'123'}),{code});assert.equal(attempts,1);}
+`);
+run(process.execPath, ['group-operations.mjs']);
 const help = run(process.execPath, ['node_modules/qq-native-client/dist/cli.js', '--help']);
 if (!help.includes('group-kick') || !help.includes('--message-file')) throw new Error('Installed CLI lacks commands');
 const cliEntry='node_modules/qq-native-client/dist/cli.js';
@@ -98,10 +118,11 @@ void factory; void options; void subscribe;
 `);
 run(process.execPath, [resolve(root, 'node_modules/typescript/bin/tsc'), '--noEmit', '--strict', '--types', 'node', '--module', 'NodeNext', '--target', 'ES2023', '--typeRoots', resolve(root, 'node_modules/@types'), 'consumer.ts']);
 const receipt = { checkedAt: new Date().toISOString(), package: packed.name, version: packed.version,
-  integrity: packed.integrity, fileCount: files.length, checks: { privateFilesExcluded:true, installedImport:true, cliHelp:true, cliDefaultConfig:true, faceContract:true, messageQueryContract:true, selfProfileContract:true, declarations:true },
+  integrity: packed.integrity, fileCount: files.length, checks: { privateFilesExcluded:true, installedImport:true, cliHelp:true, cliDefaultConfig:true, faceContract:true, messageQueryContract:true, selfProfileContract:true, groupOperationContract:true, declarations:true },
   nativeExecuted:false, accountUsed:false };
 await mkdir(join(root, '.local'), {recursive:true});
 await writeFile(join(root, '.local/package-consumer-verification.json'), JSON.stringify(receipt, null, 2));
 await mkdir(join(root, '.local/research'), {recursive:true});
 await writeFile(join(root, '.local/research/signature-installed-consumer.json'), JSON.stringify(receipt, null, 2));
+await writeFile(join(root, '.local/research/group-return-installed-consumer.json'), JSON.stringify(receipt, null, 2));
 console.log(JSON.stringify(receipt, null, 2));

@@ -45,10 +45,55 @@ test('invalid inputs do not resolve users or invoke native mutations', async () 
 
 test('native failure, missing methods and UID resolution errors propagate', async () => {
   for (const result of [{ result: 5 }, undefined, {}]) {
-    const operations = createGroupOperations({ getGroupService: () => ({ quitGroup: async () => result }) }, async () => 'u');
-    await assert.rejects(operations.invokeOperation('leaveGroup', { groupId: '123' }), /failed/);
+    const operations = createGroupOperations({ getGroupService: () => ({ modifyGroupName: async () => result }) }, async () => 'u');
+    await assert.rejects(operations.invokeOperation('setGroupName', { groupId: '123', name: 'name' }), /failed/);
   }
   await assert.rejects(createGroupOperations({}, async () => 'u').invokeOperation('leaveGroup', { groupId: '123' }), /missing getGroupService/);
   await assert.rejects(createGroupOperations({ getGroupService: () => ({}) }, async () => 'u').invokeOperation('leaveGroup', { groupId: '123' }), /missing quitGroup/);
   await assert.rejects(createGroupOperations({}, async () => { throw new Error('resolution failure'); }).invokeOperation('setGroupAdmin', { groupId: '123', userId: '456', enabled: true }), /resolution failure/);
+});
+
+test('void group contracts acknowledge dispatch once without requiring an invented result', async () => {
+  const calls: string[] = [];
+  const operations = createGroupOperations({ getGroupService: () => ({
+    modifyMemberRole: () => { calls.push('role'); },
+    modifyMemberCardName: () => { calls.push('card'); },
+    kickMember: async () => { calls.push('kick'); },
+    quitGroup: () => { calls.push('quit'); },
+  }) }, async () => 'u');
+  await operations.invokeOperation('setGroupAdmin', { groupId: '123', userId: '456', enabled: true });
+  await operations.invokeOperation('setGroupMemberCard', { groupId: '123', userId: '456', card: '' });
+  await operations.invokeOperation('kickGroupMember', { groupId: '123', userId: '456' });
+  await operations.invokeOperation('leaveGroup', { groupId: '123' });
+  assert.deepEqual(calls, ['role', 'card', 'kick', 'quit']);
+});
+
+test('result-bearing group contracts still reject missing or malformed completion', async () => {
+  for (const result of [undefined, null, {}, 0, { result: '0' }]) {
+    const service = { modifyGroupName: () => result, setGroupShutUp: () => result, setMemberShutUp: () => result };
+    const operations = createGroupOperations({ getGroupService: () => service }, async () => 'u');
+    for (const [method, payload] of [
+      ['setGroupName', { name: 'name' }], ['setGroupMute', { enabled: false }],
+      ['setGroupMemberMute', { userId: '456', seconds: 0 }],
+    ] as [GroupOperation, Record<string, unknown>][]) {
+      await assert.rejects(operations.invokeOperation(method, { groupId: '123', ...payload }), /failed/);
+    }
+  }
+});
+
+test('void contracts retain explicit rejection codes and do not expose native response payloads', async () => {
+  for (const [result, code] of [
+    [{ result: 'permission-denied', credential: 'fixture-secret' }, 'permission-denied'],
+    [{ result: -7003 }, -7003], [{ result: NaN }, 'invalid-result'],
+    [{ result: Infinity }, 'invalid-result'], [{}, 'invalid-result'], [null, 'invalid-result'],
+  ] as [unknown, string | number][]) {
+    let calls = 0;
+    const operations = createGroupOperations({ getGroupService: () => ({ quitGroup: () => { calls++; return result; } }) }, async () => 'u');
+    await assert.rejects(operations.invokeOperation('leaveGroup', { groupId: '123' }), error => {
+      assert.equal((error as Error & { code: unknown }).code, code);
+      assert.doesNotMatch(JSON.stringify(error), /fixture-secret|credential/);
+      return true;
+    });
+    assert.equal(calls, 1);
+  }
 });

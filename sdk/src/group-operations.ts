@@ -3,7 +3,11 @@
  * https://github.com/NapNeko/NapCatQQ/blob/26d7533e0f5800fdff865ab2f2ad7692917e1076/packages/napcat-core/types/group.ts#L554-L560
  * These contracts are fake-tested; no real group mutation is part of verification.
  */
+import { nativeResultError } from './errors.ts';
 export type GroupOperation = 'setGroupName' | 'setGroupMute' | 'setGroupMemberMute' | 'setGroupMemberCard' | 'setGroupAdmin' | 'kickGroupMember' | 'leaveGroup';
+// Pinned NodeIKernelGroupService declares void/Promise<void> for these four.
+// A void return acknowledges submission only, not remote permission or effect.
+const voidOperations = new Set<GroupOperation>(['setGroupMemberCard', 'setGroupAdmin', 'kickGroupMember', 'leaveGroup']);
 type Native = Record<string, any>;
 function id(value: unknown, field: string): string {
   if (typeof value !== 'string' || !/^\d+$/.test(value)) throw new Error(`${field} must be a numeric string`);
@@ -57,10 +61,11 @@ export function createGroupOperations(session: Native, resolveUid: (id: string) 
     const service = session.getGroupService();
     if (!service || typeof service[nativeMethod] !== 'function') throw new Error(`Native group service is missing ${nativeMethod}`);
     const result = await service[nativeMethod](...args);
-    // Do not mistake an absent/malformed return for confirmed native success.
+    if (result === undefined && voidOperations.has(method)) return;
+    // GeneralCallResult methods require result zero; explicit failure or malformed
+    // returns also reject for void methods. No mutation is retried.
     if (!result || typeof result !== 'object' || result.result !== 0) {
-      const code = typeof result?.result === 'number' ? result.result : 'invalid-result';
-      throw Object.assign(new Error(`Native group ${method} failed (code=${code})`),{code});
+      throw nativeResultError(`Native group ${method} failed`, result);
     }
   }
   return { invokeOperation };
