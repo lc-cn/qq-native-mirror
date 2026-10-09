@@ -1,0 +1,285 @@
+{
+  "schemaVersion": 1,
+  "runUrl": "https://github.com/lc-cn/qq-native-mirror/actions/runs/37971314866",
+  "independentReviewSha256": "75d018d003c8e151a9ff67ed5301b4973bf283cb1001547ae91ad641b939a9ac",
+  "review": {
+    "schemaVersion": 1,
+    "independentOfflineReview": true,
+    "runId": 37971314866,
+    "builderCommit": "47667990e7c237f7d628338f96c1f531fc47df64",
+    "sourceCommit": "6cae1ec0a5e1bfb03cb7871083915b3d03272347",
+    "conclusion": "success",
+    "packagedRegularFiles": 61,
+    "nativeFiles": 58,
+    "oldProfileFiles": 47,
+    "retainedVideoFiles": 11,
+    "allRetainedBytesEqualOriginal": true,
+    "originalMainByteIdentical": true,
+    "localPrunedTarballByteIdentical": true,
+    "prunedTarballSha256": "3128a4741044520f7c99a89673db0d04f3183312d7ff0191d580ddb2ca816da8",
+    "logReceiptsEqualDownloadedArtifacts": true,
+    "consumerExports": 104,
+    "installedMainOnly": true,
+    "automaticActualVideoClips": 3,
+    "prepared": true,
+    "closed": true,
+    "loginAttempted": false,
+    "accountAcceptanceEstablished": false,
+    "signingAuthenticityEstablished": false,
+    "published": false,
+    "defaultsChanged": false,
+    "boundFiles": [
+      {
+        "path": ".local/research/pruned-codec-native-ci-37971314866-state.json",
+        "bytes": 3232,
+        "sha256": "8ad0450c189f5978e7005b39b02ca31dd7b1fc8b8472c8ae250937e8bdf99018"
+      },
+      {
+        "path": ".local/research/pruned-codec-native-ci-37971314866-full.log",
+        "bytes": 59891,
+        "sha256": "a497289082489c65c254d78fb62a669eedec6697e4fc177efd5160b36de4c031"
+      },
+      {
+        "path": ".local/research/pruned-codec-native-ci-37971314866-artifacts/experimental-darwin-arm64-resources-codec-v2/qq-native-client-darwin-arm64-0.0.2.tgz",
+        "bytes": 59326804,
+        "sha256": "3128a4741044520f7c99a89673db0d04f3183312d7ff0191d580ddb2ca816da8"
+      },
+      {
+        "path": ".local/research/pruned-codec-native-ci-37971314866-artifacts/experimental-darwin-arm64-resources-codec-v2/qq-native-client-0.0.2.tgz",
+        "bytes": 319380,
+        "sha256": "ff2d8330985eb9fceb1f20d35859280a5c3799cc90e96077826a080b911d118b"
+      },
+      {
+        "path": ".local/releases/pruned-codec-native-local-v2/qq-native-client-darwin-arm64-0.0.2.tgz",
+        "bytes": 59326804,
+        "sha256": "3128a4741044520f7c99a89673db0d04f3183312d7ff0191d580ddb2ca816da8"
+      },
+      {
+        "path": ".local/github-mirror-publish/tools/profiles/darwin-arm64-resources-v1.json",
+        "bytes": 9754,
+        "sha256": "424e225ee2ccb5e9e45c50d399fd0b20a00b29162e91e7990fa2a6614f2429f6"
+      },
+      {
+        "path": ".local/research/pruned-codec-native-ci-37971314866-artifacts/experimental-darwin-arm64-resources-codec-v2/consumer.json",
+        "bytes": 3847,
+        "sha256": "f9f2b5002027ae5305dc720ffd5c587321f51cf1f9b1e0094134e2e808702974"
+      },
+      {
+        "path": ".local/research/pruned-codec-native-ci-37971314866-artifacts/experimental-darwin-arm64-resources-codec-v2/pruning-acceptance.json",
+        "bytes": 2102,
+        "sha256": "826338c91d911ea4892a30cbe340a1109a2ca76029767fb68bb46e9c7032b7a2"
+      },
+      {
+        "path": ".local/research/pruned-codec-native-ci-37971314866-artifacts/experimental-darwin-arm64-resources-codec-v2/pruning-profile.json",
+        "bytes": 12232,
+        "sha256": "d07c1e30fabbdf97c3335d96a4aeac45f399103617482c40dba066fdeaa592a9"
+      },
+      {
+        "path": ".local/research/pruned-codec-native-ci-37971314866-artifacts/experimental-darwin-arm64-resources-codec-v2/installed-video.json",
+        "bytes": 1836,
+        "sha256": "cbe3fffac44e917d5932bf10843de5d0b932b537f2941ab4ab97129933eb916a"
+      },
+      {
+        "path": ".local/research/pruned-codec-native-ci-37971314866-artifacts/experimental-darwin-arm64-resources-codec-v2/source-release-manifest.json",
+        "bytes": 4702,
+        "sha256": "9a362f3c4abada4c8cfc397039c20835bcb5393e0ae356873cccb518be9c8e1a"
+      },
+      {
+        "path": ".local/research/pruned-codec-native-ci-37971314866-artifacts/experimental-darwin-arm64-resources-codec-v2/pruning-build.json",
+        "bytes": 1966,
+        "sha256": "2e4cb3c8af4e1c5f1e2a7f426aabe5f7f6609b110407e5848886b7967c009386"
+      }
+    ],
+    "scope": "One local-vs-CI exact byte comparison; not universal reproducibility certification. No account/native execution by reviewer."
+  },
+  "consumer": {
+    "platform": "darwin",
+    "arch": "arm64",
+    "node": "v24.20.0",
+    "exports": 104,
+    "forwardMessageContract": true,
+    "nativeForwardQueryAttempted": false,
+    "forwardSubmissionAttempted": false,
+    "normalizedRecallContract": true,
+    "nativeRecallObserved": false,
+    "accountUsed": false,
+    "inboundMentionContract": true,
+    "nativeMentionLookupAttempted": false,
+    "sendMessageContract": true,
+    "nativeSendAttempted": false,
+    "receivedMessageContract": true,
+    "nativeReceivedIdentityLookupAttempted": false,
+    "videoCodecContract": true,
+    "nativeVideoSendAttempted": false,
+    "automaticVideoCodec": true,
+    "installedVideoDecoder": true,
+    "installedVideoFakeCache": true,
+    "installedVideo": {
+      "schemaVersion": 1,
+      "platform": "darwin",
+      "arch": "arm64",
+      "node": "v24.20.0",
+      "noAccount": true,
+      "noQQ": true,
+      "nativeSendAttempted": false,
+      "passed": true,
+      "inputs": [
+        {
+          "name": "blue-64.mp4",
+          "sha256": "ced7b4e1cd47d948ecf407116095282e5b5ca4df76142b7a06826eecb92cb932",
+          "bytes": 1684,
+          "width": 64,
+          "height": 64,
+          "duration": 0.4,
+          "thumbnailWidth": 64,
+          "thumbnailHeight": 64,
+          "thumbnailSha256": "6dd6fdedccb6f2c3524b05d848d96bde56f7f10a98038104827b391f089a4646",
+          "thumbnailBytes": 12342,
+          "pattern": "blue",
+          "rowStride": 192
+        },
+        {
+          "name": "blue-1280.mp4",
+          "sha256": "1c8920f2db13e3c1b28b708bc94d3889ed8bd10f15ee5d89881d99715188b468",
+          "bytes": 1820,
+          "width": 1280,
+          "height": 720,
+          "duration": 0.4,
+          "thumbnailWidth": 640,
+          "thumbnailHeight": 360,
+          "thumbnailSha256": "f94feb9cd93a661f4e585b2d73a44856666488847a97f54643eb49939f4ca782",
+          "thumbnailBytes": 691254,
+          "pattern": "blue",
+          "rowStride": 1920
+        },
+        {
+          "name": "blue-red-65.mp4",
+          "sha256": "53a0baad6f0853d39e53263c22c847bd78435fc263e6844450878b471d13cc57",
+          "bytes": 1652,
+          "width": 65,
+          "height": 33,
+          "duration": 0.4,
+          "thumbnailWidth": 65,
+          "thumbnailHeight": 33,
+          "thumbnailSha256": "f375d0f2d4c7fc580c07b639f27897bbd20348285329f6c39cce381acb0504d5",
+          "thumbnailBytes": 6522,
+          "pattern": "blue-red",
+          "rowStride": 196
+        }
+      ],
+      "binary": {
+        "sha256": "101a8eb635806b8c06fd55e3353a5a129d643c42198a3eb0dcaca7eefeab74c4",
+        "bytes": 13167872
+      },
+      "exports": [
+        "getVideoInfo"
+      ],
+      "concurrentDecode": true,
+      "unicodeFilename": true,
+      "malformedMissingNetworkRejected": true,
+      "sourceUnchanged": true,
+      "sdkFakeCache": true
+    },
+    "installedMainOnly": true,
+    "automaticPlatformSelection": true,
+    "tarballRequests": [
+      "silk-wasm",
+      "qq-native-client-darwin-arm64",
+      "qq-native-client"
+    ],
+    "faceContract": true,
+    "faceDeliveryAttempted": false,
+    "messageQueryContract": true,
+    "historyQueryContract": true,
+    "nativeHistoryQueryAttempted": false,
+    "nativeMessageQueryAttempted": false,
+    "selfProfileContract": true,
+    "profileMutationAttempted": false,
+    "groupOperationContract": true,
+    "groupMutationAttempted": false,
+    "groupMemberQueryContract": true,
+    "groupMemberIdentityContract": true,
+    "nativeGroupMemberQueryAttempted": false,
+    "groupMetadataEventContract": true,
+    "businessWatchContract": true,
+    "nativeGroupMetadataObserved": false,
+    "friendMetadataEventContract": true,
+    "nativeFriendMetadataObserved": false,
+    "friendListQueryContract": true,
+    "friendListBatchContract": true,
+    "friendProfileQueryContract": true,
+    "groupListQueryContract": true,
+    "nativeGroupListQueryAttempted": false,
+    "nativeFriendListQueryAttempted": false,
+    "prepared": true,
+    "closed": true,
+    "loginAttempted": false,
+    "registry": "isolated local fixture serving actual CI tarballs"
+  },
+  "codec": {
+    "schemaVersion": 1,
+    "platform": "darwin",
+    "arch": "arm64",
+    "node": "v24.20.0",
+    "noAccount": true,
+    "noQQ": true,
+    "nativeSendAttempted": false,
+    "passed": true,
+    "inputs": [
+      {
+        "name": "blue-64.mp4",
+        "sha256": "ced7b4e1cd47d948ecf407116095282e5b5ca4df76142b7a06826eecb92cb932",
+        "bytes": 1684,
+        "width": 64,
+        "height": 64,
+        "duration": 0.4,
+        "thumbnailWidth": 64,
+        "thumbnailHeight": 64,
+        "thumbnailSha256": "6dd6fdedccb6f2c3524b05d848d96bde56f7f10a98038104827b391f089a4646",
+        "thumbnailBytes": 12342,
+        "pattern": "blue",
+        "rowStride": 192
+      },
+      {
+        "name": "blue-1280.mp4",
+        "sha256": "1c8920f2db13e3c1b28b708bc94d3889ed8bd10f15ee5d89881d99715188b468",
+        "bytes": 1820,
+        "width": 1280,
+        "height": 720,
+        "duration": 0.4,
+        "thumbnailWidth": 640,
+        "thumbnailHeight": 360,
+        "thumbnailSha256": "f94feb9cd93a661f4e585b2d73a44856666488847a97f54643eb49939f4ca782",
+        "thumbnailBytes": 691254,
+        "pattern": "blue",
+        "rowStride": 1920
+      },
+      {
+        "name": "blue-red-65.mp4",
+        "sha256": "53a0baad6f0853d39e53263c22c847bd78435fc263e6844450878b471d13cc57",
+        "bytes": 1652,
+        "width": 65,
+        "height": 33,
+        "duration": 0.4,
+        "thumbnailWidth": 65,
+        "thumbnailHeight": 33,
+        "thumbnailSha256": "f375d0f2d4c7fc580c07b639f27897bbd20348285329f6c39cce381acb0504d5",
+        "thumbnailBytes": 6522,
+        "pattern": "blue-red",
+        "rowStride": 196
+      }
+    ],
+    "binary": {
+      "sha256": "101a8eb635806b8c06fd55e3353a5a129d643c42198a3eb0dcaca7eefeab74c4",
+      "bytes": 13167872
+    },
+    "exports": [
+      "getVideoInfo"
+    ],
+    "concurrentDecode": true,
+    "unicodeFilename": true,
+    "malformedMissingNetworkRejected": true,
+    "sourceUnchanged": true,
+    "sdkFakeCache": true
+  }
+}
