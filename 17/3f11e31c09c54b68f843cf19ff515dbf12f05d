@@ -1,0 +1,39 @@
+ci/verify-consumer.mjs
+  s_2104cc474f1ce5::t_d8c742f2a578c3 12,43,249
+sdk/README.md
+  s_2104cc474f1ce5::t_93be353b982e8d 145-146
+sdk/docs/sdk-acceptance.md
+  s_2104cc474f1ce5::t_736bb4b546f3ad 509-517
+sdk/scripts/recall-consumer-contract.mjs
+  s_2104cc474f1ce5::t_acbcd54f3991e5 1-64
+sdk/scripts/verify-package-consumer.mjs
+  s_2104cc474f1ce5::t_92e02ecd2d2cfb 7,181,218,222,226,254
+sdk/src/cli.ts
+  s_2104cc474f1ce5::t_b4e86040b9bff8 26,29-30,35,57
+sdk/src/native-services.ts
+  s_2104cc474f1ce5::t_622e4b009dbad9 17,68,129,350
+sdk/src/recall-events.ts
+  s_2104cc474f1ce5::t_1baa3a7554c1ed 1-33
+sdk/src/types.ts
+  s_2104cc474f1ce5::t_ea34151c16dae0 56,125-131
+sdk/test/cli.test.ts
+  s_2104cc474f1ce5::t_38a071a57d588b 182,192-203,209
+sdk/test/recall-events.test.ts
+  s_2104cc474f1ce5::t_77f47681553ece 1-110
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "173f11e31c09c54b68f843cf19ff515dbf12f05d",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
