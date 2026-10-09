@@ -21,11 +21,14 @@ await writeFile('out/QQNT.def',(await readFile('out/QQNT.def','utf8'))+' ?IsEnvi
 const vars=process.config.variables;
 if(!vars.node_use_openssl||!vars.v8_enable_inspector)throw new Error('Unexpected official Node feature configuration');
 const includes=['src','deps/v8/include','deps/uv/include','deps/simdjson','deps/simdutf','deps/sqlite','deps/openssl/openssl/include','deps/openssl/config','deps/openssl/config/archs/'+(process.arch==='x64'?'VC-WIN64A':'VC-WIN64-ARM')+'/'+(process.arch==='arm64'||vars.openssl_no_asm?'no-asm':'asm')+'/include'];
-const args=['/nologo','/LD','/std:c++20','/Zc:__cplusplus','/EHsc','/MD','/O2','/Gy','/Gw','/DNOMINMAX','/D_ITERATOR_DEBUG_LEVEL=0','/DNODE_WANT_INTERNALS=1','/DHAVE_INSPECTOR=1','/DHAVE_OPENSSL=1','/DNODE_USE_V8_PLATFORM=1',`/DHAVE_SQLITE=${vars.node_use_sqlite?1:0}`,`/DHAVE_AMARO=${vars.node_use_amaro?1:0}`];
+// This DLL consumes Node exports. node.h otherwise defaults to dllexport on Windows,
+// retaining unrelated inline Node/header code and its private dependency references.
+// simdjson.gyp builds static linkage by default; there is no SIMDJSON_STATIC macro to add.
+const args=['/nologo','/LD','/std:c++20','/Zc:__cplusplus','/EHsc','/MD','/O2','/Gy','/Gw','/DNOMINMAX','/D_ITERATOR_DEBUG_LEVEL=0','/DBUILDING_NODE_EXTENSION=1','/DNODE_WANT_INTERNALS=1','/DHAVE_INSPECTOR=1','/DHAVE_OPENSSL=1','/DNODE_USE_V8_PLATFORM=1',`/DHAVE_SQLITE=${vars.node_use_sqlite?1:0}`,`/DHAVE_AMARO=${vars.node_use_amaro?1:0}`];
 if(vars.v8_enable_pointer_compression)args.push('/DV8_COMPRESS_POINTERS');if(vars.v8_enable_sandbox)args.push('/DV8_ENABLE_SANDBOX');
 args.push(...includes.map(p=>'/I'+join(root,p)),resolve('ci/windows/environment-stopping.cc'),'/link','/OPT:REF',resolve('out/node-internals/node.lib'),'/DEF:'+resolve('out/QQNT.def'),'/OUT:'+resolve('out/windows-source/QQNT.dll'));
 execFileSync('cl',args,{stdio:'inherit'});
-const probeArgs=['/nologo','/LD','/std:c++20','/Zc:__cplusplus','/EHsc','/MD','/O2','/Gy','/Gw','/DNOMINMAX','/D_ITERATOR_DEBUG_LEVEL=0',...includes.map(p=>'/I'+join(root,p)),resolve('ci/windows/verify-stopping.cc'),'/link','/OPT:REF',resolve('out/node-internals/node.lib'),'/OUT:'+resolve('out/verify-stopping.node')];
+const probeArgs=['/nologo','/LD','/std:c++20','/Zc:__cplusplus','/EHsc','/MD','/O2','/Gy','/Gw','/DNOMINMAX','/D_ITERATOR_DEBUG_LEVEL=0','/DBUILDING_NODE_EXTENSION=1',...includes.map(p=>'/I'+join(root,p)),resolve('ci/windows/verify-stopping.cc'),'/link','/OPT:REF',resolve('out/node-internals/node.lib'),'/OUT:'+resolve('out/verify-stopping.node')];
 execFileSync('cl',probeArgs,{stdio:'inherit'});
 const transition=execFileSync(process.execPath,['-e',`require(${JSON.stringify(resolve('out/verify-stopping.node'))}).verify()`],{encoding:'utf8',env:{...process.env,QQ_STOPPING_ADAPTER_DLL:resolve('out/windows-source/QQNT.dll')}});
 console.log(transition);await writeFile('out/windows-stopping-transition.json',transition);
