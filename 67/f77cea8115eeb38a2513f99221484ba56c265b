@@ -1,0 +1,21 @@
+sdk/docs/evidence/forward-typed-elements-six-ci-37997097275.json
+  s_2104cc474f1ce5::t_546abd41111708 1-1198
+sdk/docs/forward-resource-decoding.md
+  s_2104cc474f1ce5::t_a22aad77cbda0a 74-81
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "67f77cea8115eeb38a2513f99221484ba56c265b",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
