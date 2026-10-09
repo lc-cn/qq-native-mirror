@@ -1,0 +1,36 @@
+ci/verify-consumer.mjs
+  s_2104cc474f1ce5::t_d556b8723b00de 11,41
+  s_2104cc474f1ce5::t_6ade9fc2f6fe31 247
+.github/workflows/pruned-native-candidate.yml
+  s_2104cc474f1ce5::t_d556b8723b00de 27-30,38,41-44
+sdk/docs/merged-forward-contract.md
+  s_2104cc474f1ce5::t_9e75eb76c77091 1-17
+sdk/docs/sdk-acceptance.md
+  s_2104cc474f1ce5::t_54a9247a06271c 484-495
+sdk/scripts/forward-consumer-contract.mjs
+  s_2104cc474f1ce5::t_3d9fde92350890 1-46
+sdk/scripts/verify-package-consumer.mjs
+  s_2104cc474f1ce5::t_ecda40c3d31e1a 6,216,251,259
+sdk/src/forward-messages.ts
+  s_2104cc474f1ce5::t_2c09ebd5050307 33,36,43,49,52-54,56-62,72,74,76,78
+sdk/src/native-services.ts
+  s_2104cc474f1ce5::t_15349447069699 177
+sdk/test/forward-messages.test.ts
+  s_2104cc474f1ce5::t_e77eb642265c58 49-100
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "9c2f71554fe47406b8f5fc8aa307f49165d27a85",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
