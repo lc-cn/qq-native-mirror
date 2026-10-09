@@ -26,7 +26,7 @@ node scripts/local-first-publish.mjs /absolute/path/npm-release --publish
 
 七个包的 Trusted Publisher 设置均使用 GitHub 用户 `lc-cn`、仓库 `qq-native-mirror`、工作流文件 `native-npm.yml`、环境 `npm-production`。设置完成后，后续版本可手动运行该工作流并启用 `publish`。默认关闭发布，push 仅构建与验收。npm 官方文档：[Trusted publishing](https://docs.npmjs.com/trusted-publishers/)。
 
-聚合 manifest 合同：根字段 `schemaVersion:1,repository,commit,runId,runAttempt,version,packages`；每个 package 包含 `name,version,tarball,size,sha256,integrity`；辅包额外包含 `manifestSha256,receipt,receiptSha256`，receipt 路径为 `evidence/<platform>-<arch>.consumer.json`。
+聚合 manifest 合同：根字段 `schemaVersion,repository,commit,runId,runAttempt,version,packages`；每个 package 包含 `name,version,tarball,size,sha256,integrity`；辅包额外包含 `manifestSha256,receipt,receiptSha256`，receipt 路径为 `evidence/<platform>-<arch>.consumer.json`。新候选使用 `schemaVersion:2`，增加 `aggregateReceipt:{path:'evidence/aggregated-main.consumer.json',sha256}`。CI 在聚合主包消费者通过后，重新校验七包和全部收据、核对当前 run/commit 身份，再原子写入该摘要；本地校验拒绝缺失声明、其他路径和字节摘要不符。已归档的 schema 1 首发仍兼容；其主收据没有独立 manifest 摘要，由 GitHub evidence 压缩包的资产摘要固定。
 
 ## 下载 CI 候选归档
 
@@ -59,3 +59,9 @@ node scripts/download-npm-candidate.mjs npm-v0.0.1-ci-RUN_ID /absolute/path/npm-
 本机从官方 npm 的新缓存只安装主包，自动安装 macOS arm64 辅包；按包名导入、真实内核初始化（104 exports）、关闭和 CLI help 均通过，未触发镜像下载、登录或恢复。六平台官方 npm 安装及镜像路径的独立 [CI 37893553033](https://github.com/lc-cn/qq-native-mirror/actions/runs/37893553033) 已全部通过，回执经过独立核对：官方 metadata/安装 lock 摘要与固定首发候选一致，未安装其他平台辅包，默认内核初始化和关闭成功、CLI help 完整，且镜像第二次初始化零文件下载。Windows 使用 Node 24.20.0，Linux 使用 24.21.0，macOS x64/arm64 分别使用 24.19.0/24.20.0；本轮没有账号登录或恢复。
 
 现在可由 npm 包维护者按前文，为七个包分别配置 Trusted Publisher：GitHub 用户 `lc-cn`、仓库 `qq-native-mirror`、工作流 `native-npm.yml`、环境 `npm-production`。现有工作流默认不发布；后续版本在完整验收后才手动启用发布。首发成功不等于可信发布配置已经完成。
+
+## 0.0.2 候选准备
+
+源码版本与六个辅包的精确 pin 已提升到 `0.0.2`；已发布版本仍为 `0.0.1`。候选包含首发后的 SDK 查询、事件与生命周期修复，仍需同一次六平台构建、聚合消费者和 schema 2 摘要校验完成后才可本地发布。归档不等于 npm 发布，账号验收与签名真实性也不由构建成功证明。
+
+在辅包尚未发布时，源码 lock 的六个 QQ 辅包条目仅声明目标版本、optional、os/cpu，不填写尚未知的 resolved/integrity，也不沿用 0.0.1 的字节摘要。锁定的其他依赖保持原有真实摘要。独立 macOS arm64 构建目录已验证在线及缓存齐备后的离线 `npm ci --ignore-scripts`；此时六个未发布 QQ 辅包没有安装，编译依赖完整。六平台候选 CI 会从固定源逐文件验证并构建辅包，通过独立本地 registry 安装主包验收，release manifest 绑定实际生成包的摘要。七包发布并逐一核对入库后，再用官方 registry 生成这些辅包的完整 lock；这项准备不宣称未知原生包具有已验证的 registry 完整性。

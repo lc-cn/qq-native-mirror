@@ -128,6 +128,7 @@ Preserve original native filenames and dependency layout when building bundles. 
 - Image/reply/file/video/record sending and attachment downloading are implemented. A macOS media batch returned native send/recall acknowledgements for image, voice and video; the peer confirmed two recall notices and the file attachment, without identifying each media item. File recall remained unsuccessful, with a separate diagnostic returning `-7003`. Complete media-delivery acceptance and oicq-like capability parity remain unfinished; see [file recall evidence](docs/file-recall-investigation.md). Video preparation and built-in WAV/SILK conversion also have local verification.
 - See [SDK acceptance criteria](docs/sdk-acceptance.md) for the full project scope. Login success is not the SDK completion criterion.
 - Main npm package name: `qq-native-client`; initial release version: `0.0.1`. The six native auxiliary packages use the same release version.
+- Working source is the `0.0.2` candidate with six matching auxiliary version pins. Public npm remains `0.0.1` until a separately reviewed local release. See [candidate preparation and evidence binding](docs/npm-first-publish.md#002-候选准备); newer query/event contracts below remain unpublished.
 
 See [research](RESEARCH.md), [registration bridge](native/README.md), and [login contract](docs/login-contract.md).
 

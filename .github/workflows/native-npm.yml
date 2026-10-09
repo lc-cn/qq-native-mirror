@@ -124,6 +124,7 @@ jobs:
           cp release/*.tgz out/
           node ci/verify-consumer.mjs
           cp out/consumer.json release/evidence/aggregated-main.consumer.json
+          node ci/finalize-release.mjs
       - name: Archive verified candidate for accelerated local download
         if: github.event_name == 'workflow_dispatch' && inputs.archive
         env:

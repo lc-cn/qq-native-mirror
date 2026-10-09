@@ -22,7 +22,7 @@ function tarJson(path, member) {
 export async function validateRelease(directory) {
   const root = await realpath(resolve(directory));
   const manifest = JSON.parse((await localFile(root, 'release-manifest.json')).bytes);
-  requireThat(manifest.schemaVersion === 1 && /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/.test(manifest.version), 'Invalid release version/schema');
+  requireThat([1, 2].includes(manifest.schemaVersion) && /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/.test(manifest.version), 'Invalid release version/schema');
   requireThat(manifest.repository === 'lc-cn/qq-native-mirror' && /^\d+$/.test(String(manifest.runId)) && /^[a-f0-9]{40}$/.test(manifest.commit), 'Invalid CI provenance');
   requireThat(Array.isArray(manifest.packages) && manifest.packages.length === 7, 'Exactly seven packages required');
   requireThat(typeof manifest.runId === 'string' && Number.isInteger(manifest.runAttempt) && manifest.runAttempt > 0, 'Invalid CI run attempt');
@@ -85,7 +85,12 @@ export async function validateRelease(directory) {
       }
     }
   }
-  const mainReceipt = JSON.parse((await localFile(root, 'evidence/aggregated-main.consumer.json')).bytes);
+  const mainReceiptBytes = (await localFile(root, 'evidence/aggregated-main.consumer.json')).bytes;
+  if (manifest.schemaVersion === 2) {
+    requireThat(manifest.aggregateReceipt?.path === 'evidence/aggregated-main.consumer.json' && /^[a-f0-9]{64}$/.test(manifest.aggregateReceipt?.sha256 ?? ''), 'Aggregate receipt binding missing or invalid');
+    requireThat(manifest.aggregateReceipt.sha256 === hash(mainReceiptBytes, 'sha256', 'hex'), 'Aggregate receipt digest mismatch');
+  }
+  const mainReceipt = JSON.parse(mainReceiptBytes);
   requireThat(mainReceipt.platform === 'linux' && mainReceipt.arch === 'x64' && mainReceipt.installedMainOnly === true && mainReceipt.automaticPlatformSelection === true && mainReceipt.prepared === true && mainReceipt.closed === true && mainReceipt.loginAttempted === false && Number.isInteger(mainReceipt.exports) && mainReceipt.exports >= 80 && /^v24\./.test(mainReceipt.node), 'Aggregate main consumer failed');
   return { manifest, packages };
 }
