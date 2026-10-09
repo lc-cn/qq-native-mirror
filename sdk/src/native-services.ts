@@ -3,7 +3,7 @@ import {captureMergedForward,sendCapturedMergedForward} from './merged-forward.t
 import {createLongMessageResponseTransport} from './long-message-response.ts';
 import {buildForwardResourceRequest,normalizeForwardResourceId} from './forward-resource-wire.ts';
 import {createForwardResourceTransport} from './forward-resource-transport.ts';
-import { normalizeMessageQuery, normalizeMessageBatchQuery, queryNativeMessage, queryNativeMessages, queryNativeHistory } from './message-query.ts';
+import { normalizeMessageQuery, normalizeMessageBatchQuery, normalizeHistoryQuery, queryNativeMessage, queryNativeMessages, queryNativeHistory } from './message-query.ts';
 import { createSelfProfile, type SelfProfileOperation } from './self-profile.ts';
 import { listWebGroupNotices } from './web-group-notices.ts';
 import { createGroupNotices, type GroupNoticeOperation } from './group-notices.ts';
@@ -405,13 +405,13 @@ export function createNativeServices(session: Native, version: string, emit: (ev
         }
         case 'getMessage': {
           const query = normalizeMessageQuery(payload.peer, payload.messageId);
-          const raw = await queryNativeMessage(service('Msg'), await resolvePeer(query.peer), query.messageId);
+          const raw = await awaitAlive(queryNativeMessage(service('Msg'), await resolvePeer(query.peer), query.messageId));
           lifetime.signal.throwIfAborted();
           return raw === undefined ? undefined : resolvedMessage(raw);
         }
         case 'getMessages': {
           const query = normalizeMessageBatchQuery(payload.peer, payload.messageIds);
-          const raw = await queryNativeMessages(service('Msg'), await resolvePeer(query.peer), query.messageIds);
+          const raw = await awaitAlive(queryNativeMessages(service('Msg'), await resolvePeer(query.peer), query.messageIds));
           lifetime.signal.throwIfAborted();
           const present = raw.filter((message): message is Native => message !== undefined);
           const decoded = await resolvedMessages(present);
@@ -425,11 +425,9 @@ export function createNativeServices(session: Native, version: string, emit: (ev
           return query.messageIds.map(id => found.get(id));
         }
         case 'getHistory': {
-          const peer = await resolvePeer(payload.peer);
-          const options = payload.options ?? {};
-          const count = options.limit ?? options.count ?? 20;
-          if (!Number.isInteger(count) || count < 1 || count > 100) throw new Error('History count must be between 1 and 100');
-          const messages = await queryNativeHistory(service('Msg'), peer, String(options.before ?? options.messageId ?? '0'), count, options.reverse ?? false);
+          const query = normalizeHistoryQuery(payload.peer, payload.options);
+          const peer = await resolvePeer(query.peer);
+          const messages = await awaitAlive(queryNativeHistory(service('Msg'), peer, query.before, query.count, query.reverse));
           lifetime.signal.throwIfAborted();
           return (await resolvedMessages(messages)) as Message[];
         }

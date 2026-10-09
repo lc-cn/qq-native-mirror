@@ -1,7 +1,7 @@
 import { deserializeKernelError, KernelRequestError } from './errors.ts';
 import {captureMergedForward} from './merged-forward.ts';
 import {normalizeForwardResourceId} from './forward-resource-wire.ts';
-import { normalizeMessageQuery, normalizeMessageBatchQuery } from './message-query.ts';
+import { normalizeMessageQuery, normalizeMessageBatchQuery, normalizeHistoryQuery } from './message-query.ts';
 export { KernelRequestError, MergedForwardError } from './errors.ts';
 export type {MergedForwardFailure, MergedForwardProgress} from './errors.ts';
 import { EventEmitter } from 'node:events';
@@ -181,7 +181,13 @@ export class QQClient extends EventEmitter<ClientEvents> {
     }
     return this.#login;
   }
-  waitForLogin(): Promise<Account> { return this.#login ?? this.login(); }
+  waitForLogin(): Promise<Account> {
+    if (this.#closing || this.#closed) return Promise.reject(new Error('QQ client is closed'));
+    // A completed login Promise exposes its mutable result to its caller.
+    // Return the current stored identity, while still joining a pending login.
+    if (this.#account) return Promise.resolve({ ...this.#account });
+    return this.#login ?? this.login();
+  }
   /** Restart the isolated native process and restore authorization. Requests are never replayed. */
   reconnect(login: LoginRequest = { method: 'restore', ...(this.#lastAccount ? { uin: this.#lastAccount.uin } : {}) }): Promise<Account> {
     if (this.#closing || this.#state === 'closed') return Promise.reject(new Error('QQ client is closed'));
@@ -245,7 +251,10 @@ export class QQClient extends EventEmitter<ClientEvents> {
   getGroupMembers(groupId: string): Promise<GroupMember[]> { return this.#operation('getGroupMembers', { groupId }); }
   sendPrivateMessage(userId: string, message: MessageInput): Promise<SentMessage> { return this.#operation('sendPrivateMessage', { userId, message }); }
   sendGroupMessage(groupId: string, message: MessageInput): Promise<SentMessage> { return this.#operation('sendGroupMessage', { groupId, message }); }
-  getHistory(peer: Peer, options: HistoryOptions = {}): Promise<Message[]> { return this.#operation('getHistory', { peer, options }); }
+  async getHistory(peer: Peer, options: HistoryOptions = {}): Promise<Message[]> {
+    const query = normalizeHistoryQuery(peer, options);
+    return this.#operation('getHistory', { peer: query.peer, options: { before: query.before, limit: query.count, reverse: query.reverse } });
+  }
   async getMessage(peer: Peer, messageId: string): Promise<Message | undefined> { return this.#operation('getMessage', normalizeMessageQuery(peer, messageId)); }
   /** Same order as unique requested IDs; absent successful-response items are undefined. */
   async getMessages(peer: Peer, messageIds: readonly string[]): Promise<(Message | undefined)[]> { return this.#operation('getMessages', normalizeMessageBatchQuery(peer, messageIds)); }

@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { readFile, writeFile, mkdir, stat } from 'node:fs/promises';
+import { realpathSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { createClient, type QQClient } from './index.ts';
@@ -11,10 +12,20 @@ import {normalizeForwardResourceId} from './forward-resource-wire.ts';
 import {KernelRequestError,MergedForwardError} from './errors.ts';
 import type { ClientOptions, LoginRequest, Peer, HistoryOptions, MessageInput } from './types.ts';
 
+function watchReconnectEnabled(value: ClientOptions['autoReconnect']): boolean {
+  if (value === undefined || value === false) return false;
+  if (value === true) return true;
+  if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('Invalid autoReconnect policy');
+  const { maxAttempts = 3, delayMs = 1000 } = value;
+  if (!Number.isSafeInteger(maxAttempts) || maxAttempts < 1 || !Number.isSafeInteger(delayMs) || delayMs < 0) throw new Error('Invalid autoReconnect policy');
+  return true;
+}
+
 /** Watch only remains open across explicitly retryable, enabled reconnects. */
-export function observeWatchFailures(client: QQClient, autoReconnect: boolean, fail: (error: Error) => void): () => void {
+export function observeWatchFailures(client: QQClient, autoReconnect: ClientOptions['autoReconnect'], fail: (error: Error) => void): () => void {
+  const enabled = watchReconnectEnabled(autoReconnect);
   const disconnected = (info: { retryable?: boolean } | undefined) => {
-    if (!(autoReconnect && info?.retryable === true)) fail(new Error('QQ watch stopped: account disconnected'));
+    if (!(enabled && info?.retryable === true)) fail(new Error('QQ watch stopped: account disconnected'));
   };
   const kicked = () => fail(new Error('QQ watch stopped: account kicked offline'));
   const logout = () => fail(new Error('QQ watch stopped: account logged out'));
@@ -294,6 +305,7 @@ async function main() {
     else if (method === 'quick') login = { method: 'quick', uin: required(flags, 'uin') };
     else if (method !== 'restore') throw new Error('--method must be qr, restore or quick');
   }
+  if (command === 'watch') watchReconnectEnabled(options.autoReconnect);
   const client = await createClient({ ...options, login: undefined });
   let qrWrite: Promise<void> = Promise.resolve();
   const qrPath = resolve(flags['qr-file'] ?? `${configPath}.qrcode.png`);
@@ -314,7 +326,7 @@ async function main() {
   if (watchDone) {
     void watchDone.catch(() => {});
     removeWatchEvents = observeWatchEvents(client, watchMode);
-    removeWatchObservers = observeWatchFailures(client, options.autoReconnect === true, error => failWatch?.(error));
+    removeWatchObservers = observeWatchFailures(client, options.autoReconnect, error => failWatch?.(error));
   }
   const stop = () => { process.exitCode = 130; endWatch?.(); void client.close().catch(() => {}).finally(() => { process.exitCode = 130; }); };
   process.once('SIGINT', stop); process.once('SIGTERM', stop);
@@ -335,4 +347,7 @@ export function formatCliError(error:unknown):string {
   const progress=error instanceof MergedForwardError?{phase:error.phase,...error.progress}:error instanceof KernelRequestError?error.mergedForward:undefined;
   return progress?JSON.stringify({error:error instanceof Error?error.message:'Merged-forward failed',mergedForward:progress,...(typeof (error as KernelRequestError).code==='string'||typeof (error as KernelRequestError).code==='number'?{code:(error as KernelRequestError).code}:{})}):error instanceof Error?error.message:String(error);
 }
-if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) void main().catch(error => { console.error(formatCliError(error)); if (process.exitCode !== 130) process.exitCode = 1; });
+let isCliEntry = false;
+try { isCliEntry = !!process.argv[1] && import.meta.url === pathToFileURL(realpathSync(process.argv[1])).href; }
+catch { /* Imported modules and non-file argv entries do not execute the CLI. */ }
+if (isCliEntry) void main().catch(error => { console.error(formatCliError(error)); if (process.exitCode !== 130) process.exitCode = 1; });

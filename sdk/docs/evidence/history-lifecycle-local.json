@@ -1,0 +1,105 @@
+{
+  "schemaVersion": 1,
+  "feature": "history input capture and shutdown, current wait identity, object watch reconnect policy and actual CLI symlink startup",
+  "observedAt": "2026-10-09T21:33:59.664156+00:00",
+  "baseCommit": "df718fdf08bd92c318c6d8b25a5a2c5ae2fa3ca0",
+  "sourceFiles": [
+    {
+      "path": "sdk/src/index.ts",
+      "sha256": "7f538a3c7f0b8f8c29e1fae18d17c614018b9e2d428aeb31807ae8293563882b"
+    },
+    {
+      "path": "sdk/src/native-services.ts",
+      "sha256": "815f593c4d2b8beee8dc76dcf7aa4f20370bb5910b5f3e2fdb0b2b862eead733"
+    },
+    {
+      "path": "sdk/src/message-query.ts",
+      "sha256": "f53e0738f433eea0e8d34f608aea5fb20931527ee98d24895a4c8cef9113ec66"
+    },
+    {
+      "path": "sdk/src/cli.ts",
+      "sha256": "c87331eecb7c3074048c72f685baa8fd6d916cc742775aa31fdc23ba46c7d1a2"
+    },
+    {
+      "path": "sdk/scripts/history-lifecycle-consumer-contract.mjs",
+      "sha256": "b1b947df87faf7e52677d457bfe9a0fc5298f4a03d8529161a41fc8ee18a0065"
+    },
+    {
+      "path": "sdk/scripts/verify-package-consumer.mjs",
+      "sha256": "aed97565c5670e6bd9ddc17d87d4609399ccede7374d0e493ff2de72363ee90a"
+    },
+    {
+      "path": "sdk/test/client-wait-for-login.test.ts",
+      "sha256": "6c3f75490512380bba82757bf5ab24f30d2bf397105b0a00cb5d6379bb057872"
+    },
+    {
+      "path": "sdk/test/history-query-input.test.ts",
+      "sha256": "28655cd8ff104ce4fa77180a632f62a56c6f1693ce0ff57ee1437b5c9befa068"
+    },
+    {
+      "path": "sdk/test/cli-watch-reconnect-policy.test.ts",
+      "sha256": "f5463dda2504b8f3493b492bc6b8565e9a9ee74dd604f5136fc9dc8512501199"
+    },
+    {
+      "path": "sdk/test/cli-entrypoint.test.ts",
+      "sha256": "ae7832cff1a1400cdc976cc9bcbf5ff723a376a46addda1571c9948a163f73ec"
+    },
+    {
+      "path": "sdk/test/history-lifecycle-services.test.ts",
+      "sha256": "be7ab24d69311f88847c6d5ca2435624c76877ab90fce67fb8ae62a1522f3cfb"
+    },
+    {
+      "path": "ci/verify-consumer.mjs",
+      "sha256": "65b102ef4165998297bde60de2a2fd371ed1c6402cd27c2428ef32f1d9817bdb"
+    },
+    {
+      "path": "tools/verify-dedup-consumer.mjs",
+      "sha256": "44d36c16ad66b6e23fb2c6e5ab9e19e28657f8a8f302a7a01a85c4871f6404e4"
+    },
+    {
+      "path": "tools/verify-dedup-consumer.test.mjs",
+      "sha256": "553338e1835861a56b32873c71a113ae2cd7e501cbdae2395dd1f82051c6a961"
+    }
+  ],
+  "fullRegression": {
+    "tests": 555,
+    "pass": 555,
+    "fail": 0,
+    "skipped": 0,
+    "logSha256": "c9e528fbe950494c04fe080c8518cdb2f1e2b0eb9c54a22c735f69b7c5f00d7d"
+  },
+  "buildLogSha256": "819a2f99ef8332e62374bc44315a31f243dd85502188e29441db9dd50b6c1c41",
+  "producerContracts": {
+    "tests": 6,
+    "pass": 6,
+    "fail": 0,
+    "logSha256": "3c4b77d7acd11dad125264a3308b923c9b843f1b36d3c326ee829903f1fcd5d3"
+  },
+  "cleanInstalledConsumer": {
+    "receiptSha256": "24ea5c01426c73373e751c772bd902fc4e7c3b74c4b9c46befd06c3a7d710a8a",
+    "package": "qq-native-client",
+    "version": "0.0.2",
+    "integrity": "sha512-l6GBO1QwIdKGr5ePCOU2IU+FkQg1wumYJL0X05B7XKzXVOB3CvNDigJ039BsBzYm9aZ0I8kQRDE7RjLH9qV2+w==",
+    "fileCount": 147,
+    "checks": {
+      "historyInputCaptureContract": true,
+      "loginWaitIdentityContract": true,
+      "watchReconnectPolicyContract": true,
+      "installedCliEntrypointContract": true,
+      "posixNpmBinEntrypointChecked": true,
+      "forwardResourceContract": true,
+      "receivedForwardContract": true,
+      "nativeHistoryQueryAttempted": false,
+      "nativeExecuted": false,
+      "accountUsed": false
+    }
+  },
+  "independentReview": "13 focused cases, including actual CLI subprocesses; prompt cancellation review caused three native-read waits to adopt existing awaitAlive",
+  "sixPlatformCurrentSourceAcceptanceEstablished": false,
+  "accountUsed": false,
+  "actualLoginAttempted": false,
+  "nativeHistoryQueryAttempted": false,
+  "signingAuthenticityEstablished": false,
+  "published": false,
+  "defaultsChanged": false
+}

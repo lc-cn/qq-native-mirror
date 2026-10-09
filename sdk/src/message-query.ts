@@ -13,6 +13,33 @@ export function normalizeMessageQuery(peer: unknown, messageId: unknown): { peer
   throw new Error('Message query peer requires a private userId or group groupId numeric string');
 }
 
+/** Capture history aliases before UID resolution or any native access. */
+export function normalizeHistoryQuery(peer: unknown, options: unknown = {}): { peer: Peer; before: string; count: number; reverse: boolean } {
+  if (!options || typeof options !== 'object' || ![Object.prototype, null].includes(Object.getPrototypeOf(options))) throw new Error('History options must be a plain object');
+  const values: Record<string, unknown> = Object.create(null);
+  for (const key of Reflect.ownKeys(options)) {
+    if (typeof key !== 'string' || !['before', 'messageId', 'limit', 'count', 'reverse'].includes(key)) throw new Error('Unsupported history option');
+    const descriptor = Object.getOwnPropertyDescriptor(options, key);
+    if (!descriptor || !('value' in descriptor)) throw new Error('History options require own data properties');
+    if (descriptor.value !== undefined) values[key] = descriptor.value;
+  }
+  if (values.before !== undefined && values.messageId !== undefined && values.before !== values.messageId) throw new Error('Conflicting history cursor aliases');
+  if (values.limit !== undefined && values.count !== undefined && values.limit !== values.count) throw new Error('Conflicting history count aliases');
+  const before = values.before !== undefined ? values.before : values.messageId !== undefined ? values.messageId : '0';
+  const count = values.limit !== undefined ? values.limit : values.count !== undefined ? values.count : 20;
+  const reverse = values.reverse !== undefined ? values.reverse : false;
+  if (typeof before !== 'string' || !/^\d+$/.test(before)) throw new Error('History before must be a numeric string');
+  if (typeof count !== 'number' || !Number.isInteger(count) || count < 1 || count > 100) throw new Error('History count must be an integer between 1 and 100');
+  if (typeof reverse !== 'boolean') throw new Error('History reverse must be a boolean');
+  if (!peer || typeof peer !== 'object' || ![Object.prototype, null].includes(Object.getPrototypeOf(peer))) throw new Error('History query requires a peer');
+  const capturedPeer: Record<string, unknown> = {};
+  for (const key of ['type', 'userId', 'groupId']) {
+    const descriptor = Object.getOwnPropertyDescriptor(peer, key);
+    if (descriptor) { if (!('value' in descriptor)) throw new Error('History peer requires own data properties'); capturedPeer[key] = descriptor.value; }
+  }
+  return { peer: normalizeMessageQuery(capturedPeer, before).peer, before, count, reverse };
+}
+
 function messageIds(value: unknown): string[] {
   if (!Array.isArray(value) || value.length < 1 || value.length > 100) throw new Error('messageIds requires between 1 and 100 IDs');
   const ids = Array.from(value, id => {
@@ -81,10 +108,16 @@ export async function queryNativeMessages(msgService: Native, peer: NativePeer, 
  * Keep native ordering; an error or malformed record is not an empty history.
  */
 export async function queryNativeHistory(msgService: Native, peer: NativePeer, before: string, count: number, reverse: boolean): Promise<Native[]> {
-  if (!peer || (peer.chatType !== 1 && peer.chatType !== 2) || typeof peer.peerUid !== 'string' || !peer.peerUid) throw new Error('Invalid native history query peer');
+  if (!peer || typeof peer !== 'object' || ![Object.prototype, null].includes(Object.getPrototypeOf(peer))) throw new Error('Invalid native history query peer');
+  const chatType = Object.getOwnPropertyDescriptor(peer, 'chatType'), peerUid = Object.getOwnPropertyDescriptor(peer, 'peerUid');
+  if (!chatType || !('value' in chatType) || (chatType.value !== 1 && chatType.value !== 2) || !peerUid || !('value' in peerUid) || typeof peerUid.value !== 'string' || !peerUid.value) throw new Error('Invalid native history query peer');
+  const expectedPeer: NativePeer = { chatType: chatType.value, peerUid: peerUid.value };
+  if (typeof before !== 'string' || !/^\d+$/.test(before)) throw new Error('History before must be a numeric string');
+  if (!Number.isInteger(count) || count < 1 || count > 100) throw new Error('History count must be an integer between 1 and 100');
+  if (typeof reverse !== 'boolean') throw new Error('History reverse must be a boolean');
   if (typeof msgService?.getMsgsIncludeSelf !== 'function') throw new Error('Native service is missing getMsgsIncludeSelf');
-  const result = await msgService.getMsgsIncludeSelf(peer, before, count, reverse);
+  const result = await msgService.getMsgsIncludeSelf({ ...expectedPeer }, before, count, reverse);
   if (result?.result !== 0) throw nativeResultError('Native getMsgsIncludeSelf failed (invalid or rejected result)', result);
   if (!Array.isArray(result.msgList)) throw new Error('Native getMsgsIncludeSelf returned an invalid message list');
-  return Array.from(result.msgList, message => queriedMessage(message, peer, 'getMsgsIncludeSelf'));
+  return Array.from(result.msgList, message => queriedMessage(message, expectedPeer, 'getMsgsIncludeSelf'));
 }
