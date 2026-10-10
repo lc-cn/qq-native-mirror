@@ -96,6 +96,15 @@ claiming to cancel a dispatched native operation. The session composition keeps
 system-message processing and native callback registration in their original
 order. Queried history does not share live-delivery deduplication state.
 
+`NativeMessageSender` owns element preparation, reserved correlation IDs and
+terminal receipt selection behind `send`, `sendPrepared` and `close`. Normal text,
+media and merged-forward cards use the same receipt path. It receives the Session's
+callback channel rather than registering another listener, preserving send/recall
+subscription order. Construction performs no native work. A callback success still
+waits for native completion, failed IDs remain reserved until teardown, and an
+operation is never replayed. The Session aborts pending work before closing the
+sender; deferred preparation cannot dispatch after shutdown.
+
 The proprietary `.node` surface has no stable complete TypeScript declaration.
 Its type erasure is centralized in `src/native/native-object.ts`. This internal
 escape hatch is not proof of an ABI. Native results must pass adapter validation
@@ -149,7 +158,9 @@ The `SDK quality` GitHub workflow runs these gates independently of platform
 bundle and video-native CI. Runtime output is recreated from a clean `dist`
 directory so obsolete emitted modules cannot make a packaging check pass.
 
-Static architecture tests also reject runtime dependency cycles, missing internal
+Static architecture tests require every TypeScript source module to participate
+in the formatting gate. Binary-directory ignores are anchored to the package root
+so `src/native/` remains checked. They also reject runtime dependency cycles, missing internal
 modules, implementation imports from public contracts, and transitive native/IO
 dependencies in pure input modules. They protect these boundaries during later
 feature work; renaming directories alone does not establish them.

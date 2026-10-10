@@ -4,6 +4,7 @@ import { dirname, join, relative, resolve } from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import ts from 'typescript';
+import { getFileInfo } from 'prettier';
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const sourceRoot = join(projectRoot, 'src');
@@ -194,4 +195,19 @@ test('relative runtime source dependencies have no cycles', () => {
     complete.add(path);
   }
   for (const path of files) walk(path);
+});
+
+// Binary bundles are ignored only at the package root. A basename ignore such as
+// native/ would silently exclude src/native/ from the mandatory formatting gate.
+test('every TypeScript source module participates in the formatting gate', async () => {
+  const results = await Promise.all(
+    files.map(async (path) => ({
+      path,
+      info: await getFileInfo(path, { ignorePath: join(projectRoot, '.prettierignore') }),
+    })),
+  );
+  for (const { path, info } of results) {
+    assert.equal(info.ignored, false, `${label(path)} is silently excluded from formatting`);
+    assert.equal(info.inferredParser, 'typescript', `${label(path)} has no TypeScript formatter`);
+  }
 });

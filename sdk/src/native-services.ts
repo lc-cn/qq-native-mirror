@@ -40,18 +40,11 @@ import { listWebGroupNotices } from './features/groups/web-group-notices.ts';
 import { createGroupNotices } from './features/groups/group-notices.ts';
 import { createForwardMessages } from './features/forward/forward-messages.ts';
 import { createGroupRequests } from './features/groups/group-requests.ts';
-import { createVideoElement } from './features/media/media-send.ts';
-import { createRecordElement } from './features/media/media-record.ts';
 import { createFriendRequests } from './features/contacts/friend-requests.ts';
 import { createContactOperations } from './features/contacts/contact-operations.ts';
 import { downloadAttachment } from './features/media/media-operations.ts';
-import {
-  createImageElement,
-  createFileElement,
-  createReplyElement,
-  decodeElements,
-  faceElement,
-} from './features/messages/message-elements.ts';
+import { decodeElements } from './features/messages/message-elements.ts';
+import { createNativeMessageSender } from './features/messages/native-message-sender.ts';
 /** Native contracts extracted from local NapCat; this module never sends at startup. */
 import { createGroupOperations } from './features/groups/group-operations.ts';
 import { createGroupEvents, projectGroupInfo } from './features/groups/group-events.ts';
@@ -63,12 +56,7 @@ import {
   decodeNativeMessages,
   projectNativeMessage,
 } from './features/messages/inbound-messages.ts';
-import {
-  captureSendInput,
-  sendUserId,
-  sendGroupId,
-  sentReceipt,
-} from './features/messages/send-input.ts';
+import { captureSendInput, sendUserId, sendGroupId } from './features/messages/send-input.ts';
 import type {
   Friend,
   Group,
@@ -79,18 +67,10 @@ import type {
 } from './types.ts';
 
 import type { NativeObject as Native } from './native/native-object.ts';
-export interface NativePeer {
-  chatType: 1 | 2;
-  peerUid: string;
-  guildId?: string;
-}
+import type { NativePeer, NativeMessage } from './native/message-contracts.ts';
+export type { NativePeer, NativeMessage } from './native/message-contracts.ts';
 import type { ServiceOperation } from './runtime/operations.ts';
 export type { ServiceOperation } from './runtime/operations.ts';
-export interface NativeMessage extends Native {
-  msgId: string;
-  peerUid: string;
-  chatType: number;
-}
 
 /** A callback does not replace the native method's own completion code. */
 function nativeCallSucceeded(value: unknown): boolean {
@@ -111,7 +91,6 @@ export function createNativeServices(context: NativeServiceContext) {
     if (!closed) context.events.emit(event, payload);
   };
   const { userId: accountId, uid: accountUid } = context.identity ?? {};
-  const { tools: mediaTools, recordCodec, videoCodec } = context.media ?? {};
   const lifetime = new AbortController();
   let closed = false;
   const listeners: Native[] = [];
@@ -165,10 +144,8 @@ export function createNativeServices(context: NativeServiceContext) {
     const callbackChannel = own(createNativeEventChannel(lifetime.signal));
     const { dispatch, call: eventCall } = callbackChannel;
     const uidCache = new Map<string, string>();
-    const usedSendIds = new Set<string>();
     cleanupSteps.push(() => {
       uidCache.clear();
-      usedSendIds.clear();
     });
     const recallEvents = own(createRecallEvents(emit));
     let groupListRequest: Promise<unknown> | undefined;
@@ -418,112 +395,23 @@ export function createNativeServices(context: NativeServiceContext) {
       lifetime.signal,
       resolvedMessages,
     );
-    const elementsFor = async (input: unknown, peer: NativePeer): Promise<Native[]> => {
-      const elements = typeof input === 'string' ? [{ type: 'text', text: input }] : input;
-      if (!Array.isArray(elements) || !elements.length)
-        throw new Error('Message must contain elements');
-      return Promise.all(
-        elements.map(async (element: Native) => {
-          if (element.type === 'text') {
-            if (typeof element.text !== 'string') throw new Error('Invalid text element');
-            return {
-              elementType: 1,
-              elementId: '',
-              textElement: {
-                content: element.text,
-                atType: 0,
-                atUid: '',
-                atTinyId: '',
-                atNtUid: '',
-              },
-            };
-          }
-          if (element.type === 'at') {
-            if (peer.chatType !== 2) throw new Error('Mentions require a group peer');
-            const id = String(element.userId ?? element.id ?? '');
-            if (!id) throw new Error('Mention requires userId');
-            const all = id === 'all';
-            return {
-              elementType: 1,
-              elementId: '',
-              textElement: {
-                content: `@${element.text ?? (all ? '全体成员' : id)}`,
-                atType: all ? 1 : 2,
-                atUid: id,
-                atTinyId: '',
-                atNtUid: all ? 'all' : await uidFor(id),
-              },
-            };
-          }
-          if (element.type === 'face') return faceElement(element.id);
-          if (element.type === 'image') return createImageElement(element.file, service('Msg'));
-          if (element.type === 'video')
-            return createVideoElement(
-              element.file,
-              service('Msg'),
-              mediaTools,
-              videoCodec,
-              lifetime.signal,
-            );
-          if (element.type === 'record')
-            return createRecordElement(element.file, service('Msg'), recordCodec);
-          if (element.type === 'file') return createFileElement(element.file, element.name);
-          if (element.type === 'reply')
-            return createReplyElement(element.messageId, peer, service('Msg'));
-          throw new Error(`Unsupported message element: ${String(element.type)}`);
-        }),
-      );
-    };
+    const sender = own(
+      createNativeMessageSender({
+        signal: lifetime.signal,
+        service,
+        call,
+        awaitAlive,
+        uidFor,
+        eventCall,
+        media: context.media,
+      }),
+    );
     let longMessageTransport: ReturnType<typeof createLongMessageResponseTransport> | undefined;
     let forwardResourceTransport: ReturnType<typeof createForwardResourceTransport> | undefined;
     cleanupSteps.push(
       () => longMessageTransport?.close(),
       () => forwardResourceTransport?.close(),
     );
-    const sendPreparedElements = async (
-      peer: NativePeer,
-      elements: Native[],
-      onDispatch?: () => void,
-    ) => {
-      const messages = service('Msg');
-      const uniqueId = await awaitAlive(
-        call(messages, 'generateMsgUniqueId', peer.chatType, call(service('MSF'), 'getServerTime')),
-      );
-      lifetime.signal.throwIfAborted();
-      if (typeof uniqueId !== 'string' || !uniqueId.trim())
-        throw new Error('Invalid native send correlation identifier');
-      if (usedSendIds.has(uniqueId))
-        throw new Error('Duplicate native send correlation identifier');
-      usedSendIds.add(uniqueId);
-      const destination = { ...peer, guildId: uniqueId };
-      const sent = await eventCall(
-        'Msg/onMsgInfoListUpdate',
-        (updates: NativeMessage[]) => {
-          const matching = updates.filter(
-            (message) =>
-              message.guildId === uniqueId &&
-              (message.chatType === undefined || message.chatType === peer.chatType) &&
-              (message.peerUid === undefined || message.peerUid === peer.peerUid),
-          );
-          const message = matching.find((message) => message.sendStatus === 2);
-          if (message) return sentReceipt(message);
-          if (matching.some((message) => message.sendStatus === 0))
-            throw new Error('Native message send failed');
-          return undefined;
-        },
-        () => {
-          lifetime.signal.throwIfAborted();
-          onDispatch?.();
-          return call(messages, 'sendMsg', '0', destination, elements, new Map());
-        },
-        10_000,
-        nativeCallSucceeded,
-      );
-      lifetime.signal.throwIfAborted();
-      return sent;
-    };
-    const send = async (peer: NativePeer, input: unknown) =>
-      sendPreparedElements(peer, await elementsFor(input, peer));
     return {
       async invokeOperation(method: ServiceOperation, payload: Native = {}): Promise<unknown> {
         if (closed) throw new Error('Native services are closed');
@@ -711,12 +599,12 @@ export function createNativeServices(context: NativeServiceContext) {
           case 'sendPrivateMessage': {
             const userId = sendUserId(payload.userId);
             const input = captureSendInput(payload.message, false);
-            return send({ chatType: 1, peerUid: await uidFor(userId) }, input);
+            return sender.send({ chatType: 1, peerUid: await uidFor(userId) }, input);
           }
           case 'sendGroupMessage': {
             const groupId = sendGroupId(payload.groupId);
             const input = captureSendInput(payload.message, true);
-            return send({ chatType: 2, peerUid: groupId }, input);
+            return sender.send({ chatType: 2, peerUid: groupId }, input);
           }
           case 'sendMergedForward': {
             const captured = captureMergedForward(payload.peer, payload.nodes, payload.options);
@@ -729,7 +617,7 @@ export function createNativeServices(context: NativeServiceContext) {
                 (longMessageTransport ??= createLongMessageResponseTransport(
                   service('Msg') as LongMessageResponseService,
                 )),
-              (card, onDispatch) => sendPreparedElements(destination, [card], onDispatch),
+              (card, onDispatch) => sender.sendPrepared(destination, [card], onDispatch),
               lifetime.signal,
             );
           }
