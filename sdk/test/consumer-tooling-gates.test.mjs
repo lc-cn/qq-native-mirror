@@ -79,6 +79,28 @@ test('group-search consumer compiler rejects missing preparation await and inval
   );
 });
 
+const elementHelper = resolve(root, 'scripts/element-preparation-consumer-contract.mjs');
+const elementSource = readFileSync(elementHelper, 'utf8');
+test('element preparation compiler rejects unawaited results, wrong variants and unchecked thumbnail paths without running adapters', () => {
+  assert.deepEqual(diagnostics(elementSource, elementHelper), []);
+  for (const [before, after, code] of [
+    ['const prepared = await createImageElement(', 'const prepared = createImageElement(', 2339],
+    [
+      'assert.equal(prepared.picElement.sourcePath, staged);',
+      'assert.equal(prepared.fileElement.sourcePath, staged);',
+      2339,
+    ],
+    ['assert.ok(thumbnailPath);', '/* Missing thumbnail path narrowing. */', 2345],
+  ]) {
+    assert.ok(
+      diagnostics(replaceOnce(elementSource, before, after), elementHelper).some(
+        (item) => item.code === code,
+      ),
+      `Element contract must reject ${after}`,
+    );
+  }
+});
+
 for (const fixture of [
   {
     name: 'face',
@@ -86,6 +108,13 @@ for (const fixture of [
     source,
     invocation: 'await action(client);',
     ignored: 'action(client);',
+  },
+  {
+    name: 'element-preparation',
+    file: elementHelper,
+    source: elementSource,
+    invocation: 'const prepared = await createImageElement(image, allocator);',
+    ignored: 'createImageElement(image, allocator); const prepared = undefined;',
   },
   {
     name: 'group-search',

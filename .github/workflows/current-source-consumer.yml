@@ -1,0 +1,63 @@
+name: Current SDK default mirror consumers
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  consumer:
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { platform: linux, arch: x64, runner: ubuntu-24.04 }
+          - { platform: linux, arch: arm64, runner: ubuntu-24.04-arm }
+          - { platform: darwin, arch: x64, runner: macos-15-intel }
+          - { platform: darwin, arch: arm64, runner: macos-15 }
+          - { platform: win32, arch: x64, runner: windows-2022 }
+          - { platform: win32, arch: arm64, runner: windows-11-arm }
+    runs-on: ${{ matrix.runner }}
+    env:
+      SDK_SOURCE_MODE: current-source
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.20.0'
+          architecture: ${{ matrix.arch }}
+      - name: Assert actual runner device
+        env:
+          TARGET_PLATFORM: ${{ matrix.platform }}
+          TARGET_ARCH: ${{ matrix.arch }}
+        run: node -e "if(process.platform!==process.env.TARGET_PLATFORM||process.arch!==process.env.TARGET_ARCH)throw Error('Incorrect runner')"
+      - name: Validate immutable source and package bindings
+        run: node --test version-ci/main-artifact.test.mjs version-ci/build-main-contract.test.mjs
+      - name: Linux system dependencies
+        if: matrix.platform == 'linux'
+        run: sudo apt-get update && sudo apt-get install -y libx11-xcb1 libgnutls30
+      - name: Install SDK build dependencies
+        working-directory: sdk
+        run: npm ci --ignore-scripts --omit=optional --no-audit --no-fund
+      - name: Compile and pack main from this exact source run
+        run: node version-ci/build-main.mjs
+      - name: Check installed module paths before native execution
+        run: node --test ci/consumer-module-paths.test.mjs
+      - name: Default cold download, warm cache, actual prepare and close, codec validation
+        run: node ci/run-current-source-mirror.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: current-source-${{ matrix.platform }}-${{ matrix.arch }}
+          path: |
+            out/main-source.json
+            out/qq-native-client-*.tgz
+            out/current-source-mirror.json
+            out/current-source-video.json
+          if-no-files-found: error
+          retention-days: 30

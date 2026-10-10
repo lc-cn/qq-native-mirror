@@ -43,9 +43,13 @@ const exceptions = [
   },
 ];
 const options = {
-  entries: [`${root}ci/verify-consumer.mjs`, script('verify-package-consumer.mjs')],
+  entries: [
+    `${root}ci/verify-consumer.mjs`,
+    `${root}ci/current-source-mirror.mjs`,
+    script('verify-package-consumer.mjs'),
+  ],
   distRoot: `${root}sdk/dist`,
-  helperRoots: [`${root}sdk/scripts`, `${root}ci`],
+  helperRoots: [`${root}sdk/scripts`, `${root}ci`, `${root}version-ci`],
   exceptions,
 };
 test('native CI and local packed verifier helper closures reference the clean SDK build', () => {

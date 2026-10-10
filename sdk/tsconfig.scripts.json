@@ -12,6 +12,8 @@
     "src/**/*.ts",
     "scripts/**/*.ts",
     "scripts/face-consumer-contract.mjs",
-    "scripts/group-search-consumer-contract.mjs"
+    "scripts/group-search-consumer-contract.mjs",
+    "scripts/element-preparation-consumer-contract.mjs",
+    "scripts/mirror-consumer-contract.mjs"
   ]
 }

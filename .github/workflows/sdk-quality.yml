@@ -6,11 +6,15 @@ on:
     paths:
       - 'sdk/**'
       - 'ci/**'
+      - 'version-ci/**'
+      - '.github/workflows/current-source-consumer.yml'
       - '.github/workflows/sdk-quality.yml'
   push:
     paths:
       - 'sdk/**'
       - 'ci/**'
+      - 'version-ci/**'
+      - '.github/workflows/current-source-consumer.yml'
       - '.github/workflows/sdk-quality.yml'
 
 permissions:
@@ -52,5 +56,7 @@ jobs:
         run: npm run build
       - name: Check native CI installed module paths
         run: node --test ../ci/consumer-module-paths.test.mjs
+      - name: Check current source mirror consumer bindings
+        run: node --test ../version-ci/main-artifact.test.mjs ../version-ci/build-main-contract.test.mjs
       - name: Verify a clean installed package and fake service contracts
         run: npm run verify:package

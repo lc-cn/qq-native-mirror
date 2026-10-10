@@ -51,6 +51,8 @@ export default defineConfig([
       'scripts/**/*.ts',
       'scripts/face-consumer-contract.mjs',
       'scripts/group-search-consumer-contract.mjs',
+      'scripts/element-preparation-consumer-contract.mjs',
+      'scripts/mirror-consumer-contract.mjs',
     ],
     languageOptions: {
       parserOptions: { project: './tsconfig.scripts.json', tsconfigRootDir: import.meta.dirname },
@@ -65,6 +67,8 @@ export default defineConfig([
     files: [
       'scripts/face-consumer-contract.mjs',
       'scripts/group-search-consumer-contract.mjs',
+      'scripts/element-preparation-consumer-contract.mjs',
+      'scripts/mirror-consumer-contract.mjs',
       'scripts/consumer-module-references.ts',
     ],
     rules: { '@typescript-eslint/no-explicit-any': 'error' },

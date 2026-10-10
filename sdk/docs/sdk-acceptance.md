@@ -134,6 +134,11 @@ QQ server acceptance.
 
 ## Completion rule
 
+[Current source mirror acceptance](current-source-mirror.md) describes the
+six-platform no-account workflow for a main archive built from the chosen source
+commit. Its native initialization/cache/codec evidence is separate from the
+account and business acceptance below.
+
 Every required capability needs current-version evidence for its promised scope.
 Every declared platform/version must repeat the required account/message/contact
 acceptance. Missing or indirect proof leaves the full goal unfinished.
