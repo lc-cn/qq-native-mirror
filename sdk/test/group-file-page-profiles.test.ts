@@ -61,23 +61,37 @@ function fixture(profile: NativeContractProfile | undefined, version: string) {
   return { services, acquisitions: () => acquire };
 }
 
-test('only the separately inspected exact page binary is enabled; other five profiles reject before acquisition', async () => {
-  assert.equal(evidence.profiles.length, 1);
+test('only separately inspected exact page binaries are enabled; other profiles reject before acquisition', async () => {
+  assert.deepEqual(
+    evidence.profiles.map(({ platform, arch, clientVersion }) => [platform, arch, clientVersion]),
+    [
+      ['darwin', 'arm64', '7.0.2-53644'],
+      ['linux', 'arm64', '3.2.32-52194'],
+    ],
+  );
   assert.equal(evidence.nativeExecuted, false);
   assert.equal(evidence.accountUsed, false);
-  const supported = evidence.profiles[0]!;
-  const positive = fixture(supported, supported.clientVersion);
-  try {
-    assert.deepEqual(
-      await positive.services.invokeOperation('listGroupFiles', { groupId: '000123' }),
-      [],
-    );
-    assert.equal(positive.acquisitions(), 1);
-  } finally {
-    positive.services.close();
+  for (const supported of evidence.profiles) {
+    const positive = fixture(supported, supported.clientVersion);
+    try {
+      assert.deepEqual(
+        await positive.services.invokeOperation('listGroupFiles', { groupId: '000123' }),
+        [],
+      );
+      assert.equal(positive.acquisitions(), 1);
+    } finally {
+      positive.services.close();
+    }
   }
   for (const candidate of allProfiles.profiles.filter(
-    (p) => p.platform !== supported.platform || p.arch !== supported.arch,
+    (candidate) =>
+      !evidence.profiles.some(
+        (supported) =>
+          candidate.platform === supported.platform &&
+          candidate.arch === supported.arch &&
+          candidate.clientVersion === supported.clientVersion &&
+          candidate.wrapperSha256 === supported.wrapperSha256,
+      ),
   )) {
     const f = fixture(candidate, candidate.clientVersion);
     try {
@@ -89,22 +103,27 @@ test('only the separately inspected exact page binary is enabled; other five pro
       f.services.close();
     }
   }
-  for (const [profile, version] of [
-    [undefined, supported.clientVersion],
-    [{ ...supported, platform: 'unknown' }, supported.clientVersion],
-    [{ ...supported, arch: 'unknown' }, supported.clientVersion],
-    [{ ...supported, wrapperSha256: '0'.repeat(64) }, supported.clientVersion],
-    [{ ...supported, clientVersion: 'unverified' }, 'unverified'],
-    [supported, 'unverified'],
-  ] as const) {
-    const f = fixture(profile, version);
-    try {
-      await assert.rejects(f.services.invokeOperation('getGroupFilePage', { groupId: '000123' }), {
-        code: 'unsupported-native-contract',
-      });
-      assert.equal(f.acquisitions(), 0);
-    } finally {
-      f.services.close();
+  for (const supported of evidence.profiles) {
+    for (const [profile, version] of [
+      [undefined, supported.clientVersion],
+      [{ ...supported, platform: 'unknown' }, supported.clientVersion],
+      [{ ...supported, arch: 'unknown' }, supported.clientVersion],
+      [{ ...supported, wrapperSha256: '0'.repeat(64) }, supported.clientVersion],
+      [{ ...supported, clientVersion: 'unverified' }, 'unverified'],
+      [supported, 'unverified'],
+    ] as const) {
+      const f = fixture(profile, version);
+      try {
+        await assert.rejects(
+          f.services.invokeOperation('getGroupFilePage', { groupId: '000123' }),
+          {
+            code: 'unsupported-native-contract',
+          },
+        );
+        assert.equal(f.acquisitions(), 0);
+      } finally {
+        f.services.close();
+      }
     }
   }
 });

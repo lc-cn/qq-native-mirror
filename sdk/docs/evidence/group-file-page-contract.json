@@ -6,6 +6,12 @@
       "arch": "arm64",
       "clientVersion": "7.0.2-53644",
       "wrapperSha256": "fbc8ad9b328d05e16784d76b0181dda894c17001179dbf8c0d5dd00dc6271358"
+    },
+    {
+      "platform": "linux",
+      "arch": "arm64",
+      "clientVersion": "3.2.32-52194",
+      "wrapperSha256": "c302361f52494de257044e912e43ed244bb29ee59f59345d25a8959327828337"
     }
   ],
   "nativeExecuted": false,
@@ -93,7 +99,8 @@
       "callback-producer/route-next/bounded-query-readiness.json": "36f3015e0ff8b9b5aecf561b86791d40a4ce607c2e657db35931470551287d84",
       "pc-caller/page-caller-contract.json": "7914bfa2c1131b332c134eb23b7f971da880af3a1389e15d831252a1ba67a658",
       "bounded-page-owner-design.json": "d33776707065a3dc42d9b25d6848046719cbb1f85400757aa8b7b3b53e34cb73"
-    }
+    },
+    "profile": "darwin-arm64/7.0.2-53644"
   },
   "sdkPolicy": {
     "pageCompletion": "First validated callback strictly matching a newly reserved token; isEnd=false is legal page success. This is explicit SDK page policy supported by the pinned readable PC caller, not a native one-callback guarantee.",
@@ -116,9 +123,13 @@
     "projection": "Preserve all 11 folder and 22 file fields including local paths; uint64 stays decimal string, independent carriers and optional strings stay null. No type/transfer/time-unit interpretations."
   },
   "limits": [
-    "Only this exact macOS ARM64 binary is enabled; other five defaults require independent binding and callback evidence.",
+    "Only the exact measured macOS ARM64 and Linux ARM64 binaries are enabled; the other four defaults require independent binding, token and callback evidence.",
     "Static binary evidence and deterministic installed consumer checks do not prove real-account group-file results.",
+    "Linux ARM64 FE4F-present responses select Search; only the absent branch selects FileInfo, subject to downstream completion. Missing FileInfo fails at the SDK deadline.",
     "Nonzero core completion can produce no callback, so bounded timeout is a failed read, never an empty success.",
     "Cancellation stops SDK waits or queued work; it cannot undo an issued native request."
-  ]
+  ],
+  "platformProofs": {
+    "linux-arm64/3.2.32-52194": "group-file-page-linux-arm64-contract.json"
+  }
 }

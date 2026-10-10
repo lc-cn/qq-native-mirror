@@ -1,0 +1,1110 @@
+{
+  "schemaVersion": 1,
+  "profile": {
+    "platform": "linux",
+    "arch": "arm64",
+    "clientVersion": "3.2.32-52194",
+    "wrapperSha256": "c302361f52494de257044e912e43ed244bb29ee59f59345d25a8959327828337"
+  },
+  "nativeExecuted": false,
+  "accountUsed": false,
+  "proofScope": "Pinned ELF static binding, complete field conversion, token route and same-Session listener identity; conditional FileInfo delivery.",
+  "sharedContract": "group-file-page-contract.json",
+  "independentReplay": {
+    "actualCompleteFunctionsMatched": 97,
+    "actualInstructionsMatched": 20140,
+    "actualFieldConversionsMatched": 45,
+    "actualImportsMatched": 13,
+    "correctedSupplierWordsMatched": 21,
+    "conditionWordsMatched": 18,
+    "extraRelocationsMatched": 6
+  },
+  "routes": [
+    {
+      "owner": "binding",
+      "path": [
+        "descriptor 0x8745c38/0x8745c48",
+        "0x16a5130",
+        "0x16ac384",
+        "RichMedia core +0xc0",
+        "0xce222c",
+        "inner core +0xa8",
+        "0x249b280"
+      ],
+      "fact": "Two arguments; uint64 decimal group, typed params; synchronous uint32 token including zero."
+    },
+    {
+      "owner": "token",
+      "path": [
+        "atomic counter +0x260",
+        "closure +0x28",
+        "0x24b4a38",
+        "0x269c3e4",
+        "closure +0x38",
+        "0x26a2ffc",
+        "PB selector 64915",
+        "0x269fa94",
+        "0x24ef238",
+        "0x24f89f0",
+        "0x24f8bb8"
+      ],
+      "fact": "Normal completion retains the original response PB pair and adds the request token; registry member pointer offset 0x30/flag 1."
+    },
+    {
+      "owner": "registry",
+      "path": [
+        "0xeb2878",
+        "adapter key +0x450",
+        "0xecc964",
+        "0xed0a94",
+        "0xed0cb0",
+        "registry 0x89f72f0",
+        "secondary address point 0x86eb818 +0x30",
+        "0xebf7c4",
+        "0xebeb70"
+      ],
+      "fact": "The raw signed branch targets 0xebeb70, not neighboring TransferInfo function 0xebf7cc."
+    },
+    {
+      "owner": "callback classification",
+      "path": [
+        "0xebebd8 selector 65103 (0xfe4f)",
+        "0xebebdc virtual +0x130",
+        "0xebebe0 bit-zero branch to 0xebed40",
+        "FileInfo closure address point 0x86ebfc0",
+        "0xec946c",
+        "0xcfc8dc",
+        "adapter listener map +0x390",
+        "Msg +0xd8",
+        "0x1a87410",
+        "0x1a95fb4",
+        "0x1aa2180"
+      ],
+      "fact": "Only the FE4F-absent branch reaches FileInfo. FE4F-present uses decoder 0xcfd540 and Msg +0xe0 for search. No server branch guarantee."
+    },
+    {
+      "owner": "context identity",
+      "path": [
+        "Session core string +0x48",
+        "RichMedia constructor",
+        "0x24930a8",
+        "0x24c2308",
+        "0x24c23ec",
+        "0x269b7f4",
+        "GroupFileMgr context +0xe0",
+        "Session getter 0x31b9b28",
+        "adapter key +0x450"
+      ],
+      "fact": "The registry key and producer context derive from the same Session core string, not merely identical layout offsets."
+    },
+    {
+      "owner": "listener instance",
+      "path": [
+        "Session adapter pair +0x4c0",
+        "0x8e7794 caller stack +0x20",
+        "0x904fc4 frame +0x80",
+        "0x905004 caller stack +0x20",
+        "0x905274 frame +0x70",
+        "0x9052f4 caller stack +0x20",
+        "0xd884c4 frame +0x80",
+        "0xd88794 pair copy",
+        "0xd887d0 caller stack +0x18",
+        "0xd88b9c frame +0x68",
+        "0xd88bc4 pair copy",
+        "virtual +0x968",
+        "0xd89364",
+        "Msg weak adapter +0xe0/+0xe8"
+      ],
+      "fact": "Stack frame deltas preserve the actual Session-owned adapter through Msg construction."
+    },
+    {
+      "owner": "Node installation",
+      "path": [
+        "getMsgService descriptor 0x8754640/0x8754650",
+        "0x17aca60",
+        "Session +0x170",
+        "0x8e76a4",
+        "Session cached Msg +0x530/+0x538",
+        "0x15cae10 napi_wrap carrier",
+        "addKernelMsgListener 0x159263c",
+        "Node callback converter 0x15fd1bc",
+        "Node Msg ctor 0x1a81b00 address point 0x876baf8",
+        "Msg +0x10 -> 0xd8a644",
+        "weak adapter +0xe0/+0xe8",
+        "0xeb87d4",
+        "0xece778",
+        "adapter map +0x390"
+      ],
+      "fact": "Node registers its FileInfo listener in the same adapter instance reached by the response route."
+    }
+  ],
+  "supplierFrameProof": {
+    "904f74": {
+      "frameAllocation": 208,
+      "framePointerOffset": 112,
+      "callerStack": 32,
+      "calleeFrameOffset": 128
+    },
+    "905150": {
+      "frameAllocation": 304,
+      "framePointerOffset": 224,
+      "callerStack": 32,
+      "calleeFrameOffset": 112
+    },
+    "d8848c": {
+      "frameAllocation": 448,
+      "framePointerOffset": 352,
+      "callerStack": 32,
+      "calleeFrameOffset": 128
+    },
+    "d88af4": {
+      "frameAllocationBeforeFP": 80,
+      "callerStack": 24,
+      "calleeFrameOffset": 104
+    }
+  },
+  "fieldProofs": [
+    {
+      "propertyAt": "0x1aa21d0",
+      "literalVA": "0x676f734",
+      "name": "retCode",
+      "scalarCreate": {
+        "at": "0x1aa21bc",
+        "target": "0x83a5c0",
+        "kind": "int32"
+      }
+    },
+    {
+      "propertyAt": "0x1aa2214",
+      "literalVA": "0x68393d8",
+      "name": "retMsg",
+      "scalarCreate": {
+        "at": "0x1aa21fc",
+        "target": "0x83d0f0",
+        "kind": "string"
+      }
+    },
+    {
+      "propertyAt": "0x1aa2258",
+      "literalVA": "0x68393df",
+      "name": "clientWording",
+      "scalarCreate": {
+        "at": "0x1aa2240",
+        "target": "0x83d0f0",
+        "kind": "string"
+      }
+    },
+    {
+      "propertyAt": "0x1aa2284",
+      "literalVA": "0x67b3216",
+      "name": "isEnd",
+      "scalarCreate": {
+        "at": "0x1aa226c",
+        "target": "0x83b880",
+        "kind": "boolean"
+      }
+    },
+    {
+      "propertyAt": "0x1aa231c",
+      "literalVA": "0x6b25f46",
+      "name": "item",
+      "scalarCreate": null
+    },
+    {
+      "propertyAt": "0x1aa2348",
+      "literalVA": "0x6880438",
+      "name": "allFileCount",
+      "scalarCreate": {
+        "at": "0x1aa2330",
+        "target": "0x83cad0",
+        "kind": "uint32"
+      }
+    },
+    {
+      "propertyAt": "0x1aa2374",
+      "literalVA": "0x687d42b",
+      "name": "nextIndex",
+      "scalarCreate": {
+        "at": "0x1aa235c",
+        "target": "0x83cad0",
+        "kind": "uint32"
+      }
+    },
+    {
+      "propertyAt": "0x1aa23a0",
+      "literalVA": "0x684b1a6",
+      "name": "reqId",
+      "scalarCreate": {
+        "at": "0x1aa2388",
+        "target": "0x83cad0",
+        "kind": "uint32"
+      }
+    },
+    {
+      "propertyAt": "0x19dcb88",
+      "literalVA": "0x67a8127",
+      "name": "peerId",
+      "scalarCreate": {
+        "at": "0x19dcb64",
+        "target": "0x83d0f0",
+        "kind": "string"
+      }
+    },
+    {
+      "propertyAt": "0x19dcbb4",
+      "literalVA": "0x6ef23df",
+      "name": "type",
+      "scalarCreate": {
+        "at": "0x19dcb9c",
+        "target": "0x83a5c0",
+        "kind": "int32"
+      }
+    },
+    {
+      "propertyAt": "0x19dcc74",
+      "literalVA": "0x68753ba",
+      "name": "folderInfo",
+      "scalarCreate": null
+    },
+    {
+      "propertyAt": "0x19dccc8",
+      "literalVA": "0x674c46f",
+      "name": "fileInfo",
+      "scalarCreate": null
+    },
+    {
+      "propertyAt": "0x19dcd90",
+      "literalVA": "0x67a7b28",
+      "name": "folderId",
+      "scalarCreate": {
+        "at": "0x19dcd78",
+        "target": "0x83d0f0",
+        "kind": "string"
+      }
+    },
+    {
+      "propertyAt": "0x19dcdd4",
+      "literalVA": "0x68750ac",
+      "name": "parentFolderId",
+      "scalarCreate": {
+        "at": "0x19dcdbc",
+        "target": "0x83d0f0",
+        "kind": "string"
+      }
+    },
+    {
+      "propertyAt": "0x19dce18",
+      "literalVA": "0x68753c5",
+      "name": "folderName",
+      "scalarCreate": {
+        "at": "0x19dce00",
+        "target": "0x83d0f0",
+        "kind": "string"
+      }
+    },
+    {
+      "propertyAt": "0x19dce44",
+      "literalVA": "0x67b87dc",
+      "name": "createTime",
+      "scalarCreate": {
+        "at": "0x19dce2c",
+        "target": "0x83cad0",
+        "kind": "uint32"
+      }
+    },
+    {
+      "propertyAt": "0x19dce70",
+      "literalVA": "0x67b87f3",
+      "name": "modifyTime",
+      "scalarCreate": {
+        "at": "0x19dce58",
+        "target": "0x83cad0",
+        "kind": "uint32"
+      }
+    },
+    {
+      "propertyAt": "0x19dced0",
+      "literalVA": "0x686c61d",
+      "name": "createUin",
+      "scalarCreate": {
+        "at": "0x19dcea8",
+        "target": "0x83d0f0",
+        "kind": "string"
+      }
+    },
+    {
+      "propertyAt": "0x19dcf14",
+      "literalVA": "0x682282b",
+      "name": "creatorName",
+      "scalarCreate": {
+        "at": "0x19dcefc",
+        "target": "0x83d0f0",
+        "kind": "string"
+      }
+    },
+    {
+      "propertyAt": "0x19dcf40",
+      "literalVA": "0x67c8dd3",
+      "name": "totalFileCount",
+      "scalarCreate": {
+        "at": "0x19dcf28",
+        "target": "0x83cad0",
+        "kind": "uint32"
+      }
+    },
+    {
+      "propertyAt": "0x19dcfa0",
+      "literalVA": "0x68753d0",
+      "name": "modifyUin",
+      "scalarCreate": {
+        "at": "0x19dcf78",
+        "target": "0x83d0f0",
+        "kind": "string"
+      }
+    },
+    {
+      "propertyAt": "0x19dcfe4",
+      "literalVA": "0x68753da",
+      "name": "modifyName",
+      "scalarCreate": {
+        "at": "0x19dcfcc",
+        "target": "0x83d0f0",
+        "kind": "string"
+      }
+    },
+    {
+      "propertyAt": "0x19dd044",
+      "literalVA": "0x6869f5b",
+      "name": "usedSpace",
+      "scalarCreate": {
+        "at": "0x19dd01c",
+        "target": "0x83d0f0",
+        "kind": "string"
+      }
+    },
+    {
+      "propertyAt": "0x19da124",
+      "literalVA": "0x67a883f",
+      "name": "fileModelId",
+      "scalarCreate": {
+        "at": "0x19da0fc",
+        "target": "0x83d0f0",
+        "kind": "string"
+      }
+    },
+    {
+      "propertyAt": "0x19da168",
+      "literalVA": "0x6f3fbaf",
+      "name": "fileId",
+      "scalarCreate": {
+        "at": "0x19da150",
+        "target": "0x83d0f0",
+        "kind": "string"
+      }
+    },
+    {
+      "propertyAt": "0x19da1ac",
+      "literalVA": "0x6ae0ed9",
+      "name": "fileName",
+      "scalarCreate": {
+        "at": "0x19da194",
+        "target": "0x83d0f0",
+        "kind": "string"
+      }
+    },
+    {
+      "propertyAt": "0x19da20c",
+      "literalVA": "0x67a73b1",
+      "name": "fileSize",
+      "scalarCreate": {
+        "at": "0x19da1e4",
+        "target": "0x83d0f0",
+        "kind": "string"
+      }
+    },
+    {
+      "propertyAt": "0x19da238",
+      "literalVA": "0x6f37a66",
+      "name": "busId",
+      "scalarCreate": {
+        "at": "0x19da220",
+        "target": "0x83cad0",
+        "kind": "uint32"
+      }
+    },
+    {
+      "propertyAt": "0x19da298",
+      "literalVA": "0x687508d",
+      "name": "uploadedSize",
+      "scalarCreate": {
+        "at": "0x19da270",
+        "target": "0x83d0f0",
+        "kind": "string"
+      }
+    },
+    {
+      "propertyAt": "0x19da2c4",
+      "literalVA": "0x67a5eec",
+      "name": "uploadTime",
+      "scalarCreate": {
+        "at": "0x19da2ac",
+        "target": "0x83cad0",
+        "kind": "uint32"
+      }
+    },
+    {
+      "propertyAt": "0x19da2f0",
+      "literalVA": "0x684b1d9",
+      "name": "deadTime",
+      "scalarCreate": {
+        "at": "0x19da2d8",
+        "target": "0x83cad0",
+        "kind": "uint32"
+      }
+    },
+    {
+      "propertyAt": "0x19da31c",
+      "literalVA": "0x67b87f3",
+      "name": "modifyTime",
+      "scalarCreate": {
+        "at": "0x19da304",
+        "target": "0x83cad0",
+        "kind": "uint32"
+      }
+    },
+    {
+      "propertyAt": "0x19da348",
+      "literalVA": "0x684b1e2",
+      "name": "downloadTimes",
+      "scalarCreate": {
+        "at": "0x19da330",
+        "target": "0x83cad0",
+        "kind": "uint32"
+      }
+    },
+    {
+      "propertyAt": "0x19da38c",
+      "literalVA": "0x6f378f9",
+      "name": "sha",
+      "scalarCreate": {
+        "at": "0x19da374",
+        "target": "0x83d0f0",
+        "kind": "string"
+      }
+    },
+    {
+      "propertyAt": "0x19da3d0",
+      "literalVA": "0x6f3791c",
+      "name": "sha3",
+      "scalarCreate": {
+        "at": "0x19da3b8",
+        "target": "0x83d0f0",
+        "kind": "string"
+      }
+    },
+    {
+      "propertyAt": "0x19da414",
+      "literalVA": "0x6b05a9d",
+      "name": "md5",
+      "scalarCreate": {
+        "at": "0x19da3fc",
+        "target": "0x83d0f0",
+        "kind": "string"
+      }
+    },
+    {
+      "propertyAt": "0x19da494",
+      "literalVA": "0x687509a",
+      "name": "uploaderLocalPath",
+      "scalarCreate": {
+        "at": "0x19da460",
+        "target": "0x83d0f0",
+        "kind": "string"
+      }
+    },
+    {
+      "propertyAt": "0x19da4d8",
+      "literalVA": "0x684b1b8",
+      "name": "uploaderName",
+      "scalarCreate": {
+        "at": "0x19da4c0",
+        "target": "0x83d0f0",
+        "kind": "string"
+      }
+    },
+    {
+      "propertyAt": "0x19da538",
+      "literalVA": "0x684b1ac",
+      "name": "uploaderUin",
+      "scalarCreate": {
+        "at": "0x19da510",
+        "target": "0x83d0f0",
+        "kind": "string"
+      }
+    },
+    {
+      "propertyAt": "0x19da5b8",
+      "literalVA": "0x68750ac",
+      "name": "parentFolderId",
+      "scalarCreate": {
+        "at": "0x19da584",
+        "target": "0x83d0f0",
+        "kind": "string"
+      }
+    },
+    {
+      "propertyAt": "0x19da5fc",
+      "literalVA": "0x67c8c52",
+      "name": "localPath",
+      "scalarCreate": {
+        "at": "0x19da5e4",
+        "target": "0x83d0f0",
+        "kind": "string"
+      }
+    },
+    {
+      "propertyAt": "0x19da628",
+      "literalVA": "0x68750bb",
+      "name": "transStatus",
+      "scalarCreate": {
+        "at": "0x19da610",
+        "target": "0x83cad0",
+        "kind": "uint32"
+      }
+    },
+    {
+      "propertyAt": "0x19da654",
+      "literalVA": "0x681d251",
+      "name": "transType",
+      "scalarCreate": {
+        "at": "0x19da63c",
+        "target": "0x83cad0",
+        "kind": "uint32"
+      }
+    },
+    {
+      "propertyAt": "0x19da6b4",
+      "literalVA": "0x67a6d60",
+      "name": "elementId",
+      "scalarCreate": {
+        "at": "0x19da68c",
+        "target": "0x83d0f0",
+        "kind": "string"
+      }
+    },
+    {
+      "propertyAt": "0x19da6e0",
+      "literalVA": "0x68750c7",
+      "name": "isFolder",
+      "scalarCreate": {
+        "at": "0x19da6c8",
+        "target": "0x83b880",
+        "kind": "boolean"
+      }
+    }
+  ],
+  "completeFunctionRanges": [
+    {
+      "start": "0x13f3b98",
+      "end": "0x13f3d60",
+      "bytesSha256": "758d2d4c6f0e6833eb7f2352bba84893e7565a39df57cd70bad7a4f3e1892fd4"
+    },
+    {
+      "start": "0x13f6d94",
+      "end": "0x13f735c",
+      "bytesSha256": "8fbd670b47ad2bd7c3817f87ef90e555ef08d68d86ebcf994412700350fcc046"
+    },
+    {
+      "start": "0x159263c",
+      "end": "0x1592878",
+      "bytesSha256": "4b06d693360768a6daf9db1a515ae4c570afbf4c5ac5281fb93ad258f3b446d9"
+    },
+    {
+      "start": "0x15cae10",
+      "end": "0x15caf54",
+      "bytesSha256": "0f376d39f78dac00fcc0ca3466d5000f510964a1d5cb258bc91cc9585a9ba939"
+    },
+    {
+      "start": "0x15fd1bc",
+      "end": "0x15fd2d8",
+      "bytesSha256": "64b9ea7d5a6eadde235a80894388df7945406d6b322488832ba1c10fe31a5c70"
+    },
+    {
+      "start": "0x16a5130",
+      "end": "0x16a5318",
+      "bytesSha256": "a36c8474a0331785a6b84654861e1574d953b60bb3f4fd7cb00c8dcd7d449be5"
+    },
+    {
+      "start": "0x16ac384",
+      "end": "0x16ac630",
+      "bytesSha256": "6a1e7c54725ae695af4157374f8fee815603788902a85b488cac49810cf449a7"
+    },
+    {
+      "start": "0x17aca60",
+      "end": "0x17acba8",
+      "bytesSha256": "bfd5a670828133697c4b099d5b976b8ed7250806891c932aba3232e0cc6e6d5f"
+    },
+    {
+      "start": "0x19da0a0",
+      "end": "0x19da730",
+      "bytesSha256": "3889646716c49d32fe2400eb8e9e63ba5d57c90f31de53a5aa44b6870633ccd5"
+    },
+    {
+      "start": "0x19dcb08",
+      "end": "0x19dcd2c",
+      "bytesSha256": "7c73e283a7ddda1422b8d18deb877a0078d6439afeae502aeff724363fb11022"
+    },
+    {
+      "start": "0x19dcd2c",
+      "end": "0x19dd084",
+      "bytesSha256": "43d3f15a7f63a371b5261dfb24debd868e181125ab138573d3e3f8ad1e257fac"
+    },
+    {
+      "start": "0x1a81b00",
+      "end": "0x1a81b60",
+      "bytesSha256": "cf1aa7617c169661898c4e111f3da7d928200689128d0444b94ff3bcc7c8bd16"
+    },
+    {
+      "start": "0x1a87410",
+      "end": "0x1a877ec",
+      "bytesSha256": "f3b77d5e567eac3d48a2f0eab9e4dbebc2297bb2e95138e742b743c02b7ca51a"
+    },
+    {
+      "start": "0x1a87d30",
+      "end": "0x1a8810c",
+      "bytesSha256": "14530967dcd88892ef2ff1a7bc3354d637437ac847fd7b3958e18b4c6b2b57fb"
+    },
+    {
+      "start": "0x1a95f80",
+      "end": "0x1a95fb4",
+      "bytesSha256": "d8e308faec50fcb1f92517d7ea9046dd7d0d529241cd7973fb8c43506d63ae6a"
+    },
+    {
+      "start": "0x1a95fb4",
+      "end": "0x1a96128",
+      "bytesSha256": "74b7f13e8785b683ab763169efb0bcc5b3b7f1b5846a97ab7f66e0af47f40762"
+    },
+    {
+      "start": "0x1a961c4",
+      "end": "0x1a961cc",
+      "bytesSha256": "ef7b131e45cbd0f4bd0f8fbb8fa1a7b0b257dc29924bdd63dcdabe9db45eea2c"
+    },
+    {
+      "start": "0x1a968b0",
+      "end": "0x1a96a24",
+      "bytesSha256": "172840b34f2554b5c37c28c852f31dc404404118846dba9992fb8ad6429282f8"
+    },
+    {
+      "start": "0x1a96ac0",
+      "end": "0x1a96ac8",
+      "bytesSha256": "ef7b131e45cbd0f4bd0f8fbb8fa1a7b0b257dc29924bdd63dcdabe9db45eea2c"
+    },
+    {
+      "start": "0x1a9fb3c",
+      "end": "0x1a9fc70",
+      "bytesSha256": "8a974e8c9aa374b61806fa5202451b52544599a8fed57c0568aca0a695f9d81e"
+    },
+    {
+      "start": "0x1aa2180",
+      "end": "0x1aa23c0",
+      "bytesSha256": "ba4da3bfef124ea3f8083ea92c2383885a5e3c8baa937f32efaa5a4b58f211b5"
+    },
+    {
+      "start": "0x2492598",
+      "end": "0x2493978",
+      "bytesSha256": "d235ad40cec669fc07a34fc50eeb4a3a3a9b6ec05aa555db84ab93f5853aefcc"
+    },
+    {
+      "start": "0x249b280",
+      "end": "0x249b44c",
+      "bytesSha256": "04c88b4e66aa8f33fb58d6f53f42a6b4e6e3bb9b07c2efe84fcafa1a49cde854"
+    },
+    {
+      "start": "0x249b4b4",
+      "end": "0x249b4bc",
+      "bytesSha256": "2d29c45cd23f8d881b0388f5f505ade5d36a4c6b1cffa3bcddb676638eecd6ae"
+    },
+    {
+      "start": "0x24b4a38",
+      "end": "0x24b4bf4",
+      "bytesSha256": "e62e3ce9c19a9fb96929f499c8bf0343ad3cee2aae2a26ef7674635200e8975c"
+    },
+    {
+      "start": "0x24c1538",
+      "end": "0x24c1670",
+      "bytesSha256": "ca27d66ff584e0ad62a6d0cf3c795e59d33d5cf4677c13b34d696dc7de00f43e"
+    },
+    {
+      "start": "0x24c2308",
+      "end": "0x24c23ec",
+      "bytesSha256": "baab1bf9032c8e2f228b33fe622d31c9fcd60f1d4641bd48c09e0a64676a1579"
+    },
+    {
+      "start": "0x24c23ec",
+      "end": "0x24c24b8",
+      "bytesSha256": "f95efdc9c7696c25994146392678c74976874891a980cf5abddd0856b5665706"
+    },
+    {
+      "start": "0x24ef238",
+      "end": "0x24ef360",
+      "bytesSha256": "7c4a7f61f7aae68c24bd4bbaa16bf05825e85eefea0ff2ec4af1557c7d9ff828"
+    },
+    {
+      "start": "0x24f89f0",
+      "end": "0x24f8bb8",
+      "bytesSha256": "6f9b31f4a6a64daec83c765780de48e261917ca034b2723543c97309e9afb93a"
+    },
+    {
+      "start": "0x24f8bb8",
+      "end": "0x24f8da8",
+      "bytesSha256": "68651bb1c753bea6884301fc6f54bf70284d823721737ffb8b07b0230ab5c6f7"
+    },
+    {
+      "start": "0x24fdfe4",
+      "end": "0x24fe208",
+      "bytesSha256": "771263cce0a58af384793c4e7986a0e7183be8e7f10e576bda730f8b6aa62c94"
+    },
+    {
+      "start": "0x269b7f4",
+      "end": "0x269b870",
+      "bytesSha256": "5dcc73ae950bca2ce328746286fcf5afaf676671dc26fa36259d5d550e10ed58"
+    },
+    {
+      "start": "0x269c3e4",
+      "end": "0x269c724",
+      "bytesSha256": "3bdea41ccf7c59f93bbd9a74dbb59a589b0a5c465d13a509d30a60b69d8804f6"
+    },
+    {
+      "start": "0x269fa94",
+      "end": "0x269ff5c",
+      "bytesSha256": "c3124dda48ba80bafe26baf2b07be49a35b491f93bf806e9fd6ee5d7051ff7e8"
+    },
+    {
+      "start": "0x26a2ffc",
+      "end": "0x26a3220",
+      "bytesSha256": "d6381661286a11ec01661b66d1f572ffa5cd513e16c13586f114704ae1a1b16b"
+    },
+    {
+      "start": "0x26aade4",
+      "end": "0x26aaf14",
+      "bytesSha256": "1bbc5300016f12f998fa891c583ebb0bd7c570a894d3da1ef8d84a5625b7777a"
+    },
+    {
+      "start": "0x26af768",
+      "end": "0x26afa78",
+      "bytesSha256": "ae586ee513aa8a1f1e6d0047252a66e464c3adef1678293e6434bec0a59e2588"
+    },
+    {
+      "start": "0x26afd68",
+      "end": "0x26aff58",
+      "bytesSha256": "ddd95448dd726237bc4378fa37f2864d70ada011e552f3a47303aa1524ccc9b3"
+    },
+    {
+      "start": "0x31b9b28",
+      "end": "0x31b9b34",
+      "bytesSha256": "a92c30d74b430baf3bd7e3fb232a6e504b1fc283d867e2ad07e1d3d8e96bea08"
+    },
+    {
+      "start": "0x493f914",
+      "end": "0x493f970",
+      "bytesSha256": "eec908e399a70fe3cec1348714941bd8d8a71cf0394d7567ce51f2f8fb95fe47"
+    },
+    {
+      "start": "0x493f970",
+      "end": "0x493f9d4",
+      "bytesSha256": "17325500e72336c624d87a6ac37a5b48ba265f31f27fd8ffff939a64f7f012e0"
+    },
+    {
+      "start": "0x493fad8",
+      "end": "0x493fbb8",
+      "bytesSha256": "395561c3e16762f7803b3c407b2c6bb68db6b14d729417e857790769b2af43b1"
+    },
+    {
+      "start": "0x493fc98",
+      "end": "0x493fd78",
+      "bytesSha256": "8626c8cde7388633e30859846bed441f230cc798ff42ec2414fc3aa1e5e786e8"
+    },
+    {
+      "start": "0x665d5a0",
+      "end": "0x665d5d0",
+      "bytesSha256": "562da2297d3d9c8af09a816966987582aeb1ab9e21a84080a182430f8b847570"
+    },
+    {
+      "start": "0x84b418",
+      "end": "0x84b500",
+      "bytesSha256": "04526e001669740d4acabffcfc1e5628018e3c0940ebc5f6a8c8a34a371ccee2"
+    },
+    {
+      "start": "0x8c58d8",
+      "end": "0x8c8e18",
+      "bytesSha256": "2d8ec015abef0150eb24cb835a980348ed8e981fbc3e6707295b82e2fc70dbec"
+    },
+    {
+      "start": "0x8cb304",
+      "end": "0x8cb33c",
+      "bytesSha256": "48d600292f9fbf35ddf7fa9b92fe1568c1b637591b2bc2d31551e6ce96002d44"
+    },
+    {
+      "start": "0x8d234c",
+      "end": "0x8d2468",
+      "bytesSha256": "e908abdbf896a15e8acffada150c6594456b2cd2be5647ab8a84b14a8c755107"
+    },
+    {
+      "start": "0x8dc35c",
+      "end": "0x8dd484",
+      "bytesSha256": "54b7919ae1504d6997b58363ce0e3f2fd48741863496e41d37ea701f8e58cd18"
+    },
+    {
+      "start": "0x8df158",
+      "end": "0x8dfadc",
+      "bytesSha256": "7abd31e1366c8f2610eb507019abeb4381256c10e0f24aa487a55b483530623c"
+    },
+    {
+      "start": "0x8e08b4",
+      "end": "0x8e2cc8",
+      "bytesSha256": "d1025c15ce89c26b26ea521d7453e4c193885dbb912ba9b8961fb42a3e0c3957"
+    },
+    {
+      "start": "0x8e5018",
+      "end": "0x8e5028",
+      "bytesSha256": "c7e1c665ce29d4322dcdf84e65f874b083b0768118000ce16d521d16fed62681"
+    },
+    {
+      "start": "0x8e5390",
+      "end": "0x8e540c",
+      "bytesSha256": "81c84441695633674d8b6f56e665d8cbdc55413fa40f8bf43c9be8c9a87439b5"
+    },
+    {
+      "start": "0x8e76a4",
+      "end": "0x8e7c9c",
+      "bytesSha256": "25641f7b4a674296954b196f59839985c4d964f58f64e7179c86245d7aaf8d8e"
+    },
+    {
+      "start": "0x8e8df8",
+      "end": "0x8e8fc8",
+      "bytesSha256": "ce0356afd66e9c098081bb75b00cb50238453432eea74cf4888114f2438eb772"
+    },
+    {
+      "start": "0x8ee86c",
+      "end": "0x8eeaa8",
+      "bytesSha256": "69683f908d7cbc7c83eecc4383818d06949507fea9833236c8861c347aa0d4d2"
+    },
+    {
+      "start": "0x90160c",
+      "end": "0x901720",
+      "bytesSha256": "d3c5a5f4d92aa77b9b785daf61d3c4006fd71d11cda16bbd5efb0d2ef9a2eaf9"
+    },
+    {
+      "start": "0x901a6c",
+      "end": "0x901b9c",
+      "bytesSha256": "d541d177117cb46fa7d3f79e58a7abf8141ee49a2256c139b4bd46d585980050"
+    },
+    {
+      "start": "0x901bec",
+      "end": "0x901cc4",
+      "bytesSha256": "27fe7cd201f13d91b69449563dbba9721cae42e6e32f084c840a9ad844ce9ec7"
+    },
+    {
+      "start": "0x904f74",
+      "end": "0x905100",
+      "bytesSha256": "001e50b72214ef8aaf6ff944f838372a0b39a9c2433089a241062a4e60cf96f9"
+    },
+    {
+      "start": "0x905150",
+      "end": "0x905494",
+      "bytesSha256": "8d9bf0985741cd1f9b666564175feaa196dda2cb03125560ad3005f62b67e9ab"
+    },
+    {
+      "start": "0x907464",
+      "end": "0x907594",
+      "bytesSha256": "16920a6e8ac9ed5e489a26ac507704b7f0143513541048d07baa88ab900c3730"
+    },
+    {
+      "start": "0x907594",
+      "end": "0x90766c",
+      "bytesSha256": "db0c5fccf55cc7404e181e4bff3c448fe72b34fff5f145a59744b3e29ebc852e"
+    },
+    {
+      "start": "0xcdd7ac",
+      "end": "0xcdd8a8",
+      "bytesSha256": "2ff3d64ff75b1ab0ec951223d9510be73f53af756f5b2ebb565808cc5f5d5c77"
+    },
+    {
+      "start": "0xce222c",
+      "end": "0xce2548",
+      "bytesSha256": "a0b50238cdd10f7ea3fb2ccfae6f4e5140d9d4e5f56b7840bad35df9dfa60ff4"
+    },
+    {
+      "start": "0xcfc8dc",
+      "end": "0xcfcc4c",
+      "bytesSha256": "e80f874a98b99553e9d828dd681afac4779ab7bf2bffac28d1e4394bbb9a0588"
+    },
+    {
+      "start": "0xcfd540",
+      "end": "0xcfdc3c",
+      "bytesSha256": "2ffe61dcebe8740070712a064f90e270ab29407866a66d31df3daf11496b5bed"
+    },
+    {
+      "start": "0xcfe66c",
+      "end": "0xcfe790",
+      "bytesSha256": "181693a5e12f4f1c452adbec2f221ee5a8179fe8243babf3ff40bce8e70add29"
+    },
+    {
+      "start": "0xcfe790",
+      "end": "0xcfe9e8",
+      "bytesSha256": "0220f5b22b660906034787196f58207e54683a0d185c5d8bcb23150919dd0908"
+    },
+    {
+      "start": "0xd8848c",
+      "end": "0xd88af4",
+      "bytesSha256": "0b5cd2f638dd797589ab7e981ed81fa76ba76b8a55f560cbfa1e25def5595076"
+    },
+    {
+      "start": "0xd88af4",
+      "end": "0xd891f4",
+      "bytesSha256": "1d41c9669eba197454d012cde11546dbfdcf561d70a18dc9e07cc40558a3628c"
+    },
+    {
+      "start": "0xd891f4",
+      "end": "0xd892ac",
+      "bytesSha256": "b07453e11eaa226a453577976817cca1949d5fa5209061b10ba2fe503f1f1267"
+    },
+    {
+      "start": "0xd89364",
+      "end": "0xd89418",
+      "bytesSha256": "160c7b4c8cae2e5a245419d5201e6a930be9100ee2212c4896b5c9e0a2eadb9e"
+    },
+    {
+      "start": "0xd8a644",
+      "end": "0xd8a7dc",
+      "bytesSha256": "c7503e55e1f2b6e1ca362230aac29314cdf596d445dd45b926d50d58d4e9d7fc"
+    },
+    {
+      "start": "0xeb2428",
+      "end": "0xeb2520",
+      "bytesSha256": "5806ebe3229e53fed5492db9b6f751ea1baebed1dca3bc36b4365c119e7cb017"
+    },
+    {
+      "start": "0xeb2520",
+      "end": "0xeb26ac",
+      "bytesSha256": "a9c440a11c395e711a7d03fd15ea5ab893ac3f78c16bb801e04b181f315c9410"
+    },
+    {
+      "start": "0xeb26ac",
+      "end": "0xeb26b4",
+      "bytesSha256": "b6a03c978fbce09f81070f30f0354539682c18557e877a427d759439c5689f02"
+    },
+    {
+      "start": "0xeb26b4",
+      "end": "0xeb26bc",
+      "bytesSha256": "3e59047bbd0f572d6203ea4b830d67041c766cbb97b229f1f627ed69a0089bfe"
+    },
+    {
+      "start": "0xeb2820",
+      "end": "0xeb2878",
+      "bytesSha256": "1090bdcd5fb64b6f9497529cc4eb0425bd3627e1e7adc129bf0f71ce1a04dab7"
+    },
+    {
+      "start": "0xeb2878",
+      "end": "0xeb2fd4",
+      "bytesSha256": "ebc5cfa64435566abffc7a64bf5b475a16cb45c4c77dd44be4b46d04563b894f"
+    },
+    {
+      "start": "0xeb3164",
+      "end": "0xeb32e4",
+      "bytesSha256": "d9cf06eebc805f70626dfa4b36a78997bbcc860394659ee0dd3c573bff7fbd2c"
+    },
+    {
+      "start": "0xeb32e4",
+      "end": "0xeb34b0",
+      "bytesSha256": "91b036e4e538c86acb340216ea4c728858732b01876a9d76842885763c5188df"
+    },
+    {
+      "start": "0xeb34b8",
+      "end": "0xeb35ac",
+      "bytesSha256": "29361777413582dd8dd050fe4a073ff8827d0125418fd9333729735efb2881fe"
+    },
+    {
+      "start": "0xeb3910",
+      "end": "0xeb3918",
+      "bytesSha256": "56ff093594ed1ecf1cbc90e3cb3a288f136fcf8b44111ea69e44b67d9736d582"
+    },
+    {
+      "start": "0xeb400c",
+      "end": "0xeb41fc",
+      "bytesSha256": "bc05cefddc128ec833800f228506d9f7b91b571ba45b0ea73dc4a45348de9586"
+    },
+    {
+      "start": "0xeb87d4",
+      "end": "0xeb8824",
+      "bytesSha256": "b38b9aa501f7f17e17979856ccff665db5892143747902a166e998765581061b"
+    },
+    {
+      "start": "0xeb8824",
+      "end": "0xeb88b4",
+      "bytesSha256": "03f51677adc6aa6975238a1c8f50296cb9fc0a5cccd6fcc62ba4885daa088d45"
+    },
+    {
+      "start": "0xebeb70",
+      "end": "0xebf75c",
+      "bytesSha256": "c9e908a934cadb687e8fd4efe79f717260c6d2059d3ea47149c326254a4a29f8"
+    },
+    {
+      "start": "0xebf7c4",
+      "end": "0xebf7cc",
+      "bytesSha256": "d72f5854d11b443081f713932901630a9d137653f8921482983647cdf006743c"
+    },
+    {
+      "start": "0xebf7cc",
+      "end": "0xebfaec",
+      "bytesSha256": "e173158f365bc18f81c9fb79e0b7752f7cebce16cf9d6d388d2b6b91e1b9989d"
+    },
+    {
+      "start": "0xec946c",
+      "end": "0xec98e4",
+      "bytesSha256": "1e707d3a3201fb78e69bd5cf77d413941e14b4b720502d9538107ed8660e80e4"
+    },
+    {
+      "start": "0xecc964",
+      "end": "0xeccaa4",
+      "bytesSha256": "08c2ae4e0c4c636007043518f54c26eab673274b72d0546cd6b76fe0b02cb388"
+    },
+    {
+      "start": "0xece778",
+      "end": "0xece958",
+      "bytesSha256": "f4226447fd16baef7fd46b8090dc4695aa5f7608264593d5d3fac81c1d242df5"
+    },
+    {
+      "start": "0xed0a94",
+      "end": "0xed0cb0",
+      "bytesSha256": "25f50df05b509e4120eb086707e7f5d51f43e284ffb938c778b339f56b809e66"
+    },
+    {
+      "start": "0xed0cb0",
+      "end": "0xed0d8c",
+      "bytesSha256": "041b491ad4aebd5fa10ee8927644b7967f9110dec73fd2d63058aa21503ab688"
+    },
+    {
+      "start": "0xed3530",
+      "end": "0xed35f4",
+      "bytesSha256": "9028a645ff9b5033712bbe7a00ac8c74915748356b1347f86994c16521ef1f81"
+    }
+  ],
+  "frozenReceiptHashes": {
+    "conditional-route-final/facts-index.json": "32bae373bbdd8b91317ea6f4ff5cba8ef26e35f87ff57c33754fd094be85e7c6",
+    "parent-full-machine-replay.json": "8f4963f1f72d027610b8dad5ca3b040df06899967bbe465ca55ab438d67a3bf6",
+    "parent-final-conditional-route-review-v2.json": "278f3c606babeaecc488fc483937509af35d81208303b2e996657b18d5466010"
+  },
+  "sdkPolicy": "Grant only this measured profile the existing bounded page owner. Accept the first strictly correlated complete FileInfo callback; no retry, Search-to-FileInfo substitution or synthetic completion.",
+  "corrections": [
+    "The registry thunk branches to 0xebeb70; the adjacent 0xebf7cc TransferInfo function is not its target.",
+    "Caller adapter pointer is stored by 0xd887d0 STP at stack +0x18, not by 0xd887d4 STR at stack +0x0.",
+    "Earlier unconditional route-ready wording is superseded by explicit FE4F branch conditions."
+  ],
+  "limits": [
+    "Normal response presence of selector 65103 (FE4F) is not inferred from its local producer. FE4F-present dispatches Search; FE4F-absent selects FileInfo, still dependent on downstream completion.",
+    "Nonzero core completion, absent FileInfo or stalled downstream work must reject at the SDK deadline, never return an empty success.",
+    "Static route and controlled SDK consumer checks do not prove actual Linux group file results, account interoperability or signature authenticity.",
+    "SDK page defaults and budgets are policy, not newly inferred native enum, timestamp or field semantics."
+  ]
+}

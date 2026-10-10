@@ -230,17 +230,30 @@ export async function verifyGroupFilePagesConsumer(packageRoot, options = {}) {
     clientVersion: '7.0.2-53644',
     wrapperSha256: 'fbc8ad9b328d05e16784d76b0181dda894c17001179dbf8c0d5dd00dc6271358',
   };
-  /** @param {import('../src/native/native-contracts.ts').NativeContractProfile|undefined} binaryProfile */
-  function composition(binaryProfile) {
+  const linuxArmProfile = {
+    platform: 'linux',
+    arch: 'arm64',
+    clientVersion: '3.2.32-52194',
+    wrapperSha256: 'c302361f52494de257044e912e43ed244bb29ee59f59345d25a8959327828337',
+  };
+  // Controlled replacements share the real worker-lifetime token ledger.
+  // Their token producer must keep advancing across account compositions too.
+  let nextCompositionToken = 1000;
+  /** @param {import('../src/native/native-contracts.ts').NativeContractProfile|undefined} binaryProfile
+   * @param {string} [version]
+   */
+  function composition(
+    binaryProfile,
+    version = binaryProfile?.clientVersion ?? profile.clientVersion,
+  ) {
     /** @type {{onGroupFileInfoUpdate(raw:unknown):void}|undefined} */ let listener;
-    let acquired = 0,
-      dispatched = 0;
+    let acquired = 0;
     const rich = {
       /** @param {string} group @param {import('../src/features/groups/group-file-input.ts').GroupFileListParams} params */
       getGroupFileList(group, params) {
         assert.equal(this, rich);
         assert.equal(group, groupId);
-        const token = 1000 + ++dispatched;
+        const token = ++nextCompositionToken;
         assert.ok(listener);
         listener.onGroupFileInfoUpdate(callback(token, params.startIndex === 7, 7));
         return token;
@@ -261,20 +274,50 @@ export async function verifyGroupFilePagesConsumer(packageRoot, options = {}) {
           return rich;
         },
       },
-      version: profile.clientVersion,
+      version,
       binaryProfile,
       events: { emit() {} },
     });
     return { services, acquired: () => acquired };
   }
-  const good = composition(profile);
+  for (const verifiedProfile of [profile, linuxArmProfile]) {
+    const good = composition(verifiedProfile);
+    try {
+      assert.deepEqual(
+        await good.services.invokeOperation('listGroupFiles', {
+          groupId,
+          options: { maxPages: 2 },
+        }),
+        [expected, expected],
+      );
+      assert.equal(good.acquired(), 2);
+    } finally {
+      good.services.close();
+    }
+  }
+  for (const changedProfile of [
+    { ...linuxArmProfile, wrapperSha256: profile.wrapperSha256 },
+    { ...linuxArmProfile, clientVersion: '3.2.31-51457' },
+    { ...linuxArmProfile, arch: 'x64' },
+  ]) {
+    const bad = composition(changedProfile);
+    try {
+      await assert.rejects(bad.services.invokeOperation('getGroupFilePage', { groupId }), {
+        code: 'unsupported-native-contract',
+      });
+      assert.equal(bad.acquired(), 0);
+    } finally {
+      bad.services.close();
+    }
+  }
+  const wrongVersion = composition(linuxArmProfile, profile.clientVersion);
   try {
-    assert.deepEqual(
-      await good.services.invokeOperation('listGroupFiles', { groupId, options: { maxPages: 2 } }),
-      [expected, expected],
-    );
+    await assert.rejects(wrongVersion.services.invokeOperation('getGroupFilePage', { groupId }), {
+      code: 'unsupported-native-contract',
+    });
+    assert.equal(wrongVersion.acquired(), 0);
   } finally {
-    good.services.close();
+    wrongVersion.services.close();
   }
   for (const [platform, arch] of [
     ['linux', 'x64'],

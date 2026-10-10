@@ -394,10 +394,15 @@ replacement. Duplicate tokens, token-budget exhaustion (100,000 requests) or an
 untrustworthy post-dispatch token retire this page lane until worker recreation.
 Core errors that produce no callback time out as failed reads, never empty success.
 
-Only the exact measured macOS ARM64 `7.0.2-53644` binary is enabled for this new
-operation. The other five default binaries remain gated pending their independent
-callback evidence. Static inspection and controlled source/installed consumers
-validate the SDK contract; no real account file list was read in these checks.
+The exact measured macOS ARM64 `7.0.2-53644` and Linux ARM64 `3.2.32-52194`
+binaries are enabled for this operation. The other four default binaries remain
+gated pending independent binding, token and callback evidence. The
+[Linux ARM64 record](evidence/group-file-page-linux-arm64-contract.json) proves a
+conditional FileInfo route: responses containing selector `65103` (`FE4F`) select
+a separate Search callback. The SDK never substitutes that callback for a page;
+missing FileInfo or downstream completion fails at the deadline. Static inspection
+and controlled source/installed consumers validate the SDK contract; no real
+account file list was read in these checks.
 This working-source addition has not been published to npm.
 
 ## Search a group by number
