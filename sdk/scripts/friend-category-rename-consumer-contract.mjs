@@ -21,7 +21,7 @@ export async function verifyFriendCategoryRenameConsumer(packageRoot) {
     b &&
     ['platform', 'arch', 'clientVersion', 'wrapperSha256'].every((key) => a[key] === b[key]);
   const isVerified = (profile) => verifiedProfiles.some((p) => matches(p, profile));
-  assert.equal(verifiedProfiles.length, 3);
+  assert.equal(verifiedProfiles.length, 4);
   assert.equal(profiles.length, 6);
   for (const profile of [
     ...profiles,

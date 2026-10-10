@@ -93,6 +93,7 @@ const binaryProfiles: readonly BinaryContract[] = [
     '63112ab9161e127f5f7e17998a7196e143808923fb54cbbf7b4e21426187a5f0',
     [
       'categoryCreation',
+      'categoryRenaming',
       'groupFileCount',
       'groupSearch',
       'groupFolderDeletion',

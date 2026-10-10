@@ -64,9 +64,9 @@ function fixture(
   return { services, calls, acquired: () => acquired };
 }
 
-test('rename enables only three exact binary profiles and preserves uint32, spelling, receiver and two arguments', async () => {
+test('rename enables only four exact binary profiles and preserves uint32, spelling, receiver and two arguments', async () => {
   assert.equal(profiles.length, 6);
-  assert.equal(verifiedProfiles.length, 3);
+  assert.equal(verifiedProfiles.length, 4);
   for (const profile of profiles) {
     assert.equal(supportsCategoryRenaming(profile, profile.clientVersion), verified(profile));
     const f = fixture(profile);

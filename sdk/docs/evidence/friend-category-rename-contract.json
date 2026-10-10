@@ -1,5 +1,5 @@
 {
-  "evidence": "actual ELF and Mach-O static instruction inspection; controlled source and installed consumer tests are separate",
+  "evidence": "actual ELF, Mach-O and PE static instruction inspection; controlled source and installed consumer tests are separate",
   "operation": "renameFriendCategory",
   "nativeMethod": "renameCategory",
   "arguments": [
@@ -85,11 +85,40 @@
         "normalResult": "result int32 at0xb232e8; errMsg UTF8 at0xb23368; resolve0xb233b0"
       },
       "abiRecheckSha256": "1fcc9f47e4a889b15c30eb6499b1cf0ebaf337c51f8b34971dbba1a5e1ac0f38"
+    },
+    {
+      "platform": "win32",
+      "arch": "x64",
+      "clientVersion": "9.9.33-52230",
+      "wrapperSha256": "63112ab9161e127f5f7e17998a7196e143808923fb54cbbf7b4e21426187a5f0",
+      "method": {
+        "descriptor": "0x184057f90",
+        "function": "0x1810168de",
+        "argc": "compare2 at0x181016989",
+        "argument0": "native unsigned32 via QQNT.dll napi_get_value_uint32 IAT0x18490f180; SDK forbids permissive string input",
+        "argument1": "native UTF8 string converter",
+        "nativeSlot": "0x181016a60 vtable+0xe0; Windows slot differs from Linux/Mac"
+      },
+      "sdkListArguments": [
+        "0",
+        true,
+        0
+      ],
+      "abiEvidenceSha256": "7bc90be6613eb247334bd96655d012131904264a9668bfe6a9dbfe7f3df525bf",
+      "abiRecheckSha256": "9ccffc562f21c791bb8ce88245a79f0c6e16500d3a5db3ef9a1c354a643d64d1",
+      "namespaceEvidenceSha256": "2f46992c46ed971f604764d3530ac6f584f1306329ffc8d423a76b490a20d4f4",
+      "namespaceScope": "V2 slot1a0=0x1800ac960; refresh normal completion retains locked instance, callback and source and delegates with refresh=false; this+c0 category rows copy first8 bytes and JS serializes row0 categoryId; rename slot0xe0 compares same cache row0 and emits selector61af",
+      "source0ReceiptSha256": "c35dd71fe0d0131e6b0f724951fdca5e1e0202d0d3076620c51f874a9af3b4e7",
+      "copyCompletionReceiptSha256": "9028ee5b2bcbd0cf56478384227fb7a8204351716ab7fdc66fb705053eb7130f",
+      "remoteCompletionReceiptSha256": "f880f6785b937d5f30e27e8d96ed07937bdff9d5903265265e6d5a6485973a07",
+      "callback": {
+        "dispatch": "0x1821c204c ->0x1821c215e inline/allocated deferred work ->0x1821c2283",
+        "normalResult": "result int32 via IAT0x18490f0c0; errMsg UTF8 via0x18490f0e0; named properties0x18490f1a8; resolve_deferred0x18490f198"
+      }
     }
   ],
   "unsupportedPlatforms": [
     "darwin-x64",
-    "win32-x64",
     "win32-arm64"
   ],
   "nativeExecuted": false,
