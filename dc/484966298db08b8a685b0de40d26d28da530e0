@@ -1,0 +1,37 @@
+sdk/docs/architecture.md
+  s_2104cc474f1ce5::t_5ef8f9bf7e98a3 493,500-507
+sdk/docs/development.md
+  s_2104cc474f1ce5::t_bd717e1e638b6d 64-70
+sdk/scripts/element-preparation-consumer-contract.mjs
+  s_2104cc474f1ce5::t_e37a88564f983a 119-227,230-231
+sdk/src/features/media/media-record.ts
+  s_2104cc474f1ce5::t_e9157880fc7243 7,31
+sdk/src/features/media/media-send.ts
+  s_2104cc474f1ce5::t_75a9a45aa97002 8,28,68,158
+sdk/src/features/messages/native-message-sender.ts
+  s_2104cc474f1ce5::t_58cd8fecfd8ccf 3-8,17
+sdk/src/features/messages/outbound-elements.ts
+  s_2104cc474f1ce5::t_9c877898fa8158 6,51
+sdk/src/runtime/media-contracts.ts
+  s_2104cc474f1ce5::t_35842847c6de62 1-17
+sdk/test/fixtures/domain-port-types.ts
+  s_2104cc474f1ce5::t_41c6e41d77d84d 277,279,305-341
+sdk/test/media-staging-port.test.ts
+  s_2104cc474f1ce5::t_052a89e19854d6 1-114
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "dc484966298db08b8a685b0de40d26d28da530e0",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
