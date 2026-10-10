@@ -1,34 +1,26 @@
 import { serializeKernelError } from './errors.ts';
 import { withCleanupFailure } from './runtime/cleanup.ts';
-import type { NativeContractProfile } from './native/native-contracts.ts';
 import { createNativeServices, type ServiceOperation } from './native-services.ts';
 import { normalizeLoginRequest } from './native/login-request.ts';
 import type { LoginRequest } from './types.ts';
-import type { VideoCodec } from './runtime/media-contracts.ts';
-import type { RecordCodec } from './runtime/media-contracts.ts';
+import { AccountSessionLifecycle } from './runtime/account-session-lifecycle.ts';
+import type {
+  AccountIdentity,
+  AccountSessionOptions,
+} from './runtime/account-session-lifecycle.ts';
 import { mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
-import { hostname, platform, release, type } from 'node:os';
+import { hostname, platform, release } from 'node:os';
 
 // QQ exports are proprietary and versioned; this boundary intentionally validates
 // the required methods at runtime rather than asserting a stable upstream API.
 import type { NativeObject } from './native/native-object.ts';
-export interface KernelOptions {
-  dataDir: string;
-  version: { clientVersion: string; appId: string; qua: string };
-  device?: { hostname?: string; osVersion?: string };
+export interface KernelOptions extends AccountSessionOptions {
   loginTimeoutMs?: number;
   rememberPassword?: boolean;
-  mediaTools?: { ffmpeg: string; ffprobe: string };
-  recordCodec?: RecordCodec;
-  videoCodec?: VideoCodec;
-  nativeContracts?: NativeContractProfile;
 }
 export type { LoginRequest } from './types.ts';
-export interface AccountIdentity {
-  uin: string;
-  uid: string;
-}
+export type { AccountIdentity } from './runtime/account-session-lifecycle.ts';
 
 function nativeAccountNumber(value: unknown): string | undefined {
   if (typeof value === 'string' && /^\d+$/.test(value)) return value;
@@ -47,9 +39,7 @@ export function createKernel(
   let accountSession: NativeObject | undefined;
   let sessionStrategy: 'startup' | 'direct' | undefined;
   let identity: AccountIdentity | undefined;
-  let nativeServices: ReturnType<typeof createNativeServices> | undefined;
-  let startingSession = false;
-  let nativeSessionCallbacks: NativeObject | undefined;
+  let ownedSession: AccountSessionLifecycle | undefined;
   let forcedOffline = false;
   let lastMsfStatus: { status: unknown; reason: unknown } | undefined;
   let accountMsfConnected = false;
@@ -78,12 +68,12 @@ export function createKernel(
     timeout = poll = undefined;
   };
   // Detach before teardown: reentrant native notifications cannot reuse a Session.
-  const detachServices = () => {
-    const services = nativeServices;
-    nativeServices = undefined;
+  const detachSession = () => {
+    const services = ownedSession;
+    ownedSession = undefined;
     return services;
   };
-  const cleanupFailure = (services: typeof nativeServices): { error: unknown } | undefined => {
+  const cleanupFailure = (services: typeof ownedSession): { error: unknown } | undefined => {
     try {
       services?.close();
     } catch (error) {
@@ -116,7 +106,7 @@ export function createKernel(
     clearTimers();
     const current = pending;
     pending = undefined;
-    const failure = cleanupFailure(detachServices());
+    const failure = cleanupFailure(detachSession());
     const result = failure ? withCleanupFailure(error, failure.error) : error;
     current?.reject(result);
     if (failure) reportCleanupFailure(failure.error, error);
@@ -132,7 +122,7 @@ export function createKernel(
     generation++;
     identity = undefined;
     requesting = false;
-    const services = detachServices();
+    const services = detachSession();
     clearTimers();
     const current = pending;
     pending = undefined;
@@ -166,235 +156,97 @@ export function createKernel(
       ),
       { get: (target, key) => Reflect.get(target, key) ?? auditedNoop(family, String(key)) },
     );
-  const startAccountSession = async (account: AccountIdentity) => {
-    if (closed || !pending || startingSession) return;
-    startingSession = true;
+  const startAccountSession = (account: AccountIdentity) => {
+    if (closed || !pending || ownedSession) return;
     const attempt = generation;
     const expectedPending = pending;
     const session = accountSession!;
     const active = () => !closed && generation === attempt && accountSession === session;
-    let nativeReady = false;
-    let startReturned = false;
-    const completeSession = () => {
-      if (!nativeReady || !startReturned || !active() || pending !== expectedPending) return;
-      try {
-        // Capture dependency reads in the original positional evaluation order.
-        const serviceVersion = options.version.clientVersion;
-        const serviceMediaTools = options.mediaTools;
-        const serviceRecordCodec = options.recordCodec;
-        const serviceUserId = account.uin;
-        const serviceUid = account.uid;
-        const serviceVideoCodec = options.videoCodec;
-        const serviceBinaryProfile = options.nativeContracts;
-        nativeServices = createNativeServices({
-          session: session,
-          version: serviceVersion,
-          events: {
-            emit: (event, payload) => {
-              if (!active()) return;
-              if (event === 'kicked') {
-                forcedOffline = true;
-                const kicked = payload as { info?: unknown; args?: unknown[] };
-                const info = transitionOffline({
-                  source: 'kicked',
-                  kind: 'forced',
-                  kickedInfo: kicked.info,
-                  args: kicked.args ?? [],
-                });
-                if (info) notify('kicked', info);
-                return;
-              }
-              notify(event, payload);
-            },
-          },
-          media: {
-            tools: serviceMediaTools,
-            recordCodec: serviceRecordCodec,
-            videoCodec: serviceVideoCodec,
-          },
-          identity: { userId: serviceUserId, uid: serviceUid },
-          auditCallback: (info) => {
-            if (active()) notify('native-callback', info);
-          },
-          binaryProfile: serviceBinaryProfile,
-        });
-      } catch (error) {
-        fail(error instanceof Error ? error : new Error(String(error)));
-        return;
-      }
-      if (!active() || pending !== expectedPending) {
-        const failure = cleanupFailure(detachServices());
-        if (failure) reportCleanupFailure(failure.error);
-        return;
-      }
-      identity = { ...account };
-      clearTimers();
-      const current = pending;
-      pending = undefined;
-      current.resolve({ ...account });
-      notify('login', { ...account });
-      if (active()) notify('ready', { ...account });
-    };
-    const scoped = (adapter: NativeObject) =>
-      new Proxy(adapter, {
-        get(target, key) {
-          const callback = Reflect.get(target, key);
-          return typeof callback === 'function'
-            ? (...args: unknown[]) => {
-                if (active()) return callback(...args);
-              }
-            : callback;
+    ownedSession = new AccountSessionLifecycle({
+      session,
+      account,
+      options,
+      machineGuid: () => invoke(loginService!, 'getMachineGuid'),
+      startNative: () =>
+        sessionStrategy === 'startup'
+          ? invoke(startupSession!, 'start')
+          : invoke(session, 'startNT', 0),
+      isCurrent: active,
+      isPending: () => pending === expectedPending,
+      createServices: createNativeServices,
+      depends: {
+        onMSFStatusChange: (status: unknown, reason: unknown, ...extra: unknown[]) => {
+          lastMsfStatus = { status, reason };
+          notify('msf-status', { status, reason, args: [status, reason, ...extra] });
+          if (status === 2) accountMsfConnected = true;
+          // During Session startup the first disconnected/unknown snapshot is
+          // not a transition from an established connection. Keep awaiting
+          // native readiness or a definitive failure within the login deadline.
+          if (
+            status === 1 &&
+            reason === 0 &&
+            pending &&
+            !identity &&
+            !accountMsfConnected &&
+            !forcedOffline
+          ) {
+            notify('diagnostic', { stage: 'session-initial-msf-disconnected' });
+            return;
+          }
+          // 1=DISCONNECTED; reason2=USERLOGINOUT, reason3=AUTO. AUTO is
+          // not a documented network-only reason and is never auto-restored.
+          if (status === 1)
+            transitionOffline({
+              source: 'msf',
+              kind: forcedOffline ? 'forced' : reason === 2 ? 'logout' : 'transport',
+              status,
+              reason,
+              args: [status, reason, ...extra],
+            });
         },
-      });
-    try {
-      const rawGuid = String(invoke(loginService!, 'getMachineGuid'));
-      if (!/^[a-fA-F0-9]{32}$/.test(rawGuid) && !/^[a-fA-F0-9-]{36}$/.test(rawGuid)) {
-        throw new Error('Invalid native machine GUID');
-      }
-      const guid =
-        rawGuid.length === 32
-          ? `${rawGuid.slice(0, 8)}-${rawGuid.slice(8, 12)}-${rawGuid.slice(12, 16)}-${rawGuid.slice(16, 20)}-${rawGuid.slice(20)}`
-          : rawGuid;
-      const downloadsDir = join(options.dataDir, 'downloads');
-      await mkdir(downloadsDir, { recursive: true });
-      if (!active() || pending !== expectedPending) return;
-      const nativePlatform = { win32: 3, darwin: 4, linux: 5 }[
-        platform() as 'win32' | 'darwin' | 'linux'
-      ];
-      const osVersion = options.device?.osVersion ?? release();
-      const hostName = options.device?.hostname ?? hostname();
-      nativeSessionCallbacks = scoped(
-        callbacks(
-          [
-            'onNTSessionCreate',
-            'onGProSessionCreate',
-            'onSessionInitComplete',
-            'onOpentelemetryInit',
-            'onUserOnlineResult',
-            'onGetSelfTinyId',
-          ],
-          {
-            onOpentelemetryInit: (result: { is_init: boolean }) => {
-              if (!active() || pending !== expectedPending) return;
-              if (!result?.is_init) {
-                fail(new Error('Native account session initialization failed'));
-                return;
-              }
-              nativeReady = true;
-              completeSession();
-            },
-          },
-        ),
-      );
-      invoke(
-        session,
-        'init',
-        {
-          selfUin: account.uin,
-          selfUid: account.uid,
-          desktopPathConfig: { account_path: options.dataDir },
-          clientVer: options.version.clientVersion,
-          a2: '',
-          d2: '',
-          d2Key: '',
-          machineId: '',
-          platform: nativePlatform,
-          platVer: osVersion,
-          appid: options.version.appId,
-          rdeliveryConfig: {
-            appKey: '',
-            systemId: 0,
-            appId: '',
-            logicEnvironment: '',
-            platform: nativePlatform,
-            language: '',
-            sdkVersion: '',
-            userId: '',
-            appVersion: '',
-            osVersion: '',
-            bundleId: '',
-            serverUrl: '',
-            fixedAfterHitKeys: [''],
-          },
-          defaultFileDownloadPath: downloadsDir,
-          deviceInfo: {
-            guid,
-            buildVer: options.version.clientVersion,
-            localId: 2052,
-            devName: hostName,
-            devType: type(),
-            vendorName: '',
-            osVer: osVersion,
-            vendorOsName: type(),
-            setMute: false,
-            vendorType: 0,
-          },
-          deviceConfig: '{"appearance":{"isSplitViewMode":true},"msg":{}}',
+        onMSFSsoError: (code: unknown, description: unknown, ...extra: unknown[]) => {
+          const details = {
+            ...(typeof code === 'number' || typeof code === 'string' ? { code } : {}),
+            ...(typeof description === 'string' ? { description } : {}),
+            args: [code, description, ...extra],
+          };
+          notify('msf-error', details);
+          transitionOffline({
+            source: 'msf',
+            kind: forcedOffline ? 'forced' : 'unknown',
+            ...details,
+          });
         },
-        scoped(
-          callbacks(
-            ['onMSFStatusChange', 'onMSFSsoError', 'getGroupCode'],
-            {
-              onMSFStatusChange: (status: unknown, reason: unknown, ...extra: unknown[]) => {
-                lastMsfStatus = { status, reason };
-                notify('msf-status', { status, reason, args: [status, reason, ...extra] });
-                if (status === 2) accountMsfConnected = true;
-                // During Session startup the first disconnected/unknown snapshot is
-                // not a transition from an established connection. Keep awaiting
-                // native readiness or a definitive failure within the login deadline.
-                if (
-                  status === 1 &&
-                  reason === 0 &&
-                  pending &&
-                  !identity &&
-                  !accountMsfConnected &&
-                  !forcedOffline
-                ) {
-                  notify('diagnostic', { stage: 'session-initial-msf-disconnected' });
-                  return;
-                }
-                // 1=DISCONNECTED; reason2=USERLOGINOUT, reason3=AUTO. AUTO is
-                // not a documented network-only reason and is never auto-restored.
-                if (status === 1)
-                  transitionOffline({
-                    source: 'msf',
-                    kind: forcedOffline ? 'forced' : reason === 2 ? 'logout' : 'transport',
-                    status,
-                    reason,
-                    args: [status, reason, ...extra],
-                  });
-              },
-              onMSFSsoError: (code: unknown, description: unknown, ...extra: unknown[]) => {
-                const details = {
-                  ...(typeof code === 'number' || typeof code === 'string' ? { code } : {}),
-                  ...(typeof description === 'string' ? { description } : {}),
-                  args: [code, description, ...extra],
-                };
-                notify('msf-error', details);
-                transitionOffline({
-                  source: 'msf',
-                  kind: forcedOffline ? 'forced' : 'unknown',
-                  ...details,
-                });
-              },
-            },
-            'Depends',
-          ),
-        ),
-        scoped(
-          callbacks(['dispatchRequest', 'dispatchCall', 'dispatchCallWithJson'], {}, 'Dispatcher'),
-        ),
-        nativeSessionCallbacks,
-      );
-      if (!active() || pending !== expectedPending) return;
-      if (sessionStrategy === 'startup') await invoke(startupSession!, 'start');
-      else await invoke(session, 'startNT', 0);
-      if (!active() || pending !== expectedPending) return;
-      startReturned = true;
-      completeSession();
-    } catch (error) {
-      if (active()) fail(error instanceof Error ? error : new Error(String(error)));
-    }
+      },
+      emit: (event, payload) => {
+        if (!active()) return;
+        if (event === 'kicked') {
+          forcedOffline = true;
+          const kicked = payload as { info?: unknown; args?: unknown[] };
+          const info = transitionOffline({
+            source: 'kicked',
+            kind: 'forced',
+            kickedInfo: kicked.info,
+            args: kicked.args ?? [],
+          });
+          if (info) notify('kicked', info);
+          return;
+        }
+        notify(event, payload);
+      },
+      ready: (account) => {
+        if (!active() || pending !== expectedPending) return;
+        identity = { ...account };
+        clearTimers();
+        pending = undefined;
+        expectedPending.resolve({ ...account });
+        notify('login', { ...account });
+        if (active()) notify('ready', { ...account });
+      },
+      failed: fail,
+      cleanupFailed: (error) => reportCleanupFailure(error),
+    });
+    ownedSession.begin();
   };
   const beginAuthentication = async () => {
     if (closed || !pending || !loginService || requesting) return;
@@ -618,7 +470,7 @@ export function createKernel(
         const accountIdentity = { uid: account.uid, uin };
         notify('authenticated', { ...accountIdentity });
         if (closed || generation !== attempt || pending !== authentication) return;
-        void startAccountSession(accountIdentity);
+        startAccountSession(accountIdentity);
       },
       onQRCodeSessionFailed: (type: number, code: number) =>
         fail(new Error(`QR login failed (${type}, ${code})`)),
@@ -633,7 +485,7 @@ export function createKernel(
         requesting = false;
         const current = pending;
         pending = undefined;
-        const services = detachServices();
+        const services = detachSession();
         const original = new Error('Native account logged out during login');
         const failure = cleanupFailure(services);
         current?.reject(failure ? withCleanupFailure(original, failure.error) : original);
@@ -669,7 +521,6 @@ export function createKernel(
         return { ...identity };
       }
       const attempt = ++generation;
-      startingSession = false;
       forcedOffline = false;
       lastMsfStatus = undefined;
       accountMsfConnected = false;
@@ -700,14 +551,14 @@ export function createKernel(
       payload: Record<string, unknown> = {},
     ): Promise<unknown> {
       if (closed) throw new Error('Client is closed');
-      if (!identity || !nativeServices) throw new Error('Client is not online');
-      return nativeServices.invokeOperation(method, payload);
+      if (!identity || !ownedSession) throw new Error('Client is not online');
+      return ownedSession.invokeOperation(method, payload);
     },
     async close(): Promise<void> {
       if (closed) return;
       closed = true;
       generation++;
-      const services = detachServices();
+      const services = detachSession();
       identity = undefined;
       requesting = false;
       clearTimers();

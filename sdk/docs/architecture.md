@@ -15,7 +15,9 @@ ClientLifecycle (account state and worker generations)
         |
 WorkerRpcChannel (request correlation and settlement)
         |
-worker.ts (IPC boundary) -> kernel.ts (native session composition)
+worker.ts (IPC boundary) -> kernel.ts (authentication composition)
+                                |
+                     AccountSessionLifecycle
                                 |
                    NativeServiceContext / native-services.ts
                                 |
@@ -77,6 +79,26 @@ provenance. Optional dependencies are named rather than encoded by argument
 positions. The record/video codecs and worker transport are actual substitution
 points used by platform implementations and controlled tests. Domain adapters use
 composition; a shared superclass would couple unrelated native contracts.
+
+`AccountSessionLifecycle` owns startup for one authenticated account, retained
+Session callbacks, the native-readiness/start-completion gates and the acquired
+business adapter. Its interface is `begin`, `invokeOperation` and `close`; it does
+not expose services, readiness flags or callback handles. A named context supplies
+the already selected native start strategy, business adapter factory and account
+transition hooks. The factory is a real variation point: production composes the
+native services; controlled tests supply an adapter through the same interface.
+The kernel retains login/restore selection, account matching, pending settlement,
+deadlines, generations and interpretation of offline notifications. Raw Session
+instances are prepared before LoginService initialization because native versions
+may depend on them; they are not a second business-service owner.
+
+The Session owner buffers early readiness until native start succeeds, and never
+falls back after a dispatched start fails. Close detaches its business adapter
+before fallible cleanup; retained callbacks cannot publish after close or generation
+replacement. A business adapter returned after reentrant close is released once,
+including its cleanup error, rather than retained as an online Session. Reentrant
+readiness during construction cannot allocate a second adapter. Native singleton
+threads still require worker exit: this module does not invent a Session destructor.
 
 `NativeServiceLifetime` owns the Session's dispatch guard, abort signal, native
 waits and resource ledger. Composition acquires modules in order and registers
