@@ -24,6 +24,18 @@
   fallible teardown. Offline/logout events still report the original transition.
   Cleanup diagnostics expose typed message/name/code records rather than native
   Error instances or arbitrary error properties.
+- Native connection callbacks, authentication polling and account startup dispatch
+  their background Promises through `runtime/worker-task`. Expected failures stay
+  with the authentication/account owner. An escaping rejection, such as a failure
+  observer throwing, schedules a fatal exception after current Promise settlements;
+  it does not notify that observer again or replay native work. Node's default
+  uncaught-exception handling exits the isolated worker even when unhandled-rejection
+  mode is `warn`. The parent retires account state and pending requests on exit,
+  and worker exit releases its locks. An already settled login result is unchanged;
+  delivery of that result over IPC before exit is not guaranteed. This terminal
+  path does not await asynchronous Session cleanup. Applications must not install
+  an exception handler in the worker that allows it to continue after fatal errors.
+  Default Node stderr is an internal crash diagnostic, not a sanitized public DTO.
 - Error serialization includes only explicitly supported data fields. It never
   coerces an unknown object or invokes error accessors; invalid fields, trapping
   proxies and inaccessible progress records cannot prevent an RPC failure reply.

@@ -82,6 +82,7 @@ const kernelDependencies = new Set([
   'src/runtime/authentication-attempt.ts',
   'src/runtime/kernel-environment.ts',
   'src/runtime/cleanup.ts',
+  'src/runtime/worker-task.ts',
 ]);
 const serviceRuntimeDependencies = new Set([
   'src/runtime/cleanup.ts',

@@ -45,7 +45,13 @@ file bytes, and retirement of each client. Its deterministic tests substitute th
 factory; the separate current-source workflow exercises real platform bundles
 without an account.
 
-Type-aware lint rejects unobserved Promises even when prefixed with `void`.
+Type-aware lint in TypeScript source and governed consumer tooling rejects
+unobserved Promises even when prefixed with `void`. Source gate fixtures replace
+an actual observed background invocation with bare and `void` invocations and
+require lint failure without executing either mutation. Isolated subprocess tests
+cover connection, authentication polling and Session startup observer failures;
+they preserve Node's default fatal exception handling and also test the `warn`
+unhandled-rejection setting. These tests use controlled services, never an account.
 Negative gate fixtures prove that missing preparation/action awaits, invalid
 receipts and missing video thumbnail guards fail without executing those
 fixtures. Other JavaScript acceptance helpers still receive syntax lint; strict

@@ -2,6 +2,7 @@ import { mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { hostname, platform, release, type } from 'node:os';
 import { normalizeKernelError } from '../errors.ts';
+import { observeWorkerTask } from './worker-task.ts';
 import type { NativeObject } from '../native/native-object.ts';
 import type { NativeContractProfile } from '../native/native-contracts.ts';
 import type { NativeServiceContext } from './native-service-context.ts';
@@ -125,7 +126,7 @@ export class AccountSessionLifecycle {
   begin(): void {
     if (this.#begun || !this.#pending()) return;
     this.#begun = true;
-    void this.#start();
+    observeWorkerTask(this.#start());
   }
 
   #complete(): void {

@@ -10,6 +10,7 @@ import type {
 } from './runtime/account-session-lifecycle.ts';
 import { createKernelEnvironment } from './runtime/kernel-environment.ts';
 import { AuthenticationAttempt } from './runtime/authentication-attempt.ts';
+import { observeWorkerTask } from './runtime/worker-task.ts';
 
 // QQ exports are proprietary and versioned; this boundary intentionally validates
 // the required methods at runtime rather than asserting a stable upstream API.
@@ -269,7 +270,7 @@ export function createKernel(
       );
       Object.assign(listener, {
         onLoginConnected: () => {
-          void pending?.onConnected();
+          if (pending) observeWorkerTask(pending.onConnected());
         },
         onLoginDisConnected: (...args: unknown[]) => {
           transitionOffline({

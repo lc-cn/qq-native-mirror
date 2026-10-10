@@ -1,4 +1,5 @@
 import { normalizeKernelError } from '../errors.ts';
+import { observeWorkerTask } from './worker-task.ts';
 import type { LoginRequest } from '../contracts/client.ts';
 import type { AccountIdentity } from './account-session-lifecycle.ts';
 import type { NativeObject } from '../native/native-object.ts';
@@ -85,7 +86,7 @@ export class AuthenticationAttempt {
       if (status === 3) {
         clearTimeout(this.#poll);
         this.#poll = setTimeout(() => {
-          void this.onConnected();
+          observeWorkerTask(this.onConnected());
         }, 500);
         return;
       }
