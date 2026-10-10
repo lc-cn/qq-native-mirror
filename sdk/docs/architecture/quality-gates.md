@@ -29,7 +29,7 @@ bundle and video-native CI. Runtime output is recreated from a clean `dist`
 directory so obsolete emitted modules cannot make a packaging check pass.
 
 `tsconfig.scripts.json` governs all TypeScript scripts, the shared face,
-group-search, group-essence, element-preparation and mirror consumers, and the module-reference
+group-search, group-essence, group-file page, element-preparation and mirror consumers, and the module-reference
 collector. Checked consumers bind dynamic installed imports to their source
 contracts. The face consumer returns a valid synthetic send receipt through the
 installed Client and controlled IPC. The group-search CLI action uses the same

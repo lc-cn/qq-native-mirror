@@ -224,6 +224,7 @@ export function dependencyViolation({ from, to, typeOnly }: SourceDependency): s
     [
       'src/features/groups/group-file-input.ts',
       'src/features/groups/group-file-operations.ts',
+      'src/features/groups/group-file-page-codec.ts',
     ].includes(to)
   )
     return 'Group-file capture and operation orchestration belong to the group-files owner.';

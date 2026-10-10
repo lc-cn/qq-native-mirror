@@ -15,6 +15,7 @@
     "scripts/group-search-consumer-contract.mjs",
     "scripts/element-preparation-consumer-contract.mjs",
     "scripts/mirror-consumer-contract.mjs",
-    "scripts/group-essence-consumer-contract.mjs"
+    "scripts/group-essence-consumer-contract.mjs",
+    "scripts/group-file-pages-consumer-contract.mjs"
   ]
 }

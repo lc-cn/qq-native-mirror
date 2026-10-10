@@ -2,6 +2,7 @@ import { createFriendCategoryMutations } from './features/contacts/friend-catego
 import { captureGroupSearch } from './features/groups/group-search-input.ts';
 import { createGroupSearch } from './features/groups/group-search.ts';
 import { createGroupFiles } from './features/groups/group-files.ts';
+import { GroupFilePageHistory } from './features/groups/group-file-pages.ts';
 import { captureDownloadPayload } from './features/media/download-input.ts';
 import { createMessageQueries } from './features/messages/message-queries.ts';
 import { withCleanupFailure } from './runtime/cleanup.ts';
@@ -13,6 +14,7 @@ import {
   supportsCategoryRenaming,
   supportsCategoryDeletion,
   supportsGroupFileCount,
+  supportsGroupFilePages,
   supportsGroupFolderDeletion,
   supportsGroupFolderCreation,
   supportsGroupSearch,
@@ -49,6 +51,10 @@ import type { NativeMessage } from './native/message-contracts.ts';
 export type { NativePeer, NativeMessage } from './native/message-contracts.ts';
 import type { ServiceOperation } from './runtime/operations.ts';
 export type { ServiceOperation } from './runtime/operations.ts';
+
+// Callback tokens belong to the native worker, including account replacements.
+// Only process recreation releases reservations; feature owners keep request state.
+const groupFilePageHistory = new GroupFilePageHistory();
 
 /** Compose account-scoped native operations from explicit runtime dependencies.
  * This context changes dependency injection only: native calls remain guarded,
@@ -153,7 +159,12 @@ export function createNativeServices(context: NativeServiceContext) {
     };
     const groupSystemEvents = own(createGroupSystemEvents(emit));
     const friendSystemEvents = own(createFriendSystemEvents(emit));
+    let receiveGroupFileInfo: (value: unknown) => void = () => {};
     listener('Msg', {
+      onGroupFileInfoUpdate: (value: unknown) => {
+        receiveGroupFileInfo(value);
+        dispatch('Msg/onGroupFileInfoUpdate', [value]);
+      },
       onRecvSysMsg: groupSystemEvents.onRecvSysMsg,
       onRecvMsg: (messages: NativeMessage[]) => {
         if (lifetime.closed) return;
@@ -312,32 +323,39 @@ export function createNativeServices(context: NativeServiceContext) {
       sendPrepared: (peer, elements, onDispatch) => sender.sendPrepared(peer, elements, onDispatch),
       defer: (cleanup) => lifetime.defer(cleanup),
     });
-    const groupFiles = createGroupFiles({
-      signal: lifetime.signal,
-      awaitAlive,
-      supportsFileCount: () => supportsGroupFileCount(nativeContracts, version),
-      supportsFolderCreation: () => supportsGroupFolderCreation(nativeContracts, version),
-      supportsFolderDeletion: () => supportsGroupFolderDeletion(nativeContracts, version),
-      getFileCountService: () => {
-        const richMedia = service('RichMedia');
-        return {
-          batchGetGroupFileCount: (groups) => call(richMedia, 'batchGetGroupFileCount', groups),
-        };
-      },
-      getFolderCreationService: () => {
-        const richMedia = service('RichMedia');
-        return {
-          createGroupFolder: (groupId, name) => call(richMedia, 'createGroupFolder', groupId, name),
-        };
-      },
-      getFolderDeletionService: () => {
-        const richMedia = service('RichMedia');
-        return {
-          deleteGroupFolder: (groupId, folderId) =>
-            call(richMedia, 'deleteGroupFolder', groupId, folderId),
-        };
-      },
-    });
+    const groupFiles = own(
+      createGroupFiles({
+        signal: lifetime.signal,
+        awaitAlive,
+        supportsFileCount: () => supportsGroupFileCount(nativeContracts, version),
+        supportsFilePage: () => supportsGroupFilePages(nativeContracts, version),
+        history: groupFilePageHistory,
+        getFilePageService: () => service('RichMedia'),
+        supportsFolderCreation: () => supportsGroupFolderCreation(nativeContracts, version),
+        supportsFolderDeletion: () => supportsGroupFolderDeletion(nativeContracts, version),
+        getFileCountService: () => {
+          const richMedia = service('RichMedia');
+          return {
+            batchGetGroupFileCount: (groups) => call(richMedia, 'batchGetGroupFileCount', groups),
+          };
+        },
+        getFolderCreationService: () => {
+          const richMedia = service('RichMedia');
+          return {
+            createGroupFolder: (groupId, name) =>
+              call(richMedia, 'createGroupFolder', groupId, name),
+          };
+        },
+        getFolderDeletionService: () => {
+          const richMedia = service('RichMedia');
+          return {
+            deleteGroupFolder: (groupId, folderId) =>
+              call(richMedia, 'deleteGroupFolder', groupId, folderId),
+          };
+        },
+      }),
+    );
+    receiveGroupFileInfo = groupFiles.receiveFileInfo;
     return {
       async invokeOperation(
         method: ServiceOperation,
@@ -441,6 +459,16 @@ export function createNativeServices(context: NativeServiceContext) {
           }
           case 'getGroupFileCount':
             return groupFiles.getGroupFileCount(payload.groupId);
+          case 'getGroupFilePage':
+            return awaitAlive(
+              groupFiles.getGroupFilePage(payload.groupId, payload.options, requestSignal),
+              requestSignal,
+            );
+          case 'listGroupFiles':
+            return awaitAlive(
+              groupFiles.listGroupFiles(payload.groupId, payload.options, requestSignal),
+              requestSignal,
+            );
           case 'createGroupFolder':
             return groupFiles.createGroupFolder(payload.groupId, payload.name);
           case 'deleteGroupFolder':

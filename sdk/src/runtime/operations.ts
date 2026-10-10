@@ -24,6 +24,8 @@ export const SERVICE_OPERATIONS = Object.freeze([
   'getForwardResource',
   'forwardMessages',
   'getGroupFileCount',
+  'getGroupFilePage',
+  'listGroupFiles',
   'searchGroup',
   'deleteGroupFolder',
   'createGroupFolder',
@@ -62,13 +64,15 @@ export function isServiceOperation(value: unknown): value is ServiceOperation {
   return typeof value === 'string' && operationNames.has(value);
 }
 
-/** Only these HTTP readers propagate a per-request signal through all awaits.
+/** These readers propagate a per-request signal through all awaits and queued work.
  * An IPC timeout cannot undo an issued native call or a remote mutation.
  */
 export function isCancellableRead(value: unknown): boolean {
   return (
     value === 'getGroupEssencePage' ||
     value === 'listGroupEssenceMessages' ||
-    value === 'listGroupNotices'
+    value === 'listGroupNotices' ||
+    value === 'getGroupFilePage' ||
+    value === 'listGroupFiles'
   );
 }

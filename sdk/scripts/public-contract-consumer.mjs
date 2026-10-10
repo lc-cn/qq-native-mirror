@@ -94,11 +94,25 @@ search.ownerUserId;
 declare const client: import('qq-native-client').QQClient;
 const searchResult: Promise<GroupSearchMatch | undefined> = client.searchGroup('123');
 const folderResult: Promise<GroupFolder> = client.createGroupFolder('123', 'files');
+const filePageResult: Promise<GroupFilePage> = client.getGroupFilePage('123', {startIndex: 0});
+const fileListResult: Promise<GroupFileEntry[]> = client.listGroupFiles('123', {maxPages: 20});
+// @ts-expect-error Full folder traversal always starts at zero.
+client.listGroupFiles('123', {startIndex: 1});
+// @ts-expect-error Page selectors are numeric, never unchecked strings.
+client.getGroupFilePage('123', {sortType: '1'});
+declare const fileMetadata: GroupFile;
+const fileSize: string = fileMetadata.fileSize;
+const parentFolder: string | null = fileMetadata.parentFolderId;
+// @ts-expect-error uint64 native metadata must not lose precision through Number.
+const roundedSize: number = fileMetadata.fileSize;
+declare const fileEntry: GroupFileEntry;
+// @ts-expect-error An opaque native kind cannot imply that file metadata exists.
+fileEntry.fileInfo.fileId;
 declare const folder: GroupFolder;
 client.deleteGroupFolder(folder.groupId, folder.folderId);
 // @ts-expect-error A folder snapshot does not claim a listing or file-count result.
 folder.files;
-void [request, sent, webNotices, searchGroup, ownerUid, searchResult, folderResult];
+void [request, sent, webNotices, searchGroup, ownerUid, searchResult, folderResult, filePageResult, fileListResult, fileSize, parentFolder];
 `,
   );
   const program = ts.createProgram([consumer, join(dist, 'types.d.ts')], options);

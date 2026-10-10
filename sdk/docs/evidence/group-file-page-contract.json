@@ -1,0 +1,124 @@
+{
+  "schemaVersion": 1,
+  "profiles": [
+    {
+      "platform": "darwin",
+      "arch": "arm64",
+      "clientVersion": "7.0.2-53644",
+      "wrapperSha256": "fbc8ad9b328d05e16784d76b0181dda894c17001179dbf8c0d5dd00dc6271358"
+    }
+  ],
+  "nativeExecuted": false,
+  "accountUsed": false,
+  "binding": {
+    "service": "RichMedia",
+    "method": "getGroupFileList",
+    "arguments": [
+      "groupCode: uint64 decimal string",
+      "params: object"
+    ],
+    "return": "synchronous uint32 request token, including zero",
+    "callback": "Msg/onGroupFileInfoUpdate"
+  },
+  "requestFields": {
+    "folderId": "optional string",
+    "sortType": "int32",
+    "fileCount": "uint32",
+    "startIndex": "uint32",
+    "sortOrder": "uint32",
+    "showOnlinedocFolder": "uint32"
+  },
+  "callbackFields": {
+    "retCode": "int32",
+    "retMsg": "string",
+    "clientWording": "string",
+    "isEnd": "boolean",
+    "item": "dense array",
+    "allFileCount": "uint32",
+    "nextIndex": "uint32",
+    "reqId": "uint32"
+  },
+  "entryFields": {
+    "peerId": "uint64 decimal string",
+    "type": "opaque int32",
+    "folderInfo": "independent nullable folder carrier",
+    "fileInfo": "independent nullable file carrier"
+  },
+  "folderFields": {
+    "folderId": "string",
+    "parentFolderId": "string",
+    "folderName": "string",
+    "createTime": "uint32",
+    "modifyTime": "uint32",
+    "createUin": "uint64-decimal-string",
+    "creatorName": "string",
+    "totalFileCount": "uint32",
+    "modifyUin": "uint64-decimal-string",
+    "modifyName": "string",
+    "usedSpace": "uint64-decimal-string"
+  },
+  "fileFields": {
+    "fileModelId": "uint64-decimal-string",
+    "fileId": "string",
+    "fileName": "string",
+    "fileSize": "uint64-decimal-string",
+    "busId": "uint32",
+    "uploadedSize": "uint64-decimal-string",
+    "uploadTime": "uint32",
+    "deadTime": "uint32",
+    "modifyTime": "uint32",
+    "downloadTimes": "uint32",
+    "sha": "string",
+    "sha3": "string",
+    "md5": "string",
+    "uploaderLocalPath": "string|null",
+    "uploaderName": "string",
+    "uploaderUin": "uint64-decimal-string",
+    "parentFolderId": "string|null",
+    "localPath": "string",
+    "transStatus": "uint32",
+    "transType": "uint32",
+    "elementId": "uint64-decimal-string",
+    "isFolder": "bool"
+  },
+  "staticProof": {
+    "actualFunctionBytesMatched": 2944,
+    "actualFieldConversionsAndLiteralsMatched": 33,
+    "actualImportsMatched": 7,
+    "absentValueCorrection": "Actual _napi_get_null corrects earlier static summary that described undefined. Frozen earlier receipt was preserved.",
+    "references": {
+      "item-complete/complete-item-codec.json": "978ea562ba12ae0d01d5fde9a4e489162cfad50322d60c66f378df40f2f000e4",
+      "item-complete/codec-independent-replay.json": "026bc37e8bf3f15e3146d55a23d72ff424d934d839336bc3835417ece55f3f18",
+      "item-complete/parent-codec-recheck.json": "e98f13244b59adb8f23b71c4a1ee72b345b08b57db3ba3399c75a8277ef5e3bc",
+      "callback-producer/route-next/bounded-query-readiness.json": "36f3015e0ff8b9b5aecf561b86791d40a4ce607c2e657db35931470551287d84",
+      "pc-caller/page-caller-contract.json": "7914bfa2c1131b332c134eb23b7f971da880af3a1389e15d831252a1ba67a658",
+      "bounded-page-owner-design.json": "d33776707065a3dc42d9b25d6848046719cbb1f85400757aa8b7b3b53e34cb73"
+    }
+  },
+  "sdkPolicy": {
+    "pageCompletion": "First validated callback strictly matching a newly reserved token; isEnd=false is legal page success. This is explicit SDK page policy supported by the pinned readable PC caller, not a native one-callback guarantee.",
+    "traversal": "Start at zero, issue a new request at each nextIndex until isEnd; reject nonadvancing cursor or exhausted page budget. No atomic snapshot claim.",
+    "defaults": {
+      "sortType": 1,
+      "fileCount": 50,
+      "startIndex": 0,
+      "sortOrder": 2,
+      "showOnlinedocFolder": 0,
+      "maxPages": 20
+    },
+    "requestFileCountBudget": "1..1000 (SDK limit, not native uint32 width)",
+    "pageBudget": "1..1000",
+    "callbackItemBudget": 10000,
+    "earlyCallbackBudget": 16,
+    "deadlineMs": 5000,
+    "tokenHistoryBudget": 100000,
+    "tokenLifetime": "Worker process; never evict on account replacement. Duplicate or untrustworthy postdispatch token quarantines the page lane until worker recreation.",
+    "projection": "Preserve all 11 folder and 22 file fields including local paths; uint64 stays decimal string, independent carriers and optional strings stay null. No type/transfer/time-unit interpretations."
+  },
+  "limits": [
+    "Only this exact macOS ARM64 binary is enabled; other five defaults require independent binding and callback evidence.",
+    "Static binary evidence and deterministic installed consumer checks do not prove real-account group-file results.",
+    "Nonzero core completion can produce no callback, so bounded timeout is a failed read, never an empty success.",
+    "Cancellation stops SDK waits or queued work; it cannot undo an issued native request."
+  ]
+}

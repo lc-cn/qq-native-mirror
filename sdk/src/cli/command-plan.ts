@@ -7,6 +7,8 @@ import {
   captureCreateGroupFolder,
   captureDeleteGroupFolder,
   captureGroupFileCount,
+  captureGroupFilePage,
+  captureGroupFileList,
 } from '../features/groups/group-file-input.ts';
 import { readFile, stat } from 'node:fs/promises';
 import { resolve } from 'node:path';
@@ -72,6 +74,28 @@ export function validateCommandFlags(command: string, flags: Record<string, stri
     'group-essence': ['config', 'uin', 'group-id', 'message-id', 'enabled'],
     'group-search': ['config', 'uin', 'group-id'],
     'group-file-count': ['config', 'uin', 'group-id'],
+    'group-file-list': [
+      'config',
+      'uin',
+      'group-id',
+      'folder-id',
+      'sort-type',
+      'file-count',
+      'start-index',
+      'sort-order',
+      'show-onlinedoc-folder',
+    ],
+    'group-file-all': [
+      'config',
+      'uin',
+      'group-id',
+      'folder-id',
+      'sort-type',
+      'file-count',
+      'sort-order',
+      'show-onlinedoc-folder',
+      'max-pages',
+    ],
     'group-folder-create': ['config', 'uin', 'group-id', 'name'],
     'group-folder-delete': ['config', 'uin', 'group-id', 'folder-id'],
     'group-remark': ['config', 'uin', 'group-id', 'remark'],
@@ -396,6 +420,41 @@ export async function prepareCommand(
     case 'group-file-count': {
       const captured = captureGroupFileCount(required(flags, 'group-id'));
       return (client) => client.getGroupFileCount(captured.groupId);
+    }
+    case 'group-file-list':
+    case 'group-file-all': {
+      const integerFlag = (name: string, signed = false) => {
+        const value = flags[name];
+        if (value === undefined) return undefined;
+        if (!(signed ? /^-?\d+$/ : /^\d+$/).test(value))
+          throw new Error(`--${name} must be a decimal integer`);
+        return Number(value);
+      };
+      const options = {
+        folderId: flags['folder-id'],
+        sortType: integerFlag('sort-type', true),
+        fileCount: integerFlag('file-count'),
+        sortOrder: integerFlag('sort-order'),
+        showOnlinedocFolder: integerFlag('show-onlinedoc-folder'),
+      };
+      const group = required(flags, 'group-id');
+      if (command === 'group-file-list') {
+        const captured = captureGroupFilePage(group, {
+          ...options,
+          startIndex: integerFlag('start-index'),
+        });
+        return (client) => client.getGroupFilePage(captured.groupId, captured.params);
+      }
+      const captured = captureGroupFileList(group, {
+        ...options,
+        maxPages: integerFlag('max-pages'),
+      });
+      const { startIndex: _startIndex, ...params } = captured.params;
+      return (client) =>
+        client.listGroupFiles(captured.groupId, {
+          ...params,
+          maxPages: captured.maxPages,
+        });
     }
     case 'group-folder-create': {
       const captured = captureCreateGroupFolder(

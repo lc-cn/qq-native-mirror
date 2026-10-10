@@ -14,6 +14,7 @@ type NativeCapability =
   | 'categoryRenaming'
   | 'categoryDeletion'
   | 'groupFileCount'
+  | 'groupFilePages'
   | 'groupSearch'
   | 'groupFolderDeletion'
   | 'groupFolderCreation';
@@ -73,6 +74,7 @@ const binaryProfiles: readonly BinaryContract[] = [
       'categoryRenaming',
       'categoryDeletion',
       'groupFileCount',
+      'groupFilePages',
       'groupSearch',
       'groupFolderDeletion',
       'groupFolderCreation',
@@ -191,6 +193,13 @@ export function supportsGroupFileCount(
   version: string,
 ): boolean {
   return matchesContract(profile, version, 'groupFileCount');
+}
+
+export function supportsGroupFilePages(
+  profile: NativeContractProfile | undefined,
+  version: string,
+): boolean {
+  return matchesContract(profile, version, 'groupFilePages');
 }
 
 export function supportsGroupSearch(

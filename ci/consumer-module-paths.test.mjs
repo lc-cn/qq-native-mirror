@@ -41,6 +41,19 @@ const exceptions = [
     modules: [],
     reason: 'Explicit external compiler path, not SDK module.',
   },
+  ...[
+    ['features/groups/group-file-pages', 'features/groups/group-file-pages.js'],
+    ['features/groups/group-file-input', 'features/groups/group-file-input.js'],
+    ['native-services', 'native-services.js'],
+    ['runtime/worker-termination', 'runtime/worker-termination.js'],
+    ['index', 'index.js'],
+    ['cli', 'cli.js'],
+  ].map(([source, compiled]) => ({
+    file: script('group-file-pages-consumer-contract.mjs'),
+    expression: `import(pathToFileURL(join(packageRoot, 'src/${source}.ts')).href)`,
+    modules: [compiled],
+    reason: 'Finite source-only fixture branch; its exact compiled counterpart is checked here.',
+  })),
 ];
 const options = {
   entries: [

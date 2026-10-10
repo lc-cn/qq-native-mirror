@@ -236,6 +236,7 @@ test('group-file composition cannot regain operation policy through input or ada
     for (const to of [
       'src/features/groups/group-file-input.ts',
       'src/features/groups/group-file-operations.ts',
+      'src/features/groups/group-file-page-codec.ts',
     ])
       assert.ok(dependencyViolation({ from: 'src/native-services.ts', to, typeOnly }));
     assert.equal(

@@ -30,6 +30,7 @@ import { verifyProfileRequestConsumer } from './profile-request-consumer-contrac
 import { verifyGroupRequestConsumer } from './group-request-consumer-contract.mjs';
 import { verifyGroupNoticeConsumer } from './group-notice-consumer-contract.mjs';
 import { verifyGroupSearchConsumer } from './group-search-consumer-contract.mjs';
+import { verifyGroupFilePagesConsumer } from './group-file-pages-consumer-contract.mjs';
 import { verifyQunWebConsumer } from './qun-web-consumer-contract.mjs';
 import { verifyFriendCategoryRenameConsumer } from './friend-category-rename-consumer-contract.mjs';
 
@@ -189,6 +190,9 @@ const groupNoticeChecks = await verifyGroupNoticeConsumer(
   join(destination, 'node_modules/qq-native-client'),
 );
 const groupSearchChecks = await verifyGroupSearchConsumer(
+  join(destination, 'node_modules/qq-native-client'),
+);
+const groupFilePagesChecks = await verifyGroupFilePagesConsumer(
   join(destination, 'node_modules/qq-native-client'),
 );
 const friendCategoryRenameChecks = await verifyFriendCategoryRenameConsumer(
@@ -559,6 +563,7 @@ const receipt = {
     ...groupWebChecks,
     ...friendCategoryRenameChecks,
     groupSearchChecks,
+    groupFilePagesChecks,
     ...publicContractChecks,
     privateFilesExcluded: true,
     installedImport: true,

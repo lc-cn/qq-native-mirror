@@ -89,6 +89,88 @@ export interface GroupFolder {
   name: string;
 }
 
+/** Native folder metadata. Time units and numeric selector meanings are unverified. */
+export interface GroupFileFolder {
+  folderId: string;
+  parentFolderId: string;
+  folderName: string;
+  createTime: number;
+  modifyTime: number;
+  createUin: string;
+  creatorName: string;
+  totalFileCount: number;
+  modifyUin: string;
+  modifyName: string;
+  usedSpace: string;
+}
+
+/** File metadata preserves uint64 fields as decimal strings and absent paths as null. */
+export interface GroupFile {
+  fileModelId: string;
+  fileId: string;
+  fileName: string;
+  fileSize: string;
+  busId: number;
+  uploadedSize: string;
+  uploadTime: number;
+  deadTime: number;
+  modifyTime: number;
+  downloadTimes: number;
+  sha: string;
+  sha3: string;
+  md5: string;
+  uploaderLocalPath: string | null;
+  uploaderName: string;
+  uploaderUin: string;
+  parentFolderId: string | null;
+  localPath: string;
+  transStatus: number;
+  transType: number;
+  elementId: string;
+  isFolder: boolean;
+}
+
+/** Carriers are independent; their presence does not classify the opaque native type. */
+export interface GroupFileEntry {
+  groupId: string;
+  type: number;
+  folderInfo: GroupFileFolder | null;
+  fileInfo: GroupFile | null;
+}
+
+export interface GroupFilePageOptions {
+  /** Omit for the root folder. */
+  folderId?: string;
+  /** Opaque int32 selector; defaults to 1. */
+  sortType?: number;
+  /** SDK request budget: 1..1000; defaults to 50. */
+  fileCount?: number;
+  /** uint32 cursor; defaults to 0. */
+  startIndex?: number;
+  /** Opaque uint32 selector; defaults to 2. */
+  sortOrder?: number;
+  /** Opaque uint32 selector; defaults to 0. */
+  showOnlinedocFolder?: number;
+}
+
+/** First validated callback for one correlated request; this is not an atomic snapshot. */
+export interface GroupFilePage {
+  groupId: string;
+  folderId?: string;
+  startIndex: number;
+  fileCount: number;
+  items: GroupFileEntry[];
+  isEnd: boolean;
+  nextIndex: number;
+  /** Native allFileCount, not a promise that it equals items.length. */
+  allFileCount: number;
+}
+
+export interface GroupFileListOptions extends Omit<GroupFilePageOptions, 'startIndex'> {
+  /** Starts at zero. No end marker within 1..1000 pages rejects; default is 20. */
+  maxPages?: number;
+}
+
 export interface GroupMember {
   userId: string;
   uid: string;

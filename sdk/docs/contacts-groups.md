@@ -346,11 +346,59 @@ binaries to independently inspected normal input and completion paths. This is
 static and controlled-consumer evidence; no real account count was queried. It
 does not enable older versions or prove remote core success semantics.
 
-A reliable file list remains unresolved. The pinned upstream callback contains a
-`reqId` but no group or folder identity, while its request parameters contain no
-`reqId`. The upstream caller accepts any matching callback family. Serializing
-SDK requests alone cannot identify unsolicited notifications. The SDK must first
-verify that correlation rather than returning a potentially unrelated list.
+## Group file pages and complete folder traversal
+
+```typescript
+const page = await client.getGroupFilePage('123456', { fileCount: 50 });
+const entries = await client.listGroupFiles('123456', {
+  folderId: 'opaque-folder-id',
+  maxPages: 20,
+});
+```
+
+CLI: `group-file-list --config ./qq.json --group-id 123456 --start-index 0`
+reads one page; `group-file-all --config ./qq.json --group-id 123456 --max-pages 20`
+traverses the root folder. Both accept optional `--folder-id`, `--file-count`,
+`--sort-type`, `--sort-order` and `--show-onlinedoc-folder`. Full traversal starts
+at zero and accepts no starting cursor. It does not recursively list subfolders.
+
+The single-page result contains the requested group/folder, cursor and page size,
+`items`, `isEnd`, `nextIndex` and native `allFileCount`. Each item preserves an opaque
+int32 `type` and independently nullable `folderInfo` and `fileInfo`. Folder metadata
+has all 11 measured fields; file metadata has all 22, including local paths.
+Sizes and other uint64 fields remain decimal strings. Optional file parent/path
+values remain `null`; both carriers or neither carrier are allowed. Transfer kinds
+and time units are not inferred from field names. Unknown extra native properties
+are excluded rather than exposing an unvalidated object.
+
+The [separate binary contract](evidence/group-file-page-contract.json) verifies the
+synchronous uint32 request token and its path into `Msg/onGroupFileInfoUpdate`.
+Zero is valid; it does not by itself establish success. A page uses the first
+strictly correlated, fully validated callback. An early callback is copied while
+the native method is running; a subsequent native throw still rejects. Nonempty
+rows must echo the requested uint64 group. Empty pages rely on the request token;
+the callback has no outer group or folder identity.
+
+Full traversal issues a new request for each `nextIndex`, returning only when
+`isEnd` is true. Empty pages and counts cannot imply completion. A nonadvancing
+cursor, exhausted page budget or failed page rejects the entire read; the caller
+receives no partial list. Concurrent native changes can affect successive pages,
+so the result does not claim an atomic folder snapshot.
+
+The SDK permits 1..1000 requested entries per page and 1..1000 traversal pages,
+defaulting to 50 entries and 20 pages. Each queued page has a five-second deadline.
+Callbacks are bounded to 10,000 entries and 16 early snapshots. Request timeout
+or cancellation stops queued work and SDK waits, without undoing an issued native
+query. Tokens remain reserved for the worker lifetime, including account
+replacement. Duplicate tokens, token-budget exhaustion (100,000 requests) or an
+untrustworthy post-dispatch token retire this page lane until worker recreation.
+Core errors that produce no callback time out as failed reads, never empty success.
+
+Only the exact measured macOS ARM64 `7.0.2-53644` binary is enabled for this new
+operation. The other five default binaries remain gated pending their independent
+callback evidence. Static inspection and controlled source/installed consumers
+validate the SDK contract; no real account file list was read in these checks.
+This working-source addition has not been published to npm.
 
 ## Search a group by number
 

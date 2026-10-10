@@ -3,6 +3,8 @@ import {
   captureCreateGroupFolder,
   captureDeleteGroupFolder,
   captureGroupFileCount,
+  captureGroupFilePage,
+  captureGroupFileList,
 } from '../features/groups/group-file-input.ts';
 import { ClientLifecycle } from '../runtime/client-lifecycle.ts';
 import type { ServiceOperation } from '../runtime/operations.ts';
@@ -45,6 +47,10 @@ import type {
   Group,
   GroupSearchMatch,
   GroupFolder,
+  GroupFilePage,
+  GroupFilePageOptions,
+  GroupFileEntry,
+  GroupFileListOptions,
   GroupMember,
   GroupInfoUpdate,
   GroupMutedMember,
@@ -289,6 +295,31 @@ export class QQClient extends EventEmitter<ClientEvents> {
   }
   async getGroupFileCount(groupId: string): Promise<number> {
     return this.#operation('getGroupFileCount', captureGroupFileCount(groupId));
+  }
+
+  /** Read the first validated, correlated native page within a five-second deadline. */
+  async getGroupFilePage(
+    groupId: string,
+    options: GroupFilePageOptions = {},
+  ): Promise<GroupFilePage> {
+    const captured = captureGroupFilePage(groupId, options);
+    return this.#operation('getGroupFilePage', {
+      groupId: captured.groupId,
+      options: captured.params,
+    });
+  }
+
+  /** Traverse a folder from zero to the native end marker; never return a partial list. */
+  async listGroupFiles(
+    groupId: string,
+    options: GroupFileListOptions = {},
+  ): Promise<GroupFileEntry[]> {
+    const captured = captureGroupFileList(groupId, options);
+    const { startIndex: _startIndex, ...params } = captured.params;
+    return this.#operation('listGroupFiles', {
+      groupId: captured.groupId,
+      options: { ...params, maxPages: captured.maxPages },
+    });
   }
 
   async createGroupFolder(groupId: string, name: string): Promise<GroupFolder> {

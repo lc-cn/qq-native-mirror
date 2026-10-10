@@ -55,6 +55,8 @@ const usage = `qq-native-client <command> [options]
   group-info --config FILE --group-id ID
   group-search --config FILE --group-id ID
   group-file-count --config FILE --group-id ID
+  group-file-list --config FILE --group-id ID [--folder-id ID] [--start-index N] [--file-count N]
+  group-file-all --config FILE --group-id ID [--folder-id ID] [--file-count N] [--max-pages N]
   group-folder-create --config FILE --group-id ID --name NAME
   group-folder-delete --config FILE --group-id ID --folder-id ID
   group-remark --config FILE --group-id ID --remark TEXT

@@ -115,6 +115,24 @@ test('group-essence compiler rejects unawaited CLI preparation and incomplete pu
   );
 });
 
+const filePagesHelper = resolve(root, 'scripts/group-file-pages-consumer-contract.mjs');
+const filePagesSource = readFileSync(filePagesHelper, 'utf8');
+test('group file consumer rejects missing metadata, rounded uint64 and unawaited CLI preparation without executing native code', () => {
+  assert.deepEqual(diagnostics(filePagesSource, filePagesHelper), []);
+  for (const [before, after, code] of [
+    ["fileSize: '18446744073709551615',", 'fileSize: 18446744073709551615,', 2322],
+    ['    totalFileCount: 1,', '    /* Missing required folder count. */', 1360],
+    ['const plan = await prepareCommand(', 'const plan = prepareCommand(', 2349],
+  ]) {
+    assert.ok(
+      diagnostics(replaceOnce(filePagesSource, before, after), filePagesHelper).some(
+        (item) => item.code === code,
+      ),
+      before,
+    );
+  }
+});
+
 const elementHelper = resolve(root, 'scripts/element-preparation-consumer-contract.mjs');
 const elementSource = readFileSync(elementHelper, 'utf8');
 test('element preparation compiler rejects unawaited results, wrong variants and unchecked thumbnail paths without running adapters', () => {
@@ -165,6 +183,13 @@ for (const fixture of [
     source: groupSearchSource,
     invocation: 'const match = await plan(client);',
     ignored: 'plan(client); const match = undefined;',
+  },
+  {
+    name: 'group-file-pages',
+    file: filePagesHelper,
+    source: filePagesSource,
+    invocation: 'assert.deepEqual(await plan(client), page);',
+    ignored: 'plan(client);',
   },
 ]) {
   test(`${fixture.name} typed consumer lint rejects unobserved action Promise without running the helper`, async () => {

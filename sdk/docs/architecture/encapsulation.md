@@ -445,13 +445,23 @@ RichMedia method and Session wait port, and native envelopes become copied publi
 DTOs only after validation. Public folder contracts expose no native service
 objects or mutable Session ownership.
 
-`features/groups/group-files` owns file-count and folder input capture and dispatch
-policy. Composition injects lazy method-specific ports and measured-profile
-decisions, then delegates named operations. The domain owner rejects unsupported
-contracts before acquiring native methods; the existing operation adapters retain
+`features/groups/group-files` owns file-count, folder and listing dispatch policy.
+Composition injects lazy method-specific ports and measured-profile decisions,
+then delegates named operations. The domain owner rejects unsupported contracts
+before acquiring native methods; existing mutation/count adapters retain their
 response validation, receiver handling and account cancellation. Composition cannot
-import their input or operation implementations. This module adds no retries,
-listener, resource ledger or account lifetime.
+import input, operation or listing-codec implementations.
+
+`group-file-pages` owns the serialized page lane, early callback snapshots,
+request deadlines and complete traversal. `group-file-page-codec` copies the
+measured fields from unknown own-data properties without acquiring services or
+interpreting selector values. The existing Msg listener forwards notifications;
+no second native listener is registered. Composition supplies one
+`GroupFilePageHistory` for the worker lifetime, while account owners retain their
+own pending requests. Closing an account cancels its waits without releasing
+token reservations. The ledger never evicts tokens and quarantines untrustworthy
+dispatch or reuse until worker recreation. Cancellable IPC reads supply their
+request signal through queue, dispatch, traversal and final publication.
 
 Feature access to `native/native-object` is denied by default, including type-only
 imports. Only the existing native projectors and legacy interop adapters have
