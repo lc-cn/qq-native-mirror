@@ -1,0 +1,25 @@
+sdk/docs/architecture.md
+  s_2104cc474f1ce5::t_aa50f5c3120775 77-82
+sdk/src/index.ts
+  s_2104cc474f1ce5::t_aacaa67caa6de2 2,400-401,599-600
+sdk/src/runtime/worker-termination.ts
+  s_2104cc474f1ce5::t_117e785bd366d9 1-53
+sdk/test/worker-termination.test.ts
+  s_2104cc474f1ce5::t_467686ed8c55c1 1-92
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c813ea92881e1967a29de291d1e54ef855ed90c7",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
