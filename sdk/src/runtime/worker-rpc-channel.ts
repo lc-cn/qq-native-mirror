@@ -1,3 +1,5 @@
+import { isCancellableRead } from './operations.ts';
+
 /** A worker response carries an opaque business result, never a native assertion. */
 export type WorkerRpcResponse =
   { id: number; result?: unknown; error?: never } | { id: number; error: unknown; result?: never };
@@ -6,12 +8,15 @@ export interface WorkerRpcTransport {
     message: { id: number; method: string } & object,
     callback: (error: Error | null) => void,
   ): unknown;
+  /** Best effort, bound to the worker that received the original request. */
+  cancelRead?(id: number): void;
 }
 interface Pending {
   method: string;
   resolve(value: unknown): void;
   reject(error: Error): void;
   timer: ReturnType<typeof setTimeout>;
+  transport?: WorkerRpcTransport;
 }
 export interface WorkerRpcPolicy {
   failure(method: string, error: Error): Error;
@@ -39,6 +44,7 @@ export class WorkerRpcChannel {
       const timer = setTimeout(() => {
         const pending = this.#take(id);
         if (!pending) return;
+        this.#cancelRead(id, pending);
         const error = new Error(`Kernel ${method} timed out`);
         // Attach rejection handling even when retirement throws synchronously.
         try {
@@ -52,13 +58,18 @@ export class WorkerRpcChannel {
           pending.reject(failure instanceof Error ? failure : new Error(String(failure)));
         }
       }, timeoutMs);
-      this.#pending.set(id, { method, resolve, reject, timer });
+      const entry: Pending = { method, resolve, reject, timer };
+      this.#pending.set(id, entry);
       const fail = (error: Error) => {
         const pending = this.#take(id);
-        if (pending) pending.reject(this.policy.failure(method, error));
+        if (pending) {
+          this.#cancelRead(id, pending);
+          pending.reject(this.policy.failure(method, error));
+        }
       };
       try {
-        this.transport().send({ id, method, ...payload }, (error) => {
+        entry.transport = this.transport();
+        entry.transport.send({ ...payload, id, method }, (error) => {
           if (error) fail(error);
         });
       } catch (error) {
@@ -79,7 +90,16 @@ export class WorkerRpcChannel {
     for (const [id, value] of this.#pending) {
       if (keep?.(value.method)) continue;
       const pending = this.#take(id)!;
+      this.#cancelRead(id, pending);
       pending.reject(this.policy.failure(pending.method, error));
+    }
+  }
+  #cancelRead(id: number, pending: Pending): void {
+    if (!isCancellableRead(pending.method)) return;
+    try {
+      pending.transport?.cancelRead?.(id);
+    } catch {
+      // Delivery failure cannot replace the caller's original terminal error.
     }
   }
   #take(id: number): Pending | undefined {

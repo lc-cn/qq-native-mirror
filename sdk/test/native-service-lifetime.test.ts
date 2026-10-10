@@ -129,3 +129,40 @@ test('synchronous close and late native rejection are observed without replay', 
   await new Promise((resolve) => setImmediate(resolve));
   assert.equal(getEventListeners(lifetime.signal, 'abort').length, 0);
 });
+
+test('a request signal interrupts only its own wait and observes late native failure', async () => {
+  const lifetime = new NativeServiceLifetime();
+  const request = new AbortController();
+  const reason = new Error('read cancelled');
+  let reject!: (error: Error) => void;
+  const native = new Promise<never>((_resolve, fail) => {
+    reject = fail;
+  });
+  const failed = assert.rejects(
+    lifetime.awaitAlive(native, request.signal),
+    (error) => error === reason,
+  );
+  const sibling = lifetime.awaitAlive(Promise.resolve(3));
+  request.abort(reason);
+  await failed;
+  assert.equal(await sibling, 3);
+  assert.equal(lifetime.closed, false);
+  assert.equal(lifetime.signal.aborted, false);
+  reject(new Error('late native failure'));
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(await lifetime.awaitAlive(4), 4);
+  lifetime.close();
+});
+
+test('a pre-aborted read never publishes a result and still observes its evaluated promise', async () => {
+  const lifetime = new NativeServiceLifetime();
+  const request = new AbortController();
+  const reason = new Error('cancelled before wait');
+  request.abort(reason);
+  await assert.rejects(
+    lifetime.awaitAlive(Promise.reject(new Error('native failure')), request.signal),
+    (error) => error === reason,
+  );
+  assert.equal(await lifetime.awaitAlive(5), 5);
+  lifetime.close();
+});

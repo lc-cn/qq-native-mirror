@@ -61,11 +61,24 @@ export class ClientLifecycle {
     this.#worker = worker;
     this.#timeout = timeout;
     this.#defaultLogin = normalizeLoginRequest(defaultLogin ?? { method: 'qr' });
-    this.#rpc = new WorkerRpcChannel(() => this.#worker, {
-      failure: requestFailure,
-      responseFailure: deserializeKernelError,
-      timeout: (method, error) => this.#requestTimedOut(method, error),
-    });
+    this.#rpc = new WorkerRpcChannel(
+      () => {
+        const worker = this.#worker;
+        return {
+          send: (message, callback) => worker.send(message, callback),
+          cancelRead: (id) => {
+            // This closure retains the original worker generation. IPC delivery
+            // is best effort; its callback observes errors without replaying IO.
+            worker.send({ control: 'cancel-read', id }, () => {});
+          },
+        };
+      },
+      {
+        failure: requestFailure,
+        responseFailure: deserializeKernelError,
+        timeout: (method, error) => this.#requestTimedOut(method, error),
+      },
+    );
     this.#restart = restart;
     if (autoReconnect)
       this.#auto = {

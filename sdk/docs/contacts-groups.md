@@ -201,9 +201,14 @@ can cause overlap or omissions; the SDK cannot detect every possible change.
 Cookies and native tickets are acquired through the existing worker transport for
 each page and never returned. Close prevents further page dispatch and suppresses
 late results. Allow a suitable client `timeoutMs` for a multi-page HTTP read.
-An RPC timeout settles the caller but does not cancel dispatched worker work;
-close the client to stop further pages. The SDK does not claim to cancel a native
-call that has already been issued.
+An RPC timeout sends a best-effort cancellation control to the original worker
+for `getGroupEssencePage`, `listGroupEssenceMessages` and `listGroupNotices`. When
+delivered, it interrupts that request's wait and HTTP IO and prevents another page
+from starting; other account operations remain available. Offline and send failure
+use the same cleanup. The caller retains the original timeout/failure even if
+cancellation delivery fails. Close also stops reads. Issued native calls cannot be
+undone: their late completion is observed without further HTTP dispatch. Other
+operations do not gain cancellation or retry semantics from this control.
 
 CLI: `qq-native-client group-essence-all --config ./qq.json --group-id 123456 --max-pages 20`.
 The existing `group-essence-list` command still reads exactly one explicit page.

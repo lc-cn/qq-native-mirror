@@ -83,3 +83,110 @@ test('synchronous transport reply followed by send throw does not replace comple
   );
   assert.equal(await channel.request('fixture', {}, 1000), 42);
 });
+
+test('read timeout cancels its original transport after detaching its request', async (context) => {
+  context.mock.timers.enable({ apis: ['setTimeout'] });
+  const cancelled: number[] = [];
+  let current: WorkerRpcTransport;
+  const original: WorkerRpcTransport = {
+    send() {},
+    cancelRead(id) {
+      cancelled.push(id);
+      channel.receive({ id, result: 'late result' });
+      channel.rejectPending(new Error('offline'));
+    },
+  };
+  current = original;
+  const channel = new WorkerRpcChannel(() => current, {
+    failure: (_method, error) => error,
+    responseFailure: () => new Error('native'),
+  });
+  const read = assert.rejects(
+    channel.request('listGroupEssenceMessages', {}, 10),
+    /Kernel listGroupEssenceMessages timed out/,
+  );
+  const sibling = assert.rejects(channel.request('other', {}, 1000), /offline/);
+  current = {
+    send() {},
+    cancelRead() {
+      assert.fail('replacement worker must not be cancelled');
+    },
+  };
+  context.mock.timers.tick(10);
+  await Promise.all([read, sibling]);
+  assert.deepEqual(cancelled, [1]);
+});
+
+test('all reviewed reads cancel on send failure; cancellation failure preserves the original error', async () => {
+  for (const method of ['getGroupEssencePage', 'listGroupEssenceMessages', 'listGroupNotices']) {
+    const cancelled: number[] = [];
+    const failed = new Error('send failed');
+    const channel = new WorkerRpcChannel(
+      () => ({
+        send(_message, callback) {
+          callback(failed);
+        },
+        cancelRead(id) {
+          cancelled.push(id);
+          throw new Error('cancel failed');
+        },
+      }),
+      { failure: (_method, error) => error, responseFailure: () => new Error('native') },
+    );
+    await assert.rejects(channel.request(method, {}, 1000), (error) => error === failed);
+    assert.deepEqual(cancelled, [1]);
+  }
+});
+
+test('settled reads, mutations, login and unreviewed queries never send cancellation', async (context) => {
+  context.mock.timers.enable({ apis: ['setTimeout'] });
+  const cancelled: number[] = [];
+  const callbacks: ((error: Error | null) => void)[] = [];
+  const channel = new WorkerRpcChannel(
+    () => ({
+      send(_message, callback) {
+        callbacks.push(callback);
+      },
+      cancelRead(id) {
+        cancelled.push(id);
+      },
+    }),
+    { failure: (_method, error) => error, responseFailure: () => new Error('native') },
+  );
+  const completed = channel.request('getGroupEssencePage', {}, 10);
+  channel.receive({ id: 1, result: [] });
+  callbacks[0](new Error('late send failure'));
+  await completed;
+  const failed = ['setGroupEssenceMessage', 'login', 'getMessages'].map((method) =>
+    assert.rejects(channel.request(method, {}, 10), /timed out/),
+  );
+  context.mock.timers.tick(10);
+  await Promise.all(failed);
+  assert.deepEqual(cancelled, []);
+});
+
+test('offline cancels a pending read once and preserves reserved correlation fields', async () => {
+  const cancelled: number[] = [];
+  const sent: { id: number; method: string }[] = [];
+  const channel = new WorkerRpcChannel(
+    () => ({
+      send(message) {
+        sent.push(message);
+      },
+      cancelRead(id) {
+        cancelled.push(id);
+      },
+    }),
+    { failure: (_method, error) => error, responseFailure: () => new Error('native') },
+  );
+  const failed = assert.rejects(
+    channel.request('listGroupNotices', { id: 50, method: 'login' }, 1000),
+    /offline/,
+  );
+  assert.deepEqual(sent, [{ id: 1, method: 'listGroupNotices' }]);
+  channel.rejectPending(new Error('offline'));
+  channel.rejectPending(new Error('again'));
+  channel.receive({ id: 1, result: [] });
+  await failed;
+  assert.deepEqual(cancelled, [1]);
+});

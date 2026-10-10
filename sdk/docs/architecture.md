@@ -206,6 +206,13 @@ RPC storage and settlement use `unknown` internally.
 - One worker owns one account data directory. Locks prevent concurrent owners.
 - Every pending IPC request settles once; timeout, reply, send failure, offline,
   exit and close all retire their corresponding map entries and timers.
+- The channel captures the sending transport per request. The three reviewed HTTP
+  reads use best-effort per-request cancellation on timeout, send failure and
+  offline; it never targets a replacement worker. `WorkerReadRequests` owns their
+  controllers, detaches before abort and observes late native completions. Its
+  signal reaches the Session adapter, HTTP IO and next-page guard. Cancellation
+  affects no sibling read, does not close the account, and cannot undo a native
+  invocation or remote mutation. Delivery failure preserves the original error.
 - Login timeout retires the worker generation before a replacement is allowed.
 - Capture and validate a complete public operation before an asynchronous lookup
   or native mutation. Recheck session lifetime after asynchronous work.

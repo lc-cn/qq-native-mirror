@@ -549,10 +549,11 @@ export function createKernel(
     async invokeOperation(
       method: ServiceOperation,
       payload: Record<string, unknown> = {},
+      signal?: AbortSignal,
     ): Promise<unknown> {
       if (closed) throw new Error('Client is closed');
       if (!identity || !ownedSession) throw new Error('Client is not online');
-      return ownedSession.invokeOperation(method, payload);
+      return ownedSession.invokeOperation(method, payload, signal);
     },
     async close(): Promise<void> {
       if (closed) return;

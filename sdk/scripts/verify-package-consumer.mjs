@@ -1,7 +1,7 @@
 import { mkdtemp, writeFile, mkdir, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { execFileSync } from 'node:child_process';
 import { verifyForwardConsumer } from './forward-consumer-contract.mjs';
 import { verifyRecallConsumer } from './recall-consumer-contract.mjs';
@@ -19,6 +19,7 @@ import { verifyReceivedForwardConsumer } from './received-forward-consumer-contr
 import { verifyContactGroupConsumer } from './contact-group-consumer-contract.mjs';
 import { verifyPublicContracts } from './public-contract-consumer.mjs';
 import { verifyGroupEssenceConsumer } from './group-essence-consumer-contract.mjs';
+import { verifyWorkerReadCancellation } from './worker-read-consumer-contract.mjs';
 
 // Offline packaging check: controlled services and actual worker routing with a replacement kernel; no QQ native binaries or accounts.
 const root = fileURLToPath(new URL('../', import.meta.url));
@@ -104,6 +105,16 @@ const messageBatchChecks = await verifyMessageBatchConsumer(
 const groupEssenceChecks = await verifyGroupEssenceConsumer(
   join(destination, 'node_modules/qq-native-client'),
 );
+const readCancellationChecks = await verifyWorkerReadCancellation({
+  QQClient: (
+    await import(
+      pathToFileURL(join(destination, 'node_modules/qq-native-client/dist/index.js')).href
+    )
+  ).QQClient,
+  workerPath: join(destination, 'node_modules/qq-native-client/dist/worker.js'),
+  kernelPath: join(destination, 'node_modules/qq-native-client/dist/kernel.js'),
+  nativeServicesPath: join(destination, 'node_modules/qq-native-client/dist/native-services.js'),
+});
 const historyLifecycleChecks = await verifyHistoryLifecycleConsumer(
   join(destination, 'node_modules/qq-native-client'),
 );
@@ -522,6 +533,7 @@ const receipt = {
   fileCount: files.length,
   checks: {
     ...groupEssenceChecks,
+    ...readCancellationChecks,
     ...publicContractChecks,
     privateFilesExcluded: true,
     installedImport: true,

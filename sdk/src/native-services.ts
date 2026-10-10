@@ -269,7 +269,11 @@ export function createNativeServices(context: NativeServiceContext) {
     lifetime.defer(() => longMessageTransport?.close());
     lifetime.defer(() => forwardResourceTransport?.close());
     return {
-      async invokeOperation(method: ServiceOperation, payload: Native = {}): Promise<unknown> {
+      async invokeOperation(
+        method: ServiceOperation,
+        payload: Native = {},
+        requestSignal?: AbortSignal,
+      ): Promise<unknown> {
         if (lifetime.closed) throw new Error('Native services are closed');
         switch (method) {
           case 'addFriendCategory': {
@@ -410,34 +414,40 @@ export function createNativeServices(context: NativeServiceContext) {
           case 'setNickname':
           case 'setSignature':
             return selfProfile.invokeOperation(method, payload);
-          case 'listGroupNotices':
+          case 'listGroupNotices': {
             if (!accountId)
               throw new Error('Group notice listing requires the authenticated account identity');
+            const signal = requestSignal
+              ? AbortSignal.any([lifetime.signal, requestSignal])
+              : lifetime.signal;
+            signal.throwIfAborted();
             return awaitAlive(
-              listWebGroupNotices(
-                guardedSession,
-                accountId,
-                payload.groupId,
-                undefined,
-                lifetime.signal,
-              ),
+              listWebGroupNotices(guardedSession, accountId, payload.groupId, undefined, signal),
+              signal,
             );
+          }
           case 'publishGroupNotice':
           case 'deleteGroupNotice':
             return groupNotices.invokeOperation(method, payload);
           case 'setGroupName':
             return groupOperations.invokeOperation(method, payload);
           case 'getGroupEssencePage':
-          case 'listGroupEssenceMessages':
+          case 'listGroupEssenceMessages': {
             if (!accountId)
               throw new Error('Group essence listing requires the authenticated account identity');
+            const signal = requestSignal
+              ? AbortSignal.any([lifetime.signal, requestSignal])
+              : lifetime.signal;
+            signal.throwIfAborted();
             return awaitAlive<unknown>(
               (method === 'getGroupEssencePage' ? getGroupEssencePage : listGroupEssenceMessages)(
-                { session: guardedSession, accountId, signal: lifetime.signal },
+                { session: guardedSession, accountId, signal },
                 payload.groupId,
                 payload.options,
               ),
+              signal,
             );
+          }
           case 'setGroupEssenceMessage':
             return setGroupEssenceMessage(
               {

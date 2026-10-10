@@ -46,6 +46,13 @@ if an earlier cleanup throws. Close must detach owned state before invoking
 fallible external cleanup. Async work rechecks lifetime before publishing or
 dispatching another operation. Do not retry an already dispatched mutation.
 
+Cancellation must have an owner at both ends of IPC. Capture the original worker
+when sending, detach the pending entry before signalling it, and propagate the
+request's signal through each cancellable await and dispatch. Only classify an
+operation as cancellable after its implementation cooperates with that signal.
+Keep request cleanup separate from account shutdown; observe a losing native
+promise even when it cannot be undone.
+
 ## Preserve the public contract
 
 Place new declarations in the relevant contract domain. Internal implementations

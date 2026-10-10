@@ -72,7 +72,10 @@ export class NativeServiceLifetime {
   }
 
   /** Bound for injection into feature modules without exporting mutable state. */
-  readonly awaitAlive = async <T>(value: T | PromiseLike<T>): Promise<T> => {
+  readonly awaitAlive = async <T>(
+    value: T | PromiseLike<T>,
+    requestSignal?: AbortSignal,
+  ): Promise<T> => {
     // Argument evaluation can synchronously close the Session. Observe a native
     // rejection even when no wait can be installed after that callback.
     const pending = Promise.resolve(value);
@@ -80,17 +83,27 @@ export class NativeServiceLifetime {
       void pending.catch(() => {});
       this.signal.throwIfAborted();
     }
+    const signal = requestSignal ? AbortSignal.any([this.signal, requestSignal]) : this.signal;
+    if (signal.aborted) {
+      void pending.catch(() => {});
+      signal.throwIfAborted();
+    }
     let abort!: () => void;
     const stopped = new Promise<never>((_, reject) => {
-      abort = () => reject(new Error('Native services closed during operation'));
-      this.signal.addEventListener('abort', abort, { once: true });
+      abort = () =>
+        reject(
+          this.signal.aborted
+            ? new Error('Native services closed during operation')
+            : signal.reason,
+        );
+      signal.addEventListener('abort', abort, { once: true });
     });
     try {
       const result = await Promise.race([pending, stopped]);
-      this.signal.throwIfAborted();
+      signal.throwIfAborted();
       return result;
     } finally {
-      this.signal.removeEventListener('abort', abort);
+      signal.removeEventListener('abort', abort);
     }
   };
 

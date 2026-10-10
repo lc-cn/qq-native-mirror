@@ -3,7 +3,8 @@ import { constants } from 'node:os';
 import { mkdir } from 'node:fs/promises';
 import { createKernel } from './kernel.ts';
 import type { ClientOptions, LoginRequest } from './contracts/client.ts';
-import { isServiceOperation } from './runtime/operations.ts';
+import { isServiceOperation, isCancellableRead } from './runtime/operations.ts';
+import { WorkerReadRequests } from './runtime/worker-read-requests.ts';
 import { lockDataDirectory } from './storage/data-directory-lock.ts';
 import { loadRecordCodec } from './features/media/record-codec-loader.ts';
 import { loadVideoCodec } from './features/media/video-codec-loader.ts';
@@ -12,15 +13,26 @@ import { inspectNativeContracts } from './native/native-contracts.ts';
 
 let kernel: ReturnType<typeof createKernel> | undefined;
 let releaseDataLock: (() => void) | undefined;
-process.on('exit', () => releaseDataLock?.());
+const reads = new WorkerReadRequests();
+process.on('exit', () => {
+  reads.close();
+  releaseDataLock?.();
+});
 process.on('message', async (message: unknown) => {
+  if (!message || typeof message !== 'object') return;
+  const control = message as { control?: unknown; id?: unknown };
+  if (control.control === 'cancel-read') {
+    if (Number.isSafeInteger(control.id) && (control.id as number) > 0)
+      reads.cancel(control.id as number);
+    return;
+  }
   const request = message as {
     id: number;
     method: string;
     options?: ClientOptions;
     login?: LoginRequest;
   };
-  if (!request || typeof request.id !== 'number') return;
+  if (!Number.isSafeInteger(request.id) || request.id <= 0) return;
   const send = (value: unknown) => {
     if (process.connected) process.send?.(value);
   };
@@ -91,8 +103,12 @@ process.on('message', async (message: unknown) => {
       result = await kernel.login(request.login!);
     } else if (isServiceOperation(request.method) && kernel) {
       const { id: _id, method, ...payload } = request;
-      result = await kernel.invokeOperation(method, payload);
+      const activeKernel = kernel;
+      result = await (isCancellableRead(method)
+        ? reads.run(request.id, (signal) => activeKernel.invokeOperation(method, payload, signal))
+        : activeKernel.invokeOperation(method, payload));
     } else if (request.method === 'close') {
+      reads.close();
       await kernel?.close();
       send({ id: request.id, result: null });
       process.exit(0);
@@ -106,4 +122,7 @@ process.on('message', async (message: unknown) => {
     send({ id: request.id, error: serializeKernelError(error) });
   }
 });
-process.on('disconnect', () => process.exit(0));
+process.on('disconnect', () => {
+  reads.close();
+  process.exit(0);
+});

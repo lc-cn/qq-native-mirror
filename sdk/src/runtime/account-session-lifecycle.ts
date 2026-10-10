@@ -26,7 +26,11 @@ export interface AccountSessionOptions {
  * controlled tests. The Session owner never imports or constructs that adapter.
  */
 export interface AccountSessionServices {
-  invokeOperation(method: ServiceOperation, payload: Record<string, unknown>): Promise<unknown>;
+  invokeOperation(
+    method: ServiceOperation,
+    payload: Record<string, unknown>,
+    signal?: AbortSignal,
+  ): Promise<unknown>;
   close(): void;
 }
 
@@ -287,9 +291,10 @@ export class AccountSessionLifecycle {
   async invokeOperation(
     method: ServiceOperation,
     payload: Record<string, unknown>,
+    signal?: AbortSignal,
   ): Promise<unknown> {
     if (!this.#active() || !this.#services) throw new Error('Client is not online');
-    return this.#services.invokeOperation(method, payload);
+    return this.#services.invokeOperation(method, payload, signal);
   }
 
   close(): void {
