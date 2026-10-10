@@ -1,0 +1,31 @@
+sdk/docs/development.md
+  s_2104cc474f1ce5::t_24bfb2a54288cc 62-65
+sdk/docs/architecture.md
+  s_2104cc474f1ce5::t_24bfb2a54288cc 366-370
+sdk/test/architecture.test.ts
+  s_2104cc474f1ce5::t_24bfb2a54288cc 260-261
+sdk/src/features/contacts/contact-directory.ts
+  s_2104cc474f1ce5::t_eac00708370a68 3-7,26-31,76,78-81,84,107,111-120,123,125
+sdk/src/features/contacts/friend-categories.ts
+  s_2104cc474f1ce5::t_afa0a4e0a14c5f 66-67,70-73,79-80,90-100
+sdk/test/contact-directory.test.ts
+  s_2104cc474f1ce5::t_dc9b455ddb6118 19,39,50-52,290-364
+sdk/test/friend-categories.test.ts
+  s_2104cc474f1ce5::t_83ec76a14fde89 6,137-155
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "d89aa39f3e328f0ad504f12e43b199f8eadd0139",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
