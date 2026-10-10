@@ -499,10 +499,11 @@ test('module loading extraction rejects computed imports and CommonJS aliases ou
   );
 });
 
-test('message query owners cannot regain the native object escape hatch', () => {
+test('message query and attachment download owners cannot regain the native object escape hatch', () => {
   for (const from of [
     'src/features/messages/message-query.ts',
     'src/features/messages/message-queries.ts',
+    'src/features/media/media-operations.ts',
   ])
     assert.ok(dependencyViolation({ from, to: 'src/native/native-object.ts', typeOnly: true }));
 });

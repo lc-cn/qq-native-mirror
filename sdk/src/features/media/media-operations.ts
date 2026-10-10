@@ -5,7 +5,7 @@ import { constants } from 'node:fs';
 import { mkdir, stat, mkdtemp, copyFile, rm } from 'node:fs/promises';
 import { dirname, isAbsolute, join } from 'node:path';
 
-import type { NativeObject as Native } from '../../native/native-object.ts';
+import type { AttachmentDownloadPort } from '../../runtime/media-contracts.ts';
 import type { NativeEventChannel } from '../../runtime/native-event-channel.ts';
 type EventCall = NativeEventChannel['call'];
 function completionData(value: unknown, key: string): unknown {
@@ -34,7 +34,7 @@ function completionCode(value: unknown, key: string): void {
  * https://github.com/NapNeko/NapCatQQ/blob/26d7533e0f5800fdff865ab2f2ad7692917e1076/packages/napcat-core/listeners/NodeIKernelMsgListener.ts#L4-L20
  */
 export async function downloadAttachment(
-  msgService: Native,
+  msgService: AttachmentDownloadPort,
   peer: { chatType: number; peerUid: string },
   payload: { messageId: unknown; elementId: unknown; destination: unknown },
   eventCall: EventCall,
@@ -50,7 +50,7 @@ export async function downloadAttachment(
     peerUid = own(peer, 'peerUid');
   if ((chatType !== 1 && chatType !== 2) || typeof peerUid !== 'string' || !peerUid)
     throw new Error('Invalid attachment native peer');
-  const capturedPeer = { chatType, peerUid };
+  const capturedPeer: { chatType: 1 | 2; peerUid: string } = { chatType, peerUid };
   if (typeof msgService.downloadRichMedia !== 'function')
     throw new Error('Native service is missing downloadRichMedia');
   await mkdir(dirname(destination), { recursive: true });
@@ -66,7 +66,7 @@ export async function downloadAttachment(
     signal?.throwIfAborted();
     const file = await eventCall(
       'Msg/onRichMediaDownloadComplete',
-      (complete: Native) => {
+      (complete: unknown) => {
         if (
           completionData(complete, 'msgElementId') !== elementId ||
           completionData(complete, 'msgId') !== messageId
@@ -89,7 +89,7 @@ export async function downloadAttachment(
       },
       () => {
         signal?.throwIfAborted();
-        return msgService.downloadRichMedia({
+        return msgService.downloadRichMedia!({
           fileModelId: '0',
           downSourceType: 0,
           downloadSourceType: 0,

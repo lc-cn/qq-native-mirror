@@ -15,6 +15,27 @@ export interface MediaStagingPort {
   }) => unknown;
 }
 
+/** The attachment downloader uses only this native operation. Return values and
+ * completion callbacks remain opaque until validated by the event channel and
+ * downloader. The optional method preserves runtime support checks; it does not
+ * promise that a dynamic native getter stays unchanged between two reads.
+ */
+export interface AttachmentDownloadPort {
+  downloadRichMedia?: (request: {
+    fileModelId: '0';
+    downSourceType: 0;
+    downloadSourceType: 0;
+    triggerType: 1;
+    msgId: string;
+    chatType: 1 | 2;
+    peerUid: string;
+    elementId: string;
+    thumbSize: 0;
+    downloadType: 1;
+    filePath: string;
+  }) => unknown;
+}
+
 /** Ports supplied by bundled codecs, consumer modules or command-line tools.
  * Contract ownership is independent of module loading and media preparation.
  */

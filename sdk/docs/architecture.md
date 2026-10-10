@@ -474,6 +474,16 @@ hatch; field validation belongs to the receiving operation. The existing
 low-level `QQClient.request` default result type is retained for compatibility;
 RPC storage and settlement use `unknown` internally.
 
+Attachment download receives `AttachmentDownloadPort`, which exposes only the
+existing rich-media download request. The downloader cannot acquire other native
+services or submit messages; dependency and compile-only negative gates enforce
+that restriction. Callback payloads and native return values remain `unknown`.
+The support check still precedes filesystem IO, and dispatch reads the method
+again on the original receiver after staging. A successful callback waits for
+native invocation completion; rejection or close prevents destination publication,
+and late native failure remains observed. A narrow type does not freeze a dynamic
+getter or replace runtime completion/file validation.
+
 The native contract registry stores each measured binary identity once, with an
 explicit list of independently inspected capabilities. Matching requires OS,
 architecture, client version and SHA-256 together; capability predicates never

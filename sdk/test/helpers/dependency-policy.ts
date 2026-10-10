@@ -233,10 +233,11 @@ export function dependencyViolation({ from, to, typeOnly }: SourceDependency): s
       [
         'src/features/messages/message-query.ts',
         'src/features/messages/message-queries.ts',
+        'src/features/media/media-operations.ts',
       ].includes(from) &&
       to === 'src/native/native-object.ts'
     )
-      return 'Message queries use validated record contracts rather than the native escape hatch.';
+      return 'Query and attachment download owners use narrow ports rather than the native escape hatch.';
     if (typeOnly && (nativeContracts.has(to) || featurePorts.has(to))) return;
     // Profile updates own a temporary native listener and preserve both lookup
     // and removal failures. This pure helper does not grant runtime composition.

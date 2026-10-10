@@ -350,3 +350,34 @@ function verifyAudioVideoStagingPorts(
   void videoPath.path;
 }
 void verifyAudioVideoStagingPorts;
+
+import type { downloadAttachment } from '../../src/features/media/media-operations.ts';
+function verifyAttachmentDownloadPort(port: Parameters<typeof downloadAttachment>[0]) {
+  // @ts-expect-error A download cannot send messages or acquire unrelated services.
+  port.sendMsg({}, [], '');
+  // @ts-expect-error The download port does not expose Session acquisition.
+  port.getBuddyService();
+  // @ts-expect-error The native method requires the exact structured request.
+  port.downloadRichMedia?.('/tmp/file');
+  const request = {
+    fileModelId: '0',
+    downSourceType: 0,
+    downloadSourceType: 0,
+    triggerType: 1,
+    msgId: '9',
+    chatType: 2,
+    peerUid: '123',
+    elementId: '2',
+    thumbSize: 0,
+    downloadType: 1,
+    filePath: '/tmp/staged',
+  } satisfies Parameters<NonNullable<typeof port.downloadRichMedia>>[0];
+  const result = port.downloadRichMedia?.(request);
+  // @ts-expect-error Native return values require validation before field access.
+  void result.result;
+  // @ts-expect-error Downloads accept only private and group native peers.
+  port.downloadRichMedia?.({ ...request, chatType: 3 });
+  // @ts-expect-error Current native download mode is the measured numeric literal.
+  port.downloadRichMedia?.({ ...request, downloadType: '1' });
+}
+void verifyAttachmentDownloadPort;
