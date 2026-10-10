@@ -205,3 +205,16 @@ function verifyGroupSearchPort(context: GroupSearchContext) {
   void result.result;
 }
 void verifyGroupSearchPort;
+
+import type { GroupFolderCreationContext } from '../../src/features/groups/group-file-operations.ts';
+function verifyGroupFolderCreationPort(context: GroupFolderCreationContext) {
+  const service = context.getRichMediaService();
+  // @ts-expect-error Folder creation cannot delete files through its port.
+  service.deleteGroupFile('123', ['102'], ['file']);
+  // @ts-expect-error Folder creation has no arbitrary native service lookup.
+  context.service('Buddy');
+  const result = service.createGroupFolder('123', 'files');
+  // @ts-expect-error Creation responses are unknown until validated.
+  void result.resultWithGroupItem;
+}
+void verifyGroupFolderCreationPort;

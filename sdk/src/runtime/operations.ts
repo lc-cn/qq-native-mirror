@@ -24,6 +24,7 @@ export const SERVICE_OPERATIONS = Object.freeze([
   'getGroupFileCount',
   'searchGroup',
   'deleteGroupFolder',
+  'createGroupFolder',
   'setGroupName',
   'setGroupEssenceMessage',
   'getGroupEssencePage',

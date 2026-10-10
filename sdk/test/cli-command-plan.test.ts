@@ -119,3 +119,27 @@ test('group-search prepares uint64 identity before client and keeps original spe
   );
   assert.equal(captured, '00123');
 });
+
+test('folder creation captures its name and rejects invalid intent before client creation', async () => {
+  validateCommandFlags('group-folder-create', {
+    config: 'fixture',
+    'group-id': '123',
+    name: 'folder',
+  });
+  await assert.rejects(
+    prepareCommand('group-folder-create', { 'group-id': '123', name: '  ' }),
+    /nonblank/,
+  );
+  const flags = { 'group-id': '00123', name: ' 文件夹 ' };
+  const action = await prepareCommand('group-folder-create', flags);
+  flags.name = 'changed';
+  const expected = { groupId: '123', folderId: 'native-id', parentFolderId: '', name: ' 文件夹 ' };
+  const result = await action({
+    createGroupFolder: async (groupId: string, name: string) => {
+      assert.equal(groupId, '00123');
+      assert.equal(name, ' 文件夹 ');
+      return expected;
+    },
+  } as unknown as QQClient);
+  assert.deepEqual(result, expected);
+});

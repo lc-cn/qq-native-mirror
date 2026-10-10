@@ -93,7 +93,12 @@ const ownerUid: string = search.ownerUid;
 search.ownerUserId;
 declare const client: import('qq-native-client').QQClient;
 const searchResult: Promise<GroupSearchMatch | undefined> = client.searchGroup('123');
-void [request, sent, webNotices, searchGroup, ownerUid, searchResult];
+const folderResult: Promise<GroupFolder> = client.createGroupFolder('123', 'files');
+declare const folder: GroupFolder;
+client.deleteGroupFolder(folder.groupId, folder.folderId);
+// @ts-expect-error A folder snapshot does not claim a listing or file-count result.
+folder.files;
+void [request, sent, webNotices, searchGroup, ownerUid, searchResult, folderResult];
 `,
   );
   const program = ts.createProgram([consumer, join(dist, 'types.d.ts')], options);

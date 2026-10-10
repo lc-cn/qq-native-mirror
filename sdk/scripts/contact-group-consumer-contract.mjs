@@ -23,6 +23,7 @@ registerHooks({load(url,context,next){
    if(method==='getGroupEssencePage'){if(payload.groupId!=='123'||payload.options.pageStart!==17||payload.options.pageLimit!==2)throw Error('Invalid essence page IPC');return {...payload.options,groupId:payload.groupId,messages:[],isEnd:false,groupRole:2};}
    if(method==='listGroupEssenceMessages'){if(payload.groupId!=='123'||payload.options.maxPages!==2)throw Error('Invalid full essence IPC');return [];}
    if(method==='setGroupEssenceMessage'){if(payload.groupId!=='123'||payload.messageId!=='9876543210123456789'||typeof payload.enabled!=='boolean')throw Error('Invalid essence IPC intent');return;}
+   if(method==='createGroupFolder'){if(payload.groupId!=='18446744073709551615'||payload.name!==' fixture folder ')throw Error('Invalid create folder IPC');return {groupId:payload.groupId,folderId:'opaque-new',parentFolderId:'',name:payload.name};}
    if(method==='deleteGroupFolder'){if(payload.groupId!=='18446744073709551615'||payload.folderId!==' opaque/文件夹 ')throw Error('Invalid folder IPC');return;}
    if(method==='getGroupFileCount'){if(payload.groupId!=='18446744073709551615')throw Error('Invalid file count IPC');return 4294967295;}
    if(method==='setGroupRemark')return {method,groupId:payload.groupId,remark:payload.remark};throw Error('Unexpected fixture operation');}
@@ -67,6 +68,12 @@ registerHooks({load(url,context,next){
       await client.deleteGroupFolder('18446744073709551615', ' opaque/文件夹 '),
       undefined,
     );
+    assert.deepEqual(await client.createGroupFolder('18446744073709551615', ' fixture folder '), {
+      groupId: '18446744073709551615',
+      folderId: 'opaque-new',
+      parentFolderId: '',
+      name: ' fixture folder ',
+    });
     await assert.rejects(client.deleteGroupFolder('18446744073709551616', 'folder'), /uint64/);
     await assert.rejects(client.deleteGroupFolder('123', ''), /nonempty/);
     assert.equal(await client.getGroupFileCount('18446744073709551615'), 4294967295);
@@ -279,9 +286,48 @@ export async function verifyContactGroupConsumer(packageRoot) {
     assert.equal(calls, 1, 'close gate must prevent a second dispatch');
   }
   const { createNativeServices } = await load('native-services.js');
+  const folderProfiles = [
+    {
+      platform: 'linux',
+      arch: 'x64',
+      clientVersion: '3.2.32-52194',
+      wrapperSha256: '7882b8e3055cd38584861042befacd8be9939896f5cbbca6fa4a230926b48526',
+    },
+    {
+      platform: 'linux',
+      arch: 'arm64',
+      clientVersion: '3.2.32-52194',
+      wrapperSha256: 'c302361f52494de257044e912e43ed244bb29ee59f59345d25a8959327828337',
+    },
+    {
+      platform: 'darwin',
+      arch: 'arm64',
+      clientVersion: '7.0.2-53644',
+      wrapperSha256: 'fbc8ad9b328d05e16784d76b0181dda894c17001179dbf8c0d5dd00dc6271358',
+    },
+    {
+      platform: 'darwin',
+      arch: 'x64',
+      clientVersion: '7.0.2-53644',
+      wrapperSha256: 'e91c58872d3d498f2d3ac1c304ab3ae4602d016274cf3e0f0cb651ad765f1f54',
+    },
+    {
+      platform: 'win32',
+      arch: 'x64',
+      clientVersion: '9.9.33-52230',
+      wrapperSha256: '63112ab9161e127f5f7e17998a7196e143808923fb54cbbf7b4e21426187a5f0',
+    },
+    {
+      platform: 'win32',
+      arch: 'arm64',
+      clientVersion: '9.9.33-52230',
+      wrapperSha256: '54e5a6ce127a1f973f28e38ddfbf1338403ea323a141546a6578dd25332c928a',
+    },
+  ];
   let folderDispatches = 0;
   const folderServices = createNativeServices({
-    version: 'fixture',
+    version: folderProfiles[2].clientVersion,
+    binaryProfile: folderProfiles[2],
     events: { emit() {} },
     session: {
       getMsgService: () => ({ addKernelMsgListener() {} }),
@@ -315,6 +361,215 @@ export async function verifyContactGroupConsumer(packageRoot) {
   );
   assert.equal(folderDispatches, 1);
 
+  for (const profile of folderProfiles) {
+    for (const supplied of [
+      profile,
+      undefined,
+      { ...profile, platform: 'unsupported' },
+      { ...profile, arch: 'unsupported' },
+      { ...profile, clientVersion: 'unknown' },
+      { ...profile, wrapperSha256: '0'.repeat(64) },
+    ]) {
+      let gets = 0,
+        calls = 0;
+      const guarded = createNativeServices({
+        version: profile.clientVersion,
+        binaryProfile: supplied,
+        events: { emit() {} },
+        session: {
+          getMsgService: () => ({ addKernelMsgListener() {} }),
+          getBuddyService: () => ({ addKernelBuddyListener() {} }),
+          getGroupService: () => ({ addKernelGroupListener() {} }),
+          getRichMediaService() {
+            gets++;
+            return {
+              deleteGroupFolder() {
+                calls++;
+                return { result: 0, groupFileCommonResult: { retCode: 0 } };
+              },
+            };
+          },
+        },
+      });
+      try {
+        if (supplied === profile)
+          await guarded.invokeOperation('deleteGroupFolder', {
+            groupId: '18446744073709551615',
+            folderId: ' opaque ',
+          });
+        else
+          await assert.rejects(
+            guarded.invokeOperation('deleteGroupFolder', { groupId: '123', folderId: 'opaque' }),
+          );
+        assert.equal(gets, supplied === profile ? 1 : 0);
+        assert.equal(calls, supplied === profile ? 1 : 0);
+      } finally {
+        guarded.close();
+      }
+    }
+  }
+  const createdRaw = () => ({
+    result: 0,
+    resultWithGroupItem: {
+      result: { retCode: 0 },
+      groupItem: {
+        peerId: '00123',
+        folderInfo: {
+          folderId: 'opaque-created',
+          parentFolderId: '',
+          folderName: ' fixture folder ',
+        },
+      },
+    },
+  });
+  for (const profile of folderProfiles) {
+    for (const supplied of [
+      profile,
+      undefined,
+      { ...profile, platform: 'unsupported' },
+      { ...profile, arch: 'unsupported' },
+      { ...profile, clientVersion: 'unknown' },
+      { ...profile, wrapperSha256: '0'.repeat(64) },
+    ]) {
+      let gets = 0,
+        creates = 0,
+        deletes = 0;
+      const media = {
+        createGroupFolder(group, name) {
+          assert.equal(this, media);
+          assert.deepEqual([group, name], ['00123', ' fixture folder ']);
+          creates++;
+          return createdRaw();
+        },
+        deleteGroupFolder(group, id) {
+          assert.deepEqual([group, id], ['00123', 'opaque-created']);
+          deletes++;
+          return { result: 0, groupFileCommonResult: { retCode: 0 } };
+        },
+      };
+      const composition = createNativeServices({
+        version: profile.clientVersion,
+        binaryProfile: supplied,
+        events: { emit() {} },
+        session: {
+          getMsgService: () => ({ addKernelMsgListener() {} }),
+          getBuddyService: () => ({ addKernelBuddyListener() {} }),
+          getGroupService: () => ({ addKernelGroupListener() {} }),
+          getRichMediaService() {
+            gets++;
+            return media;
+          },
+        },
+      });
+      try {
+        if (supplied === profile) {
+          const folder = await composition.invokeOperation('createGroupFolder', {
+            groupId: '00123',
+            name: ' fixture folder ',
+          });
+          assert.deepEqual(folder, {
+            groupId: '00123',
+            folderId: 'opaque-created',
+            parentFolderId: '',
+            name: ' fixture folder ',
+          });
+          await composition.invokeOperation('deleteGroupFolder', {
+            groupId: folder.groupId,
+            folderId: folder.folderId,
+          });
+          assert.equal(creates, 1);
+          assert.equal(deletes, 1);
+        } else {
+          await assert.rejects(
+            composition.invokeOperation('createGroupFolder', {
+              groupId: '00123',
+              name: ' fixture folder ',
+            }),
+          );
+          assert.equal(gets, 0);
+          assert.equal(creates, 0);
+        }
+      } finally {
+        composition.close();
+      }
+    }
+  }
+  const { createGroupFolder } = await load('features/groups/group-file-operations.js');
+  for (const response of [
+    { result: 23 },
+    { result: 0, resultWithGroupItem: { result: { retCode: 42 } } },
+    { ...createdRaw(), resultWithGroupItem: { result: { retCode: 0 }, groupItem: Array(1) } },
+    {
+      result: 0,
+      resultWithGroupItem: {
+        result: { retCode: 0 },
+        groupItem: {
+          peerId: '124',
+          folderInfo: createdRaw().resultWithGroupItem.groupItem.folderInfo,
+        },
+      },
+    },
+    { result: 0, resultWithGroupItem: { result: { retCode: 0 }, groupItem: { peerId: '123' } } },
+  ]) {
+    const controller = new AbortController();
+    let calls = 0;
+    await assert.rejects(
+      createGroupFolder(
+        {
+          signal: controller.signal,
+          awaitAlive: async (value) => value,
+          getRichMediaService: () => ({
+            createGroupFolder() {
+              calls++;
+              return response;
+            },
+          }),
+        },
+        '00123',
+        ' fixture folder ',
+      ),
+    );
+    assert.equal(calls, 1);
+  }
+  const { NativeServiceLifetime: CreateLifetime } = await load(
+    'runtime/native-service-lifetime.js',
+  );
+  const createLifetime = new CreateLifetime();
+  let createCalls = 0,
+    lateReject;
+  const lateCompletion = new Promise((_, reject) => {
+    lateReject = reject;
+  });
+  const canceledCreate = assert.rejects(
+    createGroupFolder(
+      {
+        signal: createLifetime.signal,
+        awaitAlive: createLifetime.awaitAlive,
+        getRichMediaService: () => ({
+          createGroupFolder() {
+            createCalls++;
+            return lateCompletion;
+          },
+        }),
+      },
+      '00123',
+      ' fixture folder ',
+    ),
+  );
+  createLifetime.close();
+  await canceledCreate;
+  lateReject(Error('late create acknowledgement'));
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(createCalls, 1);
+  const createPlan = await prepareCommand('group-folder-create', {
+    'group-id': '00123',
+    name: ' fixture folder ',
+  });
+  assert.deepEqual(await createPlan({ createGroupFolder: async (...args) => args }), [
+    '00123',
+    ' fixture folder ',
+  ]);
+  await assert.rejects(prepareCommand('group-folder-create', { 'group-id': '123', name: ' ' }));
   let compiledMsg;
   const groupListeners = [];
   const essenceCalls = [];
@@ -577,6 +832,10 @@ export async function verifyContactGroupConsumer(packageRoot) {
     groupFileCountControlledContract: true,
     nativeGroupFileCountAttempted: false,
     groupFolderDeleteControlledContract: true,
+    groupFolderDeleteBinaryGateContract: true,
+    groupFolderCreateControlledContract: true,
+    groupFolderCreateBinaryGateContract: true,
+    nativeGroupFolderCreateAttempted: false,
     nativeGroupFolderDeleteAttempted: false,
     groupEssenceControlledContract: true,
     groupEssencePageControlledContract: true,

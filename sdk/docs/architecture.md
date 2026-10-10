@@ -399,6 +399,18 @@ hatch; field validation belongs to the receiving operation. The existing
 low-level `QQClient.request` default result type is retained for compatibility;
 RPC storage and settlement use `unknown` internally.
 
+The native contract registry stores each measured binary identity once, with an
+explicit list of independently inspected capabilities. Matching requires OS,
+architecture, client version and SHA-256 together; capability predicates never
+infer support from a different operation. Worker inspection measures the bytes,
+and service composition gates the operation before lazy native acquisition.
+Adding a new profile requires its own capability list and evidence. Folder deletion
+and creation use the same provenance check as category creation, file counts and group search.
+Their input capture remains pure, their adapters receive only the required
+RichMedia method and Session wait port, and native envelopes become copied public
+DTOs only after validation. Public folder contracts expose no native service
+objects or mutable Session ownership.
+
 ## Lifecycle and error contracts
 
 - One worker owns one account data directory. Locks prevent concurrent owners.

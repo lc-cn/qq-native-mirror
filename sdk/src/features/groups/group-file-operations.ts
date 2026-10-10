@@ -1,5 +1,10 @@
 import { nativeResultError } from '../../errors.ts';
-import { captureDeleteGroupFolder, captureGroupFileCount } from './group-file-input.ts';
+import type { GroupFolder } from '../../contracts/groups.ts';
+import {
+  captureCreateGroupFolder,
+  captureDeleteGroupFolder,
+  captureGroupFileCount,
+} from './group-file-input.ts';
 
 export interface GroupFileContext {
   signal: AbortSignal;
@@ -40,6 +45,60 @@ function acknowledge(value: unknown): void {
     throw nativeResultError('Invalid native group folder response', undefined);
   if (inner !== 0)
     throw nativeResultError('Native group folder response failed', { result: inner });
+}
+
+export interface GroupFolderCreationContext {
+  signal: AbortSignal;
+  getRichMediaService(): { createGroupFolder(groupCode: string, name: string): unknown };
+  awaitAlive<T>(value: T | PromiseLike<T>): Promise<T>;
+}
+
+/** Native creation returns one groupItem object, despite the pinned upstream
+ * declaration saying array. See docs/evidence/group-folder-create-contract.json.
+ * Require both statuses and a folder snapshot matching the requested uint64
+ * group; optional folderInfo presence identifies the selected carrier without
+ * guessing the native type enum. Never retry or issue a readback automatically.
+ */
+export async function createGroupFolder(
+  context: GroupFolderCreationContext,
+  groupId: unknown,
+  name: unknown,
+): Promise<GroupFolder> {
+  const captured = captureCreateGroupFolder(groupId, name);
+  context.signal.throwIfAborted();
+  const service = context.getRichMediaService();
+  context.signal.throwIfAborted();
+  const method = service.createGroupFolder;
+  context.signal.throwIfAborted();
+  if (typeof method !== 'function') throw new Error('Native service is missing createGroupFolder');
+  const result = await context.awaitAlive(
+    Reflect.apply(method, service, [captured.groupId, captured.name]),
+  );
+  context.signal.throwIfAborted();
+  const details = field(result, 'resultWithGroupItem');
+  // Reuse the verified two-layer status policy without adopting or spreading
+  // native objects. The selected creation result uses a different property name.
+  acknowledge({ result: field(result, 'result'), groupFileCommonResult: field(details, 'result') });
+  context.signal.throwIfAborted();
+  const item = field(details, 'groupItem');
+  const peerId = field(item, 'peerId'),
+    folder = field(item, 'folderInfo');
+  const folderId = field(folder, 'folderId'),
+    parentFolderId = field(folder, 'parentFolderId'),
+    folderName = field(folder, 'folderName');
+  context.signal.throwIfAborted();
+  if (
+    typeof peerId !== 'string' ||
+    !/^\d+$/.test(peerId) ||
+    BigInt(peerId) !== BigInt(captured.groupId) ||
+    typeof folderId !== 'string' ||
+    !folderId ||
+    typeof parentFolderId !== 'string' ||
+    typeof folderName !== 'string'
+  )
+    throw nativeResultError('Invalid native group folder creation snapshot', undefined);
+  context.signal.throwIfAborted();
+  return { groupId: peerId, folderId, parentFolderId, name: folderName };
 }
 
 /** A single native acknowledgement, not proof of remote folder disappearance.

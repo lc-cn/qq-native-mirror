@@ -81,6 +81,14 @@ export interface GroupSearchMatch extends Group {
   description: string;
 }
 
+/** Native folder snapshot returned by creation; no listing or remote readback is implied. */
+export interface GroupFolder {
+  groupId: string;
+  folderId: string;
+  parentFolderId: string;
+  name: string;
+}
+
 export interface GroupMember {
   userId: string;
   uid: string;

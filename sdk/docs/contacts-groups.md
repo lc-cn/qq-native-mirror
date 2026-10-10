@@ -274,6 +274,8 @@ int32 zero. Nonzero codes reject with their numeric code; malformed statuses
 reject as `invalid-result`. Native response wording is not exposed.
 
 CLI: `qq-native-client group-folder-delete --config ./qq.json --group-id 123456 --folder-id opaque-folder-id`.
+
+Folder deletion checks the worker-measured binary profile before acquiring RichMedia. Missing or changed OS, architecture, version or SHA-256 rejects with `unsupported-native-contract` and does not dispatch a mutation. Each of the six fixed profiles has its own deletion contract evidence; other versions require independent verification.
 This is a mutation and uses the same explicit login/restore selection as other
 account commands. Invalid intent rejects before client creation.
 
@@ -281,8 +283,41 @@ The [static contract](evidence/group-folder-contract.json) binds normal-path
 inspection of the six default platform binaries and pinned upstream callers.
 A fulfilled `Promise<void>` acknowledges that native return; it does not prove
 the folder disappeared remotely. No account folder was deleted during these
-checks. Listing, creation, uploads, downloads and group file events still require
-their own implementation and acceptance.
+checks. Listing, uploads, downloads and group file events still require their own
+implementation and acceptance. Creation has its separate contract below.
+
+## Group file folder creation
+
+```ts
+const folder = await client.createGroupFolder('123456', 'Project files');
+// {groupId, folderId, parentFolderId, name}; IDs remain strings.
+await client.deleteGroupFolder(folder.groupId, folder.folderId);
+```
+
+CLI: `qq-native-client group-folder-create --config ./qq.json --group-id 123456 --name 'Project files'`.
+
+The group ID must be a positive decimal string fitting uint64. The name must be a
+nonblank string; its original spelling is captured before IPC. Binary provenance
+is checked before acquiring RichMedia, using the six independently inspected
+profiles in the [creation contract](evidence/group-folder-create-contract.json).
+Unknown OS, architecture, version or wrapper bytes reject without native dispatch.
+
+The native completion contains one `groupItem` object, despite the inspected
+upstream declaration describing an array. The SDK requires explicit int32 zero
+in both outer `result` and nested `resultWithGroupItem.result.retCode`; accepting
+both zero codes is a conservative SDK policy, not independently proven remote
+success semantics. A returned folder must carry a matching uint64 `peerId` and
+string `folderId`, `parentFolderId` and `folderName`; the ID must be nonempty.
+The adapter copies only these fields into `GroupFolder`, preserves an empty root
+parent ID and does not interpret the native `type` enum. Missing folder information
+or a file-only carrier rejects rather than inventing an ID.
+
+One explicit action issues at most one creation. Closing the Session rejects its
+pending wait and observes late failures; it cannot undo an already issued action.
+No retry, readback or automatic deletion occurs. The example's delete is a separate
+explicit mutation. Controlled service, worker and installed-package tests establish
+the SDK contract; no real account folder was created during these checks. This
+source candidate is not yet the published npm version.
 
 ## Group file count
 

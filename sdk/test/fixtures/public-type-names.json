@@ -26,6 +26,7 @@
   "GroupEssenceMessage",
   "GroupEssencePage",
   "GroupEssencePageOptions",
+  "GroupFolder",
   "GroupInfoUpdate",
   "GroupListUpdate",
   "GroupMember",

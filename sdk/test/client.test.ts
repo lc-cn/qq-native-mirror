@@ -1010,3 +1010,33 @@ test('public group search validates before IPC and preserves its complete DTO', 
   assert.deepEqual(await pending, match);
   await client.close();
 });
+
+test('public folder creation validates before IPC and returns identity usable by deletion', async () => {
+  const worker = new Worker(),
+    client = new QQClient(worker as unknown as ChildProcess, 500);
+  worker.emit('message', { event: 'ready', payload: { uin: '456', uid: 'u_self' } });
+  await assert.rejects(client.createGroupFolder('18446744073709551616', 'folder'), /uint64/);
+  await assert.rejects(client.createGroupFolder('123', '  '), /nonblank/);
+  assert.equal(worker.requests.length, 0);
+  const pending = client.createGroupFolder('00123', ' 文件夹 ');
+  const request = worker.requests.at(-1)!;
+  assert.equal(request.method, 'createGroupFolder');
+  assert.equal(request.groupId, '00123');
+  assert.equal(request.name, ' 文件夹 ');
+  const folder = {
+    groupId: '123',
+    folderId: 'opaque/folder',
+    parentFolderId: '',
+    name: ' 文件夹 ',
+  };
+  worker.emit('message', { id: request.id, result: folder });
+  const created = await pending;
+  assert.deepEqual(created, folder);
+  const deletion = client.deleteGroupFolder(created.groupId, created.folderId);
+  const remove = worker.requests.at(-1)!;
+  assert.equal(remove.method, 'deleteGroupFolder');
+  assert.equal(remove.folderId, folder.folderId);
+  worker.emit('message', { id: remove.id, result: undefined });
+  await deletion;
+  await client.close();
+});

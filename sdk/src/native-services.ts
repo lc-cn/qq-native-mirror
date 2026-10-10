@@ -1,7 +1,15 @@
 import { captureGroupSearch } from './features/groups/group-search-input.ts';
 import { createGroupSearch } from './features/groups/group-search.ts';
-import { captureGroupFileCount } from './features/groups/group-file-input.ts';
-import { deleteGroupFolder, getGroupFileCount } from './features/groups/group-file-operations.ts';
+import {
+  captureCreateGroupFolder,
+  captureDeleteGroupFolder,
+  captureGroupFileCount,
+} from './features/groups/group-file-input.ts';
+import {
+  createGroupFolder,
+  deleteGroupFolder,
+  getGroupFileCount,
+} from './features/groups/group-file-operations.ts';
 import { captureMergedForward } from './features/forward/merged-forward-input.ts';
 import { captureDownloadPayload } from './features/media/download-input.ts';
 import { createMessageQueries } from './features/messages/message-queries.ts';
@@ -11,6 +19,8 @@ import type { NativeServiceContext } from './runtime/native-service-context.ts';
 import {
   supportsCategoryCreation,
   supportsGroupFileCount,
+  supportsGroupFolderDeletion,
+  supportsGroupFolderCreation,
   supportsGroupSearch,
 } from './native/native-contracts.ts';
 import { createFriendCategory } from './features/contacts/friend-category-create.ts';
@@ -531,7 +541,36 @@ export function createNativeServices(context: NativeServiceContext) {
               captured.groupId,
             );
           }
-          case 'deleteGroupFolder':
+          case 'createGroupFolder': {
+            const captured = captureCreateGroupFolder(payload.groupId, payload.name);
+            if (!supportsGroupFolderCreation(nativeContracts, version))
+              throw Object.assign(
+                new Error('Group folder creation contract is not verified for this native binary'),
+                { code: 'unsupported-native-contract' },
+              );
+            return createGroupFolder(
+              {
+                signal: lifetime.signal,
+                awaitAlive,
+                getRichMediaService: () => {
+                  const richMedia = service('RichMedia');
+                  return {
+                    createGroupFolder: (groupId, name) =>
+                      call(richMedia, 'createGroupFolder', groupId, name),
+                  };
+                },
+              },
+              captured.groupId,
+              captured.name,
+            );
+          }
+          case 'deleteGroupFolder': {
+            const captured = captureDeleteGroupFolder(payload.groupId, payload.folderId);
+            if (!supportsGroupFolderDeletion(nativeContracts, version))
+              throw Object.assign(
+                new Error('Group folder deletion contract is not verified for this native binary'),
+                { code: 'unsupported-native-contract' },
+              );
             return deleteGroupFolder(
               {
                 signal: lifetime.signal,
@@ -544,9 +583,10 @@ export function createNativeServices(context: NativeServiceContext) {
                   };
                 },
               },
-              payload.groupId,
-              payload.folderId,
+              captured.groupId,
+              captured.folderId,
             );
+          }
           case 'setGroupName':
             return groupOperations.invokeOperation(method, payload);
           case 'getGroupEssencePage':

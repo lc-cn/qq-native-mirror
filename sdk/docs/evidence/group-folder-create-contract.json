@@ -1,0 +1,219 @@
+{
+  "schemaVersion": 1,
+  "nativeExecuted": false,
+  "accountUsed": false,
+  "evidenceTier": "Pinned binary static input binding and normal Promise serialization; no real folder creation acceptance",
+  "profiles": [
+    {
+      "platform": "darwin",
+      "arch": "arm64",
+      "clientVersion": "7.0.2-53644",
+      "wrapperSha256": "fbc8ad9b328d05e16784d76b0181dda894c17001179dbf8c0d5dd00dc6271358",
+      "nativeManifestSha256": "c48a84e3ab8baaaa5de038335e21af716836762a8066ea438f9e1ff6b274f141",
+      "privateInstructionReceiptSha256": "46d6505376cb43151f35c737de7f5269e88000f6bec7198617db37b6176ad5fe",
+      "createGroupFolderEntry": "0xa7c538",
+      "argumentCount": 2,
+      "coreVirtualSlot": "0x70",
+      "normalCompletionChain": [
+        "0xa7c704",
+        "0xa83c20",
+        "0x823c70",
+        "0x823ea0",
+        "0x823fdc"
+      ],
+      "outerSerializer": "0x823fdc",
+      "nestedStatusSerializer": "0x713ff0",
+      "resultWithGroupItemSerializer": "0x8241a0",
+      "groupItemSerializer": "0x824220",
+      "folderInfoSerializer": "0x8243c8",
+      "nativeExecuted": false,
+      "accountUsed": false
+    },
+    {
+      "platform": "darwin",
+      "arch": "x64",
+      "clientVersion": "7.0.2-53644",
+      "wrapperSha256": "e91c58872d3d498f2d3ac1c304ab3ae4602d016274cf3e0f0cb651ad765f1f54",
+      "nativeManifestSha256": "50c9ed62df5461220d27da8a589f3635b311ba1233cc499ebf3b80c0db2ae559",
+      "privateInstructionReceiptSha256": "83d203957bb458c0fd13e9e40fe3cc958cda16465ac1ce65b0696ed9d1912052",
+      "createGroupFolderEntry": "0xb3201e",
+      "argumentCount": 2,
+      "coreVirtualSlot": "0x70",
+      "normalCompletionChain": [
+        "0xb322b0",
+        "0xb3ac6d",
+        "0x87bb78",
+        "0x87c142",
+        "0x87c26c",
+        "0x87c27e"
+      ],
+      "outerSerializer": "0x87c27e",
+      "nestedStatusSerializer": "0x762bd0",
+      "resultWithGroupItemSerializer": "0x87c438",
+      "groupItemSerializer": "0x87c4ac",
+      "folderInfoSerializer": "0x87c670",
+      "nativeExecuted": false,
+      "accountUsed": false
+    },
+    {
+      "platform": "linux",
+      "arch": "arm64",
+      "clientVersion": "3.2.32-52194",
+      "wrapperSha256": "c302361f52494de257044e912e43ed244bb29ee59f59345d25a8959327828337",
+      "nativeManifestSha256": "263fc8fe7416b06e99af43db2418ef28679ae91b88a014990ef2191673e3ee7f",
+      "privateInstructionReceiptSha256": "f5d63a4fad2ad2e1ffdd1546964a3e3913e658c2a50ec04811d12621cf84a696",
+      "createGroupFolderEntry": "0x16a2e30",
+      "argumentCount": 2,
+      "coreVirtualSlot": "0x70",
+      "normalCompletionChain": [
+        "0x19dbf0c",
+        "0x19dc44c",
+        "0x19dc654",
+        "0x19dc688"
+      ],
+      "outerSerializer": "0x19dc688",
+      "nestedStatusSerializer": "0x174ea4c",
+      "resultWithGroupItemSerializer": "inlined in outer serializer",
+      "groupItemSerializer": "0x19dcb08",
+      "folderInfoSerializer": "0x19dcd2c",
+      "nativeExecuted": false,
+      "accountUsed": false
+    },
+    {
+      "platform": "linux",
+      "arch": "x64",
+      "clientVersion": "3.2.32-52194",
+      "wrapperSha256": "7882b8e3055cd38584861042befacd8be9939896f5cbbca6fa4a230926b48526",
+      "nativeManifestSha256": "8a7b8f44327fa8408dfee2885c0e23d94b4152ff1e70ce0ee735669803066a87",
+      "privateInstructionReceiptSha256": "3c8665270fe6eebf902cf219d0ec19a473a5ec5b9df735e94620fed9ee4fea3f",
+      "createGroupFolderEntry": "0x398b540",
+      "argumentCount": 2,
+      "coreVirtualSlot": "0x70",
+      "normalCompletionChain": [
+        "0x399cc10",
+        "0x399d1a0",
+        "0x399d3a0",
+        "0x399d3e0"
+      ],
+      "outerSerializer": "0x399d3e0",
+      "nestedStatusSerializer": "0x3976e90",
+      "resultWithGroupItemSerializer": "inlined in outer serializer",
+      "groupItemSerializer": "0x3975e60",
+      "folderInfoSerializer": "0x39760b0",
+      "nativeExecuted": false,
+      "accountUsed": false
+    },
+    {
+      "platform": "win32",
+      "arch": "x64",
+      "clientVersion": "9.9.33-52230",
+      "wrapperSha256": "63112ab9161e127f5f7e17998a7196e143808923fb54cbbf7b4e21426187a5f0",
+      "nativeManifestSha256": "7373fca97953a24c550bb73298b5008f4988fad934eaab4c1a21f07dd7dfc9c8",
+      "privateInstructionReceiptSha256": "e6f2ac99d71e0103e96e442c576fb358fee4e36fb3884b1c2265b39b6659b4cc",
+      "createGroupFolderEntry": "0x180edec8e",
+      "argumentCount": 2,
+      "coreVirtualSlot": "0x68",
+      "normalCompletionChain": [
+        "0x180edefeb",
+        "0x180ee90f5",
+        "0x1822f58c0",
+        "0x1822f5b46",
+        "0x1822f5ca2",
+        "0x1822f5cb7"
+      ],
+      "outerSerializer": "0x1822f5cb7",
+      "nestedStatusSerializer": "0x1822f5f2e",
+      "resultWithGroupItemSerializer": "0x1822f5e9a",
+      "groupItemSerializer": "0x1822f6046",
+      "folderInfoSerializer": "0x1822f6242",
+      "nativeExecuted": false,
+      "accountUsed": false
+    },
+    {
+      "platform": "win32",
+      "arch": "arm64",
+      "clientVersion": "9.9.33-52230",
+      "wrapperSha256": "54e5a6ce127a1f973f28e38ddfbf1338403ea323a141546a6578dd25332c928a",
+      "nativeManifestSha256": "c453d420e486e2683d7f72cb73fc689c24a3d670e02622565568085b604a800c",
+      "privateInstructionReceiptSha256": "5adfae275bf3f256554c067785d5e707f666626474bb4569ccdb0e07efac7b11",
+      "createGroupFolderEntry": "0x180e9f128",
+      "argumentCount": 2,
+      "coreVirtualSlot": "0x68",
+      "normalCompletionChain": [
+        "0x180e9f434",
+        "0x180ea8fdc",
+        "0x1821f5504",
+        "0x1821f5798",
+        "0x1821f5918",
+        "0x1821f5928"
+      ],
+      "outerSerializer": "0x1821f5928",
+      "nestedStatusSerializer": "0x1821f5bd4",
+      "resultWithGroupItemSerializer": "0x1821f5b30",
+      "groupItemSerializer": "0x1821f5cf8",
+      "folderInfoSerializer": "0x1821f5f14",
+      "nativeExecuted": false,
+      "accountUsed": false
+    }
+  ],
+  "primarySources": {
+    "commit": "26d7533e0f5800fdff865ab2f2ad7692917e1076",
+    "groupApi": {
+      "path": "packages/napcat-core/apis/group.ts",
+      "gitBlob": "4949dabe83de37e42570d0c5e63036c0eb1e662a",
+      "sha256": "999ce32535ec94dd008562b93db95d07204d7fe858e9cf8d4413f6d76fe057bf",
+      "lines": [
+        363,
+        364
+      ]
+    },
+    "oneBotAction": {
+      "path": "packages/napcat-onebot/action/go-cqhttp/CreateGroupFileFolder.ts",
+      "gitBlob": "ee54675c471042b1b98ebfce9871285fc9ac9f10",
+      "sha256": "dd1e79fa7eb55002873707bb3a8eb8c2c3c26a546045e68340ae1e3863d998a0",
+      "line": 41,
+      "behavior": "Calls GroupApi.creatGroupFileFolder(group_id.toString(), folderName) and returns resultWithGroupItem; does not independently prove status success semantics"
+    }
+  },
+  "nativeContract": {
+    "method": "RichMediaService.createGroupFolder",
+    "arguments": [
+      "group code decimal string converted to native uint64",
+      "folder name string"
+    ],
+    "outer": {
+      "result": "int32",
+      "errMsg": "string",
+      "resultWithGroupItem": {
+        "result": {
+          "retCode": "int32",
+          "retMsg": "string",
+          "clientWording": "string"
+        },
+        "groupItem": {
+          "shape": "single object, not array",
+          "peerId": "native uint64 converted to decimal string",
+          "type": "int32; opaque enum",
+          "folderInfo": "optional object constructed only when native optional folder payload is present",
+          "fileInfo": "separate optional payload; not part of minimum folder DTO"
+        }
+      }
+    },
+    "folderInfo": {
+      "folderId": "string",
+      "parentFolderId": "string",
+      "folderName": "string"
+    }
+  },
+  "acceptancePolicy": {
+    "description": "Requiring outer result === 0 and nested result.retCode === 0 is conservative SDK policy, not proof of proprietary status enum semantics or remote creation effectiveness",
+    "requiredProjection": "Require target-matching peerId and a valid folderInfo with returned folderId, parentFolderId and folderName; never fabricate an ID from a void acknowledgment or missing folder payload"
+  },
+  "limits": [
+    "No native code or account operations executed for this evidence",
+    "Do not interpret groupItem.type numeric values as folder discriminator; the optional folderInfo serialization path is the concrete folder-payload evidence",
+    "Returned identifiers permit subsequent delete/list input projection, but real create/delete/list round-trip remains unverified",
+    "All six profile contracts are independently bound to their own binaries; creation support must not inherit deletion evidence",
+    "Additional folder fields are outside this minimum contract; no inferred enum, pagination or business status labels"
+  ]
+}
