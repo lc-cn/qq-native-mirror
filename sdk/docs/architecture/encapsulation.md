@@ -164,15 +164,20 @@ claiming to cancel a dispatched native operation. The session composition keeps
 system-message processing and native callback registration in their original
 order. Queried history does not share live-delivery deduplication state.
 
-`captureNativeMessage` supplies the delivery ports with a typed receipt snapshot.
+`captureIncomingNativeMessage` supplies the live delivery ports with a typed receipt
+snapshot. Its single discriminator read is part of the same guarded capture as
+the remaining metadata; unsupported conversations are skipped before their bodies
+are read. `captureNativeMessage` uses the same snapshot implementation for queries
+and forward results, where unsupported conversations remain a failure.
 It reads the fields required for projection once, validates those captured values
 and copies the known element bodies before lookup can yield. Projection and the
 deduplication key use that same snapshot, rather than reading the original record
 again. Unrelated enumerable properties are not evaluated or carried into the
 snapshot; applications still receive the original `Message.raw`. Unknown element
 payloads retain their original object identity. Group messages do not acquire the
-unused private `peerUin` field. The outer callback filter retains its existing
-unsupported-conversation policy; the snapshot does not define a new proprietary
+unused private `peerUin` field. Delivery carries original records as `unknown`,
+uses typed snapshots for identity and ordering, and has no permission to import
+the dynamic native-object type. The snapshot does not define a new proprietary
 ABI. Source and installed-consumer checks cover controlled accessor side effects
 and queued mutation, without claiming such accessors occur in QQ callbacks.
 

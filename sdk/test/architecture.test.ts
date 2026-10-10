@@ -277,6 +277,7 @@ test('dynamic native object permissions apply only to actual reviewed adapters a
     'src/features/groups/group-files.ts',
     'src/features/messages/native-message-sender.ts',
     'src/features/messages/message-resolution.ts',
+    'src/features/messages/incoming-message-delivery.ts',
     'src/features/contacts/contact-directory.ts',
     'src/features/contacts/friend-categories.ts',
     'src/features/contacts/friend-category-mutations.ts',

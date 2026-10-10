@@ -113,7 +113,6 @@ export const dynamicNativeOwners: Readonly<Record<string, string>> = {
   'src/features/messages/inbound-messages.ts': 'Project version-dependent native messages.',
   'src/features/messages/inbound-mentions.ts': 'Resolve native mention metadata.',
   'src/features/messages/inbound-elements.ts': 'Project opaque received element variants.',
-  'src/features/messages/incoming-message-delivery.ts': 'Own delivery of opaque callback batches.',
 };
 const facadeInputs = new Set([
   'src/features/contacts/friend-categories.ts',

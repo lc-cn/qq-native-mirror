@@ -86,6 +86,11 @@ resolution, the native UIN lookup method, cancellation and diagnostics. Native
 identity results remain `unknown` until `native-identities` validates and copies
 the requested map entries; do not assert a typed map in composition. Message
 snapshotting and projection retain their existing owners and happen before awaits.
+Live delivery accepts opaque `unknown` records and uses
+`captureIncomingNativeMessage` for both conversation selection and metadata
+capture. Do not add an outer `chatType` property read: native accessors must be
+captured once inside the error boundary. Queries use the strict capture path;
+unsupported live conversations are skipped without reading their bodies.
 
 `features/forward/forward-resource-owner.ts` owns lazy resource upload/read
 transports and merged card orchestration. Supply its narrow SSO, peer resolution

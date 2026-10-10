@@ -24,9 +24,7 @@ export function createMessageResolution(context: MessageResolutionContext) {
     signal = context.signal,
   ): Promise<(Message | undefined)[]> {
     return decodeNativeMessages(
-      // The decoder validates and captures each untrusted record before its
-      // first await. This assertion exposes no proprietary callable members.
-      messages as Record<string, unknown>[],
+      messages,
       rawMessages,
       async (uids) => {
         const result = await context.getIdentityService().getUin(uids);

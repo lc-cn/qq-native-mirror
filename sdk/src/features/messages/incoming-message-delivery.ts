@@ -1,22 +1,21 @@
 import {
-  captureNativeMessage,
+  captureIncomingNativeMessage,
   messageIdentityUids,
   type CapturedNativeMessage,
 } from './inbound-messages.ts';
 import { needsMentionLookup } from './inbound-mentions.ts';
-import type { NativeObject } from '../../native/native-object.ts';
 import type { Message } from '../../contracts/messages.ts';
 
 export interface IncomingMessageDeliveryContext {
   resolveMessages(
     messages: CapturedNativeMessage[],
-    rawMessages: NativeObject[],
+    rawMessages: unknown[],
     signal: AbortSignal,
   ): Promise<(Message | undefined)[]>;
-  project(message: CapturedNativeMessage, raw: NativeObject): Message;
+  project(message: CapturedNativeMessage, raw: unknown): Message;
   emitMessage(message: Message): void;
   diagnostic(stage: string): void;
-  dispatch(rawMessages: NativeObject[]): void;
+  dispatch(rawMessages: unknown[]): void;
 }
 /** Owns callback snapshots, ordering and bounded deduplication for one Session.
  * Closing prevents new lookups and delivery, without pretending to cancel native work.
@@ -57,7 +56,7 @@ export function createIncomingMessageDelivery(context: IncomingMessageDeliveryCo
       : message.chatType === 1 && message.msgId && message.peerUin
         ? JSON.stringify([1, 'uin', message.peerUin, message.msgId])
         : undefined;
-  type Received = { raw: NativeObject; message: CapturedNativeMessage; key?: string };
+  type Received = { raw: unknown; message: CapturedNativeMessage; key?: string };
   const unseen = (messages: Received[]) =>
     messages.filter((value) => !value.key || !seen.has(value.key));
   const deliver = (messages: Received[], decoded: (Message | undefined)[]) => {
@@ -84,16 +83,9 @@ export function createIncomingMessageDelivery(context: IncomingMessageDeliveryCo
       const messages: Received[] = [];
       for (const raw of Array.from(input)) {
         if (closed) return;
-        if (
-          raw &&
-          typeof raw === 'object' &&
-          !Array.isArray(raw) &&
-          raw.chatType !== 1 &&
-          raw.chatType !== 2
-        )
-          continue;
         try {
-          const message = captureNativeMessage(raw);
+          const message = captureIncomingNativeMessage(raw);
+          if (!message) continue;
           messages.push({ raw, message, key: key(message) });
         } catch {
           diagnostic('invalid-native-message');

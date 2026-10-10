@@ -20,14 +20,14 @@ const message = (id: string, lookup = false): NativeObject => ({
 function fixture() {
   const emitted: string[] = [];
   const diagnostics: string[] = [];
-  const dispatches: NativeObject[][] = [];
+  const dispatches: unknown[][] = [];
   const pending: {
     messages: NativeObject[];
-    raw: NativeObject[];
+    raw: unknown[];
     resolve: () => void;
     reject: (error: Error) => void;
   }[] = [];
-  const project = (value: NativeObject, raw: NativeObject) =>
+  const project = (value: NativeObject, raw: unknown) =>
     projectNativeMessage(value, decodeElements(value.elements), new Map([['u_peer', '123']]), raw);
   const delivery = createIncomingMessageDelivery({
     project,
@@ -57,6 +57,37 @@ test('fast path delivers synchronously, ignores unsupported conversations and di
   assert.deepEqual(f.diagnostics, ['invalid-native-message']);
   f.delivery.receive(null);
   assert.equal(f.diagnostics[1], 'invalid-native-message-batch');
+});
+test('live delivery reads conversation once before capturing its remaining metadata', () => {
+  const f = fixture(),
+    raw = message('1');
+  let reads = 0;
+  Object.defineProperty(raw, 'chatType', {
+    get() {
+      return ++reads === 1 ? 1 : 4;
+    },
+  });
+  f.delivery.receive([raw]);
+  assert.equal(reads, 1);
+  assert.deepEqual(f.emitted, ['1']);
+  assert.deepEqual(f.diagnostics, []);
+  assert.equal(f.dispatches[0][0], raw);
+  f.delivery.close();
+});
+test('a throwing conversation getter is diagnosed without escaping or dropping the next row', () => {
+  const f = fixture(),
+    raw = message('1'),
+    next = message('2');
+  Object.defineProperty(raw, 'chatType', {
+    get() {
+      throw new Error('private native detail');
+    },
+  });
+  assert.doesNotThrow(() => f.delivery.receive([raw, next]));
+  assert.deepEqual(f.emitted, ['2']);
+  assert.deepEqual(f.diagnostics, ['invalid-native-message']);
+  assert.deepEqual(f.dispatches[0], [next]);
+  f.delivery.close();
 });
 test('queued receipt snapshots survive raw mutation and preserve batch order behind deferred lookup', async () => {
   const f = fixture();
@@ -200,7 +231,7 @@ test('dispatch retains original raw rows including same-batch duplicates', async
 
 test('an unresolved decoded row still reaches callback dispatch with its original raw object', async () => {
   const f = fixture();
-  const dispatched: NativeObject[][] = [];
+  const dispatched: unknown[][] = [];
   const delivery = createIncomingMessageDelivery({
     project: f.project,
     resolveMessages: async () => [undefined],

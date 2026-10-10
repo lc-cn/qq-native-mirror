@@ -356,6 +356,7 @@ export async function verifyReceivedConsumer(packagePath) {
     const counters = new Map();
     const once = raw({ msgId: '3', peerUin: '456', senderUin: exact, elements: [] });
     for (const name of [
+      'chatType',
       'msgId',
       'msgSeq',
       'msgTime',
@@ -378,8 +379,39 @@ export async function verifyReceivedConsumer(packagePath) {
     snapshots.listener().onRecvMsg([once]);
     await flush();
     for (const count of counters.values()) assert.equal(count, 1);
-    assert.equal(counters.size, 9);
+    assert.equal(counters.size, 10);
     assert.equal(snapshots.events.filter(([event]) => event === 'message').length, 3);
+    let conversationReads = 0;
+    const changing = raw({ msgId: '4', peerUin: '456', senderUin: exact, elements: [] });
+    Object.defineProperty(changing, 'chatType', {
+      get() {
+        return ++conversationReads === 1 ? 1 : 4;
+      },
+    });
+    snapshots.listener().onRecvMsg([changing]);
+    assert.equal(conversationReads, 1);
+    assert.equal(snapshots.events.at(-1)[1].raw, changing);
+    const broken = raw({ msgId: '5', peerUin: '456', senderUin: exact, elements: [] });
+    Object.defineProperty(broken, 'chatType', {
+      get() {
+        throw new Error('private native detail');
+      },
+    });
+    const unsupported = {
+      chatType: 4,
+      get msgId() {
+        throw new Error('Unsupported body must not be read');
+      },
+    };
+    const next = raw({ msgId: '6', peerUin: '456', senderUin: exact, elements: [] });
+    const diagnosticCount = snapshots.events.filter(([event]) => event === 'diagnostic').length;
+    assert.doesNotThrow(() => snapshots.listener().onRecvMsg([broken, unsupported, next]));
+    assert.equal(
+      snapshots.events.filter(([event]) => event === 'diagnostic').length,
+      diagnosticCount + 1,
+    );
+    assert.equal(snapshots.events.at(-1)[1].raw, next);
+    assert.equal(snapshots.events.filter(([event]) => event === 'message').length, 5);
     assert.equal(snapshots.calls.length, 0);
   } finally {
     snapshots.services.close();
@@ -387,6 +419,7 @@ export async function verifyReceivedConsumer(packagePath) {
   return {
     receivedMessageContract: true,
     receivedMessageSnapshotContract: true,
+    receivedConversationCaptureContract: true,
     nativeReceivedIdentityLookupAttempted: false,
   };
 }

@@ -71,11 +71,33 @@ export interface CapturedNativeMessage {
   readonly sendNickName?: string;
   readonly elements: Native[];
 }
-/** Capture at callback receipt, including callbacks queued behind earlier lookups. */
-export function captureNativeMessage(raw: Native): CapturedNativeMessage {
-  if (!raw || typeof raw !== 'object' || Array.isArray(raw))
-    throw new Error('Invalid native message conversation');
+function isMessageRecord(raw: unknown): raw is Record<string, unknown> {
+  return raw !== null && typeof raw === 'object' && !Array.isArray(raw);
+}
+
+/** Strict capture for queries and forward results: unsupported conversations fail. */
+export function captureNativeMessage(raw: unknown): CapturedNativeMessage {
+  if (!isMessageRecord(raw)) throw new Error('Invalid native message conversation');
+  return captureMessageRecord(raw, raw.chatType);
+}
+
+/** Live callbacks can contain other conversation kinds. Read the discriminator
+ * once, skip those kinds without inspecting their bodies, and share the strict
+ * snapshot path for supported private/group messages. The delivery owner catches
+ * native getter failures together with the rest of the capture operation.
+ */
+export function captureIncomingNativeMessage(raw: unknown): CapturedNativeMessage | undefined {
+  if (!isMessageRecord(raw)) throw new Error('Invalid native message conversation');
   const chatType = raw.chatType;
+  if (chatType !== 1 && chatType !== 2) return undefined;
+  return captureMessageRecord(raw, chatType);
+}
+
+/** Capture before queueing; caller supplies the already-read discriminator. */
+function captureMessageRecord(
+  raw: Record<string, unknown>,
+  chatType: unknown,
+): CapturedNativeMessage {
   const fields = {
     chatType,
     msgId: raw?.msgId,
@@ -163,7 +185,7 @@ export function projectNativeMessage(
   };
 }
 export async function decodeNativeMessages(
-  messages: Native[],
+  messages: unknown[],
   rawMessages: unknown[],
   resolveUins: (uids: string[]) => Promise<unknown>,
   signal: AbortSignal,
