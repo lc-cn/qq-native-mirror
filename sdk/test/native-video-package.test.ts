@@ -54,6 +54,8 @@ async function installedFixture(t: any, value = manifest()) {
   for (const name of [
     'native/native-installed-storage.ts',
     'native/native-package.ts',
+    'native/native-manifest.ts',
+    'native/native-directory-verification.ts',
     'native/native-bundle-installer.ts',
     'native/native-catalog.ts',
     'storage/process-lock.ts',

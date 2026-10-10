@@ -5,6 +5,7 @@ import { cp, mkdtemp, mkdir, readFile, realpath, rm, writeFile } from 'node:fs/p
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { createHash } from 'node:crypto';
 
 /** Actual compiled factory/worker; only addon loading and kernel are synthetic. */
 export async function verifyClientFactoryConsumer(installedRoot, { source = false } = {}) {
@@ -114,7 +115,13 @@ export async function verifyClientFactoryConsumer(installedRoot, { source = fals
         syncBuiltinESMExports();
       }
     }
+    const sourceSelectionChecks = await verifyNativeSourceSelection(
+      createClient,
+      directory,
+      explicit,
+    );
     return {
+      ...sourceSelectionChecks,
       clientFactoryInstalledContract: true,
       workerUrlExecuted: true,
       bridgePrecedenceContract: true,
@@ -130,5 +137,157 @@ export async function verifyClientFactoryConsumer(installedRoot, { source = fals
     if (oldElectron === undefined) delete process.env.ELECTRON_RUN_AS_NODE;
     else process.env.ELECTRON_RUN_AS_NODE = oldElectron;
     await rm(directory, { recursive: true, force: true });
+  }
+}
+
+/** Cross the same public factory from source and a freshly installed archive.
+ * Metadata/payload responses and addon loading are fixtures; no account is used.
+ */
+async function verifyNativeSourceSelection(createClient, directory, bridgePath) {
+  const originalFetch = globalThis.fetch;
+  const originalFork = childProcess.fork;
+  const hash = (bytes) => createHash('sha256').update(bytes).digest('hex');
+  const name = `qq-native-client-${process.platform}-${process.arch}`;
+  const auxiliary = join(directory, 'node_modules', name);
+  const bytes = Buffer.from('synthetic selected wrapper');
+  const version = { clientVersion: '1.0.0', appId: '1', qua: 'fixture' };
+  const manifest = {
+    schemaVersion: 1,
+    id: 'consumer-source-fixture',
+    platform: process.platform,
+    arch: process.arch,
+    version,
+    wrapper: 'wrapper.node',
+    files: [{ path: 'wrapper.node', url: './wrapper.node', sha256: hash(bytes) }],
+  };
+  const manifestUrl = 'https://fixture.example/manifest.json';
+  let remoteVersion = version;
+  const requests = [];
+  let init;
+  let index = 0;
+  const save = async (value) => writeFile(join(auxiliary, 'manifest.json'), JSON.stringify(value));
+  const openAndClose = async (options, expectedWrapper, expectedVersion) => {
+    init = undefined;
+    let client;
+    try {
+      client = await createClient({
+        dataDir: join(directory, `source-data-${index++}`),
+        cacheDir: join(directory, 'source-cache'),
+        bridgePath,
+        preloadLibraries: [],
+        autoReconnect: false,
+        timeoutMs: 5000,
+        ...options,
+      });
+      assert.equal(init.options.wrapperPath, expectedWrapper);
+      assert.deepEqual(init.options.version, expectedVersion);
+      assert.equal(client.account, undefined);
+    } finally {
+      await client?.close();
+    }
+  };
+  try {
+    await mkdir(auxiliary, { recursive: true });
+    await writeFile(
+      join(auxiliary, 'package.json'),
+      JSON.stringify({
+        name,
+        version: '0.0.0',
+        exports: { './manifest.json': './manifest.json' },
+      }),
+    );
+    await writeFile(join(auxiliary, 'wrapper.node'), bytes);
+    await save(manifest);
+    childProcess.fork = (...args) => {
+      const worker = originalFork(...args);
+      const send = worker.send.bind(worker);
+      worker.send = (message, ...rest) => {
+        if (message?.method === 'init') init = message;
+        return send(message, ...rest);
+      };
+      return worker;
+    };
+    syncBuiltinESMExports();
+    globalThis.fetch = async (input) => {
+      const url = String(input);
+      requests.push(url);
+      const body = JSON.stringify({ ...manifest, version: remoteVersion });
+      if (url.endsWith('catalog.json'))
+        return new Response(
+          JSON.stringify({
+            schemaVersion: 1,
+            packages: [
+              {
+                platform: process.platform,
+                arch: process.arch,
+                version: remoteVersion,
+                manifestUrl,
+                manifestSha256: hash(body),
+              },
+            ],
+          }),
+        );
+      if (url === manifestUrl) return new Response(body);
+      assert.equal(url, 'https://fixture.example/wrapper.node');
+      return new Response(bytes);
+    };
+    // Matching auxiliary is entirely local. A corrupt package must not become a fallback.
+    await openAndClose({}, join(auxiliary, 'wrapper.node'), version);
+    assert.deepEqual(requests, []);
+    await writeFile(join(auxiliary, 'wrapper.node'), 'corrupted');
+    await assert.rejects(createClient({ dataDir: directory }), /failed verification/);
+    assert.deepEqual(requests, []);
+    await writeFile(join(auxiliary, 'wrapper.node'), bytes);
+    // A version mismatch is checked before the auxiliary's runtime constraint.
+    await save({ ...manifest, nodeVersion: 'v0.0.1', nodeConfigSha256: '0'.repeat(64) });
+    remoteVersion = { ...version, clientVersion: '2.0.0' };
+    const body = JSON.stringify({ ...manifest, version: remoteVersion });
+    const target = join(directory, 'source-cache', hash(body), 'wrapper.node');
+    await openAndClose({ version: remoteVersion }, target, remoteVersion);
+    assert.deepEqual(requests, [
+      'https://raw.githubusercontent.com/lc-cn/qq-native-mirror/main/catalog.json',
+      manifestUrl,
+      'https://fixture.example/wrapper.node',
+    ]);
+    requests.length = 0;
+    // Explicit catalog and manifest each bypass the installed runtime mismatch.
+    await openAndClose(
+      { catalogUrl: 'https://fixture.example/catalog.json' },
+      target,
+      remoteVersion,
+    );
+    assert.deepEqual(requests, ['https://fixture.example/catalog.json', manifestUrl]);
+    requests.length = 0;
+    await openAndClose({ manifestUrl, manifestSha256: hash(body) }, target, remoteVersion);
+    assert.deepEqual(requests, [manifestUrl]);
+    requests.length = 0;
+    const local = join(directory, 'local-source/wrapper.node');
+    await mkdir(dirname(local), { recursive: true });
+    await writeFile(local, bytes);
+    // The legacy explicit path still needs no manifest or inventory.
+    await openAndClose({ wrapperPath: local, version }, local, version);
+    const codecBytes = Buffer.from(
+      'export function getVideoInfo(){throw Error("fixture must not execute")}',
+    );
+    await writeFile(join(dirname(local), 'codec.mjs'), codecBytes);
+    await writeFile(
+      join(dirname(local), 'manifest.json'),
+      JSON.stringify({
+        ...manifest,
+        videoCodec: 'codec.mjs',
+        files: [
+          ...manifest.files,
+          { path: 'codec.mjs', url: './codec.mjs', sha256: hash(codecBytes) },
+        ],
+      }),
+    );
+    await openAndClose({ wrapperPath: local }, local, version);
+    assert.equal(init.options.videoCodecPath, join(dirname(local), 'codec.mjs'));
+    assert.deepEqual(requests, []);
+    return { nativeSourceSelectionContract: true, nativeDirectoryInstalledContract: true };
+  } finally {
+    globalThis.fetch = originalFetch;
+    childProcess.fork = originalFork;
+    syncBuiltinESMExports();
   }
 }

@@ -55,6 +55,41 @@ function dependencies(path: string): Dependency[] {
 const graph = new Map(files.map((path) => [path, dependencies(path)]));
 const runtimeEdges = (path: string) => graph.get(path)!.filter((edge) => !edge.typeOnly);
 
+test('manifest preflight and directory verification cannot acquire source selection or installation', () => {
+  for (const from of [
+    'src/native/native-manifest.ts',
+    'src/native/native-directory-verification.ts',
+  ]) {
+    for (const to of [
+      'src/native/native-package.ts',
+      'src/native/native-catalog.ts',
+      'src/native/native-bundle-installer.ts',
+      'src/native/native-installed-storage.ts',
+      'src/storage/native-package-lock.ts',
+    ])
+      for (const typeOnly of [false, true]) assert.ok(dependencyViolation({ from, to, typeOnly }));
+  }
+  for (const typeOnly of [false, true]) {
+    assert.ok(
+      dependencyViolation({
+        from: 'src/native/native-manifest.ts',
+        to: 'src/native/native-directory-verification.ts',
+        typeOnly,
+      }),
+    );
+    assert.ok(
+      dependencyViolation({
+        from: 'src/native/new-source.ts',
+        to: 'src/native/native-directory-verification.ts',
+        typeOnly,
+      }),
+    );
+    assert.ok(
+      dependencyViolation({ from: 'src/cli.ts', to: 'src/native/native-package.ts', typeOnly }),
+    );
+  }
+});
+
 test('every source module has a reviewed owner even when it has no dependencies', () => {
   for (const path of files)
     assert.equal(sourceOwnershipViolation(label(path)), undefined, label(path));
@@ -452,6 +487,7 @@ test('public contract type dependencies have no cycles', () => {
 // This list describes reviewed pure modules, not permitted dependencies of general
 // composition modules. Adding an input helper requires reviewing its runtime closure.
 const pureModules = new Set([
+  'src/native/native-manifest.ts',
   'src/types.ts',
   'src/errors.ts',
   'src/validation/identifiers.ts',
@@ -472,6 +508,7 @@ const pureModules = new Set([
   'src/features/forward/merged-forward-card.ts',
 ]);
 const pureRoots = [
+  'native/native-manifest.ts',
   'features/contacts/friend-categories.ts',
   'features/messages/query-input.ts',
   'validation/identifiers.ts',

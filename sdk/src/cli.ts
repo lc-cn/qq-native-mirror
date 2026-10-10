@@ -4,7 +4,7 @@ import { realpathSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { createClient } from './index.ts';
-import { validateDownloadMirrors } from './native/native-package.ts';
+import { validateDownloadMirrors } from './native/native-manifest.ts';
 import { KernelRequestError, MergedForwardError } from './errors.ts';
 import type { ClientOptions, LoginRequest } from './contracts/client.ts';
 

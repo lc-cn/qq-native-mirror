@@ -8,22 +8,24 @@ not establish interoperability with QQ or prove an account operation succeeded.
 
 ## Choose the owner before writing the code
 
-| Change                                                        | Owner                                                                                     |
-| ------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| Public data shape or event payload                            | Relevant `src/contracts/` domain; compose event tuples in `events.ts`                     |
-| Public client method or callback presentation                 | `src/client/qq-client.ts`; `index.ts` remains a reexport-only entry                       |
-| Native bundle selection and worker bootstrap                  | `src/client/create-client.ts`                                                             |
-| Shared account/group identifier rules                         | `src/validation/identifiers.ts`; preserve string IDs and operation-specific native limits |
-| Pure validation and input snapshots                           | Feature input module, shared by facade and worker                                         |
-| Native callback projection or operation                       | Relevant `src/features/` domain                                                           |
-| Request correlation, shutdown or account ownership            | Existing `src/runtime/` lifetime owner                                                    |
-| Bundle source selection and manifest constraints              | `src/native/native-package.ts`                                                            |
-| Mirror installation transaction and content cache             | `src/native/native-bundle-installer.ts`; package locking stays in `src/storage/`          |
-| Worker initialization state and candidate ownership           | `src/worker/native-bootstrap.ts`; reserve initialization before any await                 |
-| Bind Node addon loading, codecs and account-directory locking | `src/worker/bootstrap.ts`; `worker.ts` remains the IPC entry                              |
-| Prepare local engine/login configuration                      | `src/runtime/kernel-environment.ts`; no connection or authentication                      |
-| Compose an authenticated Session and feature adapters         | `kernel.ts` and `native-services.ts`                                                      |
-| CLI flags and client execution                                | `src/cli/`; executable entry remains `cli.ts`                                             |
+| Change                                                                     | Owner                                                                                     |
+| -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| Public data shape or event payload                                         | Relevant `src/contracts/` domain; compose event tuples in `events.ts`                     |
+| Public client method or callback presentation                              | `src/client/qq-client.ts`; `index.ts` remains a reexport-only entry                       |
+| Native bundle selection and worker bootstrap                               | `src/client/create-client.ts`                                                             |
+| Shared account/group identifier rules                                      | `src/validation/identifiers.ts`; preserve string IDs and operation-specific native limits |
+| Pure validation and input snapshots                                        | Feature input module, shared by facade and worker                                         |
+| Native callback projection or operation                                    | Relevant `src/features/` domain                                                           |
+| Request correlation, shutdown or account ownership                         | Existing `src/runtime/` lifetime owner                                                    |
+| Bundle source selection and source-specific runtime policy                 | `src/native/native-package.ts`                                                            |
+| Pure manifest paths, version metadata, mirror options and remote inventory | `src/native/native-manifest.ts`; CLI preflight uses this owner directly                   |
+| Integrity of an already selected local/npm directory                       | `src/native/native-directory-verification.ts`; no download, installation or cache repair  |
+| Mirror installation transaction and content cache                          | `src/native/native-bundle-installer.ts`; package locking stays in `src/storage/`          |
+| Worker initialization state and candidate ownership                        | `src/worker/native-bootstrap.ts`; reserve initialization before any await                 |
+| Bind Node addon loading, codecs and account-directory locking              | `src/worker/bootstrap.ts`; `worker.ts` remains the IPC entry                              |
+| Prepare local engine/login configuration                                   | `src/runtime/kernel-environment.ts`; no connection or authentication                      |
+| Compose an authenticated Session and feature adapters                      | `kernel.ts` and `native-services.ts`                                                      |
+| CLI flags and client execution                                             | `src/cli/`; executable entry remains `cli.ts`                                             |
 
 Follow the change through its owners:
 

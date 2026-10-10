@@ -9,6 +9,8 @@ test('source root factory executes its worker with captured bridge precedence an
   });
   assert.equal(result.clientFactoryInstalledContract, true);
   assert.equal(result.workerUrlExecuted, true);
+  assert.equal(result.nativeSourceSelectionContract, true);
+  assert.equal(result.nativeDirectoryInstalledContract, true);
   assert.equal(result.nativeExecuted, false);
   assert.equal(result.accountUsed, false);
 });

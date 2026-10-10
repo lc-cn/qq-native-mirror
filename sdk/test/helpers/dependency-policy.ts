@@ -168,6 +168,24 @@ export function dependencyViolation({ from, to, typeOnly }: SourceDependency): s
       ? undefined
       : 'Prepared outbound contracts only reference their reviewed native peer data type.';
   if (!to.startsWith('src/')) return externalDependencyViolation(from, to, typeOnly);
+  if (from === 'src/native/native-manifest.ts')
+    return typeOnly && to === 'src/contracts/native.ts'
+      ? undefined
+      : 'Manifest preflight only owns pure metadata rules, never filesystem or source selection.';
+  if (from === 'src/native/native-directory-verification.ts')
+    return (!typeOnly && to === 'src/native/native-manifest.ts') ||
+      (typeOnly && to === 'src/contracts/native.ts')
+      ? undefined
+      : 'Directory verification only reads the selected inventory; it cannot select or install bundles.';
+  if (
+    to === 'src/native/native-directory-verification.ts' &&
+    from !== 'src/native/native-package.ts'
+  )
+    return 'Only bundle preparation may request directory verification.';
+  if (to === 'src/native/native-manifest.ts')
+    return ['src/cli.ts', 'src/native/native-package.ts'].includes(from) && !typeOnly
+      ? undefined
+      : 'Manifest rules have exact reviewed input consumers.';
   if (from === 'src/native/native-bundle-installer.ts')
     return to === 'src/storage/native-package-lock.ts' ||
       (typeOnly && to === 'src/contracts/native.ts')
@@ -307,7 +325,7 @@ export function dependencyViolation({ from, to, typeOnly }: SourceDependency): s
       to.startsWith('src/cli/') ||
       facadeInputs.has(to) ||
       to === 'src/runtime/cleanup.ts' ||
-      (from === 'src/cli.ts' && to === 'src/native/native-package.ts')
+      (from === 'src/cli.ts' && to === 'src/native/native-manifest.ts')
       ? undefined
       : 'CLI uses the public client, input capture and its own execution modules.';
   return 'Source ownership is unclassified; assign its layer before adding dependencies.';

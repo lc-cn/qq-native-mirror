@@ -1,7 +1,7 @@
 import { restoreInstalledNativeStorage } from './native-installed-storage.ts';
 import { createHash } from 'node:crypto';
-import { readFile, realpath, lstat } from 'node:fs/promises';
-import { dirname, isAbsolute, join, resolve, sep } from 'node:path';
+import { readFile, realpath } from 'node:fs/promises';
+import { dirname, join, resolve } from 'node:path';
 import { homedir } from 'node:os';
 import { createRequire } from 'node:module';
 import type { ClientOptions } from '../contracts/client.ts';
@@ -9,19 +9,23 @@ import type { NativeManifest, QQVersion } from '../contracts/native.ts';
 import { resolveNativeCatalog } from './native-catalog.ts';
 import { acquirePackageLock } from '../storage/native-package-lock.ts';
 import { installVerifiedBundle } from './native-bundle-installer.ts';
+import {
+  assertNativeVersion,
+  nativeHashPattern,
+  safeRelative,
+  validateDownloadMirrors,
+  validateRemoteInventory,
+} from './native-manifest.ts';
+import { verifyNativeDirectory } from './native-directory-verification.ts';
 
+// Internal compatibility exports; input consumers import the pure manifest owner.
+export { safeRelative, validateDownloadMirrors } from './native-manifest.ts';
 const digest = (data: Uint8Array) => createHash('sha256').update(data).digest('hex');
-const hashPattern = /^[a-f0-9]{64}$/i;
+
 interface PreparedNative {
   wrapperPath: string;
   version: QQVersion;
   videoCodecPath?: string;
-}
-function declaredVideoCodec(manifest: NativeManifest, names: Set<string>): string | undefined {
-  if (manifest.videoCodec === undefined) return;
-  const path = safeRelative(manifest.videoCodec);
-  if (!names.has(path)) throw new Error('Video codec is missing from native manifest files');
-  return path;
 }
 function verifyNodeRuntime(manifest: NativeManifest): void {
   if (manifest.nodeVersion === undefined && manifest.nodeConfigSha256 === undefined) return;
@@ -29,7 +33,7 @@ function verifyNodeRuntime(manifest: NativeManifest): void {
     typeof manifest.nodeVersion !== 'string' ||
     !/^v\d+\.\d+\.\d+$/.test(manifest.nodeVersion) ||
     typeof manifest.nodeConfigSha256 !== 'string' ||
-    !hashPattern.test(manifest.nodeConfigSha256)
+    !nativeHashPattern.test(manifest.nodeConfigSha256)
   )
     throw new Error('Invalid native Node runtime constraint');
   if (
@@ -58,7 +62,7 @@ async function installedNative(options: ClientOptions): Promise<PreparedNative |
     !Array.isArray(manifest.files)
   )
     throw new Error('Installed native package does not match device');
-  version(manifest.version);
+  assertNativeVersion(manifest.version);
   if (
     options.version &&
     (['clientVersion', 'appId', 'qua'] as const).some(
@@ -77,52 +81,12 @@ async function installedNative(options: ClientOptions): Promise<PreparedNative |
           resolve(options.cacheDir ?? join(homedir(), '.cache/qq-native-client')),
           acquirePackageLock,
         );
-  const names = new Set<string>();
-  for (const file of manifest.files) {
-    const relative = safeRelative(file.path);
-    if (names.has(relative) || !hashPattern.test(file.sha256))
-      throw new Error('Invalid installed native manifest');
-    names.add(relative);
-    const path = join(base, relative);
-    const actual = await realpath(path);
-    if (
-      !actual.startsWith(base + sep) ||
-      !(await lstat(path)).isFile() ||
-      digest(await readFile(path)) !== file.sha256.toLowerCase()
-    )
-      throw new Error(`Installed native file failed verification: ${relative}`);
-  }
-  if (!names.has(safeRelative(manifest.wrapper)))
-    throw new Error('Installed native wrapper is missing');
-  const codec = declaredVideoCodec(manifest, names);
+  const codec = await verifyNativeDirectory(base, manifest, 'installed');
   return {
     wrapperPath: join(base, manifest.wrapper),
     version: manifest.version,
-    ...(codec === undefined ? {} : { videoCodecPath: join(base, codec) }),
+    ...(codec === undefined ? {} : { videoCodecPath: codec }),
   };
-}
-function version(value: unknown): asserts value is QQVersion {
-  const v = value as QQVersion | undefined;
-  if (
-    !v ||
-    ![v.clientVersion, v.appId, v.qua].every((x) => typeof x === 'string' && x.length > 0)
-  ) {
-    throw new Error('A native package requires clientVersion, appId and qua');
-  }
-}
-export function safeRelative(path: string): string {
-  if (
-    typeof path !== 'string' ||
-    !path ||
-    path.includes('\0') ||
-    /^[a-zA-Z]:/.test(path) ||
-    isAbsolute(path) ||
-    path.includes('\\') ||
-    path.split('/').some((x) => x === '..' || x === '.' || !x)
-  ) {
-    throw new Error(`Unsafe native package path: ${path}`);
-  }
-  return path;
 }
 async function download(url: string, maxBytes: number): Promise<Buffer> {
   const parsed = new URL(url);
@@ -166,27 +130,6 @@ async function download(url: string, maxBytes: number): Promise<Buffer> {
   }
   return Buffer.concat(chunks);
 }
-export function validateDownloadMirrors(value: unknown): string[] {
-  const mirrors = value ?? [];
-  if (!Array.isArray(mirrors) || mirrors.length > 8)
-    throw new Error('downloadMirrors must contain at most eight HTTPS prefixes');
-  for (const mirror of mirrors) {
-    if (typeof mirror !== 'string') throw new Error('Invalid download mirror');
-    const url = new URL(mirror);
-    if (
-      url.protocol !== 'https:' ||
-      url.username ||
-      url.password ||
-      url.search ||
-      url.hash ||
-      !mirror.endsWith('/')
-    )
-      throw new Error(
-        'Download mirrors require HTTPS prefixes ending in / without credentials, query or fragment',
-      );
-  }
-  return mirrors;
-}
 export async function prepareNative(options: ClientOptions): Promise<PreparedNative> {
   const mirrors = validateDownloadMirrors(options.downloadMirrors);
   if (options.wrapperPath && options.manifestUrl)
@@ -213,7 +156,7 @@ export async function prepareNative(options: ClientOptions): Promise<PreparedNat
         throw new Error('Local manifest does not match wrapper or device');
       options = { ...options, version: local.version };
     }
-    version(options.version);
+    assertNativeVersion(options.version);
     let codec: string | undefined;
     // Legacy explicit wrappers remain usable without an inventory. Automatic codec
     // discovery requires a complete matching bundle and verified regular files.
@@ -227,32 +170,14 @@ export async function prepareNative(options: ClientOptions): Promise<PreparedNat
         (await realpath(join(base, safeRelative(local.wrapper)))) !== (await realpath(wrapperPath))
       )
         throw new Error('Local manifest does not match wrapper or device');
-      version(local.version);
+      assertNativeVersion(local.version);
       if (
         (['clientVersion', 'appId', 'qua'] as const).some(
           (key) => options.version![key] !== local.version[key],
         )
       )
         throw new Error('Local manifest version does not match requested version');
-      const names = new Set<string>();
-      for (const file of local.files) {
-        if (!file || typeof file !== 'object' || typeof file.sha256 !== 'string')
-          throw new Error('Invalid local native manifest');
-        const relative = safeRelative(file.path);
-        if (names.has(relative) || !hashPattern.test(file.sha256))
-          throw new Error('Invalid local native manifest');
-        names.add(relative);
-        const path = join(base, relative);
-        if (
-          !(await realpath(path)).startsWith(base + sep) ||
-          !(await lstat(path)).isFile() ||
-          digest(await readFile(path)) !== file.sha256.toLowerCase()
-        )
-          throw new Error(`Local native file failed verification: ${relative}`);
-      }
-      if (!names.has(safeRelative(local.wrapper)))
-        throw new Error('Local native wrapper is missing');
-      codec = join(base, declaredVideoCodec(local, names)!);
+      codec = await verifyNativeDirectory(base, local, 'local');
     }
     return {
       wrapperPath: await realpath(wrapperPath),
@@ -268,7 +193,7 @@ export async function prepareNative(options: ClientOptions): Promise<PreparedNat
   if (
     !options.manifestUrl ||
     !options.manifestSha256 ||
-    !hashPattern.test(options.manifestSha256)
+    !nativeHashPattern.test(options.manifestSha256)
   ) {
     throw new Error('Provide wrapperPath and version, or manifestUrl and trusted manifestSha256');
   }
@@ -279,7 +204,7 @@ export async function prepareNative(options: ClientOptions): Promise<PreparedNat
   if (!manifest || typeof manifest !== 'object') throw new Error('Invalid native manifest');
   if (manifest.npmStorage !== undefined)
     throw new Error('npmStorage is only supported for installed native packages');
-  if (options.version) version(options.version);
+  if (options.version) assertNativeVersion(options.version);
   if (
     manifest.schemaVersion !== 1 ||
     manifest.platform !== process.platform ||
@@ -288,7 +213,7 @@ export async function prepareNative(options: ClientOptions): Promise<PreparedNat
   ) {
     throw new Error('Unsupported native manifest schema, platform or architecture');
   }
-  version(manifest.version);
+  assertNativeVersion(manifest.version);
   verifyNodeRuntime(manifest);
   if (
     options.version &&
@@ -300,39 +225,7 @@ export async function prepareNative(options: ClientOptions): Promise<PreparedNat
       'Requested QQ version configuration does not match the trusted native manifest',
     );
   }
-  safeRelative(manifest.wrapper);
-  const names = new Set<string>();
-  for (const file of manifest.files) {
-    if (
-      !file ||
-      typeof file !== 'object' ||
-      typeof file.url !== 'string' ||
-      typeof file.sha256 !== 'string'
-    )
-      throw new Error('Invalid native manifest file');
-    safeRelative(file.path);
-    if (names.has(file.path) || !hashPattern.test(file.sha256))
-      throw new Error('Duplicate file or invalid SHA-256 in manifest');
-    if (file.encoding !== undefined && file.encoding !== 'gzip')
-      throw new Error('Unsupported native content encoding');
-    if (
-      file.encoding === 'gzip' &&
-      (typeof file.downloadSha256 !== 'string' || !hashPattern.test(file.downloadSha256))
-    )
-      throw new Error('Compressed native content requires downloadSha256');
-    if (file.encoding === undefined && file.downloadSha256 !== undefined)
-      throw new Error('downloadSha256 requires content encoding');
-    names.add(file.path);
-  }
-  for (const name of names) {
-    const parts = name.split('/');
-    for (let i = 1; i < parts.length; i++) {
-      if (names.has(parts.slice(0, i).join('/')))
-        throw new Error('Conflicting native package file paths');
-    }
-  }
-  if (!names.has(manifest.wrapper)) throw new Error('Wrapper is missing from manifest files');
-  const codec = declaredVideoCodec(manifest, names);
+  const codec = validateRemoteInventory(manifest);
   const target = await installVerifiedBundle({
     manifestBytes: body,
     manifest,

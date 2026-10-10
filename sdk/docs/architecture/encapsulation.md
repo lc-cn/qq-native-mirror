@@ -520,4 +520,36 @@ file lifetimes remain with the media constructors; video retains its existing
 abort/deadline checks, while image and record retain the sender's completion
 checks. The port shares the native method contract, not a new preparation policy.
 
+`native/native-manifest` owns pure manifest-relative paths, nonempty version
+metadata, mirror-prefix options, codec membership and remote inventory rules.
+The CLI uses it directly, so parameter preflight has no runtime dependency on
+bundle acquisition, package locking or installation. Catalog numeric version
+ordering remains a separate policy. The dependency gate checks this module's
+complete runtime closure and forbids source selection and filesystem acquisition.
+
+`native/native-directory-verification` owns the shared regular-file, canonical
+containment and SHA-256 checks for selected local and installed inventories. It
+returns the optional verified codec path; it cannot select a source, acquire a
+package lock, write files, repair a cache or load an addon. Bundle preparation
+retains the source policy and passes a canonical root. The legacy local codec
+inventory preflight keeps its stricter scalar checks and original diagnostics.
+
+`native/native-package` retains explicit wrapper/manifest precedence, optional
+npm selection and catalog fallback, Node runtime constraints and trusted remote
+manifest acquisition. A mismatching installed version falls back before runtime
+constraints; corruption of a matching installed package rejects. A legacy
+explicit wrapper with version may still lack an inventory; automatic local codec
+discovery requires the complete verified inventory. Remote sources reject npm
+object storage and validate the raw manifest digest before decoding it. Storage
+restoration and mirror installation keep their distinct existing format, locking,
+cache and repair policies. These differences are deliberately not hidden inside
+a universal manifest parser.
+
+The source and installed-archive factory checks exercise these selection policies
+through `createClient`, with controlled metadata/payload responses and addon
+loading. They verify default optional-package resolution, corruption rejection,
+version fallback before runtime checks, explicit catalog/manifest precedence,
+legacy wrappers and local codec inventory discovery. No account or real addon
+interoperability is claimed by those fixtures.
+
 [Architecture overview](../architecture.md) · [Development guide](../development.md)
