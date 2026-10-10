@@ -102,3 +102,15 @@ export function friendCategoryName(value: unknown): string {
     throw new Error('Friend category name must be a nonblank string');
   return value;
 }
+
+/** Category selectors inhabit the uint32 namespace; zero is not assumed mutable. */
+export function captureRenameFriendCategory(categoryId: unknown, name: unknown) {
+  if (
+    typeof categoryId !== 'number' ||
+    !Number.isInteger(categoryId) ||
+    categoryId < 0 ||
+    categoryId > 0xffff_ffff
+  )
+    throw new Error('Friend category ID must be a uint32 number');
+  return { categoryId, name: friendCategoryName(name) };
+}

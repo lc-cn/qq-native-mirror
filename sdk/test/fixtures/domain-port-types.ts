@@ -1,3 +1,4 @@
+import type { FriendCategoryRenameContext } from '../../src/features/contacts/friend-category-rename.ts';
 import type { ContactDirectoryContext } from '../../src/features/contacts/contact-directory.ts';
 import type { GroupQueriesContext } from '../../src/features/groups/group-queries.ts';
 import type { NativeMessageSenderContext } from '../../src/features/messages/native-message-sender.ts';
@@ -35,6 +36,7 @@ function verifyDomainPorts(
   webRead: QunWebReadContext,
   noticeRead: WebGroupNoticesContext,
   groupReads: GroupWebReadsContext,
+  categoryRename: FriendCategoryRenameContext,
 ) {
   // @ts-expect-error A contact directory cannot acquire arbitrary native services.
   contacts.service('Group');
@@ -137,6 +139,13 @@ function verifyDomainPorts(
   groupReads.service('Group');
   // @ts-expect-error A request cannot close its account or sibling reads.
   groupReads.close();
+  // @ts-expect-error Category rename does not own friend removal.
+  categoryRename.getBuddyService()?.delBuddy();
+  // @ts-expect-error Native selectors are numbers, not category names or decimal strings.
+  categoryRename.getBuddyService()?.renameCategory?.('123', 'name');
+  const renameAck = categoryRename.getBuddyService()?.renameCategory?.(123, 'name');
+  // @ts-expect-error A native ACK remains unknown until the domain adapter validates it.
+  void renameAck.result;
   // @ts-expect-error Group reads cannot dispatch message mutations.
   groupReads.getTicketService()?.sendMsg();
   // @ts-expect-error Client tickets cannot turn into message submission.

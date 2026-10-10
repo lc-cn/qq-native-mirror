@@ -1,3 +1,4 @@
+import { createFriendCategoryRename } from './features/contacts/friend-category-rename.ts';
 import { captureGroupSearch } from './features/groups/group-search-input.ts';
 import { createGroupSearch } from './features/groups/group-search.ts';
 import {
@@ -18,6 +19,7 @@ import { NativeServiceLifetime } from './runtime/native-service-lifetime.ts';
 import type { NativeServiceContext } from './runtime/native-service-context.ts';
 import {
   supportsCategoryCreation,
+  supportsCategoryRenaming,
   supportsGroupFileCount,
   supportsGroupFolderDeletion,
   supportsGroupFolderCreation,
@@ -25,7 +27,10 @@ import {
 } from './native/native-contracts.ts';
 import { createFriendCategory } from './features/contacts/friend-category-create.ts';
 import { createFriendSystemEvents } from './features/contacts/friend-system-events.ts';
-import { friendCategoryName } from './features/contacts/friend-categories.ts';
+import {
+  friendCategoryName,
+  captureRenameFriendCategory,
+} from './features/contacts/friend-categories.ts';
 import { createContactDirectory } from './features/contacts/contact-directory.ts';
 import { createNativeEventChannel } from './runtime/native-event-channel.ts';
 import { sendCapturedMergedForward } from './features/forward/merged-forward.ts';
@@ -117,6 +122,12 @@ export function createNativeServices(context: NativeServiceContext) {
       getTipOffService: () => service('TipOff'),
       awaitAlive,
     });
+    const categoryRename = own(
+      createFriendCategoryRename({
+        signal: lifetime.signal,
+        getBuddyService: () => service('Buddy'),
+      }),
+    );
     const directory = own(
       createContactDirectory({
         signal: lifetime.signal,
@@ -369,6 +380,15 @@ export function createNativeServices(context: NativeServiceContext) {
       ): Promise<unknown> {
         if (lifetime.closed) throw new Error('Native services are closed');
         switch (method) {
+          case 'renameFriendCategory': {
+            const captured = captureRenameFriendCategory(payload.categoryId, payload.name);
+            if (!supportsCategoryRenaming(nativeContracts, version))
+              throw Object.assign(
+                new Error('Friend category rename contract is not verified for this native binary'),
+                { code: 'unsupported-native-contract' },
+              );
+            return categoryRename.rename(captured.categoryId, captured.name);
+          }
           case 'addFriendCategory': {
             const name = friendCategoryName(payload.name);
             if (!supportsCategoryCreation(nativeContracts, version))

@@ -1,3 +1,4 @@
+import { captureRenameFriendCategory } from '../features/contacts/friend-categories.ts';
 import { captureGroupSearch } from '../features/groups/group-search-input.ts';
 import {
   captureCreateGroupFolder,
@@ -42,6 +43,7 @@ export function validateCommandFlags(command: string, flags: Record<string, stri
     contacts: ['config', 'uin'],
     'friend-categories': ['config', 'uin'],
     'friend-category-add': ['config', 'uin', 'name'],
+    'friend-category-rename': ['config', 'uin', 'category-id', 'name'],
     groups: ['config', 'uin'],
     send: ['config', 'kind', 'target', 'text', 'message-file', 'uin'],
     nickname: ['config', 'uin', 'name'],
@@ -352,6 +354,12 @@ export async function prepareCommand(
     case 'group-info': {
       const groupId = numeric(flags, 'group-id');
       return (client) => client.getGroupInfo(groupId);
+    }
+    case 'friend-category-rename': {
+      const rawId = required(flags, 'category-id');
+      if (!/^\d+$/.test(rawId)) throw new Error('--category-id must be a uint32 decimal integer');
+      const captured = captureRenameFriendCategory(Number(rawId), required(flags, 'name'));
+      return (client) => client.renameFriendCategory(captured.categoryId, captured.name);
     }
     case 'friend-category-add': {
       const name = required(flags, 'name');

@@ -11,6 +11,7 @@ export interface NativeContractProfile {
 
 type NativeCapability =
   | 'categoryCreation'
+  | 'categoryRenaming'
   | 'groupFileCount'
   | 'groupSearch'
   | 'groupFolderDeletion'
@@ -27,7 +28,8 @@ type BinaryContract = readonly [
 // Adding a new binary requires its own capability list; a known version or
 // another feature's evidence never grants an unlisted native operation.
 // Evidence: friend-category-create, group-file-count, group-search and
-// group-folder contract records under docs/evidence/.
+// group-folder contract records under docs/evidence/. Category renaming has its
+// own Linux-only namespace evidence in friend-category-rename-contract.json.
 const binaryProfiles: readonly BinaryContract[] = [
   [
     'linux',
@@ -36,6 +38,7 @@ const binaryProfiles: readonly BinaryContract[] = [
     '7882b8e3055cd38584861042befacd8be9939896f5cbbca6fa4a230926b48526',
     [
       'categoryCreation',
+      'categoryRenaming',
       'groupFileCount',
       'groupSearch',
       'groupFolderDeletion',
@@ -49,6 +52,7 @@ const binaryProfiles: readonly BinaryContract[] = [
     'c302361f52494de257044e912e43ed244bb29ee59f59345d25a8959327828337',
     [
       'categoryCreation',
+      'categoryRenaming',
       'groupFileCount',
       'groupSearch',
       'groupFolderDeletion',
@@ -152,6 +156,13 @@ function matchesContract(
         capabilities.includes(capability),
     )
   );
+}
+
+export function supportsCategoryRenaming(
+  profile: NativeContractProfile | undefined,
+  version: string,
+): boolean {
+  return matchesContract(profile, version, 'categoryRenaming');
 }
 
 export function supportsCategoryCreation(

@@ -1,0 +1,71 @@
+{
+  "evidence": "actual ELF static instruction and relocation inspection; controlled source and installed consumer tests are separate",
+  "operation": "renameFriendCategory",
+  "nativeMethod": "renameCategory",
+  "arguments": [
+    "categoryId:uint32",
+    "name:string"
+  ],
+  "normalAck": "result:int32 and errMsg:string; result0 completes void, not server receipt",
+  "profiles": [
+    {
+      "platform": "linux",
+      "arch": "x64",
+      "clientVersion": "3.2.32-52194",
+      "wrapperSha256": "7882b8e3055cd38584861042befacd8be9939896f5cbbca6fa4a230926b48526",
+      "method": {
+        "descriptor": "0x8c07c50",
+        "function": "0x36b2940",
+        "argc": 2,
+        "argument0": "sameuint32 helper6c45ee0 call36b29bb",
+        "argument1": "stdstring helper6c45d20 call36b29d0; actualstring branch",
+        "promise": "create36b29f4, native slot0xe8 call36b2b1f"
+      },
+      "sdkListArguments": [
+        "0",
+        true,
+        0
+      ],
+      "namespaceEvidenceSha256": "3437830fb05ed62e0178daf0f0b4e25e29b06464d6d1dc3851001a1163729bf0",
+      "namespaceScope": "same instance cache categoryId uint32 at row offset0; refresh success returns to cached path",
+      "callback": {
+        "vtable": "0x8bfcf70",
+        "slot2": "0x3584d60",
+        "dispatchManager": "0x3585090",
+        "invoke": "0x35852f0 ->0x3585330",
+        "normalResult": "object result(int32) fieldset358539f +errMsg(string)fieldset3585410; resolve_deferred3585442; no name/groupId/context here"
+      }
+    },
+    {
+      "platform": "linux",
+      "arch": "arm64",
+      "clientVersion": "3.2.32-52194",
+      "wrapperSha256": "c302361f52494de257044e912e43ed244bb29ee59f59345d25a8959327828337",
+      "method": {
+        "descriptor": "0x8723220",
+        "method": "0x1490b1c",
+        "argcCompare": "1490b84 argc2",
+        "arg0": "1490b94 sameuint32converter",
+        "arg1": "1490ba8 ->493fad8 stringconverter type4branch",
+        "nativeSlot": "1490cd0 vtable+e8"
+      },
+      "sdkListArguments": [
+        "0",
+        true,
+        0
+      ],
+      "namespaceEvidenceSha256": "66358884d1024067ab72774fc4c0a2e8d8027a07f5743f84deaf33e9a5bd3a48",
+      "namespaceScope": "same instance cache categoryId uint32 at row offset0; refresh success returns to cached path",
+      "callback": "GOT89dbd08 RELATIVE1027 ->8751180 +16 addresspoint8751190,slot2 1765028 \u2192 work1765348 \u2192 invoke17655ac \u2192 shared17655e4 result int32/errMsg UTF8 properties176564c/17656b4 and resolve17656e8"
+    }
+  ],
+  "unsupportedPlatforms": [
+    "darwin-x64",
+    "darwin-arm64",
+    "win32-x64",
+    "win32-arm64"
+  ],
+  "nativeExecuted": false,
+  "accountUsed": false,
+  "realRenameVerified": false
+}

@@ -29,6 +29,7 @@ import { verifyGroupRequestConsumer } from './group-request-consumer-contract.mj
 import { verifyGroupNoticeConsumer } from './group-notice-consumer-contract.mjs';
 import { verifyGroupSearchConsumer } from './group-search-consumer-contract.mjs';
 import { verifyQunWebConsumer } from './qun-web-consumer-contract.mjs';
+import { verifyFriendCategoryRenameConsumer } from './friend-category-rename-consumer-contract.mjs';
 
 // Offline packaging check: controlled services and actual worker routing with a replacement kernel; no QQ native binaries or accounts.
 const root = fileURLToPath(new URL('../', import.meta.url));
@@ -200,6 +201,9 @@ const groupNoticeChecks = await verifyGroupNoticeConsumer(
   join(destination, 'node_modules/qq-native-client'),
 );
 const groupSearchChecks = await verifyGroupSearchConsumer(
+  join(destination, 'node_modules/qq-native-client'),
+);
+const friendCategoryRenameChecks = await verifyFriendCategoryRenameConsumer(
   join(destination, 'node_modules/qq-native-client'),
 );
 const groupWebChecks = await verifyQunWebConsumer(
@@ -474,6 +478,10 @@ function subscribe(client: QQClient) {
  void client.getGroupInfo('123').then(value=>value.description);
  client.on('group-info-updated', update => [update.groupId,update.ownerUid,update.ownerUserId,update.description]);
  const createdCategory: Promise<CreatedFriendCategory> = client.addFriendCategory('分组');
+ const renamedCategory: Promise<void> = client.renameFriendCategory(123, 'name');
+ void renamedCategory;
+ // @ts-expect-error Category selectors use numeric uint32 values, never names.
+ client.renameFriendCategory('123', 'name');
  const categories: Promise<FriendCategory[]> = client.listFriendCategories();
  const fileCount: Promise<number> = client.getGroupFileCount('123');
  void fileCount;
@@ -554,6 +562,7 @@ const receipt = {
     ...groupRequestChecks,
     ...groupNoticeChecks,
     ...groupWebChecks,
+    ...friendCategoryRenameChecks,
     groupSearchChecks,
     ...publicContractChecks,
     privateFilesExcluded: true,
