@@ -1,0 +1,41 @@
+sdk/test/native-package.test.ts
+  s_2104cc474f1ce5::t_52b2af1d2eb37d 17-40,47-54,56-57,60-72,75-78,80-93,98-99,102,105
+  s_2104cc474f1ce5::t_f4749d40d64a82 41-46,55,58-59,73-74,79,94-97
+  s_2104cc474f1ce5::t_c3418e034c17ec 100-101,103-104
+sdk/test/architecture.test.ts
+  s_2104cc474f1ce5::t_f4b124d7c6ea2d 124-130,175,190-193
+  s_2104cc474f1ce5::t_040fb579b74e34 194-196,202
+sdk/test/helpers/dependency-policy.ts
+  s_2104cc474f1ce5::t_f4b124d7c6ea2d 86-100,117-120,123,127
+  s_2104cc474f1ce5::t_aafba299ed230d 121-122,124-126
+sdk/docs/architecture.md
+  s_2104cc474f1ce5::t_32ea6fac3d7629 129-139
+sdk/docs/development.md
+  s_2104cc474f1ce5::t_0935109bed8f01 11-22
+sdk/src/native/native-bundle-installer.ts
+  s_2104cc474f1ce5::t_a130031c6291c3 1-180
+sdk/src/native/native-package.ts
+  s_2104cc474f1ce5::t_a9fc1214ce36f9 2-3,10-11,336-343
+sdk/src/storage/native-package-lock.ts
+  s_2104cc474f1ce5::t_8bc215b0e3b931 1-55
+sdk/test/installed-native.test.ts
+  s_2104cc474f1ce5::t_01f739ceefa283 28,31,140,143
+sdk/test/native-video-package.test.ts
+  s_2104cc474f1ce5::t_73b2463f772c39 57,60
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "cb80172b3a372735f86d04bc0f5d7caa6d942478",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
