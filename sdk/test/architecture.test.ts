@@ -7,6 +7,10 @@ import ts from 'typescript';
 import { getFileInfo } from 'prettier';
 import { extractSourceDependencies } from './helpers/source-dependencies.ts';
 import { crossFeatureDependencies, dependencyViolation } from './helpers/dependency-policy.ts';
+import {
+  externalRuntimeDependencies,
+  externalTypeDependencies,
+} from './helpers/external-dependencies.ts';
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const sourceRoot = join(projectRoot, 'src');
@@ -161,7 +165,7 @@ test('dependency policy rejects reverse, type-only and new cross-domain coupling
   );
 });
 
-test('package entry contains only public reexports and resource owners use explicit IO dependencies', () => {
+test('package entry contains only public reexports', () => {
   const entry = join(sourceRoot, 'index.ts');
   const tree = ts.createSourceFile(
     entry,
@@ -175,28 +179,45 @@ test('package entry contains only public reexports and resource owners use expli
       ts.isExportDeclaration(statement) && statement.moduleSpecifier,
       'The package entry must not acquire resources or implement client behavior.',
     );
-  for (const [path, edges] of graph) {
-    if (
-      !label(path).startsWith('src/client/') &&
-      ![
-        'src/native/native-bundle-installer.ts',
-        'src/storage/native-package-lock.ts',
-        'src/runtime/kernel-environment.ts',
-        'src/kernel.ts',
-        'src/native-services.ts',
-        'src/worker.ts',
-      ].includes(label(path))
-    )
-      continue;
+});
+
+test('every source module uses exact reviewed external dependency ownership', () => {
+  const observed = new Set<string>();
+  for (const [path, edges] of graph)
     for (const edge of edges) {
       if (edge.target) continue;
       assert.equal(
         dependencyViolation({ from: label(path), to: edge.specifier, typeOnly: edge.typeOnly }),
         undefined,
-        `${label(path)} → ${edge.specifier}: unreviewed owner IO dependency`,
+        `${label(path)}:${edge.line} → ${edge.specifier}: unreviewed external dependency`,
       );
+      observed.add(JSON.stringify([label(path), edge.specifier, edge.typeOnly]));
     }
-  }
+  for (const [typeOnly, owners] of [
+    [false, externalRuntimeDependencies],
+    [true, externalTypeDependencies],
+  ] as const)
+    for (const [owner, specifiers] of Object.entries(owners))
+      for (const specifier of specifiers)
+        assert.ok(
+          observed.has(JSON.stringify([owner, specifier, typeOnly])),
+          `Remove obsolete external ownership: ${owner} → ${specifier} (typeOnly=${typeOnly})`,
+        );
+  for (const from of [
+    'src/features/groups/new-action.ts',
+    'src/runtime/new-owner.ts',
+    'src/native/new-bundle.ts',
+  ])
+    for (const to of ['node:fs', 'node:module', 'silk-wasm'])
+      for (const typeOnly of [false, true])
+        assert.ok(dependencyViolation({ from, to, typeOnly }), `${from} inherited ${to}`);
+  assert.ok(
+    dependencyViolation({
+      from: 'src/runtime/worker-termination.ts',
+      to: 'node:child_process',
+      typeOnly: false,
+    }),
+  );
 });
 
 test('all relative source imports and exports resolve, including type-only dependencies', () => {
@@ -284,12 +305,14 @@ const pureModules = new Set([
   'src/features/messages/query-input.ts',
   'src/features/groups/group-essence-input.ts',
   'src/features/groups/group-file-input.ts',
+  'src/features/groups/group-search-input.ts',
   'src/features/media/download-input.ts',
   'src/features/forward/merged-forward-input.ts',
   'src/features/messages/send-input.ts',
   'src/features/messages/face-input.ts',
   'src/features/messages/qq-faces.ts',
   'src/features/forward/long-message-request.ts',
+  'src/features/forward/forward-resource-wire.ts',
   'src/features/forward/merged-forward-card.ts',
 ]);
 const pureRoots = [
@@ -298,6 +321,8 @@ const pureRoots = [
   'validation/identifiers.ts',
   'features/groups/group-essence-input.ts',
   'features/groups/group-file-input.ts',
+  'features/groups/group-search-input.ts',
+  'features/forward/forward-resource-wire.ts',
   'features/media/download-input.ts',
   'features/forward/merged-forward-input.ts',
   'features/messages/send-input.ts',
@@ -332,7 +357,7 @@ test('input validation runtime closures stay pure and do not load service operat
   }
 });
 
-test('relative runtime source dependencies have no cycles', () => {
+test('all relative source dependencies have no cycles, including erased type imports', () => {
   const complete = new Set<string>();
   const active: string[] = [];
   function walk(path: string) {
@@ -340,11 +365,11 @@ test('relative runtime source dependencies have no cycles', () => {
     assert.equal(
       index,
       -1,
-      `Runtime dependency cycle: ${[...active.slice(index < 0 ? 0 : index), path].map(label).join(' → ')}`,
+      `Source dependency cycle: ${[...active.slice(index < 0 ? 0 : index), path].map(label).join(' → ')}`,
     );
     if (complete.has(path)) return;
     active.push(path);
-    for (const edge of runtimeEdges(path)) if (edge.target) walk(edge.target);
+    for (const edge of graph.get(path)!) if (edge.target) walk(edge.target);
     active.pop();
     complete.add(path);
   }

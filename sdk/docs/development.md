@@ -35,6 +35,11 @@ narrow typed ports but cannot depend on the account composition context.
 Changing the policy should explain the real ownership relationship; granting an
 entire directory access to another one makes future coupling invisible.
 
+All source dependencies, including erased type imports, must remain acyclic.
+External IO and third-party imports require an exact source owner and import kind
+in `test/helpers/external-dependencies.ts`; removing an import also removes its
+permission. Computed `createRequire` namespace access does not bypass review.
+
 ## Design a small interface with explicit lifetime
 
 Keep state private to its owner. Request IDs, pending maps, credentials, timers and

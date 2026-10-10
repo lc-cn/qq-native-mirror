@@ -40,10 +40,18 @@ export function extractSourceDependencies(path: string, source: string) {
   function factory(node: ts.Expression): boolean {
     return ts.isIdentifier(node)
       ? factories.has(node.text)
-      : ts.isPropertyAccessExpression(node) &&
+      : (ts.isPropertyAccessExpression(node) &&
           ts.isIdentifier(node.expression) &&
           namespaces.has(node.expression.text) &&
-          node.name.text === 'createRequire';
+          node.name.text === 'createRequire') ||
+          (ts.isElementAccessExpression(node) &&
+            ts.isIdentifier(node.expression) &&
+            namespaces.has(node.expression.text) &&
+            // An opaque computed namespace member cannot establish a reviewed
+            // factory. Conservatively classify it as a loader boundary.
+            (!node.argumentExpression ||
+              !ts.isStringLiteral(node.argumentExpression) ||
+              node.argumentExpression.text === 'createRequire'));
   }
   function loader(node: ts.Expression): boolean {
     return ts.isIdentifier(node)
@@ -58,9 +66,10 @@ export function extractSourceDependencies(path: string, source: string) {
           if (factory(node.initializer)) factories.add(node.name.text);
           if (loader(node.initializer)) loaders.add(node.name.text);
           if (
-            ts.isPropertyAccessExpression(node.initializer) &&
-            loader(node.initializer.expression) &&
-            node.initializer.name.text === 'resolve'
+            ((ts.isPropertyAccessExpression(node.initializer) &&
+              node.initializer.name.text === 'resolve') ||
+              ts.isElementAccessExpression(node.initializer)) &&
+            loader(node.initializer.expression)
           )
             loaders.add(node.name.text);
         } else if (ts.isObjectBindingPattern(node.name) && loader(node.initializer))

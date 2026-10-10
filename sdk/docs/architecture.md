@@ -479,7 +479,7 @@ directory so obsolete emitted modules cannot make a packaging check pass.
 
 Static architecture tests require every TypeScript source module to participate
 in the formatting gate. Binary-directory ignores are anchored to the package root
-so `src/native/` remains checked. They also reject runtime dependency cycles, missing internal
+so `src/native/` remains checked. They also reject source dependency cycles including erased type imports, missing internal
 modules, implementation imports from public contracts, and transitive native/IO
 dependencies in pure input modules. They protect these boundaries during later
 feature work; renaming directories alone does not establish them. Computed
@@ -503,6 +503,20 @@ Compile-only negative domain-port contracts reject arbitrary service acquisition
 unrelated operations and property access on unchecked native results. Native
 response field readers retain their existing domain rules; narrowing a port does
 not establish descriptor-safe projection for every proprietary result.
+
+`features/messages/recall-operation` owns recall correlation and completion:
+chat type, native peer UID and message ID must all match, and a matching update
+still waits for the native invocation to succeed. Composition injects peer
+resolution, the shared callback channel and only `recallMsg`; it does not retain
+the predicate or acquire a second listener. Close and late failure observation
+remain with the shared channel and Session lifetime.
+
+Every source module's external imports are checked against exact resource owners
+in `test/helpers/external-dependencies.ts`, including the runtime/type-only kind.
+A new feature cannot acquire filesystem, process or third-party dependencies by
+inheriting its directory's permissions. Obsolete ownership entries fail the check.
+The loader extractor detects computed namespace factories and aliases; reviewed
+codec loading forms remain limited to their exact owner and syntax.
 
 Comments should explain constraints, ownership, ABI evidence or decisions that
 are not evident from the code. Keep native provenance references next to the

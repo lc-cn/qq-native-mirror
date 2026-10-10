@@ -1,3 +1,5 @@
+import { externalDependencyViolation } from './external-dependencies.ts';
+
 /** Architectural policy includes type edges: an erased import can still couple
  * ownership and force coordinated changes between otherwise independent modules.
  */
@@ -102,48 +104,7 @@ export const crossFeatureDependencies = [
 ] as const;
 
 export function dependencyViolation({ from, to, typeOnly }: SourceDependency): string | undefined {
-  if (!to.startsWith('src/')) {
-    if (from === 'src/runtime/kernel-environment.ts')
-      return ['node:fs/promises', 'node:path', 'node:os'].includes(to)
-        ? undefined
-        : 'Environment preparation owns local configuration, not transports or account actions.';
-    if (from === 'src/worker.ts')
-      return ['node:os', 'node:fs/promises'].includes(to)
-        ? undefined
-        : 'The worker only acquires its reviewed process and directory dependencies.';
-    if (from === 'src/kernel.ts' || from === 'src/native-services.ts')
-      return 'Authentication and service composition delegate IO to their resource owners.';
-    if (from === 'src/native/native-bundle-installer.ts')
-      return [
-        'node:crypto',
-        'node:zlib',
-        'node:fs',
-        'node:fs/promises',
-        'node:path',
-        'node:os',
-      ].includes(to)
-        ? undefined
-        : 'The bundle installer uses its injected download port rather than owning network selection.';
-    if (from === 'src/storage/native-package-lock.ts')
-      return ['node:crypto', 'node:fs/promises'].includes(to)
-        ? undefined
-        : 'Package locking only owns lock publication, waiting and reclamation.';
-    if (from === 'src/client/qq-client.ts')
-      return to === 'node:events' || (typeOnly && to === 'node:child_process')
-        ? undefined
-        : 'The public facade delegates IO and process ownership to its lifetime owner.';
-    if (from === 'src/client/create-client.ts')
-      return [
-        'node:child_process',
-        'node:fs',
-        'node:fs/promises',
-        'node:path',
-        'node:url',
-      ].includes(to)
-        ? undefined
-        : 'The factory only loads its reviewed Node bootstrap dependencies.';
-    return 'External dependencies require reviewed module ownership.';
-  }
+  if (!to.startsWith('src/')) return externalDependencyViolation(from, to, typeOnly);
   if (from === 'src/native/native-bundle-installer.ts')
     return to === 'src/storage/native-package-lock.ts' ||
       (typeOnly && to === 'src/contracts/native.ts')

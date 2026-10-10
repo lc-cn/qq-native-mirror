@@ -64,6 +64,7 @@ import { createGroupEvents } from './features/groups/group-events.ts';
 import { createGroupQueries } from './features/groups/group-queries.ts';
 import { createGroupSystemEvents } from './features/groups/group-system-events.ts';
 import { createRecallEvents } from './features/messages/recall-events.ts';
+import { recallMessage } from './features/messages/recall-operation.ts';
 import { createIncomingMessageDelivery } from './features/messages/incoming-message-delivery.ts';
 import {
   decodeNativeMessages,
@@ -77,11 +78,6 @@ import type { NativePeer, NativeMessage } from './native/message-contracts.ts';
 export type { NativePeer, NativeMessage } from './native/message-contracts.ts';
 import type { ServiceOperation } from './runtime/operations.ts';
 export type { ServiceOperation } from './runtime/operations.ts';
-
-/** A callback does not replace the native method's own completion code. */
-function nativeCallSucceeded(value: unknown): boolean {
-  return (value as { result?: unknown } | null | undefined)?.result === 0;
-}
 
 function toMessage(message: Native, raw: unknown = message): Message {
   return projectNativeMessage(message, decodeElements(message.elements), new Map(), raw);
@@ -451,26 +447,21 @@ export function createNativeServices(context: NativeServiceContext) {
             lifetime.signal.throwIfAborted();
             return downloadAttachment(service('Msg'), peer, captured, eventCall, lifetime.signal);
           }
-          case 'recallMessage': {
-            const peer = await resolvePeer(payload.peer);
-            const msgId = String(payload.messageId);
-            await eventCall(
-              'Msg/onMsgInfoListUpdate',
-              (updates: NativeMessage[]) =>
-                updates.find(
-                  (message) =>
-                    message.chatType === peer.chatType &&
-                    message.peerUid === peer.peerUid &&
-                    message.msgId === msgId &&
-                    message.recallTime &&
-                    message.recallTime !== '0',
-                ),
-              () => call(service('Msg'), 'recallMsg', peer, [msgId]),
-              10_000,
-              nativeCallSucceeded,
+          case 'recallMessage':
+            return recallMessage(
+              {
+                resolvePeer,
+                eventCall,
+                getMessageService: () => {
+                  const messageService = service('Msg');
+                  return {
+                    recallMsg: (peer, ids) => call(messageService, 'recallMsg', peer, ids),
+                  };
+                },
+              },
+              payload.peer,
+              () => payload.messageId,
             );
-            return undefined;
-          }
           case 'getForwardMessages':
           case 'forwardMessages':
             return forwardMessages.invokeOperation(method, payload);

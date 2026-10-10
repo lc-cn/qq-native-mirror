@@ -218,3 +218,18 @@ function verifyGroupFolderCreationPort(context: GroupFolderCreationContext) {
   void result.resultWithGroupItem;
 }
 void verifyGroupFolderCreationPort;
+
+import type { RecallContext } from '../../src/features/messages/recall-operation.ts';
+function verifyRecallPort(context: RecallContext) {
+  // @ts-expect-error Recall cannot acquire arbitrary native services.
+  context.service('Buddy');
+  const service = context.getMessageService();
+  // @ts-expect-error Recall does not own message submission or a second listener.
+  service.sendMsg({}, [], '');
+  // @ts-expect-error Recall cannot register an independent Session listener.
+  service.addKernelMsgListener({});
+  const returned = service.recallMsg({ chatType: 2, peerUid: '123' }, ['42']);
+  // @ts-expect-error Native acknowledgement is unknown before validation.
+  void returned.result;
+}
+void verifyRecallPort;
