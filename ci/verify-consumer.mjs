@@ -23,6 +23,8 @@ import {verifyKernelSessionConsumer} from '../sdk/scripts/kernel-session-consume
 import {verifyHistoryLifecycleConsumer} from '../sdk/scripts/history-lifecycle-consumer-contract.mjs';
 import {verifyVideoConsumerContract} from '../sdk/scripts/video-consumer-contract.mjs';
 import {verifyContactGroupConsumer} from '../sdk/scripts/contact-group-consumer-contract.mjs';
+import {verifyActionPortConsumer} from '../sdk/scripts/action-port-consumer-contract.mjs';
+import {verifyProfileRequestConsumer} from '../sdk/scripts/profile-request-consumer-contract.mjs';
 const execute=promisify(execFile),temp=await realpath(await mkdtemp(join(tmpdir(),'qq-ci-consumer-')));
 const {version}=JSON.parse(await readFile('sdk/package.json','utf8'));
 const platformName=`qq-native-client-${process.platform}-${process.arch}`;
@@ -191,63 +193,9 @@ let finish,begin,calls=0;const began=new Promise(resolve=>{begin=resolve;});cons
 const closing=createNativeServices({ session: {getMsgService:()=>({addKernelMsgListener(){},getMsgsIncludeSelf(){calls++;begin();return delayed;}}),getBuddyService:()=>({addKernelBuddyListener(){}}),getGroupService:()=>({addKernelGroupListener(){}})}, version: '7.0.2-53644', events: { emit: ()=>{} } });
 const pending=closing.invokeOperation('getHistory',payload);await began;closing.close();finish({result:0,msgList:[]});await assert.rejects(pending,/abort|closed/i);assert.equal(calls,1);
  }
- // Installed compiled code with a fake profile service: this checks field preservation,
- // not a QQ-native profile mutation. Native preparation below remains a separate check.
- const profile=await import(pathToFileURL(join(temp,'node_modules/qq-native-client/dist/features/contacts/self-profile.js')).href);
- assert.equal(typeof sdk.QQClient.prototype.setSignature,'function');
- for(const text of ['','  spaced signature  ']){
-  const action=await cli.prepareCommand('signature',{text});let actual;
-  await action({setSignature:async value=>{actual=value;}});assert.equal(actual,text);
- }
- const birthday={birthday_year:'2000',birthday_month:'1',birthday_day:'2'};
- function profileFixture(missingNick=false){
-  let listener;const writes=[];
-  const service={
-   addKernelProfileListener(value){listener=value;return 1;},removeKernelProfileListener(){},
-   fetchUserDetailInfo(trace,uids,source,biz){
-    assert.equal(trace,'BuddyProfileStore');assert.deepEqual(uids,['self']);assert.equal(source,1);assert.deepEqual(biz,[0]);
-    listener.onUserDetailInfoChanged({uid:'self',simpleInfo:{coreInfo:missingNick?{}:{nick:'original nickname'},baseInfo:{longNick:'original signature',sex:255,birthday_year:2000,birthday_month:1,birthday_day:2}}});return{result:0};
-   },
-   modifyDesktopMiniProfile(value){writes.push(value);return{result:0};}
-  };
-  return{module:profile.createSelfProfile({getProfileService:()=>service},()=> 'self'),writes};
- }
- const nickname=profileFixture();
- try{await nickname.module.invokeOperation('setNickname',{name:'new nickname'});assert.deepEqual(nickname.writes,[{nick:'new nickname',longNick:'original signature',sex:255,birthday,location:undefined}]);}finally{nickname.module.close();}
- for(const text of ['new signature','']){
-  const fixture=profileFixture();
-  try{await fixture.module.invokeOperation('setSignature',{text});assert.deepEqual(fixture.writes,[{nick:'original nickname',longNick:text,sex:255,birthday,location:undefined}]);}finally{fixture.module.close();}
- }
- const missing=profileFixture(true);
- try{await assert.rejects(missing.module.invokeOperation('setSignature',{text:'new'}),/nickname|preserv|profile/i);assert.equal(missing.writes.length,0);}finally{missing.module.close();}
- // Installed compiled contract only: synthetic services, no QQ group mutation.
- const {createGroupOperations}=await import(pathToFileURL(join(temp,'node_modules/qq-native-client/dist/features/groups/group-operations.js')).href);
- const voidCases=[
-  ['setGroupMemberCard','modifyMemberCardName',{groupId:'123',userId:'456',card:''},['123','u_fixture','']],
-  ['setGroupAdmin','modifyMemberRole',{groupId:'123',userId:'456',enabled:true},['123','u_fixture',3]],
-  ['kickGroupMember','kickMember',{groupId:'123',userId:'456',options:{rejectRejoin:true,reason:'fixture'}},['123',['u_fixture'],true,'fixture']],
-  ['leaveGroup','quitGroup',{groupId:'123'},['123']],
- ];
- for(const [method,native,payload,expected] of voidCases){
-  let calls=0;
-  const invoke=(...args)=>{calls++;assert.deepEqual(args,expected);return undefined;};
-  const operation=createGroupOperations({getGroupService:()=>({[native]:native==='kickMember'?async(...args)=>invoke(...args):invoke})},async()=> 'u_fixture');
-  await operation.invokeOperation(method,payload);assert.equal(calls,1);
-  for(const [result,code] of [['0','invalid-result'],[0,'invalid-result'],[{result:23},23],[{result:'23'},'23'],[{result:NaN},'invalid-result'],[{result:Infinity},'invalid-result']]){
-   let failures=0;
-   const rejected=createGroupOperations({getGroupService:()=>({[native]:()=>{failures++;return result;}})},async()=> 'u_fixture');
-   await assert.rejects(rejected.invokeOperation(method,payload),{code});assert.equal(failures,1);
-  }
- }
- for(const [method,native,payload] of [
-  ['setGroupName','modifyGroupName',{groupId:'123',name:'fixture'}],
-  ['setGroupMute','setGroupShutUp',{groupId:'123',enabled:true}],
-  ['setGroupMemberMute','setMemberShutUp',{groupId:'123',userId:'456',seconds:0}],
- ]){
-  let calls=0;
-  const operation=createGroupOperations({getGroupService:()=>({[native]:()=>{calls++;return undefined;}})},async()=> 'u_fixture');
-  await assert.rejects(operation.invokeOperation(method,payload),/Native group/);assert.equal(calls,1);
- }
+ // Shared installed-package contracts use controlled services; native client initialization remains below.
+ const actionPortChecks=await verifyActionPortConsumer(installedRoot);
+ const profileRequestChecks=await verifyProfileRequestConsumer(installedRoot);
  // Query contract uses only synthetic listener services, never native QQ calls.
  const {createNativeServices:queryServices}=await import(pathToFileURL(join(temp,'node_modules/qq-native-client/dist/native-services.js')).href);
  for(const [response,expectedCode] of [
@@ -359,5 +307,5 @@ try{assert.deepEqual(await success.invokeOperation('listFriends'),[]);assert.equ
  globalThis.fetch=()=>{throw new Error('Unexpected mirror request with installed platform package');};
  client=await sdk.createClient({dataDir:join(temp,'unused-account'),cacheDir:nativeCache,autoReconnect:false,timeoutMs:30000});
  const exports=client.nativeExports.length;if(exports<80)throw new Error('Unexpected native export inventory');await client.close();if(client.state!=='closed')throw new Error('Client did not close');
- await writeFile('out/consumer.json',JSON.stringify({platform:process.platform,arch:process.arch,node:process.version,exports,installedNativeStorage,contactGroupChecks,...messageBatchChecks,...forwardChecks,...recallChecks,...mentionChecks,...sendChecks,...receivedChecks,...receivedForwardChecks,...forwardResourceChecks,...historyLifecycleChecks,...videoChecks,...mergedForwardChecks,automaticVideoCodec:installedVideo!==undefined,installedVideoDecoder:installedVideo?.passed===true,installedVideoFakeCache:installedVideo?.sdkFakeCache===true,installedVideo,installedMainOnly:true,automaticPlatformSelection:true,tarballRequests,faceContract:true,faceDeliveryAttempted:false,messageQueryContract:true,historyQueryContract:true,nativeHistoryQueryAttempted:false,nativeMessageQueryAttempted:false,selfProfileContract:true,profileMutationAttempted:false,groupOperationContract:true,groupMutationAttempted:false,groupMemberQueryContract:true,groupMemberIdentityContract:true,nativeGroupMemberQueryAttempted:false,groupMetadataEventContract:true,businessWatchContract:true,nativeGroupMetadataObserved:false,friendMetadataEventContract:true,nativeFriendMetadataObserved:false,friendListQueryContract:true,friendListBatchContract:true,friendProfileQueryContract:true,groupListQueryContract:true,nativeGroupListQueryAttempted:false,nativeFriendListQueryAttempted:false,prepared:true,closed:true,loginAttempted:false,registry:'isolated local fixture serving actual CI tarballs'},null,2));console.log(await readFile('out/consumer.json','utf8'));
+ await writeFile('out/consumer.json',JSON.stringify({platform:process.platform,arch:process.arch,node:process.version,exports,installedNativeStorage,contactGroupChecks,actionPortChecks,profileRequestChecks,...messageBatchChecks,...forwardChecks,...recallChecks,...mentionChecks,...sendChecks,...receivedChecks,...receivedForwardChecks,...forwardResourceChecks,...historyLifecycleChecks,...videoChecks,...mergedForwardChecks,automaticVideoCodec:installedVideo!==undefined,installedVideoDecoder:installedVideo?.passed===true,installedVideoFakeCache:installedVideo?.sdkFakeCache===true,installedVideo,installedMainOnly:true,automaticPlatformSelection:true,tarballRequests,faceContract:true,faceDeliveryAttempted:false,messageQueryContract:true,historyQueryContract:true,nativeHistoryQueryAttempted:false,nativeMessageQueryAttempted:false,selfProfileContract:true,profileMutationAttempted:false,groupOperationContract:true,groupMutationAttempted:false,groupMemberQueryContract:true,groupMemberIdentityContract:true,nativeGroupMemberQueryAttempted:false,groupMetadataEventContract:true,businessWatchContract:true,nativeGroupMetadataObserved:false,friendMetadataEventContract:true,nativeFriendMetadataObserved:false,friendListQueryContract:true,friendListBatchContract:true,friendProfileQueryContract:true,groupListQueryContract:true,nativeGroupListQueryAttempted:false,nativeFriendListQueryAttempted:false,prepared:true,closed:true,loginAttempted:false,registry:'isolated local fixture serving actual CI tarballs'},null,2));console.log(await readFile('out/consumer.json','utf8'));
 }finally{await client?.close();server.closeAllConnections();await new Promise(done=>server.close(done));await rm(temp,{recursive:true,force:true});}

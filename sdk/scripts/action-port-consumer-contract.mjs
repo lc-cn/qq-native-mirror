@@ -193,28 +193,59 @@ export async function verifyActionPortConsumer(installedRoot) {
   } finally {
     strict.lifetime.close();
   }
-  for (const [result, code] of [
-    [{ result: 'denied' }, 'denied'],
-    [{ result: 73 }, 73],
-    [{ result: NaN }, 'invalid-result'],
-    [{}, 'invalid-result'],
+  // Keep the full multi-platform void-acknowledgement matrix in the same owner
+  // used by local and CI installed consumers; neither caller duplicates ports.
+  for (const [method, native, payload, expected] of [
+    [
+      'setGroupMemberCard',
+      'modifyMemberCardName',
+      { groupId: '123', userId: '456', card: '' },
+      ['123', 'u_fixture', ''],
+    ],
+    [
+      'setGroupAdmin',
+      'modifyMemberRole',
+      { groupId: '123', userId: '456', enabled: true },
+      ['123', 'u_fixture', 3],
+    ],
+    [
+      'kickGroupMember',
+      'kickMember',
+      { groupId: '123', userId: '456', options: { rejectRejoin: true, reason: 'fixture' } },
+      ['123', ['u_fixture'], true, 'fixture'],
+    ],
+    ['leaveGroup', 'quitGroup', { groupId: '123' }, ['123']],
   ]) {
-    let attempts = 0;
-    const rejection = fixture(createGroupOperations, {
-      getGroupService: () => ({
-        quitGroup() {
-          attempts++;
-          return result;
-        },
-      }),
-    });
-    try {
-      await assert.rejects(rejection.operations.invokeOperation('leaveGroup', { groupId: '123' }), {
-        code,
+    for (const [result, code] of [
+      [undefined, undefined],
+      ['0', 'invalid-result'],
+      [0, 'invalid-result'],
+      [{ result: 23 }, 23],
+      [{ result: '23' }, '23'],
+      [{ result: 'denied' }, 'denied'],
+      [{ result: 73 }, 73],
+      [{ result: NaN }, 'invalid-result'],
+      [{ result: Infinity }, 'invalid-result'],
+      [{}, 'invalid-result'],
+    ]) {
+      let attempts = 0;
+      const f = fixture(createGroupOperations, {
+        getGroupService: () => ({
+          [native](...args) {
+            attempts++;
+            assert.deepEqual(args, expected);
+            return native === 'kickMember' ? Promise.resolve(result) : result;
+          },
+        }),
       });
-      assert.equal(attempts, 1);
-    } finally {
-      rejection.lifetime.close();
+      try {
+        const pending = f.operations.invokeOperation(method, payload);
+        if (code === undefined) await pending;
+        else await assert.rejects(pending, { code });
+        assert.equal(attempts, 1);
+      } finally {
+        f.lifetime.close();
+      }
     }
   }
   return {
