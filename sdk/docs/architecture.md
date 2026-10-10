@@ -413,7 +413,12 @@ helper grants no permission to compose accounts or acquire other runtime owners.
 uncorrelated list query. Its port contains only registration/removal, listing and
 approval. Notifications validate a whole materialized batch before any event,
 including sparse-array holes. Request/decision inputs are captured once. Native
-success alone cannot complete a list; a failed query invalidates listing while
+notification carriers and each DTO scalar are also captured once as unknown and
+validated before projection. Accessors cannot replace a checked value with a
+different type during event publication. The original `raw` object remains opaque
+and retains its identity for existing consumers; typed fields never reread it.
+This owner has no dynamic native-object permission.
+Native success alone cannot complete a list; a failed query invalidates listing while
 unsolicited requests and explicit decisions remain available. Local close and
 Session abort retire pending waits and callback publication before attempting
 listener removal. Synchronous observer close stops the current batch; registration

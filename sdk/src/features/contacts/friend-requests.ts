@@ -5,7 +5,6 @@ import { createFriendEvents } from './friend-events.ts';
  * https://github.com/NapNeko/NapCatQQ/blob/26d7533e0f5800fdff865ab2f2ad7692917e1076/packages/napcat-core/apis/friend.ts#L87-L103
  * Buddy service declares getBuddyReq Promise<GeneralCallResult>, approvalFriendRequest Promise<void>.
  */
-import type { NativeObject as Native } from '../../native/native-object.ts';
 export type FriendRequestOperation = 'listFriendRequests' | 'handleFriendRequest';
 export interface NativeFriendRequestDTO {
   uid: string;
@@ -22,28 +21,36 @@ function nonempty(value: unknown, name: string): string {
     throw new Error(`${name} must be a nonempty string`);
   return value;
 }
+function record(value: unknown): Record<string, unknown> | undefined {
+  return value && typeof value === 'object' ? (value as Record<string, unknown>) : undefined;
+}
 function normalize(raw: unknown): NativeFriendRequestDTO {
   if (!raw || typeof raw !== 'object') throw new Error('Invalid native friend request');
-  const item = raw as Native;
+  const item = record(raw)!;
   const uid = nonempty(item.friendUid, 'native friendUid');
   const time = nonempty(item.reqTime, 'native reqTime');
   if (!/^\d+$/.test(time)) throw new Error('Native request time must be a numeric string');
+  const decided = item.isDecide;
+  const unread = item.isUnread;
+  const initiator = item.isInitiator;
   if (
-    typeof item.isDecide !== 'boolean' ||
-    typeof item.isUnread !== 'boolean' ||
-    (item.isInitiator !== undefined && typeof item.isInitiator !== 'boolean')
+    typeof decided !== 'boolean' ||
+    typeof unread !== 'boolean' ||
+    (initiator !== undefined && typeof initiator !== 'boolean')
   )
     throw new Error('Invalid native friend request flags');
-  if (typeof item.friendNick !== 'string' || typeof item.extWords !== 'string')
+  const nickname = item.friendNick;
+  const message = item.extWords;
+  if (typeof nickname !== 'string' || typeof message !== 'string')
     throw new Error('Invalid native friend request text');
   return {
     uid,
     time,
-    nickname: item.friendNick,
-    message: item.extWords,
-    decided: item.isDecide,
-    unread: item.isUnread,
-    initiator: item.isInitiator ?? false,
+    nickname,
+    message,
+    decided,
+    unread,
+    initiator: initiator ?? false,
     raw,
   };
 }
@@ -105,7 +112,7 @@ export function createFriendRequests(context: FriendRequestsContext) {
   const seen = new Set<string>();
   const waiters = new Set<{
     resolve: (requests: NativeFriendRequestDTO[]) => void;
-    reject: (error: Error) => void;
+    reject: (error: unknown) => void;
   }>();
   let listing: Promise<NativeFriendRequestDTO[]> | undefined;
   let queryInvalidated = false;
@@ -118,13 +125,10 @@ export function createFriendRequests(context: FriendRequestsContext) {
       onBuddyReqChange(notification: unknown) {
         if (closed || signal.aborted) return;
         try {
-          if (
-            !notification ||
-            typeof notification !== 'object' ||
-            !Array.isArray((notification as Native).buddyReqs)
-          )
-            throw new Error('Invalid native friend request notification');
-          const requests = Array.from((notification as Native).buddyReqs, normalize);
+          const rows = record(notification)?.buddyReqs;
+          if (!Array.isArray(rows)) throw new Error('Invalid native friend request notification');
+          const requests = Array.from(rows, normalize);
+          if (closed || signal.aborted) return;
           for (const request of requests) {
             if (closed || signal.aborted) return;
             if (request.decided || request.initiator) continue;
@@ -136,7 +140,7 @@ export function createFriendRequests(context: FriendRequestsContext) {
           }
           for (const waiter of waiters) waiter.resolve(requests);
         } catch (error) {
-          for (const waiter of waiters) waiter.reject(error as Error);
+          for (const waiter of waiters) waiter.reject(error);
         }
       },
     },
@@ -188,7 +192,7 @@ export function createFriendRequests(context: FriendRequestsContext) {
       );
     let waiter: {
       resolve: (requests: NativeFriendRequestDTO[]) => void;
-      reject: (error: Error) => void;
+      reject: (error: unknown) => void;
     };
     const notification = new Promise<NativeFriendRequestDTO[]>((resolve, reject) => {
       waiter = { resolve, reject };
@@ -201,11 +205,7 @@ export function createFriendRequests(context: FriendRequestsContext) {
         Promise.resolve()
           .then(() => awaitValue(callList()))
           .then((result) => {
-            if (
-              !result ||
-              typeof result !== 'object' ||
-              (result as { result?: unknown }).result !== 0
-            )
+            if (!result || typeof result !== 'object' || record(result)?.result !== 0)
               throw nativeResultError(
                 'Native getBuddyReq failed or returned an invalid result',
                 result,
@@ -251,7 +251,7 @@ export function createFriendRequests(context: FriendRequestsContext) {
     const capturedRequest = payload.request;
     if (!capturedRequest || typeof capturedRequest !== 'object' || Array.isArray(capturedRequest))
       throw new Error('request must be an object');
-    const request = capturedRequest as Native;
+    const request = record(capturedRequest)!;
     const uid = nonempty(request.uid, 'request.uid');
     const time = nonempty(request.time, 'request.time');
     if (!/^\d+$/.test(time)) throw new Error('request.time must be a numeric string');
@@ -269,7 +269,7 @@ export function createFriendRequests(context: FriendRequestsContext) {
     // Upstream void confirms dispatch only. Explicit native errors still reject.
     if (
       result !== undefined &&
-      (!result || typeof result !== 'object' || (result as { result?: unknown }).result !== 0)
+      (!result || typeof result !== 'object' || record(result)?.result !== 0)
     )
       throw nativeResultError(
         'Native approvalFriendRequest failed or returned an invalid result',

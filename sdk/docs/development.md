@@ -95,6 +95,13 @@ captured registration function instead of a Session or service locator. Keep
 listener references for the worker lifetime until a removal ABI is verified;
 account close is not proof that the native kernel released a callback pointer.
 
+Friend request notifications stay unknown until their carrier, row identities,
+texts and flags have been captured and validated. Read each field once; checking
+it and then rereading it when emitting a DTO permits a native accessor to change
+its type. Validate the full batch before publication and check account retirement
+after projection. Preserve opaque `raw` identity separately from those validated
+scalars; this does not require a dynamic native-object port.
+
 Element decoding belongs to `features/messages/inbound-elements`; add no file
 preparation or native querying there. Local image/file staging and reply-reference
 construction belong to `outbound-elements`, using the specific staging/query

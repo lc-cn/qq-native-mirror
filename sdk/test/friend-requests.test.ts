@@ -587,3 +587,114 @@ test('approval synchronously closes then returns rejection which is observed', a
   await new Promise<void>((resolve) => setImmediate(resolve));
   assert.equal(calls, 1);
 });
+
+test('notification scalar getters are captured once and raw identity stays intact', () => {
+  const f = fixture();
+  const reads = new Map<string, number>();
+  const values = {
+    friendUid: 'u_snapshot',
+    reqTime: '789',
+    friendNick: 'nick',
+    extWords: 'hello',
+    isDecide: false,
+    isUnread: true,
+    isInitiator: false,
+  };
+  const row = Object.fromEntries(Object.entries(values).map(([key, value]) => [key, value]));
+  for (const [key, value] of Object.entries(values))
+    Object.defineProperty(row, key, {
+      enumerable: true,
+      get() {
+        const n = (reads.get(key) ?? 0) + 1;
+        reads.set(key, n);
+        return n === 1 ? value : 123;
+      },
+    });
+  f.notify([row]);
+  assert.equal(f.emitted.length, 1);
+  assert.deepEqual(f.emitted[0].payload, {
+    uid: 'u_snapshot',
+    time: '789',
+    nickname: 'nick',
+    message: 'hello',
+    decided: false,
+    unread: true,
+    initiator: false,
+    raw: row,
+  });
+  assert.deepEqual([...reads.values()], Array(7).fill(1));
+  f.operations.close();
+});
+
+test('notification carrier captured once and entire invalid batch cannot emit a prefix', () => {
+  let listener!: FriendBuddyListener;
+  const emitted: unknown[] = [];
+  const owner = createFriendRequests(
+    {
+      getBuddyService: () => ({
+        addKernelBuddyListener(value) {
+          listener = value;
+          return 1;
+        },
+        removeKernelBuddyListener() {},
+      }),
+    },
+    (_event, value) => emitted.push(value),
+  );
+  let reads = 0;
+  listener.onBuddyReqChange({
+    get buddyReqs() {
+      reads++;
+      return reads === 1 ? [incoming] : [{ ...incoming, friendNick: 123 }];
+    },
+  });
+  assert.equal(reads, 1);
+  assert.equal(emitted.length, 1);
+  listener.onBuddyReqChange({
+    buddyReqs: [
+      { ...incoming, reqTime: '125' },
+      { ...incoming, friendNick: 123 },
+    ],
+  });
+  assert.equal(emitted.length, 1);
+  owner.close();
+});
+
+test('close during scalar projection cannot emit or complete a pending list', async () => {
+  let listener!: FriendBuddyListener;
+  let gets = 0;
+  const events: unknown[] = [];
+  const owner = createFriendRequests(
+    {
+      getBuddyService: () => ({
+        addKernelBuddyListener(value) {
+          listener = value;
+          return 1;
+        },
+        removeKernelBuddyListener() {},
+        getBuddyReq() {
+          gets++;
+          return { result: 0 };
+        },
+      }),
+    },
+    (_event, value) => events.push(value),
+  );
+  const pending = owner.invokeOperation('listFriendRequests');
+  const checked = assert.rejects(pending, /closed/);
+  await Promise.resolve();
+  listener.onBuddyReqChange({
+    buddyReqs: [
+      {
+        ...incoming,
+        get friendNick() {
+          owner.close();
+          return 'nick';
+        },
+      },
+    ],
+  });
+  await checked;
+  assert.equal(events.length, 0);
+  assert.equal(gets, 1);
+});

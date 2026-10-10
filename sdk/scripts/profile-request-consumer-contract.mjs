@@ -205,7 +205,11 @@ export async function verifyProfileRequestConsumer(installedRoot) {
     isDecide: false,
     isUnread: true,
   };
-  const requestFixture = (result = { result: 0 }, approve = () => undefined) => {
+  const requestFixture = (
+    result = { result: 0 },
+    approve = () => undefined,
+    notification = () => ({ buddyReqs: [incoming] }),
+  ) => {
     let listener;
     const events = [];
     const removed = [];
@@ -225,7 +229,7 @@ export async function verifyProfileRequestConsumer(installedRoot) {
           },
           getBuddyReq() {
             gets++;
-            listener.onBuddyReqChange({ buddyReqs: [incoming] });
+            listener.onBuddyReqChange(notification());
             return result;
           },
           approvalFriendRequest(payload) {
@@ -256,6 +260,54 @@ export async function verifyProfileRequestConsumer(installedRoot) {
     requests.services.close();
   }
   assert.deepEqual(requests.removed, [7]);
+  const originalFields = { ...incoming, isInitiator: false };
+  const reads = new Map();
+  const changingRequest = Object.defineProperties(
+    {},
+    Object.fromEntries(
+      Object.entries(originalFields).map(([key, value]) => [
+        key,
+        {
+          get() {
+            const count = (reads.get(key) ?? 0) + 1;
+            reads.set(key, count);
+            return count === 1 ? value : typeof value === 'boolean' ? 'changed' : 123;
+          },
+        },
+      ]),
+    ),
+  );
+  let carrierReads = 0;
+  const captured = requestFixture({ result: 0 }, undefined, () => ({
+    get buddyReqs() {
+      carrierReads++;
+      return carrierReads === 1 ? [changingRequest] : 'changed';
+    },
+  }));
+  try {
+    const listed = await captured.services.invokeOperation('listFriendRequests');
+    assert.deepEqual(listed, [
+      {
+        uid: 'u_request',
+        time: '123',
+        nickname: 'nick',
+        message: 'hello',
+        decided: false,
+        unread: true,
+        initiator: false,
+        raw: changingRequest,
+      },
+    ]);
+    assert.equal(carrierReads, 1);
+    assert.deepEqual(
+      [...reads.values()],
+      Object.keys(originalFields).map(() => 1),
+    );
+    assert.equal(captured.events[0][1].raw, changingRequest);
+    assert.equal(captured.events[0][1].nickname, 'nick');
+  } finally {
+    captured.services.close();
+  }
   const failed = requestFixture({ result: 73 });
   try {
     await assert.rejects(failed.services.invokeOperation('listFriendRequests'), { code: 73 });
@@ -330,6 +382,7 @@ export async function verifyProfileRequestConsumer(installedRoot) {
     profileRequestInstalledComposition: true,
     profileInputSnapshotContract: true,
     friendRequestCompletionContract: true,
+    friendRequestNotificationSnapshotContract: true,
     friendRequestRetirementContract: true,
     profileRequestStatusRetirementContract: true,
     friendRequestWaitRetentionBounded: true,
