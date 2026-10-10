@@ -1,0 +1,55 @@
+sdk/docs/architecture.md
+  s_2104cc474f1ce5::t_7878842c4ae9f1 489-499
+sdk/docs/development.md
+  s_2104cc474f1ce5::t_7680981365d863 57-63
+sdk/scripts/element-preparation-consumer-contract.mjs
+  s_2104cc474f1ce5::t_9c778508fd12ff 1-131
+sdk/scripts/mention-consumer-contract.mjs
+  s_2104cc474f1ce5::t_2e41d436d20c2d 8
+sdk/scripts/verify-package-consumer.mjs
+  s_2104cc474f1ce5::t_e852d497d0ff2f 10,49-50,175,435-437,611
+sdk/src/features/messages/inbound-elements.ts
+  s_2104cc474f1ce5::t_53b106de5b2f95 1-93
+sdk/src/features/messages/inbound-mentions.ts
+  s_2104cc474f1ce5::t_737a556b5dcdba 1
+sdk/src/features/messages/native-message-sender.ts
+  s_2104cc474f1ce5::t_f36c71c01d799e 7-9,13
+sdk/src/features/messages/outbound-elements.ts
+  s_2104cc474f1ce5::t_e74ed9cf7099bf 5-6,8-22,62-65,141-142,144
+sdk/src/native-services.ts
+  s_2104cc474f1ce5::t_d138137fa4d911 59
+sdk/test/architecture.test.ts
+  s_2104cc474f1ce5::t_47ef5e8535799b 350-351,369
+sdk/test/face-send.test.ts
+  s_2104cc474f1ce5::t_c625c8dab7c002 4
+sdk/test/fixtures/domain-port-types.ts
+  s_2104cc474f1ce5::t_36344c1a66b089 276-304
+sdk/test/helpers/dependency-policy.ts
+  s_2104cc474f1ce5::t_f45ff23d97827f 135
+sdk/test/helpers/external-dependencies.ts
+  s_2104cc474f1ce5::t_28699ee1914710 47
+sdk/test/inbound-elements.test.ts
+  s_2104cc474f1ce5::t_373dc35582db13 1-75
+sdk/test/incoming-message-delivery.test.ts
+  s_2104cc474f1ce5::t_b7c351fe50addf 5
+sdk/test/outbound-elements-ports.test.ts
+  s_2104cc474f1ce5::t_bc8f0488b1c0f4 1-108
+sdk/test/outbound-elements.test.ts
+  s_2104cc474f1ce5::t_1ebd6532ffd9d2 10,72,104,123,138
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "56e4fc88e70b78d21a1b606c36b121e59ef58253",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
