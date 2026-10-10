@@ -1,0 +1,26 @@
+ci/consumer-module-paths.test.mjs
+  s_2104cc474f1ce5::t_e969448e44db28 8-20,30-31,35
+sdk/scripts/face-consumer-contract.mjs
+  s_2104cc474f1ce5::t_bab7fa6687baf5 1-54
+ci/verify-consumer.mjs
+  s_2104cc474f1ce5::t_bab7fa6687baf5 17-18,79-80
+  s_2104cc474f1ce5::t_e2e65ffc69a2cd 316
+sdk/scripts/verify-package-consumer.mjs
+  s_2104cc474f1ce5::t_bab7fa6687baf5 10,172,557
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "795346176251b26220b45bc535d3cb8683c926cd",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
