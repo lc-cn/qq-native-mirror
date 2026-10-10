@@ -10,12 +10,8 @@ import type { NativeServiceContext } from './runtime/native-service-context.ts';
 import { supportsCategoryCreation } from './native/native-contracts.ts';
 import { createFriendCategory } from './features/contacts/friend-category-create.ts';
 import { createFriendSystemEvents } from './features/contacts/friend-system-events.ts';
-import {
-  friendCategoryName,
-  captureFriendCategories,
-  projectFriendCategories,
-} from './features/contacts/friend-categories.ts';
-import { nativeResultError } from './errors.ts';
+import { friendCategoryName } from './features/contacts/friend-categories.ts';
+import { createContactDirectory } from './features/contacts/contact-directory.ts';
 import { createNativeEventChannel } from './runtime/native-event-channel.ts';
 import { sendCapturedMergedForward } from './features/forward/merged-forward.ts';
 import {
@@ -57,7 +53,7 @@ import {
   projectNativeMessage,
 } from './features/messages/inbound-messages.ts';
 import { captureSendInput, sendUserId, sendGroupId } from './features/messages/send-input.ts';
-import type { Friend, Message } from './types.ts';
+import type { Message } from './types.ts';
 
 import type { NativeObject as Native } from './native/native-object.ts';
 import type { NativePeer, NativeMessage } from './native/message-contracts.ts';
@@ -136,10 +132,6 @@ export function createNativeServices(context: NativeServiceContext) {
     });
     const callbackChannel = own(createNativeEventChannel(lifetime.signal));
     const { dispatch, call: eventCall } = callbackChannel;
-    const uidCache = new Map<string, string>();
-    cleanupSteps.push(() => {
-      uidCache.clear();
-    });
     const recallEvents = own(createRecallEvents(emit));
     const call = (object: Native, name: string, ...args: unknown[]) => {
       if (closed) throw new Error('Native services are closed');
@@ -169,6 +161,10 @@ export function createNativeServices(context: NativeServiceContext) {
         lifetime.signal.removeEventListener('abort', abort!);
       }
     };
+    const directory = own(
+      createContactDirectory({ signal: lifetime.signal, version, service, call, awaitAlive }),
+    );
+    const { uidFor } = directory;
     const resolvedMessages = async (
       messages: Native[],
       rawMessages = messages,
@@ -284,20 +280,9 @@ export function createNativeServices(context: NativeServiceContext) {
         call,
         eventCall,
         awaitAlive,
-        commitMembers: (members) => {
-          for (const member of members) uidCache.set(member.userId, member.uid);
-        },
+        commitMembers: directory.rememberMembers,
       }),
     );
-    const uidFor = async (id: string): Promise<string> => {
-      if (id.startsWith('u_')) return id;
-      if (uidCache.has(id)) return uidCache.get(id)!;
-      const converted = await awaitAlive(call(service('UixConvert'), 'getUid', [id]));
-      const uid = converted?.uidInfo?.get(id);
-      if (typeof uid !== 'string' || !uid || uid.includes('*'))
-        throw new Error('Could not resolve user identifier');
-      return uid;
-    };
     const friendRequests = own(createFriendRequests(guardedSession, emit));
     const groupRequests = own(createGroupRequests(guardedSession, emit));
     const contactOperations = createContactOperations(guardedSession, uidFor);
@@ -358,70 +343,10 @@ export function createNativeServices(context: NativeServiceContext) {
             return groupQueries.listGroupMutedMembers(sendGroupId(payload.groupId));
           case 'getGroupInfo':
             return groupQueries.getGroupInfo(sendGroupId(payload.groupId));
-          case 'listFriendCategories': {
-            if (!['7.0.2-53644', '3.2.32-52194', '9.9.33-52230'].includes(version))
-              throw new Error('Buddy list signature not verified for this native version');
-            const raw = await awaitAlive(call(service('Buddy'), 'getBuddyListV2', '0', true, 0));
-            const captured = captureFriendCategories(raw);
-            const profiles = await awaitAlive(
-              call(service('Profile'), 'getCoreAndBaseInfo', 'nodeStore', [...captured.uniqueUIDs]),
-            );
-            const categories = projectFriendCategories(captured, profiles);
-            lifetime.signal.throwIfAborted();
-            for (const category of categories)
-              for (const friend of category.friends) uidCache.set(friend.userId, friend.uid);
-            return categories;
-          }
-          case 'listFriends': {
-            // Windows 9.9.33 uses the same three-argument V2 contract in the pinned
-            // upstream implementation; account-level Windows validation is pending.
-            if (!['7.0.2-53644', '3.2.32-52194', '9.9.33-52230'].includes(version))
-              throw new Error('Buddy list signature not verified for this native version');
-            const result = await awaitAlive(call(service('Buddy'), 'getBuddyListV2', '0', true, 0));
-            // Pinned getBuddyListV2 returns GeneralCallResult as well as data.
-            // An empty data array does not establish a successful query.
-            if (result?.result !== 0)
-              throw nativeResultError('Native buddy list query failed', result);
-            if (!Array.isArray(result?.data)) throw new Error('Invalid native buddy list');
-            // Materialize holes before validation; flatMap/some would skip them.
-            const categories = Array.from(result.data);
-            if (categories.some((category) => !Array.isArray((category as Native)?.buddyUids)))
-              throw new Error('Invalid native buddy list');
-            const requested = categories.flatMap((category) =>
-              Array.from((category as Native).buddyUids),
-            );
-            if (!requested.every((uid): uid is string => typeof uid === 'string' && uid.length > 0))
-              throw new Error('Invalid native buddy UID');
-            const uids = [...new Set<string>(requested)];
-            const profiles = await awaitAlive(
-              call(service('Profile'), 'getCoreAndBaseInfo', 'nodeStore', uids),
-            );
-            if (!(profiles instanceof Map)) throw new Error('Invalid native profile map');
-            if (uids.some((uid) => !profiles.has(uid)))
-              throw new Error('Native buddy profiles are incomplete');
-            const friends = uids.map((uid): Friend => {
-              const profile = profiles.get(uid);
-              const core = profile?.coreInfo;
-              if (
-                !core ||
-                typeof core !== 'object' ||
-                Array.isArray(core) ||
-                typeof core.uid !== 'string' ||
-                !core.uid.trim() ||
-                core.uid !== uid ||
-                typeof core.uin !== 'string' ||
-                !/^\d+$/.test(core.uin) ||
-                typeof core.remark !== 'string' ||
-                (core.nick !== undefined && typeof core.nick !== 'string')
-              )
-                throw new Error('Invalid native buddy profile');
-              return { userId: core.uin, uid, nickname: core.nick ?? '', remark: core.remark };
-            });
-            // A rejected batch must not leave usable entries from an earlier row.
-            lifetime.signal.throwIfAborted();
-            for (const friend of friends) uidCache.set(friend.userId, friend.uid);
-            return friends;
-          }
+          case 'listFriendCategories':
+            return directory.listFriendCategories();
+          case 'listFriends':
+            return directory.listFriends();
           case 'listGroups':
             return groupQueries.listGroups(payload.refresh ?? true);
           case 'getGroupMembers':

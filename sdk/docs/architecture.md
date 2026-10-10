@@ -115,6 +115,14 @@ commit hook only after the whole batch validates and the Session remains alive.
 Closing invalidates the module and clears its query bookkeeping; the owning
 Session first aborts pending callbacks and native waits.
 
+`ContactDirectory` owns the account's UID cache, recipient resolution and validated
+friend/category reads. It receives whole validated member batches from
+`GroupQueries`; no cache reference escapes. Buddy/profile queries commit only after
+the complete result validates and the Session remains alive. Categorized results
+retain their separate counts and duplicate membership semantics. Single conversion
+misses remain uncached, preserving the existing policy. Construction does no native
+work, and close prevents cache hits, late commits and subsequent dispatch.
+
 The proprietary `.node` surface has no stable complete TypeScript declaration.
 Its type erasure is centralized in `src/native/native-object.ts`. This internal
 escape hatch is not proof of an ABI. Native results must pass adapter validation
