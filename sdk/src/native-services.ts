@@ -41,7 +41,7 @@ import { setGroupEssenceMessage } from './features/groups/group-essence.ts';
 import { createGroupEvents } from './features/groups/group-events.ts';
 import { createGroupQueries } from './features/groups/group-queries.ts';
 import { createGroupSystemEvents } from './features/groups/group-system-events.ts';
-import { createRecallEvents } from './features/messages/recall-events.ts';
+import { createMessageUpdateEvents } from './features/messages/recall-events.ts';
 import { recallMessage } from './features/messages/recall-operation.ts';
 import { createIncomingMessageDelivery } from './features/messages/incoming-message-delivery.ts';
 import { captureSendInput, sendUserId, sendGroupId } from './features/messages/send-input.ts';
@@ -80,7 +80,13 @@ export function createNativeServices(context: NativeServiceContext) {
     const guardedSession = lifetime.guardSession(session);
     const callbackChannel = own(createNativeEventChannel(lifetime.signal));
     const { dispatch, call: eventCall } = callbackChannel;
-    const recallEvents = own(createRecallEvents(emit));
+    const messageUpdateEvents = own(
+      createMessageUpdateEvents({
+        emit,
+        dispatchUpdates: (rows) => dispatch('Msg/onMsgInfoListUpdate', [rows]),
+        isClosed: () => lifetime.closed,
+      }),
+    );
     const call = (object: Native, name: string, ...args: unknown[]) => {
       if (lifetime.closed) throw new Error('Native services are closed');
       if (!object || typeof object[name] !== 'function')
@@ -178,21 +184,7 @@ export function createNativeServices(context: NativeServiceContext) {
         if (lifetime.closed) return;
         incomingMessages.receive(messages);
       },
-      onMsgInfoListUpdate: (messages: NativeMessage[]) => {
-        if (lifetime.closed) return;
-        if (!Array.isArray(messages)) {
-          emit('diagnostic', { stage: 'invalid-native-message-update-batch' });
-          return;
-        }
-        const validMessages = messages.filter((message) => message && typeof message === 'object');
-        if (validMessages.length !== messages.length)
-          emit('diagnostic', { stage: 'invalid-native-message-update' });
-        dispatch('Msg/onMsgInfoListUpdate', [validMessages]);
-        for (const message of validMessages) {
-          recallEvents.onMessageUpdate(message);
-          if (message.recallTime && message.recallTime !== '0') emit('message-recalled', message);
-        }
-      },
+      onMsgInfoListUpdate: messageUpdateEvents.onMessageUpdates,
       onKickedOffLine: (...args: unknown[]) => {
         if (!lifetime.closed) emit('kicked', { info: args[0], args });
       },

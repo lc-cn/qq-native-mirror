@@ -1,6 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createRecallEvents } from '../src/features/messages/recall-events.ts';
+import {
+  createRecallEvents,
+  createMessageUpdateEvents,
+} from '../src/features/messages/recall-events.ts';
 import { createNativeServices } from '../src/native-services.ts';
 
 const id = '900719925474099312345';
@@ -11,6 +14,64 @@ const record = {
   peerUid: '123',
   recallTime: '900719925474099399999',
 };
+
+test('message-update ingress correlates first, preserves raw rows and keeps both recall contracts', () => {
+  const events: [string, unknown][] = [];
+  const raw = { ...record };
+  const ordinary = { msgId: '2' };
+  const owner = createMessageUpdateEvents({
+    emit: (event, payload) => events.push([event, payload]),
+    isClosed: () => false,
+    dispatchUpdates: (rows) => {
+      assert.equal(rows[0], raw);
+      assert.equal(rows[1], ordinary);
+      events.push(['correlation', rows]);
+    },
+  });
+  owner.onMessageUpdates([raw, null, ordinary]);
+  assert.deepEqual(
+    events.map(([name]) => name),
+    ['diagnostic', 'correlation', 'message.recalled', 'message-recalled'],
+  );
+  assert.equal(events[3]![1], raw);
+  owner.onMessageUpdates([raw, ordinary]);
+  assert.deepEqual(
+    events.slice(4).map(([name]) => name),
+    ['correlation', 'message-recalled'],
+  );
+  owner.close();
+  owner.onMessageUpdates(null);
+  owner.onMessageUpdates([raw]);
+  assert.equal(events.length, 6);
+});
+
+test('message-update ingress retains sparse-array diagnostics and checks lifetime before reading', () => {
+  const events: [string, unknown][] = [];
+  let retired = false;
+  const owner = createMessageUpdateEvents({
+    emit: (event, payload) => events.push([event, payload]),
+    isClosed: () => retired,
+    dispatchUpdates: (rows) => events.push(['correlation', rows]),
+  });
+  owner.onMessageUpdates(null);
+  const sparse = new Array(2);
+  sparse[1] = { ...record, recallTime: '0' };
+  owner.onMessageUpdates(sparse);
+  assert.deepEqual(
+    events.map(([name]) => name),
+    ['diagnostic', 'diagnostic', 'correlation'],
+  );
+  assert.deepEqual(events[2]![1], [sparse[1]]);
+  retired = true;
+  const unread = new Proxy([], {
+    get() {
+      throw new Error('retired callback was read');
+    },
+  });
+  assert.doesNotThrow(() => owner.onMessageUpdates(unread));
+  assert.equal(events.length, 3);
+  owner.close();
+});
 
 test('recall metadata preserves exact native decimal strings and conversation identity', () => {
   const events: unknown[] = [];

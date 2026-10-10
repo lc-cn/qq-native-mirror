@@ -84,6 +84,16 @@ positions. The record/video codecs and worker transport are actual substitution
 points used by platform implementations and controlled tests. Domain adapters use
 composition; a shared superclass would couple unrelated native contracts.
 
+Message-update ingress belongs to `features/messages/recall-events`, including
+batch filtering, invalid-batch diagnostics, callback correlation ordering and
+normalized/legacy recall delivery. `createMessageUpdateEvents` requires named
+event, dispatch and lifetime ports; it does not acquire a Session or register a
+second listener. Service composition wires the existing native listener directly
+to this owner. Correlation precedes normalized recall projection and legacy raw
+delivery. Normalized replay suppression does not suppress legacy notifications;
+close retires the account's replay window. The existing single-record projector
+remains available to internal consumers without an optional batch configuration.
+
 `AccountSessionLifecycle` owns startup for one authenticated account, retained
 Session callbacks, the native-readiness/start-completion gates and the acquired
 business adapter. Its interface is `begin`, `invokeOperation` and `close`; it does

@@ -6,7 +6,9 @@ import { EventEmitter } from 'node:events';
 // Installed compiled modules with synthetic callbacks only. Never creates a native client.
 export async function verifyRecallConsumer(packagePath) {
   const load = (name) => import(pathToFileURL(join(packagePath, 'dist', name)).href);
-  const { createRecallEvents } = await load('features/messages/recall-events.js');
+  const { createRecallEvents, createMessageUpdateEvents } = await load(
+    'features/messages/recall-events.js',
+  );
   const { createNativeServices } = await load('native-services.js');
   const { observeWatchEvents } = await load('cli.js');
   const events = [],
@@ -64,6 +66,35 @@ export async function verifyRecallConsumer(packagePath) {
   const count = events.length;
   listener.onMessageUpdate({ ...raw, msgId: '4' });
   assert.equal(events.length, count);
+
+  const ingressEvents = [];
+  const ingress = createMessageUpdateEvents({
+    isClosed: () => false,
+    emit: (event, payload) => ingressEvents.push([event, payload]),
+    dispatchUpdates: (rows) => {
+      assert.equal(rows[0], raw);
+      ingressEvents.push(['correlation', rows]);
+    },
+  });
+  ingress.onMessageUpdates([raw, null]);
+  ingress.onMessageUpdates([raw]);
+  assert.deepEqual(
+    ingressEvents.map(([name]) => name),
+    [
+      'diagnostic',
+      'correlation',
+      'message.recalled',
+      'message-recalled',
+      'correlation',
+      'message-recalled',
+    ],
+  );
+  assert.equal(ingressEvents[3][1], raw);
+  assert.equal(ingressEvents[5][1], raw);
+  ingress.close();
+  ingress.onMessageUpdates([raw]);
+  ingress.onMessageUpdates(null);
+  assert.equal(ingressEvents.length, 6);
 
   // Exercise actual Session callback integration and stop delivery after close.
   let callback;
@@ -128,5 +159,10 @@ export async function verifyRecallConsumer(packagePath) {
   client.emit('message', { fixture: true });
   assert.deepEqual(plain, [{ fixture: true }]);
   unwatch();
-  return { normalizedRecallContract: true, nativeRecallObserved: false, accountUsed: false };
+  return {
+    normalizedRecallContract: true,
+    messageUpdateIngressInstalledContract: true,
+    nativeRecallObserved: false,
+    accountUsed: false,
+  };
 }

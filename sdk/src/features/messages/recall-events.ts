@@ -7,6 +7,46 @@ const decimal = (value: unknown): value is string =>
   typeof value === 'string' && /^\d+$/.test(value);
 const positive = (value: unknown): value is string => decimal(value) && /[1-9]/.test(value);
 
+export interface MessageUpdateEventsContext {
+  emit(event: string, payload: unknown): void;
+  dispatchUpdates(rows: Record<string, unknown>[]): void;
+  isClosed(): boolean;
+}
+
+/** Own update ingress and its two recall presentations. Dispatch the unchanged
+ * raw rows to request waiters before emitting normalized and legacy events.
+ */
+export function createMessageUpdateEvents(context: MessageUpdateEventsContext) {
+  const { emit, dispatchUpdates, isClosed } = context;
+  const recalls = createRecallEvents(emit);
+  let closed = false;
+  return {
+    onMessageUpdates(messages: unknown): void {
+      if (closed || isClosed()) return;
+      if (!Array.isArray(messages)) {
+        emit('diagnostic', { stage: 'invalid-native-message-update-batch' });
+        return;
+      }
+      const rows: unknown[] = messages;
+      const validMessages = rows.filter(
+        (message): message is Record<string, unknown> =>
+          message !== null && typeof message === 'object',
+      );
+      if (validMessages.length !== messages.length)
+        emit('diagnostic', { stage: 'invalid-native-message-update' });
+      dispatchUpdates(validMessages);
+      for (const message of validMessages) {
+        recalls.onMessageUpdate(message);
+        if (message.recallTime && message.recallTime !== '0') emit('message-recalled', message);
+      }
+    },
+    close(): void {
+      closed = true;
+      recalls.close();
+    },
+  };
+}
+
 export function createRecallEvents(emit: (event: string, payload: unknown) => void) {
   const seen = new Set<string>();
   let closed = false;

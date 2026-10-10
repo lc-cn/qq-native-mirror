@@ -55,6 +55,34 @@ function dependencies(path: string): Dependency[] {
 const graph = new Map(files.map((path) => [path, dependencies(path)]));
 const runtimeEdges = (path: string) => graph.get(path)!.filter((edge) => !edge.typeOnly);
 
+test('service composition delegates message-update ingress without projecting recall records', () => {
+  const source = ts.createSourceFile(
+    'native-services.ts',
+    readFileSync(join(sourceRoot, 'native-services.ts'), 'utf8'),
+    ts.ScriptTarget.Latest,
+    true,
+  );
+  const hooks: ts.PropertyAssignment[] = [];
+  const imported: string[] = [];
+  function visit(node: ts.Node): void {
+    if (ts.isPropertyAssignment(node) && node.name.getText(source) === 'onMsgInfoListUpdate')
+      hooks.push(node);
+    if (ts.isImportSpecifier(node)) imported.push((node.propertyName ?? node.name).text);
+    assert.ok(
+      !ts.isPropertyAccessExpression(node) || node.name.text !== 'recallTime',
+      'Recall metadata interpretation belongs to the message-update event owner.',
+    );
+    ts.forEachChild(node, visit);
+  }
+  visit(source);
+  assert.equal(hooks.length, 1);
+  const hook = hooks[0]!.initializer;
+  assert.ok(ts.isPropertyAccessExpression(hook), 'Composition must wire the owned callback.');
+  assert.equal(hook.name.text, 'onMessageUpdates');
+  assert.ok(imported.includes('createMessageUpdateEvents'));
+  assert.ok(!imported.includes('createRecallEvents'));
+});
+
 test('manifest preflight and directory verification cannot acquire source selection or installation', () => {
   for (const from of [
     'src/native/native-manifest.ts',
