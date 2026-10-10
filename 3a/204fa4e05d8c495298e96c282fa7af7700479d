@@ -1,0 +1,29 @@
+sdk/README.md
+  s_2104cc474f1ce5::t_97c988406f0af2 70
+sdk/docs/contacts-groups.md
+  s_2104cc474f1ce5::t_21b8e12082870b 8,83
+sdk/docs/evidence/friend-category-rename-contract.json
+  s_2104cc474f1ce5::t_3f47d25ad24389 2,60-87
+sdk/scripts/friend-category-rename-consumer-contract.mjs
+  s_2104cc474f1ce5::t_0393e1b2a7ff21 16-24,29,57
+sdk/src/native/native-contracts.ts
+  s_2104cc474f1ce5::t_ae67bae7527926 32,69
+sdk/test/friend-category-rename-profiles.test.ts
+  s_2104cc474f1ce5::t_dd87279547dcd5 20-34,67,69,71,74,98-117,120-133
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "3a204fa4e05d8c495298e96c282fa7af7700479d",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
