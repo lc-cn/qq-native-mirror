@@ -222,3 +222,27 @@ for (const stage of [
     });
   }
 }
+
+for (const absent of [undefined, null])
+  for (const family of ['message', 'time'])
+    test(`${family} absent service ${String(absent)} preserves missing-method error`, async () => {
+      const controller = new AbortController();
+      const channel = createNativeEventChannel(controller.signal);
+      const sender = createNativeMessageSender({
+        signal: controller.signal,
+        getMessageService: () =>
+          family === 'message' ? absent : { generateMsgUniqueId: () => 'id' },
+        getServerTimeService: () => (family === 'time' ? absent : { getServerTime: () => '100' }),
+        awaitAlive: async (value) => value,
+        uidFor: async () => 'u_fixture',
+        eventCall: channel.call,
+      });
+      try {
+        await assert.rejects(sender.sendPrepared(peer, []), {
+          message: `Native service is missing ${family === 'message' ? 'generateMsgUniqueId' : 'getServerTime'}`,
+        });
+      } finally {
+        sender.close();
+        channel.close();
+      }
+    });

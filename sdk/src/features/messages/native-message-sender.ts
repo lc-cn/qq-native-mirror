@@ -38,8 +38,8 @@ export interface ServerTimePort {
 
 export interface NativeMessageSenderContext {
   signal: AbortSignal;
-  getMessageService(): MessageSendPort;
-  getServerTimeService(): ServerTimePort;
+  getMessageService(): MessageSendPort | null | undefined;
+  getServerTimeService(): ServerTimePort | null | undefined;
   awaitAlive<T>(value: T | PromiseLike<T>): Promise<T>;
   uidFor(id: string): Promise<string>;
   eventCall: NativeEventChannel['call'];
@@ -62,6 +62,12 @@ export function createNativeMessageSender(context: NativeMessageSenderContext) {
   };
   const nativeCallSucceeded = (value: unknown) =>
     (value as { result?: unknown } | null | undefined)?.result === 0;
+  const elementMessageService = (method: string): MessageSendPort => {
+    const service = getMessageService();
+    alive();
+    if (!service) throw new Error(`Native service is missing ${method}`);
+    return service;
+  };
   const elementsFor = async (input: unknown, peer: NativePeer): Promise<Native[]> => {
     alive();
     const elements = typeof input === 'string' ? [{ type: 'text', text: input }] : input;
@@ -102,20 +108,32 @@ export function createNativeMessageSender(context: NativeMessageSenderContext) {
           };
         }
         if (element.type === 'face') return faceElement(element.id);
-        if (element.type === 'image') return createImageElement(element.file, getMessageService());
+        if (element.type === 'image')
+          return createImageElement(
+            element.file,
+            elementMessageService('getRichMediaFilePathForGuild'),
+          );
         if (element.type === 'video')
           return createVideoElement(
             element.file,
-            getMessageService(),
+            elementMessageService('getRichMediaFilePathForGuild'),
             mediaTools,
             videoCodec,
             signal,
           );
         if (element.type === 'record')
-          return createRecordElement(element.file, getMessageService(), recordCodec);
+          return createRecordElement(
+            element.file,
+            elementMessageService('getRichMediaFilePathForGuild'),
+            recordCodec,
+          );
         if (element.type === 'file') return createFileElement(element.file, element.name);
         if (element.type === 'reply')
-          return createReplyElement(element.messageId, peer, getMessageService());
+          return createReplyElement(
+            element.messageId,
+            peer,
+            elementMessageService('getMsgsByMsgId'),
+          );
         throw new Error(`Unsupported message element: ${String(element.type)}`);
       }),
     );
@@ -130,13 +148,13 @@ export function createNativeMessageSender(context: NativeMessageSenderContext) {
     alive();
     const msf = getServerTimeService();
     alive();
-    const getServerTime = msf.getServerTime;
+    const getServerTime = msf?.getServerTime;
     alive();
     if (typeof getServerTime !== 'function')
       throw new Error('Native service is missing getServerTime');
     const serverTime: unknown = Reflect.apply(getServerTime, msf, []);
     alive();
-    const generateMsgUniqueId = messages.generateMsgUniqueId;
+    const generateMsgUniqueId = messages?.generateMsgUniqueId;
     alive();
     if (typeof generateMsgUniqueId !== 'function')
       throw new Error('Native service is missing generateMsgUniqueId');
@@ -170,7 +188,7 @@ export function createNativeMessageSender(context: NativeMessageSenderContext) {
         alive();
         onDispatch?.();
         alive();
-        const sendMsg = messages.sendMsg;
+        const sendMsg = messages?.sendMsg;
         alive();
         if (typeof sendMsg !== 'function') throw new Error('Native service is missing sendMsg');
         return Reflect.apply(sendMsg, messages, ['0', destination, elements, new Map()]) as unknown;

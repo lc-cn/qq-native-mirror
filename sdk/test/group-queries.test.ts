@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { createGroupQueries } from '../src/features/groups/group-queries.ts';
+import { createGroupQueries, type GroupQueryPort } from '../src/features/groups/group-queries.ts';
 import { createNativeEventChannel } from '../src/runtime/native-event-channel.ts';
 import type { GroupMember } from '../src/types.ts';
 import type { NativeObject } from '../src/native/native-object.ts';
@@ -22,11 +22,24 @@ function fixture() {
   let returned: unknown = { result: 0 };
   const queries = createGroupQueries({
     signal: controller.signal,
-    service: () => ({}),
-    call(_object, method, ...args) {
-      calls.push({ method, args });
-      return returned;
-    },
+    getGroupService: () => ({
+      getGroupDetailInfo(...args) {
+        calls.push({ method: 'getGroupDetailInfo', args });
+        return returned;
+      },
+      getGroupShutUpMemberList(...args) {
+        calls.push({ method: 'getGroupShutUpMemberList', args });
+        return returned;
+      },
+      getGroupList(...args) {
+        calls.push({ method: 'getGroupList', args });
+        return returned;
+      },
+      getAllMemberList(...args) {
+        calls.push({ method: 'getAllMemberList', args });
+        return returned;
+      },
+    }),
     eventCall: channel.call,
     awaitAlive: async (value) => value,
     commitMembers: (members) => commits.push(members),
@@ -167,3 +180,183 @@ test('closing invalidates every joined list caller even when the provider comple
     f.channel.close();
   }
 });
+
+const queryCases = [
+  {
+    method: 'getGroupDetailInfo',
+    run: (q: ReturnType<typeof createGroupQueries>) => q.getGroupInfo('1'),
+    args: ['1', 2],
+  },
+  {
+    method: 'getGroupShutUpMemberList',
+    run: (q: ReturnType<typeof createGroupQueries>) => q.listGroupMutedMembers('1'),
+    args: ['1'],
+  },
+  {
+    method: 'getGroupList',
+    run: (q: ReturnType<typeof createGroupQueries>) => q.listGroups('native-refresh'),
+    args: ['native-refresh'],
+  },
+  {
+    method: 'getAllMemberList',
+    run: (q: ReturnType<typeof createGroupQueries>) => q.getGroupMembers('1', true),
+    args: ['1', true],
+  },
+] as const;
+for (const entry of queryCases) {
+  for (const stage of ['service', 'getter'] as const) {
+    for (const termination of ['close', 'abort'] as const) {
+      test(`${entry.method}: reentrant ${termination} in ${stage} prevents invocation`, async () => {
+        const controller = new AbortController();
+        const channel = createNativeEventChannel(controller.signal);
+        let nativeCalls = 0;
+        let reads = 0;
+        const stop = () =>
+          termination === 'close'
+            ? queries.close()
+            : controller.abort(new Error('fixture aborted'));
+        const group: GroupQueryPort = {};
+        Object.defineProperty(group, entry.method, {
+          get() {
+            reads++;
+            if (stage === 'getter') stop();
+            return function (this: GroupQueryPort) {
+              assert.equal(this, group);
+              nativeCalls++;
+              return { result: 0 };
+            };
+          },
+        });
+        const queries = createGroupQueries({
+          signal: controller.signal,
+          getGroupService() {
+            if (stage === 'service') stop();
+            return group;
+          },
+          eventCall: channel.call,
+          awaitAlive: async (value) => value,
+          commitMembers() {
+            assert.fail('no commit after close');
+          },
+        });
+        try {
+          await assert.rejects(entry.run(queries), /closed|aborted/);
+          assert.equal(nativeCalls, 0);
+          assert.equal(reads, stage === 'getter' ? 1 : 0);
+        } finally {
+          queries.close();
+          channel.close();
+        }
+      });
+    }
+  }
+  test(`${entry.method}: missing method rejects without dispatch`, async () => {
+    const controller = new AbortController();
+    const channel = createNativeEventChannel(controller.signal);
+    const queries = createGroupQueries({
+      signal: controller.signal,
+      getGroupService: () => ({}),
+      eventCall: channel.call,
+      awaitAlive: async (value) => value,
+      commitMembers() {
+        assert.fail();
+      },
+    });
+    try {
+      await assert.rejects(entry.run(queries), new RegExp(`missing ${entry.method}`));
+    } finally {
+      queries.close();
+      channel.close();
+    }
+  });
+  for (const stage of ['service', 'getter', 'call'] as const) {
+    test(`${entry.method}: ${stage} failure preserves identity and captures receiver once`, async () => {
+      const original = Object.assign(new Error('fixture original'), { code: 'fixture-code' });
+      const controller = new AbortController();
+      const channel = createNativeEventChannel(controller.signal);
+      let reads = 0;
+      const group: GroupQueryPort = {};
+      Object.defineProperty(group, entry.method, {
+        get() {
+          reads++;
+          if (stage === 'getter') throw original;
+          return function (this: GroupQueryPort, ...args: unknown[]) {
+            assert.equal(this, group);
+            assert.deepEqual(args, entry.args);
+            throw original;
+          };
+        },
+      });
+      const queries = createGroupQueries({
+        signal: controller.signal,
+        getGroupService() {
+          if (stage === 'service') throw original;
+          return group;
+        },
+        eventCall: channel.call,
+        awaitAlive: async (value) => value,
+        commitMembers() {
+          assert.fail();
+        },
+      });
+      try {
+        await assert.rejects(entry.run(queries), (error) => error === original);
+        assert.equal(reads, stage === 'service' ? 0 : 1);
+      } finally {
+        queries.close();
+        channel.close();
+      }
+    });
+  }
+}
+
+for (const entry of queryCases) {
+  for (const returned of [null, undefined]) {
+    test(`${entry.method}: ${String(returned)} service keeps fixed missing-method error`, async () => {
+      const controller = new AbortController();
+      const channel = createNativeEventChannel(controller.signal);
+      const queries = createGroupQueries({
+        signal: controller.signal,
+        getGroupService: () => returned,
+        eventCall: channel.call,
+        awaitAlive: async (value) => value,
+        commitMembers() {
+          assert.fail();
+        },
+      });
+      try {
+        await assert.rejects(entry.run(queries), {
+          message: `Native service is missing ${entry.method}`,
+        });
+      } finally {
+        queries.close();
+        channel.close();
+      }
+    });
+    for (const termination of ['close', 'abort'] as const) {
+      test(`${entry.method}: ${String(returned)} service with synchronous ${termination} keeps lifecycle priority`, async () => {
+        const controller = new AbortController();
+        const channel = createNativeEventChannel(controller.signal);
+        const queries = createGroupQueries({
+          signal: controller.signal,
+          getGroupService() {
+            if (termination === 'close') queries.close();
+            else controller.abort(new Error('fixture aborted'));
+            return returned;
+          },
+          eventCall: channel.call,
+          awaitAlive: async (value) => value,
+          commitMembers() {
+            assert.fail();
+          },
+        });
+        try {
+          await assert.rejects(entry.run(queries), /closed|aborted/);
+        } finally {
+          queries.close();
+          channel.close();
+        }
+      });
+    }
+  }
+}

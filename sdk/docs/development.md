@@ -42,6 +42,12 @@ native handles must not escape as mutable configuration. Prefer a named context
 for dependencies and return projected DTOs. A feature should not recreate worker
 ownership or add another callback listener for an existing shared channel.
 
+Inject only the methods a module actually uses, rather than a full Session or a
+string-based service locator. Keep proprietary return values `unknown` at that
+interface, acquire methods lazily and preserve their native receiver. A getter may
+synchronously close or abort the owner: check lifetime after acquisition and
+before dispatch. Compile-only negative contracts keep these ports narrow.
+
 Use composition for domain operations. Interfaces support polymorphism where an
 implementation actually varies: the worker transport and bundled/custom media
 codecs already have production and controlled-test adapters. Inheritance is

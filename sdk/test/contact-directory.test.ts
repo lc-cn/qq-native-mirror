@@ -20,13 +20,24 @@ function fixture(version = '7.0.2-53644') {
   const directory = createContactDirectory({
     signal: new AbortController().signal,
     version,
-    service: () => ({}),
-    call(_object, method, ...args) {
-      calls.push({ method, args });
-      if (method === 'getBuddyListV2') return buddy;
-      if (method === 'getCoreAndBaseInfo') return profiles;
-      return { uidInfo: new Map([[(args[0] as string[])[0], 'u_converted']]) };
-    },
+    getBuddyService: () => ({
+      getBuddyListV2(...args) {
+        calls.push({ method: 'getBuddyListV2', args });
+        return buddy;
+      },
+    }),
+    getProfileService: () => ({
+      getCoreAndBaseInfo(...args) {
+        calls.push({ method: 'getCoreAndBaseInfo', args });
+        return profiles;
+      },
+    }),
+    getUidService: () => ({
+      getUid(...args) {
+        calls.push({ method: 'getUid', args });
+        return { uidInfo: new Map([[args[0][0], 'u_converted']]) };
+      },
+    }),
     awaitAlive: async (value) => value,
   });
   return {
@@ -129,3 +140,146 @@ for (const stage of ['buddy', 'profile'])
     await assert.rejects(f.directory.uidFor('123'), /closed/);
     assert.equal(f.calls.length, stage === 'buddy' ? 1 : 2);
   });
+
+for (const family of ['buddy', 'profile', 'uid'])
+  for (const stage of ['service', 'method', 'call'])
+    for (const termination of ['close', 'abort'])
+      test(`${family} ${stage} synchronous ${termination} prevents subsequent dispatch or cache`, async () => {
+        const controller = new AbortController();
+        const calls: string[] = [];
+        const terminate = () => (termination === 'close' ? directory.close() : controller.abort());
+        const get = (name: string) => {
+          if (family === name && stage === 'service') terminate();
+          const service = {
+            get getBuddyListV2() {
+              if (family === 'buddy' && stage === 'method') terminate();
+              return function (this: unknown) {
+                assert.equal(this, service);
+                calls.push('buddy');
+                if (family === 'buddy' && stage === 'call') terminate();
+                return { result: 0, data: [{ buddyUids: ['u_a'] }] };
+              };
+            },
+            get getCoreAndBaseInfo() {
+              if (family === 'profile' && stage === 'method') terminate();
+              return function (this: unknown) {
+                assert.equal(this, service);
+                calls.push('profile');
+                if (family === 'profile' && stage === 'call') terminate();
+                return new Map([['u_a', profile()]]);
+              };
+            },
+            get getUid() {
+              if (family === 'uid' && stage === 'method') terminate();
+              return function (this: unknown) {
+                assert.equal(this, service);
+                calls.push('uid');
+                if (family === 'uid' && stage === 'call') terminate();
+                return { uidInfo: new Map([['123', 'u_a']]) };
+              };
+            },
+          };
+          return service;
+        };
+        const directory = createContactDirectory({
+          signal: controller.signal,
+          version: '7.0.2-53644',
+          getBuddyService: () => get('buddy'),
+          getProfileService: () => get('profile'),
+          getUidService: () => get('uid'),
+          awaitAlive: async (value) => value,
+        });
+        await assert.rejects(family === 'uid' ? directory.uidFor('123') : directory.listFriends());
+        assert.deepEqual(
+          calls,
+          family === 'profile'
+            ? stage === 'call'
+              ? ['buddy', 'profile']
+              : ['buddy']
+            : stage === 'call'
+              ? [family]
+              : [],
+        );
+        await assert.rejects(directory.uidFor('u_cached'));
+        directory.close();
+      });
+
+test('missing narrow methods reject explicitly without later services', async () => {
+  let profileGets = 0;
+  const directory = createContactDirectory({
+    signal: new AbortController().signal,
+    version: '7.0.2-53644',
+    getBuddyService: () => ({}),
+    getProfileService: () => {
+      profileGets++;
+      return {};
+    },
+    getUidService: () => ({}),
+    awaitAlive: async (value) => value,
+  });
+  await assert.rejects(directory.listFriends(), /missing getBuddyListV2/);
+  await assert.rejects(directory.uidFor('123'), /missing getUid/);
+  assert.equal(profileGets, 0);
+  directory.close();
+});
+
+test('native port failure identity is preserved without retry', async () => {
+  const error = Object.assign(Error('synthetic'), { code: 23 });
+  let calls = 0;
+  const directory = createContactDirectory({
+    signal: new AbortController().signal,
+    version: '7.0.2-53644',
+    getBuddyService: () => ({
+      getBuddyListV2() {
+        calls++;
+        throw error;
+      },
+    }),
+    getProfileService: () => ({}),
+    getUidService: () => ({}),
+    awaitAlive: async (value) => value,
+  });
+  await assert.rejects(directory.listFriends(), (received: unknown) => received === error);
+  assert.equal(calls, 1);
+  directory.close();
+});
+
+test('missing Profile method rejects after valid Buddy batch with no cache commit', async () => {
+  const directory = createContactDirectory({
+    signal: new AbortController().signal,
+    version: '7.0.2-53644',
+    getBuddyService: () => ({
+      getBuddyListV2: () => ({ result: 0, data: [{ buddyUids: ['u_a'] }] }),
+    }),
+    getProfileService: () => ({}),
+    getUidService: () => ({ getUid: () => ({ uidInfo: new Map([['123', 'u_uncached']]) }) }),
+    awaitAlive: async (value) => value,
+  });
+  await assert.rejects(directory.listFriends(), /missing getCoreAndBaseInfo/);
+  assert.equal(await directory.uidFor('123'), 'u_uncached');
+  directory.close();
+});
+
+for (const absent of [undefined, null])
+  for (const family of ['buddy', 'profile', 'uid'])
+    test(`${family} absent service ${String(absent)} preserves missing-method error`, async () => {
+      const directory = createContactDirectory({
+        signal: new AbortController().signal,
+        version: '7.0.2-53644',
+        getBuddyService: () =>
+          family === 'buddy' ? absent : { getBuddyListV2: () => ({ result: 0, data: [] }) },
+        getProfileService: () => (family === 'profile' ? absent : {}),
+        getUidService: () => absent,
+        awaitAlive: async (value) => value,
+      });
+      const method =
+        family === 'buddy'
+          ? 'getBuddyListV2'
+          : family === 'profile'
+            ? 'getCoreAndBaseInfo'
+            : 'getUid';
+      await assert.rejects(family === 'uid' ? directory.uidFor('123') : directory.listFriends(), {
+        message: `Native service is missing ${method}`,
+      });
+      directory.close();
+    });

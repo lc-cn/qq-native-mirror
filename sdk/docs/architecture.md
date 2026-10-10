@@ -238,8 +238,11 @@ query control flow. Whole-batch validation precedes asynchronous projection, and
 the existing Session lifetime observes pending work and blocks dispatch after close.
 
 `GroupQueries` owns full-list selection, per-group query coalescing, failed-channel
-quarantine and complete member-result validation. The four read methods use the
-Session's shared callback channel and do not register listeners. Detail/mute
+quarantine and complete member-result validation. The query port exposes only the four verified Group read methods; native method
+returns stay `unknown` until their receiving validator checks them. Service and
+method acquisition remain lazy, methods are captured once, and their original
+receiver is retained. Close or abort during either getter prevents dispatch.
+The callback reads use the Session's shared channel and do not register listeners. Detail/mute
 callers receive separate DTO copies; full-list callers retain the existing shared
 result semantics. Member results update the account's UID cache through one
 commit hook only after the whole batch validates and the Session remains alive.
@@ -247,7 +250,10 @@ Closing invalidates the module and clears its query bookkeeping; the owning
 Session first aborts pending callbacks and native waits.
 
 `ContactDirectory` owns the account's UID cache, recipient resolution and validated
-friend/category reads. It receives whole validated member batches from
+friend/category reads. Its lazy Buddy, Profile and UID ports expose only the three native methods it
+actually uses, returning `unknown`; it cannot acquire arbitrary native services.
+A method is captured once with its original receiver, and close or abort during
+acquisition prevents dispatch. It receives whole validated member batches from
 `GroupQueries`; no cache reference escapes. Buddy/profile queries commit only after
 the complete result validates and the Session remains alive. Categorized results
 retain their separate counts and duplicate membership semantics. Single conversion
@@ -364,6 +370,10 @@ operations. Native composition roots may assemble lower modules; lower modules
 cannot import those roots or the public facade. Obsolete cross-feature exceptions
 fail the gate rather than silently broadening access. Synthetic forbidden edges
 verify that newly added modules do not inherit permission from existing names.
+Compile-only negative domain-port contracts reject arbitrary service acquisition,
+unrelated operations and property access on unchecked native results. Native
+response field readers retain their existing domain rules; narrowing a port does
+not establish descriptor-safe projection for every proprietary result.
 
 Comments should explain constraints, ownership, ABI evidence or decisions that
 are not evident from the code. Keep native provenance references next to the

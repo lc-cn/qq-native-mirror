@@ -9,10 +9,15 @@ import type { NativeEventChannel } from '../../runtime/native-event-channel.ts';
 import { nativeResultError } from '../../errors.ts';
 import { projectGroupInfo } from './group-events.ts';
 import { projectGroupMuteList } from './group-mute-list.ts';
+export interface GroupQueryPort {
+  getGroupDetailInfo?: (id: string, source: number) => unknown;
+  getGroupShutUpMemberList?: (id: string) => unknown;
+  getGroupList?: (refresh: unknown) => unknown;
+  getAllMemberList?: (id: string, refresh: boolean) => unknown;
+}
 export interface GroupQueriesContext {
   signal: AbortSignal;
-  service(name: string): Native;
-  call(object: Native, name: string, ...args: unknown[]): unknown;
+  getGroupService(): GroupQueryPort | null | undefined;
   eventCall: NativeEventChannel['call'];
   awaitAlive<T>(value: T | PromiseLike<T>): Promise<T>;
   commitMembers(members: readonly GroupMember[]): void;
@@ -22,15 +27,47 @@ export interface GroupQueriesContext {
  * The composition aborts its Session signal before closing this module.
  */
 export function createGroupQueries(context: GroupQueriesContext) {
-  const { signal, service, call: invoke, eventCall, awaitAlive, commitMembers } = context;
+  const { signal, getGroupService, eventCall, awaitAlive, commitMembers } = context;
   let closed = false;
   const alive = () => {
     signal.throwIfAborted();
     if (closed) throw new Error('Group queries are closed');
   };
-  const call = (object: Native, name: string, ...args: unknown[]) => {
+  const groupService = () => {
     alive();
-    return invoke(object, name, ...args);
+    const group = getGroupService();
+    alive();
+    return group;
+  };
+  const requestDetail = (id: string) => {
+    const group = groupService();
+    const method = group?.getGroupDetailInfo;
+    alive();
+    if (typeof method !== 'function')
+      throw new Error('Native service is missing getGroupDetailInfo');
+    return Reflect.apply(method, group, [id, 2]) as unknown;
+  };
+  const requestMuteList = (id: string) => {
+    const group = groupService();
+    const method = group?.getGroupShutUpMemberList;
+    alive();
+    if (typeof method !== 'function')
+      throw new Error('Native service is missing getGroupShutUpMemberList');
+    return Reflect.apply(method, group, [id]) as unknown;
+  };
+  const requestGroupList = (refresh: unknown) => {
+    const group = groupService();
+    const method = group?.getGroupList;
+    alive();
+    if (typeof method !== 'function') throw new Error('Native service is missing getGroupList');
+    return Reflect.apply(method, group, [refresh]) as unknown;
+  };
+  const requestMembers = (id: string, refresh: boolean) => {
+    const group = groupService();
+    const method = group?.getAllMemberList;
+    alive();
+    if (typeof method !== 'function') throw new Error('Native service is missing getAllMemberList');
+    return Reflect.apply(method, group, [id, refresh]) as unknown;
   };
   const nativeCallSucceeded = (value: unknown) =>
     (value as { result?: unknown } | null | undefined)?.result === 0;
@@ -55,7 +92,7 @@ export function createGroupQueries(context: GroupQueriesContext) {
             return;
           return projectGroupInfo(raw);
         },
-        () => call(service('Group'), 'getGroupDetailInfo', id, 2),
+        () => requestDetail(id),
         5000,
         nativeCallSucceeded,
       )
@@ -86,7 +123,7 @@ export function createGroupQueries(context: GroupQueriesContext) {
           if (groupId !== id) return;
           return projectGroupMuteList(members);
         },
-        () => call(service('Group'), 'getGroupShutUpMemberList', id),
+        () => requestMuteList(id),
         5000,
         nativeCallSucceeded,
       )
@@ -142,7 +179,7 @@ export function createGroupQueries(context: GroupQueriesContext) {
           };
         });
       },
-      () => call(service('Group'), 'getGroupList', refresh ?? true),
+      () => requestGroupList(refresh ?? true),
       10_000,
       nativeCallSucceeded,
     );
@@ -165,9 +202,7 @@ export function createGroupQueries(context: GroupQueriesContext) {
     alive();
     refresh = refresh ?? false;
     if (typeof refresh !== 'boolean') throw new Error('refresh must be a boolean');
-    const result = (await awaitAlive(
-      call(service('Group'), 'getAllMemberList', groupId, refresh),
-    )) as Native;
+    const result = (await awaitAlive(requestMembers(groupId, refresh))) as Native;
     // Pinned NodeIKernelGroupService.getAllMemberList reports errCode and
     // finish:true. A Map alone does not establish a successful full list.
     if (result?.errCode !== 0)

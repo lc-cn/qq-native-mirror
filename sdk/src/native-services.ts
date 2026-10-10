@@ -103,7 +103,14 @@ export function createNativeServices(context: NativeServiceContext) {
     const service = (name: string): Native => call(guardedSession, `get${name}Service`);
     const { awaitAlive } = lifetime;
     const directory = own(
-      createContactDirectory({ signal: lifetime.signal, version, service, call, awaitAlive }),
+      createContactDirectory({
+        signal: lifetime.signal,
+        version,
+        getBuddyService: () => service('Buddy'),
+        getProfileService: () => service('Profile'),
+        getUidService: () => service('UixConvert'),
+        awaitAlive,
+      }),
     );
     const { uidFor } = directory;
     const resolvedMessages = async (
@@ -217,8 +224,7 @@ export function createNativeServices(context: NativeServiceContext) {
     const groupQueries = own(
       createGroupQueries({
         signal: lifetime.signal,
-        service,
-        call,
+        getGroupService: () => service('Group'),
         eventCall,
         awaitAlive,
         commitMembers: directory.rememberMembers,
