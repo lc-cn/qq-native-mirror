@@ -35,7 +35,7 @@ import { createGroupRequests } from './features/groups/group-requests.ts';
 import { createFriendRequests } from './features/contacts/friend-requests.ts';
 import { createContactOperations } from './features/contacts/contact-operations.ts';
 import { downloadAttachment } from './features/media/media-operations.ts';
-import { decodeElements } from './features/messages/inbound-elements.ts';
+import { createMessageResolution } from './features/messages/message-resolution.ts';
 import { createNativeMessageSender } from './features/messages/native-message-sender.ts';
 /** Native contracts extracted from local NapCat; this module never sends at startup. */
 import { createGroupOperations } from './features/groups/group-operations.ts';
@@ -46,22 +46,13 @@ import { createGroupSystemEvents } from './features/groups/group-system-events.t
 import { createRecallEvents } from './features/messages/recall-events.ts';
 import { recallMessage } from './features/messages/recall-operation.ts';
 import { createIncomingMessageDelivery } from './features/messages/incoming-message-delivery.ts';
-import {
-  decodeNativeMessages,
-  projectNativeMessage,
-} from './features/messages/inbound-messages.ts';
 import { captureSendInput, sendUserId, sendGroupId } from './features/messages/send-input.ts';
-import type { Message } from './contracts/messages.ts';
 
 import type { NativeObject as Native } from './native/native-object.ts';
-import type { NativePeer, NativeMessage } from './native/message-contracts.ts';
+import type { NativeMessage } from './native/message-contracts.ts';
 export type { NativePeer, NativeMessage } from './native/message-contracts.ts';
 import type { ServiceOperation } from './runtime/operations.ts';
 export type { ServiceOperation } from './runtime/operations.ts';
-
-function toMessage(message: Native, raw: unknown = message): Message {
-  return projectNativeMessage(message, decodeElements(message.elements), new Map(), raw);
-}
 
 /** Compose account-scoped native operations from explicit runtime dependencies.
  * This context changes dependency injection only: native calls remain guarded,
@@ -120,32 +111,24 @@ export function createNativeServices(context: NativeServiceContext) {
       }),
     );
     const { uidFor } = directory;
-    const resolvedMessages = async (
-      messages: Native[],
-      rawMessages = messages,
-      live = false,
-      signal = lifetime.signal,
-    ): Promise<(Message | undefined)[]> => {
-      return decodeNativeMessages(
-        messages,
-        rawMessages,
-        async (uids) => {
-          const value = await call(service('UixConvert'), 'getUin', uids);
-          return value?.uinInfo;
-        },
-        signal,
-        (stage) => {
-          if (!lifetime.closed) emit('diagnostic', { stage });
-        },
-        live,
-      );
-    };
-    const resolvedMessage = async (message: Native) => (await resolvedMessages([message]))[0];
+    const messageResolution = createMessageResolution({
+      signal: lifetime.signal,
+      resolveUid: uidFor,
+      getIdentityService: () => ({ getUin: (uids) => call(service('UixConvert'), 'getUin', uids) }),
+      diagnostic: (stage) => {
+        if (!lifetime.closed) emit('diagnostic', { stage });
+      },
+    });
+    const {
+      resolvePeer,
+      resolveMessages: resolvedMessages,
+      resolveMessage: resolvedMessage,
+    } = messageResolution;
     const incomingMessages = own(
       createIncomingMessageDelivery({
         resolveMessages: (messages, rawMessages, signal) =>
           resolvedMessages(messages, rawMessages, true, signal),
-        project: toMessage,
+        project: messageResolution.projectImmediate,
         emitMessage: (message) => emit('message', message),
         diagnostic: (stage) => emit('diagnostic', { stage }),
         dispatch: (rawMessages) => dispatch('Msg/onRecvMsg', [rawMessages]),
@@ -294,19 +277,6 @@ export function createNativeServices(context: NativeServiceContext) {
       signal: lifetime.signal,
       awaitAlive,
     });
-    const resolvePeer = async (value: unknown): Promise<NativePeer> => {
-      if (!value || typeof value !== 'object' || Array.isArray(value))
-        throw new Error('Unsupported peer type');
-      const peer = value as Record<string, unknown>;
-      if (peer?.chatType === 1 || peer?.chatType === 2) {
-        if (typeof peer.peerUid !== 'string' || !peer.peerUid) throw new Error('Invalid peer UID');
-        return { chatType: peer.chatType, peerUid: peer.peerUid };
-      }
-      if (peer?.type === 'group') return { chatType: 2, peerUid: String(peer.groupId ?? peer.id) };
-      if (peer?.type === 'private')
-        return { chatType: 1, peerUid: await uidFor(String(peer.userId ?? peer.id)) };
-      throw new Error('Unsupported peer type');
-    };
     const forwardMessages = own(
       createForwardMessages({
         getMessageService: () => service('Msg'),

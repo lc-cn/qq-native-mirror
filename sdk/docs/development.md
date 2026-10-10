@@ -60,6 +60,13 @@ New feature modules cannot import the dynamic `NativeObject` escape hatch. Use
 Existing legacy adapters and native projectors have exact ownership entries with
 reasons in the dependency policy; remove an entry when its import disappears.
 
+`features/messages/message-resolution.ts` owns peer conversion and the identity
+lookup needed by live delivery, queries and forwarding. Supply only user-ID
+resolution, the native UIN lookup method, cancellation and diagnostics. Native
+identity results remain `unknown` until `native-identities` validates and copies
+the requested map entries; do not assert a typed map in composition. Message
+snapshotting and projection retain their existing owners and happen before awaits.
+
 `features/forward/forward-resource-owner.ts` owns lazy resource upload/read
 transports and merged card orchestration. Supply its narrow SSO, peer resolution
 and prepared card ports; keep wire schemas inside the forward domain. Register

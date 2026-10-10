@@ -165,7 +165,7 @@ export function projectNativeMessage(
 export async function decodeNativeMessages(
   messages: Native[],
   rawMessages: unknown[],
-  resolveUins: (uids: string[]) => Promise<ReadonlyMap<string, string>>,
+  resolveUins: (uids: string[]) => Promise<unknown>,
   signal: AbortSignal,
   diagnostic: (stage: string) => void,
   live = false,

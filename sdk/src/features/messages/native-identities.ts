@@ -9,7 +9,7 @@ export function nativeUid(value: unknown): value is string {
 }
 export async function resolveNativeUins(
   requested: readonly string[],
-  resolveUins: (uids: string[]) => Promise<ReadonlyMap<string, string>>,
+  resolveUins: (uids: string[]) => Promise<unknown>,
   signal: AbortSignal,
   diagnostic: (stage: string) => void,
   failureStage: string,
@@ -19,7 +19,7 @@ export async function resolveNativeUins(
   const uids = [...new Set(requested)];
   if (!uids.length) return new Map();
   try {
-    const result = await new Promise<ReadonlyMap<string, string>>((resolve, reject) => {
+    const result = await new Promise<unknown>((resolve, reject) => {
       const cleanup = () => {
         clearTimeout(timer);
         signal.removeEventListener('abort', abort);

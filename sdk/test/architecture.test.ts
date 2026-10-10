@@ -256,6 +256,7 @@ test('dynamic native object permissions apply only to actual reviewed adapters a
     'src/features/messages/new-projector.ts',
     'src/features/contacts/new-operation.ts',
     'src/features/groups/group-files.ts',
+    'src/features/messages/message-resolution.ts',
     'src/features/messages/send-input.ts',
   ])
     for (const typeOnly of [false, true])
@@ -268,6 +269,24 @@ test('dynamic native object permissions apply only to actual reviewed adapters a
     );
     assert.equal(dependencyViolation({ from, to, typeOnly: true }), undefined);
     assert.ok(dependencyViolation({ from, to, typeOnly: false }));
+  }
+});
+
+test('message composition delegates projection and identity orchestration to its domain owner', () => {
+  for (const typeOnly of [false, true]) {
+    for (const to of [
+      'src/features/messages/inbound-elements.ts',
+      'src/features/messages/inbound-messages.ts',
+    ])
+      assert.ok(dependencyViolation({ from: 'src/native-services.ts', to, typeOnly }));
+    assert.equal(
+      dependencyViolation({
+        from: 'src/native-services.ts',
+        to: 'src/features/messages/message-resolution.ts',
+        typeOnly,
+      }),
+      undefined,
+    );
   }
 });
 

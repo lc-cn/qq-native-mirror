@@ -522,6 +522,16 @@ operation modules and detects obsolete permissions when an import is removed.
 This keeps the proprietary dynamic escape hatch from becoming a general feature
 dependency.
 
+`features/messages/message-resolution` combines peer conversion with the message
+projection used by live delivery, queries and forwarding. Composition supplies
+one narrow UIN lookup port and its diagnostic/UID-resolution callbacks rather
+than interpreting message fields. The dependency gate prevents composition from
+importing receive projectors directly. Existing snapshot, identity deadline,
+delivery ordering and account-close owners remain in place. Native UIN results
+stay `unknown` until `native-identities` validates the Map and copies only positive
+decimal identities for the requested UIDs; the lookup port does not promise a
+verified native result shape.
+
 `runtime/native-listener-owner` owns callback proxy caching, shape-only audit,
 unknown callback dispatch and strong references. Composition supplies each native
 registration call and its business overrides; the owner cannot acquire services

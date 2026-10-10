@@ -231,6 +231,14 @@ export function dependencyViolation({ from, to, typeOnly }: SourceDependency): s
     ].includes(to)
   )
     return 'Group-file capture and operation orchestration belong to the group-files owner.';
+  if (
+    from === 'src/native-services.ts' &&
+    [
+      'src/features/messages/inbound-elements.ts',
+      'src/features/messages/inbound-messages.ts',
+    ].includes(to)
+  )
+    return 'Message projection and identity orchestration belong to the message-resolution owner.';
   if (from === 'src/native-services.ts')
     return to.startsWith('src/features/') ||
       serviceRuntimeDependencies.has(to) ||
