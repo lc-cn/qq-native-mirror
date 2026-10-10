@@ -1,0 +1,81 @@
+sdk/test/helpers/dependency-policy.ts
+  s_2104cc474f1ce5::t_56f75d68db9877 66
+sdk/test/native-event-channel.test.ts
+  s_2104cc474f1ce5::t_9320b47582f2e4 115-118,124-125,131-141,148-160,187-207
+  s_2104cc474f1ce5::t_4de108e384174f 101-114,119-123,126-130,142-147,161-163,182-186,208-209
+  s_2104cc474f1ce5::t_611a41acee460e 164-181
+  s_2104cc474f1ce5::t_11bd8ae6eb6a9b 210-217
+sdk/src/contracts/groups.ts
+  s_2104cc474f1ce5::t_0f7b1f4b4dd75f 77-83
+sdk/src/runtime/native-event-channel.ts
+  s_2104cc474f1ce5::t_9320b47582f2e4 60-65
+  s_2104cc474f1ce5::t_89937190aace15 8,42,45,47-48,66,81,86,96
+  s_2104cc474f1ce5::t_611a41acee460e 23
+sdk/test/fixtures/public-type-names.json
+  s_2104cc474f1ce5::t_56f75d68db9877 43
+sdk/scripts/public-contract-consumer.mjs
+  s_2104cc474f1ce5::t_165415b823d1fb 89-96
+sdk/test/group-search-profiles.test.ts
+  s_2104cc474f1ce5::t_b9040b4037bd36 1-24
+  s_2104cc474f1ce5::t_cd527b781ef6ce 25-30
+sdk/test/fixtures/domain-port-types.ts
+  s_2104cc474f1ce5::t_165415b823d1fb 190-204
+  s_2104cc474f1ce5::t_41e0552dfffc84 205-207
+sdk/src/features/groups/group-search.ts
+  s_2104cc474f1ce5::t_56f75d68db9877 1-42,44-192
+  s_2104cc474f1ce5::t_423efc8ee12251 43
+ci/verify-consumer.mjs
+  s_2104cc474f1ce5::t_0ee703ff83eb13 30,205,318
+sdk/README.md
+  s_2104cc474f1ce5::t_c96692866b5c62 128
+sdk/docs/architecture.md
+  s_2104cc474f1ce5::t_3a0ddd83f09d9e 269-280
+sdk/docs/contacts-groups.md
+  s_2104cc474f1ce5::t_7217001d6a044f 5-10,315-350
+sdk/docs/evidence/group-search-contract.json
+  s_2104cc474f1ce5::t_08976d935b191a 1-189
+sdk/docs/sdk-acceptance.md
+  s_2104cc474f1ce5::t_899a0a19c24f1e 57,59-60,64-70,78-87
+sdk/scripts/group-search-consumer-contract.mjs
+  s_2104cc474f1ce5::t_c75bfc60d9a0c1 1-195
+sdk/scripts/verify-package-consumer.mjs
+  s_2104cc474f1ce5::t_7c96c9b45dce1e 29,198-200,552
+sdk/src/cli.ts
+  s_2104cc474f1ce5::t_370073aff223a7 54
+sdk/src/cli/command-plan.ts
+  s_2104cc474f1ce5::t_276a512b4b69fd 1,66,372-375
+sdk/src/client/qq-client.ts
+  s_2104cc474f1ce5::t_bda1a8c3aea894 1,41,271-273
+sdk/src/features/groups/group-search-input.ts
+  s_2104cc474f1ce5::t_159a70a459bfbb 1-8
+sdk/src/native-services.ts
+  s_2104cc474f1ce5::t_657933fd78c871 1-2,11-15,161-166,189-191,253-272,503-511
+sdk/src/native/native-contracts.ts
+  s_2104cc474f1ce5::t_04d3a8b75dda22 95-135,146,193-199
+sdk/src/runtime/operations.ts
+  s_2104cc474f1ce5::t_16a50c35963a73 25
+sdk/test/cli-command-plan.test.ts
+  s_2104cc474f1ce5::t_b1d992bd0fb093 100-121
+sdk/test/client.test.ts
+  s_2104cc474f1ce5::t_f14b1f4bf6b3eb 990-1012
+sdk/test/group-search-routes.test.ts
+  s_2104cc474f1ce5::t_381590a9446a97 1-129
+sdk/test/group-search.test.ts
+  s_2104cc474f1ce5::t_d20135c612d401 1-254
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "2408706461b950de157471479df0f08bdac2e41f",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
