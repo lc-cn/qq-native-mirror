@@ -5,7 +5,7 @@ import { pathToFileURL } from 'node:url';
 // Compiled installed SDK, synthetic services only. No native client or account.
 export async function verifyMentionConsumer(packagePath) {
   const load = (name) => import(pathToFileURL(join(packagePath, 'dist', name)).href);
-  const { decodeElements } = await load('features/messages/message-elements.js');
+  const { decodeElements } = await load('features/messages/inbound-elements.js');
   const { decodeResolvedElementBatches } = await load('features/messages/inbound-mentions.js');
   const { createNativeServices } = await load('native-services.js');
   const element = (text = {}) => ({

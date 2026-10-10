@@ -44,7 +44,7 @@ export const externalRuntimeDependencies: Readonly<Record<string, readonly strin
     'node:path',
     'node:url',
   ],
-  'src/features/messages/message-elements.ts': ['node:crypto', 'node:fs/promises', 'node:path'],
+  'src/features/messages/outbound-elements.ts': ['node:crypto', 'node:fs/promises', 'node:path'],
   'src/features/messages/send-input.ts': ['node:path'],
   'src/native/native-bundle-installer.ts': [
     'node:crypto',

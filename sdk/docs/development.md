@@ -54,6 +54,13 @@ captured registration function instead of a Session or service locator. Keep
 listener references for the worker lifetime until a removal ABI is verified;
 account close is not proof that the native kernel released a callback pointer.
 
+Element decoding belongs to `features/messages/inbound-elements`; add no file
+preparation or native querying there. Local image/file staging and reply-reference
+construction belong to `outbound-elements`, using the specific staging/query
+ports. The sender owns orchestration and receipt correlation. Test element
+projection independently of outbound filesystem setup; installed-consumer checks
+exercise both from the fresh archive and reject the removed mixed module.
+
 Every source file must have a reviewed layer or domain, including files without
 imports. The TypeScript dependency gate includes type-only edges and TypeScript
 `import = require()` declarations. Cross-feature cooperation

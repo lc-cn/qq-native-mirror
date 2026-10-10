@@ -7,6 +7,7 @@ import { verifyForwardConsumer } from './forward-consumer-contract.mjs';
 import { verifyRecallConsumer } from './recall-consumer-contract.mjs';
 import { verifyMentionConsumer } from './mention-consumer-contract.mjs';
 import { verifySendConsumer } from './send-consumer-contract.mjs';
+import { verifyElementPreparationConsumer } from './element-preparation-consumer-contract.mjs';
 import { verifyReceivedConsumer } from './received-consumer-contract.mjs';
 import { verifyVideoConsumerContract } from './video-consumer-contract.mjs';
 import { verifyMessageBatchConsumer } from './message-batch-consumer-contract.mjs';
@@ -45,6 +46,8 @@ const packed = JSON.parse(
   run('npm', ['pack', '--ignore-scripts', '--json', '--pack-destination', destination], root),
 )[0];
 const files = packed.files.map((file) => file.path);
+if (files.some((path) => /^dist\/features\/messages\/message-elements\.(?:js|d\.ts)$/.test(path)))
+  throw new Error('Obsolete mixed message-element module remains in package');
 if (
   files.some((path) =>
     /(^|\/)(\.local|test|scripts|node_modules)(\/|$)|\.(db|db-wal|db-shm)$/.test(path),
@@ -169,7 +172,7 @@ await writeFile(
   join(destination, 'faces.mjs'),
   `import assert from 'node:assert/strict';
 import {normalizeMessage, prepareCommand} from './node_modules/qq-native-client/dist/cli.js';
-import {faceElement} from './node_modules/qq-native-client/dist/features/messages/message-elements.js';
+import {faceElement} from './node_modules/qq-native-client/dist/features/messages/face-input.js';
 const mixed=[{type:'text',text:'hello'},{type:'face',id:14},{type:'face',id:333}];
 assert.deepEqual(normalizeMessage(mixed),mixed);
 assert.deepEqual(faceElement(428),{elementType:6,elementId:'',faceElement:{faceIndex:428,faceType:2,faceText:'/收到',sourceType:1,stickerType:0,packId:'0',stickerId:'0'}});
@@ -429,6 +432,9 @@ const mentionChecks = await verifyMentionConsumer(
   join(destination, 'node_modules/qq-native-client'),
 );
 const sendChecks = await verifySendConsumer(join(destination, 'node_modules/qq-native-client'));
+const elementPreparationChecks = await verifyElementPreparationConsumer(
+  join(destination, 'node_modules/qq-native-client'),
+);
 const receivedChecks = await verifyReceivedConsumer(
   join(destination, 'node_modules/qq-native-client'),
 );
@@ -602,6 +608,7 @@ const receipt = {
   ...recallChecks,
   ...mentionChecks,
   ...sendChecks,
+  ...elementPreparationChecks,
   ...receivedChecks,
   ...videoChecks,
   nativeExecuted: false,

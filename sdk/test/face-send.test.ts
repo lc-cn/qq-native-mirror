@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createNativeServices } from '../src/native-services.ts';
-import { faceElement } from '../src/features/messages/message-elements.ts';
+import { faceElement } from '../src/features/messages/face-input.ts';
 
 const cases = [
   { id: 0, text: '/惊讶', type: 1 },

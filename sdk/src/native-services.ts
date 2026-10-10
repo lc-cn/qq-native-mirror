@@ -56,7 +56,7 @@ import { createGroupRequests } from './features/groups/group-requests.ts';
 import { createFriendRequests } from './features/contacts/friend-requests.ts';
 import { createContactOperations } from './features/contacts/contact-operations.ts';
 import { downloadAttachment } from './features/media/media-operations.ts';
-import { decodeElements } from './features/messages/message-elements.ts';
+import { decodeElements } from './features/messages/inbound-elements.ts';
 import { createNativeMessageSender } from './features/messages/native-message-sender.ts';
 /** Native contracts extracted from local NapCat; this module never sends at startup. */
 import { createGroupOperations } from './features/groups/group-operations.ts';

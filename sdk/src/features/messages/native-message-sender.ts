@@ -4,16 +4,13 @@ import type { MediaTools, RecordCodec, VideoCodec } from '../../runtime/media-co
 import type { MessageIdQueryPort } from './message-query.ts';
 import type { NativeEventChannel } from '../../runtime/native-event-channel.ts';
 import { sentReceipt } from './send-input.ts';
-import {
-  createImageElement,
-  createFileElement,
-  createReplyElement,
-  faceElement,
-} from './message-elements.ts';
+import { createImageElement, createFileElement, createReplyElement } from './outbound-elements.ts';
+import type { ImageStagingPort } from './outbound-elements.ts';
+import { faceElement } from './face-input.ts';
 import { createVideoElement } from '../media/media-send.ts';
 import { createRecordElement } from '../media/media-record.ts';
 
-export interface MessageSendPort extends MessageIdQueryPort {
+export interface MessageSendPort extends MessageIdQueryPort, ImageStagingPort {
   generateMsgUniqueId?: (chatType: 1 | 2, serverTime: unknown) => unknown;
   sendMsg?: (
     id: string,
@@ -21,16 +18,6 @@ export interface MessageSendPort extends MessageIdQueryPort {
     elements: Native[],
     attributes: Map<unknown, unknown>,
   ) => unknown;
-  getRichMediaFilePathForGuild?: (request: {
-    md5HexStr: string;
-    fileName: string;
-    elementType: number;
-    elementSubType: number;
-    thumbSize: number;
-    needCreate: boolean;
-    downloadType: number;
-    file_uuid: string;
-  }) => unknown;
 }
 export interface ServerTimePort {
   getServerTime?: () => unknown;

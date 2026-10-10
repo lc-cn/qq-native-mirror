@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createIncomingMessageDelivery } from '../src/features/messages/incoming-message-delivery.ts';
 import { projectNativeMessage } from '../src/features/messages/inbound-messages.ts';
-import { decodeElements } from '../src/features/messages/message-elements.ts';
+import { decodeElements } from '../src/features/messages/inbound-elements.ts';
 import type { NativeObject } from '../src/native/native-object.ts';
 const tick = () => new Promise((resolve) => setImmediate(resolve));
 const message = (id: string, lookup = false): NativeObject => ({

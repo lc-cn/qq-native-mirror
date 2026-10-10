@@ -132,7 +132,7 @@ export const crossFeatureDependencies = [
     reason: 'Forward nodes share validated message input capture.',
   },
   {
-    from: 'src/features/messages/message-elements.ts',
+    from: 'src/features/messages/inbound-elements.ts',
     to: 'src/features/forward/received-forward.ts',
     reason: 'Received forward cards are projected as message elements.',
   },

@@ -347,6 +347,8 @@ const pureModules = new Set([
   'src/features/forward/merged-forward-input.ts',
   'src/features/messages/send-input.ts',
   'src/features/messages/face-input.ts',
+  'src/features/messages/inbound-elements.ts',
+  'src/features/forward/received-forward.ts',
   'src/features/messages/qq-faces.ts',
   'src/features/forward/long-message-request.ts',
   'src/features/forward/forward-resource-wire.ts',
@@ -364,6 +366,7 @@ const pureRoots = [
   'features/forward/merged-forward-input.ts',
   'features/messages/send-input.ts',
   'features/messages/face-input.ts',
+  'features/messages/inbound-elements.ts',
 ];
 const pureBuiltins = new Set(['node:path', 'node:crypto', 'node:zlib', 'node:buffer', 'node:util']);
 test('input validation runtime closures stay pure and do not load service operations or IO', () => {

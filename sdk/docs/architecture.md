@@ -486,6 +486,17 @@ Msg/Group after-add retention rules. Close suppresses callback execution through
 the account lifetime but does not clear references or guess a listener-removal
 ABI. Audit exceptions and synchronous reentrancy retain their existing behavior.
 
+`features/messages/inbound-elements` owns receive-only element projection and
+mention interpretation. It has no filesystem or native-operation dependency;
+its complete runtime closure is checked by the pure-module gate. Unknown native
+elements retain their original objects. `outbound-elements` owns local image and
+attachment preparation and validated reply references. It accepts only the image
+staging and message-ID query ports, preserving their receivers and native request
+shapes. `native-message-sender` composes these constructors and keeps concurrent
+preparation, send correlation and account-close checks. Face construction belongs
+to the shared pure `face-input` owner. Internal paths are private; the former mixed
+module is removed from source and packed output without changing public exports.
+
 ## Lifecycle and error contracts
 
 - One worker owns one account data directory. Locks prevent concurrent owners.

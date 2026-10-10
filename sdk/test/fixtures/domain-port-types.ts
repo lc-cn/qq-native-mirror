@@ -273,3 +273,32 @@ function verifyCapturedMessage(message: CapturedNativeMessage) {
   void invalidTime;
 }
 void verifyCapturedMessage;
+
+import type { ImageStagingPort } from '../../src/features/messages/outbound-elements.ts';
+import type { MessageIdQueryPort } from '../../src/features/messages/message-query.ts';
+function verifyElementPreparationPorts(image: ImageStagingPort, reply: MessageIdQueryPort) {
+  // @ts-expect-error Image staging cannot send messages.
+  image.sendMsg('42', {}, [], new Map());
+  // @ts-expect-error Staging requires its exact request object, not a path scalar.
+  image.getRichMediaFilePathForGuild?.('/tmp/image.png');
+  const staged = image.getRichMediaFilePathForGuild?.({
+    md5HexStr: 'hash',
+    fileName: 'image.png',
+    elementType: 2,
+    elementSubType: 0,
+    thumbSize: 0,
+    needCreate: true,
+    downloadType: 1,
+    file_uuid: '',
+  });
+  // @ts-expect-error Native staging returns unknown until validated.
+  void staged.path;
+  // @ts-expect-error Reply lookup cannot stage images or acquire other services.
+  reply.getRichMediaFilePathForGuild({});
+  // @ts-expect-error Reply IDs are a string array, not a scalar.
+  reply.getMsgsByMsgId?.({ chatType: 2, peerUid: '123' }, '42');
+  const queried = reply.getMsgsByMsgId?.({ chatType: 2, peerUid: '123' }, ['42']);
+  // @ts-expect-error Native query results must validate before reading message fields.
+  void queried.msgList;
+}
+void verifyElementPreparationPorts;

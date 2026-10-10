@@ -1,4 +1,4 @@
-import { decodeElements, mentionLookupUid } from './message-elements.ts';
+import { decodeElements, mentionLookupUid } from './inbound-elements.ts';
 import { resolveNativeUins } from './native-identities.ts';
 import type { MessageElement } from '../../contracts/messages.ts';
 import type { NativeObject as Native } from '../../native/native-object.ts';
