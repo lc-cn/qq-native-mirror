@@ -1,0 +1,41 @@
+sdk/docs/architecture/quality-gates.md
+  s_2104cc474f1ce5::t_0bcfa8233f7efa 31,55-62
+sdk/test/helpers/dependency-policy.ts
+  s_2104cc474f1ce5::t_0bcfa8233f7efa 61
+sdk/src/worker.ts
+  s_2104cc474f1ce5::t_0bcfa8233f7efa 6,30,45-46,60-61,65,67-74
+sdk/test/source-promise-gates.test.mjs
+  s_2104cc474f1ce5::t_0bcfa8233f7efa 35-56
+  s_2104cc474f1ce5::t_f1f753ed95c573 57-61
+sdk/src/runtime/worker-task.ts
+  s_2104cc474f1ce5::t_0bcfa8233f7efa 3
+sdk/scripts/worker-delivery-consumer-contract.mjs
+  s_2104cc474f1ce5::t_4dd91b5330573c 1-139
+  s_2104cc474f1ce5::t_d51d49a0c1beab 140-149
+sdk/eslint.config.mjs
+  s_2104cc474f1ce5::t_0bcfa8233f7efa 42,59,78
+sdk/tsconfig.scripts.json
+  s_2104cc474f1ce5::t_0bcfa8233f7efa 19-20
+sdk/docs/architecture/lifecycle.md
+  s_2104cc474f1ce5::t_0bcfa8233f7efa 27,39-45
+sdk/test/worker-delivery.test.mjs
+  s_2104cc474f1ce5::t_4dd91b5330573c 1-10
+sdk/scripts/verify-package-consumer.mjs
+  s_2104cc474f1ce5::t_0bcfa8233f7efa 27,146-149,563
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "7c6fa6cebadaca954216c9e83a781eea2c041977",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
