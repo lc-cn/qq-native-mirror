@@ -601,16 +601,24 @@ The `SDK quality` GitHub workflow runs these gates independently of platform
 bundle and video-native CI. Runtime output is recreated from a clean `dist`
 directory so obsolete emitted modules cannot make a packaging check pass.
 
-`tsconfig.scripts.json` governs all TypeScript scripts, the shared face and group-search consumers
-and the module-reference collector. The checked consumers bind dynamic installed imports to their source
-contracts and use the actual installed Client with controlled IPC. The face consumer
-returns a valid synthetic send receipt. The group-search CLI action runs through the installed
-Client and controlled worker, returning the complete `GroupSearchMatch` rather than
-a fabricated string result. Type-aware lint rejects unobserved Promises even
-when prefixed with `void`. Negative gate fixtures prove that missing preparation
-awaits, missing action awaits and invalid receipts fail without executing those
-fixtures. Other JavaScript acceptance helpers still receive the existing syntax lint;
-strict JavaScript checking is an explicit migration, not a claim about every helper.
+`tsconfig.scripts.json` governs all TypeScript scripts, the shared face,
+group-search, element-preparation and mirror consumers, and the module-reference
+collector. Checked consumers bind dynamic installed imports to their source
+contracts. The face consumer returns a valid synthetic send receipt through the
+installed Client and controlled IPC. The group-search CLI action uses the same
+controlled worker and returns a complete `GroupSearchMatch`. Element preparation
+uses narrow media-staging and message-ID ports; its checked constructors preserve
+receivers, input variants and asynchronous results. The mirror consumer accepts a
+narrow client factory and verifies cold/warm downloads, exact metadata and native
+file bytes, and retirement of each client. Its deterministic tests substitute the
+factory; the separate current-source workflow exercises real platform bundles
+without an account.
+
+Type-aware lint rejects unobserved Promises even when prefixed with `void`.
+Negative gate fixtures prove that missing preparation/action awaits, invalid
+receipts and missing video thumbnail guards fail without executing those
+fixtures. Other JavaScript acceptance helpers still receive syntax lint; strict
+JavaScript checking remains an explicit migration.
 
 The module-reference collector reads the local packed verifier and platform
 consumer helper closures without executing them. It checks supported static

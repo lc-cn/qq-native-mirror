@@ -1,4 +1,17 @@
 import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
+
+/** Windows checkout filters may rewrite line endings. Expected public bytes
+ * come from the exact source Git object; network/native bytes stay unchanged.
+ */
+export function readSourceCatalog(sourceCommit) {
+  assert.match(sourceCommit, /^[a-f0-9]{40}$/);
+  assert.equal(
+    execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
+    sourceCommit,
+  );
+  return execFileSync('git', ['show', `${sourceCommit}:catalog.json`], { maxBuffer: 1024 * 1024 });
+}
 
 export function validateCurrentBuildIdentity({ platform, arch, sourceCommit, environment }) {
   assert.ok(['darwin', 'linux', 'win32'].includes(platform));

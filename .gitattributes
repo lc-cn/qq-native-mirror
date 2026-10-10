@@ -1,0 +1,12 @@
+# Keep SDK templates and reproducible source inventories consistent across hosts.
+sdk/** text eol=lf
+catalog.json text eol=lf
+
+# Native payloads and media fixtures retain their exact binary bytes.
+*.node -text
+*.png -text
+*.jpg -text
+*.mp4 -text
+*.wav -text
+*.silk -text
+*.tgz -text

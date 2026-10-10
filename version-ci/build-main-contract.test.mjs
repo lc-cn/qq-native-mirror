@@ -1,9 +1,21 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
 import {
   validateCurrentBuildIdentity,
   validatePackedMainInventory,
+  readSourceCatalog,
 } from './build-main-contract.mjs';
+
+test('expected catalog uses exact source Git object bytes independent of checkout filters', () => {
+  const commit = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+  const bytes = readSourceCatalog(commit);
+  assert.deepEqual(bytes, execFileSync('git', ['show', `${commit}:catalog.json`]));
+  assert.equal(JSON.parse(bytes.toString('utf8')).schemaVersion, 1);
+  assert.equal(bytes.includes(Buffer.from('\r\n')), false);
+  assert.throws(() => readSourceCatalog('a'.repeat(40)), /Expected values/);
+  assert.throws(() => readSourceCatalog('--help'));
+});
 
 const sourceCommit = 'a'.repeat(40);
 const environment = {

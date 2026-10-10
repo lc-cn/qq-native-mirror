@@ -119,6 +119,28 @@ test('default mirror owner proves cold bytes, independent cache hashes and warm 
   await assert.rejects(access(f.options[0]!.cacheDir!), { code: 'ENOENT' });
 });
 
+test('CRLF checkout digest rejects raw LF before payload; exact Git blob digest passes cold and warm verification', async () => {
+  const bad = fixture();
+  const bytes = Buffer.from(
+    JSON.stringify({ schemaVersion: 1, packages: [bad.context.selected] }, null, 2) + '\n',
+  );
+  const originalBad = bad.context.fetchImpl;
+  bad.context.fetchImpl = async (input, init) =>
+    String(input).endsWith('/catalog.json') ? new Response(bytes) : originalBad(input, init);
+  bad.context.catalogSha256 = sha(Buffer.from(bytes.toString().replaceAll('\n', '\r\n')));
+  await assert.rejects(verifyMirrorConsumer(bad.context), { code: 'ERR_ASSERTION' });
+  assert.equal(bad.options.length, 1);
+  assert.deepEqual(bad.closed, []);
+  assert.equal(bad.network.length, 0, 'Digest mismatch stops before manifest and payload fetch');
+  const good = fixture(),
+    originalGood = good.context.fetchImpl;
+  good.context.fetchImpl = async (input, init) =>
+    String(input).endsWith('/catalog.json') ? new Response(bytes) : originalGood(input, init);
+  good.context.catalogSha256 = sha(bytes);
+  assert.equal((await verifyMirrorConsumer(good.context)).completed, true);
+  assert.deepEqual(good.closed, [0, 1]);
+});
+
 for (const mode of [
   'warm-download',
   'account',

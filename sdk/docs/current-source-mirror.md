@@ -19,10 +19,19 @@ the downloaded native bundle, rather than compiling the Unix bridge.
 The real public `createClient` receives a new empty account directory, one empty
 native cache and the explicit download accelerator. `wrapperPath`, `version`,
 `manifestUrl`, `manifestSha256` and `catalogUrl` remain absent. Its HTTP observation
-checks the actual default catalog against the checked-out catalog bytes and the
+checks the actual default catalog against the exact source commit's Git object bytes and the
 selected manifest against its trusted digest. This deliberately rejects catalog
 changes during the run rather than assigning their outcome to the wrong source
 snapshot.
+
+The expected catalog is read with `git show <source-commit>:catalog.json`. Windows
+checkout filters can convert LF into CRLF; hashing that transformed working copy
+would reject the unchanged public catalog. Network and native file bytes are
+never normalized to make a digest match.
+
+Repository attributes also keep SDK text sources in LF on all hosts. This matters
+for multiline TypeScript string literals, whose contents retain source line
+endings in emitted JavaScript. Native binaries and media fixtures remain binary.
 
 The first factory call must download native payload bytes and then close its
 worker. After that retirement, the consumer discovers the bundled video codec

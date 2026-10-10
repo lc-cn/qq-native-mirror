@@ -7,6 +7,7 @@ import { tmpdir } from 'node:os';
 import { pathToFileURL } from 'node:url';
 import { npm } from './npm.mjs';
 import { readMainArtifact } from '../version-ci/main-artifact.mjs';
+import { readSourceCatalog } from '../version-ci/build-main-contract.mjs';
 import { verifyMirrorConsumer } from '../sdk/scripts/mirror-consumer-contract.mjs';
 
 const directory = await mkdtemp(join(tmpdir(), 'qq-current-main-installed-'));
@@ -57,7 +58,7 @@ try {
   const { prepareNative } = await import(
     pathToFileURL(join(installedRoot, 'dist/native/native-package.js')).href
   );
-  const catalogBytes = await readFile('catalog.json');
+  const catalogBytes = readSourceCatalog(artifact.source.commit);
   const selected = selectNativePackage(JSON.parse(catalogBytes), process.platform, process.arch);
   const sha = (bytes) => createHash('sha256').update(bytes).digest('hex');
   // Same no-symlink policy reaches the actual worker and the codec child.
@@ -107,7 +108,27 @@ try {
     published: false,
   });
   await writeFile(output, JSON.stringify(receipt, null, 2) + '\n');
-} catch {
+} catch (error) {
+  // Safe diagnostic data only: never copy native payloads, wording or URLs.
+  const failure = {};
+  try {
+    failure.errorName = error instanceof assert.AssertionError ? 'AssertionError' : 'Error';
+    const code = Object.getOwnPropertyDescriptor(error, 'code')?.value;
+    if (typeof code === 'string' && /^[A-Z0-9_]{1,80}$/.test(code)) failure.errorCode = code;
+    const expected = Object.getOwnPropertyDescriptor(error, 'expected')?.value;
+    const actual = Object.getOwnPropertyDescriptor(error, 'actual')?.value;
+    if (
+      typeof expected === 'string' &&
+      typeof actual === 'string' &&
+      /^[a-f0-9]{64}$/.test(expected) &&
+      /^[a-f0-9]{64}$/.test(actual)
+    ) {
+      failure.expectedSha256 = expected;
+      failure.actualSha256 = actual;
+    }
+  } catch {
+    /* Diagnostic inspection cannot replace the failure receipt. */
+  }
   await writeFile(
     output,
     JSON.stringify(
@@ -121,6 +142,7 @@ try {
         restoreAttempted: false,
         nativeSendAttempted: false,
         published: false,
+        ...failure,
       },
       null,
       2,
