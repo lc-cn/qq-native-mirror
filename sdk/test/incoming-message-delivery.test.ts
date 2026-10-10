@@ -1,7 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createIncomingMessageDelivery } from '../src/features/messages/incoming-message-delivery.ts';
-import { projectNativeMessage } from '../src/features/messages/inbound-messages.ts';
+import {
+  projectNativeMessage,
+  type CapturedNativeMessage,
+} from '../src/features/messages/inbound-messages.ts';
 import { decodeElements } from '../src/features/messages/inbound-elements.ts';
 import type { NativeObject } from '../src/native/native-object.ts';
 const tick = () => new Promise((resolve) => setImmediate(resolve));
@@ -22,12 +25,12 @@ function fixture() {
   const diagnostics: string[] = [];
   const dispatches: unknown[][] = [];
   const pending: {
-    messages: NativeObject[];
+    messages: CapturedNativeMessage[];
     raw: unknown[];
     resolve: () => void;
     reject: (error: Error) => void;
   }[] = [];
-  const project = (value: NativeObject, raw: unknown) =>
+  const project = (value: CapturedNativeMessage, raw: unknown) =>
     projectNativeMessage(value, decodeElements(value.elements), new Map([['u_peer', '123']]), raw);
   const delivery = createIncomingMessageDelivery({
     project,
@@ -99,7 +102,10 @@ test('queued receipt snapshots survive raw mutation and preserve batch order beh
   await tick();
   assert.equal(f.pending.length, 1);
   assert.equal(f.pending[0].messages[0].msgId, '1');
-  assert.equal(f.pending[0].messages[0].elements[0].textElement.content, 'text1');
+  assert.deepEqual(f.pending[0].messages[0].elements[0], {
+    elementType: 1,
+    textElement: { atType: 0, content: 'text1' },
+  });
   assert.equal(f.pending[0].raw[0], raw);
   f.pending[0].resolve();
   await tick();

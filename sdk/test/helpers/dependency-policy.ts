@@ -110,8 +110,6 @@ const featurePorts = new Set([
 // proprietary dynamic object. New features use unknown results and narrow ports;
 // importing this type must require an explicit review, not a directory permission.
 export const dynamicNativeOwners: Readonly<Record<string, string>> = {
-  'src/features/messages/inbound-messages.ts': 'Project version-dependent native messages.',
-  'src/features/messages/inbound-mentions.ts': 'Resolve native mention metadata.',
   'src/features/messages/inbound-elements.ts': 'Project opaque received element variants.',
 };
 const facadeInputs = new Set([
@@ -232,6 +230,7 @@ export function dependencyViolation({ from, to, typeOnly }: SourceDependency): s
     [
       'src/features/messages/inbound-elements.ts',
       'src/features/messages/inbound-messages.ts',
+      'src/features/messages/inbound-mentions.ts',
     ].includes(to)
   )
     return 'Message projection and identity orchestration belong to the message-resolution owner.';

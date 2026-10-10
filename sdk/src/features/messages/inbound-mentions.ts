@@ -1,14 +1,13 @@
 import { decodeElements, mentionLookupUid } from './inbound-elements.ts';
 import { resolveNativeUins } from './native-identities.ts';
 import type { MessageElement } from '../../contracts/messages.ts';
-import type { NativeObject as Native } from '../../native/native-object.ts';
 
-export function needsMentionLookup(elements: Native[]): boolean {
+export function needsMentionLookup(elements: unknown[]): boolean {
   return elements.some(
     (element) => element && typeof element === 'object' && mentionLookupUid(element) !== undefined,
   );
 }
-export function captureElementBatches(batches: Native[][]) {
+export function captureElementBatches(batches: unknown[][]) {
   const dense = Array.from(batches, (elements) => {
     if (!Array.isArray(elements)) throw new Error('Invalid native message element batch');
     return elements;
@@ -58,7 +57,7 @@ export function decodeCapturedElements(
 }
 /** One keyed UID query; unknown mention evidence and exact numeric IDs survive. */
 export async function decodeResolvedElementBatches(
-  batches: Native[][],
+  batches: unknown[][],
   resolveUins: (uids: string[]) => Promise<ReadonlyMap<string, string>>,
   signal: AbortSignal,
   diagnostic: (stage: string) => void,

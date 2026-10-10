@@ -177,7 +177,13 @@ snapshot; applications still receive the original `Message.raw`. Unknown element
 payloads retain their original object identity. Group messages do not acquire the
 unused private `peerUin` field. Delivery carries original records as `unknown`,
 uses typed snapshots for identity and ordering, and has no permission to import
-the dynamic native-object type. The snapshot does not define a new proprietary
+the dynamic native-object type. The envelope projector and mention-resolution
+owner also have no dynamic-object permission. Captured metadata has a closed
+interface, and its element bodies remain `unknown[]`. Only the element projector
+interprets version-dependent native members after checking each element carrier;
+projection, identity resolution and delivery callers do not inherit that escape
+hatch. Capturing an envelope does not validate the contents of an element.
+The snapshot does not define a new proprietary
 ABI. Source and installed-consumer checks cover controlled accessor side effects
 and queued mutation, without claiming such accessors occur in QQ callbacks.
 

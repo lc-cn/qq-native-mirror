@@ -1,8 +1,22 @@
 import { captureElementBatches, decodeCapturedElements } from './inbound-mentions.ts';
 import { nativeUid, positiveDecimal, resolveNativeUins } from './native-identities.ts';
 import type { Message, MessageElement } from '../../contracts/messages.ts';
-import type { NativeObject as Native } from '../../native/native-object.ts';
-const originalElements = new WeakMap<Native, unknown[]>();
+const originalElements = new WeakMap<object, unknown[]>();
+
+/** Only receipt and identity data belong to the envelope projector. Element
+ * bodies stay opaque until their dedicated projector validates the variant.
+ */
+interface NativeMessageMetadata {
+  readonly chatType: 1 | 2;
+  readonly msgId: string;
+  readonly msgSeq: string;
+  readonly msgTime: string;
+  readonly peerUid?: string;
+  readonly peerUin?: string;
+  readonly senderUid?: string;
+  readonly senderUin?: string;
+  readonly sendNickName?: string;
+}
 
 function accountIdentity(uin: unknown, uid: unknown): { uin?: string; uid: string } {
   if (uid !== undefined && uid !== '' && !nativeUid(uid))
@@ -13,7 +27,7 @@ function accountIdentity(uin: unknown, uid: unknown): { uin?: string; uid: strin
   if (!nativeUid(uid)) throw new Error('Native message identity requires a user UID');
   return { uid };
 }
-function metadata(message: Native) {
+function metadata(message: NativeMessageMetadata) {
   if (
     !message ||
     typeof message !== 'object' ||
@@ -38,17 +52,17 @@ function metadata(message: Native) {
   if (message.chatType === 2 && !positiveDecimal(message.peerUid))
     throw new Error('Invalid native message group identifier');
   return {
-    messageId: message.msgId as string,
-    sequence: message.msgSeq as string,
+    messageId: message.msgId,
+    sequence: message.msgSeq,
     time: Number(message.msgTime),
-    chatType: message.chatType as 1 | 2,
+    chatType: message.chatType,
     peerUid: message.peerUid as string,
     peer,
     sender,
     nickname: message.sendNickName ?? '',
   };
 }
-export function messageIdentityUids(message: Native): string[] {
+export function messageIdentityUids(message: NativeMessageMetadata): string[] {
   const value = metadata(message);
   return [
     ...new Set(
@@ -59,18 +73,14 @@ export function messageIdentityUids(message: Native): string[] {
     ),
   ];
 }
-export interface CapturedNativeMessage {
-  readonly chatType: 1 | 2;
-  readonly msgId: string;
-  readonly msgSeq: string;
-  readonly msgTime: string;
-  readonly peerUid?: string;
-  readonly peerUin?: string;
-  readonly senderUid?: string;
-  readonly senderUin?: string;
-  readonly sendNickName?: string;
-  readonly elements: Native[];
+export interface CapturedNativeMessage extends NativeMessageMetadata {
+  readonly elements: unknown[];
 }
+
+function optionalString(value: unknown): value is string | undefined {
+  return value === undefined || typeof value === 'string';
+}
+
 function isMessageRecord(raw: unknown): raw is Record<string, unknown> {
   return raw !== null && typeof raw === 'object' && !Array.isArray(raw);
 }
@@ -98,26 +108,43 @@ function captureMessageRecord(
   raw: Record<string, unknown>,
   chatType: unknown,
 ): CapturedNativeMessage {
-  const fields = {
+  if (chatType !== 1 && chatType !== 2) throw new Error('Invalid native message conversation');
+  const msgId = raw.msgId;
+  const msgSeq = raw.msgSeq;
+  const msgTime = raw.msgTime;
+  if (
+    !positiveDecimal(msgId) ||
+    typeof msgSeq !== 'string' ||
+    !/^\d+$/.test(msgSeq) ||
+    typeof msgTime !== 'string' ||
+    !/^\d+$/.test(msgTime) ||
+    !Number.isSafeInteger(Number(msgTime))
+  )
+    throw new Error('Invalid native message receipt metadata');
+  const peerUid = raw.peerUid;
+  const peerUin = chatType === 1 ? raw.peerUin : undefined;
+  const senderUid = raw.senderUid;
+  const senderUin = raw.senderUin;
+  const sendNickName = raw.sendNickName;
+  if (
+    !optionalString(peerUid) ||
+    !optionalString(peerUin) ||
+    !optionalString(senderUid) ||
+    !optionalString(senderUin) ||
+    !optionalString(sendNickName)
+  )
+    throw new Error('Invalid native message identity metadata');
+  const fields: NativeMessageMetadata = {
     chatType,
-    msgId: raw?.msgId,
-    msgSeq: raw?.msgSeq,
-    msgTime: raw?.msgTime,
-    peerUid: raw?.peerUid,
-    peerUin: chatType === 1 ? raw.peerUin : undefined,
-    senderUid: raw?.senderUid,
-    senderUin: raw?.senderUin,
-    sendNickName: raw?.sendNickName,
+    msgId,
+    msgSeq,
+    msgTime,
+    peerUid,
+    peerUin,
+    senderUid,
+    senderUin,
+    sendNickName,
   };
-  for (const field of [
-    fields.peerUid,
-    fields.peerUin,
-    fields.senderUid,
-    fields.senderUin,
-    fields.sendNickName,
-  ])
-    if (field !== undefined && typeof field !== 'string')
-      throw new Error('Invalid native message identity metadata');
   metadata(fields);
   const sourceElements = raw.elements;
   if (!Array.isArray(sourceElements)) throw new Error('Invalid native message elements');
@@ -148,12 +175,12 @@ function captureMessageRecord(
     }
     return Object.create(Object.getPrototypeOf(element), descriptors);
   });
-  const captured = { ...fields, elements } as CapturedNativeMessage;
+  const captured: CapturedNativeMessage = { ...fields, elements };
   originalElements.set(captured, originalElements.get(raw) ?? Array.from(sourceElements));
   return captured;
 }
 export function projectNativeMessage(
-  message: Native,
+  message: CapturedNativeMessage,
   elements: MessageElement[],
   uins: ReadonlyMap<string, string>,
   raw: unknown = message,

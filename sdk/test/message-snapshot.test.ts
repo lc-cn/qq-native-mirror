@@ -70,7 +70,10 @@ test('unknown element raw identity and known nested snapshots survive caller mut
   );
   assert.equal(projected.elements[0]?.type, 'unknown');
   if (projected.elements[0]?.type === 'unknown') assert.equal(projected.elements[0].data, element);
-  assert.equal(captured.elements[1].textElement.content, 'before');
+  assert.deepEqual(captured.elements[1], {
+    elementType: 1,
+    textElement: { content: 'before', atType: 0 },
+  });
   assert.equal(projected.messageId, '1');
 });
 

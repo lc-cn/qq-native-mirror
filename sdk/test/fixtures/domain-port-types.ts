@@ -293,6 +293,8 @@ function verifyCapturedMessage(message: CapturedNativeMessage) {
   const invalidTime: number = message.msgTime;
   // @ts-expect-error Unrelated raw members remain with Message.raw, not the delivery snapshot.
   message.nativeHandle.initialize();
+  // @ts-expect-error Capturing an envelope does not validate native element bodies.
+  void message.elements[0].textElement.content;
   void invalidTime;
 }
 void verifyCapturedMessage;

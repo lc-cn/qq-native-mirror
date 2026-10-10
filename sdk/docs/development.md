@@ -59,6 +59,11 @@ method and worker-owned token history. The existing Msg listener routes callback
 and account/request signals retire waits. Do not introduce another account lifetime
 or release worker token reservations during account replacement.
 
+Message envelope capture and mention resolution accept opaque element batches.
+Keep the captured envelope's metadata closed and its element bodies `unknown`;
+only the element projector interprets native variant fields. Do not widen a queue
+or resolution port to accommodate an undocumented element.
+
 New feature modules cannot import the dynamic `NativeObject` escape hatch. Use
 `unknown` for untrusted results and narrow typed ports for callable methods.
 Existing legacy adapters and native projectors have exact ownership entries with

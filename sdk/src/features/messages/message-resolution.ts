@@ -1,7 +1,11 @@
 import type { Message } from '../../contracts/messages.ts';
 import type { NativePeer } from '../../native/message-contracts.ts';
 import { decodeElements } from './inbound-elements.ts';
-import { decodeNativeMessages, projectNativeMessage } from './inbound-messages.ts';
+import {
+  decodeNativeMessages,
+  projectNativeMessage,
+  type CapturedNativeMessage,
+} from './inbound-messages.ts';
 
 export interface MessageResolutionContext {
   readonly signal: AbortSignal;
@@ -55,14 +59,8 @@ export function createMessageResolution(context: MessageResolutionContext) {
     async resolveMessage(message: unknown): Promise<Message | undefined> {
       return (await resolveMessages([message]))[0];
     },
-    projectImmediate(message: object, raw: unknown = message): Message {
-      const record = message as Record<string, unknown>;
-      return projectNativeMessage(
-        record,
-        decodeElements(record.elements as Record<string, unknown>[]),
-        new Map(),
-        raw,
-      );
+    projectImmediate(message: CapturedNativeMessage, raw: unknown = message): Message {
+      return projectNativeMessage(message, decodeElements(message.elements), new Map(), raw);
     },
   };
 }
