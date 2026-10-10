@@ -1,3 +1,4 @@
+import type { NativePeer } from '../src/native/message-contracts.ts';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createMessageQueries } from '../src/features/messages/message-queries.ts';
@@ -116,4 +117,38 @@ test('history resolves peer before obtaining Msg while invalid IDs obtain nothin
   await assert.rejects(queries.getMessages({ type: 'group', groupId: '123' }, ['1', '1']));
   assert.deepEqual(f.order, []);
   f.lifetime.close();
+});
+
+test('narrow query ports retain native receiver and accept only validated unknown results', async () => {
+  const { queryNativeMessage, queryNativeHistory } =
+    await import('../src/features/messages/message-query.ts');
+  const peer = { chatType: 2 as const, peerUid: '123' };
+  const calls: unknown[][] = [];
+  const service = {
+    getMsgsByMsgId(actualPeer: NativePeer, ids: string[]): unknown {
+      assert.equal(this, service);
+      calls.push([actualPeer, ids]);
+      return { result: 0, msgList: [] };
+    },
+    getMsgsIncludeSelf(
+      actualPeer: NativePeer,
+      before: string,
+      count: number,
+      reverse: boolean,
+    ): unknown {
+      assert.equal(this, service);
+      calls.push([actualPeer, before, count, reverse]);
+      return { result: 0, msgList: [] };
+    },
+  };
+  assert.equal(await queryNativeMessage(service, peer, '1'), undefined);
+  assert.deepEqual(await queryNativeHistory(service, peer, '0', 1, false), []);
+  assert.deepEqual(calls, [
+    [peer, ['1']],
+    [peer, '0', 1, false],
+  ]);
+  await assert.rejects(queryNativeMessage({ getMsgsByMsgId: () => 0 }, peer, '1'));
+  await assert.rejects(
+    queryNativeHistory({ getMsgsIncludeSelf: () => undefined }, peer, '0', 1, false),
+  );
 });

@@ -91,8 +91,12 @@ public native manifest data is distinct from the proprietary native service type
 
 `KernelEnvironment` owns one cached preparation promise, local directories, device
 configuration, Session factory selection and engine/login initialization. It does
-not connect or authenticate. `kernel.ts` owns authentication generation, pending
-login, identity checks, timers and offline transitions. Acquired handles become
+not connect or authenticate. `AuthenticationAttempt` owns one captured login request, account matching,
+connection request, QR/restore/quick dispatch, polling and the original login
+deadline. Its Promise resolves only at account Session readiness. Its login port
+contains only the methods that authentication uses; it cannot start Sessions or
+load bundles. The Kernel owns the current attempt reference, account generation,
+identity and offline transitions. Acquired handles become
 visible to that state machine before engine initialization and listener
 registration: native calls can synchronously invoke callbacks. A rejected
 preparation is retained rather than replaying native initialization; factory
@@ -144,8 +148,12 @@ not expose services, readiness flags or callback handles. A named context suppli
 the already selected native start strategy, business adapter factory and account
 transition hooks. The factory is a real variation point: production composes the
 native services; controlled tests supply an adapter through the same interface.
-The kernel retains login/restore selection, account matching, pending settlement,
-deadlines, generations and interpretation of offline notifications. Raw Session
+The authentication attempt retains login/restore selection, account matching,
+request deadlines and terminal settlement. The Kernel retains account generations
+and interpretation of offline notifications. Invalidation stops authentication
+work before account teardown; failure/offline settlement retains cleanup errors.
+Close retains its distinct contracts: pending login rejects with the closing
+error, while cleanup failure rejects close with its original value. Raw Session
 instances are prepared before LoginService initialization because native versions
 may depend on them; they are not a second business-service owner.
 
@@ -218,8 +226,10 @@ waits for native completion, failed IDs remain reserved until teardown, and an
 operation is never replayed. The Session aborts pending work before closing the
 sender; deferred preparation cannot dispatch after shutdown.
 
-`MessageQueries` owns peer capture, exact/batch/history reads, asynchronous record
-projection and batch reordering through injected native-read and resolver ports.
+`createMessageQueries` owns peer capture, exact/batch/history reads, asynchronous record
+projection and batch reordering through injected native-read and resolver ports. The query port exposes only
+`getMsgsByMsgId` and `getMsgsIncludeSelf`; returned values remain `unknown` until
+the response validator checks status and the complete message batch.
 The composition root binds those ports and selects a method; it does not implement
 query control flow. Whole-batch validation precedes asynchronous projection, and
 the existing Session lifetime observes pending work and blocks dispatch after close.

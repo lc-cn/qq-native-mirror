@@ -9,6 +9,23 @@ import { nativeResultError } from '../../errors.ts';
 import type { NativeObject as Native } from '../../native/native-object.ts';
 type NativePeer = { chatType: 1 | 2; peerUid: string };
 
+/** Only the two query ABI methods cross this port; results remain unknown until
+ * the existing response validators have checked status and every message.
+ * Optional members retain the explicit missing-method failure contract.
+ */
+export interface MessageIdQueryPort {
+  getMsgsByMsgId?: (peer: NativePeer, ids: string[]) => unknown;
+}
+export interface MessageHistoryQueryPort {
+  getMsgsIncludeSelf?: (
+    peer: NativePeer,
+    before: string,
+    count: number,
+    reverse: boolean,
+  ) => unknown;
+}
+export type MessageQueryPort = MessageIdQueryPort & MessageHistoryQueryPort;
+
 /** Reject a malformed queried batch before projecting or dropping any record. */
 function queriedMessage(
   value: unknown,
@@ -43,7 +60,7 @@ function queriedMessage(
  * Empty successful lists mean absent; errors and mismatched records do not.
  */
 export async function queryNativeMessage(
-  msgService: Native,
+  msgService: MessageIdQueryPort,
   peer: NativePeer,
   messageId: string,
 ): Promise<Native | undefined> {
@@ -58,7 +75,8 @@ export async function queryNativeMessage(
     throw new Error('Invalid native message query peer');
   if (typeof msgService?.getMsgsByMsgId !== 'function')
     throw new Error('Native service is missing getMsgsByMsgId');
-  const result = await msgService.getMsgsByMsgId(peer, [messageId]);
+  const value = await msgService.getMsgsByMsgId(peer, [messageId]);
+  const result = value as Record<string, unknown> | null | undefined;
   if (!result || typeof result !== 'object' || result.result !== 0)
     throw nativeResultError('Native getMsgsByMsgId failed (invalid or rejected result)', result);
   if (!Array.isArray(result.msgList))
@@ -77,7 +95,7 @@ export async function queryNativeMessage(
  * A missing item means absent from this successful response only.
  */
 export async function queryNativeMessages(
-  msgService: Native,
+  msgService: MessageIdQueryPort,
   peer: NativePeer,
   ids: unknown,
 ): Promise<(Native | undefined)[]> {
@@ -92,7 +110,8 @@ export async function queryNativeMessages(
   const expectedPeer = { chatType: peer.chatType, peerUid: peer.peerUid };
   if (typeof msgService?.getMsgsByMsgId !== 'function')
     throw new Error('Native service is missing getMsgsByMsgId');
-  const result = await msgService.getMsgsByMsgId({ ...expectedPeer }, [...captured]);
+  const value = await msgService.getMsgsByMsgId({ ...expectedPeer }, [...captured]);
+  const result = value as Record<string, unknown> | null | undefined;
   if (!result || typeof result !== 'object' || result.result !== 0)
     throw nativeResultError('Native getMsgsByMsgId failed (invalid or rejected result)', result);
   if (!Array.isArray(result.msgList))
@@ -112,7 +131,7 @@ export async function queryNativeMessages(
  * Keep native ordering; an error or malformed record is not an empty history.
  */
 export async function queryNativeHistory(
-  msgService: Native,
+  msgService: MessageHistoryQueryPort,
   peer: NativePeer,
   before: string,
   count: number,
@@ -144,7 +163,8 @@ export async function queryNativeHistory(
   if (typeof reverse !== 'boolean') throw new Error('History reverse must be a boolean');
   if (typeof msgService?.getMsgsIncludeSelf !== 'function')
     throw new Error('Native service is missing getMsgsIncludeSelf');
-  const result = await msgService.getMsgsIncludeSelf({ ...expectedPeer }, before, count, reverse);
+  const value = await msgService.getMsgsIncludeSelf({ ...expectedPeer }, before, count, reverse);
+  const result = value as Record<string, unknown> | null | undefined;
   if (result?.result !== 0)
     throw nativeResultError(
       'Native getMsgsIncludeSelf failed (invalid or rejected result)',

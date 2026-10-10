@@ -33,6 +33,7 @@ const kernelDependencies = new Set([
   'src/native-services.ts',
   'src/native/login-request.ts',
   'src/runtime/account-session-lifecycle.ts',
+  'src/runtime/authentication-attempt.ts',
   'src/runtime/kernel-environment.ts',
   'src/runtime/cleanup.ts',
 ]);

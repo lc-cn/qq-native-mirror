@@ -9,20 +9,23 @@ import { pathToFileURL } from 'node:url';
  */
 export async function verifyKernelSessionConsumer(packageRoot) {
   const { createKernel } = await import(pathToFileURL(join(packageRoot, 'dist/kernel.js')).href);
-  async function fixture(accountFactory, startupFactory, loginFailure) {
+  async function fixture(accountFactory, startupFactory, loginFailure, onEvent) {
     const dataDir = await mkdtemp(join(tmpdir(), 'qq-installed-session-'));
     let loginListener;
     const events = [];
+    const dispatches = [];
     const service = {
       initConfig() {},
       addKernelLoginListener(value) {
         loginListener = value;
       },
       connect() {
+        dispatches.push('connect');
         loginListener.onLoginConnected();
       },
       getMsfStatus: () => 0,
       getQRCodePicture() {
+        dispatches.push('qr');
         if (loginFailure !== undefined) {
           loginListener.onLoginFailed(loginFailure);
           return true;
@@ -44,11 +47,16 @@ export async function verifyKernelSessionConsumer(packageRoot) {
         version: { clientVersion: 'fixture', appId: '1', qua: 'fixture' },
         loginTimeoutMs: 500,
       },
-      (name) => events.push(name),
+      (name, payload) => {
+        events.push(name);
+        onEvent?.(name, payload);
+      },
     );
     return {
       kernel,
       events,
+      service,
+      dispatches,
       async close() {
         await kernel.close();
         await rm(dataDir, { recursive: true, force: true });
@@ -233,9 +241,35 @@ export async function verifyKernelSessionConsumer(packageRoot) {
       await f.close();
     }
   }
+  for (const stage of ['login-connect', 'msf-status']) {
+    const close = () => {
+      void f.kernel.close();
+    };
+    const f = await fixture({ create: () => ({}) }, undefined, undefined, (name, payload) => {
+      if (stage === 'login-connect' && name === 'diagnostic' && payload.stage === stage) close();
+    });
+    if (stage === 'msf-status')
+      f.service.getMsfStatus = () => {
+        close();
+        return 0;
+      };
+    try {
+      await assert.rejects(f.kernel.login({ method: 'qr' }), /Client closed during login/);
+      assert.deepEqual(
+        f.dispatches,
+        stage === 'login-connect' ? [] : ['connect'],
+        `Reentrant retirement at ${stage} must prevent subsequent native dispatch`,
+      );
+      assert.equal(f.events.includes('authenticated'), false);
+      assert.equal(f.events.includes('ready'), false);
+    } finally {
+      await f.close();
+    }
+  }
   return {
     sessionStrategyContract: true,
     opaqueLoginFailureContract: true,
+    authenticationRetirementContract: true,
     nativeSessionStrategyLoginAttempted: false,
   };
 }

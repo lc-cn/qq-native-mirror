@@ -9,6 +9,7 @@ import type {
   AccountSessionOptions,
 } from './runtime/account-session-lifecycle.ts';
 import { createKernelEnvironment } from './runtime/kernel-environment.ts';
+import { AuthenticationAttempt } from './runtime/authentication-attempt.ts';
 
 // QQ exports are proprietary and versioned; this boundary intentionally validates
 // the required methods at runtime rather than asserting a stable upstream API.
@@ -19,12 +20,6 @@ export interface KernelOptions extends AccountSessionOptions {
 }
 export type { LoginRequest } from './contracts/client.ts';
 export type { AccountIdentity } from './runtime/account-session-lifecycle.ts';
-
-function nativeAccountNumber(value: unknown): string | undefined {
-  if (typeof value === 'string' && /^\d+$/.test(value)) return value;
-  if (typeof value === 'number' && Number.isSafeInteger(value) && value >= 0) return String(value);
-  return undefined;
-}
 
 export function createKernel(
   wrapper: NativeObject,
@@ -42,27 +37,11 @@ export function createKernel(
   let accountMsfConnected = false;
   let closed = false;
   let generation = 0;
-  let pending:
-    | {
-        method: LoginRequest['method'];
-        targetUin?: string;
-        authenticationIssued: boolean;
-        resolve: (account: AccountIdentity) => void;
-        reject: (error: Error) => void;
-      }
-    | undefined;
-  let timeout: ReturnType<typeof setTimeout> | undefined;
-  let poll: ReturnType<typeof setTimeout> | undefined;
-  let request: LoginRequest;
-  let requesting = false;
+  let pending: AuthenticationAttempt | undefined;
   const notify = (event: string, payload: unknown) => {
     if (!closed) emit(event, payload);
   };
-  const clearTimers = () => {
-    clearTimeout(timeout);
-    clearTimeout(poll);
-    timeout = poll = undefined;
-  };
+  const invalidateAttempt = () => pending?.invalidate();
   // Detach before teardown: reentrant native notifications cannot reuse a Session.
   const detachSession = () => {
     const services = ownedSession;
@@ -98,8 +77,7 @@ export function createKernel(
   const fail = (error: Error) => {
     generation++;
     identity = undefined;
-    requesting = false;
-    clearTimers();
+    invalidateAttempt();
     const current = pending;
     pending = undefined;
     const failure = cleanupFailure(detachSession());
@@ -116,9 +94,8 @@ export function createKernel(
     if (closed) return;
     generation++;
     identity = undefined;
-    requesting = false;
     const services = detachSession();
-    clearTimers();
+    invalidateAttempt();
     const current = pending;
     pending = undefined;
     const original = new Error('Native account became offline');
@@ -232,9 +209,9 @@ export function createKernel(
       ready: (account) => {
         if (!active() || pending !== expectedPending) return;
         identity = { ...account };
-        clearTimers();
+        invalidateAttempt();
         pending = undefined;
-        expectedPending.resolve({ ...account });
+        expectedPending.completeReady(account);
         notify('login', { ...account });
         if (active()) notify('ready', { ...account });
       },
@@ -242,80 +219,6 @@ export function createKernel(
       cleanupFailed: (error) => reportCleanupFailure(error),
     });
     ownedSession.begin();
-  };
-  const beginAuthentication = async () => {
-    if (closed || !pending || !loginService || requesting) return;
-    const attempt = generation;
-    const expectedPending = pending;
-    const active = () => !closed && generation === attempt && pending === expectedPending;
-    try {
-      if (invoke(loginService, 'getMsfStatus') === 3) {
-        poll = setTimeout(() => {
-          void beginAuthentication();
-        }, 500);
-        return;
-      }
-      requesting = true;
-      if (request.method === 'qr') {
-        expectedPending.authenticationIssued = true;
-        const accepted = invoke(loginService, 'getQRCodePicture');
-        if (accepted === false) throw new Error('Native login service rejected QR request');
-      } else {
-        let uin = request.uin;
-        if (request.method === 'restore') {
-          const records = await invoke(loginService, 'getLoginList');
-          if (!active()) return;
-          if (process.env.QQ_NATIVE_TRACE_FIELDS === '1') {
-            const local = Array.isArray(records?.LocalLoginInfoList)
-              ? records.LocalLoginInfoList
-              : [];
-            notify('diagnostic', {
-              stage: `restore-records:${JSON.stringify({
-                topLevelKeys: records && typeof records === 'object' ? Object.keys(records) : [],
-                localRecordCount: local.length,
-                recordFieldNames: local.map((record: NativeObject) => Object.keys(record)),
-                quickLoginFlagTypes: local.map(
-                  (record: NativeObject) => typeof record.isQuickLogin,
-                ),
-                quickLoginFlags: local.map((record: NativeObject) =>
-                  typeof record.isQuickLogin === 'boolean' ? record.isQuickLogin : null,
-                ),
-              })}`,
-            });
-          }
-          const eligible = Array.isArray(records?.LocalLoginInfoList)
-            ? records.LocalLoginInfoList.filter(
-                (record: NativeObject) => record.isQuickLogin === true,
-              )
-            : [];
-          if (uin) {
-            if (!eligible.some((record: NativeObject) => nativeAccountNumber(record.uin) === uin)) {
-              throw new Error('Requested account has no restorable login record');
-            }
-          } else {
-            if (eligible.length !== 1)
-              throw new Error(
-                eligible.length === 0
-                  ? 'No restorable login record'
-                  : 'Multiple restorable accounts; specify uin',
-              );
-            uin = nativeAccountNumber(eligible[0].uin);
-          }
-          if (uin === undefined) throw new Error('Invalid restored account number');
-        }
-        expectedPending.targetUin = uin;
-        expectedPending.authenticationIssued = true;
-        const result = await invoke(loginService, 'quickLoginWithUin', uin);
-        if (!active()) return;
-        if (result?.result !== '0' || result?.loginErrorInfo?.errMsg) {
-          throw new Error(
-            result?.loginErrorInfo?.errMsg || `Quick login failed: ${result?.result}`,
-          );
-        }
-      }
-    } catch (error) {
-      if (active()) fail(normalizeKernelError(error));
-    }
   };
   const environment = createKernelEnvironment({
     wrapper,
@@ -366,7 +269,7 @@ export function createKernel(
       );
       Object.assign(listener, {
         onLoginConnected: () => {
-          void beginAuthentication();
+          void pending?.onConnected();
         },
         onLoginDisConnected: (...args: unknown[]) => {
           transitionOffline({
@@ -389,23 +292,13 @@ export function createKernel(
           if (!pending) return;
           const authentication = pending;
           const attempt = generation;
-          const uin = nativeAccountNumber(account?.uin);
-          if (uin === undefined || typeof account?.uid !== 'string' || !account.uid.trim()) {
-            fail(new Error('Invalid native login identity'));
+          let accountIdentity: AccountIdentity;
+          try {
+            accountIdentity = authentication.acceptAuthentication(account);
+          } catch (error) {
+            fail(normalizeKernelError(error));
             return;
           }
-          if (!pending.authenticationIssued) {
-            fail(new Error('Native authentication arrived before the login request was issued'));
-            return;
-          }
-          if (
-            pending.method !== 'qr' &&
-            (pending.targetUin === undefined || uin !== pending.targetUin)
-          ) {
-            fail(new Error('Native login account does not match the requested account'));
-            return;
-          }
-          const accountIdentity = { uid: account.uid, uin };
           notify('authenticated', { ...accountIdentity });
           if (closed || generation !== attempt || pending !== authentication) return;
           startAccountSession(accountIdentity);
@@ -417,9 +310,8 @@ export function createKernel(
           fail(new Error(`Account already logged in: ${String(uin)}`)),
         onLogoutSucceed: () => {
           generation++;
-          clearTimers();
+          invalidateAttempt();
           identity = undefined;
-          requesting = false;
           const current = pending;
           pending = undefined;
           const services = detachSession();
@@ -458,26 +350,18 @@ export function createKernel(
       forcedOffline = false;
       lastMsfStatus = undefined;
       accountMsfConnected = false;
-      request = loginRequest;
-      requesting = false;
-      const result = new Promise<AccountIdentity>((resolve, reject) => {
-        pending = { method: loginRequest.method, authenticationIssued: false, resolve, reject };
+      const authentication: AuthenticationAttempt = new AuthenticationAttempt({
+        request: loginRequest,
+        timeoutMs: options.loginTimeoutMs ?? 120_000,
+        prepare,
+        loginService: () => loginService,
+        isCurrent: (): boolean => !closed && generation === attempt && pending === authentication,
+        notify,
+        failed: fail,
       });
-      // Attach rejection handling immediately while asynchronous setup runs.
-      void result.catch(() => {});
-      timeout = setTimeout(
-        () => fail(new Error('Login timed out')),
-        options.loginTimeoutMs ?? 120_000,
-      );
-      try {
-        await prepare();
-        if (pending && !closed && generation === attempt) {
-          notify('diagnostic', { stage: 'login-connect' });
-          invoke(loginService!, 'connect');
-        }
-      } catch (error) {
-        if (generation === attempt) fail(normalizeKernelError(error));
-      }
+      pending = authentication;
+      await authentication.begin();
+      const result = authentication.result;
       return result;
     },
     async invokeOperation(
@@ -495,8 +379,7 @@ export function createKernel(
       generation++;
       const services = detachSession();
       identity = undefined;
-      requesting = false;
-      clearTimers();
+      invalidateAttempt();
       pending?.reject(new Error('Client closed during login'));
       pending = undefined;
       services?.close();

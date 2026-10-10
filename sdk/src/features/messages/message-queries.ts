@@ -6,11 +6,16 @@ import {
   normalizeMessageBatchQuery,
   normalizeHistoryQuery,
 } from './query-input.ts';
-import { queryNativeMessage, queryNativeMessages, queryNativeHistory } from './message-query.ts';
+import {
+  queryNativeMessage,
+  queryNativeMessages,
+  queryNativeHistory,
+  type MessageQueryPort,
+} from './message-query.ts';
 
 export interface MessageQueriesContext {
   signal: AbortSignal;
-  getMessageService(): Native;
+  getMessageService(): MessageQueryPort;
   resolvePeer(peer: Peer): Promise<NativePeer>;
   decode(messages: Native[]): Promise<(Message | undefined)[]>;
   awaitAlive<T>(value: T | PromiseLike<T>): Promise<T>;
