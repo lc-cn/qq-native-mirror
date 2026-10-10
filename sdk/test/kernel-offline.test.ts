@@ -7,65 +7,154 @@ import { createKernel } from '../src/kernel.ts';
 
 async function fixture(initialStatuses: number[][] = [], complete = true) {
   const dataDir = await mkdtemp(join(tmpdir(), 'qq-offline-'));
-  let loginListener: any, depends: any, sessionListener: any, messageListener: any, dispatcher: any, global: any;
+  let loginListener: any,
+    depends: any,
+    sessionListener: any,
+    messageListener: any,
+    dispatcher: any,
+    global: any;
   const events: Array<[string, any]> = [];
   const session = {
-    init(_config: any, adapter: any, dispatch: any, listener: any) { depends = adapter; dispatcher = dispatch; sessionListener = listener; },
-    getMsgService: () => ({ addKernelMsgListener(listener: any) { messageListener = listener; } }),
+    init(_config: any, adapter: any, dispatch: any, listener: any) {
+      depends = adapter;
+      dispatcher = dispatch;
+      sessionListener = listener;
+    },
+    getMsgService: () => ({
+      addKernelMsgListener(listener: any) {
+        messageListener = listener;
+      },
+    }),
     getGroupService: () => ({ addKernelGroupListener() {} }),
-    getBuddyService: () => ({ addKernelBuddyListener() { return 1; } }),
+    getBuddyService: () => ({
+      addKernelBuddyListener() {
+        return 1;
+      },
+    }),
   };
   const service = {
-    initConfig() {}, addKernelLoginListener(listener: any) { loginListener = listener; },
-    connect() { loginListener.onLoginConnected(); }, getMsfStatus: () => 0,
-    getQRCodePicture() { loginListener.onQRCodeLoginSucceed({ uid: 'u_a', uin: '123' }); return true; },
+    initConfig() {},
+    addKernelLoginListener(listener: any) {
+      loginListener = listener;
+    },
+    connect() {
+      loginListener.onLoginConnected();
+    },
+    getMsfStatus: () => 0,
+    getQRCodePicture() {
+      loginListener.onQRCodeLoginSucceed({ uid: 'u_a', uin: '123' });
+      return true;
+    },
     getMachineGuid: () => '0123456789abcdef0123456789abcdef',
   };
-  const kernel = createKernel({
-    NodeIQQNTWrapperEngine: { get: () => ({ initWithDeskTopConfig(_config: any, adapter: any) { global = adapter; } }) },
-    NodeIKernelLoginService: { get: () => service },
-    NodeIQQNTStartupSessionWrapper: { create: () => ({ start() {
-      for (const [status,reason] of initialStatuses) depends.onMSFStatusChange(status,reason);
-      if (complete) sessionListener.onOpentelemetryInit({ is_init: true });
-    } }) },
-    NodeIQQNTWrapperSession: { getNTWrapperSession: () => session },
-  }, { dataDir, loginTimeoutMs:100, version: { clientVersion: '7.0.2-53644', appId: '1', qua: 'test' } }, (event, value) => events.push([event, value]));
-  try { await kernel.login({ method: 'qr' }); }
-  catch(error) { await kernel.close();await rm(dataDir,{recursive:true});throw error; }
-  return { kernel, events, login: () => loginListener, depends: () => depends, msg: () => messageListener, dispatcher: () => dispatcher, global: () => global,
-    async close() { await kernel.close(); await rm(dataDir, { recursive: true }); } };
+  const kernel = createKernel(
+    {
+      NodeIQQNTWrapperEngine: {
+        get: () => ({
+          initWithDeskTopConfig(_config: any, adapter: any) {
+            global = adapter;
+          },
+        }),
+      },
+      NodeIKernelLoginService: { get: () => service },
+      NodeIQQNTStartupSessionWrapper: {
+        create: () => ({
+          start() {
+            for (const [status, reason] of initialStatuses)
+              depends.onMSFStatusChange(status, reason);
+            if (complete) sessionListener.onOpentelemetryInit({ is_init: true });
+          },
+        }),
+      },
+      NodeIQQNTWrapperSession: { getNTWrapperSession: () => session },
+    },
+    {
+      dataDir,
+      loginTimeoutMs: 100,
+      version: { clientVersion: '7.0.2-53644', appId: '1', qua: 'test' },
+    },
+    (event, value) => events.push([event, value]),
+  );
+  try {
+    await kernel.login({ method: 'qr' });
+  } catch (error) {
+    await kernel.close();
+    await rm(dataDir, { recursive: true });
+    throw error;
+  }
+  return {
+    kernel,
+    events,
+    login: () => loginListener,
+    depends: () => depends,
+    msg: () => messageListener,
+    dispatcher: () => dispatcher,
+    global: () => global,
+    async close() {
+      await kernel.close();
+      await rm(dataDir, { recursive: true });
+    },
+  };
 }
 
 test('initial disconnected unknown snapshot does not abort native Session readiness', async () => {
-  const f=await fixture([[1,0],[2,1]]);
+  const f = await fixture([
+    [1, 0],
+    [2, 1],
+  ]);
   try {
-    assert.equal(f.events.filter(([event])=>event==='ready').length,1);
-    assert.equal(f.events.filter(([event])=>event==='offline').length,0);
-    assert.ok(f.events.some(([event,value])=>event==='diagnostic'&&value.stage==='session-initial-msf-disconnected'));
-    f.depends().onMSFStatusChange(1,0);
-    assert.equal(f.events.filter(([event])=>event==='offline').length,1);
-    await assert.rejects(f.kernel.invokeOperation('listFriends'),/not online/);
-  } finally {await f.close();}
+    assert.equal(f.events.filter(([event]) => event === 'ready').length, 1);
+    assert.equal(f.events.filter(([event]) => event === 'offline').length, 0);
+    assert.ok(
+      f.events.some(
+        ([event, value]) =>
+          event === 'diagnostic' && value.stage === 'session-initial-msf-disconnected',
+      ),
+    );
+    f.depends().onMSFStatusChange(1, 0);
+    assert.equal(f.events.filter(([event]) => event === 'offline').length, 1);
+    await assert.rejects(f.kernel.invokeOperation('listFriends'), /not online/);
+  } finally {
+    await f.close();
+  }
 });
 
 test('initial unknown snapshot without readiness still times out; established disconnect and logout still fail', async () => {
-  await assert.rejects(fixture([[1,0]],false),/Login timed out/);
-  await assert.rejects(fixture([[2,1],[1,0]],false),/became offline/);
-  await assert.rejects(fixture([[1,2]],false),/became offline/);
+  await assert.rejects(fixture([[1, 0]], false), /Login timed out/);
+  await assert.rejects(
+    fixture(
+      [
+        [2, 1],
+        [1, 0],
+      ],
+      false,
+    ),
+    /became offline/,
+  );
+  await assert.rejects(fixture([[1, 2]], false), /became offline/);
 });
 
 test('forced offline retains all native kick fields and later disconnect remains forced', async () => {
   const f = await fixture();
   try {
-    const info = { kickedType: 987, securityKickedType: 654, tipsDesc: 'native reason', sameDevice: true };
+    const info = {
+      kickedType: 987,
+      securityKickedType: 654,
+      tipsDesc: 'native reason',
+      sameDevice: true,
+    };
     f.msg().onKickedOffLine(info, { additional: true });
     const kicked = f.events.find(([event]) => event === 'kicked')?.[1];
-    assert.equal(kicked.kind, 'forced'); assert.equal(kicked.retryable, false);
-    assert.equal(kicked.kickedInfo, info); assert.deepEqual(kicked.args, [info, { additional: true }]);
+    assert.equal(kicked.kind, 'forced');
+    assert.equal(kicked.retryable, false);
+    assert.equal(kicked.kickedInfo, info);
+    assert.deepEqual(kicked.args, [info, { additional: true }]);
     f.login().onLoginDisConnected('opaque reason', 432);
     assert.equal(f.events.filter(([event]) => event === 'offline').at(-1)?.[1].kind, 'forced');
     await assert.rejects(f.kernel.invokeOperation('listFriends'), /not online/);
-  } finally { await f.close(); }
+  } finally {
+    await f.close();
+  }
 });
 
 test('transport auto status does not imply safe reconnect and preserves native reason', async () => {
@@ -73,10 +162,14 @@ test('transport auto status does not imply safe reconnect and preserves native r
   try {
     f.depends().onMSFStatusChange(1, 3);
     const offline = f.events.find(([event]) => event === 'offline')?.[1];
-    assert.equal(offline.kind, 'transport'); assert.equal(offline.retryable, false);
-    assert.equal(offline.status, 1); assert.equal(offline.reason, 3);
+    assert.equal(offline.kind, 'transport');
+    assert.equal(offline.retryable, false);
+    assert.equal(offline.status, 1);
+    assert.equal(offline.reason, 3);
     await assert.rejects(f.kernel.invokeOperation('listFriends'), /not online/);
-  } finally { await f.close(); }
+  } finally {
+    await f.close();
+  }
 });
 
 test('unknown login disconnect and SSO codes retain evidence without detecting meaning', async () => {
@@ -84,12 +177,17 @@ test('unknown login disconnect and SSO codes retain evidence without detecting m
   try {
     f.depends().onMSFSsoError(987654, 'native description', { opaque: true });
     const error = f.events.find(([event]) => event === 'msf-error')?.[1];
-    assert.equal(error.code, 987654); assert.equal(error.description, 'native description');
+    assert.equal(error.code, 987654);
+    assert.equal(error.description, 'native description');
     assert.deepEqual(error.args, [987654, 'native description', { opaque: true }]);
     assert.equal(f.events.find(([event]) => event === 'offline')?.[1].kind, 'unknown');
     f.login().onLoginDisConnected({ unmapped: true });
-    assert.deepEqual(f.events.filter(([event]) => event === 'offline').at(-1)?.[1].args, [{ unmapped: true }]);
-  } finally { await f.close(); }
+    assert.deepEqual(f.events.filter(([event]) => event === 'offline').at(-1)?.[1].args, [
+      { unmapped: true },
+    ]);
+  } finally {
+    await f.close();
+  }
 });
 
 test('host callback audit records only method names and argument types', async () => {
@@ -98,11 +196,23 @@ test('host callback audit records only method names and argument types', async (
     const sensitive = { token: 'never serialize this' };
     assert.equal(f.dispatcher().dispatchRequest(sensitive, 'secret string'), undefined);
     assert.equal(f.global().futureHostMethod(sensitive), undefined);
-    const audits = f.events.filter(([event]) => event === 'native-callback').map(([, value]) => value);
-    assert.deepEqual(audits.at(-2), { family: 'Dispatcher', name: 'dispatchRequest', argumentTypes: ['object', 'string'] });
-    assert.deepEqual(audits.at(-1), { family: 'Global', name: 'futureHostMethod', argumentTypes: ['object'] });
+    const audits = f.events
+      .filter(([event]) => event === 'native-callback')
+      .map(([, value]) => value);
+    assert.deepEqual(audits.at(-2), {
+      family: 'Dispatcher',
+      name: 'dispatchRequest',
+      argumentTypes: ['object', 'string'],
+    });
+    assert.deepEqual(audits.at(-1), {
+      family: 'Global',
+      name: 'futureHostMethod',
+      argumentTypes: ['object'],
+    });
     assert.equal(JSON.stringify(audits).includes('never serialize'), false);
-  } finally { await f.close(); }
+  } finally {
+    await f.close();
+  }
 });
 
 test('stale Session readiness and Depends callbacks cannot complete a new login attempt', async () => {
@@ -112,46 +222,73 @@ test('stale Session readiness and Depends callbacks cannot complete a new login 
   let qrRequests = 0;
   const events: string[] = [];
   const service = {
-    initConfig() {}, addKernelLoginListener(value: any) { loginListener = value; },
-    connect() { loginListener.onLoginConnected(); }, getMsfStatus: () => 0,
+    initConfig() {},
+    addKernelLoginListener(value: any) {
+      loginListener = value;
+    },
+    connect() {
+      loginListener.onLoginConnected();
+    },
+    getMsfStatus: () => 0,
     getQRCodePicture() {
       qrRequests++;
       if (qrRequests === 1) loginListener.onQRCodeLoginSucceed({ uin: '123', uid: 'old' });
       return true;
-    }, getMachineGuid: () => '0123456789abcdef0123456789abcdef',
+    },
+    getMachineGuid: () => '0123456789abcdef0123456789abcdef',
   };
   const session = {
-    init(_config: any, depends: any, _dispatch: any, listener: any) { sessions.push({ depends, listener }); },
+    init(_config: any, depends: any, _dispatch: any, listener: any) {
+      sessions.push({ depends, listener });
+    },
     getMsgService: () => ({ addKernelMsgListener() {} }),
     getGroupService: () => ({ addKernelGroupListener() {} }),
-    getBuddyService: () => ({ addKernelBuddyListener() { return 1; } }),
+    getBuddyService: () => ({
+      addKernelBuddyListener() {
+        return 1;
+      },
+    }),
   };
-  const kernel = createKernel({
-    NodeIQQNTWrapperEngine: { get: () => ({ initWithDeskTopConfig() {} }) },
-    NodeIKernelLoginService: { get: () => service },
-    NodeIQQNTStartupSessionWrapper: { create: () => ({ start() {} }) },
-    NodeIQQNTWrapperSession: { getNTWrapperSession: () => session },
-  }, { dataDir, loginTimeoutMs: 2000, version: { clientVersion: '7.0.2-53644', appId: '1', qua: 'test' } }, event => events.push(event));
+  const kernel = createKernel(
+    {
+      NodeIQQNTWrapperEngine: { get: () => ({ initWithDeskTopConfig() {} }) },
+      NodeIKernelLoginService: { get: () => service },
+      NodeIQQNTStartupSessionWrapper: { create: () => ({ start() {} }) },
+      NodeIQQNTWrapperSession: { getNTWrapperSession: () => session },
+    },
+    {
+      dataDir,
+      loginTimeoutMs: 2000,
+      version: { clientVersion: '7.0.2-53644', appId: '1', qua: 'test' },
+    },
+    (event) => events.push(event),
+  );
   try {
     const first = kernel.login({ method: 'qr' });
-    while (!sessions.length) await new Promise(resolve => setImmediate(resolve));
+    while (!sessions.length) await new Promise((resolve) => setImmediate(resolve));
     loginListener.onLoginDisConnected('first interrupted');
     await assert.rejects(first, /offline/);
     let settled = false;
-    const second = kernel.login({ method: 'qr' }).then(result => { settled = true; return result; });
-    while (qrRequests < 2) await new Promise(resolve => setImmediate(resolve));
-    const offlineBefore = events.filter(event => event === 'offline').length;
+    const second = kernel.login({ method: 'qr' }).then((result) => {
+      settled = true;
+      return result;
+    });
+    while (qrRequests < 2) await new Promise((resolve) => setImmediate(resolve));
+    const offlineBefore = events.filter((event) => event === 'offline').length;
     sessions[0].depends.onMSFStatusChange(1, 2);
     sessions[0].depends.onMSFSsoError(99, 'stale error');
     sessions[0].listener.onOpentelemetryInit({ is_init: true });
-    await new Promise(resolve => setImmediate(resolve));
+    await new Promise((resolve) => setImmediate(resolve));
     assert.equal(settled, false);
-    assert.equal(events.filter(event => event === 'offline').length, offlineBefore);
-    assert.equal(events.filter(event => event === 'ready').length, 0);
+    assert.equal(events.filter((event) => event === 'offline').length, offlineBefore);
+    assert.equal(events.filter((event) => event === 'ready').length, 0);
     loginListener.onQRCodeLoginSucceed({ uin: '456', uid: 'new' });
-    while (sessions.length < 2) await new Promise(resolve => setImmediate(resolve));
+    while (sessions.length < 2) await new Promise((resolve) => setImmediate(resolve));
     sessions[1].listener.onOpentelemetryInit({ is_init: true });
     assert.deepEqual(await second, { uin: '456', uid: 'new' });
-    assert.equal(events.filter(event => event === 'ready').length, 1);
-  } finally { await kernel.close(); await rm(dataDir, { recursive: true, force: true }); }
+    assert.equal(events.filter((event) => event === 'ready').length, 1);
+  } finally {
+    await kernel.close();
+    await rm(dataDir, { recursive: true, force: true });
+  }
 });

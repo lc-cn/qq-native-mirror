@@ -18,7 +18,6 @@ Read-only binary inspection found the compiled assertions for zero-argument star
 
 The shared installed check reports `sessionStrategyContract:true` and `nativeSessionStrategyLoginAttempted:false`. Six-platform CI requires both fields rather than promoting synthetic checks to account evidence. Vendor signing/provider authenticity remains unverified.
 
-
 ## Current acceptance
 
 Source `5907793ad848c68b3183ac5c2f2b06fbd1a5e0cf` passed 585 SDK regressions, 51 kernel-focused checks and 9 producer/version-artifact checks. The original factory/signature reproduction had five failures; the later readiness-before-start-return reproduction had six additional failures. Independent post-repair review passed all 15 new source tests. A fresh installed compiled consumer also passed. [Local proof](evidence/kernel-session-strategy-local.json) binds source and test/review hashes.

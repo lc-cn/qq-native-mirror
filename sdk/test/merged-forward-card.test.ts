@@ -1,13 +1,90 @@
-import{test}from'node:test';import assert from'node:assert/strict';import{buildMergedForwardCard,type ForwardCardInput}from'../src/merged-forward-card.ts';
-const input:ForwardCardInput={resourceId:'resource-fixture',cardId:'12345678-1234-4123-8123-123456789abc',nodes:[{displayName:'Alice',text:'A中😀'}]};
-test('exact protocol envelope and caller identities, owned defaults and explicit options',()=>{
- const element=buildMergedForwardCard(input);assert.deepEqual({...element,arkElement:undefined},{elementType:10,elementId:'',arkElement:undefined});const body=JSON.parse(element.arkElement.bytesData);
- assert.deepEqual(body,{app:'com.tencent.multimsg',ver:'0.0.0.5',view:'contact',config:{autosize:1,forward:1,round:1,type:'normal',width:300},extra:{filename:input.cardId,tsum:1},meta:{detail:{resid:input.resourceId,uniseq:input.cardId,news:[{text:'Alice:A中😀'}],source:'聊天记录',summary:'查看1条消息'}},desc:'[聊天记录]',prompt:'[聊天记录]'});
- const custom=JSON.parse(buildMergedForwardCard({...input,options:{title:'群记录',summary:'summary',prompt:'提示'}}).arkElement.bytesData);assert.equal(custom.meta.detail.source,'群记录');assert.equal(custom.meta.detail.summary,'summary');assert.equal(custom.prompt,'提示');assert.equal(custom.desc,'提示');assert.deepEqual(buildMergedForwardCard(input),element);
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import {
+  buildMergedForwardCard,
+  type ForwardCardInput,
+} from '../src/features/forward/merged-forward-card.ts';
+const input: ForwardCardInput = {
+  resourceId: 'resource-fixture',
+  cardId: '12345678-1234-4123-8123-123456789abc',
+  nodes: [{ displayName: 'Alice', text: 'A中😀' }],
+};
+test('exact protocol envelope and caller identities, owned defaults and explicit options', () => {
+  const element = buildMergedForwardCard(input);
+  assert.deepEqual(
+    { ...element, arkElement: undefined },
+    { elementType: 10, elementId: '', arkElement: undefined },
+  );
+  const body = JSON.parse(element.arkElement.bytesData);
+  assert.deepEqual(body, {
+    app: 'com.tencent.multimsg',
+    ver: '0.0.0.5',
+    view: 'contact',
+    config: { autosize: 1, forward: 1, round: 1, type: 'normal', width: 300 },
+    extra: { filename: input.cardId, tsum: 1 },
+    meta: {
+      detail: {
+        resid: input.resourceId,
+        uniseq: input.cardId,
+        news: [{ text: 'Alice:A中😀' }],
+        source: '聊天记录',
+        summary: '查看1条消息',
+      },
+    },
+    desc: '[聊天记录]',
+    prompt: '[聊天记录]',
+  });
+  const custom = JSON.parse(
+    buildMergedForwardCard({
+      ...input,
+      options: { title: '群记录', summary: 'summary', prompt: '提示' },
+    }).arkElement.bytesData,
+  );
+  assert.equal(custom.meta.detail.source, '群记录');
+  assert.equal(custom.meta.detail.summary, 'summary');
+  assert.equal(custom.prompt, '提示');
+  assert.equal(custom.desc, '提示');
+  assert.deepEqual(buildMergedForwardCard(input), element);
 });
-test('preview clipping is codepoint-safe, ordered and does not mutate full text input',()=>{
- const source={...input,nodes:[{displayName:'A',text:'😀'.repeat(180)},{displayName:'A',text:'second'}]};const snapshot=structuredClone(source);const body=JSON.parse(buildMergedForwardCard(source).arkElement.bytesData);assert.equal(Array.from(body.meta.detail.news[0].text).length,160);assert.ok(body.meta.detail.news[0].text.endsWith('…'));assert.equal(body.meta.detail.news[1].text,'A:second');assert.equal(body.extra.tsum,2);assert.deepEqual(source,snapshot);
+test('preview clipping is codepoint-safe, ordered and does not mutate full text input', () => {
+  const source = {
+    ...input,
+    nodes: [
+      { displayName: 'A', text: '😀'.repeat(180) },
+      { displayName: 'A', text: 'second' },
+    ],
+  };
+  const snapshot = structuredClone(source);
+  const body = JSON.parse(buildMergedForwardCard(source).arkElement.bytesData);
+  assert.equal(Array.from(body.meta.detail.news[0].text).length, 160);
+  assert.ok(body.meta.detail.news[0].text.endsWith('…'));
+  assert.equal(body.meta.detail.news[1].text, 'A:second');
+  assert.equal(body.extra.tsum, 2);
+  assert.deepEqual(source, snapshot);
 });
-test('strict structure/UUID/UTF8/bounds reject malformed nodes and unsupported data',()=>{
- const mutations:Array<(v:any)=>void>=[v=>v.nodes=Array(1),v=>v.nodes=[],v=>v.nodes=Array(101).fill(input.nodes[0]),v=>v.cardId='uuid',v=>v.cardId='12345678-1234-0123-8123-123456789abc',v=>v.cardId='12345678-1234-4123-0123-123456789abc',v=>v.resourceId='',v=>v.resourceId='x'.repeat(4097),v=>v.resourceId='中'.repeat(1366),v=>v.nodes[0].text='\ud800',v=>v.nodes[0].displayName='\udc00',v=>v.nodes[0].image='unsupported',v=>v.nodes[0].text='x'.repeat(1024*1024),v=>v.options={title:'',extra:true},v=>v.options={prompt:'\ud800'},v=>v.options={summary:'\0'.repeat(200000)},v=>v.extra=true];for(const mutate of mutations){const value=structuredClone(input);mutate(value);assert.throws(()=>buildMergedForwardCard(value));}
+test('strict structure/UUID/UTF8/bounds reject malformed nodes and unsupported data', () => {
+  const mutations: Array<(v: any) => void> = [
+    (v) => (v.nodes = Array(1)),
+    (v) => (v.nodes = []),
+    (v) => (v.nodes = Array(101).fill(input.nodes[0])),
+    (v) => (v.cardId = 'uuid'),
+    (v) => (v.cardId = '12345678-1234-0123-8123-123456789abc'),
+    (v) => (v.cardId = '12345678-1234-4123-0123-123456789abc'),
+    (v) => (v.resourceId = ''),
+    (v) => (v.resourceId = 'x'.repeat(4097)),
+    (v) => (v.resourceId = '中'.repeat(1366)),
+    (v) => (v.nodes[0].text = '\ud800'),
+    (v) => (v.nodes[0].displayName = '\udc00'),
+    (v) => (v.nodes[0].image = 'unsupported'),
+    (v) => (v.nodes[0].text = 'x'.repeat(1024 * 1024)),
+    (v) => (v.options = { title: '', extra: true }),
+    (v) => (v.options = { prompt: '\ud800' }),
+    (v) => (v.options = { summary: '\0'.repeat(200000) }),
+    (v) => (v.extra = true),
+  ];
+  for (const mutate of mutations) {
+    const value = structuredClone(input);
+    mutate(value);
+    assert.throws(() => buildMergedForwardCard(value));
+  }
 });

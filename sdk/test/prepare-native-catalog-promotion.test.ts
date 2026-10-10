@@ -1,6 +1,61 @@
-import {test} from 'node:test';import assert from 'node:assert/strict';
-import {planNativeCatalogPromotion} from '../scripts/prepare-native-catalog-promotion.mjs';
-const oldBytes=Buffer.from(JSON.stringify({schemaVersion:1,packages:[['linux','arm64','3.2.31-51102'],['linux','x64','3.2.31-51102'],['linux','arm64','3.2.32-52194'],['linux','x64','3.2.32-52194'],['darwin','arm64','7.0.2-53644'],['darwin','x64','7.0.2-53644'],['win32','arm64','9.9.33-52230'],['win32','x64','9.9.33-52230']].map(([platform,arch,clientVersion])=>({platform,arch,version:{clientVersion,appId:'123',qua:'fixture'},manifestUrl:`https://example.test/old/${platform}/${arch}/${clientVersion}`,manifestSha256:'b'.repeat(64)}))})+'\n');
-function updates(){return{schemaVersion:1,packages:JSON.parse(oldBytes.toString()).packages.filter((p:any)=>p.version.clientVersion!=='3.2.31-51102').map((p:any)=>({...p,manifestUrl:'https://example.test/new/'+p.platform+'/'+p.arch,manifestSha256:'a'.repeat(64)}))};}
-test('replaces exactly six entries, retains old Linux versions and exact-byte backup identity',()=>{const r=planNativeCatalogPromotion(oldBytes,updates());assert.equal(r.catalog.packages.length,8);assert.equal(r.changes.length,6);assert.equal(r.retained.length,2);assert.ok(r.retained.every((p:any)=>p.version.clientVersion==='3.2.31-51102'));assert.match(r.backupPath,new RegExp(r.backupSha256));assert.equal(new Set(r.catalog.packages.map((p:any)=>`${p.platform}/${p.arch}/${p.version.clientVersion}`)).size,8);});
-test('rejects duplicate device, new QQ version or changed configuration',()=>{for(const change of [(u:any)=>u.packages[1]=u.packages[0],(u:any)=>u.packages[0].version={...u.packages[0].version,clientVersion:'99.0.0'},(u:any)=>u.packages[0].version={...u.packages[0].version,appId:'wrong'}]){const u=updates();change(u);assert.throws(()=>planNativeCatalogPromotion(oldBytes,u));}});
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { planNativeCatalogPromotion } from '../scripts/prepare-native-catalog-promotion.mjs';
+const oldBytes = Buffer.from(
+  JSON.stringify({
+    schemaVersion: 1,
+    packages: [
+      ['linux', 'arm64', '3.2.31-51102'],
+      ['linux', 'x64', '3.2.31-51102'],
+      ['linux', 'arm64', '3.2.32-52194'],
+      ['linux', 'x64', '3.2.32-52194'],
+      ['darwin', 'arm64', '7.0.2-53644'],
+      ['darwin', 'x64', '7.0.2-53644'],
+      ['win32', 'arm64', '9.9.33-52230'],
+      ['win32', 'x64', '9.9.33-52230'],
+    ].map(([platform, arch, clientVersion]) => ({
+      platform,
+      arch,
+      version: { clientVersion, appId: '123', qua: 'fixture' },
+      manifestUrl: `https://example.test/old/${platform}/${arch}/${clientVersion}`,
+      manifestSha256: 'b'.repeat(64),
+    })),
+  }) + '\n',
+);
+function updates() {
+  return {
+    schemaVersion: 1,
+    packages: JSON.parse(oldBytes.toString())
+      .packages.filter((p: any) => p.version.clientVersion !== '3.2.31-51102')
+      .map((p: any) => ({
+        ...p,
+        manifestUrl: 'https://example.test/new/' + p.platform + '/' + p.arch,
+        manifestSha256: 'a'.repeat(64),
+      })),
+  };
+}
+test('replaces exactly six entries, retains old Linux versions and exact-byte backup identity', () => {
+  const r = planNativeCatalogPromotion(oldBytes, updates());
+  assert.equal(r.catalog.packages.length, 8);
+  assert.equal(r.changes.length, 6);
+  assert.equal(r.retained.length, 2);
+  assert.ok(r.retained.every((p: any) => p.version.clientVersion === '3.2.31-51102'));
+  assert.match(r.backupPath, new RegExp(r.backupSha256));
+  assert.equal(
+    new Set(
+      r.catalog.packages.map((p: any) => `${p.platform}/${p.arch}/${p.version.clientVersion}`),
+    ).size,
+    8,
+  );
+});
+test('rejects duplicate device, new QQ version or changed configuration', () => {
+  for (const change of [
+    (u: any) => (u.packages[1] = u.packages[0]),
+    (u: any) => (u.packages[0].version = { ...u.packages[0].version, clientVersion: '99.0.0' }),
+    (u: any) => (u.packages[0].version = { ...u.packages[0].version, appId: 'wrong' }),
+  ]) {
+    const u = updates();
+    change(u);
+    assert.throws(() => planNativeCatalogPromotion(oldBytes, u));
+  }
+});

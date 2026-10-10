@@ -17,12 +17,12 @@ for (const operation of ['getHistory', 'getMessage', 'getMessages', 'uidLookup']
         return new Promise((_resolve, reject) => { rejectLate = reject; });
       };
       const uid = ${JSON.stringify(operation)} === 'uidLookup';
-      services = createNativeServices({
+      services = createNativeServices({ session: {
         getMsgService: () => ({ addKernelMsgListener() {}, getMsgsIncludeSelf: native, getMsgsByMsgId: native }),
         getBuddyService: () => ({ addKernelBuddyListener() {} }),
         getGroupService: () => ({ addKernelGroupListener() {} }),
         getUixConvertService: () => ({ getUid: native }),
-      }, '7.0.2-53644', () => {});
+      }, version: '7.0.2-53644', events: { emit: () => {} } });
       const method = uid ? 'getHistory' : ${JSON.stringify(operation)};
       const peer = uid ? {type:'private',userId:'456'} : {type:'group',groupId:'123'};
       const result = services.invokeOperation(method, {peer,messageId:'42',messageIds:['42']});
@@ -35,7 +35,10 @@ for (const operation of ['getHistory', 'getMessage', 'getMessages', 'uidLookup']
       assert.equal(calls, 1);
       console.log(JSON.stringify({operation:${JSON.stringify(operation)},calls,unhandled}));
     `;
-    const child = spawnSync(process.execPath, ['--input-type=module', '-e', script], { encoding: 'utf8', timeout: 5000 });
+    const child = spawnSync(process.execPath, ['--input-type=module', '-e', script], {
+      encoding: 'utf8',
+      timeout: 5000,
+    });
     assert.equal(child.status, 0, child.stderr || String(child.error));
     assert.deepEqual(JSON.parse(child.stdout), { operation, calls: 1, unhandled: 0 });
   });

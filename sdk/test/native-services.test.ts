@@ -11,85 +11,230 @@ function fixture(version = '7.0.2-53644') {
   const sentCalls: any[][] = [];
   const events: any[] = [];
   const msg = {
-    addKernelMsgListener(listener: any) { msgListener = listener; },
-    generateMsgUniqueId(chatType: number, time: string) { assert.equal(chatType, 2); assert.equal(time, '100'); return 'unique'; },
+    addKernelMsgListener(listener: any) {
+      msgListener = listener;
+    },
+    generateMsgUniqueId(chatType: number, time: string) {
+      assert.equal(chatType, 2);
+      assert.equal(time, '100');
+      return 'unique';
+    },
     sendMsg(...args: any[]) {
       sentCalls.push(args);
       msgListener.onMsgInfoListUpdate([{ guildId: 'unrelated', sendStatus: 2 }]);
       msgListener.onMsgInfoListUpdate([{ guildId: 'unique', sendStatus: 1 }]);
-      queueMicrotask(() => msgListener.onMsgInfoListUpdate([{ guildId: 'unique', sendStatus: 2, msgId: '42', msgSeq: '9', msgTime: '100' }]));
+      queueMicrotask(() =>
+        msgListener.onMsgInfoListUpdate([
+          { guildId: 'unique', sendStatus: 2, msgId: '42', msgSeq: '9', msgTime: '100' },
+        ]),
+      );
       return Promise.resolve({ result: 0 });
     },
-    getMsgsIncludeSelf(peer: any, before: string, count: number, reverse: boolean) { assert.equal(peer.peerUid, '123'); assert.equal(before, '42'); assert.equal(count, 2); assert.equal(reverse, false); return { result: 0, msgList: [] }; },
+    getMsgsIncludeSelf(peer: any, before: string, count: number, reverse: boolean) {
+      assert.equal(peer.peerUid, '123');
+      assert.equal(before, '42');
+      assert.equal(count, 2);
+      assert.equal(reverse, false);
+      return { result: 0, msgList: [] };
+    },
   };
   const session = {
     getMsgService: () => msg,
-    getGroupService: () => ({ addKernelGroupListener(listener: any) { groupListeners.push(listener); return groupListeners.length; }, removeKernelGroupListener(id: number) { groupListeners[id - 1] = undefined; }, getGroupList() { for (const listener of groupListeners.filter(Boolean)) { listener.onGroupListUpdate(4, []); listener.onGroupListUpdate(2, []); listener.onGroupListUpdate(1, [{ groupCode: '123', groupName: 'group', memberCount: 2, maxMember: 100 }]); } return {result:0}; } }),
+    getGroupService: () => ({
+      addKernelGroupListener(listener: any) {
+        groupListeners.push(listener);
+        return groupListeners.length;
+      },
+      removeKernelGroupListener(id: number) {
+        groupListeners[id - 1] = undefined;
+      },
+      getGroupList() {
+        for (const listener of groupListeners.filter(Boolean)) {
+          listener.onGroupListUpdate(4, []);
+          listener.onGroupListUpdate(2, []);
+          listener.onGroupListUpdate(1, [
+            { groupCode: '123', groupName: 'group', memberCount: 2, maxMember: 100 },
+          ]);
+        }
+        return { result: 0 };
+      },
+    }),
     getMSFService: () => ({ getServerTime: () => '100' }),
-    getBuddyService: () => ({ addKernelBuddyListener() { return 1; }, getBuddyListV2(...args: any[]) { assert.deepEqual(args, ['0', true, 0]); return { result: 0, data: [{ buddyUids: ['u_a'] }] }; } }),
-    getProfileService: () => ({ getCoreAndBaseInfo(store: string, uids: string[]) { assert.equal(store, 'nodeStore'); assert.deepEqual(uids, ['u_a']); return new Map([['u_a', { coreInfo: { uid: 'u_a', uin: '456', nick: 'friend', remark: 'remark' } }]]); } }),
+    getBuddyService: () => ({
+      addKernelBuddyListener() {
+        return 1;
+      },
+      getBuddyListV2(...args: any[]) {
+        assert.deepEqual(args, ['0', true, 0]);
+        return { result: 0, data: [{ buddyUids: ['u_a'] }] };
+      },
+    }),
+    getProfileService: () => ({
+      getCoreAndBaseInfo(store: string, uids: string[]) {
+        assert.equal(store, 'nodeStore');
+        assert.deepEqual(uids, ['u_a']);
+        return new Map([
+          ['u_a', { coreInfo: { uid: 'u_a', uin: '456', nick: 'friend', remark: 'remark' } }],
+        ]);
+      },
+    }),
   };
-  return { services: createNativeServices(session, version, (event, value) => events.push([event, value])), sentCalls, events, msg, listener: () => msgListener };
+  return {
+    services: createNativeServices({
+      session: session,
+      version: version,
+      events: { emit: (event, value) => events.push([event, value]) },
+    }),
+    sentCalls,
+    events,
+    msg,
+    listener: () => msgListener,
+  };
 }
 
 test('signature dispatch uses the authenticated UID and Session close cancels a pending profile mutation', async () => {
   let profileListener: any;
   let holdLookup = false;
   const writes: unknown[] = [];
-  const detail = { uid: 'u_self', simpleInfo: { coreInfo: { nick: 'existing nickname' }, baseInfo: { longNick: 'old', sex: 255, birthday_year: 2000, birthday_month: 1, birthday_day: 2 } } };
+  const detail = {
+    uid: 'u_self',
+    simpleInfo: {
+      coreInfo: { nick: 'existing nickname' },
+      baseInfo: {
+        longNick: 'old',
+        sex: 255,
+        birthday_year: 2000,
+        birthday_month: 1,
+        birthday_day: 2,
+      },
+    },
+  };
   const session = {
     getMsgService: () => ({ addKernelMsgListener() {} }),
-    getGroupService: () => ({ addKernelGroupListener() { return 1; } }),
-    getBuddyService: () => ({ addKernelBuddyListener() { return 1; } }),
+    getGroupService: () => ({
+      addKernelGroupListener() {
+        return 1;
+      },
+    }),
+    getBuddyService: () => ({
+      addKernelBuddyListener() {
+        return 1;
+      },
+    }),
     getProfileService: () => ({
-      addKernelProfileListener(listener: any) { profileListener = listener; return 3; },
-      removeKernelProfileListener(id: number) { assert.equal(id, 3); },
+      addKernelProfileListener(listener: any) {
+        profileListener = listener;
+        return 3;
+      },
+      removeKernelProfileListener(id: number) {
+        assert.equal(id, 3);
+      },
       async fetchUserDetailInfo(store: string, uids: string[], source: number, fields: number[]) {
         assert.deepEqual([store, uids, source, fields], ['BuddyProfileStore', ['u_self'], 1, [0]]);
         if (!holdLookup) profileListener.onUserDetailInfoChanged(detail);
         return { result: 0 };
       },
-      async modifyDesktopMiniProfile(value: unknown) { writes.push(value); return { result: 0 }; },
+      async modifyDesktopMiniProfile(value: unknown) {
+        writes.push(value);
+        return { result: 0 };
+      },
     }),
   };
-  const services = createNativeServices(session, '7.0.2-53644', () => {}, undefined, undefined, '456', 'u_self');
+  const services = createNativeServices({
+    session: session,
+    version: '7.0.2-53644',
+    events: { emit: () => {} },
+    identity: { userId: '456', uid: 'u_self' },
+  });
   try {
     await services.invokeOperation('setSignature', { text: '' });
-    assert.deepEqual(writes, [{ nick: 'existing nickname', longNick: '', sex: 255, birthday: { birthday_year: '2000', birthday_month: '1', birthday_day: '2' }, location: undefined }]);
+    assert.deepEqual(writes, [
+      {
+        nick: 'existing nickname',
+        longNick: '',
+        sex: 255,
+        birthday: { birthday_year: '2000', birthday_month: '1', birthday_day: '2' },
+        location: undefined,
+      },
+    ]);
     holdLookup = true;
-    const stopped = assert.rejects(services.invokeOperation('setSignature', { text: 'must not be written' }), /closed/);
-    await new Promise(resolve => setImmediate(resolve));
+    const stopped = assert.rejects(
+      services.invokeOperation('setSignature', { text: 'must not be written' }),
+      /closed/,
+    );
+    await new Promise((resolve) => setImmediate(resolve));
     services.close();
     await stopped;
     profileListener.onUserDetailInfoChanged(detail);
     await assert.rejects(services.invokeOperation('setSignature', { text: 'closed' }), /closed/);
     assert.equal(writes.length, 1, 'late profile callbacks cannot cause a new write');
-  } finally { services.close(); }
+  } finally {
+    services.close();
+  }
 });
 
 test('send correlates successful native update and encodes text without mutating peer', async () => {
   const { services, sentCalls } = fixture();
   try {
-    const sent = await services.invokeOperation('sendGroupMessage', { groupId: '123', message: 'hello' });
+    const sent = await services.invokeOperation('sendGroupMessage', {
+      groupId: '123',
+      message: 'hello',
+    });
     assert.deepEqual(sent, { messageId: '42', sequence: '9', time: 100 });
     assert.equal(sentCalls.length, 1);
-    assert.deepEqual(sentCalls[0]?.slice(0, 3), ['0', { chatType: 2, peerUid: '123', guildId: 'unique' }, [{ elementType: 1, elementId: '', textElement: { content: 'hello', atType: 0, atUid: '', atTinyId: '', atNtUid: '' } }]]);
+    assert.deepEqual(sentCalls[0]?.slice(0, 3), [
+      '0',
+      { chatType: 2, peerUid: '123', guildId: 'unique' },
+      [
+        {
+          elementType: 1,
+          elementId: '',
+          textElement: { content: 'hello', atType: 0, atUid: '', atTinyId: '', atNtUid: '' },
+        },
+      ],
+    ]);
     assert.ok(sentCalls[0]?.[3] instanceof Map);
-  } finally { services.close(); }
+  } finally {
+    services.close();
+  }
 });
 
-for (const version of ['7.0.2-53644', '3.2.32-52194', '9.9.33-52230']) test(`read-only lists and history map contract fields for ${version}`, async () => {
-  const { services } = fixture(version);
-  try {
-    assert.deepEqual(await services.invokeOperation('listFriends'), [{ userId: '456', uid: 'u_a', nickname: 'friend', remark: 'remark' }]);
-    assert.deepEqual(await services.invokeOperation('listGroups'), [{ groupId: '123', name: 'group', memberCount: 2, maxMemberCount: 100 }]);
-    assert.deepEqual(await services.invokeOperation('getHistory', { peer: { type: 'group', groupId: '123' }, options: { before: '42', limit: 2 } }), []);
-  } finally { services.close(); }
-});
+for (const version of ['7.0.2-53644', '3.2.32-52194', '9.9.33-52230'])
+  test(`read-only lists and history map contract fields for ${version}`, async () => {
+    const { services } = fixture(version);
+    try {
+      assert.deepEqual(await services.invokeOperation('listFriends'), [
+        { userId: '456', uid: 'u_a', nickname: 'friend', remark: 'remark' },
+      ]);
+      assert.deepEqual(await services.invokeOperation('listGroups'), [
+        { groupId: '123', name: 'group', memberCount: 2, maxMemberCount: 100 },
+      ]);
+      assert.deepEqual(
+        await services.invokeOperation('getHistory', {
+          peer: { type: 'group', groupId: '123' },
+          options: { before: '42', limit: 2 },
+        }),
+        [],
+      );
+    } finally {
+      services.close();
+    }
+  });
 
 test('incoming message emits typed message once with raw evidence retained', () => {
   const { services, events, listener } = fixture();
-  const raw = { msgId: '1', msgSeq: '2', msgTime: '100', chatType: 1, peerUid: 'u_a', peerUin: '456', senderUin: '456', senderUid: 'u_a', sendNickName: 'friend', elements: [{ textElement: { content: 'hi', atType: 0 } }] };
+  const raw = {
+    msgId: '1',
+    msgSeq: '2',
+    msgTime: '100',
+    chatType: 1,
+    peerUid: 'u_a',
+    peerUin: '456',
+    senderUin: '456',
+    senderUid: 'u_a',
+    sendNickName: 'friend',
+    elements: [{ textElement: { content: 'hi', atType: 0 } }],
+  };
   listener().onRecvMsg([raw]);
   assert.equal(events[0][0], 'message');
   assert.equal(events.length, 1);
@@ -102,42 +247,74 @@ test('incoming message emits typed message once with raw evidence retained', () 
 
 test('group member query separates completed empty lists from native failure and partial lists', async () => {
   const member = { uin: '456', uid: 'u_member', nick: 'member', cardName: '', role: 2 };
-  const complete = (infos: Map<string, unknown> = new Map()) => ({ errCode: 0, result: { infos, finish: true } });
+  const complete = (infos: Map<string, unknown> = new Map()) => ({
+    errCode: 0,
+    result: { infos, finish: true },
+  });
   let response: unknown = complete();
   let calls = 0;
   const session = {
     getMsgService: () => ({ addKernelMsgListener() {} }),
     getBuddyService: () => ({ addKernelBuddyListener() {} }),
-    getGroupService: () => ({ addKernelGroupListener() {}, getAllMemberList(groupId: string, refresh: boolean) {
-      assert.deepEqual([groupId, refresh], ['123', false]); calls++; return response;
-    } }),
+    getGroupService: () => ({
+      addKernelGroupListener() {},
+      getAllMemberList(groupId: string, refresh: boolean) {
+        assert.deepEqual([groupId, refresh], ['123', false]);
+        calls++;
+        return response;
+      },
+    }),
   };
-  const services = createNativeServices(session, '7.0.2-53644', () => {});
+  const services = createNativeServices({
+    session: session,
+    version: '7.0.2-53644',
+    events: { emit: () => {} },
+  });
   try {
     assert.deepEqual(await services.invokeOperation('getGroupMembers', { groupId: '123' }), []);
     response = complete(new Map([['u_member', member]]));
-    assert.deepEqual(await services.invokeOperation('getGroupMembers', { groupId: '123' }), [{ userId: '456', uid: 'u_member', nickname: 'member', card: '', role: 'member' }]);
+    assert.deepEqual(await services.invokeOperation('getGroupMembers', { groupId: '123' }), [
+      { userId: '456', uid: 'u_member', nickname: 'member', card: '', role: 'member' },
+    ]);
     for (const [value, code] of [
       [{ errCode: 73, result: { infos: new Map(), finish: true } }, 73],
-      [{ errCode: 'denied', credential: 'fixture-secret', result: { infos: new Map(), finish: true } }, 'denied'],
+      [
+        {
+          errCode: 'denied',
+          credential: 'fixture-secret',
+          result: { infos: new Map(), finish: true },
+        },
+        'denied',
+      ],
       [{ errCode: NaN, result: { infos: new Map(), finish: true } }, 'invalid-result'],
       [{ result: { infos: new Map(), finish: true } }, 'invalid-result'],
     ] as [unknown, string | number][]) {
       response = value;
-      await assert.rejects(services.invokeOperation('getGroupMembers', { groupId: '123' }), error => {
-        assert.equal((error as Error & { code: unknown }).code, code);
-        assert.doesNotMatch(JSON.stringify(error), /fixture-secret|credential/);
-        return true;
-      });
+      await assert.rejects(
+        services.invokeOperation('getGroupMembers', { groupId: '123' }),
+        (error) => {
+          assert.equal((error as Error & { code: unknown }).code, code);
+          assert.doesNotMatch(JSON.stringify(error), /fixture-secret|credential/);
+          return true;
+        },
+      );
     }
     for (const finish of [false, undefined, 1, 'true']) {
       response = { errCode: 0, result: { infos: new Map([['u_member', member]]), finish } };
-      await assert.rejects(services.invokeOperation('getGroupMembers', { groupId: '123' }), /incomplete/);
+      await assert.rejects(
+        services.invokeOperation('getGroupMembers', { groupId: '123' }),
+        /incomplete/,
+      );
     }
     response = { errCode: 0, result: { infos: [], finish: true } };
-    await assert.rejects(services.invokeOperation('getGroupMembers', { groupId: '123' }), /member map/);
+    await assert.rejects(
+      services.invokeOperation('getGroupMembers', { groupId: '123' }),
+      /member map/,
+    );
     assert.equal(calls, 11, 'one query per call, without automatic retries');
-  } finally { services.close(); }
+  } finally {
+    services.close();
+  }
 });
 
 test('group metadata callbacks preserve query completion and stop after Session close', async () => {
@@ -147,133 +324,295 @@ test('group metadata callbacks preserve query completion and stop after Session 
     getMsgService: () => ({ addKernelMsgListener() {} }),
     getBuddyService: () => ({ addKernelBuddyListener() {} }),
     getGroupService: () => ({
-      addKernelGroupListener(value: any) { if (!listener) listener = value; },
+      addKernelGroupListener(value: any) {
+        if (!listener) listener = value;
+      },
       getGroupList() {
         listener.onGroupListUpdate(2, [{ groupCode: '123', groupName: 'modified' }]);
-        listener.onGroupListUpdate(1, [{ groupCode: '123', groupName: 'all', memberCount: 2, maxMember: 100 }]);
+        listener.onGroupListUpdate(1, [
+          { groupCode: '123', groupName: 'all', memberCount: 2, maxMember: 100 },
+        ]);
         return { result: 0 };
       },
     }),
   };
-  const services = createNativeServices(session, '7.0.2-53644', (name, value) => events.push([name, value]));
+  const services = createNativeServices({
+    session: session,
+    version: '7.0.2-53644',
+    events: { emit: (name, value) => events.push([name, value]) },
+  });
   try {
-    assert.deepEqual(await services.invokeOperation('listGroups'), [{ groupId: '123', name: 'all', memberCount: 2, maxMemberCount: 100 }]);
-    listener.onMemberInfoChange('123', 1, new Map([['u', { uid: 'u', uin: '456', role: 3, isChangeRole: true }]]));
-    assert.deepEqual(events.map(([name]) => name), ['group-list-updated', 'group-list-updated', 'group-members-updated']);
-    assert.equal(events[0][1].kind, 'modified'); assert.equal(events[1][1].kind, 'all');
-    assert.deepEqual(events[2][1], { groupId: '123', source: 'remote', members: [{ uid: 'u', userId: '456', role: 'admin', roleChanged: true }] });
+    assert.deepEqual(await services.invokeOperation('listGroups'), [
+      { groupId: '123', name: 'all', memberCount: 2, maxMemberCount: 100 },
+    ]);
+    listener.onMemberInfoChange(
+      '123',
+      1,
+      new Map([['u', { uid: 'u', uin: '456', role: 3, isChangeRole: true }]]),
+    );
+    assert.deepEqual(
+      events.map(([name]) => name),
+      ['group-list-updated', 'group-list-updated', 'group-members-updated'],
+    );
+    assert.equal(events[0][1].kind, 'modified');
+    assert.equal(events[1][1].kind, 'all');
+    assert.deepEqual(events[2][1], {
+      groupId: '123',
+      source: 'remote',
+      members: [{ uid: 'u', userId: '456', role: 'admin', roleChanged: true }],
+    });
     services.close();
     listener.onGroupListUpdate(3, [{ groupCode: '123' }]);
     listener.onMemberInfoChange('123', 0, new Map());
     assert.equal(events.length, 3);
-  } finally { services.close(); }
+  } finally {
+    services.close();
+  }
 });
 
 test('nonlocal image input rejects without invoking native send', async () => {
   const { services, sentCalls } = fixture();
-  try { await assert.rejects(services.invokeOperation('sendGroupMessage', { groupId: '123', message: [{ type: 'image', file: 'https://example.test/image.png' }] }), /absolute local file path/); assert.equal(sentCalls.length, 0); }
-  finally { services.close(); }
+  try {
+    await assert.rejects(
+      services.invokeOperation('sendGroupMessage', {
+        groupId: '123',
+        message: [{ type: 'image', file: 'https://example.test/image.png' }],
+      }),
+      /absolute local file path/,
+    );
+    assert.equal(sentCalls.length, 0);
+  } finally {
+    services.close();
+  }
 });
 
 test('receive replay is deduplicated per conversation without suppressing history or other peers', async () => {
- const {services,events,listener}=fixture();
- try {
-  const raw={msgId:'42',msgSeq:'9',msgTime:'100',chatType:2,peerUid:'123',peerUin:'123',senderUin:'456',elements:[]};
-  listener().onRecvMsg([raw,raw]);
-  listener().onRecvMsg([{...raw}, {...raw,peerUid:'456'}, {...raw,chatType:1}]);
-  assert.equal(events.filter(([event])=>event==='message').length,3);
-  await services.invokeOperation('getHistory',{peer:{type:'group',groupId:'123'},options:{before:'42',limit:2}});
-  listener().onMsgInfoListUpdate([{...raw,recallTime:'101'}]);
-  assert.equal(events.filter(([event])=>event==='message-recalled').length,1);
- }finally{services.close();}
+  const { services, events, listener } = fixture();
+  try {
+    const raw = {
+      msgId: '42',
+      msgSeq: '9',
+      msgTime: '100',
+      chatType: 2,
+      peerUid: '123',
+      peerUin: '123',
+      senderUin: '456',
+      elements: [],
+    };
+    listener().onRecvMsg([raw, raw]);
+    listener().onRecvMsg([{ ...raw }, { ...raw, peerUid: '456' }, { ...raw, chatType: 1 }]);
+    assert.equal(events.filter(([event]) => event === 'message').length, 3);
+    await services.invokeOperation('getHistory', {
+      peer: { type: 'group', groupId: '123' },
+      options: { before: '42', limit: 2 },
+    });
+    listener().onMsgInfoListUpdate([{ ...raw, recallTime: '101' }]);
+    assert.equal(events.filter(([event]) => event === 'message-recalled').length, 1);
+  } finally {
+    services.close();
+  }
 });
 
 // A callback cannot override rejection of the native submission itself.
 test('failed submission retains native code even when success callback arrives first', async () => {
-  const {services,msg,listener,sentCalls}=fixture();
-  msg.sendMsg=(...args:any[])=>{
+  const { services, msg, listener, sentCalls } = fixture();
+  msg.sendMsg = (...args: any[]) => {
     sentCalls.push(args);
-    listener().onMsgInfoListUpdate([{guildId:'unique',sendStatus:2,msgId:'42',msgSeq:'9',msgTime:'100'}]);
-    return Promise.resolve({result:23});
+    listener().onMsgInfoListUpdate([
+      { guildId: 'unique', sendStatus: 2, msgId: '42', msgSeq: '9', msgTime: '100' },
+    ]);
+    return Promise.resolve({ result: 23 });
   };
   try {
-    await assert.rejects(services.invokeOperation('sendGroupMessage',{groupId:'123',message:'fixture only'}),{message:/Native operation rejected/,code:23});
-    assert.equal(sentCalls.length,1,'failed submissions are never retried');
-  } finally {services.close();}
+    await assert.rejects(
+      services.invokeOperation('sendGroupMessage', { groupId: '123', message: 'fixture only' }),
+      { message: /Native operation rejected/, code: 23 },
+    );
+    assert.equal(sentCalls.length, 1, 'failed submissions are never retried');
+  } finally {
+    services.close();
+  }
 });
 
 test('recall waits for the selected conversation as well as the message ID', async () => {
-  const {services,msg,listener}=fixture();
-  let settled=false,calls=0;
-  (msg as any).recallMsg=(peer:any,ids:string[])=>{
-    calls++;assert.deepEqual(peer,{chatType:2,peerUid:'123'});assert.deepEqual(ids,['42']);
-    listener().onMsgInfoListUpdate([{msgId:'42',chatType:2,peerUid:'other',recallTime:'101'}]);
-    listener().onMsgInfoListUpdate([{msgId:'42',chatType:1,peerUid:'123',recallTime:'101'}]);
-    return {result:0};
+  const { services, msg, listener } = fixture();
+  let settled = false,
+    calls = 0;
+  (msg as any).recallMsg = (peer: any, ids: string[]) => {
+    calls++;
+    assert.deepEqual(peer, { chatType: 2, peerUid: '123' });
+    assert.deepEqual(ids, ['42']);
+    listener().onMsgInfoListUpdate([
+      { msgId: '42', chatType: 2, peerUid: 'other', recallTime: '101' },
+    ]);
+    listener().onMsgInfoListUpdate([
+      { msgId: '42', chatType: 1, peerUid: '123', recallTime: '101' },
+    ]);
+    return { result: 0 };
   };
   try {
-    const pending=services.invokeOperation('recallMessage',{peer:{type:'group',groupId:'123'},messageId:'42'}).then(()=>{settled=true;});
-    await new Promise(resolve=>setImmediate(resolve));
-    assert.equal(settled,false,'unrelated notifications do not confirm recall');
-    listener().onMsgInfoListUpdate([{msgId:'42',chatType:2,peerUid:'123',recallTime:'101'}]);
-    await pending;assert.equal(settled,true);assert.equal(calls,1);
-  } finally {services.close();}
+    const pending = services
+      .invokeOperation('recallMessage', {
+        peer: { type: 'group', groupId: '123' },
+        messageId: '42',
+      })
+      .then(() => {
+        settled = true;
+      });
+    await new Promise((resolve) => setImmediate(resolve));
+    assert.equal(settled, false, 'unrelated notifications do not confirm recall');
+    listener().onMsgInfoListUpdate([
+      { msgId: '42', chatType: 2, peerUid: '123', recallTime: '101' },
+    ]);
+    await pending;
+    assert.equal(settled, true);
+    assert.equal(calls, 1);
+  } finally {
+    services.close();
+  }
 });
 
 test('closing services during UID lookup prevents a deferred group mutation', async () => {
-  let finishLookup:(value:any)=>void=()=>{},mutations=0,lookupStarted=false;
-  const session={
-    getMsgService:()=>({addKernelMsgListener(){}}),
-    getBuddyService:()=>({addKernelBuddyListener(){}}),
-    getGroupService:()=>({addKernelGroupListener(){},modifyMemberRole(){mutations++;return {result:0};}}),
-    getUixConvertService:()=>({getUid(){lookupStarted=true;return new Promise(resolve=>{finishLookup=resolve;});}}),
+  let finishLookup: (value: any) => void = () => {},
+    mutations = 0,
+    lookupStarted = false;
+  const session = {
+    getMsgService: () => ({ addKernelMsgListener() {} }),
+    getBuddyService: () => ({ addKernelBuddyListener() {} }),
+    getGroupService: () => ({
+      addKernelGroupListener() {},
+      modifyMemberRole() {
+        mutations++;
+        return { result: 0 };
+      },
+    }),
+    getUixConvertService: () => ({
+      getUid() {
+        lookupStarted = true;
+        return new Promise((resolve) => {
+          finishLookup = resolve;
+        });
+      },
+    }),
   };
-  const services=createNativeServices(session,'7.0.2-53644',()=>{});
-  const pending=services.invokeOperation('setGroupAdmin',{groupId:'123',userId:'456',enabled:true});
-  await new Promise(resolve=>setImmediate(resolve));assert.equal(lookupStarted,true);
-  services.close();finishLookup({uidInfo:new Map([['456','u_fixture']])});
-  await assert.rejects(pending,/closed/);assert.equal(mutations,0);
+  const services = createNativeServices({
+    session: session,
+    version: '7.0.2-53644',
+    events: { emit: () => {} },
+  });
+  const pending = services.invokeOperation('setGroupAdmin', {
+    groupId: '123',
+    userId: '456',
+    enabled: true,
+  });
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(lookupStarted, true);
+  services.close();
+  finishLookup({ uidInfo: new Map([['456', 'u_fixture']]) });
+  await assert.rejects(pending, /closed/);
+  assert.equal(mutations, 0);
 });
 
 test('close during local image preparation prevents native staging and send', async () => {
-  const directory=await mkdtemp(join(tmpdir(),'qq-close-image-'));
-  const {services,msg,sentCalls}=fixture();let staged=0;
-  (msg as any).getRichMediaFilePathForGuild=()=>{staged++;return join(directory,'staged.png');};
+  const directory = await mkdtemp(join(tmpdir(), 'qq-close-image-'));
+  const { services, msg, sentCalls } = fixture();
+  let staged = 0;
+  (msg as any).getRichMediaFilePathForGuild = () => {
+    staged++;
+    return join(directory, 'staged.png');
+  };
   try {
-    const file=join(directory,'input.png'),png=Buffer.alloc(24);
-    Buffer.from('89504e470d0a1a0a','hex').copy(png);png.writeUInt32BE(1,16);png.writeUInt32BE(1,20);await writeFile(file,png);
-    const pending=services.invokeOperation('sendGroupMessage',{groupId:'123',message:[{type:'image',file}]});
+    const file = join(directory, 'input.png'),
+      png = Buffer.alloc(24);
+    Buffer.from('89504e470d0a1a0a', 'hex').copy(png);
+    png.writeUInt32BE(1, 16);
+    png.writeUInt32BE(1, 20);
+    await writeFile(file, png);
+    const pending = services.invokeOperation('sendGroupMessage', {
+      groupId: '123',
+      message: [{ type: 'image', file }],
+    });
     services.close();
-    await assert.rejects(pending,/closed/);assert.equal(staged,0);assert.equal(sentCalls.length,0);
-  } finally {services.close();await rm(directory,{recursive:true,force:true});}
+    await assert.rejects(pending, /closed/);
+    assert.equal(staged, 0);
+    assert.equal(sentCalls.length, 0);
+  } finally {
+    services.close();
+    await rm(directory, { recursive: true, force: true });
+  }
 });
 
 test('friend listing rejects incomplete profiles rather than returning partial success', async () => {
-  const session={getMsgService:()=>({addKernelMsgListener(){}}),getGroupService:()=>({addKernelGroupListener(){}}),
-    getBuddyService:()=>({addKernelBuddyListener(){},getBuddyListV2(){return {result:0,data:[{buddyUids:['u_a','u_b']}]};}}),
-    getProfileService:()=>({getCoreAndBaseInfo(){return new Map([['u_a',{coreInfo:{uid:'u_a',uin:'456',nick:'fixture',remark:''}}]]);}})};
-  const services=createNativeServices(session,'7.0.2-53644',()=>{});
-  try {await assert.rejects(services.invokeOperation('listFriends'),/incomplete/);} finally {services.close();}
+  const session = {
+    getMsgService: () => ({ addKernelMsgListener() {} }),
+    getGroupService: () => ({ addKernelGroupListener() {} }),
+    getBuddyService: () => ({
+      addKernelBuddyListener() {},
+      getBuddyListV2() {
+        return { result: 0, data: [{ buddyUids: ['u_a', 'u_b'] }] };
+      },
+    }),
+    getProfileService: () => ({
+      getCoreAndBaseInfo() {
+        return new Map([
+          ['u_a', { coreInfo: { uid: 'u_a', uin: '456', nick: 'fixture', remark: '' } }],
+        ]);
+      },
+    }),
+  };
+  const services = createNativeServices({
+    session: session,
+    version: '7.0.2-53644',
+    events: { emit: () => {} },
+  });
+  try {
+    await assert.rejects(services.invokeOperation('listFriends'), /incomplete/);
+  } finally {
+    services.close();
+  }
 });
 
 test('friend listing rejects native query errors before profiles and preserves successful empty lists', async () => {
-  let response: unknown = { result: 73, data: [] }, queries = 0, profileReads = 0;
+  let response: unknown = { result: 73, data: [] },
+    queries = 0,
+    profileReads = 0;
   const services = createNativeServices({
-    getMsgService: () => ({ addKernelMsgListener() {} }),
-    getGroupService: () => ({ addKernelGroupListener() {} }),
-    getBuddyService: () => ({ addKernelBuddyListener() {}, getBuddyListV2(...args: unknown[]) {
-      assert.deepEqual(args, ['0', true, 0]); queries++; return response;
-    } }),
-    getProfileService: () => ({ getCoreAndBaseInfo() { profileReads++; return new Map(); } }),
-  }, '7.0.2-53644', () => {});
+    session: {
+      getMsgService: () => ({ addKernelMsgListener() {} }),
+      getGroupService: () => ({ addKernelGroupListener() {} }),
+      getBuddyService: () => ({
+        addKernelBuddyListener() {},
+        getBuddyListV2(...args: unknown[]) {
+          assert.deepEqual(args, ['0', true, 0]);
+          queries++;
+          return response;
+        },
+      }),
+      getProfileService: () => ({
+        getCoreAndBaseInfo() {
+          profileReads++;
+          return new Map();
+        },
+      }),
+    },
+    version: '7.0.2-53644',
+    events: { emit: () => {} },
+  });
   try {
     for (const [value, code] of [
-      [{ result: -1, data: [] }, -1], [{ result: 73, data: [] }, 73], [{ result: 'denied', data: [{ buddyUids: ['u_private'] }], errMsg: 'fixture-secret' }, 'denied'],
-      [{ result: '0', data: [] }, '0'], [{ data: [] }, 'invalid-result'],
-      [{ result: NaN, data: [] }, 'invalid-result'], [{ result: Infinity, data: [] }, 'invalid-result'],
+      [{ result: -1, data: [] }, -1],
+      [{ result: 73, data: [] }, 73],
+      [
+        { result: 'denied', data: [{ buddyUids: ['u_private'] }], errMsg: 'fixture-secret' },
+        'denied',
+      ],
+      [{ result: '0', data: [] }, '0'],
+      [{ data: [] }, 'invalid-result'],
+      [{ result: NaN, data: [] }, 'invalid-result'],
+      [{ result: Infinity, data: [] }, 'invalid-result'],
     ] as [unknown, string | number][]) {
       response = value;
-      await assert.rejects(services.invokeOperation('listFriends'), error => {
+      await assert.rejects(services.invokeOperation('listFriends'), (error) => {
         assert.equal((error as any).code, code);
         assert.doesNotMatch((error as Error).message, /fixture-secret|u_private/);
         return true;
@@ -284,76 +623,209 @@ test('friend listing rejects native query errors before profiles and preserves s
     response = { result: 0, data: [] };
     assert.deepEqual(await services.invokeOperation('listFriends'), []);
     assert.equal(queries, 8);
-  } finally { services.close(); }
+  } finally {
+    services.close();
+  }
 });
 
 test('malformed native batches do not terminate delivery of subsequent valid messages', () => {
-  const {services,events,listener}=fixture();
+  const { services, events, listener } = fixture();
   try {
-    assert.doesNotThrow(()=>listener().onRecvMsg(null));
-    assert.doesNotThrow(()=>listener().onRecvMsg([null,{chatType:1,elements:{secret:'fixture value'}}]));
-    assert.doesNotThrow(()=>listener().onMsgInfoListUpdate(null));
-    assert.doesNotThrow(()=>listener().onMsgInfoListUpdate([null]));
-    listener().onRecvMsg([{msgId:'42',msgSeq:'1',msgTime:'100',chatType:2,peerUid:'123',senderUin:'456',elements:[]}]);
-    assert.equal(events.filter(([name])=>name==='message').length,1);
-    const diagnostics=events.filter(([name])=>name==='diagnostic');assert.equal(diagnostics.length,5);
-    assert.ok(!JSON.stringify(diagnostics).includes('fixture value'),'diagnostics omit native payloads');
-  } finally {services.close();}
+    assert.doesNotThrow(() => listener().onRecvMsg(null));
+    assert.doesNotThrow(() =>
+      listener().onRecvMsg([null, { chatType: 1, elements: { secret: 'fixture value' } }]),
+    );
+    assert.doesNotThrow(() => listener().onMsgInfoListUpdate(null));
+    assert.doesNotThrow(() => listener().onMsgInfoListUpdate([null]));
+    listener().onRecvMsg([
+      {
+        msgId: '42',
+        msgSeq: '1',
+        msgTime: '100',
+        chatType: 2,
+        peerUid: '123',
+        senderUin: '456',
+        elements: [],
+      },
+    ]);
+    assert.equal(events.filter(([name]) => name === 'message').length, 1);
+    const diagnostics = events.filter(([name]) => name === 'diagnostic');
+    assert.equal(diagnostics.length, 5);
+    assert.ok(
+      !JSON.stringify(diagnostics).includes('fixture value'),
+      'diagnostics omit native payloads',
+    );
+  } finally {
+    services.close();
+  }
 });
 
 test('group list queries coalesce and a timed-out uncorrelated callback cannot satisfy a later query', async () => {
-  const listeners:any[]=[];let calls=0;
-  const services=createNativeServices({
-    getMsgService:()=>({addKernelMsgListener(){}}),
-    getBuddyService:()=>({addKernelBuddyListener(){}}),
-    getGroupService:()=>({addKernelGroupListener(value:any){listeners.push(value);return listeners.length;},getGroupList(){calls++;return {result:0};}}),
-  },'3.2.32-52194',()=>{});
+  const listeners: any[] = [];
+  let calls = 0;
+  const services = createNativeServices({
+    session: {
+      getMsgService: () => ({ addKernelMsgListener() {} }),
+      getBuddyService: () => ({ addKernelBuddyListener() {} }),
+      getGroupService: () => ({
+        addKernelGroupListener(value: any) {
+          listeners.push(value);
+          return listeners.length;
+        },
+        getGroupList() {
+          calls++;
+          return { result: 0 };
+        },
+      }),
+    },
+    version: '3.2.32-52194',
+    events: { emit: () => {} },
+  });
   try {
-    const first=services.invokeOperation('listGroups');
-    const second=services.invokeOperation('listGroups');
-    assert.equal(calls,1);
-    const outcomes=await Promise.allSettled([first,second]);
-    assert.ok(outcomes.every(result=>result.status==='rejected'&&/timed out/.test(result.reason.message)));
-    for(const listener of listeners)listener.onGroupListUpdate(1,[]);
-    await assert.rejects(services.invokeOperation('listGroups'),/channel invalidated/);
-    assert.equal(calls,1);
-  } finally {services.close();}
+    const first = services.invokeOperation('listGroups');
+    const second = services.invokeOperation('listGroups');
+    assert.equal(calls, 1);
+    const outcomes = await Promise.allSettled([first, second]);
+    assert.ok(
+      outcomes.every(
+        (result) => result.status === 'rejected' && /timed out/.test(result.reason.message),
+      ),
+    );
+    for (const listener of listeners) listener.onGroupListUpdate(1, []);
+    await assert.rejects(services.invokeOperation('listGroups'), /channel invalidated/);
+    assert.equal(calls, 1);
+  } finally {
+    services.close();
+  }
 });
 
 test('native group query rejection overrides an early full-list callback and preserves its code', async () => {
-  const listeners:any[]=[];
-  const services=createNativeServices({
-    getMsgService:()=>({addKernelMsgListener(){}}),getBuddyService:()=>({addKernelBuddyListener(){}}),
-    getGroupService:()=>({addKernelGroupListener(value:any){listeners.push(value);return listeners.length;},getGroupList(){for(const listener of listeners)listener.onGroupListUpdate(1,[]);return {result:73};}}),
-  },'3.2.32-52194',()=>{});
-  try {await assert.rejects(services.invokeOperation('listGroups'),error=>{assert.equal((error as any).code,73);return true;});}
-  finally {services.close();}
+  const listeners: any[] = [];
+  const services = createNativeServices({
+    session: {
+      getMsgService: () => ({ addKernelMsgListener() {} }),
+      getBuddyService: () => ({ addKernelBuddyListener() {} }),
+      getGroupService: () => ({
+        addKernelGroupListener(value: any) {
+          listeners.push(value);
+          return listeners.length;
+        },
+        getGroupList() {
+          for (const listener of listeners) listener.onGroupListUpdate(1, []);
+          return { result: 73 };
+        },
+      }),
+    },
+    version: '3.2.32-52194',
+    events: { emit: () => {} },
+  });
+  try {
+    await assert.rejects(services.invokeOperation('listGroups'), (error) => {
+      assert.equal((error as any).code, 73);
+      return true;
+    });
+  } finally {
+    services.close();
+  }
 });
 
-test('forced group refresh accepts REFRESHALL zero while ignoring delta callbacks',async()=>{
-  const listeners:any[]=[];
-  const services=createNativeServices({getMsgService:()=>({addKernelMsgListener(){}}),getBuddyService:()=>({addKernelBuddyListener(){}}),
-    getGroupService:()=>({addKernelGroupListener(value:any){listeners.push(value);return listeners.length;},getGroupList(force:boolean){
-      assert.equal(force,true);for(const listener of listeners){listener.onGroupListUpdate(2,[]);listener.onGroupListUpdate(3,[]);}
-      for(const listener of listeners)listener.onGroupListUpdate(0,[{groupCode:'123',groupName:'refreshed',memberCount:2,maxMember:100}]);return {result:0};
-    }})},'3.2.32-52194',()=>{});
-  try {assert.deepEqual(await services.invokeOperation('listGroups'),[{groupId:'123',name:'refreshed',memberCount:2,maxMemberCount:100}]);}
-  finally {services.close();}
+test('forced group refresh accepts REFRESHALL zero while ignoring delta callbacks', async () => {
+  const listeners: any[] = [];
+  const services = createNativeServices({
+    session: {
+      getMsgService: () => ({ addKernelMsgListener() {} }),
+      getBuddyService: () => ({ addKernelBuddyListener() {} }),
+      getGroupService: () => ({
+        addKernelGroupListener(value: any) {
+          listeners.push(value);
+          return listeners.length;
+        },
+        getGroupList(force: boolean) {
+          assert.equal(force, true);
+          for (const listener of listeners) {
+            listener.onGroupListUpdate(2, []);
+            listener.onGroupListUpdate(3, []);
+          }
+          for (const listener of listeners)
+            listener.onGroupListUpdate(0, [
+              { groupCode: '123', groupName: 'refreshed', memberCount: 2, maxMember: 100 },
+            ]);
+          return { result: 0 };
+        },
+      }),
+    },
+    version: '3.2.32-52194',
+    events: { emit: () => {} },
+  });
+  try {
+    assert.deepEqual(await services.invokeOperation('listGroups'), [
+      { groupId: '123', name: 'refreshed', memberCount: 2, maxMemberCount: 100 },
+    ]);
+  } finally {
+    services.close();
+  }
 });
 
 test('native recall rejection overrides even an early matching completion without retry', async () => {
- const {services,msg,listener}=fixture();let calls=0;
- (msg as any).recallMsg=()=>{calls++;listener().onMsgInfoListUpdate([{msgId:'42',chatType:2,peerUid:'123',recallTime:'101'}]);return {result:8,credential:'private fixture'};};
- try{await assert.rejects(services.invokeOperation('recallMessage',{peer:{type:'group',groupId:'123'},messageId:'42'}),(error:any)=>{assert.equal(error.code,8);assert.equal(error.credential,undefined);return true;});assert.equal(calls,1);}finally{services.close();}
+  const { services, msg, listener } = fixture();
+  let calls = 0;
+  (msg as any).recallMsg = () => {
+    calls++;
+    listener().onMsgInfoListUpdate([
+      { msgId: '42', chatType: 2, peerUid: '123', recallTime: '101' },
+    ]);
+    return { result: 8, credential: 'private fixture' };
+  };
+  try {
+    await assert.rejects(
+      services.invokeOperation('recallMessage', {
+        peer: { type: 'group', groupId: '123' },
+        messageId: '42',
+      }),
+      (error: any) => {
+        assert.equal(error.code, 8);
+        assert.equal(error.credential, undefined);
+        return true;
+      },
+    );
+    assert.equal(calls, 1);
+  } finally {
+    services.close();
+  }
 });
 
-test('core service callback diagnostics contain shapes only and stop after close',()=>{
- let listener:any;const audits:unknown[]=[];
- const session={getMsgService:()=>({addKernelMsgListener(value:any){listener=value;}}),getBuddyService:()=>({addKernelBuddyListener(){}}),getGroupService:()=>({addKernelGroupListener(){}})};
- const services=createNativeServices(session,'7.0.2-53644',()=>{},undefined,undefined,undefined,undefined,info=>audits.push(info));
- listener.onRecvMsg([]);listener.onRichMediaUploadComplete({privatePayload:'credential'},null,[1]);
- assert.deepEqual(audits,[{family:'Msg',name:'onRecvMsg',argumentTypes:['array']},{family:'Msg',name:'onRichMediaUploadComplete',argumentTypes:['object','null','array']}]);
- assert.equal(JSON.stringify(audits).includes('credential'),false);services.close();listener.onRecvMsg([]);assert.equal(audits.length,2);
+test('core service callback diagnostics contain shapes only and stop after close', () => {
+  let listener: any;
+  const audits: unknown[] = [];
+  const session = {
+    getMsgService: () => ({
+      addKernelMsgListener(value: any) {
+        listener = value;
+      },
+    }),
+    getBuddyService: () => ({ addKernelBuddyListener() {} }),
+    getGroupService: () => ({ addKernelGroupListener() {} }),
+  };
+  const services = createNativeServices({
+    session: session,
+    version: '7.0.2-53644',
+    events: { emit: () => {} },
+    auditCallback: (info) => audits.push(info),
+  });
+  listener.onRecvMsg([]);
+  listener.onRichMediaUploadComplete({ privatePayload: 'credential' }, null, [1]);
+  assert.deepEqual(audits, [
+    { family: 'Msg', name: 'onRecvMsg', argumentTypes: ['array'] },
+    {
+      family: 'Msg',
+      name: 'onRichMediaUploadComplete',
+      argumentTypes: ['object', 'null', 'array'],
+    },
+  ]);
+  assert.equal(JSON.stringify(audits).includes('credential'), false);
+  services.close();
+  listener.onRecvMsg([]);
+  assert.equal(audits.length, 2);
 });
 
 for (const [name, data] of [
@@ -363,15 +835,29 @@ for (const [name, data] of [
   test(`listFriends rejects ${name} before Profile lookup`, async () => {
     let profileCalls = 0;
     const services = createNativeServices({
-      getMsgService: () => ({ addKernelMsgListener() {} }),
-      getGroupService: () => ({ addKernelGroupListener() {} }),
-      getBuddyService: () => ({ addKernelBuddyListener() {}, getBuddyListV2: () => ({ result: 0, data }) }),
-      getProfileService: () => ({ getCoreAndBaseInfo() { profileCalls++; return new Map(); } }),
-    }, '7.0.2-53644', () => {});
+      session: {
+        getMsgService: () => ({ addKernelMsgListener() {} }),
+        getGroupService: () => ({ addKernelGroupListener() {} }),
+        getBuddyService: () => ({
+          addKernelBuddyListener() {},
+          getBuddyListV2: () => ({ result: 0, data }),
+        }),
+        getProfileService: () => ({
+          getCoreAndBaseInfo() {
+            profileCalls++;
+            return new Map();
+          },
+        }),
+      },
+      version: '7.0.2-53644',
+      events: { emit: () => {} },
+    });
     try {
       await assert.rejects(services.invokeOperation('listFriends'), /Invalid native buddy/);
       assert.equal(profileCalls, 0);
-    } finally { services.close(); }
+    } finally {
+      services.close();
+    }
   });
 }
 
@@ -380,33 +866,69 @@ test('failed buddy profile batch cannot seed UID cache used by later private sen
   const conversions: string[][] = [];
   const sends: any[][] = [];
   const services = createNativeServices({
-    getMsgService: () => ({
-      addKernelMsgListener(value: any) { listener = value; },
-      generateMsgUniqueId: () => 'fixture-unique',
-      sendMsg(...args: any[]) {
-        sends.push(args);
-        queueMicrotask(() => listener.onMsgInfoListUpdate([
-          { guildId: 'fixture-unique', sendStatus: 2, msgId: '42', msgSeq: '9', msgTime: '100' },
-        ]));
-        return { result: 0 };
-      },
-    }),
-    getGroupService: () => ({ addKernelGroupListener() {} }),
-    getBuddyService: () => ({ addKernelBuddyListener() {}, getBuddyListV2: () => ({ result: 0, data: [{ buddyUids: ['u_partial', 'u_invalid'] }] }) }),
-    getProfileService: () => ({ getCoreAndBaseInfo: () => new Map([
-      ['u_partial', { coreInfo: { uid: 'u_partial', uin: '456', nick: 'fixture', remark: '' } }],
-      ['u_invalid', { coreInfo: { uid: 'u_invalid', uin: 'invalid', nick: 'fixture', remark: '' } }],
-    ]) }),
-    getUixConvertService: () => ({ getUid(ids: string[]) { conversions.push(ids); return { uidInfo: new Map([['456', 'u_converted']]) }; } }),
-    getMSFService: () => ({ getServerTime: () => '100' }),
-  }, '7.0.2-53644', () => {});
+    session: {
+      getMsgService: () => ({
+        addKernelMsgListener(value: any) {
+          listener = value;
+        },
+        generateMsgUniqueId: () => 'fixture-unique',
+        sendMsg(...args: any[]) {
+          sends.push(args);
+          queueMicrotask(() =>
+            listener.onMsgInfoListUpdate([
+              {
+                guildId: 'fixture-unique',
+                sendStatus: 2,
+                msgId: '42',
+                msgSeq: '9',
+                msgTime: '100',
+              },
+            ]),
+          );
+          return { result: 0 };
+        },
+      }),
+      getGroupService: () => ({ addKernelGroupListener() {} }),
+      getBuddyService: () => ({
+        addKernelBuddyListener() {},
+        getBuddyListV2: () => ({ result: 0, data: [{ buddyUids: ['u_partial', 'u_invalid'] }] }),
+      }),
+      getProfileService: () => ({
+        getCoreAndBaseInfo: () =>
+          new Map([
+            [
+              'u_partial',
+              { coreInfo: { uid: 'u_partial', uin: '456', nick: 'fixture', remark: '' } },
+            ],
+            [
+              'u_invalid',
+              { coreInfo: { uid: 'u_invalid', uin: 'invalid', nick: 'fixture', remark: '' } },
+            ],
+          ]),
+      }),
+      getUixConvertService: () => ({
+        getUid(ids: string[]) {
+          conversions.push(ids);
+          return { uidInfo: new Map([['456', 'u_converted']]) };
+        },
+      }),
+      getMSFService: () => ({ getServerTime: () => '100' }),
+    },
+    version: '7.0.2-53644',
+    events: { emit: () => {} },
+  });
   try {
     await assert.rejects(services.invokeOperation('listFriends'), /Invalid native buddy profile/);
-    await services.invokeOperation('sendPrivateMessage', { userId: '456', message: 'fake contract only' });
+    await services.invokeOperation('sendPrivateMessage', {
+      userId: '456',
+      message: 'fake contract only',
+    });
     assert.deepEqual(conversions, [['456']], 'failed query must not bypass UID conversion');
     assert.equal(sends.length, 1);
     assert.equal(sends[0][1].peerUid, 'u_converted');
-  } finally { services.close(); }
+  } finally {
+    services.close();
+  }
 });
 
 function invalidMemberFixture(infos: Map<string, any>) {
@@ -414,34 +936,72 @@ function invalidMemberFixture(infos: Map<string, any>) {
   const conversions: string[][] = [];
   const sends: any[][] = [];
   const services = createNativeServices({
-    getMsgService: () => ({
-      addKernelMsgListener(value: any) { listener = value; },
-      generateMsgUniqueId: () => 'member-fixture',
-      sendMsg(...args: any[]) {
-        sends.push(args);
-        queueMicrotask(() => listener.onMsgInfoListUpdate([{ guildId: 'member-fixture', sendStatus: 2, msgId: '42', msgSeq: '9', msgTime: '100' }]));
-        return { result: 0 };
-      },
-    }),
-    getGroupService: () => ({ addKernelGroupListener() {}, getAllMemberList: () => ({ errCode: 0, result: { finish: true, infos } }) }),
-    getBuddyService: () => ({ addKernelBuddyListener() {} }),
-    getUixConvertService: () => ({ getUid(ids: string[]) { conversions.push(ids); return { uidInfo: new Map([['456', 'u_converted']]) }; } }),
-    getMSFService: () => ({ getServerTime: () => '100' }),
-  }, '7.0.2-53644', () => {});
+    session: {
+      getMsgService: () => ({
+        addKernelMsgListener(value: any) {
+          listener = value;
+        },
+        generateMsgUniqueId: () => 'member-fixture',
+        sendMsg(...args: any[]) {
+          sends.push(args);
+          queueMicrotask(() =>
+            listener.onMsgInfoListUpdate([
+              {
+                guildId: 'member-fixture',
+                sendStatus: 2,
+                msgId: '42',
+                msgSeq: '9',
+                msgTime: '100',
+              },
+            ]),
+          );
+          return { result: 0 };
+        },
+      }),
+      getGroupService: () => ({
+        addKernelGroupListener() {},
+        getAllMemberList: () => ({ errCode: 0, result: { finish: true, infos } }),
+      }),
+      getBuddyService: () => ({ addKernelBuddyListener() {} }),
+      getUixConvertService: () => ({
+        getUid(ids: string[]) {
+          conversions.push(ids);
+          return { uidInfo: new Map([['456', 'u_converted']]) };
+        },
+      }),
+      getMSFService: () => ({ getServerTime: () => '100' }),
+    },
+    version: '7.0.2-53644',
+    events: { emit: () => {} },
+  });
   return { services, conversions, sends };
 }
 
 test('failed group member batch cannot seed UID cache used by later private send', async () => {
-  const f = invalidMemberFixture(new Map([
-    ['u_partial', { uin: '456', uid: 'u_partial', role: 2, nick: 'fixture', cardName: '' }],
-    ['u_invalid', { uin: '789', uid: 'u_invalid', role: 999, nick: 'fixture', cardName: '' }],
-  ]));
+  const f = invalidMemberFixture(
+    new Map([
+      ['u_partial', { uin: '456', uid: 'u_partial', role: 2, nick: 'fixture', cardName: '' }],
+      ['u_invalid', { uin: '789', uid: 'u_invalid', role: 999, nick: 'fixture', cardName: '' }],
+    ]),
+  );
   try {
-    await assert.rejects(f.services.invokeOperation('getGroupMembers', { groupId: '123' }), /role|member/i);
-    await f.services.invokeOperation('sendPrivateMessage', { userId: '456', message: 'fake contract only' });
-    assert.deepEqual(f.conversions, [['456']], 'failed member query must not bypass UID conversion');
+    await assert.rejects(
+      f.services.invokeOperation('getGroupMembers', { groupId: '123' }),
+      /role|member/i,
+    );
+    await f.services.invokeOperation('sendPrivateMessage', {
+      userId: '456',
+      message: 'fake contract only',
+    });
+    assert.deepEqual(
+      f.conversions,
+      [['456']],
+      'failed member query must not bypass UID conversion',
+    );
     assert.equal(f.sends[0][1].peerUid, 'u_converted');
-  } finally { f.services.close(); }
+  } finally {
+    f.services.close();
+  }
 });
 
 const validGroupMember = { uin: '456', uid: 'u_member', role: 2, nick: 'fixture', cardName: '' };
@@ -464,38 +1024,77 @@ for (const [label, key, change, missing] of [
     if (missing) delete member[missing];
     const f = invalidMemberFixture(new Map([[key, member]]));
     try {
-      await assert.rejects(f.services.invokeOperation('getGroupMembers', { groupId: '123' }), /invalid|member|UID|user|nickname|card|role/i);
-    } finally { f.services.close(); }
+      await assert.rejects(
+        f.services.invokeOperation('getGroupMembers', { groupId: '123' }),
+        /invalid|member|UID|user|nickname|card|role/i,
+      );
+    } finally {
+      f.services.close();
+    }
   });
 }
 
 test('group member query preserves long decimal IDs and normalizes all three membership roles', async () => {
-  const infos = new Map([2, 3, 4].map(role => [`u_${role}`, { uin: `90071992547409931234${role}`, uid: `u_${role}`, nick: `name${role}`, cardName: '', role }]));
+  const infos = new Map(
+    [2, 3, 4].map((role) => [
+      `u_${role}`,
+      {
+        uin: `90071992547409931234${role}`,
+        uid: `u_${role}`,
+        nick: `name${role}`,
+        cardName: '',
+        role,
+      },
+    ]),
+  );
   const f = invalidMemberFixture(infos);
   try {
-    assert.deepEqual(await f.services.invokeOperation('getGroupMembers', { groupId: '123' }), [2, 3, 4].map(role => ({ userId: `90071992547409931234${role}`, uid: `u_${role}`, nickname: `name${role}`, card: '', role: ({ 2: 'member', 3: 'admin', 4: 'owner' } as const)[role as 2 | 3 | 4] })));
-  } finally { f.services.close(); }
+    assert.deepEqual(
+      await f.services.invokeOperation('getGroupMembers', { groupId: '123' }),
+      [2, 3, 4].map((role) => ({
+        userId: `90071992547409931234${role}`,
+        uid: `u_${role}`,
+        nickname: `name${role}`,
+        card: '',
+        role: ({ 2: 'member', 3: 'admin', 4: 'owner' } as const)[role as 2 | 3 | 4],
+      })),
+    );
+  } finally {
+    f.services.close();
+  }
 });
 
 function fullGroupListFixture(groups: unknown) {
-  const listeners: any[] = [], events: any[] = [];
+  const listeners: any[] = [],
+    events: any[] = [];
   let calls = 0;
   const services = createNativeServices({
-    getMsgService: () => ({ addKernelMsgListener() {} }),
-    getBuddyService: () => ({ addKernelBuddyListener() {} }),
-    getGroupService: () => ({
-      addKernelGroupListener(listener: any) { listeners.push(listener); },
-      getGroupList() {
-        calls++;
-        for (const listener of listeners) listener.onGroupListUpdate(1, groups);
-        return { result: 0 };
-      },
-    }),
-  }, '7.0.2-53644', (event, payload) => events.push([event, payload]));
+    session: {
+      getMsgService: () => ({ addKernelMsgListener() {} }),
+      getBuddyService: () => ({ addKernelBuddyListener() {} }),
+      getGroupService: () => ({
+        addKernelGroupListener(listener: any) {
+          listeners.push(listener);
+        },
+        getGroupList() {
+          calls++;
+          for (const listener of listeners) listener.onGroupListUpdate(1, groups);
+          return { result: 0 };
+        },
+      }),
+    },
+    version: '7.0.2-53644',
+    events: { emit: (event, payload) => events.push([event, payload]) },
+  });
   return { services, events, calls: () => calls };
 }
 
-const validFullGroup = { groupCode: '900719925474099312345', groupName: 'fixture', memberCount: 2, maxMember: 100 };
+const validFullGroup = {
+  groupCode: '900719925474099312345',
+  groupName: 'fixture',
+  memberCount: 2,
+  maxMember: 100,
+};
 for (const [label, groups] of [
   ['sparse array', Array(1)],
   ['missing group ID', [{ ...validFullGroup, groupCode: undefined }]],
@@ -513,24 +1112,45 @@ for (const [label, groups] of [
       await assert.rejects(f.services.invokeOperation('listGroups'), /Invalid native group list/i);
       await assert.rejects(f.services.invokeOperation('listGroups'), /channel invalidated/);
       assert.equal(f.calls(), 1, 'invalidated query must not dispatch again');
-      assert.ok(f.events.some(([event, value]) => event === 'diagnostic' && value.stage === 'invalid-native-group-list-update'));
-      assert.ok(!f.events.some(([event]) => event === 'group-list-updated'), 'malformed metadata must not become a business event');
-    } finally { f.services.close(); }
+      assert.ok(
+        f.events.some(
+          ([event, value]) =>
+            event === 'diagnostic' && value.stage === 'invalid-native-group-list-update',
+        ),
+      );
+      assert.ok(
+        !f.events.some(([event]) => event === 'group-list-updated'),
+        'malformed metadata must not become a business event',
+      );
+    } finally {
+      f.services.close();
+    }
   });
 }
 
 test('full group query accepts empty list and preserves a long decimal ID', async () => {
   for (const [groups, expected] of [
     [[], []],
-    [[validFullGroup], [{ groupId: validFullGroup.groupCode, name: 'fixture', memberCount: 2, maxMemberCount: 100 }]],
+    [
+      [validFullGroup],
+      [{ groupId: validFullGroup.groupCode, name: 'fixture', memberCount: 2, maxMemberCount: 100 }],
+    ],
   ] as [unknown[], unknown[]][]) {
     const f = fullGroupListFixture(groups);
-    try { assert.deepEqual(await f.services.invokeOperation('listGroups'), expected); }
-    finally { f.services.close(); }
+    try {
+      assert.deepEqual(await f.services.invokeOperation('listGroups'), expected);
+    } finally {
+      f.services.close();
+    }
   }
 });
 
-const validFriendCore = { uid: 'u_friend', uin: '900719925474099312345', nick: 'fixture', remark: '' };
+const validFriendCore = {
+  uid: 'u_friend',
+  uin: '900719925474099312345',
+  nick: 'fixture',
+  remark: '',
+};
 for (const [label, change] of [
   ['numeric user ID', { uin: 456 }],
   ['object user ID', { uin: { toString: () => '456' } }],
@@ -543,56 +1163,114 @@ for (const [label, change] of [
   test(`friend profile query rejects ${label} without projecting malformed identity`, async () => {
     let profileCalls = 0;
     const services = createNativeServices({
-      getMsgService: () => ({ addKernelMsgListener() {} }),
-      getGroupService: () => ({ addKernelGroupListener() {} }),
-      getBuddyService: () => ({ addKernelBuddyListener() {}, getBuddyListV2: () => ({ result: 0, data: [{ buddyUids: ['u_friend'] }] }) }),
-      getProfileService: () => ({ getCoreAndBaseInfo(store: string, ids: string[]) {
-        profileCalls++;
-        assert.deepEqual([store, ids], ['nodeStore', ['u_friend']]);
-        return new Map([['u_friend', { coreInfo: { ...validFriendCore, ...change } }]]);
-      } }),
-    }, '7.0.2-53644', () => {});
+      session: {
+        getMsgService: () => ({ addKernelMsgListener() {} }),
+        getGroupService: () => ({ addKernelGroupListener() {} }),
+        getBuddyService: () => ({
+          addKernelBuddyListener() {},
+          getBuddyListV2: () => ({ result: 0, data: [{ buddyUids: ['u_friend'] }] }),
+        }),
+        getProfileService: () => ({
+          getCoreAndBaseInfo(store: string, ids: string[]) {
+            profileCalls++;
+            assert.deepEqual([store, ids], ['nodeStore', ['u_friend']]);
+            return new Map([['u_friend', { coreInfo: { ...validFriendCore, ...change } }]]);
+          },
+        }),
+      },
+      version: '7.0.2-53644',
+      events: { emit: () => {} },
+    });
     try {
-      await assert.rejects(services.invokeOperation('listFriends'), /Invalid native buddy profile/i);
+      await assert.rejects(
+        services.invokeOperation('listFriends'),
+        /Invalid native buddy profile/i,
+      );
       assert.equal(profileCalls, 1);
-    } finally { services.close(); }
+    } finally {
+      services.close();
+    }
   });
 }
 
 test('friend profile query preserves long decimal ID and accepts omitted optional nickname', async () => {
   const services = createNativeServices({
-    getMsgService: () => ({ addKernelMsgListener() {} }),
-    getGroupService: () => ({ addKernelGroupListener() {} }),
-    getBuddyService: () => ({ addKernelBuddyListener() {}, getBuddyListV2: () => ({ result: 0, data: [{ buddyUids: ['u_friend'] }] }) }),
-    getProfileService: () => ({ getCoreAndBaseInfo: () => new Map([['u_friend', { coreInfo: { uid: 'u_friend', uin: validFriendCore.uin, remark: '' } }]]) }),
-  }, '7.0.2-53644', () => {});
-  try { assert.deepEqual(await services.invokeOperation('listFriends'), [{ uid: 'u_friend', userId: validFriendCore.uin, nickname: '', remark: '' }]); }
-  finally { services.close(); }
+    session: {
+      getMsgService: () => ({ addKernelMsgListener() {} }),
+      getGroupService: () => ({ addKernelGroupListener() {} }),
+      getBuddyService: () => ({
+        addKernelBuddyListener() {},
+        getBuddyListV2: () => ({ result: 0, data: [{ buddyUids: ['u_friend'] }] }),
+      }),
+      getProfileService: () => ({
+        getCoreAndBaseInfo: () =>
+          new Map([
+            ['u_friend', { coreInfo: { uid: 'u_friend', uin: validFriendCore.uin, remark: '' } }],
+          ]),
+      }),
+    },
+    version: '7.0.2-53644',
+    events: { emit: () => {} },
+  });
+  try {
+    assert.deepEqual(await services.invokeOperation('listFriends'), [
+      { uid: 'u_friend', userId: validFriendCore.uin, nickname: '', remark: '' },
+    ]);
+  } finally {
+    services.close();
+  }
 });
 
 function historyQueryFixture(response: unknown) {
   const calls: unknown[][] = [];
   const services = createNativeServices({
-    getMsgService: () => ({ addKernelMsgListener() {}, getMsgsIncludeSelf(...args: unknown[]) { calls.push(args); return response; } }),
-    getGroupService: () => ({ addKernelGroupListener() {} }),
-    getBuddyService: () => ({ addKernelBuddyListener() {} }),
-  }, '7.0.2-53644', () => {});
+    session: {
+      getMsgService: () => ({
+        addKernelMsgListener() {},
+        getMsgsIncludeSelf(...args: unknown[]) {
+          calls.push(args);
+          return response;
+        },
+      }),
+      getGroupService: () => ({ addKernelGroupListener() {} }),
+      getBuddyService: () => ({ addKernelBuddyListener() {} }),
+    },
+    version: '7.0.2-53644',
+    events: { emit: () => {} },
+  });
   return { services, calls };
 }
 function historyRawMessage() {
-  return { msgId: '900719925474099312345', msgSeq: '9', msgTime: '100', chatType: 2, peerUid: '123', peerUin: '123',
-    senderUin: '456', senderUid: 'u_friend', sendNickName: 'fixture',
-    elements: [{ elementType: 1, textElement: { content: 'fixture only', atType: 0 } }] };
+  return {
+    msgId: '900719925474099312345',
+    msgSeq: '9',
+    msgTime: '100',
+    chatType: 2,
+    peerUid: '123',
+    peerUin: '123',
+    senderUin: '456',
+    senderUid: 'u_friend',
+    sendNickName: 'fixture',
+    elements: [{ elementType: 1, textElement: { content: 'fixture only', atType: 0 } }],
+  };
 }
 const historyQuery = { peer: { type: 'group', groupId: '123' }, options: { limit: 2 } };
-for (const [result, code] of [[-1, -1], [73, 73], ['denied', 'denied'], [undefined, 'invalid-result'], [NaN, 'invalid-result']] as [unknown, string | number][]) {
+for (const [result, code] of [
+  [-1, -1],
+  [73, 73],
+  ['denied', 'denied'],
+  [undefined, 'invalid-result'],
+  [NaN, 'invalid-result'],
+] as [unknown, string | number][]) {
   for (const nonempty of [false, true]) {
     test(`history native error ${String(result)} rejects ${nonempty ? 'nonempty' : 'empty'} data without retry`, async () => {
       const f = historyQueryFixture({ result, msgList: nonempty ? [historyRawMessage()] : [] });
       try {
         await assert.rejects(f.services.invokeOperation('getHistory', historyQuery), { code });
         assert.equal(f.calls.length, 1);
-      } finally { f.services.close(); }
+      } finally {
+        f.services.close();
+      }
     });
   }
 }
@@ -606,16 +1284,21 @@ for (const [label, rows] of [
   test(`history query rejects ${label} instead of a partial or wrong-session result`, async () => {
     const f = historyQueryFixture({ result: 0, msgList: rows });
     try {
-      await assert.rejects(f.services.invokeOperation('getHistory', historyQuery), /invalid|mismatched|elements/i);
+      await assert.rejects(
+        f.services.invokeOperation('getHistory', historyQuery),
+        /invalid|mismatched|elements/i,
+      );
       assert.equal(f.calls.length, 1);
-    } finally { f.services.close(); }
+    } finally {
+      f.services.close();
+    }
   });
 }
 test('history query accepts successful empty list and preserves normalized long message ID with raw evidence', async () => {
   for (const rows of [[], [historyRawMessage()]]) {
     const f = historyQueryFixture({ result: 0, msgList: rows });
     try {
-      const messages = await f.services.invokeOperation('getHistory', historyQuery) as any[];
+      const messages = (await f.services.invokeOperation('getHistory', historyQuery)) as any[];
       assert.equal(messages.length, rows.length);
       if (rows.length) {
         assert.equal(messages[0].messageId, rows[0].msgId);
@@ -624,51 +1307,379 @@ test('history query accepts successful empty list and preserves normalized long 
         assert.deepEqual(messages[0].elements, [{ type: 'text', text: 'fixture only' }]);
       }
       assert.deepEqual(f.calls, [[{ chatType: 2, peerUid: '123' }, '0', 2, false]]);
-    } finally { f.services.close(); }
+    } finally {
+      f.services.close();
+    }
   }
 });
 
-test('friend and member query close rejects before deferred native responses settle',async()=>{
- for(const stage of ['buddy','profile','members']){
-  let release!:(value:any)=>void;const deferred=new Promise(r=>release=r);let reached!:()=>void;const began=new Promise<void>(r=>reached=r);const calls:string[]=[];
-  const services=createNativeServices({getMsgService:()=>({addKernelMsgListener(){}}),getBuddyService:()=>({addKernelBuddyListener(){},getBuddyListV2(){calls.push('buddy');if(stage==='buddy'){reached();return deferred;}return{result:0,data:[{buddyUids:['u_fixture']}]};}}),getProfileService:()=>({getCoreAndBaseInfo(){calls.push('profile');reached();return deferred;}}),getGroupService:()=>({addKernelGroupListener(){},getAllMemberList(){calls.push('members');reached();return deferred;}})},'7.0.2-53644',()=>{});
-  const pending=services.invokeOperation(stage==='members'?'getGroupMembers':'listFriends',{groupId:'123'});void pending.catch(()=>{});await began;services.close();
-  let timer:ReturnType<typeof setTimeout>|undefined;
-  try{await assert.rejects(Promise.race([pending,new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('query did not settle on close')),50);})]),/closed|abort/i);}
-  finally{clearTimeout(timer);release(stage==='buddy'?{result:0,data:[{buddyUids:['u_fixture']}]}:stage==='profile'?new Map([['u_fixture',{coreInfo:{uid:'u_fixture',uin:'456',remark:''}}]]):{errCode:0,result:{finish:true,infos:new Map()}});await new Promise(r=>setImmediate(r));services.close();}
-  assert.deepEqual(calls,stage==='buddy'?['buddy']:stage==='profile'?['buddy','profile']:['members']);
- }
+test('friend and member query close rejects before deferred native responses settle', async () => {
+  for (const stage of ['buddy', 'profile', 'members']) {
+    let release!: (value: any) => void;
+    const deferred = new Promise((r) => (release = r));
+    let reached!: () => void;
+    const began = new Promise<void>((r) => (reached = r));
+    const calls: string[] = [];
+    const services = createNativeServices({
+      session: {
+        getMsgService: () => ({ addKernelMsgListener() {} }),
+        getBuddyService: () => ({
+          addKernelBuddyListener() {},
+          getBuddyListV2() {
+            calls.push('buddy');
+            if (stage === 'buddy') {
+              reached();
+              return deferred;
+            }
+            return { result: 0, data: [{ buddyUids: ['u_fixture'] }] };
+          },
+        }),
+        getProfileService: () => ({
+          getCoreAndBaseInfo() {
+            calls.push('profile');
+            reached();
+            return deferred;
+          },
+        }),
+        getGroupService: () => ({
+          addKernelGroupListener() {},
+          getAllMemberList() {
+            calls.push('members');
+            reached();
+            return deferred;
+          },
+        }),
+      },
+      version: '7.0.2-53644',
+      events: { emit: () => {} },
+    });
+    const pending = services.invokeOperation(
+      stage === 'members' ? 'getGroupMembers' : 'listFriends',
+      { groupId: '123' },
+    );
+    void pending.catch(() => {});
+    await began;
+    services.close();
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    try {
+      await assert.rejects(
+        Promise.race([
+          pending,
+          new Promise((_, reject) => {
+            timer = setTimeout(() => reject(Error('query did not settle on close')), 50);
+          }),
+        ]),
+        /closed|abort/i,
+      );
+    } finally {
+      clearTimeout(timer);
+      release(
+        stage === 'buddy'
+          ? { result: 0, data: [{ buddyUids: ['u_fixture'] }] }
+          : stage === 'profile'
+            ? new Map([['u_fixture', { coreInfo: { uid: 'u_fixture', uin: '456', remark: '' } }]])
+            : { errCode: 0, result: { finish: true, infos: new Map() } },
+      );
+      await new Promise((r) => setImmediate(r));
+      services.close();
+    }
+    assert.deepEqual(
+      calls,
+      stage === 'buddy' ? ['buddy'] : stage === 'profile' ? ['buddy', 'profile'] : ['members'],
+    );
+  }
 });
-test('member query rejects invalid IDs before service dispatch and never coerces input',async()=>{
- let calls=0,coercions=0;const services=createNativeServices({getMsgService:()=>({addKernelMsgListener(){}}),getBuddyService:()=>({addKernelBuddyListener(){}}),getGroupService:()=>({addKernelGroupListener(){},getAllMemberList(){calls++;return{errCode:0,result:{finish:true,infos:new Map()}};}})},'7.0.2-53644',()=>{});
- try{for(const groupId of [undefined,123,'bad','',{toString(){coercions++;return'123';}}])await assert.rejects(services.invokeOperation('getGroupMembers',{groupId}));assert.equal(calls,0);assert.equal(coercions,0);assert.deepEqual(await services.invokeOperation('getGroupMembers',{groupId:'00123'}),[]);assert.equal(calls,1);}finally{services.close();}
+test('member query rejects invalid IDs before service dispatch and never coerces input', async () => {
+  let calls = 0,
+    coercions = 0;
+  const services = createNativeServices({
+    session: {
+      getMsgService: () => ({ addKernelMsgListener() {} }),
+      getBuddyService: () => ({ addKernelBuddyListener() {} }),
+      getGroupService: () => ({
+        addKernelGroupListener() {},
+        getAllMemberList() {
+          calls++;
+          return { errCode: 0, result: { finish: true, infos: new Map() } };
+        },
+      }),
+    },
+    version: '7.0.2-53644',
+    events: { emit: () => {} },
+  });
+  try {
+    for (const groupId of [
+      undefined,
+      123,
+      'bad',
+      '',
+      {
+        toString() {
+          coercions++;
+          return '123';
+        },
+      },
+    ])
+      await assert.rejects(services.invokeOperation('getGroupMembers', { groupId }));
+    assert.equal(calls, 0);
+    assert.equal(coercions, 0);
+    assert.deepEqual(await services.invokeOperation('getGroupMembers', { groupId: '00123' }), []);
+    assert.equal(calls, 1);
+  } finally {
+    services.close();
+  }
 });
 
-test('group remark dispatch reaches pinned native method once and preserves result error',async()=>{
- const calls:unknown[][]=[];let result:unknown={result:0};const services=createNativeServices({getMsgService:()=>({addKernelMsgListener(){}}),getBuddyService:()=>({addKernelBuddyListener(){}}),getGroupService:()=>({addKernelGroupListener(){},modifyGroupRemark(...args:unknown[]){calls.push(args);return result;}})},'7.0.2-53644',()=>{});
- try{await services.invokeOperation('setGroupRemark',{groupId:'00123',remark:''});assert.deepEqual(calls,[['00123','']]);result={result:73};await assert.rejects(services.invokeOperation('setGroupRemark',{groupId:'00123',remark:'exact'}),{code:73});assert.deepEqual(calls,[['00123',''],['00123','exact']]);await assert.rejects(services.invokeOperation('setGroupRemark',{groupId:'bad',remark:''}));assert.equal(calls.length,2);}finally{services.close();}
+test('group remark dispatch reaches pinned native method once and preserves result error', async () => {
+  const calls: unknown[][] = [];
+  let result: unknown = { result: 0 };
+  const services = createNativeServices({
+    session: {
+      getMsgService: () => ({ addKernelMsgListener() {} }),
+      getBuddyService: () => ({ addKernelBuddyListener() {} }),
+      getGroupService: () => ({
+        addKernelGroupListener() {},
+        modifyGroupRemark(...args: unknown[]) {
+          calls.push(args);
+          return result;
+        },
+      }),
+    },
+    version: '7.0.2-53644',
+    events: { emit: () => {} },
+  });
+  try {
+    await services.invokeOperation('setGroupRemark', { groupId: '00123', remark: '' });
+    assert.deepEqual(calls, [['00123', '']]);
+    result = { result: 73 };
+    await assert.rejects(
+      services.invokeOperation('setGroupRemark', { groupId: '00123', remark: 'exact' }),
+      { code: 73 },
+    );
+    assert.deepEqual(calls, [
+      ['00123', ''],
+      ['00123', 'exact'],
+    ]);
+    await assert.rejects(
+      services.invokeOperation('setGroupRemark', { groupId: 'bad', remark: '' }),
+    );
+    assert.equal(calls.length, 2);
+  } finally {
+    services.close();
+  }
 });
 
-test('native group detail callback emits typed metadata and stops after close',()=>{
- const listeners:any[]=[];const events:any[]=[];const services=createNativeServices({getMsgService:()=>({addKernelMsgListener(){}}),getBuddyService:()=>({addKernelBuddyListener(){}}),getGroupService:()=>({addKernelGroupListener(listener:any){listeners.push(listener);return listeners.length;}})},'7.0.2-53644',(event,payload)=>events.push({event,payload}));
- const detail={groupCode:'123',groupName:'fixture',ownerUid:'u_owner',ownerUin:'456',fingerMemo:'description',memberNum:2,maxMemberNum:100};
- try{for(const listener of listeners)listener.onGroupDetailInfoChange(detail);assert.deepEqual(events.filter(e=>e.event==='group-info-updated'),[{event:'group-info-updated',payload:{groupId:'123',name:'fixture',memberCount:2,maxMemberCount:100,ownerUid:'u_owner',ownerUserId:'456',description:'description'}}]);services.close();const count=events.length;for(const listener of listeners)listener.onGroupDetailInfoChange(detail);assert.equal(events.length,count);}finally{services.close();}
+test('native group detail callback emits typed metadata and stops after close', () => {
+  const listeners: any[] = [];
+  const events: any[] = [];
+  const services = createNativeServices({
+    session: {
+      getMsgService: () => ({ addKernelMsgListener() {} }),
+      getBuddyService: () => ({ addKernelBuddyListener() {} }),
+      getGroupService: () => ({
+        addKernelGroupListener(listener: any) {
+          listeners.push(listener);
+          return listeners.length;
+        },
+      }),
+    },
+    version: '7.0.2-53644',
+    events: { emit: (event, payload) => events.push({ event, payload }) },
+  });
+  const detail = {
+    groupCode: '123',
+    groupName: 'fixture',
+    ownerUid: 'u_owner',
+    ownerUin: '456',
+    fingerMemo: 'description',
+    memberNum: 2,
+    maxMemberNum: 100,
+  };
+  try {
+    for (const listener of listeners) listener.onGroupDetailInfoChange(detail);
+    assert.deepEqual(
+      events.filter((e) => e.event === 'group-info-updated'),
+      [
+        {
+          event: 'group-info-updated',
+          payload: {
+            groupId: '123',
+            name: 'fixture',
+            memberCount: 2,
+            maxMemberCount: 100,
+            ownerUid: 'u_owner',
+            ownerUserId: '456',
+            description: 'description',
+          },
+        },
+      ],
+    );
+    services.close();
+    const count = events.length;
+    for (const listener of listeners) listener.onGroupDetailInfoChange(detail);
+    assert.equal(events.length, count);
+  } finally {
+    services.close();
+  }
 });
 
-test('friend category route captures source before profile await, retaining native counts and duplicate relationships',async()=>{
- let release!:(value:any)=>void;const profiles=new Promise(r=>release=r);let reached!:()=>void;const began=new Promise<void>(r=>reached=r);
- const raw={result:0,data:[{categoryId:1,categorySortId:2,categroyName:'fixture',categroyMbCount:9,onlineCount:4,buddyUids:['u_fixture','u_fixture']}]};let profileCalls=0;
- const services=createNativeServices({getMsgService:()=>({addKernelMsgListener(){}}),getGroupService:()=>({addKernelGroupListener(){}}),getBuddyService:()=>({addKernelBuddyListener(){},getBuddyListV2(...args:any[]){assert.deepEqual(args,['0',true,0]);return raw;}}),getProfileService:()=>({getCoreAndBaseInfo(...args:any[]){profileCalls++;assert.deepEqual(args,['nodeStore',['u_fixture']]);reached();return profiles;}})},'7.0.2-53644',()=>{});
- try{const pending=services.invokeOperation('listFriendCategories');await began;raw.data[0].categroyName='mutated';raw.data[0].buddyUids.length=0;release(new Map([['u_fixture',{coreInfo:{uid:'u_fixture',uin:'123',nick:'name',remark:''}}]]));assert.deepEqual(await pending,[{categoryId:1,sortId:2,name:'fixture',memberCount:9,onlineCount:4,friends:[{uid:'u_fixture',userId:'123',nickname:'name',remark:''},{uid:'u_fixture',userId:'123',nickname:'name',remark:''}]}]);assert.equal(profileCalls,1);}finally{services.close();}
+test('friend category route captures source before profile await, retaining native counts and duplicate relationships', async () => {
+  let release!: (value: any) => void;
+  const profiles = new Promise((r) => (release = r));
+  let reached!: () => void;
+  const began = new Promise<void>((r) => (reached = r));
+  const raw = {
+    result: 0,
+    data: [
+      {
+        categoryId: 1,
+        categorySortId: 2,
+        categroyName: 'fixture',
+        categroyMbCount: 9,
+        onlineCount: 4,
+        buddyUids: ['u_fixture', 'u_fixture'],
+      },
+    ],
+  };
+  let profileCalls = 0;
+  const services = createNativeServices({
+    session: {
+      getMsgService: () => ({ addKernelMsgListener() {} }),
+      getGroupService: () => ({ addKernelGroupListener() {} }),
+      getBuddyService: () => ({
+        addKernelBuddyListener() {},
+        getBuddyListV2(...args: any[]) {
+          assert.deepEqual(args, ['0', true, 0]);
+          return raw;
+        },
+      }),
+      getProfileService: () => ({
+        getCoreAndBaseInfo(...args: any[]) {
+          profileCalls++;
+          assert.deepEqual(args, ['nodeStore', ['u_fixture']]);
+          reached();
+          return profiles;
+        },
+      }),
+    },
+    version: '7.0.2-53644',
+    events: { emit: () => {} },
+  });
+  try {
+    const pending = services.invokeOperation('listFriendCategories');
+    await began;
+    raw.data[0].categroyName = 'mutated';
+    raw.data[0].buddyUids.length = 0;
+    release(
+      new Map([
+        ['u_fixture', { coreInfo: { uid: 'u_fixture', uin: '123', nick: 'name', remark: '' } }],
+      ]),
+    );
+    assert.deepEqual(await pending, [
+      {
+        categoryId: 1,
+        sortId: 2,
+        name: 'fixture',
+        memberCount: 9,
+        onlineCount: 4,
+        friends: [
+          { uid: 'u_fixture', userId: '123', nickname: 'name', remark: '' },
+          { uid: 'u_fixture', userId: '123', nickname: 'name', remark: '' },
+        ],
+      },
+    ]);
+    assert.equal(profileCalls, 1);
+  } finally {
+    services.close();
+  }
 });
-test('invalid friend categories reject before Profile dispatch',async()=>{
- let profiles=0;let raw:any={result:0,data:new Array(1)};const services=createNativeServices({getMsgService:()=>({addKernelMsgListener(){}}),getGroupService:()=>({addKernelGroupListener(){}}),getBuddyService:()=>({addKernelBuddyListener(){},getBuddyListV2(){return raw;}}),getProfileService:()=>({getCoreAndBaseInfo(){profiles++;return new Map();}})},'7.0.2-53644',()=>{});
- try{await assert.rejects(services.invokeOperation('listFriendCategories'));raw={result:73,data:[]};await assert.rejects(services.invokeOperation('listFriendCategories'),{code:73});assert.equal(profiles,0);}finally{services.close();}
+test('invalid friend categories reject before Profile dispatch', async () => {
+  let profiles = 0;
+  let raw: any = { result: 0, data: new Array(1) };
+  const services = createNativeServices({
+    session: {
+      getMsgService: () => ({ addKernelMsgListener() {} }),
+      getGroupService: () => ({ addKernelGroupListener() {} }),
+      getBuddyService: () => ({
+        addKernelBuddyListener() {},
+        getBuddyListV2() {
+          return raw;
+        },
+      }),
+      getProfileService: () => ({
+        getCoreAndBaseInfo() {
+          profiles++;
+          return new Map();
+        },
+      }),
+    },
+    version: '7.0.2-53644',
+    events: { emit: () => {} },
+  });
+  try {
+    await assert.rejects(services.invokeOperation('listFriendCategories'));
+    raw = { result: 73, data: [] };
+    await assert.rejects(services.invokeOperation('listFriendCategories'), { code: 73 });
+    assert.equal(profiles, 0);
+  } finally {
+    services.close();
+  }
 });
-test('friend categories close cancels either native query phase before settlement',async()=>{
- for(const stage of ['buddy','profile']){let release!:(value:any)=>void;const deferred=new Promise(r=>release=r);let reached!:()=>void;const began=new Promise<void>(r=>reached=r);const calls:string[]=[];const raw={result:0,data:[]};
- const services=createNativeServices({getMsgService:()=>({addKernelMsgListener(){}}),getGroupService:()=>({addKernelGroupListener(){}}),getBuddyService:()=>({addKernelBuddyListener(){},getBuddyListV2(){calls.push('buddy');if(stage==='buddy'){reached();return deferred;}return raw;}}),getProfileService:()=>({getCoreAndBaseInfo(){calls.push('profile');reached();return deferred;}})},'7.0.2-53644',()=>{});
- const pending=services.invokeOperation('listFriendCategories');void pending.catch(()=>{});await began;services.close();let timer:ReturnType<typeof setTimeout>|undefined;
- try{await assert.rejects(Promise.race([pending,new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('query remained pending')),50);})]),/closed|abort/i);}finally{clearTimeout(timer);release(stage==='buddy'?raw:new Map());await new Promise(r=>setImmediate(r));services.close();}assert.deepEqual(calls,stage==='buddy'?['buddy']:['buddy','profile']);
- }
+test('friend categories close cancels either native query phase before settlement', async () => {
+  for (const stage of ['buddy', 'profile']) {
+    let release!: (value: any) => void;
+    const deferred = new Promise((r) => (release = r));
+    let reached!: () => void;
+    const began = new Promise<void>((r) => (reached = r));
+    const calls: string[] = [];
+    const raw = { result: 0, data: [] };
+    const services = createNativeServices({
+      session: {
+        getMsgService: () => ({ addKernelMsgListener() {} }),
+        getGroupService: () => ({ addKernelGroupListener() {} }),
+        getBuddyService: () => ({
+          addKernelBuddyListener() {},
+          getBuddyListV2() {
+            calls.push('buddy');
+            if (stage === 'buddy') {
+              reached();
+              return deferred;
+            }
+            return raw;
+          },
+        }),
+        getProfileService: () => ({
+          getCoreAndBaseInfo() {
+            calls.push('profile');
+            reached();
+            return deferred;
+          },
+        }),
+      },
+      version: '7.0.2-53644',
+      events: { emit: () => {} },
+    });
+    const pending = services.invokeOperation('listFriendCategories');
+    void pending.catch(() => {});
+    await began;
+    services.close();
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    try {
+      await assert.rejects(
+        Promise.race([
+          pending,
+          new Promise((_, reject) => {
+            timer = setTimeout(() => reject(Error('query remained pending')), 50);
+          }),
+        ]),
+        /closed|abort/i,
+      );
+    } finally {
+      clearTimeout(timer);
+      release(stage === 'buddy' ? raw : new Map());
+      await new Promise((r) => setImmediate(r));
+      services.close();
+    }
+    assert.deepEqual(calls, stage === 'buddy' ? ['buddy'] : ['buddy', 'profile']);
+  }
 });

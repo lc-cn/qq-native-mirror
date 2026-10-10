@@ -14,7 +14,7 @@ The new element is excluded from `SendableMessageElement`. Passing a received re
 
 ```ts
 // `cardMessage` is a received SDK Message from an already-online client.
-if (cardMessage.elements.some(element => element.type === 'forward')) {
+if (cardMessage.elements.some((element) => element.type === 'forward')) {
   const records = await client.getForwardMessages(cardMessage.peer, cardMessage.messageId);
   // Read nested contents with the outermost conversation/root retained explicitly:
   // await client.getForwardMessages(cardMessage.peer, cardMessage.messageId, nestedMessage.messageId);

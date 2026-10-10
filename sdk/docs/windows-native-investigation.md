@@ -37,10 +37,10 @@ The official matching x64 installer was also downloaded and archive-extracted: [
 
 Static native closures were exported with `scripts/export-windows-native.py`:
 
-| Target | Files / bytes | Native metadata |
-| --- | --- | --- |
+| Target                                      | Files / bytes  | Native metadata |
+| ------------------------------------------- | -------------- | --------------- |
 | `.local/native/qq-9.9.33-52230-win32-arm64` | 12 / 138852224 | appId 537379423 |
-| `.local/native/qq-9.9.33-52230-win32-x64` | 17 / 174686216 | appId 537379411 |
+| `.local/native/qq-9.9.33-52230-win32-x64`   | 17 / 174686216 | appId 537379411 |
 
 Both use `clientVersion=9.9.33-52230` from package.json and literal QUA `V1_WIN_NQ_9.9.33_52230_GW_B` and appId markers from major.node. Every copied PE matches its target architecture and every output file's size/hash was checked. Original official QQNT.dll, QQ.exe and account data are excluded. The flat sibling DLL layout has unique names and follows regular/delay imports; system API-set DLL names are recorded externally. Optional runtime-loaded libraries remain unproven. Schema-1 manifests describe the vendor files **but these bundles are not yet runnable**: a successfully built compatibility QQNT.dll must first be added with hash to each manifest.
 
@@ -80,25 +80,25 @@ The SDK now accepts the exact version `9.9.33-52230` as a **static upstream cand
 
 Official-package artifacts were inspected as bytes, without executing application JavaScript. Paths below are relative to `.local/research/`, and offsets are zero-based file-byte offsets, not virtual addresses:
 
-| Architecture | Artifact path | Bytes | SHA-256 |
-| --- | --- | ---: | --- |
-| x64 | `windows-x64-extracted/Files/versions/9.9.33-52230/resources/app/major.node` | 107373608 | `3fdc17fa0512fd4b702f34a0025ffe4eca0a5c70229872f7fc0a0324bdfb5fdf` |
-| x64 | `windows-x64-extracted/Files/versions/9.9.33-52230/resources/app/application.asar` | 30339880 | `882aa00613afd72f63b424dce347d0bffceb25c5ce643babcebe2776ab8606d7` |
-| arm64 | `windows-extracted/Files/versions/9.9.33-52230/resources/app/major.node` | 107669552 | `f8e406b2464bce4a74b6c74a782f15d1d3c76a52daacc89935cd3cd8ef2fdfdc` |
-| arm64 | `windows-extracted/Files/versions/9.9.33-52230/resources/app/application.asar` | 30601572 | `5a20441ca8f1e81937f7fc3b9a71c27be0ff7705b8b5bec126ca07e886d2ba78` |
+| Architecture | Artifact path                                                                      |     Bytes | SHA-256                                                            |
+| ------------ | ---------------------------------------------------------------------------------- | --------: | ------------------------------------------------------------------ |
+| x64          | `windows-x64-extracted/Files/versions/9.9.33-52230/resources/app/major.node`       | 107373608 | `3fdc17fa0512fd4b702f34a0025ffe4eca0a5c70229872f7fc0a0324bdfb5fdf` |
+| x64          | `windows-x64-extracted/Files/versions/9.9.33-52230/resources/app/application.asar` |  30339880 | `882aa00613afd72f63b424dce347d0bffceb25c5ce643babcebe2776ab8606d7` |
+| arm64        | `windows-extracted/Files/versions/9.9.33-52230/resources/app/major.node`           | 107669552 | `f8e406b2464bce4a74b6c74a782f15d1d3c76a52daacc89935cd3cd8ef2fdfdc` |
+| arm64        | `windows-extracted/Files/versions/9.9.33-52230/resources/app/application.asar`     |  30601572 | `5a20441ca8f1e81937f7fc3b9a71c27be0ff7705b8b5bec126ca07e886d2ba78` |
 
 The `major.node` local string clusters contain:
 
-| Token | x64 offset | arm64 offset |
-| --- | ---: | ---: |
-| `getBuddyListV2` | 5958384 | 36357672 |
-| `forceRefresh` (in the same cluster) | 5958435 | 36357723 |
-| `kNomal` | 5958485 | 36357773 |
-| `getBuddyList(from=` | 5958510 | 36357798 |
-| `,force=` | 5958545 | 36357833 |
-| `,fromNt=` | 5958565 | 36357853 |
-| `onBuddyListChange` (standalone token in the cluster) | 5958726 | 36358014 |
-| `userSimpleInfos` | 5958782 | 36358070 |
+| Token                                                 | x64 offset | arm64 offset |
+| ----------------------------------------------------- | ---------: | -----------: |
+| `getBuddyListV2`                                      |    5958384 |     36357672 |
+| `forceRefresh` (in the same cluster)                  |    5958435 |     36357723 |
+| `kNomal`                                              |    5958485 |     36357773 |
+| `getBuddyList(from=`                                  |    5958510 |     36357798 |
+| `,force=`                                             |    5958545 |     36357833 |
+| `,fromNt=`                                            |    5958565 |     36357853 |
+| `onBuddyListChange` (standalone token in the cluster) |    5958726 |     36358014 |
+| `userSimpleInfos`                                     |    5958782 |     36358070 |
 
 These tokens corroborate the method and refresh/request naming in both official architectures. They do **not** prove executable argument order, call arity, notification payload layout, or a successful authenticated query. Core ASAR entries are precompiled rather than accessible plain application source; the x64 ASAR entry-byte scan did not find a plaintext `getBuddyList` call. The candidate keeps existing category/UID/result/profile-Map validation and was covered by version-parameterized mocked list/history fixtures. No Windows business API runtime certification follows from these tests.
 

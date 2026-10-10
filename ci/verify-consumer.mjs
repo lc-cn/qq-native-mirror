@@ -67,7 +67,7 @@ try {
  Object.assign(forwardResourceChecks,{forwardResourceDeclarationsContract:forwardResourceTypeChecks.success,forwardResourceTypeChecks});
  const historyLifecycleChecks=await verifyHistoryLifecycleConsumer(join(temp,'node_modules/qq-native-client'));
  const installedRoot=join(temp,'node_modules/qq-native-client');
- const {prepareNative}=await import(pathToFileURL(join(installedRoot,'dist/native-package.js')).href);
+ const {prepareNative}=await import(pathToFileURL(join(installedRoot,'dist/native/native-package.js')).href);
  const nativeCache=join(temp,'native-cache');
  globalThis.fetch=()=>{throw new Error('Unexpected mirror request with installed platform package');};
  const autoNative=await prepareNative({dataDir:join(temp,'unused-video-account'),cacheDir:nativeCache});
@@ -96,7 +96,7 @@ try {
  assert.equal(installedManifest.videoCodec,'video/video-codec.node');
  assert.equal(autoNative.videoCodecPath,join(installedManifest.npmStorage===undefined?join(temp,'node_modules',platformName):dirname(autoNative.wrapperPath),'video/video-codec.node'));
  // Run the shared real-addon verifier against installed dist, never a fake codec.
- const verifierSource=(await readFile('sdk/scripts/verify-video-native.mjs','utf8')).replaceAll("'../dist/video-codec-loader.js'",JSON.stringify(pathToFileURL(join(installedRoot,'dist/video-codec-loader.js')).href)).replaceAll("'../dist/media-send.js'",JSON.stringify(pathToFileURL(join(installedRoot,'dist/media-send.js')).href));
+ const verifierSource=(await readFile('sdk/scripts/verify-video-native.mjs','utf8')).replaceAll("'../dist/features/media/video-codec-loader.js'",JSON.stringify(pathToFileURL(join(installedRoot,'dist/features/media/video-codec-loader.js')).href)).replaceAll("'../dist/features/media/media-send.js'",JSON.stringify(pathToFileURL(join(installedRoot,'dist/features/media/media-send.js')).href));
  const verifierPath=join(installedRoot,'installed-video-verifier.mjs');await writeFile(verifierPath,verifierSource);
  await execute(process.execPath,[verifierPath,autoNative.videoCodecPath,resolve('sdk/test/video-fixtures'),resolve('out/installed-video.json')],{timeout:120000,maxBuffer:1024*1024});
  installedVideo=JSON.parse(await readFile('out/installed-video.json'));assert.equal(installedVideo.passed,true);assert.equal(installedVideo.inputs.length,3);assert.equal(installedVideo.sdkFakeCache,true);
@@ -109,7 +109,7 @@ try {
   const {serializeKernelError}=await import(pathToFileURL(join(temp,'node_modules/qq-native-client/dist/errors.js')).href);
   assert.equal(typeof sdk.QQClient.prototype.sendMergedForward,'function');
   let listener,failCard=false;const steps=[],uploads=[],sends=[];
-  const services=createNativeServices({
+  const services=createNativeServices({ session: {
    getMsgService:()=>({addKernelMsgListener(value){listener=value;},
     sendSsoCmdReqByContend(command,data){steps.push('upload');uploads.push([command,Buffer.from(data)]);return{rspbuffer:Buffer.from('12031a0172','hex')};},
     generateMsgUniqueId(){steps.push('generate');return`fixture-native-token-${sends.length}`;},
@@ -119,7 +119,7 @@ try {
    getUixConvertService:()=>({getUid(ids){steps.push('uid');assert.deepEqual(ids,['456']);return{uidInfo:new Map([['456','u_456']])};}}),
    getGroupService:()=>({addKernelGroupListener(){}}),getBuddyService:()=>({addKernelBuddyListener(){}}),
    getMSFService:()=>({getServerTime:()=> '100'}),
-  },'7.0.2-53644',()=>{},undefined,undefined,'789','u_self');
+  }, version: '7.0.2-53644', events: { emit: ()=>{} }, media: { tools: undefined, recordCodec: undefined }, identity: { userId: '789', uid: 'u_self' } });
   class MergedWorker extends MergedForwardEmitter {
    connected=true;stdout=new MergedForwardEmitter();stderr=new MergedForwardEmitter();requests=[];
    send(request,callback){this.requests.push(request);callback(null);
@@ -155,7 +155,7 @@ try {
   return{mergedForwardClientContract:true,mergedForwardServiceContract:true,nativeMergedForwardAttempted:false};
  })();
  const cli=await import(pathToFileURL(join(temp,'node_modules/qq-native-client/dist/cli.js')).href);
- const elements=await import(pathToFileURL(join(temp,'node_modules/qq-native-client/dist/message-elements.js')).href);
+ const elements=await import(pathToFileURL(join(temp,'node_modules/qq-native-client/dist/features/messages/message-elements.js')).href);
  const mixed=[{type:'text',text:'fixture'},{type:'face',id:14},{type:'face',id:428}];
  assert.deepEqual(cli.normalizeMessage(mixed),mixed);
  assert.deepEqual(elements.faceElement(428),{elementType:6,elementId:'',faceElement:{faceIndex:428,faceType:2,faceText:'/收到',sourceType:1,stickerType:0,packId:'0',stickerId:'0'}});
@@ -163,7 +163,7 @@ try {
  await writeFile(join(temp,'faces.json'),JSON.stringify(mixed));
  const faceAction=await cli.prepareCommand('send',{kind:'group',target:'123','message-file':join(temp,'faces.json')});
  let faceArgs;await faceAction({sendGroupMessage:async(...args)=>{faceArgs=args;}});assert.deepEqual(faceArgs,['123',mixed]);
- const query=await import(pathToFileURL(join(temp,'node_modules/qq-native-client/dist/message-query.js')).href);
+ const query=await import(pathToFileURL(join(temp,'node_modules/qq-native-client/dist/features/messages/message-query.js')).href);
  const queryId='900719925474099312345',queryPeer={chatType:1,peerUid:'u_fixture'};
  assert.equal(typeof sdk.QQClient.prototype.getMessage,'function');
  assert.equal(await query.queryNativeMessage({getMsgsByMsgId:(peer,ids)=>{assert.deepEqual(peer,queryPeer);assert.deepEqual(ids,[queryId]);return{result:0,msgList:[]};}},queryPeer,queryId),undefined);
@@ -175,7 +175,7 @@ try {
  const {prepareCommand}=cli;const {queryNativeMessage}=query;
 const peer={chatType:2,peerUid:'123'},id='900719925474099312345';
 const raw={msgId:id,msgSeq:'9',msgTime:'100',chatType:2,peerUid:'123',peerUin:'123',senderUin:'456',senderUid:'u_friend',sendNickName:'fixture',elements:[{elementType:1,textElement:{content:'fixture',atType:0}}]};
-function fixture(response){let calls=0;const services=createNativeServices({getMsgService:()=>({addKernelMsgListener(){},getMsgsIncludeSelf(...args){calls++;assert.deepEqual(args,[peer,'42',2,false]);return response;}}),getBuddyService:()=>({addKernelBuddyListener(){}}),getGroupService:()=>({addKernelGroupListener(){}})},'7.0.2-53644',()=>{});return{services,calls:()=>calls};}
+function fixture(response){let calls=0;const services=createNativeServices({ session: {getMsgService:()=>({addKernelMsgListener(){},getMsgsIncludeSelf(...args){calls++;assert.deepEqual(args,[peer,'42',2,false]);return response;}}),getBuddyService:()=>({addKernelBuddyListener(){}}),getGroupService:()=>({addKernelGroupListener(){}})}, version: '7.0.2-53644', events: { emit: ()=>{} } });return{services,calls:()=>calls};}
 const payload={peer:{type:'group',groupId:'123'},options:{before:'42',limit:2}};
 for(const [result,code] of [[-1,-1],[73,73],['denied','denied'],[undefined,'invalid-result'],[NaN,'invalid-result']])for(const msgList of [[],[raw]]){
  const{services,calls}=fixture({result,msgList,errMsg:'must-not-leak'});try{await assert.rejects(services.invokeOperation('getHistory',payload),error=>{assert.equal(error.code,code);assert.ok(!error.message.includes('must-not-leak'));return true;});assert.equal(calls(),1);}finally{services.close();}
@@ -188,12 +188,12 @@ for(const msgList of [[],[{...raw,msgId:'3'},raw]]){
 }
 await assert.rejects(queryNativeMessage({getMsgsByMsgId:()=>({result:0,msgList:[{...raw,elements:Array(1)}]})},peer,id),/elements/i);
 let finish,begin,calls=0;const began=new Promise(resolve=>{begin=resolve;});const delayed=new Promise(resolve=>{finish=resolve;});
-const closing=createNativeServices({getMsgService:()=>({addKernelMsgListener(){},getMsgsIncludeSelf(){calls++;begin();return delayed;}}),getBuddyService:()=>({addKernelBuddyListener(){}}),getGroupService:()=>({addKernelGroupListener(){}})},'7.0.2-53644',()=>{});
+const closing=createNativeServices({ session: {getMsgService:()=>({addKernelMsgListener(){},getMsgsIncludeSelf(){calls++;begin();return delayed;}}),getBuddyService:()=>({addKernelBuddyListener(){}}),getGroupService:()=>({addKernelGroupListener(){}})}, version: '7.0.2-53644', events: { emit: ()=>{} } });
 const pending=closing.invokeOperation('getHistory',payload);await began;closing.close();finish({result:0,msgList:[]});await assert.rejects(pending,/abort|closed/i);assert.equal(calls,1);
  }
  // Installed compiled code with a fake profile service: this checks field preservation,
  // not a QQ-native profile mutation. Native preparation below remains a separate check.
- const profile=await import(pathToFileURL(join(temp,'node_modules/qq-native-client/dist/self-profile.js')).href);
+ const profile=await import(pathToFileURL(join(temp,'node_modules/qq-native-client/dist/features/contacts/self-profile.js')).href);
  assert.equal(typeof sdk.QQClient.prototype.setSignature,'function');
  for(const text of ['','  spaced signature  ']){
   const action=await cli.prepareCommand('signature',{text});let actual;
@@ -221,7 +221,7 @@ const pending=closing.invokeOperation('getHistory',payload);await began;closing.
  const missing=profileFixture(true);
  try{await assert.rejects(missing.module.invokeOperation('setSignature',{text:'new'}),/nickname|preserv|profile/i);assert.equal(missing.writes.length,0);}finally{missing.module.close();}
  // Installed compiled contract only: synthetic services, no QQ group mutation.
- const {createGroupOperations}=await import(pathToFileURL(join(temp,'node_modules/qq-native-client/dist/group-operations.js')).href);
+ const {createGroupOperations}=await import(pathToFileURL(join(temp,'node_modules/qq-native-client/dist/features/groups/group-operations.js')).href);
  const voidCases=[
   ['setGroupMemberCard','modifyMemberCardName',{groupId:'123',userId:'456',card:''},['123','u_fixture','']],
   ['setGroupAdmin','modifyMemberRole',{groupId:'123',userId:'456',enabled:true},['123','u_fixture',3]],
@@ -257,11 +257,11 @@ const pending=closing.invokeOperation('getHistory',payload);await began;closing.
   [{errCode:0,result:{finish:false,infos:new Map()}},'incomplete-result'],
  ]){
   let calls=0;
-  const query=queryServices({
+  const query=queryServices({ session: {
    getMsgService:()=>({addKernelMsgListener(){}}),
    getBuddyService:()=>({addKernelBuddyListener(){}}),
    getGroupService:()=>({addKernelGroupListener(){},getAllMemberList(group,refresh){calls++;assert.equal(group,'123');assert.equal(refresh,false);return response;}}),
-  },'7.0.2-53644',()=>{});
+  }, version: '7.0.2-53644', events: { emit: ()=>{} } });
   try{
    if(expectedCode===undefined)assert.deepEqual(await query.invokeOperation('getGroupMembers',{groupId:'123'}),[]);
    else await assert.rejects(query.invokeOperation('getGroupMembers',{groupId:'123'}),{code:expectedCode});
@@ -272,18 +272,18 @@ const pending=closing.invokeOperation('getHistory',payload);await began;closing.
  const createNativeServices=queryServices;
 // Complete member identity/DTO validation and failure-cache isolation.
 const valid={uid:'u_member',uin:'900719925474099312345',nick:'member',cardName:'',role:2};
-function membersFixture(infos){return createNativeServices({getMsgService:()=>({addKernelMsgListener(){}}),getBuddyService:()=>({addKernelBuddyListener(){}}),getGroupService:()=>({addKernelGroupListener(){},getAllMemberList(){return{errCode:0,result:{finish:true,infos}};}})},'7.0.2-53644',()=>{});}
+function membersFixture(infos){return createNativeServices({ session: {getMsgService:()=>({addKernelMsgListener(){}}),getBuddyService:()=>({addKernelBuddyListener(){}}),getGroupService:()=>({addKernelGroupListener(){},getAllMemberList(){return{errCode:0,result:{finish:true,infos}};}})}, version: '7.0.2-53644', events: { emit: ()=>{} } });}
 for(const [key,member] of [['u_member',{...valid,uin:456}],['u_member',{...valid,uin:{toString(){throw Error('Coercion must not run');}}}],['u_member',{...valid,uid:'u_other'}],['',{...valid,uid:''}],['u_member',{...valid,nick:{secret:true}}],['u_member',{...valid,cardName:12}],['u_member',{...valid,uid:undefined}],['u_member',{...valid,nick:undefined}],['u_member',{...valid,cardName:undefined}],['u_member',{...valid,role:'2'}],['u_member',{...valid,role:0}],['u_member',{...valid,role:1}]]){
  const query=membersFixture(new Map([[key,member]]));try{await assert.rejects(query.invokeOperation('getGroupMembers',{groupId:'123'}),/native group member/);}finally{query.close();}
 }
 const roles=membersFixture(new Map([['u_member',valid],['u_admin',{...valid,uid:'u_admin',uin:'456',role:3}],['u_owner',{...valid,uid:'u_owner',uin:'789',role:4}]]));
 try{assert.deepEqual(await roles.invokeOperation('getGroupMembers',{groupId:'123'}),[{userId:valid.uin,uid:'u_member',nickname:'member',card:'',role:'member'},{userId:'456',uid:'u_admin',nickname:'member',card:'',role:'admin'},{userId:'789',uid:'u_owner',nickname:'member',card:'',role:'owner'}]);}finally{roles.close();}
 let conversions=0;
-const atomic=createNativeServices({getMsgService:()=>({addKernelMsgListener(){}}),getBuddyService:()=>({addKernelBuddyListener(){}}),getGroupService:()=>({addKernelGroupListener(){},getAllMemberList(){return{errCode:0,result:{finish:true,infos:new Map([['u_first',{...valid,uid:'u_first',uin:'456'}],['u_bad',{...valid,uid:'u_bad',role:999}]])}};}}),getUixConvertService:()=>({getUid(ids){assert.deepEqual(ids,['456']);conversions++;return{uidInfo:new Map()};}})},'7.0.2-53644',()=>{});
+const atomic=createNativeServices({ session: {getMsgService:()=>({addKernelMsgListener(){}}),getBuddyService:()=>({addKernelBuddyListener(){}}),getGroupService:()=>({addKernelGroupListener(){},getAllMemberList(){return{errCode:0,result:{finish:true,infos:new Map([['u_first',{...valid,uid:'u_first',uin:'456'}],['u_bad',{...valid,uid:'u_bad',role:999}]])}};}}),getUixConvertService:()=>({getUid(ids){assert.deepEqual(ids,['456']);conversions++;return{uidInfo:new Map()};}})}, version: '7.0.2-53644', events: { emit: ()=>{} } });
 try{await assert.rejects(atomic.invokeOperation('getGroupMembers',{groupId:'123'}),/Unknown native group member role/);await assert.rejects(atomic.invokeOperation('sendPrivateMessage',{userId:'456',message:'fixture'}),/Could not resolve user identifier/);assert.equal(conversions,1);}finally{atomic.close();}
  }
  // Installed metadata callbacks are normalized using fake events only.
- const {createGroupEvents}=await import(pathToFileURL(join(temp,'node_modules/qq-native-client/dist/group-events.js')).href);
+ const {createGroupEvents}=await import(pathToFileURL(join(temp,'node_modules/qq-native-client/dist/features/groups/group-events.js')).href);
  const groupEvents=[];const groupListener=createGroupEvents((event,payload)=>groupEvents.push([event,payload]));
  groupListener.onGroupListUpdate(3,[{groupCode:'123'}]);
  assert.deepEqual(groupEvents.pop(),['group-list-updated',{kind:'removed',groups:[{groupId:'123'}]}]);
@@ -304,7 +304,7 @@ try{await assert.rejects(atomic.invokeOperation('getGroupMembers',{groupId:'123'
  unwatch();fakeWatch.emit('group-list-updated',{kind:'all',groups:[]});assert.equal(watchLines.length,2);
  { // Synthetic installed friend metadata and CLI contract.
 const {EventEmitter:FriendEmitter}=await import('node:events');
-const {createFriendEvents}=await import(pathToFileURL(join(temp,'node_modules/qq-native-client/dist/friend-events.js')).href);
+const {createFriendEvents}=await import(pathToFileURL(join(temp,'node_modules/qq-native-client/dist/features/contacts/friend-events.js')).href);
 const {observeWatchEvents:watchFriends}=await import(pathToFileURL(join(temp,'node_modules/qq-native-client/dist/cli.js')).href);
 const events=[];const listener=createFriendEvents((event,payload)=>events.push([event,payload]));
 const expected={categories:[{categoryId:1,name:'fixture',memberCount:1,friends:[{uid:'u_friend',userId:'900719925474099312345',nickname:'friend',remark:'remark'}]}]};
@@ -322,38 +322,38 @@ const plain=[];const cleanDefault=watchFriends(client,undefined,line=>plain.push
 const {createNativeServices}=await import(pathToFileURL(join(temp,'node_modules/qq-native-client/dist/native-services.js')).href);
 for(const [result,code] of [[-1,-1],[73,73],['denied','denied'],[undefined,'invalid-result'],[NaN,'invalid-result']])for(const data of [[],[{buddyUids:['u_fixture']}]] ){
  let buddyCalls=0,profileCalls=0;
- const query=createNativeServices({getMsgService:()=>({addKernelMsgListener(){}}),getGroupService:()=>({addKernelGroupListener(){}}),getBuddyService:()=>({addKernelBuddyListener(){},getBuddyListV2(){buddyCalls++;return{result,data};}}),getProfileService:()=>({getCoreAndBaseInfo(){profileCalls++;throw Error('Unexpected profile query');}})},'7.0.2-53644',()=>{});
+ const query=createNativeServices({ session: {getMsgService:()=>({addKernelMsgListener(){}}),getGroupService:()=>({addKernelGroupListener(){}}),getBuddyService:()=>({addKernelBuddyListener(){},getBuddyListV2(){buddyCalls++;return{result,data};}}),getProfileService:()=>({getCoreAndBaseInfo(){profileCalls++;throw Error('Unexpected profile query');}})}, version: '7.0.2-53644', events: { emit: ()=>{} } });
  try{await assert.rejects(query.invokeOperation('listFriends'),{code});assert.equal(buddyCalls,1);assert.equal(profileCalls,0);}finally{query.close();}
 }
 // Sparse native arrays must not become a valid empty list.
 for(const data of [Array(1),[{buddyUids:Array(1)}]]){
  let profileCalls=0;
- const query=createNativeServices({getMsgService:()=>({addKernelMsgListener(){}}),getGroupService:()=>({addKernelGroupListener(){}}),getBuddyService:()=>({addKernelBuddyListener(){},getBuddyListV2(){return{result:0,data};}}),getProfileService:()=>({getCoreAndBaseInfo(){profileCalls++;return new Map();}})},'7.0.2-53644',()=>{});
+ const query=createNativeServices({ session: {getMsgService:()=>({addKernelMsgListener(){}}),getGroupService:()=>({addKernelGroupListener(){}}),getBuddyService:()=>({addKernelBuddyListener(){},getBuddyListV2(){return{result:0,data};}}),getProfileService:()=>({getCoreAndBaseInfo(){profileCalls++;return new Map();}})}, version: '7.0.2-53644', events: { emit: ()=>{} } });
  try{await assert.rejects(query.invokeOperation('listFriends'),/Invalid native buddy/);assert.equal(profileCalls,0);}finally{query.close();}
 }
 // A failed row must leave no usable UID cache entry from preceding rows.
 let conversions=0;
-const atomic=createNativeServices({getMsgService:()=>({addKernelMsgListener(){}}),getGroupService:()=>({addKernelGroupListener(){}}),getBuddyService:()=>({addKernelBuddyListener(){},getBuddyListV2(){return{result:0,data:[{buddyUids:['u_partial','u_bad']}]};}}),getProfileService:()=>({getCoreAndBaseInfo(){return new Map([['u_partial',{coreInfo:{uid:'u_partial',uin:'456',nick:'fixture',remark:''}}],['u_bad',{}]]);}}),getUixConvertService:()=>({getUid(ids){assert.deepEqual(ids,['456']);conversions++;return{uidInfo:new Map()};}})},'7.0.2-53644',()=>{});
+const atomic=createNativeServices({ session: {getMsgService:()=>({addKernelMsgListener(){}}),getGroupService:()=>({addKernelGroupListener(){}}),getBuddyService:()=>({addKernelBuddyListener(){},getBuddyListV2(){return{result:0,data:[{buddyUids:['u_partial','u_bad']}]};}}),getProfileService:()=>({getCoreAndBaseInfo(){return new Map([['u_partial',{coreInfo:{uid:'u_partial',uin:'456',nick:'fixture',remark:''}}],['u_bad',{}]]);}}),getUixConvertService:()=>({getUid(ids){assert.deepEqual(ids,['456']);conversions++;return{uidInfo:new Map()};}})}, version: '7.0.2-53644', events: { emit: ()=>{} } });
 try{await assert.rejects(atomic.invokeOperation('listFriends'),/Invalid native buddy profile/);await assert.rejects(atomic.invokeOperation('sendPrivateMessage',{userId:'456',message:'fixture'}),/Could not resolve user identifier/);assert.equal(conversions,1);}finally{atomic.close();}
 // Preserve deduplication, category order and lossless long decimal IDs.
-const complete=createNativeServices({getMsgService:()=>({addKernelMsgListener(){}}),getGroupService:()=>({addKernelGroupListener(){}}),getBuddyService:()=>({addKernelBuddyListener(){},getBuddyListV2(){return{result:0,data:[{buddyUids:['u_first','u_second']},{buddyUids:['u_first']}]};}}),getProfileService:()=>({getCoreAndBaseInfo(store,uids){assert.deepEqual([store,uids],['nodeStore',['u_first','u_second']]);return new Map([['u_first',{coreInfo:{uid:'u_first',uin:'900719925474099312345',nick:'first',remark:''}}],['u_second',{coreInfo:{uid:'u_second',uin:'456',nick:'second',remark:'remark'}}]]);}})},'7.0.2-53644',()=>{});
+const complete=createNativeServices({ session: {getMsgService:()=>({addKernelMsgListener(){}}),getGroupService:()=>({addKernelGroupListener(){}}),getBuddyService:()=>({addKernelBuddyListener(){},getBuddyListV2(){return{result:0,data:[{buddyUids:['u_first','u_second']},{buddyUids:['u_first']}]};}}),getProfileService:()=>({getCoreAndBaseInfo(store,uids){assert.deepEqual([store,uids],['nodeStore',['u_first','u_second']]);return new Map([['u_first',{coreInfo:{uid:'u_first',uin:'900719925474099312345',nick:'first',remark:''}}],['u_second',{coreInfo:{uid:'u_second',uin:'456',nick:'second',remark:'remark'}}]]);}})}, version: '7.0.2-53644', events: { emit: ()=>{} } });
 try{assert.deepEqual(await complete.invokeOperation('listFriends'),[{userId:'900719925474099312345',uid:'u_first',nickname:'first',remark:''},{userId:'456',uid:'u_second',nickname:'second',remark:'remark'}]);}finally{complete.close();}
 // Friend profile identity/display fields must already have their declared types.
 const validCore={uid:'u_friend',uin:'900719925474099312345',nick:'friend',remark:''};
 for(const change of [{uin:456},{uin:{toString(){throw Error('Coercion must not run');}}},{nick:{}},{nick:null},{remark:12},{uid:'u_other'},{uid:undefined},{remark:undefined}]){
- const query=createNativeServices({getMsgService:()=>({addKernelMsgListener(){}}),getGroupService:()=>({addKernelGroupListener(){}}),getBuddyService:()=>({addKernelBuddyListener(){},getBuddyListV2(){return{result:0,data:[{buddyUids:['u_friend']}]};}}),getProfileService:()=>({getCoreAndBaseInfo(){return new Map([['u_friend',{coreInfo:{...validCore,...change}}]]);}})},'7.0.2-53644',()=>{});
+ const query=createNativeServices({ session: {getMsgService:()=>({addKernelMsgListener(){}}),getGroupService:()=>({addKernelGroupListener(){}}),getBuddyService:()=>({addKernelBuddyListener(){},getBuddyListV2(){return{result:0,data:[{buddyUids:['u_friend']}]};}}),getProfileService:()=>({getCoreAndBaseInfo(){return new Map([['u_friend',{coreInfo:{...validCore,...change}}]]);}})}, version: '7.0.2-53644', events: { emit: ()=>{} } });
  try{await assert.rejects(query.invokeOperation('listFriends'),/Invalid native buddy profile/);}finally{query.close();}
 }
-const omittedNick=createNativeServices({getMsgService:()=>({addKernelMsgListener(){}}),getGroupService:()=>({addKernelGroupListener(){}}),getBuddyService:()=>({addKernelBuddyListener(){},getBuddyListV2(){return{result:0,data:[{buddyUids:['u_friend']}]};}}),getProfileService:()=>({getCoreAndBaseInfo(){return new Map([['u_friend',{coreInfo:{...validCore,nick:undefined}}]]);}})},'7.0.2-53644',()=>{});
+const omittedNick=createNativeServices({ session: {getMsgService:()=>({addKernelMsgListener(){}}),getGroupService:()=>({addKernelGroupListener(){}}),getBuddyService:()=>({addKernelBuddyListener(){},getBuddyListV2(){return{result:0,data:[{buddyUids:['u_friend']}]};}}),getProfileService:()=>({getCoreAndBaseInfo(){return new Map([['u_friend',{coreInfo:{...validCore,nick:undefined}}]]);}})}, version: '7.0.2-53644', events: { emit: ()=>{} } });
 try{assert.deepEqual(await omittedNick.invokeOperation('listFriends'),[{userId:validCore.uin,uid:'u_friend',nickname:'',remark:''}]);}finally{omittedNick.close();}
 // Full group callbacks reject malformed batches and retire their uncorrelated query.
 const group={groupCode:'900719925474099312345',groupName:'group',memberCount:2,maxMember:100};
-function groupFixture(groups){const listeners=[];let calls=0;const query=createNativeServices({getMsgService:()=>({addKernelMsgListener(){}}),getBuddyService:()=>({addKernelBuddyListener(){}}),getGroupService:()=>({addKernelGroupListener(value){listeners.push(value);},getGroupList(){calls++;for(const listener of listeners)listener.onGroupListUpdate?.(1,groups);return{result:0};}})},'7.0.2-53644',()=>{});return{query,calls:()=>calls};}
+function groupFixture(groups){const listeners=[];let calls=0;const query=createNativeServices({ session: {getMsgService:()=>({addKernelMsgListener(){}}),getBuddyService:()=>({addKernelBuddyListener(){}}),getGroupService:()=>({addKernelGroupListener(value){listeners.push(value);},getGroupList(){calls++;for(const listener of listeners)listener.onGroupListUpdate?.(1,groups);return{result:0};}})}, version: '7.0.2-53644', events: { emit: ()=>{} } });return{query,calls:()=>calls};}
 for(const groups of [Array(1),[{...group,groupCode:undefined}],[{...group,groupCode:123}],[{...group,groupName:{secret:true}}],[{...group,memberCount:-1}],[{...group,memberCount:1.5}],[{...group,memberCount:Number.MAX_SAFE_INTEGER+1}],[{...group,maxMember:'100'}],[{...group,maxMember:Infinity}]]){
  const{query,calls}=groupFixture(groups);try{await assert.rejects(query.invokeOperation('listGroups'),/Invalid native group list/);await assert.rejects(query.invokeOperation('listGroups'),/channel invalidated/);assert.equal(calls(),1);}finally{query.close();}
 }
 for(const groups of [[],[group]]){const{query,calls}=groupFixture(groups);try{assert.deepEqual(await query.invokeOperation('listGroups'),groups.map(g=>({groupId:g.groupCode,name:g.groupName,memberCount:g.memberCount,maxMemberCount:g.maxMember})));assert.equal(calls(),1);}finally{query.close();}}
-let successCalls=0;const success=createNativeServices({getMsgService:()=>({addKernelMsgListener(){}}),getGroupService:()=>({addKernelGroupListener(){}}),getBuddyService:()=>({addKernelBuddyListener(){},getBuddyListV2(){successCalls++;return{result:0,data:[]};}}),getProfileService:()=>({getCoreAndBaseInfo(){return new Map();}})},'7.0.2-53644',()=>{});
+let successCalls=0;const success=createNativeServices({ session: {getMsgService:()=>({addKernelMsgListener(){}}),getGroupService:()=>({addKernelGroupListener(){}}),getBuddyService:()=>({addKernelBuddyListener(){},getBuddyListV2(){successCalls++;return{result:0,data:[]};}}),getProfileService:()=>({getCoreAndBaseInfo(){return new Map();}})}, version: '7.0.2-53644', events: { emit: ()=>{} } });
 try{assert.deepEqual(await success.invokeOperation('listFriends'),[]);assert.equal(successCalls,1);}finally{success.close();}
  }
  globalThis.fetch=()=>{throw new Error('Unexpected mirror request with installed platform package');};

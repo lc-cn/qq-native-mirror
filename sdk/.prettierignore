@@ -1,0 +1,6 @@
+.local/
+node_modules/
+dist/
+native/
+docs/evidence/
+package-lock.json

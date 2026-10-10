@@ -12,17 +12,17 @@ Initial static snapshot on 2026-09-30: no foreign executable was installed or ex
 
 ## Download access results
 
-| Source | Requested binary | Result |
-|---|---|---|
-| NapCat release Tencent link | Linux3.2.23-44343 amd64 | HTTP404 |
-| Same Tencent v6 CDN | Linux3.2.23-44343 arm64 | HTTP404 |
-| NapCat release Tencent link | Windows9.9.26-44343 x64 | HTTP404 |
-| NapCat Docker source Tencent link | Linux3.2.30-50969 amd64 | HTTP404 |
-| Official current config | Linux3.2.34 arm64 | HTTP403 |
-| Current config with browser UA/referrer | Linux3.2.34 arm64 | HTTP403 |
-| Equivalent dldir1 CDN pathname | Linux3.2.34 arm64 | HTTP404 |
-| Official current config | Windows9.9.36 x64 | HTTP403 |
-| NapCat official GitHub release | Windows.Node packagev4.18.28 | Download succeeded |
+| Source                                  | Requested binary             | Result             |
+| --------------------------------------- | ---------------------------- | ------------------ |
+| NapCat release Tencent link             | Linux3.2.23-44343 amd64      | HTTP404            |
+| Same Tencent v6 CDN                     | Linux3.2.23-44343 arm64      | HTTP404            |
+| NapCat release Tencent link             | Windows9.9.26-44343 x64      | HTTP404            |
+| NapCat Docker source Tencent link       | Linux3.2.30-50969 amd64      | HTTP404            |
+| Official current config                 | Linux3.2.34 arm64            | HTTP403            |
+| Current config with browser UA/referrer | Linux3.2.34 arm64            | HTTP403            |
+| Equivalent dldir1 CDN pathname          | Linux3.2.34 arm64            | HTTP404            |
+| Official current config                 | Windows9.9.36 x64            | HTTP403            |
+| NapCat official GitHub release          | Windows.Node packagev4.18.28 | Download succeeded |
 
 Current Linux exact URL: `https://qqdl.gtimg.cn/qqfile/QQNTV2/9.9.36/release/9ee04bef/QQ_3.2.34_260924_arm64_01.deb`.
 Current Windows exact URL: `https://qqdl.gtimg.cn/qqfile/QQNTV2/9.9.36/release/e8e54bbb/QQ_9.9.36_260924_x64_01.exe`.
@@ -45,11 +45,11 @@ This is a Tencent/CDN-style response; it contains **no ROBOTS_DENIED / proxy den
 
 Source: [NapCat.Shell.Windows.Node.zip](https://github.com/NapNeko/NapCatQQ/releases/download/v4.18.28/NapCat.Shell.Windows.Node.zip). ZIP size **116682798bytes**, SHA256 `fb64fa3b036ad2df1a5d7c204c482694c20e4b763978c8a4968fd3474c05b4a8`. Archive entries dated2026-09-14. Both package.json and config.json identify QQ **9.9.31-49738**, platformwin32, eleArchx64. This release artifact is an upstream prepared package, not a newly downloaded stock Tencent installer; patches may exist.
 
-| File | Size | SHA256 |
-|---|---:|---|
-| wrapper.node |104663600|`a1e59891e743c271d641ee011f47aa887d9f7dfae6b3bb9292a03af759dec203`|
-| QQNT.dll |481280|`2f9ae01c30fa624535439cab9ccc2ba56d95e5f2ec85e6182789cb3c9089f3b7`|
-| node.exe |80511640|`7447c4ece014aa41fb2ff866c993c708e5a8213a00913cc2ac5049ea3ffc230d`|
+| File         |      Size | SHA256                                                             |
+| ------------ | --------: | ------------------------------------------------------------------ |
+| wrapper.node | 104663600 | `a1e59891e743c271d641ee011f47aa887d9f7dfae6b3bb9292a03af759dec203` |
+| QQNT.dll     |    481280 | `2f9ae01c30fa624535439cab9ccc2ba56d95e5f2ec85e6182789cb3c9089f3b7` |
+| node.exe     |  80511640 | `7447c4ece014aa41fb2ff866c993c708e5a8213a00913cc2ac5049ea3ffc230d` |
 
 `wrapper.node` is **PE32+ x86-64 DLL**, machine0x8664. Its ordinary PE exports contain C++ Session symbols, no standard napi_register_module_v1 export. Its import table imports **qq_magic_napi_register**, many NAPI functions, V8/Node functions and libuv from **QQNT.dll**.
 

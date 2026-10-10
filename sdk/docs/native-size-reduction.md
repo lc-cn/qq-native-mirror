@@ -2,10 +2,10 @@
 
 The current six-platform default catalog retains the full registered runtime inventory plus the owned codec; original complete bundles and the SHA-named previous catalog remain available for explicit fallback. The macOS arm64 candidate retains all 1156 manifest paths. It deduplicates identical file contents and retains the vendor's original arm64 slice from universal Mach-O binaries. No native instructions are patched or signatures reauthored.
 
-| Package | Unique contents | Unique content bytes | Runtime paths |
-| --- | ---: | ---: | ---: |
-| Original macOS bundle | 309 | 245,273,162 | 1156 |
-| arm64 slice candidate | 309 | 115,511,882 | 1156 |
+| Package               | Unique contents | Unique content bytes | Runtime paths |
+| --------------------- | --------------: | -------------------: | ------------: |
+| Original macOS bundle |             309 |          245,273,162 |          1156 |
+| arm64 slice candidate |             309 |          115,511,882 |          1156 |
 
 Thinning eleven unique native binaries saves 129,761,280 bytes, approximately 53% of unique content. The original export also materialized duplicate framework aliases, adding 25,083,687 bytes to its logical file total. The installer now downloads identical SHA-256 contents once and hardlinks the remaining paths, reducing macOS payload requests from 1156 to 309 without deleting any runtime paths.
 
@@ -136,7 +136,6 @@ The subsequent [actual object-storage CI 37977995467](https://github.com/lc-cn/q
 The producer/verifier and experimental consumer matrix now cover Linux, macOS and Windows on both x64 and arm64, with separate fixed-source inventory/objects/exports checks for each device. Original Windows Node 24.20.0/config constraints and shim/DLL paths, Linux glibc metadata and all licenses/source/relink references are preserved. The main SDK is built separately from the fixed original native bytes; Windows compiles TypeScript and uses that original ABI-bound shim. Linux consumer runners install the same system libraries required by the already verified ordinary-bundle path. This does not add a QQ/Electron host or an account login.
 
 Four new [static candidate measurements](evidence/dedup-six-platform-static.json) retain all original bytes. Linux x64: 69,959,816 versus 70,030,024 bytes (19 paths/19 objects); Linux arm64: 71,896,209 versus 72,005,502 (20/20); Windows x64: 66,616,129 versus 66,610,876 (32/31); Windows arm64: 54,104,279 versus 54,122,150 (27/26). Windows x64 grows by 5,253 bytes. Object storage has little wire-size benefit on these platforms; it must not be marketed as universally smaller. Six-platform installed/native execution for this expanded cohort is now established by the separately bound successful CI below. No default distribution is switched and no npm publish occurs.
-
 
 ## Complete object storage on six actual platforms
 

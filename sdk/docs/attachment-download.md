@@ -14,7 +14,6 @@ The existing 120-second event deadline and Session close terminate observation w
 
 Synthetic service tests and actual temporary-file fixtures cover pending UID mutation, malformed preflight, completion failures/getters, cache-path copies, destination collisions, late native rejection and public/CLI dispatch. They do not establish a real QQ download, peer interoperability or signing authenticity. Account download acceptance requires a separately authorized batch; previously consumed login/read permissions are not reused.
 
-
 ## Source-bound acceptance
 
 Source `075b6d0437f068b5d75d6671101b56a27b2bc5fe` passed 570 SDK tests, 9 producer/version-artifact tests, and a fresh isolated installed consumer. [Local evidence](evidence/attachment-download-local.json) records the source and log hashes, pre-fix reproduction, and independent post-repair review. Closing during a real temporary-file copy rejects and retains the already copied destination; malformed native completion paths and filesystem failures do not expose the native cache path.

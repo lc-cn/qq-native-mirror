@@ -16,13 +16,27 @@
   ],
   "scripts": {
     "probe": "node scripts/probe-native.ts",
-    "build": "node scripts/build-native.ts && tsc",
+    "build": "npm run clean && node scripts/build-native.ts && tsc",
     "test": "node --test test/*.test.ts test/*.test.mjs",
-    "prepack": "npm run build"
+    "prepack": "npm run build",
+    "lint": "eslint . --max-warnings=0",
+    "lint:fix": "eslint . --fix --max-warnings=0",
+    "format": "prettier --write src test scripts docs README.md package.json tsconfig*.json *.mjs .prettierrc.json",
+    "format:check": "prettier --check src test scripts docs README.md package.json tsconfig*.json *.mjs .prettierrc.json",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.test.json",
+    "verify:package": "node scripts/verify-package-consumer.mjs",
+    "check": "npm run format:check && npm run lint && npm run typecheck && npm test && npm run build && npm run verify:package",
+    "clean": "node scripts/clean-dist.mjs"
   },
   "devDependencies": {
+    "@eslint/js": "10.0.1",
     "@types/node": "^24.19.0",
-    "typescript": "^7.0.2"
+    "eslint": "10.12.0",
+    "eslint-config-prettier": "10.1.8",
+    "globals": "17.13.0",
+    "prettier": "3.9.9",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.71.1"
   },
   "engines": {
     "node": ">=24"
@@ -35,11 +49,11 @@
   },
   "optionalDependencies": {
     "qq-native-client-darwin-arm64": "0.0.2",
-    "qq-native-client-linux-x64": "0.0.2",
-    "qq-native-client-linux-arm64": "0.0.2",
     "qq-native-client-darwin-x64": "0.0.2",
-    "qq-native-client-win32-x64": "0.0.2",
-    "qq-native-client-win32-arm64": "0.0.2"
+    "qq-native-client-linux-arm64": "0.0.2",
+    "qq-native-client-linux-x64": "0.0.2",
+    "qq-native-client-win32-arm64": "0.0.2",
+    "qq-native-client-win32-x64": "0.0.2"
   },
   "repository": {
     "type": "git",

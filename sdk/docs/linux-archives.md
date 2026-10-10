@@ -6,16 +6,16 @@ Verified on 2026-09-30. Packages were downloaded and listed without installation
 
 [Rodert/qq-versions](https://github.com/Rodert/qq-versions/releases) preserves actual release attachments, rather than only links to Tencent CDN. Release asset metadata and published checksums are third-party provenance; matching them establishes download integrity, not independent Tencent authenticity.
 
-| QQ version/build | Architectures observed | Release |
-|---|---|---|
-| 3.2.32 / 260812 | amd64, arm64, loongarch64; mips64el asset is 3.2.31 | [20260813 archive](https://github.com/Rodert/qq-versions/releases/tag/qq-packages-20260813-1d08f1d4) |
-| 3.2.32 / 260730 | amd64, arm64, loongarch64; mips64el asset is 3.2.31 | [20260730 archive](https://github.com/Rodert/qq-versions/releases/tag/qq-packages-20260730-8b1562d3) |
-| 3.2.31 / 260710 | amd64, arm64, loongarch64, mips64el | [20260720 archive](https://github.com/Rodert/qq-versions/releases/tag/qq-packages-20260720-ffedf7c6) |
+| QQ version/build | Architectures observed                              | Release                                                                                              |
+| ---------------- | --------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| 3.2.32 / 260812  | amd64, arm64, loongarch64; mips64el asset is 3.2.31 | [20260813 archive](https://github.com/Rodert/qq-versions/releases/tag/qq-packages-20260813-1d08f1d4) |
+| 3.2.32 / 260730  | amd64, arm64, loongarch64; mips64el asset is 3.2.31 | [20260730 archive](https://github.com/Rodert/qq-versions/releases/tag/qq-packages-20260730-8b1562d3) |
+| 3.2.31 / 260710  | amd64, arm64, loongarch64, mips64el                 | [20260720 archive](https://github.com/Rodert/qq-versions/releases/tag/qq-packages-20260720-ffedf7c6) |
 
 Only the following two assets were downloaded in this pass. Other rows are confirmed release asset listings.
 
-| Asset | Bytes | Observed SHA-256, matching published digest |
-|---|---:|---|
+| Asset                                                                                                                                   |     Bytes | Observed SHA-256, matching published digest                        |
+| --------------------------------------------------------------------------------------------------------------------------------------- | --------: | ------------------------------------------------------------------ |
 | [3.2.32 arm64 DEB](https://github.com/Rodert/qq-versions/releases/download/qq-packages-20260813-1d08f1d4/QQ_3.2.32_260812_arm64_01.deb) | 205524324 | `8796ccfd66acc025ef18db37185532d40bc8c58921e17da6d28c295acbcf8f92` |
 | [3.2.32 amd64 DEB](https://github.com/Rodert/qq-versions/releases/download/qq-packages-20260813-1d08f1d4/QQ_3.2.32_260812_amd64_01.deb) | 185828040 | `d085dd89397225061eb9f194308f688129818ed445777e97a4a0a16e13d7b0e8` |
 

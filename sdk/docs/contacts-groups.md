@@ -2,12 +2,12 @@
 
 These are working-source additions for the next candidate, not published `0.0.1` features. Six-platform CI run `38014518589` succeeded for revision `7f24062` (categories/remarks/detail event); Revision `b0dee1c` group detail/membership additions also passed six-platform CI `38015512259`; its [bounded artifact audit](evidence/group-query-system-events-ci-38015512259.json) matched 94 compiled files to 47 source files and six native prepare/close receipts. Revision `9deaa56` administrator/mute events and mute-list additions passed CI `38016572108`; its [independent bounded artifact audit](evidence/group-admin-mute-ci-38016572108.json) matched 96 compiled files to 48 committed source files and six prepare/close receipts using 582496 bytes of actual ranges. Revision `8d2da41` category creation passed six-platform CI `38017928237`; its [independent bounded artifact audit](evidence/friend-category-create-ci-38017928237.json) matched 100 compiled files to 50 committed source files and seven manifest-bound receipts using 590577 bytes of actual ranges. The later friend-added source requires its own CI. The [7f CI audit](evidence/contacts-groups-ci-38014518589.json) independently matched the actual main package's 92 compiled files to 46 committed source files and six platform prepare/close receipts, using 571463 bytes of bounded official ranges. It did not re-read six large auxiliary packages or verify the complete ZIP digest. Controlled service/worker and installed-package checks are separate from real account acceptance.
 
-| Area | Available methods/events | Remaining work |
-| --- | --- | --- |
-| Friends | Lists/profiles, remarks/deletion, request listing/handling, `request.friend`, `friend-list-updated`, `friend-added` | Sending applications; independent deleted/profile/remark notices |
-| Friend categories | `listFriendCategories`, `addFriendCategory`; categorized `friend-list-updated` metadata | Delete/rename/reorder categories and move friends; parameters and completion responses need verification |
-| Group queries | Lists/members/`getGroupInfo`/`listGroupMutedMembers`, `group-list-updated`, `group-members-updated`, `group-info-updated`, `group-membership`, `group-admin`, `group-mute` | Complete join classification and real event/query acceptance |
-| Group actions | Name/remark, all/member mute, member card/admin/kick, leave, notices and requests | Create/search/join/invite, member titles, essence messages and group files |
+| Area              | Available methods/events                                                                                                                                                   | Remaining work                                                                                           |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| Friends           | Lists/profiles, remarks/deletion, request listing/handling, `request.friend`, `friend-list-updated`, `friend-added`                                                        | Sending applications; independent deleted/profile/remark notices                                         |
+| Friend categories | `listFriendCategories`, `addFriendCategory`; categorized `friend-list-updated` metadata                                                                                    | Delete/rename/reorder categories and move friends; parameters and completion responses need verification |
+| Group queries     | Lists/members/`getGroupInfo`/`listGroupMutedMembers`, `group-list-updated`, `group-members-updated`, `group-info-updated`, `group-membership`, `group-admin`, `group-mute` | Complete join classification and real event/query acceptance                                             |
+| Group actions     | Name/remark, all/member mute, member card/admin/kick, leave, notices and requests                                                                                          | Create/search/join/invite, member titles, essence messages and group files                               |
 
 ## Categorized friends
 
@@ -25,7 +25,7 @@ CLI: `qq-native-client friend-categories --config ./qq.json`.
 ```ts
 await client.setGroupRemark('123456', 'Project group');
 await client.setGroupRemark('123456', ''); // Explicitly clear.
-client.on('group-info-updated', info => {
+client.on('group-info-updated', (info) => {
   console.log(info.groupId, info.name, info.ownerUserId, info.description);
 });
 ```
@@ -59,7 +59,7 @@ The exact native path is `getGroupDetailInfo(groupId, 2)` plus `onGroupDetailInf
 ## Membership system messages
 
 ```ts
-client.on('group-membership', event => {
+client.on('group-membership', (event) => {
   // groupId:string; direction:'increase'|'decrease'; code:number;
   // kind:'invite'|'leave'|'kick'|'kick-me'|'disband'|'unknown';
   // optional memberUid/operatorUid (native UIDs, not numeric account IDs).
@@ -77,10 +77,10 @@ These later additions passed 628 regressions and an installed compiled-consumer 
 ## Administrators and mute events
 
 ```ts
-client.on('group-admin', event => {
+client.on('group-admin', (event) => {
   // {groupId,memberUid,enabled}; native UID, no fabricated operator.
 });
-client.on('group-mute', event => {
+client.on('group-mute', (event) => {
   // {groupId,scope:'member'|'all',durationSeconds:string,enabled,
   //  operatorUid,memberUid?:string}; duration '0' lifts mute.
 });
@@ -97,7 +97,6 @@ Primary sources: [administrator schema](https://github.com/NapNeko/NapCatQQ/blob
 
 [Local evidence](evidence/group-admin-mute-local.json): 641 regressions passed, installed consumer and actual child-worker routes verified with a replacement kernel; 181 regular package files and all 96 compiled files matched before the later docs/evidence append. These are controlled-service/wire checks, with no real account operation or live delivery claim.
 
-
 ## Creating an empty friend category
 
 ```ts
@@ -109,14 +108,14 @@ The name must be a nonblank string and is sent unchanged. The verified call is `
 
 Every default binary was inspected independently. The worker streams SHA256 from the selected file itself and uses the actual runtime platform/architecture; neither a manifest claim nor ClientOptions can override this profile. The exact allowed profiles are:
 
-| Platform | Client version | wrapper SHA256 |
-| --- | --- | --- |
-| Linux x64 | 3.2.32-52194 | `7882b8e3055cd38584861042befacd8be9939896f5cbbca6fa4a230926b48526` |
-| Linux ARM64 | 3.2.32-52194 | `c302361f52494de257044e912e43ed244bb29ee59f59345d25a8959327828337` |
-| macOS x64 | 7.0.2-53644 | `e91c58872d3d498f2d3ac1c304ab3ae4602d016274cf3e0f0cb651ad765f1f54` |
-| macOS ARM64 | 7.0.2-53644 | `fbc8ad9b328d05e16784d76b0181dda894c17001179dbf8c0d5dd00dc6271358` |
-| Windows x64 | 9.9.33-52230 | `63112ab9161e127f5f7e17998a7196e143808923fb54cbbf7b4e21426187a5f0` |
-| Windows ARM64 | 9.9.33-52230 | `54e5a6ce127a1f973f28e38ddfbf1338403ea323a141546a6578dd25332c928a` |
+| Platform      | Client version | wrapper SHA256                                                     |
+| ------------- | -------------- | ------------------------------------------------------------------ |
+| Linux x64     | 3.2.32-52194   | `7882b8e3055cd38584861042befacd8be9939896f5cbbca6fa4a230926b48526` |
+| Linux ARM64   | 3.2.32-52194   | `c302361f52494de257044e912e43ed244bb29ee59f59345d25a8959327828337` |
+| macOS x64     | 7.0.2-53644    | `e91c58872d3d498f2d3ac1c304ab3ae4602d016274cf3e0f0cb651ad765f1f54` |
+| macOS ARM64   | 7.0.2-53644    | `fbc8ad9b328d05e16784d76b0181dda894c17001179dbf8c0d5dd00dc6271358` |
+| Windows x64   | 9.9.33-52230   | `63112ab9161e127f5f7e17998a7196e143808923fb54cbbf7b4e21426187a5f0` |
+| Windows ARM64 | 9.9.33-52230   | `54e5a6ce127a1f973f28e38ddfbf1338403ea323a141546a6578dd25332c928a` |
 
 Other binaries reject this operation before native dispatch; other SDK capabilities retain their existing contracts. Static evidence establishes this name-only ABI and normal callback shape, not complete native failure settlement. The SDK therefore bounds the wait to five seconds, cancels its wait on close and consumes late rejections. It sends once with no retry. Timeout, close, malformed receipts or IPC failure after dispatch leave the remote effect uncertain: inspect the category list before explicitly deciding to try again.
 
@@ -124,11 +123,10 @@ CLI: `qq-native-client friend-category-add --config ./qq.json --name 'Project fr
 
 [Creation evidence](evidence/friend-category-create-local.json): 655 full regressions, compiled service/declaration/CLI and actual child-worker fixture checks passed. The 423051-byte local candidate matched all 188 installed regular files and 100 compiled files before this evidence/docs append. No native creation or real account operation ran. Its revision `8d2da41` has since passed six-platform CI `38017928237`; its [actual artifact verification](evidence/friend-category-create-ci-38017928237.json) is recorded separately.
 
-
 ## Friend added notifications
 
 ```ts
-client.on('friend-added', notice => {
+client.on('friend-added', (notice) => {
   // {uid:string,messageId:string,userId?:string}
   console.log(notice.uid, notice.userId);
 });

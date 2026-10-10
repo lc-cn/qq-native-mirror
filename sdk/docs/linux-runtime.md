@@ -2,10 +2,10 @@
 
 Verified 2026-09-30 with QQ Linux 3.2.32-52194. These tests run ordinary Node in ephemeral Linux containers provided by the already available OrbStack Docker environment. No QQ executable or Electron process runs. No macOS login state is copied.
 
-| Architecture | Node | Loader | Kernel initialization and QR | Public `createClient` |
-| --- | --- | --- | --- | --- |
-| arm64 | 24.20.0, N-API 10 | Success, 98 exports, normal exit | Success, 600-byte QR PNG | Source: 599-byte QR; installed tarball: 601-byte QR |
-| x64 via Linux amd64 emulation | 24.20.0, N-API 10 | Success, 98 exports, normal exit | Success, 600-byte QR PNG | Source: 597-byte QR; installed tarball: 596-byte QR |
+| Architecture                  | Node              | Loader                           | Kernel initialization and QR | Public `createClient`                               |
+| ----------------------------- | ----------------- | -------------------------------- | ---------------------------- | --------------------------------------------------- |
+| arm64                         | 24.20.0, N-API 10 | Success, 98 exports, normal exit | Success, 600-byte QR PNG     | Source: 599-byte QR; installed tarball: 601-byte QR |
+| x64 via Linux amd64 emulation | 24.20.0, N-API 10 | Success, 98 exports, normal exit | Success, 600-byte QR PNG     | Source: 597-byte QR; installed tarball: 596-byte QR |
 
 The table describes QR-only probes. A subsequent Linux arm64 run received user phone confirmation and reached authenticated Session readiness, as recorded in `.local/linux-live-arm64/verification.json`. Linux x64 still has QR-only evidence. Linux arm64 restore then failed because no eligible native quick-login record was available; account services, media/message operations and installed-package restore remain unverified. See the authorization/restore update below. QR generation alone does not establish authenticated login.
 
@@ -96,10 +96,10 @@ These static findings establish a signing integration boundary to investigate. T
 
 Both current extracted bundles have now been exported and every copied file verified by SHA-256 and size:
 
-| Architecture | Export | Native files | Bytes | Actual native appId |
-| --- | --- | --- | --- | --- |
-| arm64 | `.local/native/qq-3.2.32-52194-linux-arm64` | 8 | 181287704 | 537379448 |
-| x64 | `.local/native/qq-3.2.32-52194-linux-x64` | 7 | 172094832 | 537379447 |
+| Architecture | Export                                      | Native files | Bytes     | Actual native appId |
+| ------------ | ------------------------------------------- | ------------ | --------- | ------------------- |
+| arm64        | `.local/native/qq-3.2.32-52194-linux-arm64` | 8            | 181287704 | 537379448           |
+| x64          | `.local/native/qq-3.2.32-52194-linux-x64`   | 7            | 172094832 | 537379447           |
 
 Each export has an SDK schema-1 `manifest.json` with relative file URLs, suitable as a `stageMirror` input after hosting the listed files together. The adjacent `dependency-report.json` records each dependency edge and externally required library. These reports are local metadata, outside the native file manifest. The appId comes from the unique `major.node` `QQAppId/<digits>` byte marker, while clientVersion/buildVersion come from `package.json`. QUA is explicitly constructed as `V1_LNX_3.2.32-52194_52194_GW_B`; it is not claimed to be an extracted native literal. major.node is inspected for metadata and hashed in the report, but is not loaded or included as a Node dependency.
 
@@ -175,13 +175,11 @@ Pinned NapCat group types define REFRESHALL=0 and GETALL=1 as whole-list updates
 
 These are actual query responses, not proof of contact/member completeness. The account may differ from earlier attempts; no identity comparison is claimed or identifiers published. The empty member result needs investigation. No messages, mutations, reconnects or retries occurred. Signature authenticity and durable account restoration remain unresolved.
 
-
 ## Native Linux CI with the corrected main (2026-10-09)
 
 [Run 37888770685](https://github.com/lc-cn/qq-native-mirror/actions/runs/37888770685) passed on native x64 and ARM64 Ubuntu 24.04 runners for both 3.2.31-51102 and 3.2.32-52194, under Node 24.20.0. Fresh consumers imported the verified corrected main by package name with native optional dependencies omitted, downloaded from the public default catalog, verified every native file, prepared and closed twice, and made zero native-file requests on the second preparation. Symlink creation was denied throughout SDK/worker execution. The older versions were selected explicitly; omitting version selected 3.2.32-52194. Older/newer exports were 92/98. No QQ account was mounted or login attempted. This upgrades preparation and mirror evidence to native runner execution; previous account claims keep their original scope.
 
 Private bound receipts and the independently checked summary are in `.local/research/linux-version-ci-37888770685/`. Old version business-method compatibility remains unverified, and the existing buddy-list guard is retained.
-
 
 ## Current-source SDK Linux multi-version consumers (2026-10-09)
 
@@ -190,7 +188,6 @@ Private bound receipts and the independently checked summary are in `.local/rese
 Each fresh consumer installed only the main package and regular dependencies with native optional packages omitted, selected a public mirror for its actual device, independently rehashed every cached native file, initialized and closed twice with symlink creation denied, and recorded zero native payload requests on the second preparation. 3.2.31 was explicitly selected (92 exports); omission of version selected 3.2.32 (98 exports). Cached inventories were 7 paths on x64 and 8 on arm64. Four downloaded source/consumer receipts were independently matched to the successful job state and producer JSON in the complete log, with exact source/version/hash bindings. Private evidence: `.local/research/current-linux-version-ci-37935497983/`, `current-linux-version-ci-state.json`, `current-linux-version-ci-full.log`, and `current-linux-version-ci-verified.json`. The main tarballs were verified inside the jobs; they were not downloaded again for this independent receipt inspection.
 
 No QQ account was mounted, restored or logged in, no business query or message was performed, and no npm publication occurred. This establishes current-source multi-version preparation and cache compatibility; it does not extend earlier account receipts to 0.0.2 or verify old-kernel business methods or signature authenticity. In normal npm use, a valid matching-device auxiliary package is preferred and pins its bundled kernel; catalog latest selection applies when that auxiliary is unavailable or explicitly bypassed with `catalogUrl`.
-
 
 ## Old Linux 3.2.31 Buddy type evidence (2026-10-10)
 

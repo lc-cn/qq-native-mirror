@@ -6,14 +6,14 @@ Real-account baseline: macOS arm64, Node 24.19.0, QQ native kernel 7.0.2-53644. 
 
 Platform evidence is specific to the tested native version; it is not a promise of complete compatibility.
 
-| Platform / native version | Installed Node preparation | Account login / restore | Account operations |
-| --- | --- | --- | --- |
-| macOS arm64 / 7.0.2-53644 | Passed | QR and restore passed in prior account runs | Friends/groups/members/history and one authorized private text send/recall passed |
-| Linux arm64 / 3.2.32-52194 | Passed with current package | QR readiness passed; restore attempt failed | Post-login queries and messaging not verified |
-| Linux amd64 / 3.2.32-52194 | Passed on native x64 CI; account runs used amd64 emulation | QR authentication and Session readiness passed; restore unverified | Latest read-only run: 3 friends, 13 groups, first-group member response empty; completeness and messaging unverified |
-| macOS x64 / 7.0.2-53644 | Passed on native x64 CI | Not verified | Not verified |
-| Windows x64 / 9.9.33-52230 | Passed on native x64 CI, Node 24.20.0 | Not verified | Not verified |
-| Windows arm64 / 9.9.33-52230 | Passed on native arm64 CI, Node 24.20.0 | Not verified | Not verified |
+| Platform / native version    | Installed Node preparation                                 | Account login / restore                                            | Account operations                                                                                                   |
+| ---------------------------- | ---------------------------------------------------------- | ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
+| macOS arm64 / 7.0.2-53644    | Passed                                                     | QR and restore passed in prior account runs                        | Friends/groups/members/history and one authorized private text send/recall passed                                    |
+| Linux arm64 / 3.2.32-52194   | Passed with current package                                | QR readiness passed; restore attempt failed                        | Post-login queries and messaging not verified                                                                        |
+| Linux amd64 / 3.2.32-52194   | Passed on native x64 CI; account runs used amd64 emulation | QR authentication and Session readiness passed; restore unverified | Latest read-only run: 3 friends, 13 groups, first-group member response empty; completeness and messaging unverified |
+| macOS x64 / 7.0.2-53644      | Passed on native x64 CI                                    | Not verified                                                       | Not verified                                                                                                         |
+| Windows x64 / 9.9.33-52230   | Passed on native x64 CI, Node 24.20.0                      | Not verified                                                       | Not verified                                                                                                         |
+| Windows arm64 / 9.9.33-52230 | Passed on native arm64 CI, Node 24.20.0                    | Not verified                                                       | Not verified                                                                                                         |
 
 The six native platforms also passed installed-package and mirror-cache preparation/close with symlink creation denied in [CI run 37886708952](https://github.com/lc-cn/qq-native-mirror/actions/runs/37886708952). This initialization run made no account login attempt. All six public compressed mirror paths also passed fresh downloads, native preparation and second-pass zero-payload cache reuse in [CI run 37889421789](https://github.com/lc-cn/qq-native-mirror/actions/runs/37889421789). It used the fixed main candidate with optional native packages omitted and an explicitly configured download accelerator.
 
@@ -41,8 +41,10 @@ client.on('qrcode', async ({ image, url }) => {
   await writeFile('./qrcode.png', image, { mode: 0o600 });
   // Show the image to the user, who confirms authorization on their phone.
 });
-client.on('authenticated', identity => { /* Account auth succeeded; session starts next. */ });
-client.on('loginError', error => console.error(error.message));
+client.on('authenticated', (identity) => {
+  /* Account auth succeeded; session starts next. */
+});
+client.on('loginError', (error) => console.error(error.message));
 
 try {
   const identity = await client.waitForLogin();
@@ -92,9 +94,7 @@ The manifest contains kernel version metadata, platform/architecture and a list 
     "appId": "537391652",
     "qua": "V1_MAC_7.0.2-53644_53644_GW_B"
   },
-  "files": [
-    { "path": "wrapper.node", "url": "wrapper.node", "sha256": "..." }
-  ]
+  "files": [{ "path": "wrapper.node", "url": "wrapper.node", "sha256": "..." }]
 }
 ```
 
@@ -171,8 +171,12 @@ const friends = await client.listFriends();
 const groups = await client.listGroups();
 // Unpublished source: find one message in a specific conversation (undefined if absent).
 // const message = await client.getMessage({ type: 'group', groupId }, messageId);
-client.on('message.private', message => { /* incoming private message */ });
-client.on('message.group', message => { /* incoming group message */ });
+client.on('message.private', (message) => {
+  /* incoming private message */
+});
+client.on('message.group', (message) => {
+  /* incoming group message */
+});
 // These methods send only when explicitly called by your application:
 // await client.sendPrivateMessage(userId, 'hello');
 // await client.sendGroupMessage(groupId, [{ type: 'text', text: 'hello' }]);
@@ -255,13 +259,17 @@ The legacy opt-in catalog covers macOS arm64 and Linux x64/arm64 and remains ava
 
 Working source now adds `listFriendCategories()`, `setGroupRemark(groupId, remark)` and `group-info-updated`, with CLI commands and complete worker routing. [Friend/category/group coverage](docs/contacts-groups.md) records the remaining action and event contracts. These additions postdate source `a0b879e` and are not covered by its six-platform CI or the published `0.0.1`.
 
-
 Working-source group additions include `getGroupInfo(groupId)` and `group-membership` with finite known classification, raw unknown codes and optional native UIDs. CLI adds `group-info`; normalized/all watch includes membership events. See [friends and groups coverage](docs/contacts-groups.md) for source-backed contracts, 628 local regressions and the installed-consumer evidence limits. These additions are not published `0.0.1` features.
-
 
 Working source also exposes `group-admin` and `group-mute` events plus `listGroupMutedMembers(groupId)`/CLI `group-muted`. These use explicit native branches and gray-tip enums, retain seconds as strings and preserve the mute list's opaque native time. The [coverage and evidence](docs/contacts-groups.md) distinguish 641 local regressions/installed-consumer checks from live account delivery.
 
 The next candidate also exposes `addFriendCategory(name)` and CLI `friend-category-add`, using six independently inspected default binary profiles. Unknown binaries reject before dispatch. See [category contract and coverage](docs/contacts-groups.md) for the version matrix and the distinction between local tests, native ABI inspection and real account acceptance.
 
-
 Working source adds `friend-added` with `{uid,messageId,userId?}` from the explicit private gray-tip branch. Native account IDs stay strings; no identity lookup or operation cause is inferred. Cached/offline notices are delivered, with bounded Session deduplication and close suppression. [Contracts and evidence](docs/contacts-groups.md) record 666 regressions and installed-consumer verification; real native event delivery remains unverified.
+
+## 开发与架构
+
+模块职责、依赖方向、原生边界和生命周期约束见 [架构说明](docs/architecture.md)。
+维护时使用 Node 24 和 npm：`npm ci --ignore-scripts`，修改后执行 `npm run format` 与
+`npm run check`。门禁包含格式、零 warning lint、源码与测试类型检查、确定性回归、
+清理旧产物后的构建，以及新打包安装的消费者验证。账号验收独立进行。

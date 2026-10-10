@@ -85,7 +85,6 @@ Independent old-version analysis now locates the same callback RTTI class in Lin
 
 A separate no-account 3.2.32 hardware-breakpoint run watched both callback sign entry and candidate provider entry during preparation. Neither entry was hit in that observed interval, although the callback was registered. The registration evidence therefore does not establish signing execution during prepare. Neither observation covers authenticated requests or server-side account marking.
 
-
 ## Pinned host-adapter source and observed shape comparison (2026-10-09)
 
 `scripts/audit-host-adapters.mjs` statically compares the SDK's Global/Depends/Dispatcher callback registrations with three exact upstream adapter files at commit `26d7533e0f5800fdff865ab2f2ad7692917e1076`. The local source files were checked against a freshly fetched GitHub tree and their Git blob SHA-1 values: Global `4df9b66e122c13f6db9e0986d750ee5c92d7e275`, Depends `493f6e7336e050ab90c236f1564015ad355e459d`, Dispatcher `fb9d24bd8103fbb15dfef30c63e73ae6d33da90b`. The audit rejects changed blobs or unrecognized source structure instead of evaluating adapters. The scanner supports this narrow verified source shape; it is not a general TypeScript parser.
@@ -94,11 +93,11 @@ All 14 declared upstream adapter methods have empty bodies. The SDK handles the 
 
 An existing, separately authorized macOS file-recall diagnostic receipt contains these shapes. Reading it here performs no new account operation:
 
-| Family / callback | Argument types | Count in that receipt | Current handling / upstream declaration |
-| --- | --- | ---: | --- |
-| Dispatcher / dispatchCall | number, object | 4 | Audited no-op; declared in pinned upstream |
-| Global / onRegProxySequenceChanged | object | 1 | Fallback audited no-op; absent from the three pinned adapter classes |
-| Global / onUpdateGeneralFlag | number | 2 | Audited no-op; declared in pinned upstream |
+| Family / callback                  | Argument types | Count in that receipt | Current handling / upstream declaration                              |
+| ---------------------------------- | -------------- | --------------------: | -------------------------------------------------------------------- |
+| Dispatcher / dispatchCall          | number, object |                     4 | Audited no-op; declared in pinned upstream                           |
+| Global / onRegProxySequenceChanged | object         |                     1 | Fallback audited no-op; absent from the three pinned adapter classes |
+| Global / onUpdateGeneralFlag       | number         |                     2 | Audited no-op; declared in pinned upstream                           |
 
 The unfamiliar Global callback is therefore an observed, unresolved host boundary. Neither its name nor its argument shape identifies a security-signing request, required return value or server marker. Absence from a single bounded shape audit cannot exclude a callback from other native paths. No response implementation or fake success is added based on this observation.
 

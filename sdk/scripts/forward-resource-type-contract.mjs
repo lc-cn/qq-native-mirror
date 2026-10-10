@@ -1,9 +1,9 @@
-import {mkdtemp, readFile, writeFile, rm, realpath} from 'node:fs/promises';
-import {tmpdir} from 'node:os';
-import {isAbsolute, join, relative, sep} from 'node:path';
-import {execFile} from 'node:child_process';
-import {promisify} from 'node:util';
-import {createHash} from 'node:crypto';
+import { mkdtemp, readFile, writeFile, rm, realpath } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { isAbsolute, join, relative, sep } from 'node:path';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
+import { createHash } from 'node:crypto';
 
 const run = promisify(execFile);
 const consumer = `import type {ForwardResource, ForwardRecord, ForwardResourceElement, SendableMessageElement, MessageInput, Message} from 'qq-native-client';
@@ -50,38 +50,86 @@ void [compatibleText,compatibleFace,resource];
 
 /** Compile only the actual package's public declaration entry; never import its runtime. */
 export async function verifyForwardResourceTypes(packagePath, typescriptRoot, typeRoots) {
-  if (!isAbsolute(packagePath) || !isAbsolute(typescriptRoot) || !Array.isArray(typeRoots)
-      || !typeRoots.length || typeRoots.some(path => typeof path !== 'string' || !isAbsolute(path))) {
+  if (
+    !isAbsolute(packagePath) ||
+    !isAbsolute(typescriptRoot) ||
+    !Array.isArray(typeRoots) ||
+    !typeRoots.length ||
+    typeRoots.some((path) => typeof path !== 'string' || !isAbsolute(path))
+  ) {
     throw new TypeError('Type contract requires absolute package, TypeScript and type-root paths');
   }
   const root = await realpath(packagePath);
-  const metadataBytes = await readFile(join(root,'package.json'));
+  const metadataBytes = await readFile(join(root, 'package.json'));
   const metadata = JSON.parse(metadataBytes);
   const entry = metadata.exports?.['.']?.types;
-  if (metadata.name !== 'qq-native-client' || typeof entry !== 'string' || !entry.startsWith('./')) {
+  if (
+    metadata.name !== 'qq-native-client' ||
+    typeof entry !== 'string' ||
+    !entry.startsWith('./')
+  ) {
     throw new Error('Type contract requires qq-native-client public exports types entry');
   }
-  const declaration = await realpath(join(root,entry));
-  const local = relative(root,declaration);
-  if (!local || local === '..' || local.startsWith(`..${sep}`) || isAbsolute(local) || !declaration.endsWith('.d.ts')) {
+  const declaration = await realpath(join(root, entry));
+  const local = relative(root, declaration);
+  if (
+    !local ||
+    local === '..' ||
+    local.startsWith(`..${sep}`) ||
+    isAbsolute(local) ||
+    !declaration.endsWith('.d.ts')
+  ) {
     throw new Error('Public declaration entry escapes package or is not a declaration');
   }
-  const cli = join(typescriptRoot,'lib','tsc.js');
+  const cli = join(typescriptRoot, 'lib', 'tsc.js');
   await readFile(cli);
-  const directory = await mkdtemp(join(tmpdir(),'qq-forward-types-'));
+  const directory = await mkdtemp(join(tmpdir(), 'qq-forward-types-'));
   try {
-    await writeFile(join(directory,'package.json'),JSON.stringify({type:'module'}));
-    await writeFile(join(directory,'consumer.ts'),consumer);
-    await writeFile(join(directory,'tsconfig.json'),JSON.stringify({compilerOptions:{
-      target:'ES2023',module:'NodeNext',moduleResolution:'NodeNext',strict:true,noEmit:true,
-      skipLibCheck:true,types:['node'],typeRoots,allowImportingTsExtensions:true,
-      paths:{'qq-native-client':[declaration]},
-    },files:['consumer.ts']}));
-    try { await run(process.execPath,[cli,'--project',join(directory,'tsconfig.json')],{cwd:directory,timeout:60000,maxBuffer:1024*1024}); }
-    catch (error) { throw new Error(`Forward resource public type contract failed: ${error.stdout || error.stderr || error.message}`); }
-    return {success:true,noEmit:true,runtimeImported:false,publicPackage:metadata.name,
-      version:metadata.version,publicDeclaration:entry,
-      packageJsonSha256:createHash('sha256').update(metadataBytes).digest('hex'),
-      declarationSha256:createHash('sha256').update(await readFile(declaration)).digest('hex')};
-  } finally { await rm(directory,{recursive:true,force:true}); }
+    await writeFile(join(directory, 'package.json'), JSON.stringify({ type: 'module' }));
+    await writeFile(join(directory, 'consumer.ts'), consumer);
+    await writeFile(
+      join(directory, 'tsconfig.json'),
+      JSON.stringify({
+        compilerOptions: {
+          target: 'ES2023',
+          module: 'NodeNext',
+          moduleResolution: 'NodeNext',
+          strict: true,
+          noEmit: true,
+          skipLibCheck: true,
+          types: ['node'],
+          typeRoots,
+          allowImportingTsExtensions: true,
+          paths: { 'qq-native-client': [declaration] },
+        },
+        files: ['consumer.ts'],
+      }),
+    );
+    try {
+      await run(process.execPath, [cli, '--project', join(directory, 'tsconfig.json')], {
+        cwd: directory,
+        timeout: 60000,
+        maxBuffer: 1024 * 1024,
+      });
+    } catch (error) {
+      // eslint-disable-next-line preserve-caught-error -- Keep the existing bounded diagnostic boundary without exposing arbitrary causes.
+      throw new Error(
+        `Forward resource public type contract failed: ${error.stdout || error.stderr || error.message}`,
+      );
+    }
+    return {
+      success: true,
+      noEmit: true,
+      runtimeImported: false,
+      publicPackage: metadata.name,
+      version: metadata.version,
+      publicDeclaration: entry,
+      packageJsonSha256: createHash('sha256').update(metadataBytes).digest('hex'),
+      declarationSha256: createHash('sha256')
+        .update(await readFile(declaration))
+        .digest('hex'),
+    };
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
 }

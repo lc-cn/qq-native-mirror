@@ -4,13 +4,13 @@ Research date: 2026-09-30, Asia/Manila.
 
 ## Evidence matrix
 
-| Native package | Architecture | Evidence | Result |
-| --- | --- | --- | --- |
-| QQ 7.0.2-53644 local universal wrapper | arm64 | Actual ordinary Node 24.19.0 loading and isolated package loading | 104 native exports via N-API alias bridge |
-| QQ 7.0.2-53644 local universal wrapper | x86_64 | Mach-O symbols and QQNT registrar disassembly only | Same missing `qq_magic_napi_register` alias; QQNT registrar uses standard `napi_module` layout. Runtime/login unverified |
-| QQ 6.9.82.40990 | universal DMG advertised | Official historical URL acquisition attempted | HTTP 404; no binary acquired or compatibility claim |
-| QQ 6.9.95 dated 260429 | DMG advertised | Official URL acquisition attempted | HTTP 404; no binary acquired or compatibility claim |
-| QQ 6.9.36.24402 | DMG historical candidate | Official URL acquisition attempted | HTTP 404; no binary acquired or compatibility claim |
+| Native package                         | Architecture             | Evidence                                                          | Result                                                                                                                   |
+| -------------------------------------- | ------------------------ | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| QQ 7.0.2-53644 local universal wrapper | arm64                    | Actual ordinary Node 24.19.0 loading and isolated package loading | 104 native exports via N-API alias bridge                                                                                |
+| QQ 7.0.2-53644 local universal wrapper | x86_64                   | Mach-O symbols and QQNT registrar disassembly only                | Same missing `qq_magic_napi_register` alias; QQNT registrar uses standard `napi_module` layout. Runtime/login unverified |
+| QQ 6.9.82.40990                        | universal DMG advertised | Official historical URL acquisition attempted                     | HTTP 404; no binary acquired or compatibility claim                                                                      |
+| QQ 6.9.95 dated 260429                 | DMG advertised           | Official URL acquisition attempted                                | HTTP 404; no binary acquired or compatibility claim                                                                      |
+| QQ 6.9.36.24402                        | DMG historical candidate | Official URL acquisition attempted                                | HTTP 404; no binary acquired or compatibility claim                                                                      |
 
 The current universal wrapper SHA-256 is `2e6f79b241c33e88f51cb947d9da6e10e31fc2038304eadf0f652a05642aab1a`. This digest covers both architecture slices, not an individual thin binary.
 

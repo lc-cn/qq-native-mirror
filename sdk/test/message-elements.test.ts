@@ -4,19 +4,37 @@ import { mkdtemp, writeFile, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createHash } from 'node:crypto';
-import { createImageElement, createReplyElement, decodeElements } from '../src/message-elements.ts';
+import {
+  createImageElement,
+  createReplyElement,
+  decodeElements,
+} from '../src/features/messages/message-elements.ts';
 
 test('local PNG staging follows native allocation contract and preserves original', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'qq-image-'));
-  const image = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aZSMAAAAASUVORK5CYII=', 'base64');
+  const image = Buffer.from(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aZSMAAAAASUVORK5CYII=',
+    'base64',
+  );
   const source = join(dir, 'original.png');
   const destination = join(dir, 'native', 'image.png');
   await writeFile(source, image);
   try {
-    const result = await createImageElement(source, { getRichMediaFilePathForGuild(options: unknown) {
-      assert.deepEqual(options, { md5HexStr: createHash('md5').update(image).digest('hex'), fileName: 'original.png', elementType: 2, elementSubType: 0, thumbSize: 0, needCreate: true, downloadType: 1, file_uuid: '' });
-      return destination;
-    } });
+    const result = await createImageElement(source, {
+      getRichMediaFilePathForGuild(options: unknown) {
+        assert.deepEqual(options, {
+          md5HexStr: createHash('md5').update(image).digest('hex'),
+          fileName: 'original.png',
+          elementType: 2,
+          elementSubType: 0,
+          thumbSize: 0,
+          needCreate: true,
+          downloadType: 1,
+          file_uuid: '',
+        });
+        return destination;
+      },
+    });
     assert.equal(result.picElement.sourcePath, destination);
     assert.equal(result.picElement.picWidth, 1);
     assert.equal(result.picElement.picHeight, 1);
@@ -24,32 +42,82 @@ test('local PNG staging follows native allocation contract and preserves origina
     assert.equal(result.picElement.fileSize, String(image.length));
     assert.deepEqual(await readFile(destination), image);
     assert.deepEqual(await readFile(source), image);
-  } finally { await rm(dir, { recursive: true }); }
+  } finally {
+    await rm(dir, { recursive: true });
+  }
 });
 
 test('URLs and nonimage files never invoke native allocation', async () => {
   let called = false;
-  const service = { getRichMediaFilePathForGuild() { called = true; } };
-  await assert.rejects(createImageElement('https://example.test/image.png', service), /absolute local/);
+  const service = {
+    getRichMediaFilePathForGuild() {
+      called = true;
+    },
+  };
+  await assert.rejects(
+    createImageElement('https://example.test/image.png', service),
+    /absolute local/,
+  );
   const dir = await mkdtemp(join(tmpdir(), 'qq-image-invalid-'));
   try {
-    const file = join(dir, 'text.png'); await writeFile(file, 'not an image');
+    const file = join(dir, 'text.png');
+    await writeFile(file, 'not an image');
     await assert.rejects(createImageElement(file, service), /Image format unsupported/);
     assert.equal(called, false);
-  } finally { await rm(dir, { recursive: true }); }
+  } finally {
+    await rm(dir, { recursive: true });
+  }
 });
 
 test('reply uses fetched native identity and rejects nonexistent conversation message', async () => {
   const peer = { chatType: 2, peerUid: '123' };
-  const service = { getMsgsByMsgId(p: unknown, ids: unknown) { assert.deepEqual(p, peer); assert.deepEqual(ids, ['9']); return { result: 0, msgList: [{ msgId: '9', msgSeq: '4', senderUin: '456', clientSeq: '3', ...peer, elements: [] }] }; } };
-  assert.deepEqual(await createReplyElement('9', peer, service), { elementType: 7, elementId: '', replyElement: { replayMsgSeq: '4', replayMsgId: '9', senderUin: '456', senderUinStr: '456', replyMsgClientSeq: '3', _replyMsgPeer: peer } });
-  await assert.rejects(createReplyElement('10', peer, { getMsgsByMsgId: () => ({ result: 0, msgList: [] }) }), /not found/);
+  const service = {
+    getMsgsByMsgId(p: unknown, ids: unknown) {
+      assert.deepEqual(p, peer);
+      assert.deepEqual(ids, ['9']);
+      return {
+        result: 0,
+        msgList: [
+          { msgId: '9', msgSeq: '4', senderUin: '456', clientSeq: '3', ...peer, elements: [] },
+        ],
+      };
+    },
+  };
+  assert.deepEqual(await createReplyElement('9', peer, service), {
+    elementType: 7,
+    elementId: '',
+    replyElement: {
+      replayMsgSeq: '4',
+      replayMsgId: '9',
+      senderUin: '456',
+      senderUinStr: '456',
+      replyMsgClientSeq: '3',
+      _replyMsgPeer: peer,
+    },
+  });
+  await assert.rejects(
+    createReplyElement('10', peer, { getMsgsByMsgId: () => ({ result: 0, msgList: [] }) }),
+    /not found/,
+  );
 });
 
 test('reply rejects native query failure and wrong-conversation records before constructing a reference', async () => {
   const peer = { chatType: 2, peerUid: '123' };
-  await assert.rejects(createReplyElement('9', peer, { getMsgsByMsgId: () => ({ result: 23, msgList: [{ msgId: '9' }] }) }), { code: 23 });
-  await assert.rejects(createReplyElement('9', peer, { getMsgsByMsgId: () => ({ result: 0, msgList: [{ msgId: '9', chatType: 2, peerUid: '456', elements: [] }] }) }), /mismatched/);
+  await assert.rejects(
+    createReplyElement('9', peer, {
+      getMsgsByMsgId: () => ({ result: 23, msgList: [{ msgId: '9' }] }),
+    }),
+    { code: 23 },
+  );
+  await assert.rejects(
+    createReplyElement('9', peer, {
+      getMsgsByMsgId: () => ({
+        result: 0,
+        msgList: [{ msgId: '9', chatType: 2, peerUid: '456', elements: [] }],
+      }),
+    }),
+    /mismatched/,
+  );
 });
 
 test('reply never constructs native references with malformed sequence or sender metadata', async () => {
@@ -57,58 +125,100 @@ test('reply never constructs native references with malformed sequence or sender
   const raw = { msgId: '9', msgSeq: '4', senderUin: '456', clientSeq: '3', ...peer, elements: [] };
   for (const field of ['msgSeq', 'senderUin', 'clientSeq']) {
     for (const value of [undefined, null, {}, false, [], 123, '']) {
-      await assert.rejects(createReplyElement('9', peer, { getMsgsByMsgId: () => ({ result: 0, msgList: [{ ...raw, [field]: value }] }) }), new RegExp(field));
+      await assert.rejects(
+        createReplyElement('9', peer, {
+          getMsgsByMsgId: () => ({ result: 0, msgList: [{ ...raw, [field]: value }] }),
+        }),
+        new RegExp(field),
+      );
     }
   }
 });
 
 test('inbound decode preserves all media and unknown element payloads', () => {
-  const native = [{ elementType: 6, faceElement: { faceIndex: 1 } }, { elementType: 7, replyElement: { replayMsgId: '9' } }, { elementType: 2, picElement: { filePath: '/tmp/x.png' } }, { elementType: 4, pttElement: { fileUuid: 'opaque' } }, { elementType: 3, fileElement: { fileName: 'attachment' } }];
+  const native = [
+    { elementType: 6, faceElement: { faceIndex: 1 } },
+    { elementType: 7, replyElement: { replayMsgId: '9' } },
+    { elementType: 2, picElement: { filePath: '/tmp/x.png' } },
+    { elementType: 4, pttElement: { fileUuid: 'opaque' } },
+    { elementType: 3, fileElement: { fileName: 'attachment' } },
+  ];
   const result = decodeElements(native);
-  assert.deepEqual(result.slice(0, 3), [{ type: 'face', id: 1 }, { type: 'reply', messageId: '9' }, { type: 'image', file: '/tmp/x.png' }]);
+  assert.deepEqual(result.slice(0, 3), [
+    { type: 'face', id: 1 },
+    { type: 'reply', messageId: '9' },
+    { type: 'image', file: '/tmp/x.png' },
+  ]);
   assert.deepEqual(result[3], { type: 'unknown', nativeType: 4, data: native[3] });
   assert.deepEqual(result[4], { type: 'unknown', nativeType: 3, data: native[4] });
   assert.equal(result.length, native.length);
 });
 
 test('file element references nonempty local attachment using native send pipeline fields', async () => {
-  const { createFileElement } = await import('../src/message-elements.ts');
+  const { createFileElement } = await import('../src/features/messages/message-elements.ts');
   const dir = await mkdtemp(join(tmpdir(), 'qq-file-'));
-  const file = join(dir, 'input.txt'); await writeFile(file, 'hello');
+  const file = join(dir, 'input.txt');
+  await writeFile(file, 'hello');
   try {
-    assert.deepEqual(await createFileElement(file, 'display.txt'), { elementType: 3, elementId: '', fileElement: { fileName: 'display.txt', folderId: '', filePath: file, fileSize: '5' } });
+    assert.deepEqual(await createFileElement(file, 'display.txt'), {
+      elementType: 3,
+      elementId: '',
+      fileElement: { fileName: 'display.txt', folderId: '', filePath: file, fileSize: '5' },
+    });
     await assert.rejects(createFileElement(file, '../escape.txt'), /filename/);
     await assert.rejects(createFileElement('https://example.test/file'), /absolute local/);
     assert.equal(await readFile(file, 'utf8'), 'hello');
-  } finally { await rm(dir, { recursive: true }); }
+  } finally {
+    await rm(dir, { recursive: true });
+  }
 });
 
 test('inbound file video and record local paths retain element identifiers', () => {
-  assert.deepEqual(decodeElements([
-    { elementType: 3, elementId: '1', fileElement: { filePath: '/tmp/a.txt', fileName: 'a.txt', fileSize: '5' } },
-    { elementType: 5, elementId: '2', videoElement: { filePath: '/tmp/a.mp4' } },
-    { elementType: 4, elementId: '3', pttElement: { filePath: '/tmp/a.silk' } },
-  ]), [
-    { type: 'file', file: '/tmp/a.txt', elementId: '1', name: 'a.txt', size: '5' },
-    { type: 'video', file: '/tmp/a.mp4', elementId: '2' },
-    { type: 'record', file: '/tmp/a.silk', elementId: '3' },
-  ]);
+  assert.deepEqual(
+    decodeElements([
+      {
+        elementType: 3,
+        elementId: '1',
+        fileElement: { filePath: '/tmp/a.txt', fileName: 'a.txt', fileSize: '5' },
+      },
+      { elementType: 5, elementId: '2', videoElement: { filePath: '/tmp/a.mp4' } },
+      { elementType: 4, elementId: '3', pttElement: { filePath: '/tmp/a.silk' } },
+    ]),
+    [
+      { type: 'file', file: '/tmp/a.txt', elementId: '1', name: 'a.txt', size: '5' },
+      { type: 'video', file: '/tmp/a.mp4', elementId: '2' },
+      { type: 'record', file: '/tmp/a.silk', elementId: '3' },
+    ],
+  );
 });
 
 test('inbound mentions preserve decimal identity and correct signed int32 IDs without Number truncation', () => {
-  assert.deepEqual(decodeElements([
-    { elementType: 1, textElement: { atType: 1, content: '@all' } },
-    { elementType: 1, textElement: { atType: 2, atUid: '-1', content: '@friend' } },
-    { elementType: 1, textElement: { atType: 2, atUid: '900719925474099312345', content: '@long' } },
-  ]), [{ type: 'at', userId: 'all', text: '@all' }, { type: 'at', userId: '4294967295', text: '@friend' }, { type: 'at', userId: '900719925474099312345', text: '@long' }]);
+  assert.deepEqual(
+    decodeElements([
+      { elementType: 1, textElement: { atType: 1, content: '@all' } },
+      { elementType: 1, textElement: { atType: 2, atUid: '-1', content: '@friend' } },
+      {
+        elementType: 1,
+        textElement: { atType: 2, atUid: '900719925474099312345', content: '@long' },
+      },
+    ]),
+    [
+      { type: 'at', userId: 'all', text: '@all' },
+      { type: 'at', userId: '4294967295', text: '@friend' },
+      { type: 'at', userId: '900719925474099312345', text: '@long' },
+    ],
+  );
 });
 
 test('unresolved, unsupported or malformed mentions retain their native element instead of false IDs or plain text', () => {
   for (const textElement of [
-    { atType: 2, content: '@friend' }, { atType: 2, atUid: '0', atNtUid: 'u_friend', content: '@friend' },
-    { atType: 2, atUid: {}, content: '@friend' }, { atType: 2, atUid: '1.2', content: '@friend' },
+    { atType: 2, content: '@friend' },
+    { atType: 2, atUid: '0', atNtUid: 'u_friend', content: '@friend' },
+    { atType: 2, atUid: {}, content: '@friend' },
+    { atType: 2, atUid: '1.2', content: '@friend' },
     { atType: 2, atUid: '-2147483649', content: '@friend' },
-    { atType: 512, atUid: '456', content: '@category' }, { atType: 8, atUid: '456', content: '@role' },
+    { atType: 512, atUid: '456', content: '@category' },
+    { atType: 8, atUid: '456', content: '@role' },
     { atType: 2, atUid: '456', content: {} },
   ]) {
     const raw = { elementType: 1, textElement };

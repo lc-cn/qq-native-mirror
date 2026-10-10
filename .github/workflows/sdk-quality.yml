@@ -1,0 +1,52 @@
+name: SDK quality
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'sdk/**'
+      - '.github/workflows/sdk-quality.yml'
+  push:
+    paths:
+      - 'sdk/**'
+      - '.github/workflows/sdk-quality.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sdk-quality-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: SDK source and installed package contracts
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: sdk
+        shell: bash
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24.20.0'
+          cache: npm
+          cache-dependency-path: sdk/package-lock.json
+      - name: Install dependencies without lifecycle scripts
+        run: npm ci --ignore-scripts --omit=optional --no-audit --no-fund
+      - name: Check formatting
+        run: npm run format:check
+      - name: Lint source and supported scripts
+        run: npm run lint
+      - name: Check TypeScript contracts without emitting files
+        run: npm run typecheck
+      - name: Run deterministic tests
+        run: npm test
+      - name: Build the SDK and registration bridge
+        run: npm run build
+      - name: Verify a clean installed package and fake service contracts
+        run: npm run verify:package

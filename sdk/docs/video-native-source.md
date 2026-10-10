@@ -18,14 +18,14 @@ Source `d43a20a76aface337240bd71db403cea496f4f17` now attaches the source-built 
 
 [CI 37953717980](https://github.com/lc-cn/qq-native-mirror/actions/runs/37953717980), source `055c113eb347405e3782f35214091000fd7426f9`, completed successfully on all six native runners with Node 24.20.0. Each ran all three synthetic clips against both the original addon and a fresh relink: twelve real native consumer receipts. Source-signature verification, decoded pixels, metadata, orientation, padding, SDK cache preparation and dependency inventories passed. The downloaded artifacts' binary hashes match the full CI log receipts; addon source, pinned FFmpeg archive, Node headers/import library, generated configuration, component notices and original/relinked outputs were independently checked. Windows checkout uses CRLF; its exact compiled-source hash is retained separately and its normalized bytes match repository source.
 
-| Target | Addon bytes | Runtime dependencies observed |
-| --- | ---: | --- |
-| Linux x64 | 17,704,104 | glibc, libm, libstdc++, libgcc and loader |
-| Linux arm64 | 15,499,928 | glibc, libm, libstdc++, libgcc and loader |
-| macOS x64 | 14,826,672 | libSystem, libc++, CoreFoundation/CoreVideo/CoreMedia |
-| macOS arm64 | 13,167,872 | libSystem, libc++, CoreFoundation/CoreVideo/CoreMedia |
-| Windows x64 | 12,058,112 | node.exe, bcrypt.dll, KERNEL32.dll |
-| Windows arm64 | 11,209,728 | node.exe, bcrypt.dll, KERNEL32.dll |
+| Target        | Addon bytes | Runtime dependencies observed                         |
+| ------------- | ----------: | ----------------------------------------------------- |
+| Linux x64     |  17,704,104 | glibc, libm, libstdc++, libgcc and loader             |
+| Linux arm64   |  15,499,928 | glibc, libm, libstdc++, libgcc and loader             |
+| macOS x64     |  14,826,672 | libSystem, libc++, CoreFoundation/CoreVideo/CoreMedia |
+| macOS arm64   |  13,167,872 | libSystem, libc++, CoreFoundation/CoreVideo/CoreMedia |
+| Windows x64   |  12,058,112 | node.exe, bcrypt.dll, KERNEL32.dll                    |
+| Windows arm64 |  11,209,728 | node.exe, bcrypt.dll, KERNEL32.dll                    |
 
 Linux runners were Ubuntu 24.04, macOS runners were macOS 15, and Windows runners were Windows Server 2022 x64 / Windows 11 arm64. This establishes those actual environments, not every OS distribution/minimum version. Neither QQ nor external FFmpeg shared libraries appear in the inventories. The public [bound evidence summary](evidence/video-source-ci-37953717980.json) retains binary/source hashes and decoded-output hashes; private detailed receipts are `video-source-ci-third-verified.json`, `video-source-ci-third-independent-verified.json` and `video-source-ci-third-artifacts-verified.json` under `.local/research`.
 

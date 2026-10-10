@@ -4,28 +4,43 @@ import { dirname } from 'node:path';
 import { tmpdir } from 'node:os';
 import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { prepareNative } from '../src/native-package.ts';
+import { prepareNative } from '../src/native/native-package.ts';
 
 // Only loads the addon and lists exports. Never initializes a session or logs in.
 // A separate process is essential: native crashes cannot be caught by JS.
 const args = process.argv.slice(2);
 if (args.includes('--help')) {
-  console.log('node scripts/probe-native.ts [--runtime /path/to/runtime] [--electron-node] [--addon /path/to/wrapper.node] [--bridge /path/to/registration-bridge.node]');
+  console.log(
+    'node scripts/probe-native.ts [--runtime /path/to/runtime] [--electron-node] [--addon /path/to/wrapper.node] [--bridge /path/to/registration-bridge.node]',
+  );
   process.exit(0);
 }
 function value(flag: string, fallback: string): string {
   const index = args.indexOf(flag);
   if (index < 0) return fallback;
-  if (!args[index + 1] || args[index + 1].startsWith('--')) throw new Error(`${flag} requires a path`);
+  if (!args[index + 1] || args[index + 1].startsWith('--'))
+    throw new Error(`${flag} requires a path`);
   return resolve(args[index + 1]);
 }
 const runtime = value('--runtime', process.execPath);
 const automatic = args.includes('--addon') ? undefined : await prepareNative({ dataDir: tmpdir() });
 const addon = value('--addon', automatic?.wrapperPath ?? '');
 const adjacent = resolve(dirname(addon), 'registration-bridge.node');
-const fallbackBridge = fileURLToPath(new URL(`../native/${process.platform}-${process.arch}/registration-bridge.node`, import.meta.url));
-const bridge = args.includes('--bridge') ? value('--bridge', '') : ['darwin', 'linux'].includes(process.platform)
-  ? (existsSync(adjacent) ? adjacent : existsSync(fallbackBridge) ? fallbackBridge : undefined) : undefined;
+const fallbackBridge = fileURLToPath(
+  new URL(
+    `../native/${process.platform}-${process.arch}/registration-bridge.node`,
+    import.meta.url,
+  ),
+);
+const bridge = args.includes('--bridge')
+  ? value('--bridge', '')
+  : ['darwin', 'linux'].includes(process.platform)
+    ? existsSync(adjacent)
+      ? adjacent
+      : existsSync(fallbackBridge)
+        ? fallbackBridge
+        : undefined
+    : undefined;
 const env = { ...process.env };
 delete env.ELECTRON_RUN_AS_NODE;
 if (args.includes('--electron-node')) env.ELECTRON_RUN_AS_NODE = '1';
@@ -47,10 +62,25 @@ try {
   process.exit(1);
 }`;
 const result = spawnSync(runtime, ['-e', source], {
-  env, encoding: 'utf8', timeout: 15000, maxBuffer: 1024 * 1024, cwd: tmpdir(),
+  env,
+  encoding: 'utf8',
+  timeout: 15000,
+  maxBuffer: 1024 * 1024,
+  cwd: tmpdir(),
 });
-console.log(JSON.stringify({
-  runtime, addon, status: result.status, signal: result.signal,
-  error: result.error?.message, stdout: result.stdout, stderr: result.stderr,
-}, null, 2));
+console.log(
+  JSON.stringify(
+    {
+      runtime,
+      addon,
+      status: result.status,
+      signal: result.signal,
+      error: result.error?.message,
+      stdout: result.stdout,
+      stderr: result.stderr,
+    },
+    null,
+    2,
+  ),
+);
 process.exitCode = result.status === 0 && !result.signal && !result.error ? 0 : 1;

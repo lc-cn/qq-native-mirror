@@ -5,246 +5,664 @@ import { mkdtemp, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { parse, prepareCommand, normalizeMessage, observeWatchFailures, observeWatchEvents } from '../src/cli.ts';
+import {
+  parse,
+  prepareCommand,
+  normalizeMessage,
+  observeWatchFailures,
+  observeWatchEvents,
+} from '../src/cli.ts';
 import type { QQClient } from '../src/index.ts';
 
 test('batch-message CLI validates IDs before login and emits null for missing positions', async () => {
-  const action = await prepareCommand('messages', { kind: 'group', target: '123', 'message-ids': '900719925474099312345,2' });
+  const action = await prepareCommand('messages', {
+    kind: 'group',
+    target: '123',
+    'message-ids': '900719925474099312345,2',
+  });
   let calls: unknown[] = [];
-  assert.deepEqual(await action({ getMessages: async (...args: unknown[]) => { calls = args; return [{ messageId: '900719925474099312345' }, undefined]; } } as unknown as QQClient), [{ messageId: '900719925474099312345' }, null]);
+  assert.deepEqual(
+    await action({
+      getMessages: async (...args: unknown[]) => {
+        calls = args;
+        return [{ messageId: '900719925474099312345' }, undefined];
+      },
+    } as unknown as QQClient),
+    [{ messageId: '900719925474099312345' }, null],
+  );
   assert.deepEqual(calls, [{ type: 'group', groupId: '123' }, ['900719925474099312345', '2']]);
-  for (const ids of ['', '1,1', '1,', '1,2.5']) await assert.rejects(prepareCommand('messages', { kind: 'group', target: '123', 'message-ids': ids }));
+  for (const ids of ['', '1,1', '1,', '1,2.5'])
+    await assert.rejects(
+      prepareCommand('messages', { kind: 'group', target: '123', 'message-ids': ids }),
+    );
 });
 
 test('single-message CLI preserves long IDs and validates before client creation', async () => {
   const id = '900719925474099312345';
-  const action = await prepareCommand('message', { kind: 'private', target: '456', 'message-id': id });
+  const action = await prepareCommand('message', {
+    kind: 'private',
+    target: '456',
+    'message-id': id,
+  });
   const calls: unknown[] = [];
-  const result = await action({ getMessage: async (...args: unknown[]) => { calls.push(args); return undefined; } } as unknown as QQClient);
+  const result = await action({
+    getMessage: async (...args: unknown[]) => {
+      calls.push(args);
+      return undefined;
+    },
+  } as unknown as QQClient);
   assert.equal(result, null);
   assert.deepEqual(calls, [[{ type: 'private', userId: '456' }, id]]);
-  for (const flags of [{ kind: 'group', target: '123' }, { kind: 'private', target: 'bad', 'message-id': id }, { kind: 'group', target: '123', 'message-id': '1.5' }]) {
+  for (const flags of [
+    { kind: 'group', target: '123' },
+    { kind: 'private', target: 'bad', 'message-id': id },
+    { kind: 'group', target: '123', 'message-id': '1.5' },
+  ] as Record<string, string>[]) {
     await assert.rejects(prepareCommand('message', flags));
   }
 });
 
-test('face JSON validates before client creation and preserves mixed message order', async t => {
-  const dir = await mkdtemp(join(tmpdir(), 'qq-cli-face-')); t.after(() => rm(dir, { recursive: true, force: true }));
+test('face JSON validates before client creation and preserves mixed message order', async (t) => {
+  const dir = await mkdtemp(join(tmpdir(), 'qq-cli-face-'));
+  t.after(() => rm(dir, { recursive: true, force: true }));
   const file = join(dir, 'faces.json');
-  const message = [{ type: 'text', text: 'hello' }, { type: 'face', id: 0 }, { type: 'face', id: 333 }];
+  const message = [
+    { type: 'text', text: 'hello' },
+    { type: 'face', id: 0 },
+    { type: 'face', id: 333 },
+  ];
   await writeFile(file, JSON.stringify(message));
-  const action = await prepareCommand('send', { kind: 'group', target: '123', 'message-file': file });
+  const action = await prepareCommand('send', {
+    kind: 'group',
+    target: '123',
+    'message-file': file,
+  });
   let sent: unknown;
-  await action({ sendGroupMessage: async (...args: unknown[]) => { sent = args; } } as unknown as QQClient);
+  await action({
+    sendGroupMessage: async (...args: unknown[]) => {
+      sent = args;
+    },
+  } as unknown as QQClient);
   assert.deepEqual(sent, ['123', message]);
-  for (const id of [undefined, null, '14', -1, 1.5, NaN, Infinity, Number.MAX_SAFE_INTEGER + 1, 99999]) {
+  for (const id of [
+    undefined,
+    null,
+    '14',
+    -1,
+    1.5,
+    NaN,
+    Infinity,
+    Number.MAX_SAFE_INTEGER + 1,
+    99999,
+  ]) {
     assert.throws(() => normalizeMessage([{ type: 'face', id }]), /Face id|Unsupported QQ face/);
   }
   await writeFile(file, '[{"type":"face","id":99999}]');
   const config = join(dir, 'qq.json');
-  await writeFile(config, JSON.stringify({ dataDir: join(dir, 'unused-account'), wrapperPath: join(dir, 'absent-wrapper.node'), version: { clientVersion: '7.0.2-53644', appId: 'fixture', qua: 'fixture' } }));
-  const invalid = spawnSync(process.execPath, ['src/cli.ts', 'send', '--config', config, '--kind', 'group', '--target', '123', '--message-file', file], { encoding: 'utf8' });
+  await writeFile(
+    config,
+    JSON.stringify({
+      dataDir: join(dir, 'unused-account'),
+      wrapperPath: join(dir, 'absent-wrapper.node'),
+      version: { clientVersion: '7.0.2-53644', appId: 'fixture', qua: 'fixture' },
+    }),
+  );
+  const invalid = spawnSync(
+    process.execPath,
+    [
+      'src/cli.ts',
+      'send',
+      '--config',
+      config,
+      '--kind',
+      'group',
+      '--target',
+      '123',
+      '--message-file',
+      file,
+    ],
+    { encoding: 'utf8' },
+  );
   assert.equal(invalid.status, 1);
   assert.match(invalid.stderr, /Unsupported QQ face id/);
   assert.doesNotMatch(invalid.stderr, /ENOENT/);
 });
 
 test('nickname CLI only dispatches an explicitly supplied nonblank name', async () => {
-  const calls:string[]=[];
-  const action=await prepareCommand('nickname',{name:'新昵称 ✓'});
-  assert.deepEqual(calls,[]);
-  await action({setNickname:async(name:string)=>{calls.push(name);}} as unknown as QQClient);
-  assert.deepEqual(calls,['新昵称 ✓']);
-  await assert.rejects(prepareCommand('nickname',{name:' '}),/blank/);
+  const calls: string[] = [];
+  const action = await prepareCommand('nickname', { name: '新昵称 ✓' });
+  assert.equal(calls.length, 0);
+  await action({
+    setNickname: async (name: string) => {
+      calls.push(name);
+    },
+  } as unknown as QQClient);
+  assert.deepEqual(calls, ['新昵称 ✓']);
+  await assert.rejects(prepareCommand('nickname', { name: ' ' }), /blank/);
 });
 
 test('signature CLI requires explicit text, preserves whitespace and allows deliberate clearing', async () => {
   const calls: string[] = [];
-  const client = { setSignature: async (text: string) => { calls.push(text); } } as unknown as QQClient;
+  const client = {
+    setSignature: async (text: string) => {
+      calls.push(text);
+    },
+  } as unknown as QQClient;
   const update = await prepareCommand('signature', { text: '个性签名 ✓  ' });
   const clear = await prepareCommand('signature', { text: '' });
   assert.equal(calls.length, 0, 'preparation never changes a profile');
-  await update(client); await clear(client);
+  await update(client);
+  await clear(client);
   assert.deepEqual(calls, ['个性签名 ✓  ', '']);
   await assert.rejects(prepareCommand('signature', {}), /--text is required/);
   const help = spawnSync(process.execPath, ['src/cli.ts', '--help'], { encoding: 'utf8' });
-  assert.equal(help.status, 0); assert.match(help.stdout, /signature --config FILE --text TEXT/);
+  assert.equal(help.status, 0);
+  assert.match(help.stdout, /signature --config FILE --text TEXT/);
 });
 
 test('group notice CLI validates explicit mutations and preserves notice identifiers', async () => {
-  const calls: unknown[]=[];
-  const client=new Proxy({}, {get:(_,method)=>async(...args:unknown[])=>{calls.push([method,...args]);}}) as QQClient;
-  await (await prepareCommand('group-notice-publish',{'group-id':'123',text:'公告 ✓',pinned:'true',image:'./picture.png'}))(client);
-  await (await prepareCommand('group-notice-delete',{'group-id':'123','notice-id':'notice_42'}))(client);
-  assert.deepEqual(calls,[['publishGroupNotice','123','公告 ✓',{pinned:true,confirmRequired:false,imagePath:resolve('picture.png')}],['deleteGroupNotice','123','notice_42']]);
-  for(const flags of [{'group-id':'123',text:' '},{'group-id':'bad',text:'ok'},{'group-id':'123',text:'ok',pinned:'yes'}]) await assert.rejects(prepareCommand('group-notice-publish',flags));
-  assert.equal(calls.length,2,'invalid preparations never dispatch');
+  const calls: unknown[] = [];
+  const client = new Proxy(
+    {},
+    {
+      get:
+        (_, method) =>
+        async (...args: unknown[]) => {
+          calls.push([method, ...args]);
+        },
+    },
+  ) as QQClient;
+  await (
+    await prepareCommand('group-notice-publish', {
+      'group-id': '123',
+      text: '公告 ✓',
+      pinned: 'true',
+      image: './picture.png',
+    })
+  )(client);
+  await (
+    await prepareCommand('group-notice-delete', { 'group-id': '123', 'notice-id': 'notice_42' })
+  )(client);
+  assert.deepEqual(calls, [
+    [
+      'publishGroupNotice',
+      '123',
+      '公告 ✓',
+      { pinned: true, confirmRequired: false, imagePath: resolve('picture.png') },
+    ],
+    ['deleteGroupNotice', '123', 'notice_42'],
+  ]);
+  for (const flags of [
+    { 'group-id': '123', text: ' ' },
+    { 'group-id': 'bad', text: 'ok' },
+    { 'group-id': '123', text: 'ok', pinned: 'yes' },
+  ] as Record<string, string>[])
+    await assert.rejects(prepareCommand('group-notice-publish', flags));
+  assert.equal(calls.length, 2, 'invalid preparations never dispatch');
 });
 
 test('group notice list CLI prepares a read for an explicit group only', async () => {
-  const calls:unknown[]=[];
-  const action=await prepareCommand('group-notices',{'group-id':'123'});
-  assert.deepEqual(calls,[]);
-  await action({listGroupNotices:async(groupId:string)=>{calls.push(groupId);return {notices:[],raw:{ec:0,feeds:[]}};}} as unknown as QQClient);
-  assert.deepEqual(calls,['123']);
-  await assert.rejects(prepareCommand('group-notices',{'group-id':'bad'}),/numeric/);
+  const calls: unknown[] = [];
+  const action = await prepareCommand('group-notices', { 'group-id': '123' });
+  assert.equal(calls.length, 0);
+  await action({
+    listGroupNotices: async (groupId: string) => {
+      calls.push(groupId);
+      return { notices: [], raw: { ec: 0, feeds: [] } };
+    },
+  } as unknown as QQClient);
+  assert.deepEqual(calls, ['123']);
+  await assert.rejects(prepareCommand('group-notices', { 'group-id': 'bad' }), /numeric/);
 });
 
-test('message inputs validate typed elements and resolve local media paths', async t => {
-  const dir = await mkdtemp(join(tmpdir(), 'qq-cli-')); t.after(() => rm(dir, { recursive: true, force: true }));
+test('message inputs validate typed elements and resolve local media paths', async (t) => {
+  const dir = await mkdtemp(join(tmpdir(), 'qq-cli-'));
+  t.after(() => rm(dir, { recursive: true, force: true }));
   const file = join(dir, 'message.json');
-  await writeFile(file, JSON.stringify([{ type: 'text', text: 'hello' }, { type: 'at', userId: 'all' }, { type: 'image', file: './image.png' }, { type: 'reply', messageId: '3' }, { type: 'file', file: './file.txt', name: 'file.txt' }]));
+  await writeFile(
+    file,
+    JSON.stringify([
+      { type: 'text', text: 'hello' },
+      { type: 'at', userId: 'all' },
+      { type: 'image', file: './image.png' },
+      { type: 'reply', messageId: '3' },
+      { type: 'file', file: './file.txt', name: 'file.txt' },
+    ]),
+  );
   let called: unknown[] | undefined;
-  const action = await prepareCommand('send', { kind: 'private', target: '123', 'message-file': file });
+  const action = await prepareCommand('send', {
+    kind: 'private',
+    target: '123',
+    'message-file': file,
+  });
   assert.equal(called, undefined, 'preparation never dispatches');
-  await action({ sendPrivateMessage: async (...args: unknown[]) => { called = args; } } as QQClient);
-  assert.deepEqual(called, ['123', normalizeMessage(JSON.parse(await (await import('node:fs/promises')).readFile(file, 'utf8')))]);
+  await action({
+    sendPrivateMessage: async (...args: unknown[]) => {
+      called = args;
+    },
+  } as unknown as QQClient);
+  assert.deepEqual(called, [
+    '123',
+    normalizeMessage(JSON.parse(await (await import('node:fs/promises')).readFile(file, 'utf8'))),
+  ]);
   assert.equal((called![1] as any[])[2].file, resolve('image.png'));
-  for (const value of [[], {}, '', [{ type: 'unknown' }], [{ type: 'at', userId: 'bad' }], [{ type: 'image', file: 3 }]]) assert.throws(() => normalizeMessage(value));
-  await assert.rejects(prepareCommand('send', { kind: 'group', target: '123', text: 'hello', 'message-file': file }), /exactly one/);
+  for (const value of [
+    [],
+    {},
+    '',
+    [{ type: 'unknown' }],
+    [{ type: 'at', userId: 'bad' }],
+    [{ type: 'image', file: 3 }],
+  ])
+    assert.throws(() => normalizeMessage(value));
+  await assert.rejects(
+    prepareCommand('send', { kind: 'group', target: '123', text: 'hello', 'message-file': file }),
+    /exactly one/,
+  );
 });
 
 test('CLI mutation commands validate before dispatch and allow explicit empty card/remark', async () => {
   assert.equal(parse(['member-card', '--card', '']).flags.card, '');
   const calls: unknown[] = [];
-  const client = new Proxy({}, { get: (_, method) => async (...args: unknown[]) => { calls.push([method, ...args]); } }) as QQClient;
-  await (await prepareCommand('member-card', { 'group-id': '123', 'user-id': '456', card: '' }))(client);
-  await (await prepareCommand('friend-remark', { target: '456', remark: '' }))(client);
-  await (await prepareCommand('group-remark', { 'group-id': '123', remark: '' }))(client);
-  await (await prepareCommand('request', { uid: 'u_req', time: '123', accept: 'false' }))(client);
-  assert.deepEqual(calls, [['setGroupMemberCard', '123', '456', ''], ['setFriendRemark', '456', ''], ['setGroupRemark', '123', ''], ['handleFriendRequest', { uid: 'u_req', time: '123' }, false]]);
-  for (const [command, flags] of [['history', { kind: 'group', target: '123', limit: '101' }], ['member-admin', { 'group-id': '123', 'user-id': '456', enabled: 'yes' }], ['member-mute', { 'group-id': '123', 'user-id': '456', seconds: '-1' }], ['request', { uid: 'u', time: 'bad', accept: 'true' }]] as [string, Record<string, string>][]) await assert.rejects(prepareCommand(command, flags));
+  const client = new Proxy(
+    {},
+    {
+      get:
+        (_, method) =>
+        async (...args: unknown[]) => {
+          calls.push([method, ...args]);
+        },
+    },
+  ) as QQClient;
+  await (
+    await prepareCommand('member-card', { 'group-id': '123', 'user-id': '456', card: '' })
+  )(client);
+  await (
+    await prepareCommand('friend-remark', { target: '456', remark: '' })
+  )(client);
+  await (
+    await prepareCommand('group-remark', { 'group-id': '123', remark: '' })
+  )(client);
+  await (
+    await prepareCommand('request', { uid: 'u_req', time: '123', accept: 'false' })
+  )(client);
+  assert.deepEqual(calls, [
+    ['setGroupMemberCard', '123', '456', ''],
+    ['setFriendRemark', '456', ''],
+    ['setGroupRemark', '123', ''],
+    ['handleFriendRequest', { uid: 'u_req', time: '123' }, false],
+  ]);
+  for (const [command, flags] of [
+    ['history', { kind: 'group', target: '123', limit: '101' }],
+    ['member-admin', { 'group-id': '123', 'user-id': '456', enabled: 'yes' }],
+    ['member-mute', { 'group-id': '123', 'user-id': '456', seconds: '-1' }],
+    ['request', { uid: 'u', time: 'bad', accept: 'true' }],
+  ] as [string, Record<string, string>][])
+    await assert.rejects(prepareCommand(command, flags));
   assert.equal(calls.length, 4);
 });
 
 test('CLI subprocess help and invalid mutation arguments never need account configuration', () => {
   const help = spawnSync(process.execPath, ['src/cli.ts', '--help'], { encoding: 'utf8' });
-  assert.equal(help.status, 0); assert.match(help.stdout, /message-file/); assert.match(help.stdout, /group-leave/);
-  const invalid = spawnSync(process.execPath, ['src/cli.ts', 'send', '--unexpected', 'x'], { encoding: 'utf8' });
-  assert.equal(invalid.status, 1); assert.match(invalid.stderr, /Unknown option/);
+  assert.equal(help.status, 0);
+  assert.match(help.stdout, /message-file/);
+  assert.match(help.stdout, /group-leave/);
+  const invalid = spawnSync(process.execPath, ['src/cli.ts', 'send', '--unexpected', 'x'], {
+    encoding: 'utf8',
+  });
+  assert.equal(invalid.status, 1);
+  assert.match(invalid.stderr, /Unknown option/);
 });
 
 test('group request CLI separates list and explicit decisions and rejects unknown types', async () => {
- const calls: unknown[]=[];
- const client={listGroupRequests:async (options:unknown)=>calls.push(options),handleGroupRequest:async (...args:unknown[])=>calls.push(args)} as unknown as QQClient;
- const list=await prepareCommand('group-requests',{limit:'10',before:'42',doubt:'true'});
- assert.deepEqual(calls,[]);
- await list(client);
- assert.deepEqual(calls[0],{limit:10,before:'42',doubt:true});
- const decide=await prepareCommand('group-request',{'group-id':'123',sequence:'42',type:'7',accept:'false',reason:'decline'});
- await decide(client);
- assert.deepEqual(calls[1],[{groupId:'123',sequence:'42',type:7,doubt:false},false,'decline']);
- await assert.rejects(prepareCommand('group-request',{'group-id':'123',sequence:'42',type:'2',accept:'true'}),/type/);
- await assert.rejects(prepareCommand('group-requests',{limit:'0'}),/limit/);
- assert.equal(calls.length,2);
+  const calls: unknown[] = [];
+  const client = {
+    listGroupRequests: async (options: unknown) => calls.push(options),
+    handleGroupRequest: async (...args: unknown[]) => calls.push(args),
+  } as unknown as QQClient;
+  const list = await prepareCommand('group-requests', { limit: '10', before: '42', doubt: 'true' });
+  assert.equal(calls.length, 0);
+  await list(client);
+  assert.deepEqual(calls[0], { limit: 10, before: '42', doubt: true });
+  const decide = await prepareCommand('group-request', {
+    'group-id': '123',
+    sequence: '42',
+    type: '7',
+    accept: 'false',
+    reason: 'decline',
+  });
+  await decide(client);
+  assert.deepEqual(calls[1], [
+    { groupId: '123', sequence: '42', type: 7, doubt: false },
+    false,
+    'decline',
+  ]);
+  await assert.rejects(
+    prepareCommand('group-request', {
+      'group-id': '123',
+      sequence: '42',
+      type: '2',
+      accept: 'true',
+    }),
+    /type/,
+  );
+  await assert.rejects(prepareCommand('group-requests', { limit: '0' }), /limit/);
+  assert.equal(calls.length, 2);
 });
 
 test('forward CLI preserves exact source, destination and message identifiers before dispatch', async () => {
- const calls:unknown[]=[];
- const client={forwardMessages:async(...args:unknown[])=>calls.push(args),getForwardMessages:async(...args:unknown[])=>calls.push(args)} as unknown as QQClient;
- const send=await prepareCommand('forward',{'source-kind':'private','source-target':'123',kind:'group',target:'456','message-ids':'42,43'});
- assert.equal(calls.length,0);
- await send(client);
- assert.deepEqual(calls[0],[{type:'private',userId:'123'},{type:'group',groupId:'456'},['42','43']]);
- const read=await prepareCommand('forward-history',{kind:'group',target:'456','root-message-id':'42','parent-message-id':'41'});
- await read(client);
- assert.deepEqual(calls[1],[{type:'group',groupId:'456'},'42','41']);
- const first=await prepareCommand('forward-history',{kind:'group',target:'456','root-message-id':'900719925474099312345'});
- await first(client);
- assert.deepEqual(calls[2],[{type:'group',groupId:'456'},'900719925474099312345','900719925474099312345']);
- await assert.rejects(prepareCommand('forward',{'source-kind':'private','source-target':'123',kind:'group',target:'456','message-ids':'42,'}),/message-ids/);
+  const calls: unknown[] = [];
+  const client = {
+    forwardMessages: async (...args: unknown[]) => calls.push(args),
+    getForwardMessages: async (...args: unknown[]) => calls.push(args),
+  } as unknown as QQClient;
+  const send = await prepareCommand('forward', {
+    'source-kind': 'private',
+    'source-target': '123',
+    kind: 'group',
+    target: '456',
+    'message-ids': '42,43',
+  });
+  assert.equal(calls.length, 0);
+  await send(client);
+  assert.deepEqual(calls[0], [
+    { type: 'private', userId: '123' },
+    { type: 'group', groupId: '456' },
+    ['42', '43'],
+  ]);
+  const read = await prepareCommand('forward-history', {
+    kind: 'group',
+    target: '456',
+    'root-message-id': '42',
+    'parent-message-id': '41',
+  });
+  await read(client);
+  assert.deepEqual(calls[1], [{ type: 'group', groupId: '456' }, '42', '41']);
+  const first = await prepareCommand('forward-history', {
+    kind: 'group',
+    target: '456',
+    'root-message-id': '900719925474099312345',
+  });
+  await first(client);
+  assert.deepEqual(calls[2], [
+    { type: 'group', groupId: '456' },
+    '900719925474099312345',
+    '900719925474099312345',
+  ]);
+  await assert.rejects(
+    prepareCommand('forward', {
+      'source-kind': 'private',
+      'source-target': '123',
+      kind: 'group',
+      target: '456',
+      'message-ids': '42,',
+    }),
+    /message-ids/,
+  );
 });
 
 test('watch stops on terminal account failures and only waits for enabled transport reconnect', () => {
-  const events=new EventEmitter(),errors:Error[]=[];
-  const remove=observeWatchFailures(events as QQClient,true,error=>errors.push(error));
-  events.emit('disconnected',{retryable:true});assert.equal(errors.length,0);
-  events.emit('disconnected',{retryable:false});events.emit('kicked',{});events.emit('logout');
-  const reconnectError=new Error('restore failed');events.emit('reconnect-error',reconnectError);
-  assert.equal(errors.length,4);assert.equal(errors[3],reconnectError);
-  remove();for(const name of ['disconnected','kicked','logout','terminated','reconnect-error']) assert.equal(events.listenerCount(name),0);
-  const removeDisabled=observeWatchFailures(events as QQClient,false,error=>errors.push(error));
-  events.emit('disconnected',{retryable:true});assert.equal(errors.length,5);removeDisabled();
+  const events = new EventEmitter(),
+    errors: Error[] = [];
+  const remove = observeWatchFailures(events as QQClient, true, (error) => errors.push(error));
+  events.emit('disconnected', { retryable: true });
+  assert.equal(errors.length, 0);
+  events.emit('disconnected', { retryable: false });
+  events.emit('kicked', {});
+  events.emit('logout');
+  const reconnectError = new Error('restore failed');
+  events.emit('reconnect-error', reconnectError);
+  assert.equal(errors.length, 4);
+  assert.equal(errors[3], reconnectError);
+  remove();
+  for (const name of ['disconnected', 'kicked', 'logout', 'terminated', 'reconnect-error'])
+    assert.equal(events.listenerCount(name), 0);
+  const removeDisabled = observeWatchFailures(events as QQClient, false, (error) =>
+    errors.push(error),
+  );
+  events.emit('disconnected', { retryable: true });
+  assert.equal(errors.length, 5);
+  removeDisabled();
 });
 
-test('CLI init supports default catalog, acceleration and local manifest metadata without native loading', async t => {
- const dir=await mkdtemp(join(tmpdir(),'qq-cli-default-'));t.after(()=>rm(dir,{recursive:true,force:true}));
- const config=join(dir,'qq.json');
- const run=(args:string[])=>spawnSync(process.execPath,['src/cli.ts',...args],{encoding:'utf8'});
- const init=run(['init','--config',config,'--data-dir',join(dir,'account'),'--download-mirror','https://gh-proxy.com/']);
- assert.equal(init.status,0,init.stderr);
- const checked=run(['config','--config',config]);assert.equal(checked.status,0,checked.stderr);
- const options=JSON.parse(checked.stdout);assert.equal(options.wrapperPath,undefined);assert.equal(options.version,undefined);assert.deepEqual(options.downloadMirrors,['https://gh-proxy.com/']);
- assert.equal(run(['init','--config',config,'--data-dir',join(dir,'other')]).status,1,'init must preserve existing config');
- assert.deepEqual(JSON.parse(run(['config','--config',config]).stdout),options);
- const local=run(['init','--config',join(dir,'local.json'),'--data-dir',join(dir,'local-account'),'--wrapper',join(dir,'not-loaded.node')]);assert.equal(local.status,0,local.stderr);
- const partial=run(['init','--config',join(dir,'bad.json'),'--data-dir',dir,'--client-version','1']);assert.equal(partial.status,1);assert.match(partial.stderr,/app-id/);
- const badProxy=run(['init','--config',join(dir,'unsafe.json'),'--data-dir',dir,'--download-mirror','http://unsafe.example/']);assert.equal(badProxy.status,1);assert.match(badProxy.stderr,/HTTPS/);
+test('CLI init supports default catalog, acceleration and local manifest metadata without native loading', async (t) => {
+  const dir = await mkdtemp(join(tmpdir(), 'qq-cli-default-'));
+  t.after(() => rm(dir, { recursive: true, force: true }));
+  const config = join(dir, 'qq.json');
+  const run = (args: string[]) =>
+    spawnSync(process.execPath, ['src/cli.ts', ...args], { encoding: 'utf8' });
+  const init = run([
+    'init',
+    '--config',
+    config,
+    '--data-dir',
+    join(dir, 'account'),
+    '--download-mirror',
+    'https://gh-proxy.com/',
+  ]);
+  assert.equal(init.status, 0, init.stderr);
+  const checked = run(['config', '--config', config]);
+  assert.equal(checked.status, 0, checked.stderr);
+  const options = JSON.parse(checked.stdout);
+  assert.equal(options.wrapperPath, undefined);
+  assert.equal(options.version, undefined);
+  assert.deepEqual(options.downloadMirrors, ['https://gh-proxy.com/']);
+  assert.equal(
+    run(['init', '--config', config, '--data-dir', join(dir, 'other')]).status,
+    1,
+    'init must preserve existing config',
+  );
+  assert.deepEqual(JSON.parse(run(['config', '--config', config]).stdout), options);
+  const local = run([
+    'init',
+    '--config',
+    join(dir, 'local.json'),
+    '--data-dir',
+    join(dir, 'local-account'),
+    '--wrapper',
+    join(dir, 'not-loaded.node'),
+  ]);
+  assert.equal(local.status, 0, local.stderr);
+  const partial = run([
+    'init',
+    '--config',
+    join(dir, 'bad.json'),
+    '--data-dir',
+    dir,
+    '--client-version',
+    '1',
+  ]);
+  assert.equal(partial.status, 1);
+  assert.match(partial.stderr, /app-id/);
+  const badProxy = run([
+    'init',
+    '--config',
+    join(dir, 'unsafe.json'),
+    '--data-dir',
+    dir,
+    '--download-mirror',
+    'http://unsafe.example/',
+  ]);
+  assert.equal(badProxy.status, 1);
+  assert.match(badProxy.stderr, /HTTPS/);
 });
 
 test('watch defaults to message JSON lines and removes its own delivery listener', () => {
-  const events = new EventEmitter(), lines: string[] = [];
-  const cleanup = observeWatchEvents(events as QQClient, undefined, line => lines.push(line));
+  const events = new EventEmitter(),
+    lines: string[] = [];
+  const cleanup = observeWatchEvents(events as QQClient, undefined, (line) => lines.push(line));
   const message = { peer: { type: 'group', groupId: '123' }, elements: [] };
-  events.emit('message', message); events.emit('group-list-updated', { groups: [] });
+  events.emit('message', message);
+  events.emit('group-list-updated', { groups: [] });
   assert.deepEqual(lines, [JSON.stringify(message)]);
-  cleanup(); cleanup(); events.emit('message', message);
-  assert.equal(events.listenerCount('message'), 0); assert.equal(lines.length, 1);
+  cleanup();
+  cleanup();
+  events.emit('message', message);
+  assert.equal(events.listenerCount('message'), 0);
+  assert.equal(lines.length, 1);
 });
 test('watch all envelopes business event families and unbinds each', () => {
-  const events = new EventEmitter(), lines: string[] = [];
-  const cleanup = observeWatchEvents(events as QQClient, 'all', line => lines.push(line));
-  const names = ['message', 'message-recalled', 'request.friend', 'request.group', 'friend-list-updated', 'group-list-updated', 'group-members-updated', 'group-info-updated'];
+  const events = new EventEmitter(),
+    lines: string[] = [];
+  const cleanup = observeWatchEvents(events as QQClient, 'all', (line) => lines.push(line));
+  const names = [
+    'message',
+    'message-recalled',
+    'request.friend',
+    'request.group',
+    'friend-list-updated',
+    'group-list-updated',
+    'group-members-updated',
+    'group-info-updated',
+  ];
   names.forEach((event, i) => events.emit(event, { fixture: i }));
-  events.emit('msf-status', { status: 1 }); events.emit('authenticated', { credential: 'fixture-secret' });
-  assert.deepEqual(lines.map(line => JSON.parse(line)), names.map((event, i) => ({ event, payload: { fixture: i } })));
-  cleanup(); names.forEach(event => assert.equal(events.listenerCount(event), 0));
-  events.emit('group-members-updated', {}); assert.equal(lines.length, names.length);
+  events.emit('msf-status', { status: 1 });
+  events.emit('authenticated', { credential: 'fixture-secret' });
+  assert.deepEqual(
+    lines.map((line) => JSON.parse(line)),
+    names.map((event, i) => ({ event, payload: { fixture: i } })),
+  );
+  cleanup();
+  names.forEach((event) => assert.equal(events.listenerCount(event), 0));
+  events.emit('group-members-updated', {});
+  assert.equal(lines.length, names.length);
 });
 test('watch normalized uses typed recall metadata once and preserves legacy all mode', () => {
-  const events = new EventEmitter(), lines: string[] = [];
-  const cleanup = observeWatchEvents(events as QQClient, 'normalized', line => lines.push(line));
-  const payload = { peer: { type: 'private', userId: '456' }, messageId: '42', sequence: '9', recallTime: '101' };
+  const events = new EventEmitter(),
+    lines: string[] = [];
+  const cleanup = observeWatchEvents(events as QQClient, 'normalized', (line) => lines.push(line));
+  const payload = {
+    peer: { type: 'private', userId: '456' },
+    messageId: '42',
+    sequence: '9',
+    recallTime: '101',
+  };
   events.emit('message-recalled', { credential: 'fixture-secret' });
   events.emit('message.recalled', payload);
   events.emit('friend-list-updated', { categories: [] });
-  assert.deepEqual(lines.map(line => JSON.parse(line)), [{ event: 'message.recalled', payload }, { event: 'friend-list-updated', payload: { categories: [] } }]);
-  cleanup(); cleanup(); events.emit('message.recalled', payload);
-  assert.equal(events.listenerCount('message.recalled'), 0); assert.equal(events.listenerCount('message-recalled'), 0);
-  assert.equal(lines.length, 2); assert.doesNotMatch(lines.join(''), /fixture-secret/);
+  assert.deepEqual(
+    lines.map((line) => JSON.parse(line)),
+    [
+      { event: 'message.recalled', payload },
+      { event: 'friend-list-updated', payload: { categories: [] } },
+    ],
+  );
+  cleanup();
+  cleanup();
+  events.emit('message.recalled', payload);
+  assert.equal(events.listenerCount('message.recalled'), 0);
+  assert.equal(events.listenerCount('message-recalled'), 0);
+  assert.equal(lines.length, 2);
+  assert.doesNotMatch(lines.join(''), /fixture-secret/);
 });
 test('watch rejects invalid event mode before registration or configuration/native setup', () => {
   const events = new EventEmitter();
-  for (const mode of ['', 'unknown', null, 1]) assert.throws(() => observeWatchEvents(events as QQClient, mode), /--events/);
+  for (const mode of ['', 'unknown', null, 1])
+    assert.throws(() => observeWatchEvents(events as QQClient, mode), /--events/);
   assert.deepEqual(events.eventNames(), []);
-  const result = spawnSync(process.execPath, ['src/cli.ts', 'watch', '--events', 'unknown', '--config', '/nonexistent-fixture-config.json'], { encoding: 'utf8' });
-  assert.equal(result.status, 1); assert.match(result.stderr, /--events must be message, all or normalized/); assert.doesNotMatch(result.stderr, /ENOENT/);
+  const result = spawnSync(
+    process.execPath,
+    ['src/cli.ts', 'watch', '--events', 'unknown', '--config', '/nonexistent-fixture-config.json'],
+    { encoding: 'utf8' },
+  );
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /--events must be message, all or normalized/);
+  assert.doesNotMatch(result.stderr, /ENOENT/);
 });
 
-test('forward resource CLI validates exact resource references before client creation',async()=>{
- const calls:string[]=[];const action=await prepareCommand('forward-resource',{'resource-id':' 资源-001 '});await action({getForwardResource:async(id:string)=>{calls.push(id);return{resourceId:id,records:[],raw:Buffer.alloc(0)};}} as any);assert.deepEqual(calls,[' 资源-001 ']);
- for(const flags of [{},{'resource-id':''},{'resource-id':'\ud800'},{'resource-id':'x'.repeat(4097)}])await assert.rejects(prepareCommand('forward-resource',flags));
+test('forward resource CLI validates exact resource references before client creation', async () => {
+  const calls: string[] = [];
+  const action = await prepareCommand('forward-resource', { 'resource-id': ' 资源-001 ' });
+  await action({
+    getForwardResource: async (id: string) => {
+      calls.push(id);
+      return { resourceId: id, records: [], raw: Buffer.alloc(0) };
+    },
+  } as any);
+  assert.deepEqual(calls, [' 资源-001 ']);
+  for (const flags of [
+    {},
+    { 'resource-id': '' },
+    { 'resource-id': '\ud800' },
+    { 'resource-id': 'x'.repeat(4097) },
+  ] as Record<string, string>[])
+    await assert.rejects(prepareCommand('forward-resource', flags));
 });
 
-test('actual resource CLI reaches preflight and validates before reading account configuration',()=>{
- const config='/nonexistent-forward-resource-fixture-config.json';
- const invalid=spawnSync(process.execPath,['src/cli.ts','forward-resource','--config',config],{encoding:'utf8'});
- assert.equal(invalid.status,1);assert.match(invalid.stderr,/resource-id/);assert.doesNotMatch(invalid.stderr,/Unknown command|ENOENT/);
- const valid=spawnSync(process.execPath,['src/cli.ts','forward-resource','--config',config,'--resource-id','r'],{encoding:'utf8'});
- assert.equal(valid.status,1);assert.match(valid.stderr,/ENOENT.*nonexistent-forward-resource-fixture-config/);assert.doesNotMatch(valid.stderr,/Unknown command|Unknown option/);
+test('actual resource CLI reaches preflight and validates before reading account configuration', () => {
+  const config = '/nonexistent-forward-resource-fixture-config.json';
+  const invalid = spawnSync(
+    process.execPath,
+    ['src/cli.ts', 'forward-resource', '--config', config],
+    { encoding: 'utf8' },
+  );
+  assert.equal(invalid.status, 1);
+  assert.match(invalid.stderr, /resource-id/);
+  assert.doesNotMatch(invalid.stderr, /Unknown command|ENOENT/);
+  const valid = spawnSync(
+    process.execPath,
+    ['src/cli.ts', 'forward-resource', '--config', config, '--resource-id', 'r'],
+    { encoding: 'utf8' },
+  );
+  assert.equal(valid.status, 1);
+  assert.match(valid.stderr, /ENOENT.*nonexistent-forward-resource-fixture-config/);
+  assert.doesNotMatch(valid.stderr, /Unknown command|Unknown option/);
 });
-test('actual batch and merged-send CLI entries reach their existing validators before account creation',()=>{
- const config='/nonexistent-forward-cli-fixture-config.json';
- const batch=spawnSync(process.execPath,['src/cli.ts','messages','--config',config,'--kind','group','--target','123','--message-ids','invalid'],{encoding:'utf8'});
- assert.equal(batch.status,1);assert.match(batch.stderr,/message.?ids|numeric/i);assert.doesNotMatch(batch.stderr,/Unknown command|ENOENT/);
- const merged=spawnSync(process.execPath,['src/cli.ts','send-forward','--config',config,'--kind','group','--target','123','--nodes-file','/nonexistent-forward-nodes-fixture.json'],{encoding:'utf8'});
- assert.equal(merged.status,1);assert.match(merged.stderr,/ENOENT.*nonexistent-forward-nodes-fixture/);assert.doesNotMatch(merged.stderr,/Unknown command|Unknown option|nonexistent-forward-cli-fixture-config/);
+test('actual batch and merged-send CLI entries reach their existing validators before account creation', () => {
+  const config = '/nonexistent-forward-cli-fixture-config.json';
+  const batch = spawnSync(
+    process.execPath,
+    [
+      'src/cli.ts',
+      'messages',
+      '--config',
+      config,
+      '--kind',
+      'group',
+      '--target',
+      '123',
+      '--message-ids',
+      'invalid',
+    ],
+    { encoding: 'utf8' },
+  );
+  assert.equal(batch.status, 1);
+  assert.match(batch.stderr, /message.?ids|numeric/i);
+  assert.doesNotMatch(batch.stderr, /Unknown command|ENOENT/);
+  const merged = spawnSync(
+    process.execPath,
+    [
+      'src/cli.ts',
+      'send-forward',
+      '--config',
+      config,
+      '--kind',
+      'group',
+      '--target',
+      '123',
+      '--nodes-file',
+      '/nonexistent-forward-nodes-fixture.json',
+    ],
+    { encoding: 'utf8' },
+  );
+  assert.equal(merged.status, 1);
+  assert.match(merged.stderr, /ENOENT.*nonexistent-forward-nodes-fixture/);
+  assert.doesNotMatch(
+    merged.stderr,
+    /Unknown command|Unknown option|nonexistent-forward-cli-fixture-config/,
+  );
 });
-
 
 test('group-info CLI validates ID before dispatch', async () => {
-  const calls:unknown[]=[];
-  await assert.rejects(prepareCommand('group-info',{'group-id':'bad'}));
-  await (await prepareCommand('group-info',{'group-id':'123'}))({getGroupInfo:async id=>{calls.push(id);return {};}} as QQClient);
-  assert.deepEqual(calls,['123']);
+  const calls: unknown[] = [];
+  await assert.rejects(prepareCommand('group-info', { 'group-id': 'bad' }));
+  await (
+    await prepareCommand('group-info', { 'group-id': '123' })
+  )({
+    getGroupInfo: async (id) => {
+      calls.push(id);
+      return {};
+    },
+  } as QQClient);
+  assert.deepEqual(calls, ['123']);
 });

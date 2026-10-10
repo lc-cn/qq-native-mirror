@@ -8,15 +8,15 @@
 
 macOS arm64 / QQ 7.0.2-53644 / Node 24.19.0 已验证普通 Node 加载、扫码授权、账号 Session readiness、独立包和镜像下载后的恢复登录。当前 wrapper 同时有 x64 切片，但 x64 尚未运行验证。其他版本/平台的具体取样结果见 version-research-macos.md 和 version-research-platforms.md。
 
-| 原生样本 | 获取来源 | 此次证据 |
-| --- | --- | --- |
-| macOS 7.0.2-53644 arm64 | 本机 MAS 安装 | 已加载、二维码、真实授权、Session readiness、镜像恢复 |
-| macOS 7.0.2-53644 x64 | 同一 universal 二进制 | 静态符号和注册布局，未运行 |
-| Windows 9.9.23-42086 x64 | NapCat v4.15.0 prepared Node bundle | 实际 PE 导入与 forwarder 扫描，未运行 |
-| Windows 9.9.31-49738 x64 | NapCat v4.18.28 prepared Node bundle | 实际 PE 导入与 forwarder 扫描，未运行 |
-| Linux 3.2.32-52194 arm64 / amd64 | GitHub 归档、文件摘要校验、独立依赖导出 | 两架构已通过安装后的 npm 初始化/关闭；arm64 曾真实扫码 ready，但恢复失败；amd64 未认证 |
+| 原生样本                         | 获取来源                                | 此次证据                                                                                             |
+| -------------------------------- | --------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| macOS 7.0.2-53644 arm64          | 本机 MAS 安装                           | 已加载、二维码、真实授权、Session readiness、镜像恢复                                                |
+| macOS 7.0.2-53644 x64            | 同一 universal 二进制                   | 静态符号和注册布局，未运行                                                                           |
+| Windows 9.9.23-42086 x64         | NapCat v4.15.0 prepared Node bundle     | 实际 PE 导入与 forwarder 扫描，未运行                                                                |
+| Windows 9.9.31-49738 x64         | NapCat v4.18.28 prepared Node bundle    | 实际 PE 导入与 forwarder 扫描，未运行                                                                |
+| Linux 3.2.32-52194 arm64 / amd64 | GitHub 归档、文件摘要校验、独立依赖导出 | 两架构已通过安装后的 npm 初始化/关闭；arm64 曾真实扫码 ready，但恢复失败；amd64 未认证               |
 | Linux 3.2.31-51102 arm64 / amd64 | GitHub 归档、文件摘要校验、独立依赖导出 | 两架构已通过镜像消费、初始化和关闭（amd64 模拟执行）；两架构已入不可变镜像目录；未登录或验证业务接口 |
-| Linux 3.2.34 arm64 | 官方配置已获取；安装包 HTTP 403 | 只有官方版本元数据，未取得原生二进制 |
+| Linux 3.2.34 arm64               | 官方配置已获取；安装包 HTTP 403         | 只有官方版本元数据，未取得原生二进制                                                                 |
 
 两个 Windows 样本复用同一 QQNT.dll（相同 SHA-256）；较新 wrapper 对该 DLL 的导入由 98 增至 101，新增 uv_poll_stop、uv_poll_init_socket、uv_poll_start。新样本导入包含 N-API、libuv，以及 V8/Node C++ 符号，因此需记录匹配的运行时约束，不能单凭 N-API 推断任意 Node 版本兼容。具体来源和哈希见平台研究报告。
 
@@ -26,14 +26,14 @@ macOS arm64 / QQ 7.0.2-53644 / Node 24.19.0 已验证普通 Node 加载、扫码
 
 先抽离现有稳定逻辑，暂不以尚未验证的版本编写适配实现。
 
-| 层 | 负责内容 | 不放在这里的内容 |
-| --- | --- | --- |
-| public client | createClient、login、事件、close、公开错误及账号状态 | 原生函数名和平台注册符号 |
-| Node worker/IPC | 普通 Node 子进程、请求关联、超时、错误/Buffer 编码、退出及工作目录隔离 | QQ/Electron 宿主启动 |
-| package resolver/cache | 精确版本选择、manifest/包校验、下载、原子安装、并发锁 | 账号凭据和原生业务配置 |
-| platform loader | 动态库搜索、注册桥、OS/CPU/依赖检查 | 登录和 Session 方法选择 |
-| kernel driver | 原生能力检查、版本对应配置、Listener、登录及 Session 启动 | 网络下载、用户 UI 和缓存锁 |
-| verification | 二进制清单、API 指纹、加载/QR/登录/恢复证据 | 把源码兼容猜测升级为 runtime support |
+| 层                     | 负责内容                                                               | 不放在这里的内容                     |
+| ---------------------- | ---------------------------------------------------------------------- | ------------------------------------ |
+| public client          | createClient、login、事件、close、公开错误及账号状态                   | 原生函数名和平台注册符号             |
+| Node worker/IPC        | 普通 Node 子进程、请求关联、超时、错误/Buffer 编码、退出及工作目录隔离 | QQ/Electron 宿主启动                 |
+| package resolver/cache | 精确版本选择、manifest/包校验、下载、原子安装、并发锁                  | 账号凭据和原生业务配置               |
+| platform loader        | 动态库搜索、注册桥、OS/CPU/依赖检查                                    | 登录和 Session 方法选择              |
+| kernel driver          | 原生能力检查、版本对应配置、Listener、登录及 Session 启动              | 网络下载、用户 UI 和缓存锁           |
+| verification           | 二进制清单、API 指纹、加载/QR/登录/恢复证据                            | 把源码兼容猜测升级为 runtime support |
 
 当前可直接复用的代码：src/index.ts 中的 worker 生命周期、src/native-package.ts 中的下载/校验/缓存、src/worker.ts 的传输边界。src/kernel.ts 目前混合了稳定登录流程和特定原生 API，适合下一轮拆出 driver。native/registration-bridge.c 是 macOS 对应加载策略，不能宣称跨平台通用。
 
@@ -101,9 +101,13 @@ storage backend 可为任意支持 HTTPS 的对象存储/CDN，避免 client 依
 {
   "schemaVersion": 2,
   "package": {
-    "product": "qqnt", "platform": "darwin", "arch": "arm64",
-    "clientVersion": "7.0.2-53644", "build": "53644",
-    "distribution": "mas", "revision": 1
+    "product": "qqnt",
+    "platform": "darwin",
+    "arch": "arm64",
+    "clientVersion": "7.0.2-53644",
+    "build": "53644",
+    "distribution": "mas",
+    "revision": 1
   },
   "driver": "nt-session-startup-v1",
   "registration": "qq-magic-napi-alias",
@@ -184,22 +188,20 @@ node scripts/record-native-profile.ts /path/to/wrapper.node \
 
 四个 Linux 包的目录身份、manifest 内容及全部原生文件 SHA-256 已重新核对，回执 `.local/research/linux-mirror-matrix.json`。从各自 major.node 提取的 AppID 分别为：3.2.31 arm64 `537376498`、x64 `537376497`；3.2.32 arm64 `537379448`、x64 `537379447`。因此同版本不同架构也不能共用 AppID 配置。这个核对只证明包身份及完整性，不证明账号登录或协议签名。
 
-
 ## 2026-10-09 原生 runner 多版本实证
 
 [CI 37888770685](https://github.com/lc-cn/qq-native-mirror/actions/runs/37888770685) 在四个独立原生 Linux runner 上实际验收，不依赖本机 Docker 或 amd64 模拟。全部使用官方 Node 24.20.0 和已校验的修正主包候选（源 run 37886708952、主包 SHA-256 `0e51e6dee2a99503c8bd0849483394e5979961b01d29826cdcfd08302affd556`）。安装时省略所有原生辅包，确认它们均未安装，消费者按包名导入主包，从公共默认 `catalog.json` 下载原生文件。
 
-| 精确内核 | 架构 | 选择方式 | 导出数 | 校验原生文件数 | 再次初始化的原生文件请求数 |
-| --- | --- | --- | ---: | ---: | ---: |
-| 3.2.31-51102 | x64 | 完整 version 配置指定旧版 | 92 | 7 | 0 |
-| 3.2.31-51102 | arm64 | 完整 version 配置指定旧版 | 92 | 8 | 0 |
-| 3.2.32-52194 | x64 | 不传 version，自动选当前最新 | 98 | 7 | 0 |
-| 3.2.32-52194 | arm64 | 不传 version，自动选当前最新 | 98 | 8 | 0 |
+| 精确内核     | 架构  | 选择方式                     | 导出数 | 校验原生文件数 | 再次初始化的原生文件请求数 |
+| ------------ | ----- | ---------------------------- | -----: | -------------: | -------------------------: |
+| 3.2.31-51102 | x64   | 完整 version 配置指定旧版    |     92 |              7 |                          0 |
+| 3.2.31-51102 | arm64 | 完整 version 配置指定旧版    |     92 |              8 |                          0 |
+| 3.2.32-52194 | x64   | 不传 version，自动选当前最新 |     98 |              7 |                          0 |
+| 3.2.32-52194 | arm64 | 不传 version，自动选当前最新 |     98 |              8 |                          0 |
 
 每次均使用新缓存和空账号目录，禁用符号链接创建，逐文件独立复核 SHA-256，并完成两次普通 Node 初始化和关闭。第二次初始化在发出任何原生载荷请求前就会拒绝测试，四项均没有触发该拒绝。重定向请求计入首次原生载荷请求数，因此请求数不能当作文件数。
 
 该实证覆盖多个内核在现有通用下载、加载和生命周期逻辑中的消费，不证明旧版账号登录、签名真实性或业务方法参数兼容。当前好友查询 driver 仍明确拒绝未经契约验证的 3.2.31 版本；不要把初始化通过当作完整客户端支持。其他三类平台的当前版本已通过独立六平台初始化 CI 37886708952，但它也没有执行账号操作。
-
 
 ## 六平台公共默认目录实证（2026-10-09）
 
@@ -207,17 +209,16 @@ node scripts/record-native-profile.ts /path/to/wrapper.node \
 
 默认目录保留原来的五条完整包记录，并加入已通过公共冷下载的 macOS x64、Windows x64/arm64 压缩记录，覆盖六种设备组合。每个 runner 都验证固定主包字节、设备对应 manifest 摘要、每个运行文件摘要、初始化/关闭以及第二次零原生文件下载；符号链接创建被禁用。Linux 两种架构均自动选中较新的 3.2.32-52194。该验收没有登录、恢复或账号业务操作，也不证明 npm 官方安装路径或签名真实性。
 
-
 ## 2026-10-10 当前源码与 Linux 两版本实证
 
 [CI 37998959637](https://github.com/lc-cn/qq-native-mirror/actions/runs/37998959637) 使用源码 `075b6d0437f068b5d75d6671101b56a27b2bc5fe`，四个独立原生 Linux runner、Node 24.20.0，通过包名导入本轮源码实际打出的主包。安装省略平台辅包，走公共 catalog 镜像解析；旧版指定精确版本，新版使用自动最新选择。四项均完成原生初始化、冷缓存下载、暖缓存复用和关闭，无账号、无登录。
 
-| 内核 | CPU | 导出数 | 校验文件数 | 首轮原生请求次数 | 第二轮原生请求次数 |
-| --- | --- | --- | --- | --- | --- |
-| 3.2.31-51102 | x64 | 92 | 7 | 14 | 0 |
-| 3.2.31-51102 | arm64 | 92 | 8 | 16 | 0 |
-| 3.2.32-52194 | x64 | 98 | 19 | 38 | 0 |
-| 3.2.32-52194 | arm64 | 98 | 20 | 40 | 0 |
+| 内核         | CPU   | 导出数 | 校验文件数 | 首轮原生请求次数 | 第二轮原生请求次数 |
+| ------------ | ----- | ------ | ---------- | ---------------- | ------------------ |
+| 3.2.31-51102 | x64   | 92     | 7          | 14               | 0                  |
+| 3.2.31-51102 | arm64 | 92     | 8          | 16               | 0                  |
+| 3.2.32-52194 | x64   | 98     | 19         | 38               | 0                  |
+| 3.2.32-52194 | arm64 | 98     | 20         | 40               | 0                  |
 
 首轮请求次数统计下载尝试，不等于唯一文件数量。实际下载并核对四份 CI ZIP、主包 SHA-256/SHA-512、运行回执及当前 manifest；主包内 72 份 JavaScript 模块和 8 份公开声明均与冻结的本地构建逐字节一致。证据见 [current-linux-versions-ci-37998959637.json](evidence/current-linux-versions-ci-37998959637.json)。
 

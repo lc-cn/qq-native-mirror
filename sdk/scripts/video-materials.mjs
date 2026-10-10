@@ -2,61 +2,442 @@ import assert from 'node:assert/strict';
 import { readFile, lstat, realpath } from 'node:fs/promises';
 import { resolve, join, sep } from 'node:path';
 import { createHash } from 'node:crypto';
-import {readNativePackageMembers} from './native-package-members.mjs';
+import { readNativePackageMembers } from './native-package-members.mjs';
 const repository = 'lc-cn/qq-native-mirror';
-export const videoTargets = ['linux-x64','linux-arm64','darwin-x64','darwin-arm64','win32-x64','win32-arm64'];
-export const videoAssetNames = ['ffmpeg-9.0.2.tar.xz','ffmpeg-9.0.2.tar.xz.asc','ffmpeg-release-key.asc','source-verification.json','video-addon-source.tar.gz',...videoTargets.map(target=>`video-${target}-relink.tar.gz`),'video-materials.json'];
-const fixtureHashes = ['ced7b4e1cd47d948ecf407116095282e5b5ca4df76142b7a06826eecb92cb932','1c8920f2db13e3c1b28b708bc94d3889ed8bd10f15ee5d89881d99715188b468','53a0baad6f0853d39e53263c22c847bd78435fc263e6844450878b471d13cc57'];
-const pin = {version:'9.0.2',commit:'946fcce07b6dcd0331c8cc609192aeff5e1924f8',sha256:'8c3850283eb25fa026482078a04051e0be17347b09ef81a0849bec15a96e002e',configureSha256:'5b281b249ad5ad859030b4da0a24ec105b5abff7b3d87a65b302df8bf5fd9833',keyFingerprint:'FCF986EA15E6E293A5644F10B4322F04D67658D8'};
-const sha = bytes=>createHash('sha256').update(bytes).digest('hex');
-const check=(ok,message)=>{if(!ok)throw Error(message);};
-const digest=value=>typeof value==='string'&&/^[a-f0-9]{64}$/.test(value);
-const safe=value=>typeof value==='string'&&value&&!value.includes('\\')&&!value.includes('\0')&&!value.startsWith('/')&&!/^[A-Za-z]:/.test(value)&&!value.split('/').some(part=>!part||part==='.'||part==='..');
-async function local(root,path){check(safe(path),'Unsafe video materials path');const requested=join(root,path),actual=await realpath(requested);check(actual.startsWith(root+sep)&&(await lstat(requested)).isFile(),'Video materials must be regular contained files');return readFile(actual);}
-function inventory(rows){check(Array.isArray(rows)&&rows.length>0,'Missing video archive inventory');const result=new Map();for(const row of rows){check(safe(row?.path)&&!result.has(row.path)&&Number.isSafeInteger(row.size)&&row.size>0&&digest(row.sha256),'Invalid video archive inventory');result.set(row.path,row);}return result;}
-function receipt(value,platform,arch,binarySha){check(value?.passed===true&&value.platform===platform&&value.arch===arch&&value.node==='v24.20.0'&&value.noAccount===true&&value.noQQ===true&&value.nativeSendAttempted===false&&value.sdkFakeCache===true&&value.sourceUnchanged===true&&value.concurrentDecode===true&&value.unicodeFilename===true&&value.malformedMissingNetworkRejected===true,'Video decoder acceptance failed');assert.deepEqual(value.inputs?.map(row=>row.sha256),fixtureHashes);check(digest(value.binary?.sha256)&&Number.isSafeInteger(value.binary?.bytes)&&value.binary.bytes>0,'Invalid decoder binary receipt');if(binarySha)check(value.binary.sha256===binarySha,'Video binary receipt mismatch');}
-async function extracted(tar,path,cache){const bytes=(await readNativePackageMembers(tar,cache)).get('package/'+path);check(Buffer.isBuffer(bytes)&&bytes.length<=64*1024*1024,'Packaged video member missing or oversized');return bytes;}
-export async function validateVideoMaterials(directory,manifest,nativePackages,{tarMembersCache=new Map()}={}){
- const codecs=nativePackages.filter(row=>row.native.videoCodec!==undefined);
- if(manifest.videoMaterials===undefined)return codecs.length?{pending:true}:undefined;
- check(codecs.length===6&&new Set(codecs.map(row=>row.target)).size===6&&codecs.every(row=>videoTargets.includes(row.target)),'Video materials require all six codec packages');
- const root=await realpath(resolve(directory)),declaration=manifest.videoMaterials;
- check(declaration.binding?.path==='video-materials/video-materials-binding.json'&&digest(declaration.binding.sha256)&&declaration.report?.path==='video-materials/video-materials.json'&&digest(declaration.report.sha256),'Invalid video materials declaration');
- const bindingBytes=await local(root,declaration.binding.path),reportBytes=await local(root,declaration.report.path);
- check(sha(bindingBytes)===declaration.binding.sha256&&sha(reportBytes)===declaration.report.sha256,'Video materials digest mismatch');
- const binding=JSON.parse(bindingBytes),report=JSON.parse(reportBytes);
- check(binding.schemaVersion===1&&binding.repository===repository&&binding.repository===manifest.repository&&binding.commit===manifest.commit&&binding.runId===manifest.runId&&binding.runAttempt===manifest.runAttempt&&binding.version===manifest.version&&binding.tag===`video-npm-v${manifest.version}-ci-${manifest.runId}-attempt-${manifest.runAttempt}`&&Number.isSafeInteger(binding.releaseId)&&binding.releaseId>0,'Video materials CI identity mismatch');
- check(Array.isArray(binding.assets)&&binding.assets.length===12,'Video assets incomplete');
- const assets=new Map();for(const row of binding.assets){check(videoAssetNames.includes(row.name)&&!assets.has(row.name)&&Number.isSafeInteger(row.size)&&row.size>0&&digest(row.sha256)&&row.url===`https://github.com/${repository}/releases/download/${binding.tag}/${row.name}`,'Invalid video asset binding');assets.set(row.name,row);}
- check(assets.get('video-materials.json')?.sha256===sha(reportBytes)&&assets.get('video-materials.json').size===reportBytes.length,'Bound video report mismatch');
- check(report.schemaVersion===1&&report.archiveExtractionInventoryVerified===true&&report.nativeExecuted===false&&report.accountUsed===false&&report.published===false,'Invalid video source report');
- for(const[key,value]of Object.entries(pin))check(report.ffmpeg?.[key]===value,'FFmpeg pin mismatch');
- const verification=report.sourceVerification;for(const[key,value]of Object.entries({version:pin.version,commit:pin.commit,archiveSha256:pin.sha256,configureSha256:pin.configureSha256,keyFingerprint:pin.keyFingerprint,pgpVerified:true}))check(verification?.[key]===value,'Signed source receipt mismatch');
- check(Array.isArray(report.assets)&&report.assets.length===11,'Incomplete report assets');const seen=new Set();for(const row of report.assets){const bound=assets.get(row.path);check(row.path!=='video-materials.json'&&bound&&!seen.has(row.path)&&row.size===bound.size&&row.sha256===bound.sha256,'Report asset differs from binding');seen.add(row.path);}
- check(assets.get('ffmpeg-9.0.2.tar.xz').sha256===pin.sha256,'Source archive pin mismatch');
- const addon=inventory(report.addonMembers);for(const path of ['native/video/video-codec.cc','native/video/ffmpeg-source.json','native/video/LICENSE','scripts/build-video-native.mjs','scripts/prepare-video-source.mjs','scripts/relink-video-native.mjs'])check(addon.has(path),'Incomplete addon corresponding source');
- check(Array.isArray(report.platforms)&&report.platforms.length===6,'Missing platform relink reports');const platforms=new Map();
- for(const platform of report.platforms){const target=`${platform.platform}-${platform.arch}`;check(videoTargets.includes(target)&&!platforms.has(target)&&platform.node==='v24.20.0'&&platform.ffmpegVersion===pin.version&&platform.sourceArchiveSha256===pin.sha256&&digest(platform.binarySha256)&&digest(platform.addonSourceSha256)&&platform.flagsSource==='relink/build.json','Invalid platform video report');platforms.set(target,platform);
-  const build=platform.build;check(build?.platform===platform.platform&&build.arch===platform.arch&&build.node===platform.node&&build.napiVersion===8&&build.binarySha256===platform.binarySha256&&build.addonSourceSha256===platform.addonSourceSha256&&build.ffmpegVersion===pin.version&&build.ffmpegCommit===pin.commit&&build.sourceArchiveSha256===pin.sha256&&build.accountUsed===false&&build.qqWrapperLoaded===false&&build.nativeSendAttempted===false,'Invalid video build proof');
-  for(const key of ['configureArgs','compileArgs','linkArgs','systemLinkFlags'])check(Array.isArray(build[key])&&(key==='systemLinkFlags'||build[key].length>0)&&build[key].every(value=>typeof value==='string'),'Missing relink flags');
-  for(const flag of ['--disable-gpl','--disable-nonfree','--disable-version3','--enable-static','--disable-network'])check(build.configureArgs.includes(flag),'Unsupported video configure flags');
-  const members=inventory(platform.members);const required=['runtime/video-codec.node','runtime/build.json','runtime/consumer.json','runtime/NODE-LICENSE.txt','runtime/NOTICE.txt','runtime/ADDON-LICENSE.txt','runtime/FFMPEG-LICENSE.md','runtime/FFMPEG-COPYING.LGPLv2.1','relink/build.json','relink/consumer.json','relink/video-codec.cc','relink/ffmpeg-source.json','relink/node-headers.tar.gz','relink/config.h','relink/config_components.h','relink/ffbuild-config.mak','relink/ADDON-LICENSE.txt','relink/build-video-native.mjs','relink/prepare-video-source.mjs','relink/relink-video-native.mjs',...(platform.platform==='win32'?['relink/avformat.lib','relink/avcodec.lib','relink/swscale.lib','relink/avutil.lib','relink/video-codec.obj','relink/node.lib']:['relink/libavformat.a','relink/libavcodec.a','relink/libswscale.a','relink/libavutil.a','relink/video-codec.o'])];for(const path of required)check(members.has(path),'Incomplete static relink archive');
-  for(const[path,digestValue]of [['runtime/video-codec.node',build.binarySha256],['relink/video-codec.cc',build.addonSourceSha256],['relink/node-headers.tar.gz',build.nodeHeadersSha256],['relink/config.h',build.configurationSha256],['runtime/NODE-LICENSE.txt',build.nodeLicenseSha256]])check(digest(digestValue)&&members.get(path).sha256===digestValue,'Relink member hash mismatch');
-  if(build.nodeLicenseDownloaderSha256!==undefined||build.nodeLicenseDownloaderNormalizedSha256!==undefined){
-   check(digest(build.nodeLicenseDownloaderSha256)&&digest(build.nodeLicenseDownloaderNormalizedSha256)&&members.get('relink/node-license-download.mjs')?.sha256===build.nodeLicenseDownloaderSha256&&addon.get('scripts/node-license-download.mjs')?.sha256===build.nodeLicenseDownloaderNormalizedSha256,'Node license downloader corresponding source missing or changed');
-  }
-  if(platform.platform==='win32')check(members.get('relink/node.lib').sha256===build.nodeImportSha256&&digest(build.nodeImportSha256),'Node import library mismatch');
-  check(digest(platform.normalizedAddonSourceSha256)&&addon.get('native/video/video-codec.cc').sha256===platform.normalizedAddonSourceSha256,'Normalized addon source differs across archives');receipt(platform.receipts?.runtime,platform.platform,platform.arch,build.binarySha256);receipt(platform.receipts?.relink,platform.platform,platform.arch);
- }
- for(const row of codecs){const platform=platforms.get(row.target);check(platform,'Codec target absent from materials');const native=row.native;check(safe(native.videoCodec),'Unsafe codec path');const codec=native.files.find(file=>file.path===native.videoCodec),provenance=native.files.find(file=>file.path==='video/SOURCE-PROVENANCE.json');check(codec&&provenance&&codec.sha256===platform.binarySha256,'Codec provenance or hash missing');const codecBytes=await extracted(row.path,native.videoCodec,tarMembersCache),provenanceBytes=await extracted(row.path,provenance.path,tarMembersCache);check(sha(codecBytes)===codec.sha256&&Number.isSafeInteger(codec.size)&&codec.size===codecBytes.length&&codecBytes.length===platform.receipts.runtime.binary.bytes&&sha(provenanceBytes)===provenance.sha256,'Packaged video bytes mismatch');const source=JSON.parse(provenanceBytes);assert.deepEqual(source.materials,binding);check(source.binarySha256===platform.binarySha256,'Packaged runtime provenance mismatch');check(row.receipt.automaticVideoCodec===true&&row.receipt.installedVideoDecoder===true&&row.receipt.installedVideoFakeCache===true,'Installed codec discovery proof missing');receipt(row.receipt.installedVideo,platform.platform,platform.arch,platform.binarySha256);}
- return {binding,report,reportSha256:sha(reportBytes),pending:false,onlineVerified:false};
+export const videoTargets = [
+  'linux-x64',
+  'linux-arm64',
+  'darwin-x64',
+  'darwin-arm64',
+  'win32-x64',
+  'win32-arm64',
+];
+export const videoAssetNames = [
+  'ffmpeg-9.0.2.tar.xz',
+  'ffmpeg-9.0.2.tar.xz.asc',
+  'ffmpeg-release-key.asc',
+  'source-verification.json',
+  'video-addon-source.tar.gz',
+  ...videoTargets.map((target) => `video-${target}-relink.tar.gz`),
+  'video-materials.json',
+];
+const fixtureHashes = [
+  'ced7b4e1cd47d948ecf407116095282e5b5ca4df76142b7a06826eecb92cb932',
+  '1c8920f2db13e3c1b28b708bc94d3889ed8bd10f15ee5d89881d99715188b468',
+  '53a0baad6f0853d39e53263c22c847bd78435fc263e6844450878b471d13cc57',
+];
+const pin = {
+  version: '9.0.2',
+  commit: '946fcce07b6dcd0331c8cc609192aeff5e1924f8',
+  sha256: '8c3850283eb25fa026482078a04051e0be17347b09ef81a0849bec15a96e002e',
+  configureSha256: '5b281b249ad5ad859030b4da0a24ec105b5abff7b3d87a65b302df8bf5fd9833',
+  keyFingerprint: 'FCF986EA15E6E293A5644F10B4322F04D67658D8',
+};
+const sha = (bytes) => createHash('sha256').update(bytes).digest('hex');
+const check = (ok, message) => {
+  if (!ok) throw Error(message);
+};
+const digest = (value) => typeof value === 'string' && /^[a-f0-9]{64}$/.test(value);
+const safe = (value) =>
+  typeof value === 'string' &&
+  value &&
+  !value.includes('\\') &&
+  !value.includes('\0') &&
+  !value.startsWith('/') &&
+  !/^[A-Za-z]:/.test(value) &&
+  !value.split('/').some((part) => !part || part === '.' || part === '..');
+async function local(root, path) {
+  check(safe(path), 'Unsafe video materials path');
+  const requested = join(root, path),
+    actual = await realpath(requested);
+  check(
+    actual.startsWith(root + sep) && (await lstat(requested)).isFile(),
+    'Video materials must be regular contained files',
+  );
+  return readFile(actual);
 }
-async function responseBytes(response){check(response?.ok===true,'Public video materials unavailable');const chunks=[];let size=0;for await(const chunk of response.body){size+=chunk.length;check(size<=8*1024*1024,'Video response too large');chunks.push(Buffer.from(chunk));}return Buffer.concat(chunks);}
-export async function verifyVideoMaterialsOnline(materials,{fetch:fetcher=globalThis.fetch}={}){
- check(materials?.pending===false&&materials.binding&&materials.report,'Validated video materials required');materials.onlineVerified=false;const {binding}=materials;
- const metadata=JSON.parse(await responseBytes(await fetcher(`https://api.github.com/repos/${repository}/releases/tags/${binding.tag}`,{headers:{Accept:'application/vnd.github+json'},signal:AbortSignal.timeout(30_000)})));
- check(metadata.id===binding.releaseId&&metadata.draft===false&&metadata.prerelease===true&&metadata.tag_name===binding.tag&&metadata.target_commitish===binding.commit&&Array.isArray(metadata.assets)&&metadata.assets.length===binding.assets.length,'Permanent video release identity mismatch');
- for(const expected of binding.assets){const matches=metadata.assets.filter(asset=>asset.name===expected.name);check(matches.length===1&&matches[0].size===expected.size&&matches[0].digest===`sha256:${expected.sha256}`&&matches[0].browser_download_url===expected.url,'Permanent video asset differs from binding');}
- const expected=binding.assets.find(asset=>asset.name==='video-materials.json'),bytes=await responseBytes(await fetcher(expected.url,{signal:AbortSignal.timeout(60_000)}));check(bytes.length===expected.size&&sha(bytes)===expected.sha256,'Permanent video report differs from validated bytes');
- materials.onlineVerified=true;return materials;
+function inventory(rows) {
+  check(Array.isArray(rows) && rows.length > 0, 'Missing video archive inventory');
+  const result = new Map();
+  for (const row of rows) {
+    check(
+      safe(row?.path) &&
+        !result.has(row.path) &&
+        Number.isSafeInteger(row.size) &&
+        row.size > 0 &&
+        digest(row.sha256),
+      'Invalid video archive inventory',
+    );
+    result.set(row.path, row);
+  }
+  return result;
+}
+function receipt(value, platform, arch, binarySha) {
+  check(
+    value?.passed === true &&
+      value.platform === platform &&
+      value.arch === arch &&
+      value.node === 'v24.20.0' &&
+      value.noAccount === true &&
+      value.noQQ === true &&
+      value.nativeSendAttempted === false &&
+      value.sdkFakeCache === true &&
+      value.sourceUnchanged === true &&
+      value.concurrentDecode === true &&
+      value.unicodeFilename === true &&
+      value.malformedMissingNetworkRejected === true,
+    'Video decoder acceptance failed',
+  );
+  assert.deepEqual(
+    value.inputs?.map((row) => row.sha256),
+    fixtureHashes,
+  );
+  check(
+    digest(value.binary?.sha256) &&
+      Number.isSafeInteger(value.binary?.bytes) &&
+      value.binary.bytes > 0,
+    'Invalid decoder binary receipt',
+  );
+  if (binarySha) check(value.binary.sha256 === binarySha, 'Video binary receipt mismatch');
+}
+async function extracted(tar, path, cache) {
+  const bytes = (await readNativePackageMembers(tar, cache)).get('package/' + path);
+  check(
+    Buffer.isBuffer(bytes) && bytes.length <= 64 * 1024 * 1024,
+    'Packaged video member missing or oversized',
+  );
+  return bytes;
+}
+export async function validateVideoMaterials(
+  directory,
+  manifest,
+  nativePackages,
+  { tarMembersCache = new Map() } = {},
+) {
+  const codecs = nativePackages.filter((row) => row.native.videoCodec !== undefined);
+  if (manifest.videoMaterials === undefined) return codecs.length ? { pending: true } : undefined;
+  check(
+    codecs.length === 6 &&
+      new Set(codecs.map((row) => row.target)).size === 6 &&
+      codecs.every((row) => videoTargets.includes(row.target)),
+    'Video materials require all six codec packages',
+  );
+  const root = await realpath(resolve(directory)),
+    declaration = manifest.videoMaterials;
+  check(
+    declaration.binding?.path === 'video-materials/video-materials-binding.json' &&
+      digest(declaration.binding.sha256) &&
+      declaration.report?.path === 'video-materials/video-materials.json' &&
+      digest(declaration.report.sha256),
+    'Invalid video materials declaration',
+  );
+  const bindingBytes = await local(root, declaration.binding.path),
+    reportBytes = await local(root, declaration.report.path);
+  check(
+    sha(bindingBytes) === declaration.binding.sha256 &&
+      sha(reportBytes) === declaration.report.sha256,
+    'Video materials digest mismatch',
+  );
+  const binding = JSON.parse(bindingBytes),
+    report = JSON.parse(reportBytes);
+  check(
+    binding.schemaVersion === 1 &&
+      binding.repository === repository &&
+      binding.repository === manifest.repository &&
+      binding.commit === manifest.commit &&
+      binding.runId === manifest.runId &&
+      binding.runAttempt === manifest.runAttempt &&
+      binding.version === manifest.version &&
+      binding.tag ===
+        `video-npm-v${manifest.version}-ci-${manifest.runId}-attempt-${manifest.runAttempt}` &&
+      Number.isSafeInteger(binding.releaseId) &&
+      binding.releaseId > 0,
+    'Video materials CI identity mismatch',
+  );
+  check(Array.isArray(binding.assets) && binding.assets.length === 12, 'Video assets incomplete');
+  const assets = new Map();
+  for (const row of binding.assets) {
+    check(
+      videoAssetNames.includes(row.name) &&
+        !assets.has(row.name) &&
+        Number.isSafeInteger(row.size) &&
+        row.size > 0 &&
+        digest(row.sha256) &&
+        row.url === `https://github.com/${repository}/releases/download/${binding.tag}/${row.name}`,
+      'Invalid video asset binding',
+    );
+    assets.set(row.name, row);
+  }
+  check(
+    assets.get('video-materials.json')?.sha256 === sha(reportBytes) &&
+      assets.get('video-materials.json').size === reportBytes.length,
+    'Bound video report mismatch',
+  );
+  check(
+    report.schemaVersion === 1 &&
+      report.archiveExtractionInventoryVerified === true &&
+      report.nativeExecuted === false &&
+      report.accountUsed === false &&
+      report.published === false,
+    'Invalid video source report',
+  );
+  for (const [key, value] of Object.entries(pin))
+    check(report.ffmpeg?.[key] === value, 'FFmpeg pin mismatch');
+  const verification = report.sourceVerification;
+  for (const [key, value] of Object.entries({
+    version: pin.version,
+    commit: pin.commit,
+    archiveSha256: pin.sha256,
+    configureSha256: pin.configureSha256,
+    keyFingerprint: pin.keyFingerprint,
+    pgpVerified: true,
+  }))
+    check(verification?.[key] === value, 'Signed source receipt mismatch');
+  check(Array.isArray(report.assets) && report.assets.length === 11, 'Incomplete report assets');
+  const seen = new Set();
+  for (const row of report.assets) {
+    const bound = assets.get(row.path);
+    check(
+      row.path !== 'video-materials.json' &&
+        bound &&
+        !seen.has(row.path) &&
+        row.size === bound.size &&
+        row.sha256 === bound.sha256,
+      'Report asset differs from binding',
+    );
+    seen.add(row.path);
+  }
+  check(assets.get('ffmpeg-9.0.2.tar.xz').sha256 === pin.sha256, 'Source archive pin mismatch');
+  const addon = inventory(report.addonMembers);
+  for (const path of [
+    'native/video/video-codec.cc',
+    'native/video/ffmpeg-source.json',
+    'native/video/LICENSE',
+    'scripts/build-video-native.mjs',
+    'scripts/prepare-video-source.mjs',
+    'scripts/relink-video-native.mjs',
+  ])
+    check(addon.has(path), 'Incomplete addon corresponding source');
+  check(
+    Array.isArray(report.platforms) && report.platforms.length === 6,
+    'Missing platform relink reports',
+  );
+  const platforms = new Map();
+  for (const platform of report.platforms) {
+    const target = `${platform.platform}-${platform.arch}`;
+    check(
+      videoTargets.includes(target) &&
+        !platforms.has(target) &&
+        platform.node === 'v24.20.0' &&
+        platform.ffmpegVersion === pin.version &&
+        platform.sourceArchiveSha256 === pin.sha256 &&
+        digest(platform.binarySha256) &&
+        digest(platform.addonSourceSha256) &&
+        platform.flagsSource === 'relink/build.json',
+      'Invalid platform video report',
+    );
+    platforms.set(target, platform);
+    const build = platform.build;
+    check(
+      build?.platform === platform.platform &&
+        build.arch === platform.arch &&
+        build.node === platform.node &&
+        build.napiVersion === 8 &&
+        build.binarySha256 === platform.binarySha256 &&
+        build.addonSourceSha256 === platform.addonSourceSha256 &&
+        build.ffmpegVersion === pin.version &&
+        build.ffmpegCommit === pin.commit &&
+        build.sourceArchiveSha256 === pin.sha256 &&
+        build.accountUsed === false &&
+        build.qqWrapperLoaded === false &&
+        build.nativeSendAttempted === false,
+      'Invalid video build proof',
+    );
+    for (const key of ['configureArgs', 'compileArgs', 'linkArgs', 'systemLinkFlags'])
+      check(
+        Array.isArray(build[key]) &&
+          (key === 'systemLinkFlags' || build[key].length > 0) &&
+          build[key].every((value) => typeof value === 'string'),
+        'Missing relink flags',
+      );
+    for (const flag of [
+      '--disable-gpl',
+      '--disable-nonfree',
+      '--disable-version3',
+      '--enable-static',
+      '--disable-network',
+    ])
+      check(build.configureArgs.includes(flag), 'Unsupported video configure flags');
+    const members = inventory(platform.members);
+    const required = [
+      'runtime/video-codec.node',
+      'runtime/build.json',
+      'runtime/consumer.json',
+      'runtime/NODE-LICENSE.txt',
+      'runtime/NOTICE.txt',
+      'runtime/ADDON-LICENSE.txt',
+      'runtime/FFMPEG-LICENSE.md',
+      'runtime/FFMPEG-COPYING.LGPLv2.1',
+      'relink/build.json',
+      'relink/consumer.json',
+      'relink/video-codec.cc',
+      'relink/ffmpeg-source.json',
+      'relink/node-headers.tar.gz',
+      'relink/config.h',
+      'relink/config_components.h',
+      'relink/ffbuild-config.mak',
+      'relink/ADDON-LICENSE.txt',
+      'relink/build-video-native.mjs',
+      'relink/prepare-video-source.mjs',
+      'relink/relink-video-native.mjs',
+      ...(platform.platform === 'win32'
+        ? [
+            'relink/avformat.lib',
+            'relink/avcodec.lib',
+            'relink/swscale.lib',
+            'relink/avutil.lib',
+            'relink/video-codec.obj',
+            'relink/node.lib',
+          ]
+        : [
+            'relink/libavformat.a',
+            'relink/libavcodec.a',
+            'relink/libswscale.a',
+            'relink/libavutil.a',
+            'relink/video-codec.o',
+          ]),
+    ];
+    for (const path of required) check(members.has(path), 'Incomplete static relink archive');
+    for (const [path, digestValue] of [
+      ['runtime/video-codec.node', build.binarySha256],
+      ['relink/video-codec.cc', build.addonSourceSha256],
+      ['relink/node-headers.tar.gz', build.nodeHeadersSha256],
+      ['relink/config.h', build.configurationSha256],
+      ['runtime/NODE-LICENSE.txt', build.nodeLicenseSha256],
+    ])
+      check(
+        digest(digestValue) && members.get(path).sha256 === digestValue,
+        'Relink member hash mismatch',
+      );
+    if (
+      build.nodeLicenseDownloaderSha256 !== undefined ||
+      build.nodeLicenseDownloaderNormalizedSha256 !== undefined
+    ) {
+      check(
+        digest(build.nodeLicenseDownloaderSha256) &&
+          digest(build.nodeLicenseDownloaderNormalizedSha256) &&
+          members.get('relink/node-license-download.mjs')?.sha256 ===
+            build.nodeLicenseDownloaderSha256 &&
+          addon.get('scripts/node-license-download.mjs')?.sha256 ===
+            build.nodeLicenseDownloaderNormalizedSha256,
+        'Node license downloader corresponding source missing or changed',
+      );
+    }
+    if (platform.platform === 'win32')
+      check(
+        members.get('relink/node.lib').sha256 === build.nodeImportSha256 &&
+          digest(build.nodeImportSha256),
+        'Node import library mismatch',
+      );
+    check(
+      digest(platform.normalizedAddonSourceSha256) &&
+        addon.get('native/video/video-codec.cc').sha256 === platform.normalizedAddonSourceSha256,
+      'Normalized addon source differs across archives',
+    );
+    receipt(platform.receipts?.runtime, platform.platform, platform.arch, build.binarySha256);
+    receipt(platform.receipts?.relink, platform.platform, platform.arch);
+  }
+  for (const row of codecs) {
+    const platform = platforms.get(row.target);
+    check(platform, 'Codec target absent from materials');
+    const native = row.native;
+    check(safe(native.videoCodec), 'Unsafe codec path');
+    const codec = native.files.find((file) => file.path === native.videoCodec),
+      provenance = native.files.find((file) => file.path === 'video/SOURCE-PROVENANCE.json');
+    check(
+      codec && provenance && codec.sha256 === platform.binarySha256,
+      'Codec provenance or hash missing',
+    );
+    const codecBytes = await extracted(row.path, native.videoCodec, tarMembersCache),
+      provenanceBytes = await extracted(row.path, provenance.path, tarMembersCache);
+    check(
+      sha(codecBytes) === codec.sha256 &&
+        Number.isSafeInteger(codec.size) &&
+        codec.size === codecBytes.length &&
+        codecBytes.length === platform.receipts.runtime.binary.bytes &&
+        sha(provenanceBytes) === provenance.sha256,
+      'Packaged video bytes mismatch',
+    );
+    const source = JSON.parse(provenanceBytes);
+    assert.deepEqual(source.materials, binding);
+    check(source.binarySha256 === platform.binarySha256, 'Packaged runtime provenance mismatch');
+    check(
+      row.receipt.automaticVideoCodec === true &&
+        row.receipt.installedVideoDecoder === true &&
+        row.receipt.installedVideoFakeCache === true,
+      'Installed codec discovery proof missing',
+    );
+    receipt(row.receipt.installedVideo, platform.platform, platform.arch, platform.binarySha256);
+  }
+  return { binding, report, reportSha256: sha(reportBytes), pending: false, onlineVerified: false };
+}
+async function responseBytes(response) {
+  check(response?.ok === true, 'Public video materials unavailable');
+  const chunks = [];
+  let size = 0;
+  for await (const chunk of response.body) {
+    size += chunk.length;
+    check(size <= 8 * 1024 * 1024, 'Video response too large');
+    chunks.push(Buffer.from(chunk));
+  }
+  return Buffer.concat(chunks);
+}
+export async function verifyVideoMaterialsOnline(
+  materials,
+  { fetch: fetcher = globalThis.fetch } = {},
+) {
+  check(
+    materials?.pending === false && materials.binding && materials.report,
+    'Validated video materials required',
+  );
+  materials.onlineVerified = false;
+  const { binding } = materials;
+  const metadata = JSON.parse(
+    await responseBytes(
+      await fetcher(`https://api.github.com/repos/${repository}/releases/tags/${binding.tag}`, {
+        headers: { Accept: 'application/vnd.github+json' },
+        signal: AbortSignal.timeout(30_000),
+      }),
+    ),
+  );
+  check(
+    metadata.id === binding.releaseId &&
+      metadata.draft === false &&
+      metadata.prerelease === true &&
+      metadata.tag_name === binding.tag &&
+      metadata.target_commitish === binding.commit &&
+      Array.isArray(metadata.assets) &&
+      metadata.assets.length === binding.assets.length,
+    'Permanent video release identity mismatch',
+  );
+  for (const expected of binding.assets) {
+    const matches = metadata.assets.filter((asset) => asset.name === expected.name);
+    check(
+      matches.length === 1 &&
+        matches[0].size === expected.size &&
+        matches[0].digest === `sha256:${expected.sha256}` &&
+        matches[0].browser_download_url === expected.url,
+      'Permanent video asset differs from binding',
+    );
+  }
+  const expected = binding.assets.find((asset) => asset.name === 'video-materials.json'),
+    bytes = await responseBytes(
+      await fetcher(expected.url, { signal: AbortSignal.timeout(60_000) }),
+    );
+  check(
+    bytes.length === expected.size && sha(bytes) === expected.sha256,
+    'Permanent video report differs from validated bytes',
+  );
+  materials.onlineVerified = true;
+  return materials;
 }

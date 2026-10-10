@@ -8,16 +8,16 @@ Binary: official Linux arm64 QQ 3.2.32-52194 wrapper.node, SHA-256 `c302361f5249
 
 The binary has distinct callback-null, signing-failure and signing-success control-flow branches. This is stronger evidence than isolated string presence. It does **not** identify which branch the current ordinary-Node process took, whether a returned result satisfies the server, or whether an environment/detection marker was included.
 
-| Boundary | Address and directly observed instructions | Meaning and limit |
-| --- | --- | --- |
-| Callback setter | `0x40614e4`; stores incoming object/control pair at `0x8a036a0` and `0x8a036a8` via `0x4061514` / `0x4061518` | There is a native registration path for a shared callback object. Symbol names are stripped; exact high-level setter name is inferred from its use, not recovered |
-| Setter wrapper | `0x4060ebc`; calls setter at `0x4060ee8` | Copies and reference-counts the incoming callback pair |
-| Callback accessor | `0x4061564`; loads `0x8a036a0` / `0x8a036a8` and increments the control reference count | Supplies the object later tested by the signing routine |
-| Signing routine entry | `0x40a6b94`; accessor call at `0x40a6bbc`, pointer `cbz` at `0x40a6bc4` | A null callback takes a separate branch |
-| Callback dispatch | `0x40a6bd8` loads vtable; `0x40a6bdc` loads vtable slot `+0x10`; `0x40a6bf0` calls it | Native callback dispatch exists, with a result checked at `0x40a6bf4` |
-| Null branch | references `Security sign callback is nullptr, will not sign!` at `0x40a6cd8`; clears return-result slot at `0x40a6cec` | Explicit no-signing fallback is implemented |
-| Failure branch | callback return bit 0 clear jumps to `0x40a6cfc`; references `MSFSign is failed, will not sign! cmd:{} data size:{}` at `0x40a6d28` | Failed callback also has a no-signing branch |
-| Success branch | references `MSFSign is success, cmd:{} data size:{}, {}` at `0x40a6c34`; allocates/copies a 72-byte result structure from `0x40a6c70` | This is local success handling; it does not prove server authenticity acceptance |
+| Boundary              | Address and directly observed instructions                                                                                            | Meaning and limit                                                                                                                                                 |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Callback setter       | `0x40614e4`; stores incoming object/control pair at `0x8a036a0` and `0x8a036a8` via `0x4061514` / `0x4061518`                         | There is a native registration path for a shared callback object. Symbol names are stripped; exact high-level setter name is inferred from its use, not recovered |
+| Setter wrapper        | `0x4060ebc`; calls setter at `0x4060ee8`                                                                                              | Copies and reference-counts the incoming callback pair                                                                                                            |
+| Callback accessor     | `0x4061564`; loads `0x8a036a0` / `0x8a036a8` and increments the control reference count                                               | Supplies the object later tested by the signing routine                                                                                                           |
+| Signing routine entry | `0x40a6b94`; accessor call at `0x40a6bbc`, pointer `cbz` at `0x40a6bc4`                                                               | A null callback takes a separate branch                                                                                                                           |
+| Callback dispatch     | `0x40a6bd8` loads vtable; `0x40a6bdc` loads vtable slot `+0x10`; `0x40a6bf0` calls it                                                 | Native callback dispatch exists, with a result checked at `0x40a6bf4`                                                                                             |
+| Null branch           | references `Security sign callback is nullptr, will not sign!` at `0x40a6cd8`; clears return-result slot at `0x40a6cec`               | Explicit no-signing fallback is implemented                                                                                                                       |
+| Failure branch        | callback return bit 0 clear jumps to `0x40a6cfc`; references `MSFSign is failed, will not sign! cmd:{} data size:{}` at `0x40a6d28`   | Failed callback also has a no-signing branch                                                                                                                      |
+| Success branch        | references `MSFSign is success, cmd:{} data size:{}, {}` at `0x40a6c34`; allocates/copies a 72-byte result structure from `0x40a6c70` | This is local success handling; it does not prove server authenticity acceptance                                                                                  |
 
 A second wrapper-level null message, `SendMsfRequestInternal security_sign_callback_ is null, cmd={} seq={}`, is referenced at `0x13a0154`. Its relationship to the global accessor above is not fully reconstructed.
 
@@ -61,7 +61,6 @@ Remaining evidence needed to decide **genuine provider initialized versus null/d
 
 No active-account or signing execution was performed during this investigation. The available evidence leaves actual provider readiness and any fake-sign/detection output **unknown**.
 
-
 ## Follow-up: resolved callback RTTI and upstream MSF initialization
 
 Additional offline relocation analysis resolves the previously candidate callback identity:
@@ -88,11 +87,11 @@ The unresolved boundary is now narrower: determine how engine/account-session in
 The four setter callers can now be assigned classes without relying on nearby log labels. On the same SHA-256-pinned ARM64 wrapper, `.eh_frame_hdr` uses encoding bytes `01 1b 03 3b`. Its data-relative sorted lookup table identifies each caller's function start. ELF `R_AARCH64_RELATIVE` entries independently place those exact starts in two class vtables, whose RTTI names resolve to `nt::MSFService` and `nt::MSFCoreService`.
 
 | Setter call | Enclosing entry / next unwind entry | Class vtable address point | Virtual slot |
-| --- | --- | --- | --- |
-| `0x1379124` | `0x1378c4c` / `0x1379fe8` | MSFService `0x87173e8` | `+0x88` |
-| `0x137a888` | `0x137a48c` / `0x137b194` | MSFService `0x87173e8` | `+0x90` |
-| `0x139cea4` | `0x139c93c` / `0x139d864` | MSFCoreService `0x8718f60` | `+0x88` |
-| `0x139df1c` | `0x139d864` / `0x139e8e4` | MSFCoreService `0x8718f60` | `+0x90` |
+| ----------- | ----------------------------------- | -------------------------- | ------------ |
+| `0x1379124` | `0x1378c4c` / `0x1379fe8`           | MSFService `0x87173e8`     | `+0x88`      |
+| `0x137a888` | `0x137a48c` / `0x137b194`           | MSFService `0x87173e8`     | `+0x90`      |
+| `0x139cea4` | `0x139c93c` / `0x139d864`           | MSFCoreService `0x8718f60` | `+0x88`      |
+| `0x139df1c` | `0x139d864` / `0x139e8e4`           | MSFCoreService `0x8718f60` | `+0x90`      |
 
 MSFService RTTI is at `0x87177e0`, reached from vtable RTTI slot `0x87173e0`; MSFCoreService RTTI is at `0x87193f8`, reached from slot `0x8718f58`. Names are exact mangled bytes `N2nt10MSFServiceE` and `N2nt14MSFCoreServiceE`. The next unwind entry gives a reproducible range boundary, rather than asserting that arbitrary nearby prologue bytes identify functions.
 
@@ -152,11 +151,11 @@ These are structural static call edges; their containing paths may be conditiona
 
 The three provider calls support these limited register contracts:
 
-| Helper | Explicit inputs set at the call | Result handling |
-| --- | --- | --- |
+| Helper                     | Explicit inputs set at the call                                                                                                                                               | Result handling                                                                                                                          |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
 | `0x424c350` at `0x4262b8c` | `x0` is provider original `x0`; `x1` points to a formatted decimal string of original `w3`; `x2` points to a string constructed from original `x1` byte start and `w2` length | `x8` points to an indirect result object at `[x29-0x80]`; its data/length pair is later copied to the provider output region at `+0x200` |
-| `0x424ab24` at `0x4262bb0` | `x0` is provider original `x0`; `x1` points to the constructed input-range string | `x8` points to an indirect result object at `[x29-0xa0]`; its data/length pair is copied to output region `+0x100` |
-| `0x4239ebc` at `0x4262bc4` | Only the indirect result pointer in `x8` is explicitly prepared here; caller-saved registers changed by the prior helper must not be invented as formal parameters | Result at `[x29-0xc0]` is copied to output region `+0`; its size is written at output `+0xff` |
+| `0x424ab24` at `0x4262bb0` | `x0` is provider original `x0`; `x1` points to the constructed input-range string                                                                                             | `x8` points to an indirect result object at `[x29-0xa0]`; its data/length pair is copied to output region `+0x100`                       |
+| `0x4239ebc` at `0x4262bc4` | Only the indirect result pointer in `x8` is explicitly prepared here; caller-saved registers changed by the prior helper must not be invented as formal parameters            | Result at `[x29-0xc0]` is copied to output region `+0`; its size is written at output `+0xff`                                            |
 
 For the `+0x100` region, size is written at output `+0x1ff`; output `+0x200` copying occurs at `0x4262bd4`. These are byte-layout observations, not authoritative signature/token/extra field names, and do not establish size validation or a safe externally callable ABI.
 
@@ -255,14 +254,14 @@ The two internal calls are `0x434d384(owner, original x4)` and `0x434daa4(owner,
 
 A bounded offline comparison used `.local/native/qq-3.2.31-linux-arm64/wrapper.node`, SHA-256 `72978494d18d0076a378550099628569ff5081ada79f37e0b7adaeae6904217a`. All older addresses were derived independently from its own ELF string sections, relative relocations and unwind table; no 3.2.32 absolute addresses were reused.
 
-| Structure | Older 3.2.31 | Newer 3.2.32 |
-| --- | --- | --- |
-| Same callback RTTI name | `N2nt8internal23MSFSecuritySignCallbackE` at `0x60dbe68` | Same class name at `0x677e8e0` |
-| Typeinfo | `0x7e19fa8` | `0x8717338` |
-| Vtable address point | `0x7e19f80` | `0x8717310` |
-| Sign slot `+0x10` | `0x7e19f90 → 0x11df4b0` | `0x8717320 → 0x1375a78` |
-| Sign method unwind range | `0x11df4b0..0x11df764` | `0x1375a78..0x1375d2c` |
-| Provider candidate call | `0x11df64c → 0x3cc75fc` | `0x1375c14 → 0x42627dc` |
+| Structure                | Older 3.2.31                                             | Newer 3.2.32                   |
+| ------------------------ | -------------------------------------------------------- | ------------------------------ |
+| Same callback RTTI name  | `N2nt8internal23MSFSecuritySignCallbackE` at `0x60dbe68` | Same class name at `0x677e8e0` |
+| Typeinfo                 | `0x7e19fa8`                                              | `0x8717338`                    |
+| Vtable address point     | `0x7e19f80`                                              | `0x8717310`                    |
+| Sign slot `+0x10`        | `0x7e19f90 → 0x11df4b0`                                  | `0x8717320 → 0x1375a78`        |
+| Sign method unwind range | `0x11df4b0..0x11df764`                                   | `0x1375a78..0x1375d2c`         |
+| Provider candidate call  | `0x11df64c → 0x3cc75fc`                                  | `0x1375c14 → 0x42627dc`        |
 
 The older method's candidate call has the same observed local calling shape (`x4` points to a local buffer, input byte start/length in `x1/w2`, module-like original word in `w3`) and tests the integer return for zero at `0x11df654`. Its success branch loads unsigned lengths for the three regions at `0x11df6b0`, `0x11df6c8`, `0x11df6d8`, then copies to ordered result offsets `0`, `0x18`, `0x30`. This confirms callback/vtable and three-region output structure across these two exact binaries; semantic signature/token/extra names and output authenticity are still unproven.
 
@@ -290,11 +289,9 @@ Combined with the already checked caller `0x43324f4..0x43324fc`, this newly esta
 
 `scripts/linux-signing-setup-callees.py` checks the exact file hash, unwind boundaries and selected instruction words, and inventories all direct calls/returns in these two bodies. Receipt: `.local/research/linux-signing-setup-callees.json`. This is static file inspection only: no native execution, account access, signing operation, environment modification or detection-result change was performed.
 
-
 The four PLT labels in this latest pass were independently checked against `.rela.plt` GOT relocations and `.dynsym`/`.dynstr` bytes from the same pinned ELF: vector emplacement at `0x83a460`, memset at `0x83a5f0`, free at `0x83c7b0`, stack-check failure at `0x83d540`. The script now rejects a dynamic-symbol mismatch. The vector's exact mangled label is `_ZNSt6vectorIlSaIlEE12emplace_backIJRlEEES3_DpOT_`. On the analysis host, `/usr/bin/objdump --disassemble --start-address=0x83a460 --stop-address=0x83a470 /absolute/path/wrapper.node` independently printed that `.plt` label and its GOT load.
 
 Run `python3 scripts/linux-signing-setup-callees.py /absolute/path/wrapper.node` from the source checkout with the exact matching ARM64 ELF to reproduce this finite pass. It reads binary bytes; it does not import or invoke the native module.
-
 
 ## 有界补充：setup 的 8 字节元素查找 callee
 
@@ -326,11 +323,11 @@ python3 scripts/linux-signing-lookup-origin.py /absolute/path/wrapper.node
 
 consumer 中还找到返回数据的构造与复制指令。记录通过 `malloc(16)` 分配；另一处从 lookup 对象取得的 32 位长度左移两位后传给 `malloc`，所得缓冲区写入 `R+8`，对象长度写入 `R+0`。`0x4335194..0x43351b0` 按相同索引从另一个 lookup 对象的 `+8` 数据指针读取并写入返回缓冲区，元素宽度为 32 位。因而，返回缓冲区虽为独立分配，也不能据此排除内容传播。这里的分配大小与后续字符串构造长度单位不同，不能把分配范围直接当成最终输出范围。
 
-| 待连接的路径 | 精确局部关系 | 尚缺证据 |
-| --- | --- | --- |
-| OR8 目标 | `0x4339470` 的 lookup 使用当前指令 byte1 的低 4 位；后续修改该对象数据指针 `+5` 的字节 | 与复制源是否相同或有数据转换关系 |
-| 返回数据复制源 | `0x4339644` 的 lookup 使用当前指令完整 byte1；其 `+8` 数据指针进入 32 位索引复制 | 两处指令位置和索引不能直接视为相同 |
-| 最终输出 | `R.data` 按 `R.length` 构造字符串并复制到 provider `+0x200` | 复制及输出是否覆盖改写字节、可达路径上是否先写后复制 |
+| 待连接的路径   | 精确局部关系                                                                           | 尚缺证据                                             |
+| -------------- | -------------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| OR8 目标       | `0x4339470` 的 lookup 使用当前指令 byte1 的低 4 位；后续修改该对象数据指针 `+5` 的字节 | 与复制源是否相同或有数据转换关系                     |
+| 返回数据复制源 | `0x4339644` 的 lookup 使用当前指令完整 byte1；其 `+8` 数据指针进入 32 位索引复制       | 两处指令位置和索引不能直接视为相同                   |
+| 最终输出       | `R.data` 按 `R.length` 构造字符串并复制到 provider `+0x200`                            | 复制及输出是否覆盖改写字节、可达路径上是否先写后复制 |
 
 consumer 入口的 `frame+0x28 = *(incoming x0)+0x10`，lookup owner 则为 `incoming x0+8`。两次 lookup 都从 `frame+0x9e8` 读取指令位置，其直接定义来自 `frame+0x28`，但循环会更新该槽，因此共用解析状态不能证明读取同一指令。`0x4339b28` 将该指针加 6 后保存，未在该处解引用；不能描述成“载荷 byte6”或与数据指针混同。若复制源为相关表项且索引 1 实际复制，32 位元素会覆盖 byte4–7，可能包含改写的 byte5；字符串输出还须实际覆盖 byte5。这些是条件性范围关系，并非执行证明。
 
@@ -351,12 +348,12 @@ python3 scripts/linux-signing-return-provenance.py /absolute/path/wrapper.node
 
 consumer 的 `0x4337340` 从当前指令位置读取 byte0。bit7 置位走已识别的退出分支；其他值通过静态地址 `0x6c7e59e` 的 128 项 `uint16` 表，计算 `0x4334230 + table[opcode]*4` 并跳转。256 字节表的 SHA-256 为 `0e5b7d0e329515863b5e947f409f7d2cc7b5bed5e777ad584070b1da08079a3f`。
 
-| opcode | 表项得到的入口 | 已检查的局部关系 | blob 中的裸字节位置 |
-| --- | --- | --- | --- |
-| `0x79` | `0x4339460` | 低四位 operand lookup，进入此前 OR8 对象路径 | 362 |
-| `0x7a` | `0x4336d00` | lookup 对象进入加工函数，结果经 `0x4332380` 回存 owner 索引 | 368 |
-| `0x61` | `0x4336e1c` | 另一条按字节复制的返回记录路径 | 376 |
-| `0x62` | `0x4339638` | 前述按 uint32 索引复制的返回路径 | 整个 blob 均无此字节 |
+| opcode | 表项得到的入口 | 已检查的局部关系                                            | blob 中的裸字节位置  |
+| ------ | -------------- | ----------------------------------------------------------- | -------------------- |
+| `0x79` | `0x4339460`    | 低四位 operand lookup，进入此前 OR8 对象路径                | 362                  |
+| `0x7a` | `0x4336d00`    | lookup 对象进入加工函数，结果经 `0x4332380` 回存 owner 索引 | 368                  |
+| `0x61` | `0x4336e1c`    | 另一条按字节复制的返回记录路径                              | 376                  |
+| `0x62` | `0x4339638`    | 前述按 uint32 索引复制的返回路径                            | 整个 blob 均无此字节 |
 
 这些是精确表项与裸字节候选位置，不能把裸字节搜索等同于指令解码。setup 已识别的直接 workspace 写入没有覆盖 `workspace+0`；consumer 的 239 个单基本块指令指针载入窗口也未发现通过所追踪指针直接写 blob。然而，该有限检查未覆盖跨块别名及全部间接 callee，故没有证明运行时 blob 不变或指令位置始终位于它内部。`0x62` 的缺席仅在这些前提成立时限制该 opcode；**不能据此排除返回数据复制**。
 

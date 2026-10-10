@@ -3,7 +3,8 @@ export interface QQVersion {
   appId: string;
   qua: string;
 }
-export type LoginRequest = { method: 'qr' } | { method: 'quick'; uin: string } | { method: 'restore'; uin?: string };
+export type LoginRequest =
+  { method: 'qr' } | { method: 'quick'; uin: string } | { method: 'restore'; uin?: string };
 export interface NativeManifest {
   /** Required for a bundle that uses a Node internal-ABI adapter. */
   nodeVersion?: string;
@@ -15,9 +16,25 @@ export interface NativeManifest {
   wrapper: string;
   /** Optional bundled video addon/module, covered by the same files SHA-256 inventory. */
   videoCodec?: string;
-  npmStorage?: {format:'gzip-objects-v1';objects:Array<{path:string;sha256:string;downloadSha256:string;size:number;downloadSize:number}>};
+  npmStorage?: {
+    format: 'gzip-objects-v1';
+    objects: Array<{
+      path: string;
+      sha256: string;
+      downloadSha256: string;
+      size: number;
+      downloadSize: number;
+    }>;
+  };
   version: QQVersion;
-  files: Array<{ path: string; url: string; sha256: string; size?: number; encoding?: 'gzip'; downloadSha256?: string }>;
+  files: Array<{
+    path: string;
+    url: string;
+    sha256: string;
+    size?: number;
+    encoding?: 'gzip';
+    downloadSha256?: string;
+  }>;
 }
 export interface ClientOptions {
   /** HTTPS native catalog; defaults to the project's GitHub mirror. */
@@ -50,8 +67,16 @@ export interface ClientOptions {
   /** Restore only after a disconnect explicitly classified as retryable. Unknown failures and kicks never trigger automatic login. */
   autoReconnect?: boolean | { maxAttempts?: number; delayMs?: number };
 }
-export interface Account { uin: string; uid: string }
-export interface NativeCallbackAudit { family: string; name: string; argumentTypes: string[]; count: number }
+export interface Account {
+  uin: string;
+  uid: string;
+}
+export interface NativeCallbackAudit {
+  family: string;
+  name: string;
+  argumentTypes: string[];
+  count: number;
+}
 export interface ClientEvents {
   state: [ClientState];
   message: [Message];
@@ -89,27 +114,96 @@ export interface ClientEvents {
   log: [{ stream: 'stdout' | 'stderr'; text: string }];
 }
 
-export type ClientState = 'idle' | 'connecting' | 'online' | 'disconnected' | 'closing' | 'closed' | 'failed';
-export interface Friend { userId: string; uid: string; nickname: string; remark: string }
+export type ClientState =
+  'idle' | 'connecting' | 'online' | 'disconnected' | 'closing' | 'closed' | 'failed';
+export interface Friend {
+  userId: string;
+  uid: string;
+  nickname: string;
+  remark: string;
+}
 /** Explicit private gray-tip notice; userId is present only when native peerUin supplies it. */
-export interface FriendAdded { uid: string; messageId: string; userId?: string }
+export interface FriendAdded {
+  uid: string;
+  messageId: string;
+  userId?: string;
+}
 /** System-message metadata; unknown codes stay unknown and operator may be absent. */
-export interface GroupMembershipEvent { groupId: string; direction: 'increase' | 'decrease'; code: number; kind: 'invite' | 'leave' | 'kick' | 'kick-me' | 'disband' | 'unknown'; memberUid?: string; operatorUid?: string }
-export interface GroupAdminEvent { groupId: string; memberUid: string; enabled: boolean }
-export interface GroupMuteEvent { groupId: string; scope: 'member' | 'all'; durationSeconds: string; enabled: boolean; memberUid?: string; operatorUid: string }
-export interface FriendCategory { categoryId: number; sortId: number; name: string; memberCount: number; onlineCount: number; friends: Friend[] }
+export interface GroupMembershipEvent {
+  groupId: string;
+  direction: 'increase' | 'decrease';
+  code: number;
+  kind: 'invite' | 'leave' | 'kick' | 'kick-me' | 'disband' | 'unknown';
+  memberUid?: string;
+  operatorUid?: string;
+}
+export interface GroupAdminEvent {
+  groupId: string;
+  memberUid: string;
+  enabled: boolean;
+}
+export interface GroupMuteEvent {
+  groupId: string;
+  scope: 'member' | 'all';
+  durationSeconds: string;
+  enabled: boolean;
+  memberUid?: string;
+  operatorUid: string;
+}
+export interface FriendCategory {
+  categoryId: number;
+  sortId: number;
+  name: string;
+  memberCount: number;
+  onlineCount: number;
+  friends: Friend[];
+}
 /** Native creation receipt; membership and refreshed list contents are not included. */
-export interface CreatedFriendCategory { categoryId: number; name: string }
+export interface CreatedFriendCategory {
+  categoryId: number;
+  name: string;
+}
 /** Projected Buddy metadata; optional remarks remain absent when not supplied. */
-export interface FriendChange { userId: string; uid: string; nickname: string; remark?: string }
-export interface FriendCategoryChange { categoryId: number; name: string; memberCount: number; friends: FriendChange[] }
+export interface FriendChange {
+  userId: string;
+  uid: string;
+  nickname: string;
+  remark?: string;
+}
+export interface FriendCategoryChange {
+  categoryId: number;
+  name: string;
+  memberCount: number;
+  friends: FriendChange[];
+}
 /** Native categorized metadata, without a completeness marker or inferred add/remove cause. */
-export interface FriendListUpdate { categories: FriendCategoryChange[] }
-export interface Group { groupId: string; name: string; memberCount: number; maxMemberCount: number }
-export interface GroupMember { userId: string; uid: string; nickname: string; card: string; role: 'owner' | 'admin' | 'member' }
+export interface FriendListUpdate {
+  categories: FriendCategoryChange[];
+}
+export interface Group {
+  groupId: string;
+  name: string;
+  memberCount: number;
+  maxMemberCount: number;
+}
+export interface GroupMember {
+  userId: string;
+  uid: string;
+  nickname: string;
+  card: string;
+  role: 'owner' | 'admin' | 'member';
+}
 /** Native metadata notification; optional fields remain absent when not supplied. */
-export interface GroupChange { groupId: string; name?: string; memberCount?: number; maxMemberCount?: number }
-export interface GroupListUpdate { kind: 'refresh' | 'all' | 'modified' | 'removed'; groups: GroupChange[] }
+export interface GroupChange {
+  groupId: string;
+  name?: string;
+  memberCount?: number;
+  maxMemberCount?: number;
+}
+export interface GroupListUpdate {
+  kind: 'refresh' | 'all' | 'modified' | 'removed';
+  groups: GroupChange[];
+}
 export interface GroupMemberChange {
   uid: string;
   userId?: string;
@@ -120,7 +214,11 @@ export interface GroupMemberChange {
   roleChanged?: boolean;
 }
 /** Metadata synchronization, not a classified member join/leave notice. */
-export interface GroupMemberUpdate { groupId: string; source: 'local' | 'remote'; members: GroupMemberChange[] }
+export interface GroupMemberUpdate {
+  groupId: string;
+  source: 'local' | 'remote';
+  members: GroupMemberChange[];
+}
 /** Detail metadata synchronization; no inferred join/leave or operator. */
 export interface GroupInfoUpdate {
   groupId: string;
@@ -172,15 +270,31 @@ export interface ForwardResource {
   /** Complete decompressed payload, including unrecognized actions and fields. */
   raw: Buffer;
 }
-export type MessageElement = SendableMessageElement
+export type MessageElement =
+  | SendableMessageElement
   | ReceivedForwardElement
   | { type: 'unknown'; nativeType: number; data: unknown };
 export type MessageInput = string | SendableMessageElement[];
-export interface SentMessage { messageId: string; sequence: string; time: number }
+export interface SentMessage {
+  messageId: string;
+  sequence: string;
+  time: number;
+}
 /** Text-only merged record; time is an explicit Unix timestamp in seconds. */
-export interface ForwardTextNode { userId: string; nickname: string; time: number; text: string }
-export interface MergedForwardOptions { title?: string; summary?: string; prompt?: string }
-export interface SentMergedForward extends SentMessage { resourceId: string }
+export interface ForwardTextNode {
+  userId: string;
+  nickname: string;
+  time: number;
+  text: string;
+}
+export interface MergedForwardOptions {
+  title?: string;
+  summary?: string;
+  prompt?: string;
+}
+export interface SentMergedForward extends SentMessage {
+  resourceId: string;
+}
 export interface Message extends SentMessage {
   peer: Peer;
   sender: { userId: string; uid: string; nickname: string };
@@ -194,13 +308,34 @@ export interface MessageRecall {
   sequence: string;
   recallTime: string;
 }
-export interface HistoryOptions { before?: string; limit?: number }
-export interface KickOptions { rejectRejoin?: boolean; reason?: string }
-export interface UserProfile { userId: string; uid: string; nickname: string; remark: string; raw: unknown }
-export interface DeleteFriendOptions { block?: boolean; both?: boolean }
+export interface HistoryOptions {
+  before?: string;
+  limit?: number;
+}
+export interface KickOptions {
+  rejectRejoin?: boolean;
+  reason?: string;
+}
+export interface UserProfile {
+  userId: string;
+  uid: string;
+  nickname: string;
+  remark: string;
+  raw: unknown;
+}
+export interface DeleteFriendOptions {
+  block?: boolean;
+  both?: boolean;
+}
 export interface FriendRequest {
-  uid: string; time: string; nickname: string; message: string;
-  decided: boolean; unread: boolean; initiator: boolean; raw: unknown;
+  uid: string;
+  time: string;
+  nickname: string;
+  message: string;
+  decided: boolean;
+  unread: boolean;
+  initiator: boolean;
+  raw: unknown;
 }
 export interface GroupRequest {
   groupId: string;
@@ -212,8 +347,15 @@ export interface GroupRequest {
   message: string;
   raw: unknown;
 }
-export interface GroupRequestOptions { doubt?: boolean; limit?: number; before?: string }
-export interface GroupRequestPage { requests: GroupRequest[]; next: string }
+export interface GroupRequestOptions {
+  doubt?: boolean;
+  limit?: number;
+  before?: string;
+}
+export interface GroupRequestPage {
+  requests: GroupRequest[];
+  next: string;
+}
 export interface OfflineInfo {
   source: 'login' | 'msf' | 'kicked';
   kind: 'unknown' | 'transport' | 'logout' | 'forced';
@@ -226,9 +368,37 @@ export interface OfflineInfo {
   kickedInfo?: unknown;
 }
 
-export interface GroupNoticeOptions { imagePath?: string; pinned?: boolean; confirmRequired?: boolean }
+export interface GroupNoticeOptions {
+  imagePath?: string;
+  pinned?: boolean;
+  confirmRequired?: boolean;
+}
 
-export type { WebGroupNotice as GroupNotice, WebGroupNoticeResult as GroupNoticePage } from './web-group-notices.ts';
+/** A projected group notice; web tickets remain inside the worker. */
+export interface WebGroupNotice {
+  noticeId: string;
+  senderId: string;
+  publishTime: number;
+  text: string;
+  images: { id: string; width: string; height: string }[];
+  settings?: unknown;
+  readCount?: number;
+  raw: Record<string, unknown>;
+}
+/** The native web query's returned page, without a complete-pagination guarantee. */
+export interface WebGroupNoticeResult {
+  notices: WebGroupNotice[];
+  raw: Record<string, unknown>;
+}
+export type GroupNotice = WebGroupNotice;
+export type GroupNoticePage = WebGroupNoticeResult;
 
 /** Native shutUpTime is preserved; its unit/expiry interpretation is not established. */
-export interface GroupMutedMember { uid:string; userId:string; nickname:string; card:string; role:'unspecified'|'stranger'|'member'|'admin'|'owner'; shutUpTime:number }
+export interface GroupMutedMember {
+  uid: string;
+  userId: string;
+  nickname: string;
+  card: string;
+  role: 'unspecified' | 'stranger' | 'member' | 'admin' | 'owner';
+  shutUpTime: number;
+}

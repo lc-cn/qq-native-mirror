@@ -6,13 +6,13 @@ The unpublished `getForwardResource(resourceId)` API, worker and `forward-resour
 
 All sources are pinned to NapCatQQ `26d7533e0f5800fdff865ab2f2ad7692917e1076`. Exact downloaded bytes were rechecked against API/tree Git blob SHA1 and SHA256 in `.local/research/forward-upload-pinned/source-proof.json`.
 
-| File under packages/napcat-core/packet/transformer/proto/message/ | Git blob | SHA256 |
-| --- | --- | --- |
-| action.ts | `5622b39830200e47c411b7b08c6a85a4d7226521` | `58bd66dc5cdcaf70bfb5a9a572b68dd515b801354cd06d0b67d4413cad00abcd` |
-| message.ts | `fdcb65760c37073eee6cb313431311a80243826a` | `4b2d1ce7a4f0ef771f5496b9374c05a32dc82406bd1b5762b1af8560e475046c` |
-| routing.ts | `f2d0525669e1edb12c4db909ec54d5e5f5a14fa1` | `4a03d31a53fda48b5bb0f5155f2371f14e9b5bd4417c806c678183f4f5889d2b` |
-| component.ts | `7b1956dfeda65f9875a6386a5f21de5464185421` | `ea339ac73bb2d09698a4c736dea19dde60564fd9351589cbbb506ae3497723f8` |
-| element.ts | `72d437eb9a4bc9f3458d07b54a804548c9cbd36d` | `22fb788d73dbbb7a850a86d147add05d7952403942ba03863d245433199ad1c7` |
+| File under packages/napcat-core/packet/transformer/proto/message/ | Git blob                                   | SHA256                                                             |
+| ----------------------------------------------------------------- | ------------------------------------------ | ------------------------------------------------------------------ |
+| action.ts                                                         | `5622b39830200e47c411b7b08c6a85a4d7226521` | `58bd66dc5cdcaf70bfb5a9a572b68dd515b801354cd06d0b67d4413cad00abcd` |
+| message.ts                                                        | `fdcb65760c37073eee6cb313431311a80243826a` | `4b2d1ce7a4f0ef771f5496b9374c05a32dc82406bd1b5762b1af8560e475046c` |
+| routing.ts                                                        | `f2d0525669e1edb12c4db909ec54d5e5f5a14fa1` | `4a03d31a53fda48b5bb0f5155f2371f14e9b5bd4417c806c678183f4f5889d2b` |
+| component.ts                                                      | `7b1956dfeda65f9875a6386a5f21de5464185421` | `ea339ac73bb2d09698a4c736dea19dde60564fd9351589cbbb506ae3497723f8` |
+| element.ts                                                        | `72d437eb9a4bc9f3458d07b54a804548c9cbd36d` | `22fb788d73dbbb7a850a86d147add05d7952403942ba03863d245433199ad1c7` |
 
 The [resource transport document](forward-resource-contract.md) records the request/response envelope. Below concerns the gzip payload and record projection.
 

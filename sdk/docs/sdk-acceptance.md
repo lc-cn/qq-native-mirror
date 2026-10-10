@@ -15,31 +15,31 @@ Every acceptance result must record kernel version, platform/architecture, Node 
 
 ## Required capabilities
 
-| Capability | Public surface / intended behavior | Real acceptance standard |
-| --- | --- | --- |
-| Native preparation | `createClient(options)` with local bundle or manifest/digest | Clean consumer loads bundle without launching QQ/Electron; missing dependency and incompatible registration fail clearly |
-| Mirror/cache | Trusted manifest and per-file SHA-256; relative dependency paths | Fresh fetch, valid cache reuse, corruption repair, four separate process contenders, dead installation owner recovery |
-| QR login | `login({method:'qr'})`, `qrcode`, `authenticated`, `ready` | User scans generated image; readiness comes only after account Session initialization |
-| Account restore | `login({method:'restore',uin?})` | Restart Node with same data directory and regain ready Session; ambiguous records require explicit account |
-| Quick login | `login({method:'quick',uin})` | Explicit account reaches readiness; expiry/error yields actionable failure |
-| Lifecycle | `close()`, disconnect/logout/termination events | Native worker exits on close; pending requests fail on crash; shutdown does not erase account credentials |
-| Friend list | `listFriends()` | Authorized account returns identifiable friends; empty list remains distinguishable from operation failure |
-| Group list | `listGroups()` | Authorized account returns joined groups with consistent IDs and names |
-| Group members | `getGroupMembers(groupId)` | Known group returns matching membership, handles paging/completion and rejects unavailable group |
-| Incoming messages | `message` event and normalized elements | Explicitly authorized peer sends private and group messages; SDK emits sender, target, message ID, time and content; history/local notifications do not duplicate live delivery |
-| Private send | `sendPrivateMessage(userId,message)` | Explicit human instruction names recipient and content; successful native result and peer receipt agree |
-| Group send | `sendGroupMessage(groupId,message)` | Explicit human instruction names group and content; successful native result and visible receipt agree |
-| Text / mention | String or text/at elements | Plain text and group mention preserve order, Unicode, target and returned message identifiers |
-| Image / reply | Image/reply elements | Local image is uploaded and visible; reply references the actual originating message; invalid paths/IDs reject clearly |
-| History | `getHistory(...)` | Retrieve known messages with bounded limit/cursor; stable order, target and pagination; no invented placeholder records |
-| Recall | `recallMessage(...)` | Explicitly authorized recall removes a known own message; permission/time-window failures surface |
-| Files and rich content | File/audio/video/forward elements or dedicated APIs | Upload/download can be checked against hashes; type-specific metadata and native error behavior verified individually |
-| Group management | Mute, kick, settings and notices as explicit methods | Only explicit human-authorized actions; permission errors are surfaced; never exercised automatically by smoke tests |
-| Friend/group requests | Request events and explicit accept/reject methods | Real pending request reaches SDK; chosen action matches explicit authorization; no implicit approval |
-| Profile/contact operations | Profile lookup, nickname/card changes, relationship actions | Read APIs agree with account; mutations separately authorized and verified |
-| Multi-account | Separate clients and data directories | Two authorized accounts run concurrently with isolated sessions/events/cache; no credentials cross account boundary |
-| Native security signing | Authentic provider initialization, explicit missing-environment failures, preserved kick reasons | Vendor provenance and provider/host contract demonstrated separately from login success; no fabricated signatures, success responses or detector outcomes |
-| Version/platform drivers | Compatibility declaration and driver selection | Each declared kernel/platform loads, logs in and repeats message/contact acceptance; static export inspection is insufficient |
+| Capability                 | Public surface / intended behavior                                                               | Real acceptance standard                                                                                                                                                        |
+| -------------------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Native preparation         | `createClient(options)` with local bundle or manifest/digest                                     | Clean consumer loads bundle without launching QQ/Electron; missing dependency and incompatible registration fail clearly                                                        |
+| Mirror/cache               | Trusted manifest and per-file SHA-256; relative dependency paths                                 | Fresh fetch, valid cache reuse, corruption repair, four separate process contenders, dead installation owner recovery                                                           |
+| QR login                   | `login({method:'qr'})`, `qrcode`, `authenticated`, `ready`                                       | User scans generated image; readiness comes only after account Session initialization                                                                                           |
+| Account restore            | `login({method:'restore',uin?})`                                                                 | Restart Node with same data directory and regain ready Session; ambiguous records require explicit account                                                                      |
+| Quick login                | `login({method:'quick',uin})`                                                                    | Explicit account reaches readiness; expiry/error yields actionable failure                                                                                                      |
+| Lifecycle                  | `close()`, disconnect/logout/termination events                                                  | Native worker exits on close; pending requests fail on crash; shutdown does not erase account credentials                                                                       |
+| Friend list                | `listFriends()`                                                                                  | Authorized account returns identifiable friends; empty list remains distinguishable from operation failure                                                                      |
+| Group list                 | `listGroups()`                                                                                   | Authorized account returns joined groups with consistent IDs and names                                                                                                          |
+| Group members              | `getGroupMembers(groupId)`                                                                       | Known group returns matching membership, handles paging/completion and rejects unavailable group                                                                                |
+| Incoming messages          | `message` event and normalized elements                                                          | Explicitly authorized peer sends private and group messages; SDK emits sender, target, message ID, time and content; history/local notifications do not duplicate live delivery |
+| Private send               | `sendPrivateMessage(userId,message)`                                                             | Explicit human instruction names recipient and content; successful native result and peer receipt agree                                                                         |
+| Group send                 | `sendGroupMessage(groupId,message)`                                                              | Explicit human instruction names group and content; successful native result and visible receipt agree                                                                          |
+| Text / mention             | String or text/at elements                                                                       | Plain text and group mention preserve order, Unicode, target and returned message identifiers                                                                                   |
+| Image / reply              | Image/reply elements                                                                             | Local image is uploaded and visible; reply references the actual originating message; invalid paths/IDs reject clearly                                                          |
+| History                    | `getHistory(...)`                                                                                | Retrieve known messages with bounded limit/cursor; stable order, target and pagination; no invented placeholder records                                                         |
+| Recall                     | `recallMessage(...)`                                                                             | Explicitly authorized recall removes a known own message; permission/time-window failures surface                                                                               |
+| Files and rich content     | File/audio/video/forward elements or dedicated APIs                                              | Upload/download can be checked against hashes; type-specific metadata and native error behavior verified individually                                                           |
+| Group management           | Mute, kick, settings and notices as explicit methods                                             | Only explicit human-authorized actions; permission errors are surfaced; never exercised automatically by smoke tests                                                            |
+| Friend/group requests      | Request events and explicit accept/reject methods                                                | Real pending request reaches SDK; chosen action matches explicit authorization; no implicit approval                                                                            |
+| Profile/contact operations | Profile lookup, nickname/card changes, relationship actions                                      | Read APIs agree with account; mutations separately authorized and verified                                                                                                      |
+| Multi-account              | Separate clients and data directories                                                            | Two authorized accounts run concurrently with isolated sessions/events/cache; no credentials cross account boundary                                                             |
+| Native security signing    | Authentic provider initialization, explicit missing-environment failures, preserved kick reasons | Vendor provenance and provider/host contract demonstrated separately from login success; no fabricated signatures, success responses or detector outcomes                       |
+| Version/platform drivers   | Compatibility declaration and driver selection                                                   | Each declared kernel/platform loads, logs in and repeats message/contact acceptance; static export inspection is insufficient                                                   |
 
 ## Current evidence baseline
 
@@ -240,7 +240,6 @@ The separately approved file-v2 attempt executed once on 2026-10-09 using the co
 
 Valid content-cache hits no longer rewrite the cached object. Installation copies request filesystem copy-on-write cloning and fall back to ordinary copies when cloning is unsupported. Cache and installation retain independent inodes, so installed-file corruption does not damage the reusable cache; duplicate paths within one installation still use the existing hardlink grouping. Copied bytes are rehashed before publication. The content-cache subdirectory must remain a real directory inside the resolved cache root. Full existing regressions pass, and focused checks verify preserved cache modification time, independent installed/cache files, corruption repair without a new payload request, and refusal of a content-directory symlink before payload download.
 
-
 ## Ordinary-user locks and six-platform corrected-main acceptance (2026-10-09)
 
 The local complete regression passed 143 tests. Both data-directory and native-cache locks now publish a fully written regular owner file using an atomic same-directory hardlink; they read legacy symlink tokens without following or creating them. Live-owner exclusion, dead-owner recovery, concurrent contenders and malformed-owner preservation remain covered. Filesystems must support same-directory hardlinks.
@@ -251,24 +250,22 @@ The six auxiliary tarballs are byte-identical to successful original run 3788090
 
 This establishes real native package and cache preparation under denied symlink creation. It does not establish public npm installation, Windows account functionality or authentic security signing. Public compressed mirror cold downloads have separate evidence below. Those gates need separate evidence. No login, restore, messaging or account mutation ran in this CI.
 
-
 ## Six-platform public compressed mirror acceptance (2026-10-09)
 
 [Run 37889421789](https://github.com/lc-cn/qq-native-mirror/actions/runs/37889421789) passed on six actual native runners under Node 24.20.0. Each fresh consumer installed the fixed corrected main tarball from source run 37886708952 with all optional auxiliary packages omitted, imported by package name, and explicitly selected the public `catalog-gzip-v1.json`. The configured download accelerator was `https://gh-proxy.com/`; origin fallback remained enabled. This is not a direct-origin-only benchmark or public npm installation proof.
 
-| Device | Native exports | First payload bytes observed | Second payload requests / bytes |
-| --- | ---: | ---: | ---: |
-| darwin-arm64 | 104 | 48,186,949 | 0 / 0 |
-| darwin-x64 | 104 | 52,288,283 | 0 / 0 |
-| linux-arm64 | 98 | 63,996,855 | 0 / 0 |
-| linux-x64 | 98 | 62,122,352 | 0 / 0 |
-| win32-arm64 | 98 | 46,360,957 | 0 / 0 |
-| win32-x64 | 98 | 58,927,406 | 0 / 0 |
+| Device       | Native exports | First payload bytes observed | Second payload requests / bytes |
+| ------------ | -------------: | ---------------------------: | ------------------------------: |
+| darwin-arm64 |            104 |                   48,186,949 |                           0 / 0 |
+| darwin-x64   |            104 |                   52,288,283 |                           0 / 0 |
+| linux-arm64  |             98 |                   63,996,855 |                           0 / 0 |
+| linux-x64    |             98 |                   62,122,352 |                           0 / 0 |
+| win32-arm64  |             98 |                   46,360,957 |                           0 / 0 |
+| win32-x64    |             98 |                   58,927,406 |                           0 / 0 |
 
 All receipts bound the expected public manifest digest to the checked-out catalog before downloading native files. The SDK verified compressed and restored byte hashes; the consumer independently rehashed every cached runtime file. Both initialization passes prepared and closed the real kernel with symlink creation denied. No account login, restore, send or management operation ran. Signing authenticity remains unresolved.
 
 The default catalog now also includes the three verified macOS x64 and Windows x64/arm64 compressed entries, preserving the original five macOS arm64/Linux full-bundle rows. [Run 37890258044](https://github.com/lc-cn/qq-native-mirror/actions/runs/37890258044), commit `0acc260b2a139b1f398ac028e47699302adc2223`, subsequently passed all six native runners with `catalogUrl`, `version`, `manifestUrl` and `wrapperPath` omitted. Each receipt selected the exact latest device row in the default catalog, verified all cache files independently and showed zero payload requests/bytes on second preparation. It used the same fixed main candidate, omitted all optional auxiliaries, denied symlink creation and configured the download accelerator with origin fallback. No account activity occurred; public npm installation remains a separate gate.
-
 
 ## Login and query generation isolation (2026-10-09)
 
@@ -280,14 +277,11 @@ Friend-request listing coalesces concurrent callers but invalidates its query ch
 
 Build and all 147 local regressions passed. These are synthetic lifecycle/correlation tests; no native library, QR authorization, restore or account operation ran. They do not establish new account acceptance or signing authenticity. The unpublished main package will be rebuilt and revalidated as a new immutable first-publication candidate; the six native auxiliary packages remain byte-identical.
 
-
 The new immutable candidate [run 37890893656](https://github.com/lc-cn/qq-native-mirror/actions/runs/37890893656), source commit `9237a3a50329e5ce8d247c3f153003501cb7c349`, passed all six native Node 24.20.0 installed/cache consumers and the final Linux aggregate. Symlink creation was denied, native preparation/close succeeded, and each cache reuse made zero native-file requests. The aggregate also passed the full SDK regression suite. Main tarball: 236,137 bytes, SHA-256 `346bfee5895de2e0ef236cfb25d97654c8b773a5ec5adc67568b79e81301b11a`. All six auxiliary tarballs retain their earlier exact SHA-256/SHA-512 values. Local verification checked GitHub run/release identity, all asset hashes and the 25 bound evidence JSON files.
 
 This candidate supersedes run 37886708952 for the unpublished first main package. It made no real-account login or restore attempt, and has not yet been published to npm. Historical public mirror runs above tested the previous fixed main candidate; new consumer workflows pin the new candidate for further verification.
 
-
 The new fixed main candidate also passed independent public consumers: [default six-platform mirror run 37891347865](https://github.com/lc-cn/qq-native-mirror/actions/runs/37891347865) and [Linux two-version/two-architecture run 37891354573](https://github.com/lc-cn/qq-native-mirror/actions/runs/37891354573). Downloaded receipts were checked against source run 37890893656 and its exact main SHA-256/SHA-512. All six default devices selected their canonical latest manifests; every runtime file was independently rehashed, and second preparation made zero payload requests. The four Linux consumers prepared and closed both 3.2.31-51102 and 3.2.32-52194, with 92 and 98 exports respectively and no second payload download. No account login or restore ran. Older Linux business APIs and security-signature authenticity remain unproven.
-
 
 ## Official npm first publication and six-device consumer proof (2026-10-09)
 
@@ -295,19 +289,18 @@ All seven `0.0.1` packages are publicly available, and their `latest` tags, SHA-
 
 [Run 37893553033](https://github.com/lc-cn/qq-native-mirror/actions/runs/37893553033), verifier commit `bbd28c067c941bfe63cac32a67b9abea8bbbc75f`, passed all six native runners. Each consumer used an independent empty npm cache and requested only the published main package from `https://registry.npmjs.org/`. The installed lock matched main/device auxiliary integrity, foreign platform packages were absent, and mirror fallback was forbidden during default native preparation. CLI help and real kernel close passed.
 
-| Device | Node version | Native exports |
-| --- | --- | ---: |
-| Linux x64 | 24.21.0 | 98 |
-| Linux arm64 | 24.21.0 | 98 |
-| macOS x64 | 24.19.0 | 104 |
-| macOS arm64 | 24.20.0 | 104 |
-| Windows x64 | 24.20.0 | 98 |
-| Windows arm64 | 24.20.0 | 98 |
+| Device        | Node version | Native exports |
+| ------------- | ------------ | -------------: |
+| Linux x64     | 24.21.0      |             98 |
+| Linux arm64   | 24.21.0      |             98 |
+| macOS x64     | 24.19.0      |            104 |
+| macOS arm64   | 24.20.0      |            104 |
+| Windows x64   | 24.20.0      |             98 |
+| Windows arm64 | 24.20.0      |             98 |
 
 Every runner separately forced the explicit public compressed catalog with a configured accelerator and origin fallback. Its pinned manifest matched the canonical device entry; the loader and independent consumer checked runtime hashes. Second initialization made zero native-file requests and transferred zero native payload bytes. SDK/worker symlink creation was denied during this mirror phase. Downloaded twelve receipts were independently checked and bound to the fixed first-publication main.
 
 A fresh local macOS arm64 consumer also passed public npm installation, by-name import, 104 exports, normal close and CLI help under Node 24.19.0 without mirror fallback. These checks made no account login, restore, send or management operation. They establish official package consumption and initialization; they do not establish Windows account operations, older Linux business compatibility, complete oicq parity or security-signature authenticity. Trusted Publisher configuration remains a separate maintainer step.
-
 
 After publication, [source CI 37893829215](https://github.com/lc-cn/qq-native-mirror/actions/runs/37893829215), commit `0bdf79dcde7379fc1f1f70f322947924404c5652`, passed all six native builds, installed native initialization/close checks and the aggregate regression gate with the official auxiliary integrity/engine fields refreshed in the SDK lockfile. Publication was skipped. This validates the updated source lock, separately from the immutable public `0.0.1` consumer evidence above; it does not replace or republish those tarballs, and no account operation ran.
 
@@ -319,11 +312,9 @@ A second pure-worker reproduction showed `close()` during old-worker retirement 
 
 The build, 157 complete local regression tests and fresh offline package consumer passed. The installed consumer checked imports, declarations, CLI help/configuration and exclusion of private/development files; neither it nor these mock regressions executed QQ native code or operated an account. These source fixes are not present in the immutable public `0.0.1` tarball. No new npm publication was attempted.
 
-
 [Six-platform source CI 37895151720](https://github.com/lc-cn/qq-native-mirror/actions/runs/37895151720), commit `2bf1aa61afc472654afeb817d7dcfe11ee30c7c9`, passed all native builds and the aggregate. The complete job log was independently parsed: all six matching-device consumers plus the final Linux aggregate installed only the main request, selected exactly their platform auxiliary, prepared and closed; macOS exposed 104 exports and Linux/Windows 98. The aggregate passed all 157 regressions. These consumers used isolated local registry fixtures serving the actual new CI tarballs, rather than claiming a new official npm release. Publication was skipped and no account login ran.
 
 A separate subsequent pure-mock check identified an additional unresolved authentication boundary: quick login, explicit-account restore and automatically selected single-record restore all accept a native callback identifying a different account, then initialize that account's Session. The reproduction dispatched mock account `123` but resolved mock `456` in all three cases. Pre-fix kernel SHA-256: `1be2f7e2f286bf4fed669ae92b87ec278115a1c24bc3e60710d4cf59e19941d4`. The next fix must retain the selected authorization target per login generation and reject mismatched native identity before authenticated events or Session initialization. The successful preparation-only CI does not cover or resolve this boundary. Local reproduction script/receipts are under `.local/research/native-login-target-mismatch.*`; no real identity, native execution or network was used. Signing authenticity also remains unresolved.
-
 
 ## Native account target and identity isolation (unpublished source, 2026-10-09)
 
@@ -332,7 +323,6 @@ The preceding mismatch is fixed in source. Each pending login retains its method
 Authentication, login/ready events, resolved identity and later online identity returns have independent copies. Regressions verify that event/result mutation does not change Session configuration or stored identity. An interrupted authenticated notification cannot initialize a newer attempt using the old account, and a disconnect during the login notification suppresses the old ready event. The parent also ignores native account events once closing begins while still processing the shutdown RPC; four fake-worker tests reproduce and prevent late ready/disconnected/logout/kicked events changing the closing state.
 
 Build and all 181 local regressions passed, including 24 new focused identity/closing cases. A fresh offline package consumer passed installed imports, declarations, CLI help/configuration and private-file exclusion. These are mock/offline checks, with no QQ native execution or real account operation. The fixed-source six-platform native preparation CI is a separate gate. The immutable public `0.0.1` package remains unchanged; no new npm release was attempted. Account-target matching does not establish native signing authenticity or correlation of native callbacks that have no request identifier.
-
 
 [Fixed-source six-platform CI 37896779539](https://github.com/lc-cn/qq-native-mirror/actions/runs/37896779539), commit `04030e7024edce3454c3808970eab1a9b2bfbb11`, passed all six native runner builds and the aggregate. Independent parsing of its complete job log confirmed every matching-device consumer plus final Linux aggregate prepared and closed using the actual CI tarballs and automatic auxiliary selection; macOS exposed 104 exports, Linux/Windows 98. The aggregate passed all 181 regressions, with publication skipped. This is current-source native preparation evidence through isolated registry fixtures, distinct from the earlier public npm `0.0.1` acceptance. No new account login or restore, messaging or management operation occurred.
 
@@ -498,7 +488,6 @@ The resource-pruning workflow now checks out the original runtime source alongsi
 
 [Pruned CI 37933233881](https://github.com/lc-cn/qq-native-mirror/actions/runs/37933233881), tooling source `9c2f71554fe47406b8f5fc8aa307f49165d27a85`, separately passed the original-runtime verifier isolation. The actual secondary checkout printed source SHA `b4b2e4eab5e44f99126e2efc68d6701ac7658833`, whose verifier handled the fixed original main plus newly generated pruned auxiliary. The tarball SHA remains `ed5c9dade1c2ce0acfbc5c8f9e1d0aac04692de06264c2dea98ced53e5a19401`, with preparation/close and no login. Complete-log verification is recorded in `.local/research/pruned-ci-source-fixture-verified.json`. This old-runtime result does not establish acceptance of the newer forwarding correction.
 
-
 ## Current-source SDK Linux multi-version consumers (2026-10-09)
 
 [CI 37935497983](https://github.com/lc-cn/qq-native-mirror/actions/runs/37935497983), source `b36a89deeb050b8376050e743f6f27f1508d6938`, passed all four combinations of Linux x64/arm64 and QQ kernels 3.2.31-51102/3.2.32-52194 on real Ubuntu 24.04 architecture runners with Node 24.20.0. The workflow now defaults to building the current SDK source (0.0.2 in this run); its explicit `published-baseline` mode retains the fixed 0.0.1 archive comparison. It binds the main tarball's size, SHA-256 and SHA-512 to the exact source commit/run/attempt before installation. Synthetic source/byte tampering and second-pass download refusal checks passed before native work.
@@ -506,7 +495,6 @@ The resource-pruning workflow now checks out the original runtime source alongsi
 Each fresh consumer installed only the main package and regular dependencies with native optional packages omitted, selected a public mirror for its actual device, independently rehashed every cached native file, initialized and closed twice with symlink creation denied, and recorded zero native payload requests on the second preparation. 3.2.31 was explicitly selected (92 exports); omission of version selected 3.2.32 (98 exports). Cached inventories were 7 paths on x64 and 8 on arm64. Four downloaded source/consumer receipts were independently matched to the successful job state and producer JSON in the complete log, with exact source/version/hash bindings. Private evidence: `.local/research/current-linux-version-ci-37935497983/`, `current-linux-version-ci-state.json`, `current-linux-version-ci-full.log`, and `current-linux-version-ci-verified.json`. The main tarballs were verified inside the jobs; they were not downloaded again for this independent receipt inspection.
 
 No QQ account was mounted, restored or logged in, no business query or message was performed, and no npm publication occurred. This establishes current-source multi-version preparation and cache compatibility; it does not extend earlier account receipts to 0.0.2 or verify old-kernel business methods or signature authenticity. In normal npm use, a valid matching-device auxiliary package is preferred and pins its bundled kernel; catalog latest selection applies when that auxiliary is unavailable or explicitly bypassed with `catalogUrl`.
-
 
 ## Typed recall metadata and normalized CLI watch (2026-10-09)
 
@@ -516,9 +504,7 @@ Nonzero timestamps, message IDs and sequences preserve their decimal string byte
 
 CLI `watch --events normalized` prints the same seven business families with `{event,payload}`, using `message.recalled` instead of the raw legacy recall event. Existing `message` and `all` watch modes are preserved. Six module/service regressions and one new CLI regression cover exact IDs/time, invalid candidates, peer-isolated replay, bounded eviction, closure, native/raw projection independence and unrelated recall completion. All 313 SDK regressions pass. A fresh offline installed consumer has 88 packaged files and verifies actual compiled callback integration, typed declarations and normalized CLI delivery/cleanup (`normalizedRecallContract:true`, `nativeRecallObserved:false`, `nativeExecuted:false`, `accountUsed:false`). The same shared fixture is included in six-platform CI; successful CI is a separate gate. Private evidence: `.local/research/recall-events-focused.log`, `recall-events-tests.log`, `recall-events-installed-consumer.log`, and `recall-events-local-verified.json`. No real account restore/query, native recall, message send or npm publication was performed.
 
-
 [CI 37936745456](https://github.com/lc-cn/qq-native-mirror/actions/runs/37936745456), source `173f11e31c09c54b68f843cf19ff515dbf12f05d`, subsequently passed all six platform/architecture builds and the aggregate, including all 313 regressions. Independent complete-log inspection verified seven actual installed-tarball receipts with `normalizedRecallContract:true`, automatic matching-device auxiliary installation, real native preparation/close, `nativeRecallObserved:false`, `accountUsed:false` and `loginAttempted:false`. Recall projection cases use synthetic callbacks. Exports were 104 on macOS and 98 on Linux/Windows. Node versions were 24.21.0 on Linux/aggregate, 24.19.0 on macOS x64, 24.20.0 on macOS arm64 and pinned 24.20.0 on both Windows architectures. Publication and candidate archiving were skipped. `.local/research/recall-events-ci-verified.json` binds the source, complete-log SHA-256 and seven receipts. This closes the typed-recall compiled contract and native initialization gate without a new QQ account operation or real recall-event observation.
-
 
 ## Received UID-only mention identity and asynchronous delivery (2026-10-09)
 
@@ -560,7 +546,6 @@ Sixteen new message regressions cover all three query paths, whole-batch prevali
 
 [CI 37944804774](https://github.com/lc-cn/qq-native-mirror/actions/runs/37944804774), source `0e9a19157137f92f32ff9a1ecb250f83f8143c9b`, subsequently passed all six platform/architecture jobs and the aggregate, including all 364 regressions. Independent complete-log inspection verified seven actual installed-tarball receipts with `receivedMessageContract:true`, automatic matching-device auxiliary selection, real native preparation/close, `nativeReceivedIdentityLookupAttempted:false`, `accountUsed:false` and `loginAttempted:false`. Received-message identity cases use synthetic services; no real native identity conversion or QQ account read occurred. Exports were 104 on macOS and 98 on Linux/Windows. Node versions were 24.21.0 on Linux/aggregate, 24.19.0 on macOS x64, 24.20.0 on macOS arm64 and pinned 24.20.0 on both Windows architectures. Publication and candidate archiving were skipped. `.local/research/inbound-messages-ci-verified.json` binds the exact source, complete-log SHA-256 and seven receipts. This verifies compiled identity contracts and six-platform initialization; actual account interoperability and signature authenticity remain separate unmet gates.
 
-
 ## Explicit ordinary-Node video codec
 
 Source `fe29cc51ada50fe4c92e4b4389d15299fdb40a73` adds optional `videoCodecPath` and public `VideoCodec` / `VideoInfo` types. The worker loads a supplied local JS codec or standard `.node` addon and carries it through kernel Session creation to video preparation. Codec metadata is measured, thumbnail `format` is distinct from MP4 container format, and JPEG/PNG/BMP headers and positive dimensions are validated. Thumbnail bytes are captured before asynchronous staging. Downsampled covers are accepted; native legacy `thumbWidth` / `thumbHeight` retain original video dimensions as in the pinned upstream converter. Exceptions fail without a CLI fallback or invented cover. Explicit executable tools remain supported when no codec is configured. Session close or the bounded wait rejects pending decoding/staging; late native results cannot resume staging or send. Already dispatched decoder work itself is not cancelled.
@@ -571,9 +556,7 @@ A pinned NapCat FFmpeg Darwin arm64 addon was independently checked against Git 
 
 This verifies offline native codec processing on macOS arm64. It does not prove upstream binary/source correspondence, authenticated video delivery with this revision, signing authenticity or native codec execution on other targets. The codec is not added to the QQ auxiliary packages or downloaded by default. Six-target default distribution still requires reproducible native builds and dependency/license verification. See [video contract](video-codec.md).
 
-
 [CI 37948165298](https://github.com/lc-cn/qq-native-mirror/actions/runs/37948165298), bound to source `fe29cc51ada50fe4c92e4b4389d15299fdb40a73`, passed all six platform jobs and the aggregate with all 376 regressions. Complete-log inspection verified seven installed-tarball receipts with `videoCodecContract:true`, `nativeVideoSendAttempted:false`, actual QQ native preparation/close, automatic matching-platform auxiliary selection, `accountUsed:false` and `loginAttempted:false`. These codec cases use synthetic JS modules; only the separate local macOS arm64 probe loaded an actual native FFmpeg codec. CI exports were 104 on macOS and 98 on Linux/Windows. Node versions were 24.21.0 on Linux/aggregate, 24.19.0 on macOS x64, 24.20.0 on macOS arm64 and pinned 24.20.0 on both Windows targets. Publication and candidate archiving were skipped. The exact source, seven receipts and full-log SHA-256 are recorded in `.local/research/video-codec-ci-verified.json`. This is SDK codec contract and six-platform initialization evidence, not six-platform native video decoding or authentic QQ media delivery/signing evidence.
-
 
 ## Owned source-built native video codec (2026-10-09)
 
@@ -582,7 +565,6 @@ This verifies offline native codec processing on macOS arm64. It does not prove 
 Downloaded artifacts were bound to complete-log binary receipts and verified for actual machine type, exact source/archive/header/import-library/configuration hashes, component licenses, static archives/objects and matching runtime/relinked fixture outputs. Windows CRLF source bytes have their own recorded compiled hash and match repository bytes after newline normalization. PE import inspection independently confirms only node.exe, bcrypt.dll and KERNEL32.dll. Unix inventories have system dependencies without QQ or external FFmpeg libraries. This establishes actual decoding on Ubuntu 24.04, macOS 15 and the chosen Windows runners; it does not establish other OS minimums or byte-identical builds. See [source build and platform sizes](video-native-source.md) and [bound public evidence](evidence/video-source-ci-37953717980.json). Detailed local evidence: `.local/research/video-source-ci-third-verified.json`, `video-source-ci-third-independent-verified.json`, `video-source-ci-third-artifacts-verified.json`.
 
 The first overall run failed Windows tar extraction; the second passed all twelve media receipts but failed only Windows dependency inventory. Both are preserved as failed runs. Relative tar filenames and PowerShell dependency inspection were verified by the complete successful third run. Source and relink CI artifacts are currently temporary candidate materials. Permanent corresponding-source/relink distribution, automatic auxiliary-package codec selection, npm publication and actual QQ video upload/signing acceptance remain pending. Explicit `videoCodecPath` is the available runtime path; no account batch was executed in this work.
-
 
 ## Automatic verified bundled video codec (2026-10-10)
 
@@ -594,11 +576,9 @@ The native npm workflow now calls the source codec producer, downloads the match
 
 [CI 37957325694](https://github.com/lc-cn/qq-native-mirror/actions/runs/37957325694) was dispatched with publish/archive false for this exact source. The six standalone media producer jobs and two Linux installed consumers passed. The macOS arm64 installed consumer failed because its expected temporary path used `/var` while the installer correctly returned canonical `/private/var`; its verifier now canonicalizes the temporary directory. The completed run is failure: both macOS paths use `/private/var` while both Windows paths expand `RUNNER~1` to `runneradmin`; all four failed the same verifier path comparison. The temporary root is now canonicalized with realpath. Aggregate acceptance was skipped. Terminal success and actual installed-tarball receipts remain required before treating six-platform auto-selection as accepted.
 
-
 A subsequent local correction preserves explicit executable-tool settings ahead of the bundled default; an explicit `videoCodecPath` still has highest priority. The expanded FakeWorker test covers all four default/codec/tools/both combinations and each reconnect payload. Compilation and this targeted correction pass locally; the ongoing source-bound CI above contains the preceding factory policy and is not evidence for this later correction.
 
 Permanent-distribution tooling now also produces the pinned official source/signature/key/verification files, a correctly laid-out owned-addon source archive and six runtime/relink archives. `ci/prepare-video-materials.mjs` was run offline against the downloaded six-platform standalone artifacts. All eleven output assets have size/SHA inventories; seven generated archives were extracted again and every regular-file member matched its original size/hash. The tool binds fixed fixture hashes, build/configuration/source/Node material receipts and component notices without loading native code. It verifies the producer PGP receipt rather than rerunning GPG. Relinked binaries themselves were not retained in these archives; actual relink verification remains bound to prior CI receipts. Detailed candidate material receipt: `.local/research/video-materials-local-recheck/video-materials.json`. No source materials were uploaded or published.
-
 
 Correction source `f5c1d64fd9dcaf2ef94db782620c35131564556d` passed all 391 regressions and the complete replacement [CI 37959651453](https://github.com/lc-cn/qq-native-mirror/actions/runs/37959651453). Independent full-log/state inspection verifies pinned-source signature validation, twelve real original/relinked decoder receipts and seven installed-package receipts (six targets plus aggregate). Each installed consumer automatically selects the actual packaged codec, decodes three fixed clips, and completes QQ native initialization/close without login. Both Windows and macOS installed gates now pass. Archive and publish were skipped. The [bound summary](evidence/auto-video-ci-37959651453.json) records exact source/log/state hashes and binaries. This accepts default codec distribution in CI candidates on the selected runners, while actual QQ video delivery and signature authenticity remain unverified.
 
@@ -656,7 +636,6 @@ The producer/verifier and experimental consumer matrix now cover Linux, macOS an
 
 Four new [static candidate measurements](evidence/dedup-six-platform-static.json) retain all original bytes. Linux x64: 69,959,816 versus 70,030,024 bytes (19 paths/19 objects); Linux arm64: 71,896,209 versus 72,005,502 (20/20); Windows x64: 66,616,129 versus 66,610,876 (32/31); Windows arm64: 54,104,279 versus 54,122,150 (27/26). Windows x64 grows by 5,253 bytes. Object storage has little wire-size benefit on these platforms; it must not be marketed as universally smaller. Six-platform installed/native execution for this expanded cohort is now established by the separately bound successful CI below. No default distribution is switched and no npm publish occurs.
 
-
 ## Complete object storage on six actual platforms
 
 [CI 37982302926](https://github.com/lc-cn/qq-native-mirror/actions/runs/37982302926), exact builder `4332638c0d1e510839c4a972d7e4f5dd8bc81b57`, completed successfully on Linux, macOS and Windows x64/arm64 with Node 24.20.0. Each actual main-only consumer automatically selected its matching auxiliary, restored and verified every original path, reused warm cache, decoded three fixed clips through the actual codec, initialized the QQ native exports and closed without an account. The original native bytes remain bound to `6cae1ec0a5e1bfb03cb7871083915b3d03272347` / run `37962268125`; the newly built SDK and loader are bound separately.
@@ -667,11 +646,9 @@ The earlier expanded run `37981454664` failed both Windows jobs during original-
 
 This establishes installed storage, initialization and local media processing. It does not establish new account business operations, native batch lookup, merged-forward upload or signing authenticity. The candidates remain unpublished and the default catalog remains unchanged.
 
-
 ## Internal long-message response adaptation
 
 The independently written internal response adapter is disconnected from the public API and worker. It strictly parses the reviewed response resource-ID fields and provides one-dispatch transport lifecycle handling, without encoding requests, loading native services or using accounts during tests. Post-dispatch cancellation/timeout reports unknown completion and never retries. A received native response does not acknowledge card delivery. [Contract](long-message-response.md) and [local proof](evidence/long-message-response-local.json) bind this separate source `cbf219bd0fbe930f71d6e9e1be89a76e453d4e59`; build/type checks and all 446 SDK regressions passed locally. The earlier six-platform storage CI source does not include this later adapter. Actual native response-envelope and upload compatibility remain unobserved.
-
 
 ## Session strategy and current read-only batch (2026-10-10)
 
@@ -681,7 +658,6 @@ A new private read-only batch `sdk-002-readonly-v3` is prepared against the actu
 
 The proposed batch restores the previous macOS account once, reads friends/groups and first-group members if present once, reads at most one private history record with 8596238 and queries that same ID once, then closes. Error/interruption stops; no sends, recall, profile/relationship changes, retry or QR fallback. Acceptance output keeps only counts/status, not contact details or message contents. The review-first executor reserves an exclusive marker before runtime import. New explicit human authorization is required; earlier consumed message-query permission and pending older-source proposals are not carried over. Signing authenticity remains unverified. This preparation does not claim account acceptance and has not run the account batch.
 
-
 ## Current SDK with resource-pruned macOS arm64 auxiliary (2026-10-10)
 
 The actual main tarball from source `5907793ad848c68b3183ac5c2f2b06fbd1a5e0cf` / CI `38000680198` now passes a local macOS arm64 / Node 24.19.0 installed consumer with the exact existing 58-path auxiliary from pruned CI `37971314866`. The native source remains `6cae1ec...` / `37962268125`; every retained byte matches the complete 1,168-path original. Main-only installation selects the matching platform auxiliary, verifies all 58 installed paths, reuses the installed paths without fetching, decodes three real video fixtures, initializes 104 native exports, and closes without an account. Latest Session contracts run against the installed compiled SDK with synthetic services; authenticated Session start remains unobserved.
@@ -689,7 +665,6 @@ The actual main tarball from source `5907793ad848c68b3183ac5c2f2b06fbd1a5e0cf` /
 A separate fresh consumer with optional packages omitted exercises the explicit trusted-manifest mirror path against an isolated loopback HTTP server. Its empty cache downloads 33 unique SHA-256 contents (128,458,994 bytes) for the 58 paths; the second preparation downloads no payload. Both preparations fetch the manifest once. Every cached path matches its expected hash and retains its modification time on the warm pass. Actual installed `silk-wasm` encodes a locally generated 0.2-second PCM16 WAV and the SDK verifies its decoded SILK duration. The first mirror verifier incorrectly expected one payload per path; that failed attempt remains recorded, and the corrected unique-content assertion passed with a separate empty cache.
 
 [Source-bound evidence](evidence/current-sdk-pruned-arm64-runtime.json) includes tarball, verifier, log, codec, cache and independent review hashes. This establishes this current SDK/pruned auxiliary combination on the local ARM device only. It does not transfer to current x64 pruning, public mirror availability, account/business or signing authenticity. The 59,326,804-byte auxiliary is still experimental and unpublished; the complete default and fallback remain available. No account operation, message send or native inventory promotion occurred.
-
 
 ## Current SDK and both macOS pruned auxiliaries in CI (2026-10-10)
 
@@ -699,7 +674,6 @@ Each real main-only installed consumer selects its matching 58-path auxiliary, v
 
 Independent review downloaded the two actual ZIPs, checked all members, per-architecture packages/profiles and three logged receipts; parent rechecked all 22 ZIP members and 116 retained native paths. [Source-bound evidence](evidence/current-pruned-sdk-ci-38003259344.json) records the exact packages, receipts, logs and audits. Auxiliaries remain 65,268,780 bytes (x64) and 59,326,804 bytes (arm64). This fixed-source snapshot workflow is separate from native package production and npm publication. It does not promote pruned inventory or prove public mirror availability, account business operations or signing authenticity; complete defaults and fallback are unchanged. Future SDK acceptance requires new separately bound main sources rather than reusing this snapshot's result.
 
-
 ## Native production Node license transport repair
 
 Production CI [38003235382](https://github.com/lc-cn/qq-native-mirror/actions/runs/38003235382), source `748dfe34dea6bf2bddc6be3c073cf8ceca31897f`, failed on the macOS x64 video job after successful FFmpeg compilation/linking: the official raw GitHub Node LICENSE request ended with `UND_ERR_CONNECT_TIMEOUT`. The other five video jobs passed; native materials/build/aggregate were skipped. This is a failed production run, not seven-package acceptance.
@@ -707,7 +681,6 @@ Production CI [38003235382](https://github.com/lc-cn/qq-native-mirror/actions/ru
 The builder now resolves the official Node LICENSE before expensive compilation, with at most three attempts for transient transport errors and HTTP 429/5xx. Permanent status, malformed/oversized/truncated content and SHA mismatch stop immediately. Verified official v24.19.0/v24.20.0 LICENSE digests are fixed; an unknown Node version requires an explicitly trusted digest. Decoded bodies have a 2 MiB bound and SHA check; encoded Content-Length is not compared to decompressed bytes. No proxy, credential or compiler changes are involved. The helper is preserved in relink and corresponding-source archives, bound by raw and LF-normalized hashes so Windows CRLF is verified explicitly. Historical receipts without these newly introduced fields remain readable.
 
 Local verification passes all 595 tests, including compressed-body integrity, deadlines, bounded retry, invalid content, corresponding-source omission/drift and historical receipt compatibility. An actual official v24.20.0 download returned 157,609 bytes with SHA-256 `5888dbb9a1d2b18f2c3e6c5f6af1b39de658372b402a0577b002777f14c62ace`. These checks involve no QQ addon, account or npm publication. A new exact-source six-platform production run is still required; the failed run is retained.
-
 
 ## Six-platform native production repair acceptance
 
@@ -734,13 +707,13 @@ This establishes current-main public-default preparation/cache behavior on this 
 Each consumer installs only the main with optional packages omitted, leaves vendor version/wrapper/manifest/catalog options absent in `createClient`, uses the actual public default catalog with the explicitly configured gh-proxy transport, prepares a fresh cache, decodes three owned video fixtures, closes and prepares/closes again with no native payload download. The public codec-bearing default catalog and its two preserved older Linux rows remain unchanged.
 
 | Actual device | Cold native payload bytes | Warm payload bytes | Native exports |
-| --- | ---: | ---: | ---: |
-| Linux x64 | 70,170,661 | 0 | 98 |
-| Linux arm64 | 72,149,208 | 0 | 98 |
-| macOS x64 | 59,917,534 | 0 | 104 |
-| macOS arm64 | 54,872,832 | 0 | 104 |
-| Windows x64 | 66,753,092 | 0 | 98 |
-| Windows arm64 | 54,205,332 | 0 | 98 |
+| ------------- | ------------------------: | -----------------: | -------------: |
+| Linux x64     |                70,170,661 |                  0 |             98 |
+| Linux arm64   |                72,149,208 |                  0 |             98 |
+| macOS x64     |                59,917,534 |                  0 |            104 |
+| macOS arm64   |                54,872,832 |                  0 |            104 |
+| Windows x64   |                66,753,092 |                  0 |             98 |
+| Windows arm64 |                54,205,332 |                  0 |             98 |
 
 Independent and parent reviews check all six official ZIP digests and 36 artifact members, identical pinned 452,930-byte main tarballs, all 90 compiled JS/declaration files per main and separately bound source/acquisition metadata. All 18 actual video input receipts match the real platform logs, and each actual codec binary SHA matches the selected public manifest. The native cache is hash-checked by the actual CI consumer; local reviewers do not reread remote caches. The consumer receipt itself is not printed to the log, so its evidence is the source-bound artifact plus successful job steps, rather than claimed receipt-to-log JSON equality. Warm file modification times are not newly claimed by this CI probe. [Bound six-platform proof](evidence/current-main-public-default-ci-38009410014.json) retains these distinctions.
 
@@ -766,16 +739,13 @@ Predecessor run `38009229223` failed both Windows extraction tests before acquis
 
 Working source now adds `listFriendCategories`, `setGroupRemark` and `group-info-updated`, plus CLI and actual worker routing. Friend/member query waits are lifetime-aware and group IDs are validated before IPC/native dispatch. [Coverage and remaining contracts](contacts-groups.md) distinguish these additions from category management and relationship/membership semantic events. All 615 regressions passed, and a freshly installed package passed declaration and controlled child-worker checks; no real account or group action was executed. These additions postdate the successful `a0b879e` CI cohort, so fresh six-platform verification remains separate.
 
-
 ## Group detail reads and membership system events
 
 The subsequent working source adds `getGroupInfo` and `group-membership`; 628 full regressions passed, plus installed compiled-consumer/actual worker routing with a replacement kernel. The 410619-byte package (SHA256 `982156fd261b5c49ae91468613938ee65a2c14bb89d4c4fb1153dd829b4d4503`) matched 178 installed regular files and all 94 compiled files, before the later public evidence/docs append. See [contract and limits](contacts-groups.md) and [local receipt](evidence/group-query-system-events-local.json). No native account operation, live system-message delivery, npm publication or fresh six-platform CI is claimed by these checks.
 
-
 ## Administrator/mute events and mute-list reads
 
 Working-source `group-admin`, `group-mute`, and `listGroupMutedMembers` passed 641 full regressions and installed compiled-consumer/actual worker routing with a replacement kernel. Candidate TGZ SHA256 `f72d28e71d85d5379d078cc6e57367d1a9c9a726076d3f1025f34996978b6e13` (415278 bytes) matched 181 installed regular files and 96 compiled files before later docs/evidence were appended. The initial two diagnostic regressions and controlled-listener fixture timeout were fixed and retained as evidence. See [contracts](contacts-groups.md) and [local receipt](evidence/group-admin-mute-local.json). No live account operation, incoming event observation, npm publication or new six-platform CI is claimed.
-
 
 ## Name-only friend category creation
 

@@ -4,23 +4,67 @@ import { mkdir } from 'node:fs/promises';
 import { createKernel } from './kernel.ts';
 import type { ClientOptions, LoginRequest } from './types.ts';
 import type { ServiceOperation } from './native-services.ts';
-import { lockDataDirectory } from './data-directory-lock.ts';
-import { loadRecordCodec } from './record-codec-loader.ts';
-import { loadVideoCodec } from './video-codec-loader.ts';
-import { builtinRecordCodec } from './builtin-record-codec.ts';
-import { inspectNativeContracts } from './native-contracts.ts';
+import { lockDataDirectory } from './storage/data-directory-lock.ts';
+import { loadRecordCodec } from './features/media/record-codec-loader.ts';
+import { loadVideoCodec } from './features/media/video-codec-loader.ts';
+import { builtinRecordCodec } from './features/media/builtin-record-codec.ts';
+import { inspectNativeContracts } from './native/native-contracts.ts';
 
-const operations = new Set(['addFriendCategory', 'listFriends', 'listFriendCategories', 'listGroups', 'getGroupInfo', 'listGroupMutedMembers', 'getGroupMembers', 'sendPrivateMessage', 'sendGroupMessage', 'sendMergedForward', 'getMessage', 'getMessages', 'getHistory', 'recallMessage', 'getForwardMessages', 'getForwardResource', 'forwardMessages',
-  'setGroupName', 'setGroupRemark', 'setGroupMute', 'setGroupMemberMute', 'setGroupMemberCard', 'setGroupAdmin', 'kickGroupMember', 'leaveGroup',
-  'setNickname', 'setSignature', 'listGroupNotices', 'publishGroupNotice', 'deleteGroupNotice', 'downloadAttachment', 'getUserProfile', 'setFriendRemark', 'deleteFriend', 'listFriendRequests', 'handleFriendRequest', 'listGroupRequests', 'handleGroupRequest']);
+const operations = new Set([
+  'addFriendCategory',
+  'listFriends',
+  'listFriendCategories',
+  'listGroups',
+  'getGroupInfo',
+  'listGroupMutedMembers',
+  'getGroupMembers',
+  'sendPrivateMessage',
+  'sendGroupMessage',
+  'sendMergedForward',
+  'getMessage',
+  'getMessages',
+  'getHistory',
+  'recallMessage',
+  'getForwardMessages',
+  'getForwardResource',
+  'forwardMessages',
+  'setGroupName',
+  'setGroupRemark',
+  'setGroupMute',
+  'setGroupMemberMute',
+  'setGroupMemberCard',
+  'setGroupAdmin',
+  'kickGroupMember',
+  'leaveGroup',
+  'setNickname',
+  'setSignature',
+  'listGroupNotices',
+  'publishGroupNotice',
+  'deleteGroupNotice',
+  'downloadAttachment',
+  'getUserProfile',
+  'setFriendRemark',
+  'deleteFriend',
+  'listFriendRequests',
+  'handleFriendRequest',
+  'listGroupRequests',
+  'handleGroupRequest',
+]);
 
 let kernel: ReturnType<typeof createKernel> | undefined;
 let releaseDataLock: (() => void) | undefined;
 process.on('exit', () => releaseDataLock?.());
 process.on('message', async (message: unknown) => {
-  const request = message as { id: number; method: string; options?: ClientOptions; login?: LoginRequest };
+  const request = message as {
+    id: number;
+    method: string;
+    options?: ClientOptions;
+    login?: LoginRequest;
+  };
   if (!request || typeof request.id !== 'number') return;
-  const send = (value: unknown) => { if (process.connected) process.send?.(value); };
+  const send = (value: unknown) => {
+    if (process.connected) process.send?.(value);
+  };
   let acquired = false;
   try {
     let result: unknown;
@@ -29,21 +73,59 @@ process.on('message', async (message: unknown) => {
       const options = request.options!;
       await mkdir(options.dataDir, { recursive: true, mode: 0o700 });
       const release = lockDataDirectory(options.dataDir);
-      releaseDataLock = release; acquired = true;
+      releaseDataLock = release;
+      acquired = true;
       const bridge: { exports: { preloadLibrary?: (path: string) => void } } = { exports: {} };
-      if (options.bridgePath) process.dlopen(bridge, options.bridgePath, constants.dlopen.RTLD_NOW | constants.dlopen.RTLD_GLOBAL);
-      for (const library of options.preloadLibraries ?? (process.platform === 'linux' ? ['libgnutls.so.30'] : [])) {
-        if (!bridge.exports.preloadLibrary) throw new Error('Registration bridge does not support library preloading');
+      if (options.bridgePath)
+        process.dlopen(
+          bridge,
+          options.bridgePath,
+          constants.dlopen.RTLD_NOW | constants.dlopen.RTLD_GLOBAL,
+        );
+      for (const library of options.preloadLibraries ??
+        (process.platform === 'linux' ? ['libgnutls.so.30'] : [])) {
+        if (!bridge.exports.preloadLibrary)
+          throw new Error('Registration bridge does not support library preloading');
         bridge.exports.preloadLibrary(library);
       }
       const nativeContracts = await inspectNativeContracts(options.wrapperPath!, options.version);
       const native = { exports: {} };
       process.dlopen(native, options.wrapperPath!);
-      const recordCodec = options.recordCodecPath === undefined ? builtinRecordCodec : await loadRecordCodec(options.recordCodecPath);
-      const videoCodec = options.videoCodecPath === undefined ? undefined : await loadVideoCodec(options.videoCodecPath);
-      kernel = createKernel(native.exports, { dataDir: options.dataDir, version: options.version!, device: options.device, loginTimeoutMs: options.timeoutMs, rememberPassword: options.rememberPassword, mediaTools: options.mediaTools, recordCodec, videoCodec, nativeContracts },
-        (event, payload) => send({ event, payload: payload instanceof Error ? { message: payload.message } : Buffer.isBuffer((payload as { image?: unknown })?.image)
-          ? { ...(payload as object), image: (payload as { image: Buffer }).image.toString('base64') } : payload }));
+      const recordCodec =
+        options.recordCodecPath === undefined
+          ? builtinRecordCodec
+          : await loadRecordCodec(options.recordCodecPath);
+      const videoCodec =
+        options.videoCodecPath === undefined
+          ? undefined
+          : await loadVideoCodec(options.videoCodecPath);
+      kernel = createKernel(
+        native.exports,
+        {
+          dataDir: options.dataDir,
+          version: options.version!,
+          device: options.device,
+          loginTimeoutMs: options.timeoutMs,
+          rememberPassword: options.rememberPassword,
+          mediaTools: options.mediaTools,
+          recordCodec,
+          videoCodec,
+          nativeContracts,
+        },
+        (event, payload) =>
+          send({
+            event,
+            payload:
+              payload instanceof Error
+                ? { message: payload.message }
+                : Buffer.isBuffer((payload as { image?: unknown })?.image)
+                  ? {
+                      ...(payload as object),
+                      image: (payload as { image: Buffer }).image.toString('base64'),
+                    }
+                  : payload,
+          }),
+      );
       await kernel.prepare();
       result = { exports: Object.keys(native.exports) };
     } else if (request.method === 'login' && kernel) {
@@ -58,7 +140,10 @@ process.on('message', async (message: unknown) => {
     } else throw new Error(`Unknown kernel request: ${request.method}`);
     send({ id: request.id, result });
   } catch (error) {
-    if (acquired && !kernel) { releaseDataLock?.(); releaseDataLock = undefined; }
+    if (acquired && !kernel) {
+      releaseDataLock?.();
+      releaseDataLock = undefined;
+    }
     send({ id: request.id, error: serializeKernelError(error) });
   }
 });
