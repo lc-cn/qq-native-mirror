@@ -6,7 +6,6 @@ import { nativeResultError } from '../../errors.ts';
  * 7 join application; status 1 unhandled; operation 1 agree / 2 refuse.
  * Locally retained native service/listener contracts: .local/research/NodeIKernelGroup{Service,Listener}.ts.
  */
-import type { NativeObject as Native } from '../../native/native-object.ts';
 export type GroupRequestOperation = 'listGroupRequests' | 'handleGroupRequest';
 export interface NativeGroupRequest {
   groupId: string;
@@ -37,43 +36,96 @@ function requestType(value: unknown): 1 | 5 | 7 {
 }
 function normalize(raw: unknown, doubt: boolean): NativeGroupRequest | undefined {
   if (!raw || typeof raw !== 'object') throw new Error('Invalid native group notification');
-  const value = raw as Native;
+  const value = raw as Record<string, unknown>;
   // Membership/admin notices are not actionable applications or invitations.
-  if (![1, 5, 7].includes(value.type)) return undefined;
-  const type = requestType(value.type);
-  const groupId = numeric(value.group?.groupCode, 'native groupCode');
+  const nativeType = value.type;
+  if (nativeType !== 1 && nativeType !== 5 && nativeType !== 7) return undefined;
+  const type = requestType(nativeType);
+  const rawGroup = value.group;
+  const group =
+    rawGroup && typeof rawGroup === 'object' ? (rawGroup as Record<string, unknown>) : undefined;
+  const groupId = numeric(group?.groupCode, 'native groupCode');
   const sequence = numeric(value.seq, 'native seq');
-  if (!Number.isInteger(value.status) || value.status < 0 || value.status > 4)
+  const status = value.status;
+  if (typeof status !== 'number' || !Number.isInteger(status) || status < 0 || status > 4)
     throw new Error('Invalid native group request status');
-  if (typeof value.postscript !== 'string') throw new Error('Invalid native group request message');
+  const message = value.postscript;
+  if (typeof message !== 'string') throw new Error('Invalid native group request message');
   return {
     groupId,
     sequence,
     type,
     kind: type === 1 ? 'invite' : type === 5 ? 'invite-approval' : 'join',
     doubt,
-    status: value.status,
-    message: value.postscript,
+    status,
+    message,
     raw,
   };
 }
-export function createGroupRequests(
-  session: Native,
-  emit: (event: string, payload: unknown) => void,
-) {
-  if (typeof session.getGroupService !== 'function')
-    throw new Error('Native service is missing getGroupService');
-  const service = session.getGroupService();
-  if (!service || typeof service.addKernelGroupListener !== 'function')
-    throw new Error('Native Group service is missing addKernelGroupListener');
+export interface GroupRequestListener {
+  onGroupNotifiesUpdated(doubt: unknown, notifies: unknown): void;
+  onGroupSingleScreenNotifies(doubt: unknown, next: unknown, notifies: unknown): void;
+}
+export interface GroupNotificationOperation {
+  operateType: 1 | 2;
+  targetMsg: { seq: string; type: 1 | 5 | 7; groupCode: string; postscript: string };
+}
+export interface GroupRequestPort {
+  addKernelGroupListener?: (listener: GroupRequestListener) => unknown;
+  removeKernelGroupListener?: (id: unknown) => unknown;
+  getSingleScreenNotifies?: (doubt: boolean, before: string, limit: number) => unknown;
+  operateSysNotify?: (doubt: boolean, request: GroupNotificationOperation) => unknown;
+}
+export interface GroupRequestsContext {
+  getGroupService(): GroupRequestPort | null | undefined;
+  emit(event: string, payload: unknown): void;
+  signal: AbortSignal;
+  awaitAlive<T>(value: T | PromiseLike<T>): Promise<T>;
+}
+export function createGroupRequests(context: GroupRequestsContext) {
+  const { signal, awaitAlive } = context;
   let closed = false;
+  const controller = new AbortController();
+  const alive = () => {
+    signal.throwIfAborted();
+    if (closed) throw new Error('Group request service is closed');
+  };
+  const awaitValue = async <T>(value: T | PromiseLike<T>): Promise<T> => {
+    const pending = Promise.resolve(value);
+    if (controller.signal.aborted) {
+      void pending.catch(() => {});
+      throw controller.signal.reason;
+    }
+    let abort!: () => void;
+    const stopped = new Promise<never>((_, reject) => {
+      abort = () => reject(controller.signal.reason);
+      controller.signal.addEventListener('abort', abort, { once: true });
+    });
+    try {
+      const result = await Promise.race([awaitAlive(pending), stopped]);
+      alive();
+      return result;
+    } finally {
+      controller.signal.removeEventListener('abort', abort);
+    }
+  };
+  alive();
+  const service = context.getGroupService();
+  alive();
+  const add = service?.addKernelGroupListener;
+  alive();
+  if (typeof add !== 'function')
+    throw new Error('Native Group service is missing addKernelGroupListener');
+  const emit = (event: string, payload: unknown) => {
+    if (!closed && !signal.aborted) context.emit(event, payload);
+  };
   let queue = Promise.resolve();
   let queryInvalidated = false;
   let pending:
     | {
         doubt: boolean;
         resolve: (page: NativeGroupRequestPage) => void;
-        reject: (error: Error) => void;
+        reject: (error: unknown) => void;
       }
     | undefined;
   const seen = new Set<string>();
@@ -88,6 +140,7 @@ export function createGroupRequests(
   }
   function events(values: NativeGroupRequest[]) {
     for (const request of values) {
+      if (closed || signal.aborted) return;
       if (request.status !== 1) continue;
       const key = `${request.doubt}:${request.groupId}:${request.sequence}:${request.type}`;
       if (seen.has(key)) continue;
@@ -99,7 +152,7 @@ export function createGroupRequests(
   const listener = new Proxy(
     {
       onGroupNotifiesUpdated(doubt: unknown, notifies: unknown) {
-        if (closed) return;
+        if (closed || signal.aborted) return;
         try {
           events(requests(doubt, notifies));
         } catch {
@@ -107,27 +160,61 @@ export function createGroupRequests(
         }
       },
       onGroupSingleScreenNotifies(doubt: unknown, next: unknown, notifies: unknown) {
-        if (closed) return;
+        if (closed || signal.aborted) return;
         try {
           const values = requests(doubt, notifies);
           if (typeof next !== 'string' || (next && !/^\d+$/.test(next)))
             throw new Error('Invalid native group notification cursor');
           events(values);
+          if (closed || signal.aborted) return;
           if (pending && pending.doubt === doubt) pending.resolve({ requests: values, next });
         } catch (error) {
-          if (pending && pending.doubt === doubt) pending.reject(error as Error);
+          if (pending && pending.doubt === doubt) pending.reject(error);
         }
       },
     },
     { get: (object, key) => Reflect.get(object, key) ?? (() => {}) },
   );
-  const listenerId = service.addKernelGroupListener(listener);
-  const call = (method: string, ...args: unknown[]) => {
-    if (closed) throw new Error('Group request service is closed');
-    if (typeof service[method] !== 'function')
-      throw new Error(`Native Group service is missing ${method}`);
-    return service[method](...args);
+  let listenerId: unknown;
+  let registered = false;
+  let removed = false;
+  const remove = () => {
+    if (!registered || removed) return;
+    removed = true;
+    const method = service?.removeKernelGroupListener;
+    if (typeof method === 'function') {
+      // Preserve legacy removal dispatch without inventing completion semantics.
+      void Promise.resolve(Reflect.apply(method, service, [listenerId])).catch(() => {});
+    }
   };
+  const callList = (doubt: boolean, before: string, limit: number) => {
+    alive();
+    const method = service?.getSingleScreenNotifies;
+    alive();
+    if (typeof method !== 'function')
+      throw new Error('Native Group service is missing getSingleScreenNotifies');
+    return Reflect.apply(method, service, [doubt, before, limit]) as unknown;
+  };
+  const callOperation = (doubt: boolean, request: GroupNotificationOperation) => {
+    alive();
+    const method = service?.operateSysNotify;
+    alive();
+    if (typeof method !== 'function')
+      throw new Error('Native Group service is missing operateSysNotify');
+    return Reflect.apply(method, service, [doubt, request]) as unknown;
+  };
+  signal.addEventListener('abort', retire, { once: true });
+  try {
+    listenerId = Reflect.apply(add, service, [listener]);
+    registered = true;
+    if (closed || signal.aborted) {
+      close();
+      alive();
+    }
+  } catch (error) {
+    retire();
+    throw error;
+  }
   async function list(
     doubt: boolean,
     before: string,
@@ -138,7 +225,7 @@ export function createGroupRequests(
     const operation = queue
       .catch(() => {})
       .then(async () => {
-        if (closed) throw new Error('Group request service is closed');
+        alive();
         if (queryInvalidated)
           throw new Error(
             'Group request query channel is invalid after a failed query; recreate the Session',
@@ -152,15 +239,23 @@ export function createGroupRequests(
             Promise.all([
               notification,
               Promise.resolve()
-                .then(() => call('getSingleScreenNotifies', doubt, before, limit))
+                .then(() => awaitValue(callList(doubt, before, limit)))
                 .then((result) => {
-                  if (!result || result.result !== 0)
+                  if (
+                    !result ||
+                    typeof result !== 'object' ||
+                    (result as { result?: unknown }).result !== 0
+                  )
                     throw nativeResultError(
                       'Native getSingleScreenNotifies failed or returned an invalid result',
                       result,
                     );
+                  alive();
                 }),
-            ]).then(([page]) => page),
+            ]).then(([page]) => {
+              alive();
+              return page;
+            }),
             new Promise<never>((_, reject) => {
               timer = setTimeout(() => {
                 queryInvalidated = true;
@@ -191,51 +286,74 @@ export function createGroupRequests(
     method: GroupRequestOperation,
     payload: Record<string, unknown> = {},
   ): Promise<NativeGroupRequestPage | void> {
-    if (closed) throw new Error('Group request service is closed');
+    alive();
     if (method === 'listGroupRequests') {
+      const capturedOptions = payload.options;
       if (
-        payload.options !== undefined &&
-        (!payload.options || typeof payload.options !== 'object' || Array.isArray(payload.options))
+        capturedOptions !== undefined &&
+        (!capturedOptions || typeof capturedOptions !== 'object' || Array.isArray(capturedOptions))
       )
         throw new Error('options must be an object');
-      const options = (payload.options ?? {}) as Native;
-      const doubt = options.doubt === undefined ? false : bool(options.doubt, 'doubt');
-      const before = options.before === undefined ? '' : numeric(options.before, 'before');
-      const limit = options.limit ?? 20;
+      const options = (capturedOptions ?? {}) as Record<string, unknown>;
+      const capturedDoubt = options.doubt,
+        capturedBefore = options.before,
+        capturedLimit = options.limit;
+      const doubt = capturedDoubt === undefined ? false : bool(capturedDoubt, 'doubt');
+      const before = capturedBefore === undefined ? '' : numeric(capturedBefore, 'before');
+      const limit = capturedLimit ?? 20;
       if (typeof limit !== 'number' || !Number.isSafeInteger(limit) || limit < 1 || limit > 100)
         throw new Error('limit must be an integer between 1 and 100');
-      return list(doubt, before, limit);
+      alive();
+      const page = await list(doubt, before, limit);
+      alive();
+      return page;
     }
     if (method !== 'handleGroupRequest')
       throw new Error(`Unsupported group request operation: ${method}`);
-    if (!payload.request || typeof payload.request !== 'object' || Array.isArray(payload.request))
+    const capturedRequest = payload.request;
+    if (!capturedRequest || typeof capturedRequest !== 'object' || Array.isArray(capturedRequest))
       throw new Error('request must be an object');
-    const request = payload.request as Native;
+    const request = capturedRequest as Record<string, unknown>;
     const groupId = numeric(request.groupId, 'request.groupId');
     const sequence = numeric(request.sequence, 'request.sequence');
     const type = requestType(request.type);
     const doubt = bool(request.doubt, 'request.doubt');
     const accept = bool(payload.accept, 'accept');
-    if (payload.reason !== undefined && typeof payload.reason !== 'string')
+    const reason = payload.reason;
+    if (reason !== undefined && typeof reason !== 'string')
       throw new Error('reason must be a string');
-    const result = await call('operateSysNotify', doubt, {
-      operateType: accept ? 1 : 2,
-      targetMsg: { seq: sequence, type, groupCode: groupId, postscript: payload.reason ?? ' ' },
-    });
+    alive();
+    const result = await awaitValue(
+      callOperation(doubt, {
+        operateType: accept ? 1 : 2,
+        targetMsg: { seq: sequence, type, groupCode: groupId, postscript: reason ?? ' ' },
+      }),
+    );
+    alive();
     // Pinned native declaration is Promise<void>: dispatch is not server approval.
-    if (result !== undefined && (!result || typeof result !== 'object' || result.result !== 0))
+    if (
+      result !== undefined &&
+      (!result || typeof result !== 'object' || (result as { result?: unknown }).result !== 0)
+    )
       throw nativeResultError(
         'Native operateSysNotify failed or returned an invalid result',
         result,
       );
+    alive();
   }
-  function close() {
+  function retire() {
     if (closed) return;
     closed = true;
-    pending?.reject(new Error('Group request service is closed'));
+    signal.removeEventListener('abort', retire);
+    controller.abort(signal.aborted ? signal.reason : new Error('Group request service is closed'));
+    const current = pending;
+    pending = undefined;
     seen.clear();
-    if (typeof service.removeKernelGroupListener === 'function')
-      service.removeKernelGroupListener(listenerId);
+    current?.reject(new Error('Group request service is closed'));
+  }
+  function close() {
+    retire();
+    remove();
   }
   return { invokeOperation, close };
 }

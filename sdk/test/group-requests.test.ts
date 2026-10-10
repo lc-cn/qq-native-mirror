@@ -1,6 +1,22 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { createGroupRequests } from '../src/features/groups/group-requests.ts';
+import {
+  createGroupRequests as createWithContext,
+  type GroupRequestPort,
+  type GroupRequestListener,
+} from '../src/features/groups/group-requests.ts';
+function createGroupRequests(
+  session: { getGroupService(): GroupRequestPort },
+  emit: (event: string, payload: unknown) => void,
+) {
+  return createWithContext({
+    getGroupService: () => session.getGroupService(),
+    emit,
+    signal: new AbortController().signal,
+    awaitAlive: async (value) => value,
+  });
+}
+
 const notify = (type: number, seq = '123', status = 1) => ({
   seq,
   type,
@@ -9,16 +25,16 @@ const notify = (type: number, seq = '123', status = 1) => ({
   postscript: 'message',
 });
 function fixture() {
-  let listener: any;
+  let listener: GroupRequestListener | undefined;
   let result: unknown = { result: 0 };
   const calls: unknown[][] = [];
-  const events: { event: string; payload: any }[] = [];
+  const events: { event: string; payload: unknown }[] = [];
   const service = {
-    addKernelGroupListener: (value: unknown) => {
+    addKernelGroupListener: (value: GroupRequestListener) => {
       listener = value;
       return 9;
     },
-    removeKernelGroupListener: (id: number) => {
+    removeKernelGroupListener: (id: unknown) => {
       calls.push(['remove', id]);
     },
     getSingleScreenNotifies: (...args: unknown[]) => {
@@ -42,8 +58,8 @@ function fixture() {
       result = value;
     },
     page: (doubt: boolean, next: string, values: unknown[]) =>
-      listener.onGroupSingleScreenNotifies(doubt, next, values),
-    update: (doubt: boolean, values: unknown[]) => listener.onGroupNotifiesUpdated(doubt, values),
+      listener!.onGroupSingleScreenNotifies(doubt, next, values),
+    update: (doubt: boolean, values: unknown[]) => listener!.onGroupNotifiesUpdated(doubt, values),
   };
 }
 
@@ -216,4 +232,375 @@ test('timed-out pages invalidate queries; late callbacks cannot satisfy a later 
   );
   assert.deepEqual(f.calls, [['get', false, '', 20]], 'no later native query is dispatched');
   f.module.close();
+});
+
+const handle = {
+  request: { groupId: '456', sequence: '123', type: 1, doubt: false },
+  accept: true,
+};
+const tick = () => new Promise<void>((resolve) => setImmediate(resolve));
+for (const method of ['listGroupRequests', 'handleGroupRequest'] as const) {
+  test(`${method} local close interrupts pending native invocation and observes late rejection`, async () => {
+    let listener!: GroupRequestListener;
+    let reject!: (error: Error) => void;
+    const native = new Promise<never>((_, fail) => {
+      reject = fail;
+    });
+    let calls = 0,
+      removed = 0;
+    const controller = new AbortController();
+    const module = createWithContext({
+      signal: controller.signal,
+      awaitAlive: async (value) => value,
+      emit() {},
+      getGroupService: () => ({
+        addKernelGroupListener(value) {
+          listener = value;
+          return 'opaque';
+        },
+        removeKernelGroupListener(id) {
+          assert.equal(id, 'opaque');
+          removed++;
+        },
+        getSingleScreenNotifies() {
+          calls++;
+          listener.onGroupSingleScreenNotifies(false, '', []);
+          return native;
+        },
+        operateSysNotify() {
+          calls++;
+          return native;
+        },
+      }),
+    });
+    const pending = assert.rejects(
+      module.invokeOperation(method, method === 'handleGroupRequest' ? handle : {}),
+      /closed/,
+    );
+    await tick();
+    module.close();
+    await pending;
+    assert.equal(controller.signal.aborted, false);
+    reject(Error('late rejected'));
+    await tick();
+    assert.equal(calls, 1);
+    assert.equal(removed, 1);
+    module.close();
+    assert.equal(removed, 1);
+  });
+  test(`${method} status getter closes owner and cannot report success`, async () => {
+    let listener!: GroupRequestListener;
+    let calls = 0;
+    const result = {
+      get result() {
+        module.close();
+        return 0;
+      },
+    };
+    const module = createWithContext({
+      signal: new AbortController().signal,
+      awaitAlive: async (value) => value,
+      emit() {},
+      getGroupService: () => ({
+        addKernelGroupListener(value) {
+          listener = value;
+          return 1;
+        },
+        removeKernelGroupListener() {},
+        getSingleScreenNotifies() {
+          calls++;
+          listener.onGroupSingleScreenNotifies(false, '', []);
+          return result;
+        },
+        operateSysNotify() {
+          calls++;
+          return result;
+        },
+      }),
+    });
+    await assert.rejects(
+      module.invokeOperation(method, method === 'handleGroupRequest' ? handle : {}),
+      /closed/,
+    );
+    assert.equal(calls, 1);
+  });
+}
+for (const stage of ['service', 'add-getter', 'registration'] as const) {
+  test(`synchronous abort during ${stage} never exposes a live owner and removes acquired ID once`, () => {
+    const controller = new AbortController(),
+      reason = Error('fixture aborted');
+    let adds = 0,
+      removes = 0;
+    const service: GroupRequestPort = {
+      get addKernelGroupListener() {
+        if (stage === 'add-getter') controller.abort(reason);
+        return function (this: GroupRequestPort) {
+          assert.equal(this, service);
+          adds++;
+          if (stage === 'registration') controller.abort(reason);
+          return 11;
+        };
+      },
+      removeKernelGroupListener(id) {
+        assert.equal(this, service);
+        assert.equal(id, 11);
+        removes++;
+      },
+    };
+    assert.throws(
+      () =>
+        createWithContext({
+          signal: controller.signal,
+          awaitAlive: async (value) => value,
+          emit() {},
+          getGroupService() {
+            if (stage === 'service') controller.abort(reason);
+            return service;
+          },
+        }),
+      (error) => error === reason,
+    );
+    assert.equal(adds, stage === 'registration' ? 1 : 0);
+    assert.equal(removes, stage === 'registration' ? 1 : 0);
+  });
+}
+for (const method of ['getSingleScreenNotifies', 'operateSysNotify'] as const) {
+  test(`${method} method getter captured once; close in getter prevents dispatch`, async () => {
+    let calls = 0,
+      reads = 0;
+    const service: GroupRequestPort = {
+      addKernelGroupListener() {
+        return 1;
+      },
+      removeKernelGroupListener() {},
+    };
+    Object.defineProperty(service, method, {
+      get() {
+        reads++;
+        module.close();
+        return function () {
+          calls++;
+        };
+      },
+    });
+    const module = createWithContext({
+      signal: new AbortController().signal,
+      awaitAlive: async (value) => value,
+      emit() {},
+      getGroupService: () => service,
+    });
+    await assert.rejects(
+      module.invokeOperation(
+        method === 'getSingleScreenNotifies' ? 'listGroupRequests' : 'handleGroupRequest',
+        method === 'operateSysNotify' ? handle : {},
+      ),
+      /closed/,
+    );
+    assert.equal(calls, 0);
+    assert.equal(reads, 1);
+  });
+}
+test('observer close stops remaining events and removes listener only once', () => {
+  let listener!: GroupRequestListener;
+  const events: unknown[] = [],
+    removed: unknown[] = [];
+  const module = createWithContext({
+    signal: new AbortController().signal,
+    awaitAlive: async (value) => value,
+    getGroupService: () => ({
+      addKernelGroupListener(value) {
+        listener = value;
+        return 5;
+      },
+      removeKernelGroupListener(id) {
+        removed.push(id);
+      },
+    }),
+    emit(_event, value) {
+      events.push(value);
+      module.close();
+    },
+  });
+  listener.onGroupNotifiesUpdated(false, [notify(1, '1'), notify(1, '2')]);
+  listener.onGroupNotifiesUpdated(false, [notify(1, '3')]);
+  assert.equal(events.length, 1);
+  assert.deepEqual(removed, [5]);
+});
+test('cleanup throws once with original identity but pending list still settles and later callbacks stay inert', async () => {
+  let listener!: GroupRequestListener;
+  const error = Error('cleanup failed');
+  let removed = 0;
+  const module = createWithContext({
+    signal: new AbortController().signal,
+    awaitAlive: async (value) => value,
+    emit() {
+      assert.fail('late event');
+    },
+    getGroupService: () => ({
+      addKernelGroupListener(value) {
+        listener = value;
+        return 1;
+      },
+      removeKernelGroupListener() {
+        removed++;
+        throw error;
+      },
+      getSingleScreenNotifies() {
+        return new Promise(() => {});
+      },
+    }),
+  });
+  const pending = assert.rejects(module.invokeOperation('listGroupRequests'), /closed/);
+  await tick();
+  assert.throws(
+    () => module.close(),
+    (value) => value === error,
+  );
+  await pending;
+  module.close();
+  listener.onGroupSingleScreenNotifies(false, '', []);
+  assert.equal(removed, 1);
+});
+test('queued requests snapshot options once and closed queue cannot dispatch another cursor', async () => {
+  const f = fixture();
+  let optionReads = 0,
+    beforeReads = 0;
+  const options = {
+    get before() {
+      beforeReads++;
+      return '100';
+    },
+  };
+  const first = f.module.invokeOperation('listGroupRequests');
+  const pending = assert.rejects(
+    f.module.invokeOperation('listGroupRequests', {
+      get options() {
+        optionReads++;
+        return options;
+      },
+    }),
+    /closed/,
+  );
+  await tick();
+  f.page(false, '', []);
+  await first;
+  f.module.close();
+  await pending;
+  assert.equal(optionReads, 1);
+  assert.equal(beforeReads, 1);
+  assert.equal(f.calls.filter((call) => call[0] === 'get').length, 1);
+});
+test('approval captures request/reason/accept once and keeps exact service receiver', async () => {
+  let requestReads = 0,
+    reasonReads = 0,
+    acceptReads = 0,
+    methodReads = 0;
+  const calls: unknown[][] = [];
+  const service: GroupRequestPort = {
+    addKernelGroupListener() {
+      return 9;
+    },
+    removeKernelGroupListener() {},
+    get operateSysNotify() {
+      methodReads++;
+      return function (this: GroupRequestPort, ...args: unknown[]) {
+        assert.equal(this, service);
+        calls.push(args);
+      };
+    },
+  };
+  const module = createWithContext({
+    signal: new AbortController().signal,
+    awaitAlive: async (value) => value,
+    emit() {},
+    getGroupService: () => service,
+  });
+  await module.invokeOperation('handleGroupRequest', {
+    get request() {
+      requestReads++;
+      return handle.request;
+    },
+    get reason() {
+      reasonReads++;
+      return reasonReads > 1 ? 'mutated' : 'captured';
+    },
+    get accept() {
+      acceptReads++;
+      return true;
+    },
+  });
+  assert.deepEqual(calls, [
+    [
+      false,
+      {
+        operateType: 1,
+        targetMsg: { seq: '123', type: 1, groupCode: '456', postscript: 'captured' },
+      },
+    ],
+  ]);
+  assert.deepEqual([requestReads, reasonReads, acceptReads, methodReads], [1, 1, 1, 1]);
+  module.close();
+});
+
+for (const name of ['getSingleScreenNotifies', 'operateSysNotify'] as const) {
+  test(`${name} missing method preserves fixed failure and native throw identity`, async () => {
+    const service: GroupRequestPort = {
+      addKernelGroupListener() {
+        return 1;
+      },
+      removeKernelGroupListener() {},
+    };
+    const module = createWithContext({
+      signal: new AbortController().signal,
+      awaitAlive: async (value) => value,
+      emit() {},
+      getGroupService: () => service,
+    });
+    const operation = name === 'operateSysNotify' ? 'handleGroupRequest' : 'listGroupRequests';
+    await assert.rejects(
+      module.invokeOperation(operation, operation === 'handleGroupRequest' ? handle : {}),
+      { message: `Native Group service is missing ${name}` },
+    );
+    module.close();
+    const original = { opaque: true };
+    service[name] = () => {
+      throw original;
+    };
+    const next = createWithContext({
+      signal: new AbortController().signal,
+      awaitAlive: async (value) => value,
+      emit() {},
+      getGroupService: () => service,
+    });
+    await assert.rejects(
+      next.invokeOperation(operation, operation === 'handleGroupRequest' ? handle : {}),
+      (error) => error === original,
+    );
+    next.close();
+  });
+}
+test('listener removal never-settling return does not block pending operation cancellation', async () => {
+  let removes = 0;
+  const module = createWithContext({
+    signal: new AbortController().signal,
+    awaitAlive: async (value) => value,
+    emit() {},
+    getGroupService: () => ({
+      addKernelGroupListener() {
+        return 1;
+      },
+      removeKernelGroupListener() {
+        removes++;
+        return new Promise(() => {});
+      },
+      operateSysNotify() {
+        return new Promise(() => {});
+      },
+    }),
+  });
+  const pending = assert.rejects(module.invokeOperation('handleGroupRequest', handle), /closed/);
+  module.close();
+  await pending;
+  module.close();
+  assert.equal(removes, 1);
 });

@@ -238,7 +238,14 @@ export function createNativeServices(context: NativeServiceContext) {
         awaitAlive,
       }),
     );
-    const groupRequests = own(createGroupRequests(guardedSession, emit));
+    const groupRequests = own(
+      createGroupRequests({
+        getGroupService: () => service('Group'),
+        emit,
+        signal: lifetime.signal,
+        awaitAlive,
+      }),
+    );
     const contactOperations = createContactOperations({
       getBuddyService: () => service('Buddy'),
       getProfileService: () => service('Profile'),

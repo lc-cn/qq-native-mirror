@@ -5,6 +5,10 @@ import type { ContactOperationsContext } from '../../src/features/contacts/conta
 import type { GroupOperationsContext } from '../../src/features/groups/group-operations.ts';
 import type { SelfProfileContext } from '../../src/features/contacts/self-profile.ts';
 import type {
+  GroupRequestsContext,
+  GroupRequestListener,
+} from '../../src/features/groups/group-requests.ts';
+import type {
   FriendRequestsContext,
   FriendBuddyListener,
 } from '../../src/features/contacts/friend-requests.ts';
@@ -20,6 +24,7 @@ function verifyDomainPorts(
   groupActions: GroupOperationsContext,
   selfProfile: SelfProfileContext,
   requests: FriendRequestsContext,
+  groupRequests: GroupRequestsContext,
 ) {
   // @ts-expect-error A contact directory cannot acquire arbitrary native services.
   contacts.service('Group');
@@ -81,6 +86,23 @@ function verifyDomainPorts(
   // @ts-expect-error Buddy registration requires both owned callback entry points.
   const incompleteListener: FriendBuddyListener = { onBuddyReqChange() {} };
   void incompleteListener;
+  // @ts-expect-error Group applications cannot acquire profile services.
+  groupRequests.getProfileService();
+  // @ts-expect-error Group applications do not own membership mutations.
+  groupRequests.getGroupService()?.kickMember('123', ['u_fixture'], false, '');
+  // @ts-expect-error Both application notification entry points are required.
+  const incompleteGroupListener: GroupRequestListener = { onGroupNotifiesUpdated() {} };
+  void incompleteGroupListener;
+  // @ts-expect-error Query doubt must retain its native boolean type.
+  groupRequests.getGroupService()?.getSingleScreenNotifies?.('false', '', 20);
+  const groupPage = groupRequests.getGroupService()?.getSingleScreenNotifies?.(false, '', 20);
+  // @ts-expect-error Native group page completion requires validation.
+  void groupPage.result;
+  groupRequests.getGroupService()?.operateSysNotify?.(false, {
+    // @ts-expect-error Native decisions are explicit accept/reject codes.
+    operateType: 3,
+    targetMsg: { seq: '1', type: 7, groupCode: '123', postscript: ' ' },
+  });
 
   const buddy = contacts.getBuddyService()?.getBuddyListV2?.('0', true, 0);
   const profile = contacts.getProfileService()?.getCoreAndBaseInfo?.('nodeStore', ['u_fixture']);

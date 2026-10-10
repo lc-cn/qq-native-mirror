@@ -299,6 +299,23 @@ Each pending wait has a removable abort subscription. Completed queries do not
 attach to a shared forever-pending Promise; an isolated installed-consumer check
 verifies bounded Promise retention over repeated completed queries.
 
+`createGroupRequests` owns its Group application listener, bounded deduplication
+and the serialized page queue. Its four-method port can register/remove the
+listener, read one notification page and submit one explicit decision. It cannot
+query unrelated account data or change group membership. Page callbacks have no
+request ID: calls remain serialized, match the requested `doubt` flag and require
+both the page and successful native completion. Any failed dispatched query
+quarantines further listing; unsolicited notifications and explicit decisions
+remain available. Inputs are captured before queueing, including the caller's
+cursor and decision reason. Local close and Session abort stop callbacks and
+pending waits before listener removal, including queued cursors and unresolved
+decision acknowledgements. Native calls already issued are observed without
+replay. A callback observer that closes the module stops the remainder of the
+batch. Undocumented removal promises are observed without waiting; a synchronous
+cleanup failure retains its original value. A void decision completion confirms
+dispatch only. The local and multi-platform installed-consumer checks share the
+same controlled composition contract; they do not approve real group requests.
+
 The CLI entry retains help, configuration, explicit login selection and entry-URL
 handling. `command-plan` validates command flags and captures file-backed message
 inputs before the client is created; its prepared actions never initiate login.
