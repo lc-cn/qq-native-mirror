@@ -1,0 +1,93 @@
+sdk/docs/architecture/quality-gates.md
+  s_2104cc474f1ce5::t_39263d3de21464 32
+sdk/scripts/public-contract-consumer.mjs
+  s_2104cc474f1ce5::t_27278c1353990f 97-110,115
+sdk/tsconfig.scripts.json
+  s_2104cc474f1ce5::t_27278c1353990f 19
+  s_2104cc474f1ce5::t_64ea9dedf63b24 18
+sdk/src/contracts/groups.ts
+  s_2104cc474f1ce5::t_8f95bdcda9fef4 92-173
+sdk/docs/architecture/encapsulation.md
+  s_2104cc474f1ce5::t_39263d3de21464 448-451,453-464
+sdk/src/native/native-contracts.ts
+  s_2104cc474f1ce5::t_fd6ff4bfea2d96 17,77,198-202
+  s_2104cc474f1ce5::t_f01988ea0a28ff 203-204
+sdk/test/group-file-page-profiles.test.ts
+  s_2104cc474f1ce5::t_86cd95369234c0 1-68
+  s_2104cc474f1ce5::t_196564a3e70ea6 69-110
+sdk/src/features/groups/group-file-input.ts
+  s_2104cc474f1ce5::t_8f95bdcda9fef4 3-21,48-105
+  s_2104cc474f1ce5::t_948b397a855614 106-112
+sdk/eslint.config.mjs
+  s_2104cc474f1ce5::t_27278c1353990f 57,75
+sdk/test/consumer-tooling-gates.test.mjs
+  s_2104cc474f1ce5::t_d796d34cf87f09 118-135
+  s_2104cc474f1ce5::t_dde0c141b76524 187-193
+ci/consumer-module-paths.test.mjs
+  s_2104cc474f1ce5::t_3bde0d4742a55d 44-47,49-56
+  s_2104cc474f1ce5::t_c5292f8fac5259 48
+sdk/docs/development.md
+  s_2104cc474f1ce5::t_39263d3de21464 52,55-60
+sdk/src/runtime/operations.ts
+  s_2104cc474f1ce5::t_fd6ff4bfea2d96 27-28,67,74-76
+sdk/docs/contacts-groups.md
+  s_2104cc474f1ce5::t_39263d3de21464 349-401
+sdk/src/native-services.ts
+  s_2104cc474f1ce5::t_a0a32aa14a9030 5,17,55-58,162,164-167,358,462,467
+  s_2104cc474f1ce5::t_d796d34cf87f09 326-357,463-466,468-471
+sdk/test/helpers/dependency-policy.ts
+  s_2104cc474f1ce5::t_27278c1353990f 227
+sdk/src/client/qq-client.ts
+  s_2104cc474f1ce5::t_fd6ff4bfea2d96 6-7,50-53,300-323
+  s_2104cc474f1ce5::t_47dfb5c397e342 324
+sdk/src/cli/command-plan.ts
+  s_2104cc474f1ce5::t_fd6ff4bfea2d96 10-11,77-98,424-442
+  s_2104cc474f1ce5::t_552a1dabc41756 443-458
+sdk/test/architecture.test.ts
+  s_2104cc474f1ce5::t_27278c1353990f 239
+sdk/src/cli.ts
+  s_2104cc474f1ce5::t_fd6ff4bfea2d96 58-59
+sdk/test/group-file-input.test.ts
+  s_2104cc474f1ce5::t_86cd95369234c0 1-48
+  s_2104cc474f1ce5::t_f4ff438fb91d5a 49-90
+sdk/README.md
+  s_2104cc474f1ce5::t_14ca11cc9a8166 71
+sdk/docs/evidence/group-file-page-contract.json
+  s_2104cc474f1ce5::t_601e76c420de79 1-124
+sdk/docs/sdk-acceptance.md
+  s_2104cc474f1ce5::t_8a8b6d5bca008e 83-92
+sdk/scripts/group-file-pages-consumer-contract.mjs
+  s_2104cc474f1ce5::t_968642f3aab818 1-461
+sdk/scripts/verify-package-consumer.mjs
+  s_2104cc474f1ce5::t_3168bccceec3ba 33,195-197,566
+sdk/src/features/groups/group-file-page-codec.ts
+  s_2104cc474f1ce5::t_c282b6bd017722 1-149
+sdk/src/features/groups/group-file-pages.ts
+  s_2104cc474f1ce5::t_7475af16f5c170 1-274
+sdk/src/features/groups/group-files.ts
+  s_2104cc474f1ce5::t_0075732fa4f609 1,7-8,28-30,46-47,51-65,67-93
+sdk/test/fixtures/public-type-names.json
+  s_2104cc474f1ce5::t_f147f851b96dbc 29-34
+sdk/test/group-file-page-codec.test.ts
+  s_2104cc474f1ce5::t_57ab3009c5bb09 1-198
+sdk/test/group-file-pages-consumer.test.ts
+  s_2104cc474f1ce5::t_22dfbe51d27fb0 1-16
+sdk/test/group-file-pages.test.ts
+  s_2104cc474f1ce5::t_9ea494041c8f11 1-500
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a0547ed8fec31f1d17fe60df33dc5800f08d4ae5",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
