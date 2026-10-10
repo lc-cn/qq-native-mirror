@@ -1,0 +1,40 @@
+sdk/src/kernel.ts
+  s_2104cc474f1ce5::t_b3c6fdfcaad78f 1,317,479
+sdk/src/runtime/account-session-lifecycle.ts
+  s_2104cc474f1ce5::t_b3c6fdfcaad78f 4,179
+  s_2104cc474f1ce5::t_0d6862492860be 287
+sdk/src/worker.ts
+  s_2104cc474f1ce5::t_4249e05bb79e40 91
+sdk/docs/architecture.md
+  s_2104cc474f1ce5::t_982142fd8cb1f9 276-283
+sdk/scripts/verify-package-consumer.mjs
+  s_2104cc474f1ce5::t_77347c96f5da5e 24,123-136,557
+sdk/scripts/worker-error-consumer-contract.mjs
+  s_2104cc474f1ce5::t_ed492e33bff26f 1-142
+sdk/src/errors.ts
+  s_2104cc474f1ce5::t_6948760340a41f 53-81,83-86,88-92,96-97,100,102-105,124-126,128-134,136-139,142-150,154-165
+sdk/test/account-session-lifecycle.test.ts
+  s_2104cc474f1ce5::t_c7eda67908610d 311-355
+sdk/test/error-serialization-total.test.ts
+  s_2104cc474f1ce5::t_74dba489b94874 1-136
+sdk/test/kernel-login-failure.test.ts
+  s_2104cc474f1ce5::t_a020f668a23e16 8,31,110-152
+sdk/test/worker-error-routes.test.ts
+  s_2104cc474f1ce5::t_2c899ba14d81bf 1-16
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "502c8b0371d10b526d2ae0575258eebaec84ed0a",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
