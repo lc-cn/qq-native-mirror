@@ -1,0 +1,101 @@
+{
+  "checkedAt": "2026-10-10T02:41:10.086658+00:00",
+  "feature": "addFriendCategory",
+  "regressions": {
+    "passed": 655,
+    "failed": 0,
+    "skipped": 0
+  },
+  "localCandidate": {
+    "packageSha256": "180a89d737129d412725326e49d09a9d0a47d2b66b6ba5a8e19275c5a72fe108",
+    "packageBytes": 423051,
+    "regularFiles": 188,
+    "compiledFiles": 100,
+    "allInstalledRegularFilesMatch": true,
+    "allCompiledMatch": true,
+    "createdBeforeUpdatedPublicDocs": true,
+    "nativeExecuted": false,
+    "accountUsed": false
+  },
+  "installedChecks": [
+    "compiled native-service fixture",
+    "public declaration",
+    "CLI command/preflight",
+    "actual worker IPC with replacement kernel",
+    "caller-provided nativeContracts ignored"
+  ],
+  "staticBinaryProfiles": [
+    {
+      "platform": "linux-x64",
+      "wrapperSha256": "7882b8e3055cd38584861042befacd8be9939896f5cbbca6fa4a230926b48526",
+      "summarySha256": "24da2cb8fe9dc792527042566717453cde7b481fe5063aed56d974d649697b3e",
+      "verifiedInstructionRecords": 1341,
+      "verifiedEvidenceFiles": 11,
+      "actualBinaryBytesMatched": true,
+      "peImportBindingsMatched": false,
+      "nativeExecuted": false,
+      "accountUsed": false
+    },
+    {
+      "platform": "darwin-x64",
+      "wrapperSha256": "e91c58872d3d498f2d3ac1c304ab3ae4602d016274cf3e0f0cb651ad765f1f54",
+      "summarySha256": "0dbea7e3aeaeed2924f53cad64724b7ac58f914b2a3a981fc0fe5e8762d65bc1",
+      "verifiedInstructionRecords": 947,
+      "verifiedEvidenceFiles": 14,
+      "actualBinaryBytesMatched": true,
+      "peImportBindingsMatched": false,
+      "nativeExecuted": false,
+      "accountUsed": false
+    },
+    {
+      "platform": "darwin-arm64",
+      "wrapperSha256": "fbc8ad9b328d05e16784d76b0181dda894c17001179dbf8c0d5dd00dc6271358",
+      "summarySha256": "97bf6d9b0fe139fce1a0c4389e1d94b26023fa004f6a9238be50a66d581844f7",
+      "verifiedInstructionRecords": 790,
+      "verifiedEvidenceFiles": 21,
+      "actualBinaryBytesMatched": true,
+      "peImportBindingsMatched": false,
+      "nativeExecuted": false,
+      "accountUsed": false
+    },
+    {
+      "platform": "win32-x64",
+      "wrapperSha256": "63112ab9161e127f5f7e17998a7196e143808923fb54cbbf7b4e21426187a5f0",
+      "summarySha256": "e3656b5fb32078ab76ac3ebdcf332447c3e57d76cbad3eca34087cb447000273",
+      "verifiedInstructionRecords": 8,
+      "verifiedEvidenceFiles": 8,
+      "actualBinaryBytesMatched": true,
+      "peImportBindingsMatched": true,
+      "nativeExecuted": false,
+      "accountUsed": false
+    },
+    {
+      "platform": "win32-arm64",
+      "wrapperSha256": "54e5a6ce127a1f973f28e38ddfbf1338403ea323a141546a6578dd25332c928a",
+      "summarySha256": "8fc901eb808795882fc518ae0794f961bcb596538a6a171ebd672b12d28842c7",
+      "verifiedInstructionRecords": 7,
+      "verifiedEvidenceFiles": 7,
+      "actualBinaryBytesMatched": true,
+      "peImportBindingsMatched": true,
+      "nativeExecuted": false,
+      "accountUsed": false
+    },
+    {
+      "platform": "linux-arm64",
+      "wrapperSha256": "c302361f52494de257044e912e43ed244bb29ee59f59345d25a8959327828337",
+      "summarySha256": "234a5b161a15e08c1600eff6c942b0404d8d036c4da2a36b01431d89c1f27c06",
+      "parentAuditSha256": "d10444731072c96ebb7ccdf635cbf8ae522414e389109342138e3d271f733e4c",
+      "actualBinaryBytesMatched": true,
+      "nativeExecuted": false,
+      "accountUsed": false
+    }
+  ],
+  "reviewSha256": "69d61c58c8c708b03827b7dbbdba1aa7a004ffcb9c40ead66e70210893db3ebc",
+  "parentFixedEdge": "synchronous abort followed by throw consumes stopped rejection before race attachment",
+  "nativeCreationExecuted": false,
+  "accountUsed": false,
+  "remoteCategoryStateVerified": false,
+  "completeNativeFailureSettlementProved": false,
+  "npmPublished": false,
+  "newSourceCiVerified": false
+}

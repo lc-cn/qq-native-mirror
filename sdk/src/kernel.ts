@@ -1,3 +1,4 @@
+import type { NativeContractProfile } from './native-contracts.ts';
 import { createNativeServices, type ServiceOperation } from './native-services.ts';
 import { normalizeLoginRequest } from './login-request.ts';
 import type { LoginRequest } from './types.ts';
@@ -19,6 +20,7 @@ export interface KernelOptions {
   mediaTools?: { ffmpeg: string; ffprobe: string };
   recordCodec?: RecordCodec;
   videoCodec?: VideoCodec;
+  nativeContracts?: NativeContractProfile;
 }
 export type { LoginRequest } from './types.ts';
 export interface AccountIdentity { uin: string; uid: string }
@@ -116,7 +118,7 @@ export function createKernel(
             return;
           }
           notify(event, payload);
-        }, options.mediaTools, options.recordCodec, account.uin, account.uid, info => { if (active()) notify('native-callback', info); }, options.videoCodec);
+        }, options.mediaTools, options.recordCodec, account.uin, account.uid, info => { if (active()) notify('native-callback', info); }, options.videoCodec, options.nativeContracts);
       } catch (error) { fail(error instanceof Error ? error : new Error(String(error))); return; }
       if (!active() || pending !== expectedPending) { nativeServices?.close(); nativeServices = undefined; return; }
       identity = { ...account };

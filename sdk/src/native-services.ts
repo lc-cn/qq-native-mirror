@@ -1,3 +1,5 @@
+import { supportsCategoryCreation, type NativeContractProfile } from './native-contracts.ts';
+import { createFriendCategory, friendCategoryName } from './friend-category-create.ts';
 import { captureFriendCategories, projectFriendCategories } from './friend-categories.ts';
 import { nativeResultError } from './errors.ts';
 import {captureMergedForward,sendCapturedMergedForward} from './merged-forward.ts';
@@ -30,7 +32,7 @@ import type { Friend, Group, GroupMember, GroupInfoUpdate, GroupMutedMember, Mes
 
 type Native = Record<string, any>;
 export interface NativePeer { chatType: 1 | 2; peerUid: string; guildId?: string }
-export type ServiceOperation = 'listFriendCategories' | 'listFriends' | 'listGroups' | 'getGroupInfo' | 'listGroupMutedMembers' | 'getGroupMembers' | 'sendPrivateMessage' | 'sendGroupMessage' | 'sendMergedForward' | 'getForwardResource' | 'getMessage' | 'getMessages' | 'getHistory' | 'recallMessage' | 'downloadAttachment' | SelfProfileOperation | 'listGroupNotices' | GroupNoticeOperation | GroupOperation | ContactOperation | FriendRequestOperation | GroupRequestOperation | ForwardOperation;
+export type ServiceOperation = 'addFriendCategory' | 'listFriendCategories' | 'listFriends' | 'listGroups' | 'getGroupInfo' | 'listGroupMutedMembers' | 'getGroupMembers' | 'sendPrivateMessage' | 'sendGroupMessage' | 'sendMergedForward' | 'getForwardResource' | 'getMessage' | 'getMessages' | 'getHistory' | 'recallMessage' | 'downloadAttachment' | SelfProfileOperation | 'listGroupNotices' | GroupNoticeOperation | GroupOperation | ContactOperation | FriendRequestOperation | GroupRequestOperation | ForwardOperation;
 export interface NativeMessage extends Native { msgId: string; peerUid: string; chatType: number }
 interface Waiter { event: string; check: (...args: any[]) => unknown; resolve: (value: any) => void; reject: (error: Error) => void; timer: ReturnType<typeof setTimeout> }
 
@@ -38,7 +40,7 @@ function toMessage(message: Native, raw: unknown = message): Message {
   return projectNativeMessage(message, decodeElements(message.elements), new Map(), raw);
 }
 
-export function createNativeServices(session: Native, version: string, emit: (event: string, payload: unknown) => void, mediaTools?: MediaTools, recordCodec?: RecordCodec, accountId?: string, accountUid?: string, auditCallback?: (info: Pick<NativeCallbackAudit,'family'|'name'|'argumentTypes'>) => void, videoCodec?: VideoCodec) {
+export function createNativeServices(session: Native, version: string, emit: (event: string, payload: unknown) => void, mediaTools?: MediaTools, recordCodec?: RecordCodec, accountId?: string, accountUid?: string, auditCallback?: (info: Pick<NativeCallbackAudit,'family'|'name'|'argumentTypes'>) => void, videoCodec?: VideoCodec, nativeContracts?: NativeContractProfile) {
   const lifetime=new AbortController();
   let closed = false;
   // Modules may retain services across awaits. Guard the actual method boundary,
@@ -354,6 +356,11 @@ export function createNativeServices(session: Native, version: string, emit: (ev
     async invokeOperation(method: ServiceOperation, payload: Native = {}): Promise<unknown> {
       if (closed) throw new Error('Native services are closed');
       switch (method) {
+        case 'addFriendCategory': {
+          const name = friendCategoryName(payload.name);
+          if (!supportsCategoryCreation(nativeContracts, version)) throw new Error('Friend category creation contract is not verified for this native binary');
+          return createFriendCategory(name, (value, members) => call(service('Buddy'), 'addCategoryV2', value, members), lifetime.signal);
+        }
         case 'listGroupMutedMembers': return listGroupMutedMembers(sendGroupId(payload.groupId));
         case 'getGroupInfo': return getGroupInfo(sendGroupId(payload.groupId));
         case 'listFriendCategories': {

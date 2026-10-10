@@ -15,9 +15,9 @@ export async function verifyContactGroupWorkerRoutes({ QQClient, workerPath, ker
 process.dlopen = () => {};
 registerHooks({load(url,context,next){
  if(url!==${JSON.stringify(pathToFileURL(kernelPath).href)})return next(url,context);
- return {format:'module',shortCircuit:true,source:\`export function createKernel(_native,_options,emit){return {
+ return {format:'module',shortCircuit:true,source:\`export function createKernel(_native,_options,emit){if(_options.nativeContracts!==undefined)throw Error('Caller-provided native contract reached kernel');return {
   async prepare(){},async close(){},async login(){const account={uin:'123',uid:'u_fixture'};emit('ready',account);return account;},
-  async invokeOperation(method,payload){if(method==='listGroupMutedMembers')return [];if(method==='getGroupInfo')return {groupId:payload.groupId,name:'fixture',memberCount:0,maxMemberCount:200,ownerUid:'u_fixture',ownerUserId:'123',description:''};if(method==='listFriendCategories')return [{categoryId:1,sortId:0,name:'fixture',memberCount:0,onlineCount:0,friends:[]}];
+  async invokeOperation(method,payload){if(method==='addFriendCategory')return {categoryId:8,name:payload.name};if(method==='listGroupMutedMembers')return [];if(method==='getGroupInfo')return {groupId:payload.groupId,name:'fixture',memberCount:0,maxMemberCount:200,ownerUid:'u_fixture',ownerUserId:'123',description:''};if(method==='listFriendCategories')return [{categoryId:1,sortId:0,name:'fixture',memberCount:0,onlineCount:0,friends:[]}];
    if(method==='setGroupRemark')return {method,groupId:payload.groupId,remark:payload.remark};throw Error('Unexpected fixture operation');}
  };}\`};
 }});
@@ -27,8 +27,10 @@ registerHooks({load(url,context,next){
   worker.stdout.resume(); worker.stderr.resume();
   const client = new QQClient(worker, 5000);
   try {
-    await client.request('init', { options: { dataDir: join(directory, 'account'), wrapperPath: join(directory, 'fixture.node'), version: 'fixture', preloadLibraries: [] } });
+    await client.request('init', { options: { dataDir: join(directory, 'account'), wrapperPath: join(directory, 'fixture.node'), version: 'fixture', preloadLibraries: [], nativeContracts:{platform:'darwin',arch:'arm64',clientVersion:'7.0.2-53644',wrapperSha256:'forged'} } });
     await client.login({ method: 'restore', uin: '123' });
+    assert.deepEqual(await client.addFriendCategory(' 新分组 '),{categoryId:8,name:' 新分组 '});
+    await assert.rejects(client.addFriendCategory(' '),/nonblank/);
     assert.deepEqual(await client.listGroupMutedMembers('000123'),[]);
     assert.equal((await client.getGroupInfo('000123')).groupId,'000123');
     assert.deepEqual(await client.listFriendCategories(), [{ categoryId: 1, sortId: 0, name: 'fixture', memberCount: 0, onlineCount: 0, friends: [] }]);
@@ -48,9 +50,11 @@ export async function verifyContactGroupConsumer(packageRoot) {
   const calls = [];
   await (await prepareCommand('group-muted', {'group-id':'123'}))({ listGroupMutedMembers: async id => { calls.push(['muted',id]); return []; } });
   await (await prepareCommand('group-info', {'group-id':'123'}))({ getGroupInfo: async id => { calls.push(['info',id]); return {}; } });
+  await (await prepareCommand('friend-category-add', {name:' 新分组 '}))({addFriendCategory:async name=>{calls.push(['add-category',name]);return {categoryId:8,name};}});
+  await assert.rejects(prepareCommand('friend-category-add',{name:' '}),/blank/);
   await (await prepareCommand('friend-categories', {}))({ listFriendCategories: async () => { calls.push('categories'); return []; } });
   await (await prepareCommand('group-remark', { 'group-id': '123', remark: '' }))({ setGroupRemark: async (...args) => calls.push(args) });
-  assert.deepEqual(calls, [['muted','123'],['info','123'], 'categories', ['123', '']]);
+  assert.deepEqual(calls, [['muted','123'],['info','123'], ['add-category',' 新分组 '], 'categories', ['123', '']]);
   const events = new EventEmitter(), lines = [];
   const stop = observeWatchEvents(events, 'normalized', line => lines.push(JSON.parse(line)));
   const listener = createGroupEvents((name, payload) => events.emit(name, payload));
@@ -71,7 +75,13 @@ export async function verifyContactGroupConsumer(packageRoot) {
     getGroupService:()=>({addKernelGroupListener(value){groupListeners.push(value);},getGroupShutUpMemberList(id){for(const listener of groupListeners)listener.onShutUpMemberListChanged(id,[]);return {result:0};}})
   },'7.0.2-53644',()=>{});
   try{assert.deepEqual(await compiledServices.invokeOperation('listGroupMutedMembers',{groupId:'123'}),[]);}finally{compiledServices.close();}
+  const categoryProfile={platform:'darwin',arch:'arm64',clientVersion:'7.0.2-53644',wrapperSha256:'fbc8ad9b328d05e16784d76b0181dda894c17001179dbf8c0d5dd00dc6271358'};
+  const categoryCalls=[];const categoryServices=createNativeServices({
+    getMsgService:()=>({addKernelMsgListener(){}}),getGroupService:()=>({addKernelGroupListener(){}}),
+    getBuddyService:()=>({addKernelBuddyListener(){},addCategoryV2(...args){categoryCalls.push(args);return {result:0,groupId:8,name:'native'};}})
+  },'7.0.2-53644',()=>{},undefined,undefined,undefined,undefined,undefined,undefined,categoryProfile);
+  try{assert.deepEqual(await categoryServices.invokeOperation('addFriendCategory',{name:' 新分组 '}),{categoryId:8,name:'native'});assert.deepEqual(categoryCalls,[[' 新分组 ',undefined]]);}finally{categoryServices.close();}
   membership.close();
   stop(); assert.equal(events.listenerCount('group-info-updated'), 0);assert.equal(events.listenerCount('group-membership'),0);assert.equal(events.listenerCount('group-admin'),0);assert.equal(events.listenerCount('group-mute'),0);
-  return verifyContactGroupWorkerRoutes({ QQClient, workerPath: join(packageRoot, 'dist/worker.js'), kernelPath: join(packageRoot, 'dist/kernel.js') });
+  return {friendCategoryCreationContract:true,nativeFriendCategoryCreationAttempted:false,...await verifyContactGroupWorkerRoutes({ QQClient, workerPath: join(packageRoot, 'dist/worker.js'), kernelPath: join(packageRoot, 'dist/kernel.js') })};
 }

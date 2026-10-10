@@ -775,3 +775,12 @@ The subsequent working source adds `getGroupInfo` and `group-membership`; 628 fu
 ## Administrator/mute events and mute-list reads
 
 Working-source `group-admin`, `group-mute`, and `listGroupMutedMembers` passed 641 full regressions and installed compiled-consumer/actual worker routing with a replacement kernel. Candidate TGZ SHA256 `f72d28e71d85d5379d078cc6e57367d1a9c9a726076d3f1025f34996978b6e13` (415278 bytes) matched 181 installed regular files and 96 compiled files before later docs/evidence were appended. The initial two diagnostic regressions and controlled-listener fixture timeout were fixed and retained as evidence. See [contracts](contacts-groups.md) and [local receipt](evidence/group-admin-mute-local.json). No live account operation, incoming event observation, npm publication or new six-platform CI is claimed.
+
+
+## Name-only friend category creation
+
+`addFriendCategory(name)` and CLI `friend-category-add` now use the exact two-argument `addCategoryV2(name, undefined)` ABI. Six default wrapper binaries were independently inspected; the worker derives actual file SHA256/runtime provenance and unknown profiles reject before native dispatch. The DTO preserves native returned name and uint32 identifier, excluding opaque context. One dispatch has a five-second bounded wait and Session-close cancellation, with no retry or inferred remote effect after uncertain failures.
+
+All 655 regressions and installed compiled/declaration/CLI/actual worker fixture checks passed. The local package SHA256 `180a89d737129d412725326e49d09a9d0a47d2b66b6ba5a8e19275c5a72fe108` (423051 bytes) matched 188 installed regular files and 100 compiled files before the subsequent evidence/docs append. Independent review plus a synchronous abort/throw regression cover late settlement. See [profiles and limitations](contacts-groups.md) and [local proof](evidence/friend-category-create-local.json). No native category creation, real account operation, npm publication or CI success for this new source is claimed.
+
+Prior cohorts are independently bound: `b0dee1c` / CI `38015512259` actual main 94 compiled files matched 47 committed source files; `9deaa56` / CI `38016572108` actual main 96 compiled files matched 48 committed source files. Each bounded artifact audit read six raw native prepare/close/no-login receipts. Neither audit verified the complete ZIP digest or re-read all six large auxiliary packages.

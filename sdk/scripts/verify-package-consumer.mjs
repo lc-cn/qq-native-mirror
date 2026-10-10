@@ -243,7 +243,7 @@ const videoChecks = await verifyVideoConsumerContract(join(destination,'node_mod
 run(process.execPath,[cliEntry,'init','--config','qq.json','--data-dir','account','--download-mirror','https://gh-proxy.com/']);
 const configuration=JSON.parse(run(process.execPath,[cliEntry,'config','--config','qq.json']));
 if(configuration.wrapperPath || configuration.version || configuration.downloadMirrors?.[0]!=='https://gh-proxy.com/')throw new Error('Installed CLI default catalog configuration failed');
-await writeFile(join(destination, 'consumer.ts'), `import {createClient, type ClientOptions, type QQClient, type MessageRecall, type VideoCodec, type VideoInfo, type Message, type FriendCategory} from 'qq-native-client';
+await writeFile(join(destination, 'consumer.ts'), `import {createClient, type ClientOptions, type QQClient, type MessageRecall, type VideoCodec, type VideoInfo, type Message, type FriendCategory, type CreatedFriendCategory} from 'qq-native-client';
 const options: ClientOptions = {dataDir:'/account',videoCodecPath:'/codec.node',downloadMirrors:['https://gh-proxy.com/'],autoReconnect:false};
 const videoInfo: VideoInfo = {width:1280,height:720,duration:2.75,format:'png',image:Buffer.alloc(0)};
 const videoCodec: VideoCodec = {getVideoInfo:async (_filePath:string):Promise<VideoInfo>=>videoInfo};
@@ -263,6 +263,7 @@ function subscribe(client: QQClient) {
  client.on('group-membership', update => [update.groupId,update.kind,update.memberUid,update.operatorUid,update.code]);
  void client.getGroupInfo('123').then(value=>value.description);
  client.on('group-info-updated', update => [update.groupId,update.ownerUid,update.ownerUserId,update.description]);
+ const createdCategory: Promise<CreatedFriendCategory> = client.addFriendCategory('分组');
  const categories: Promise<FriendCategory[]> = client.listFriendCategories();
  const remark: Promise<void> = client.setGroupRemark('123','');
  void categories; void remark;

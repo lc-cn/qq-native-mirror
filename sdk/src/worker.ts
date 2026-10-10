@@ -8,8 +8,9 @@ import { lockDataDirectory } from './data-directory-lock.ts';
 import { loadRecordCodec } from './record-codec-loader.ts';
 import { loadVideoCodec } from './video-codec-loader.ts';
 import { builtinRecordCodec } from './builtin-record-codec.ts';
+import { inspectNativeContracts } from './native-contracts.ts';
 
-const operations = new Set(['listFriends', 'listFriendCategories', 'listGroups', 'getGroupInfo', 'listGroupMutedMembers', 'getGroupMembers', 'sendPrivateMessage', 'sendGroupMessage', 'sendMergedForward', 'getMessage', 'getMessages', 'getHistory', 'recallMessage', 'getForwardMessages', 'getForwardResource', 'forwardMessages',
+const operations = new Set(['addFriendCategory', 'listFriends', 'listFriendCategories', 'listGroups', 'getGroupInfo', 'listGroupMutedMembers', 'getGroupMembers', 'sendPrivateMessage', 'sendGroupMessage', 'sendMergedForward', 'getMessage', 'getMessages', 'getHistory', 'recallMessage', 'getForwardMessages', 'getForwardResource', 'forwardMessages',
   'setGroupName', 'setGroupRemark', 'setGroupMute', 'setGroupMemberMute', 'setGroupMemberCard', 'setGroupAdmin', 'kickGroupMember', 'leaveGroup',
   'setNickname', 'setSignature', 'listGroupNotices', 'publishGroupNotice', 'deleteGroupNotice', 'downloadAttachment', 'getUserProfile', 'setFriendRemark', 'deleteFriend', 'listFriendRequests', 'handleFriendRequest', 'listGroupRequests', 'handleGroupRequest']);
 
@@ -35,11 +36,12 @@ process.on('message', async (message: unknown) => {
         if (!bridge.exports.preloadLibrary) throw new Error('Registration bridge does not support library preloading');
         bridge.exports.preloadLibrary(library);
       }
+      const nativeContracts = await inspectNativeContracts(options.wrapperPath!, options.version);
       const native = { exports: {} };
       process.dlopen(native, options.wrapperPath!);
       const recordCodec = options.recordCodecPath === undefined ? builtinRecordCodec : await loadRecordCodec(options.recordCodecPath);
       const videoCodec = options.videoCodecPath === undefined ? undefined : await loadVideoCodec(options.videoCodecPath);
-      kernel = createKernel(native.exports, { dataDir: options.dataDir, version: options.version!, device: options.device, loginTimeoutMs: options.timeoutMs, rememberPassword: options.rememberPassword, mediaTools: options.mediaTools, recordCodec, videoCodec },
+      kernel = createKernel(native.exports, { dataDir: options.dataDir, version: options.version!, device: options.device, loginTimeoutMs: options.timeoutMs, rememberPassword: options.rememberPassword, mediaTools: options.mediaTools, recordCodec, videoCodec, nativeContracts },
         (event, payload) => send({ event, payload: payload instanceof Error ? { message: payload.message } : Buffer.isBuffer((payload as { image?: unknown })?.image)
           ? { ...(payload as object), image: (payload as { image: Buffer }).image.toString('base64') } : payload }));
       await kernel.prepare();

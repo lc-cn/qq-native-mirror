@@ -63,6 +63,7 @@ const usage = `qq-native-client <command> [options]
   config --config FILE                 Check and display configuration
   login --config FILE [--method qr|restore|quick] [--uin UIN] [--qr-file FILE]
   contacts --config FILE [--uin UIN]    Restore login and list friends
+  friend-category-add --config FILE --name TEXT [--uin UIN]  Create an empty friend category
   friend-categories --config FILE [--uin UIN]  List categorized friends
   groups --config FILE [--uin UIN]      Restore login and list groups
   members --config FILE --group-id ID [--uin UIN]
@@ -237,6 +238,7 @@ export async function prepareCommand(command: string, flags: Record<string, stri
     case 'friend-remark': { const target = numeric(flags, 'target'); const remark = required(flags, 'remark', true); return client => client.setFriendRemark(target, remark); }
     case 'group-muted': { const groupId = numeric(flags, 'group-id'); return client => client.listGroupMutedMembers(groupId); }
     case 'group-info': { const groupId = numeric(flags, 'group-id'); return client => client.getGroupInfo(groupId); }
+    case 'friend-category-add': { const name = required(flags, 'name'); if (!name.trim()) throw new Error('--name must not be blank'); return client => client.addFriendCategory(name); }
     case 'friend-categories': return client => client.listFriendCategories();
     case 'friend-delete': { const target = numeric(flags, 'target'); const options = { block: bool(flags, 'block', false), both: bool(flags, 'both', false) }; return client => client.deleteFriend(target, options); }
     case 'group-name': { const group = numeric(flags, 'group-id'); const name = required(flags, 'name'); if (!name.trim()) throw new Error('--name must not be blank'); return client => client.setGroupName(group, name); }
@@ -266,7 +268,7 @@ async function main() {
     init: ['config', 'data-dir', 'wrapper', 'client-version', 'app-id', 'qua', 'manifest', 'manifest-sha256', 'catalog', 'download-mirror'],
     config: ['config'], login: ['config', 'method', 'uin', 'qr-file'],
     members: ['config', 'uin', 'group-id'], history: ['config', 'uin', 'kind', 'target', 'limit', 'before'], message: ['config', 'uin', 'kind', 'target', 'message-id'], watch: ['config', 'uin', 'events'],
-    contacts: ['config', 'uin'], 'friend-categories': ['config', 'uin'], groups: ['config', 'uin'], send: ['config', 'kind', 'target', 'text', 'message-file', 'uin'],
+    contacts: ['config', 'uin'], 'friend-categories': ['config', 'uin'], 'friend-category-add': ['config', 'uin', 'name'], groups: ['config', 'uin'], send: ['config', 'kind', 'target', 'text', 'message-file', 'uin'],
     nickname: ['config','uin','name'], signature: ['config','uin','text'],
     profile: ['config', 'uin', 'target'], requests: ['config', 'uin'], request: ['config', 'uin', 'uid', 'time', 'accept'],
     'forward-history': ['config', 'uin', 'kind', 'target', 'root-message-id', 'parent-message-id'], forward: ['config', 'uin', 'source-kind', 'source-target', 'kind', 'target', 'message-ids'],

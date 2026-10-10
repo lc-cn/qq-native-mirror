@@ -260,3 +260,5 @@ Working-source group additions include `getGroupInfo(groupId)` and `group-member
 
 
 Working source also exposes `group-admin` and `group-mute` events plus `listGroupMutedMembers(groupId)`/CLI `group-muted`. These use explicit native branches and gray-tip enums, retain seconds as strings and preserve the mute list's opaque native time. The [coverage and evidence](docs/contacts-groups.md) distinguish 641 local regressions/installed-consumer checks from live account delivery.
+
+The next candidate also exposes `addFriendCategory(name)` and CLI `friend-category-add`, using six independently inspected default binary profiles. Unknown binaries reject before dispatch. See [category contract and coverage](docs/contacts-groups.md) for the version matrix and the distinction between local tests, native ABI inspection and real account acceptance.

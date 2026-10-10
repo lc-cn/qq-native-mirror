@@ -1,3 +1,4 @@
+import { friendCategoryName } from './friend-category-create.ts';
 import { deserializeKernelError, KernelRequestError } from './errors.ts';
 import {captureMergedForward} from './merged-forward.ts';
 import {normalizeForwardResourceId} from './forward-resource-wire.ts';
@@ -14,7 +15,7 @@ import { fileURLToPath } from 'node:url';
 import { mkdir } from 'node:fs/promises';
 import { prepareNative } from './native-package.ts';
 import { normalizeLoginRequest } from './login-request.ts';
-import type { Account, ClientOptions, ClientEvents, LoginRequest, ClientState, Friend, FriendCategory, Group, GroupMember, GroupInfoUpdate, GroupMutedMember, MessageInput, SentMessage, SentMergedForward, ForwardTextNode, MergedForwardOptions, ForwardResource, Message, Peer, HistoryOptions, KickOptions, UserProfile, DeleteFriendOptions, FriendRequest, NativeCallbackAudit } from './types.ts';
+import type { Account, ClientOptions, ClientEvents, LoginRequest, ClientState, Friend, FriendCategory, CreatedFriendCategory, Group, GroupMember, GroupInfoUpdate, GroupMutedMember, MessageInput, SentMessage, SentMergedForward, ForwardTextNode, MergedForwardOptions, ForwardResource, Message, Peer, HistoryOptions, KickOptions, UserProfile, DeleteFriendOptions, FriendRequest, NativeCallbackAudit } from './types.ts';
 export type * from './types.ts';
 export type { VideoCodec, VideoInfo } from './video-codec-loader.ts';
 import type { GroupNoticeOptions, GroupNoticePage } from './types.ts';
@@ -248,6 +249,7 @@ export class QQClient extends EventEmitter<ClientEvents> {
     if (this.#state !== 'online') return Promise.reject(new Error('QQ client is not online; await login() first'));
     return this.request(method, payload);
   }
+  async addFriendCategory(name: string): Promise<CreatedFriendCategory> { return this.#operation('addFriendCategory', {name: friendCategoryName(name)}); }
   listFriendCategories(): Promise<FriendCategory[]> { return this.#operation('listFriendCategories'); }
   listFriends(): Promise<Friend[]> { return this.#operation('listFriends'); }
   listGroups(): Promise<Group[]> { return this.#operation('listGroups'); }
