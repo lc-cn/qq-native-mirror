@@ -40,6 +40,33 @@ test('only unhandled actionable types emit, with per-request deduplication', () 
   f.module.close(); f.update(true, [notify(1)]); assert.equal(f.events.length, 3);
 });
 
+test('sparse notification pages reject as a whole and invalidate the uncorrelated query channel', async () => {
+  const partial: unknown[] = [notify(1)]; partial.length = 2;
+  for (const values of [new Array(1), partial]) {
+    const f = fixture();
+    try {
+      const pending = f.module.invokeOperation('listGroupRequests');
+      const rejected = assert.rejects(pending, /Invalid native group notification/);
+      await new Promise(resolve => setImmediate(resolve));
+      f.page(false, '', values);
+      await rejected;
+      assert.deepEqual(f.events, [], 'a rejected batch emits no partial applications');
+      await assert.rejects(f.module.invokeOperation('listGroupRequests'), /query channel is invalid/);
+      assert.deepEqual(f.calls, [['get', false, '', 20]], 'failure does not dispatch a later query');
+    } finally { f.module.close(); }
+  }
+});
+
+test('malformed unsolicited sparse updates emit nothing and do not poison deduplication', () => {
+  const f = fixture(), partial: unknown[] = [notify(1)]; partial.length = 2;
+  try {
+    f.update(false, partial);
+    assert.deepEqual(f.events, []);
+    f.update(false, [notify(1)]);
+    assert.equal(f.events.length, 1, 'the valid notification remains deliverable');
+  } finally { f.module.close(); }
+});
+
 test('explicit accept and reject preserve native request type/doubt and reason defaults', async () => {
   const f = fixture();
   await f.module.invokeOperation('handleGroupRequest', { request: { groupId: '456', sequence: '123', type: 1, doubt: false }, accept: true });

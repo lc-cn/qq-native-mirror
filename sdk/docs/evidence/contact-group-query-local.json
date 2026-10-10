@@ -1,0 +1,128 @@
+{
+  "schemaVersion": 1,
+  "scope": "local source and actual clean installed compiled modules, with fake business services",
+  "sourceHashes": {
+    "src/contact-operations.ts": "d04527c7927943d191813cc0351b366e22efb65cc44ac4db01802fc5320e3496",
+    "src/group-requests.ts": "62dc4675b2ad8f57ef03bafcda6d3005c58b8079c988e51d4c93514ba7fd5b99",
+    "test/contact-operations.test.ts": "e31e4923b677381afc1b3a950c02bd91f380bf129e39a5f1590153d203453cc2",
+    "test/group-requests.test.ts": "bb103c12b0ae9de3539e30f036e7e46cfe3a31d21f1565871697c7481fd91210"
+  },
+  "primaryCoreInfo": {
+    "path": ".local/research/friend-events-user-pinned.ts",
+    "lines": "36-41",
+    "gitBlobSha1": "669f23389834cd7a2fa05743bd8726423bacc6df",
+    "requiredUID": "string",
+    "requiredUIN": "string",
+    "optionalNick": "string",
+    "requiredRemark": "string",
+    "matchesSavedGitHubBlobMetadataAndBytes": true
+  },
+  "regressions": {
+    "newCases": 3,
+    "beforeFixFocusedPassed": 9,
+    "beforeFixFocusedFailed": 3,
+    "afterFixTotal": 598,
+    "passed": 598,
+    "failed": 0,
+    "skipped": 0,
+    "firstSandboxRun": {
+      "passed": 596,
+      "failed": 2,
+      "failure": "local HTTP fixture listen EPERM",
+      "originalLogRetained": true
+    },
+    "buildPassed": true
+  },
+  "installed": {
+    "version": "0.0.2",
+    "tarballSha256": "4e0c5dc74284376db41ac2956577e61e94f9feddbf94191b6b413c5edcf56585",
+    "tarballBytes": 397879,
+    "packageMembersMatched": 169,
+    "compiledRootInstalledTarMatches": 90,
+    "receipt": {
+      "passed": true,
+      "installedCompiledModules": true,
+      "contactIdentityCases": 7,
+      "groupSparseWholeBatch": true,
+      "noPartialEvents": true,
+      "noDedupPollution": true,
+      "queryInvalidatedNoRetry": true,
+      "denseAndEmptyPages": true,
+      "profileCalls": 7,
+      "nativeExecuted": false,
+      "accountUsed": false,
+      "networkMutation": false
+    },
+    "independentReviewPassed": true
+  },
+  "negativeInstalledBaseline": {
+    "tarballSha256": "685803fcaf965cdf827fffb2d79c08885182a3a718dc59b27670af07672f6988",
+    "sourceRunId": "38005239931",
+    "expectedExitCode": 1,
+    "observedFailure": "first missing core UID is accepted, causing Missing expected rejection; consumer stops there",
+    "otherCasesNotClaimedExecuted": true
+  },
+  "qqNativeExecuted": false,
+  "accountUsed": false,
+  "npmPublished": false,
+  "existingCandidateArchiveModified": false,
+  "freshSixPlatformCiVerified": false,
+  "signingAuthenticityVerified": false,
+  "privateAudits": [
+    {
+      "file": "review.json",
+      "bytes": 2629,
+      "sha256": "88f38da78f42b6e7d90a4a4a33db43ecc0952719cae97c16831f21fb19ca1466"
+    },
+    {
+      "file": "final-review.json",
+      "bytes": 1634,
+      "sha256": "10dc7ebd278e43deb8c11a2a7d8dd4daf1e5bf2fcb458e50b75197b77cfa0aeb"
+    },
+    {
+      "file": "red-tests.log",
+      "bytes": 4026,
+      "sha256": "53c225c1344ebc3ca16c00c0d2974a5765e9a70aac75a87d650eb1aac4d8d0d4"
+    },
+    {
+      "file": "build.log",
+      "bytes": 148,
+      "sha256": "819a2f99ef8332e62374bc44315a31f243dd85502188e29441db9dd50b6c1c41"
+    },
+    {
+      "file": "full-tests.log",
+      "bytes": 57353,
+      "sha256": "b17f8f9bfc5145e9ea0035d99750a5fada94ad95f8b918079789ee06a31779a5"
+    },
+    {
+      "file": "full-tests-unsandboxed.log",
+      "bytes": 56295,
+      "sha256": "2e399082ee485254db9a54185a6c4878dbf19909d1933643e43142e5d91a331c"
+    },
+    {
+      "file": "installed-audit.json",
+      "bytes": 13231,
+      "sha256": "323c3782dcaf4a2ce55422802c95bb73c7066bc072d23d073d2c67cd9510c107"
+    },
+    {
+      "file": "parent-installed-audit.json",
+      "bytes": 255,
+      "sha256": "e1caaaebf4b1b43d30ffddb964aef5f9f8ea89b1ab986fe169b6fe8049550538"
+    },
+    {
+      "file": "synthetic-receipt.json",
+      "bytes": 339,
+      "sha256": "11a95e3b3ec6c77447f5a06988e4af2bfcb5721ce95f58969392eb3d48b1e3ac"
+    },
+    {
+      "file": "installed/verify.mjs",
+      "bytes": 3053,
+      "sha256": "1d2793262b4d5aae325992bb8c11070f5fbaabca6c5f27860a660259eb55a7f1"
+    },
+    {
+      "file": "baseline/baseline.log",
+      "bytes": 411,
+      "sha256": "1c80d1440b7cbe0812ea08e708e44fc81d2d44470dc9904723f55d5fa948b1c1"
+    }
+  ]
+}

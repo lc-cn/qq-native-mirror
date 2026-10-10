@@ -1,0 +1,89 @@
+{
+  "schemaVersion": 1,
+  "platform": "linux-arm64",
+  "version": "3.2.31-51102",
+  "wrapperSha256": "72978494d18d0076a378550099628569ff5081ada79f37e0b7adaeae6904217a",
+  "asarSha256": "3dd85cdbe8244fd92a3194ef9e25e0e47776f0c24663f274dd3318687e431d23",
+  "boundedMethodStrings": [
+    {
+      "offset": 100558009,
+      "text": "BuddyService:getBuddyListV2"
+    },
+    {
+      "offset": 100576272,
+      "text": "NSt2Cr10__function6__funcIZN2nt7wrapper18KernelBuddyService14getBuddyListV2ERKNS_12basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEEbNS3_16BuddyListReqTypeERKNS_10shared_ptrINS3_18IBuddyListCallbackEEEE4$_51NS8_ISJ_EEFvvEEE"
+    },
+    {
+      "offset": 100576500,
+      "text": "ZN2nt7wrapper18KernelBuddyService14getBuddyListV2ERKNSt2Cr12basic_stringIcNS2_11char_traitsIcEENS2_9allocatorIcEEEEbNS0_16BuddyListReqTypeERKNS2_10shared_ptrINS0_18IBuddyListCallbackEEEE4$_51"
+    },
+    {
+      "offset": 101776314,
+      "text": "assertion (argc == 3) failed: NodeIKernelBuddyService::getBuddyListV2 needs 3 arguments"
+    },
+    {
+      "offset": 101776402,
+      "text": "assertion (cpp_impl) failed: NodeIKernelBuddyService::getBuddyListV2 : implementation of IKernelBuddyService is not valid"
+    }
+  ],
+  "callbackTypeStrings": [
+    {
+      "offset": 100576272,
+      "text": "NSt2Cr10__function6__funcIZN2nt7wrapper18KernelBuddyService14getBuddyListV2ERKNS_12basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEEbNS3_16BuddyListReqTypeERKNS_10shared_ptrINS3_18IBuddyListCallbackEEEE4$_51NS8_ISJ_EEFvvEEE",
+      "demangled": "std::Cr::__function::__func<nt::wrapper::KernelBuddyService::getBuddyListV2(std::Cr::basic_string<char, std::Cr::char_traits<char>, std::Cr::allocator<char>> const&, bool, nt::wrapper::BuddyListReqType, std::Cr::shared_ptr<nt::wrapper::IBuddyListCallback> const&)::$_51, std::Cr::allocator<nt::wrapper::KernelBuddyService::getBuddyListV2(std::Cr::basic_string<char, std::Cr::char_traits<char>, std::Cr::allocator<char>> const&, bool, nt::wrapper::BuddyListReqType, std::Cr::shared_ptr<nt::wrapper::IBuddyListCallback> const&)::$_51>, void ()>"
+    },
+    {
+      "offset": 100576500,
+      "text": "ZN2nt7wrapper18KernelBuddyService14getBuddyListV2ERKNSt2Cr12basic_stringIcNS2_11char_traitsIcEENS2_9allocatorIcEEEEbNS0_16BuddyListReqTypeERKNS2_10shared_ptrINS0_18IBuddyListCallbackEEEE4$_51",
+      "demangled": "nt::wrapper::KernelBuddyService::getBuddyListV2(std::Cr::basic_string<char, std::Cr::char_traits<char>, std::Cr::allocator<char>> const&, bool, nt::wrapper::BuddyListReqType, std::Cr::shared_ptr<nt::wrapper::IBuddyListCallback> const&)::$_51"
+    },
+    {
+      "offset": 101779721,
+      "text": "NSt2Cr20__shared_ptr_emplaceI22NodeIBuddyListCallbackNS_9allocatorIS1_EEEE",
+      "demangled": "std::Cr::__shared_ptr_emplace<NodeIBuddyListCallback, std::Cr::allocator<NodeIBuddyListCallback>>"
+    },
+    {
+      "offset": 102341230,
+      "text": "&22NodeIBuddyListCallback",
+      "demangled": "&NodeIBuddyListCallback"
+    },
+    {
+      "offset": 102341256,
+      "text": "N2nt7wrapper18IBuddyListCallbackE",
+      "demangled": "nt::wrapper::IBuddyListCallback"
+    },
+    {
+      "offset": 102341290,
+      "text": "NSt2Cr23enable_shared_from_thisI22NodeIBuddyListCallbackEE",
+      "demangled": "std::Cr::enable_shared_from_this<NodeIBuddyListCallback>"
+    }
+  ],
+  "cppParameterTypes": [
+    "const std::string&",
+    "bool",
+    "BuddyListReqType",
+    "const shared_ptr<IBuddyListCallback>&"
+  ],
+  "jsArgumentCountAssertion": 3,
+  "asarStoredJsMembers": 169,
+  "allStoredJsMembersValidUtf8": false,
+  "backgroundStoredBytesMatchAsarIntegrity": true,
+  "parentRehashedSourcesAndVerifiedRawOffsetsAndTypeDemangles": true,
+  "parentRecheckedAll169StoredJsMemberBytesAndUtf8": true,
+  "demangler": {
+    "path": "/usr/bin/c++filt",
+    "args": [
+      "-t"
+    ],
+    "input": "raw RTTI type strings via stdin"
+  },
+  "completeJsContractVerified": false,
+  "enumZeroMeaningVerified": false,
+  "callbackToPromiseEnvelopeVerified": false,
+  "versionGuardRemoved": false,
+  "qqNativeExecuted": false,
+  "accountUsed": false,
+  "signingAuthenticityVerified": false,
+  "privateReceiptSha256": "664611344164c0d496fda5b1ee3e1d6b851dce85213d3966cac73e5a60362775",
+  "parentAuditSha256": "5bd79db45a76e7853fe800631ad0db2170f4a8dc77393f0154cbd6f098c399bb"
+}

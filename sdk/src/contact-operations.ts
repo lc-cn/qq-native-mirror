@@ -54,10 +54,13 @@ export function createContactOperations(session: Native, resolveUid: (id: string
       const profiles = await call('Profile', 'getCoreAndBaseInfo', 'nodeStore', [uid]);
       if (!(profiles instanceof Map)) throw new Error('Native profile response must be a Map');
       const profile = profiles.get(uid);
-      if (!profile || typeof profile !== 'object' || !profile.coreInfo || typeof profile.coreInfo !== 'object') throw new Error('Native profile response is missing the requested user');
+      if (!profile || typeof profile !== 'object' || Array.isArray(profile) || !profile.coreInfo || typeof profile.coreInfo !== 'object' || Array.isArray(profile.coreInfo)) throw new Error('Native profile response is missing the requested user');
       const core = profile.coreInfo;
-      if (core.uin !== undefined && String(core.uin) !== id) throw new Error('Native profile userId does not match requested user');
-      return { userId: id, uid, nickname: string(core.nick ?? '', 'native nickname'), remark: string(core.remark ?? '', 'native remark'), raw: profile };
+      // CoreInfo declares both identifiers as strings. A Map entry alone cannot
+      // validate a missing or contradictory native identity for the requested user.
+      const { uid: profileUid, uin } = core;
+      if (typeof profileUid !== 'string' || profileUid !== uid || typeof uin !== 'string' || !/^\d+$/.test(uin) || uin !== id) throw new Error('Native profile identity does not match requested user');
+      return { userId: uin, uid: profileUid, nickname: string(core.nick ?? '', 'native nickname'), remark: string(core.remark ?? '', 'native remark'), raw: profile };
     }
     const result = method === 'setFriendRemark'
       ? await call('Buddy', 'setBuddyRemark', { uid, remark })

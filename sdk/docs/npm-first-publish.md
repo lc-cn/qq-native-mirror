@@ -123,7 +123,9 @@ node scripts/upload-npm-native-mirror.mjs /absolute/path/npm-candidate /absolute
 
 默认入口的 [run 37969129032](https://github.com/lc-cn/qq-native-mirror/actions/runs/37969129032) 已实际全部通过，验收源码 `956f67ec88a31208b179edb0671d5ad4f025ddbb`。六平台仅安装固定候选主包、不传任何内核/catalog定位输入，真实冷初始化/关闭、自动解码三个视频样本及第二次零payload下载均通过。收据、原生解码日志、API终态与默认路径源码分支经独立核对，详见 `docs/evidence/codec-default-ci-37969129032.json`。官方npm七包latest再次只读核对仍均为0.0.1；本轮没有发包或账号操作。
 
-## 当前生产候选的永久归档（2026-10-10）
+## 已归档生产候选（2026-10-10）
+
+后续业务审计已在当前源码修复了资料身份错配和稀疏群申请页问题；以下固定归档保留原始字节，尚未包含修复。下载与原始证据核对仍有效；本地发布应等待修正源码的新生产批次完整验收，不将这份历史候选视为已修正版本。详见[查询修复及证据范围](contact-group-query.md)。
 
 [npm-v0.0.2-ci-38005239931](https://github.com/lc-cn/qq-native-mirror/releases/tag/npm-v0.0.2-ci-38005239931) 保存了成功生产 [run 38005239931](https://github.com/lc-cn/qq-native-mirror/actions/runs/38005239931) 的七个原始 npm tarball。源提交固定为 `7ec1a309da4137c5eef190482c731889f6341392`，run attempt 为 1；原始 tarball 未重新打包。该生产运行已完成六个平台的构建、视频重链接、实际安装消费者和聚合校验，595 项回归通过。归档另外包含原始 manifest、七份原始收据组成的严格证据压缩包及两份原始视频材料 JSON，共 11 个资产、389,087,406 字节。GitHub release ID 为 `408464850`，是已公开的 prerelease，并未成为 latest。
 

@@ -49,7 +49,9 @@ export function createGroupRequests(session: Native, emit: (event: string, paylo
   function requests(doubt: unknown, notifies: unknown): NativeGroupRequest[] {
     bool(doubt, 'native doubt');
     if (!Array.isArray(notifies)) throw new Error('Native group notifications must be an array');
-    return notifies.map(raw => normalize(raw, doubt as boolean)).filter((value): value is NativeGroupRequest => value !== undefined);
+    // Materialize holes so malformed batches cannot become successful empty or
+    // partial pages. Validate every entry before emitting or recording any request.
+    return Array.from(notifies, raw => normalize(raw, doubt as boolean)).filter((value): value is NativeGroupRequest => value !== undefined);
   }
   function events(values: NativeGroupRequest[]) {
     for (const request of values) {

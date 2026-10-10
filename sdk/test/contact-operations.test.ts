@@ -3,11 +3,32 @@ import assert from 'node:assert/strict';
 import { createContactOperations } from '../src/contact-operations.ts';
 
 test('profile normalizes pinned native Map and returns raw profile', async () => {
-  const raw = { coreInfo: { uin: '123', nick: '昵称', remark: '备注' }, baseInfo: {} };
+  const raw = { coreInfo: { uid: 'u_uid', uin: '123', nick: '昵称', remark: '备注' }, baseInfo: {} };
   const operations = createContactOperations({ getProfileService: () => ({ getCoreAndBaseInfo: (from: string, ids: string[]) => {
     assert.equal(from, 'nodeStore'); assert.deepEqual(ids, ['u_uid']); return new Map([['u_uid', raw]]);
   } }) }, async id => { assert.equal(id, '123'); return 'u_uid'; });
   assert.deepEqual(await operations.invokeOperation('getUserProfile', { userId: '123' }), { userId: '123', uid: 'u_uid', nickname: '昵称', remark: '备注', raw });
+});
+
+test('profile rejects absent or mismatched native identities without coercing UIN values', async () => {
+  let coercions = 0;
+  const valid = { uid: 'u_uid', uin: '123', nick: '昵称', remark: '备注' };
+  const malformed = [
+    { ...valid, uid: undefined }, { ...valid, uin: undefined },
+    { ...valid, uid: 'u_other' }, { ...valid, uin: '999' },
+    { ...valid, uin: 123 },
+    { ...valid, uin: { toString() { coercions++; return '123'; } } },
+    Object.assign([], valid),
+  ];
+  for (const coreInfo of malformed) {
+    let reads = 0;
+    const operations = createContactOperations({ getProfileService: () => ({ getCoreAndBaseInfo() {
+      reads++; return new Map([['u_uid', { coreInfo }]]);
+    } }) }, async () => 'u_uid');
+    await assert.rejects(operations.invokeOperation('getUserProfile', { userId: '123' }), /native profile.*(identity|requested user)/i);
+    assert.equal(reads, 1, 'invalid identity does not replay the query');
+  }
+  assert.equal(coercions, 0, 'object UIN is rejected before coercion');
 });
 
 test('friend mutations use explicit pinned payloads and void means dispatch only', async () => {
