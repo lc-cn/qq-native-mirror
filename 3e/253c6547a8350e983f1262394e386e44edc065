@@ -1,0 +1,27 @@
+sdk/docs/architecture.md
+  s_2104cc474f1ce5::t_81fc155906c542 349-357
+sdk/scripts/contact-group-consumer-contract.mjs
+  s_2104cc474f1ce5::t_28ded99a27c8bc 206-258,974-976
+sdk/docs/development.md
+  s_2104cc474f1ce5::t_81fc155906c542 110-115
+sdk/src/features/groups/group-events.ts
+  s_2104cc474f1ce5::t_1e875357d746eb 54-61,67-70,76-78,80-83,89-92,94-95,97,99,105-108,137-143,156-163
+sdk/test/group-events.test.ts
+  s_2104cc474f1ce5::t_7feacee55e06b8 187-294
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "3e253c6547a8350e983f1262394e386e44edc065",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
