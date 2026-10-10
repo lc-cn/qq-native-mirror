@@ -172,3 +172,18 @@ function verifyDomainPorts(
   generated.trim();
 }
 void verifyDomainPorts;
+
+import type { MessageQueriesContext } from '../../src/features/messages/message-queries.ts';
+function verifyMessageQueryPort(context: MessageQueriesContext) {
+  const service = context.getMessageService();
+  // @ts-expect-error Queries cannot send messages through their port.
+  service?.sendMsg({}, [], '');
+  // @ts-expect-error The query owner has no arbitrary service lookup.
+  context.service('Msg');
+  const result = service?.getMsgsByMsgId?.({ chatType: 2, peerUid: '123' }, ['1']);
+  // @ts-expect-error Native responses remain unknown until validated.
+  void result.result;
+  // @ts-expect-error Native query chat types are limited to private and group.
+  service?.getMsgsByMsgId?.({ chatType: 3, peerUid: '123' }, ['1']);
+}
+void verifyMessageQueryPort;

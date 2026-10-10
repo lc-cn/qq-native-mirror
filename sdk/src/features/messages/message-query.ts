@@ -6,7 +6,12 @@ export {
 } from './query-input.ts';
 import { nativeResultError } from '../../errors.ts';
 
-import type { NativeObject as Native } from '../../native/native-object.ts';
+export interface QueriedNativeMessage extends Record<string, unknown> {
+  msgId: string;
+  chatType: 1 | 2;
+  peerUid: string;
+  elements: Record<string, unknown>[];
+}
 type NativePeer = { chatType: 1 | 2; peerUid: string };
 
 /** Only the two query ABI methods cross this port; results remain unknown until
@@ -32,10 +37,10 @@ function queriedMessage(
   peer: NativePeer,
   method: string,
   expectedId?: string,
-): Native {
+): QueriedNativeMessage {
   if (!value || typeof value !== 'object' || Array.isArray(value))
     throw new Error(`Native ${method} returned an invalid message`);
-  const message = value as Native;
+  const message = value as QueriedNativeMessage;
   if (typeof message.msgId !== 'string' || !/^\d+$/.test(message.msgId))
     throw new Error(`Native ${method} returned an invalid message ID`);
   if (
@@ -63,7 +68,7 @@ export async function queryNativeMessage(
   msgService: MessageIdQueryPort,
   peer: NativePeer,
   messageId: string,
-): Promise<Native | undefined> {
+): Promise<QueriedNativeMessage | undefined> {
   if (typeof messageId !== 'string' || !/^\d+$/.test(messageId))
     throw new Error('messageId must be a numeric string');
   if (
@@ -98,7 +103,7 @@ export async function queryNativeMessages(
   msgService: MessageIdQueryPort,
   peer: NativePeer,
   ids: unknown,
-): Promise<(Native | undefined)[]> {
+): Promise<(QueriedNativeMessage | undefined)[]> {
   const captured = messageIds(ids);
   if (
     !peer ||
@@ -117,7 +122,7 @@ export async function queryNativeMessages(
   if (!Array.isArray(result.msgList))
     throw new Error('Native getMsgsByMsgId returned an invalid message list');
   const requested = new Set(captured),
-    found = new Map<string, Native>();
+    found = new Map<string, QueriedNativeMessage>();
   for (const raw of result.msgList) {
     const message = queriedMessage(raw, expectedPeer, 'getMsgsByMsgId');
     if (!requested.has(message.msgId) || found.has(message.msgId))
@@ -136,7 +141,7 @@ export async function queryNativeHistory(
   before: string,
   count: number,
   reverse: boolean,
-): Promise<Native[]> {
+): Promise<QueriedNativeMessage[]> {
   if (
     !peer ||
     typeof peer !== 'object' ||

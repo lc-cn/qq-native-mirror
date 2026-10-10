@@ -1,5 +1,4 @@
 import type { Message, Peer } from '../../contracts/messages.ts';
-import type { NativeObject as Native } from '../../native/native-object.ts';
 import type { NativePeer } from '../../native/message-contracts.ts';
 import {
   normalizeMessageQuery,
@@ -11,13 +10,14 @@ import {
   queryNativeMessages,
   queryNativeHistory,
   type MessageQueryPort,
+  type QueriedNativeMessage,
 } from './message-query.ts';
 
 export interface MessageQueriesContext {
   signal: AbortSignal;
-  getMessageService(): MessageQueryPort;
+  getMessageService(): MessageQueryPort | null | undefined;
   resolvePeer(peer: Peer): Promise<NativePeer>;
-  decode(messages: Native[]): Promise<(Message | undefined)[]>;
+  decode(messages: QueriedNativeMessage[]): Promise<(Message | undefined)[]>;
   awaitAlive<T>(value: T | PromiseLike<T>): Promise<T>;
 }
 
@@ -28,23 +28,66 @@ export interface MessageQueriesContext {
  */
 export function createMessageQueries(context: MessageQueriesContext) {
   const { signal, getMessageService, resolvePeer, decode, awaitAlive } = context;
+  const alive = () => signal.throwIfAborted();
+  // Capture methods after peer resolution, matching the original query ABI order.
+  function captureService(service: MessageQueryPort | null | undefined, history = false) {
+    alive();
+    if (history) {
+      const method = service?.getMsgsIncludeSelf;
+      alive();
+      return {
+        getMsgsIncludeSelf:
+          typeof method === 'function'
+            ? (...args: Parameters<NonNullable<MessageQueryPort['getMsgsIncludeSelf']>>) => {
+                alive();
+                return Reflect.apply(method, service, args) as unknown;
+              }
+            : undefined,
+      };
+    }
+    const method = service?.getMsgsByMsgId;
+    alive();
+    return {
+      getMsgsByMsgId:
+        typeof method === 'function'
+          ? (...args: Parameters<NonNullable<MessageQueryPort['getMsgsByMsgId']>>) => {
+              alive();
+              return Reflect.apply(method, service, args) as unknown;
+            }
+          : undefined,
+    };
+  }
   return {
     async getMessage(peer: unknown, messageId: unknown): Promise<Message | undefined> {
       const query = normalizeMessageQuery(peer, messageId);
+      alive();
+      const service = getMessageService();
+      alive();
+      const nativePeer = await awaitAlive(resolvePeer(query.peer));
+      alive();
       const raw = await awaitAlive(
-        queryNativeMessage(getMessageService(), await resolvePeer(query.peer), query.messageId),
+        queryNativeMessage(captureService(service), nativePeer, query.messageId),
       );
       signal.throwIfAborted();
-      return raw === undefined ? undefined : (await decode([raw]))[0];
+      const decoded = raw === undefined ? undefined : (await awaitAlive(decode([raw])))[0];
+      alive();
+      return decoded;
     },
     async getMessages(peer: unknown, messageIds: unknown): Promise<(Message | undefined)[]> {
       const query = normalizeMessageBatchQuery(peer, messageIds);
+      alive();
+      const service = getMessageService();
+      alive();
+      const nativePeer = await awaitAlive(resolvePeer(query.peer));
+      alive();
       const raw = await awaitAlive(
-        queryNativeMessages(getMessageService(), await resolvePeer(query.peer), query.messageIds),
+        queryNativeMessages(captureService(service), nativePeer, query.messageIds),
       );
       signal.throwIfAborted();
-      const present = raw.filter((message): message is Native => message !== undefined);
-      const decoded = await decode(present);
+      const present = raw.filter(
+        (message): message is QueriedNativeMessage => message !== undefined,
+      );
+      const decoded = await awaitAlive(decode(present));
       signal.throwIfAborted();
       const found = new Map<string, Message>();
       for (let index = 0; index < present.length; index++) {
@@ -53,16 +96,30 @@ export function createMessageQueries(context: MessageQueriesContext) {
           throw new Error('Invalid decoded message query batch');
         found.set(message.messageId, message);
       }
-      return query.messageIds.map((id) => found.get(id));
+      const result = query.messageIds.map((id) => found.get(id));
+      alive();
+      return result;
     },
     async getHistory(peerInput: unknown, options: unknown): Promise<Message[]> {
       const query = normalizeHistoryQuery(peerInput, options);
-      const peer = await resolvePeer(query.peer);
+      alive();
+      const nativePeer = await awaitAlive(resolvePeer(query.peer));
+      alive();
+      const service = getMessageService();
+      alive();
       const messages = await awaitAlive(
-        queryNativeHistory(getMessageService(), peer, query.before, query.count, query.reverse),
+        queryNativeHistory(
+          captureService(service, true),
+          nativePeer,
+          query.before,
+          query.count,
+          query.reverse,
+        ),
       );
       signal.throwIfAborted();
-      return (await decode(messages)) as Message[];
+      const decoded = await awaitAlive(decode(messages));
+      alive();
+      return decoded as Message[];
     },
   };
 }

@@ -232,7 +232,11 @@ sender; deferred preparation cannot dispatch after shutdown.
 `createMessageQueries` owns peer capture, exact/batch/history reads, asynchronous record
 projection and batch reordering through injected native-read and resolver ports. The query port exposes only
 `getMsgsByMsgId` and `getMsgsIncludeSelf`; returned values remain `unknown` until
-the response validator checks status and the complete message batch.
+the response validator checks status and the complete message batch, then narrows
+them to validated message records. ID queries retain service-before-peer ordering;
+history retains peer-before-service ordering. Method capture preserves the native
+receiver and checks retirement before dispatch. Cancellation interrupts resolver
+and decode waits and prevents a final success; it does not undo an issued query.
 The composition root binds those ports and selects a method; it does not implement
 query control flow. Whole-batch validation precedes asynchronous projection, and
 the existing Session lifetime observes pending work and blocks dispatch after close.
