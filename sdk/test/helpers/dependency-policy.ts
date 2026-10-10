@@ -82,6 +82,23 @@ export const crossFeatureDependencies = [
 ] as const;
 
 export function dependencyViolation({ from, to, typeOnly }: SourceDependency): string | undefined {
+  if (!to.startsWith('src/')) {
+    if (from === 'src/client/qq-client.ts')
+      return to === 'node:events' || (typeOnly && to === 'node:child_process')
+        ? undefined
+        : 'The public facade delegates IO and process ownership to its lifetime owner.';
+    if (from === 'src/client/create-client.ts')
+      return [
+        'node:child_process',
+        'node:fs',
+        'node:fs/promises',
+        'node:path',
+        'node:url',
+      ].includes(to)
+        ? undefined
+        : 'The factory only loads its reviewed Node bootstrap dependencies.';
+    return 'External dependencies require reviewed module ownership.';
+  }
   if (from === 'src/types.ts')
     return typeOnly && isContract(to)
       ? undefined
@@ -95,11 +112,16 @@ export function dependencyViolation({ from, to, typeOnly }: SourceDependency): s
       ? undefined
       : 'Internal modules import their contract domains instead of the compatibility barrel.';
   if (isContract(to))
-    return typeOnly ? undefined : 'Public contracts cannot be loaded as runtime implementations.';
+    return typeOnly && from !== 'src/index.ts'
+      ? undefined
+      : 'Public contracts are type-only; the entry reexports them through the compatibility barrel.';
   if (primitives.has(from)) return 'Public primitives cannot depend on implementation.';
   if (primitives.has(to)) return;
   if (composition.has(from))
-    return to === 'src/index.ts' || to === 'src/cli.ts' || to.startsWith('src/cli/')
+    return to === 'src/index.ts' ||
+      to.startsWith('src/client/') ||
+      to === 'src/cli.ts' ||
+      to.startsWith('src/cli/')
       ? 'Native composition cannot depend on application entry points.'
       : undefined;
   if (from.startsWith('src/storage/'))
@@ -124,14 +146,23 @@ export function dependencyViolation({ from, to, typeOnly }: SourceDependency): s
     return 'Features depend only on domain modules, primitives and typed ports.';
   }
   if (from === 'src/index.ts')
+    return to === 'src/client/create-client.ts' ||
+      to === 'src/client/qq-client.ts' ||
+      (typeOnly && to === 'src/runtime/media-contracts.ts')
+      ? undefined
+      : 'The package entry only reexports its reviewed public interface.';
+  if (from === 'src/client/qq-client.ts')
     return facadeInputs.has(to) ||
       to === 'src/runtime/client-lifecycle.ts' ||
-      to === 'src/runtime/operations.ts' ||
-      (typeOnly && to === 'src/runtime/media-contracts.ts') ||
+      (typeOnly && to === 'src/runtime/operations.ts')
+      ? undefined
+      : 'The facade cannot import native execution or feature operation implementations.';
+  if (from === 'src/client/create-client.ts')
+    return to === 'src/client/qq-client.ts' ||
       to === 'src/native/native-package.ts' ||
       to === 'src/native/login-request.ts'
       ? undefined
-      : 'The facade cannot import native execution or feature operation implementations.';
+      : 'Client creation selects its native bundle and constructs the public facade.';
   if (from === 'src/cli.ts' || from.startsWith('src/cli/'))
     return to === 'src/index.ts' ||
       to.startsWith('src/cli/') ||

@@ -9,6 +9,8 @@ binaries; the public API does not require an installed QQ application.
 ```text
 Application / CLI
         |
+index.ts (public exports) -> client/create-client.ts (bundle and worker bootstrap)
+        |
 QQClient (public events and typed operations)
         |
 ClientLifecycle (account state and worker generations)
@@ -28,7 +30,9 @@ worker.ts (IPC boundary) -> kernel.ts (authentication composition)
 
 | Location                                  | Responsibility                                                                                           |
 | ----------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| `src/index.ts`                            | Public API facade, callback presentation and typed operations.                                           |
+| `src/index.ts`                            | Public exports only; preserves the package interface without acquiring resources.                        |
+| `src/client/qq-client.ts`                 | Public client facade, callback presentation and typed operations.                                        |
+| `src/client/create-client.ts`             | Native bundle selection, worker bootstrap and transactional initialization.                              |
 | `src/cli.ts`, `src/worker.ts`             | Executable entry points. Their emitted URLs are runtime contracts.                                       |
 | `src/cli/`                                | Command planning and ownership of client execution, QR output, watches and process signals.              |
 | `src/kernel.ts`, `src/native-services.ts` | Compose one native session and domain adapters. They are composition roots, not public extension points. |
@@ -74,6 +78,14 @@ Internal Session, transport and codec ports stay in their existing ownership lay
 public native manifest data is distinct from the proprietary native service types.
 
 ## Encapsulation and variation points
+
+The package entry only reexports its public interface. `createClient` selects and
+validates a bundle, resolves package-relative worker/bridge paths, and releases
+the worker if initialization fails. It constructs the same `QQClient` class
+exported from the root. The facade does not import bundle preparation or file IO;
+its lifecycle owns process requests and retirement. Composition and lower layers
+cannot import `src/client/`. New files in that directory do not inherit these
+modules' dependency permissions. Both relative and external imports are checked.
 
 `QQClient` inherits from `EventEmitter` to implement the public event contract.
 `WorkerRpcChannel` owns its pending map, IDs, timer cleanup and settlement. It

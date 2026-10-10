@@ -11,6 +11,8 @@ not establish interoperability with QQ or prove an account operation succeeded.
 | Change                                                | Owner                                                                 |
 | ----------------------------------------------------- | --------------------------------------------------------------------- |
 | Public data shape or event payload                    | Relevant `src/contracts/` domain; compose event tuples in `events.ts` |
+| Public client method or callback presentation         | `src/client/qq-client.ts`; `index.ts` remains a reexport-only entry   |
+| Native bundle selection and worker bootstrap          | `src/client/create-client.ts`                                         |
 | Pure validation and input snapshots                   | Feature input module, shared by facade and worker                     |
 | Native callback projection or operation               | Relevant `src/features/` domain                                       |
 | Request correlation, shutdown or account ownership    | Existing `src/runtime/` lifetime owner                                |

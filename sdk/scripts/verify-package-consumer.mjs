@@ -20,6 +20,7 @@ import { verifyContactGroupConsumer } from './contact-group-consumer-contract.mj
 import { verifyPublicContracts } from './public-contract-consumer.mjs';
 import { verifyGroupEssenceConsumer } from './group-essence-consumer-contract.mjs';
 import { verifyWorkerReadCancellation } from './worker-read-consumer-contract.mjs';
+import { verifyClientFactoryConsumer } from './client-factory-consumer-contract.mjs';
 
 // Offline packaging check: controlled services and actual worker routing with a replacement kernel; no QQ native binaries or accounts.
 const root = fileURLToPath(new URL('../', import.meta.url));
@@ -91,6 +92,9 @@ await writeFile(
   `import {createClient, QQClient} from 'qq-native-client';\nif(typeof createClient !== 'function' || typeof QQClient !== 'function') throw new Error('Invalid exports');\n`,
 );
 run(process.execPath, ['import.mjs']);
+const clientFactoryChecks = await verifyClientFactoryConsumer(
+  join(destination, 'node_modules/qq-native-client'),
+);
 const publicContractChecks = await verifyPublicContracts(
   join(destination, 'node_modules/qq-native-client'),
   resolve(root, 'node_modules/typescript'),
@@ -532,6 +536,7 @@ const receipt = {
   integrity: packed.integrity,
   fileCount: files.length,
   checks: {
+    ...clientFactoryChecks,
     ...groupEssenceChecks,
     ...readCancellationChecks,
     ...publicContractChecks,

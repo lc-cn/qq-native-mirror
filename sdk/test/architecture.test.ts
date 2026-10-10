@@ -123,6 +123,15 @@ test('dependency policy rejects reverse, type-only and new cross-domain coupling
     ['src/native/new-bundle.ts', 'src/runtime/client-lifecycle.ts'],
     ['src/storage/new-store.ts', 'src/native/native-package.ts'],
     ['src/index.ts', 'src/features/groups/group-operations.ts'],
+    ['src/index.ts', 'src/runtime/client-lifecycle.ts'],
+    ['src/client/qq-client.ts', 'src/native/native-package.ts'],
+    ['src/client/qq-client.ts', 'src/client/create-client.ts'],
+    ['src/client/qq-client.ts', 'node:fs'],
+    ['src/client/create-client.ts', 'src/kernel.ts'],
+    ['src/client/new-facade.ts', 'src/runtime/client-lifecycle.ts'],
+    ['src/client/new-facade.ts', 'node:fs'],
+    ['src/kernel.ts', 'src/client/qq-client.ts'],
+    ['src/native-services.ts', 'src/client/create-client.ts'],
     ['src/unowned.ts', 'src/runtime/client-lifecycle.ts'],
     ['src/contracts/groups.ts', 'src/features/groups/group-queries.ts'],
     ['src/contracts/groups.ts', 'src/contracts/events.ts'],
@@ -154,6 +163,33 @@ test('dependency policy rejects reverse, type-only and new cross-domain coupling
       typeOnly: false,
     }),
   );
+});
+
+test('package entry contains only public reexports and client modules own explicit IO dependencies', () => {
+  const entry = join(sourceRoot, 'index.ts');
+  const tree = ts.createSourceFile(
+    entry,
+    readFileSync(entry, 'utf8'),
+    ts.ScriptTarget.Latest,
+    true,
+  );
+  assert.ok(tree.statements.length > 0);
+  for (const statement of tree.statements)
+    assert.ok(
+      ts.isExportDeclaration(statement) && statement.moduleSpecifier,
+      'The package entry must not acquire resources or implement client behavior.',
+    );
+  for (const [path, edges] of graph) {
+    if (!label(path).startsWith('src/client/')) continue;
+    for (const edge of edges) {
+      if (edge.target) continue;
+      assert.equal(
+        dependencyViolation({ from: label(path), to: edge.specifier, typeOnly: edge.typeOnly }),
+        undefined,
+        `${label(path)} → ${edge.specifier}: unreviewed client IO dependency`,
+      );
+    }
+  }
 });
 
 test('all relative source imports and exports resolve, including type-only dependencies', () => {
