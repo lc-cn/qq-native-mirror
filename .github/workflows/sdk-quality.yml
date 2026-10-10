@@ -6,11 +6,13 @@ on:
     paths:
       - 'sdk/**'
       - 'ci/verify-consumer.mjs'
+      - 'ci/consumer-module-paths.test.mjs'
       - '.github/workflows/sdk-quality.yml'
   push:
     paths:
       - 'sdk/**'
       - 'ci/verify-consumer.mjs'
+      - 'ci/consumer-module-paths.test.mjs'
       - '.github/workflows/sdk-quality.yml'
 
 permissions:
@@ -50,5 +52,7 @@ jobs:
         run: npm test
       - name: Build the SDK and registration bridge
         run: npm run build
+      - name: Check native CI installed module paths
+        run: node --test ../ci/consumer-module-paths.test.mjs
       - name: Verify a clean installed package and fake service contracts
         run: npm run verify:package

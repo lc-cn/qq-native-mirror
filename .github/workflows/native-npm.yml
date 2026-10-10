@@ -127,7 +127,9 @@ jobs:
       - name: Installed consumer initialization and close without account login
         env:
           QQ_VIDEO_CODEC_REQUIRED: '1'
-        run: node ci/verify-consumer.mjs
+        run: |
+          node --test ci/consumer-module-paths.test.mjs
+          node ci/verify-consumer.mjs
       - uses: actions/cache/save@v4
         if: always() && matrix.platform == 'win32' && steps.windows-sources.outputs.cache-hit != 'true'
         with:

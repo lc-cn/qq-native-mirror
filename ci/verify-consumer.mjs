@@ -163,7 +163,7 @@ try {
   return{mergedForwardClientContract:true,mergedForwardServiceContract:true,nativeMergedForwardAttempted:false};
  })();
  const cli=await import(pathToFileURL(join(temp,'node_modules/qq-native-client/dist/cli.js')).href);
- const elements=await import(pathToFileURL(join(temp,'node_modules/qq-native-client/dist/features/messages/message-elements.js')).href);
+ const elements=await import(pathToFileURL(join(temp,'node_modules/qq-native-client/dist/features/messages/face-input.js')).href);
  const mixed=[{type:'text',text:'fixture'},{type:'face',id:14},{type:'face',id:428}];
  assert.deepEqual(cli.normalizeMessage(mixed),mixed);
  assert.deepEqual(elements.faceElement(428),{elementType:6,elementId:'',faceElement:{faceIndex:428,faceType:2,faceText:'/收到',sourceType:1,stickerType:0,packId:'0',stickerId:'0'}});
