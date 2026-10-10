@@ -1,4 +1,4 @@
-import { createFriendCategoryRename } from './features/contacts/friend-category-rename.ts';
+import { createFriendCategoryMutations } from './features/contacts/friend-category-mutations.ts';
 import { captureGroupSearch } from './features/groups/group-search-input.ts';
 import { createGroupSearch } from './features/groups/group-search.ts';
 import { createGroupFiles } from './features/groups/group-files.ts';
@@ -11,6 +11,7 @@ import type { NativeServiceContext } from './runtime/native-service-context.ts';
 import {
   supportsCategoryCreation,
   supportsCategoryRenaming,
+  supportsCategoryDeletion,
   supportsGroupFileCount,
   supportsGroupFolderDeletion,
   supportsGroupFolderCreation,
@@ -18,10 +19,7 @@ import {
 } from './native/native-contracts.ts';
 import { createFriendCategory } from './features/contacts/friend-category-create.ts';
 import { createFriendSystemEvents } from './features/contacts/friend-system-events.ts';
-import {
-  friendCategoryName,
-  captureRenameFriendCategory,
-} from './features/contacts/friend-categories.ts';
+import { friendCategoryName } from './features/contacts/friend-categories.ts';
 import { createContactDirectory } from './features/contacts/contact-directory.ts';
 import { createNativeEventChannel } from './runtime/native-event-channel.ts';
 import { createForwardResourceOwner } from './features/forward/forward-resource-owner.ts';
@@ -94,10 +92,12 @@ export function createNativeServices(context: NativeServiceContext) {
       getTipOffService: () => service('TipOff'),
       awaitAlive,
     });
-    const categoryRename = own(
-      createFriendCategoryRename({
+    const categoryMutations = own(
+      createFriendCategoryMutations({
         signal: lifetime.signal,
         getBuddyService: () => service('Buddy'),
+        canRename: () => supportsCategoryRenaming(nativeContracts, version),
+        canDelete: () => supportsCategoryDeletion(nativeContracts, version),
       }),
     );
     const directory = own(
@@ -348,14 +348,10 @@ export function createNativeServices(context: NativeServiceContext) {
         if (lifetime.closed) throw new Error('Native services are closed');
         switch (method) {
           case 'renameFriendCategory': {
-            const captured = captureRenameFriendCategory(payload.categoryId, payload.name);
-            if (!supportsCategoryRenaming(nativeContracts, version))
-              throw Object.assign(
-                new Error('Friend category rename contract is not verified for this native binary'),
-                { code: 'unsupported-native-contract' },
-              );
-            return categoryRename.rename(captured.categoryId, captured.name);
+            return categoryMutations.rename(payload.categoryId, payload.name);
           }
+          case 'deleteFriendCategory':
+            return categoryMutations.delete(payload.categoryId);
           case 'addFriendCategory': {
             const name = friendCategoryName(payload.name);
             if (!supportsCategoryCreation(nativeContracts, version))

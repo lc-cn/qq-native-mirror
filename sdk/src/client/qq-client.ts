@@ -9,6 +9,7 @@ import type { ServiceOperation } from '../runtime/operations.ts';
 import {
   friendCategoryName,
   captureRenameFriendCategory,
+  captureFriendCategoryId,
 } from '../features/contacts/friend-categories.ts';
 import { captureMergedForward } from '../features/forward/merged-forward-input.ts';
 import { normalizeForwardResourceId } from '../features/forward/forward-resource-wire.ts';
@@ -166,6 +167,12 @@ export class QQClient extends EventEmitter<ClientEvents> {
   /** Native ACK only; timeout or shutdown after dispatch leaves the effect unknown. */
   async renameFriendCategory(categoryId: number, name: string): Promise<void> {
     return this.#operation('renameFriendCategory', captureRenameFriendCategory(categoryId, name));
+  }
+  /** Native ACK only; the remote category state requires independent verification. */
+  async deleteFriendCategory(categoryId: number): Promise<void> {
+    return this.#operation('deleteFriendCategory', {
+      categoryId: captureFriendCategoryId(categoryId),
+    });
   }
   listFriendCategories(): Promise<FriendCategory[]> {
     return this.#operation('listFriendCategories');

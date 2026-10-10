@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "operation": "deleteFriendCategory",
+  "profiles": [
+    {
+      "platform": "darwin",
+      "arch": "arm64",
+      "clientVersion": "7.0.2-53644",
+      "wrapperSha256": "fbc8ad9b328d05e16784d76b0181dda894c17001179dbf8c0d5dd00dc6271358"
+    }
+  ],
+  "nativeMethod": "delCategory",
+  "parameters": [
+    {
+      "name": "categoryId",
+      "type": "uint32"
+    }
+  ],
+  "completion": {
+    "kind": "Promise",
+    "resultField": "result",
+    "resultType": "int32",
+    "sdkAcknowledgement": "explicit numeric zero",
+    "remoteEffectVerified": false
+  },
+  "staticEvidence": {
+    "inspectionSha256": "eda9b79f69a62a57441b180da85f284b2e6cded02960c908ed8a60b4cefd5b5e",
+    "oldAbiReceiptSha256": "0b52180d0e6a66714f11f7c6a27c47f3bd8cbe5b0c49df77b6ed9470f2164329",
+    "binding": "0x8a3908",
+    "normalResultSerializer": "0xb23290",
+    "coreVtable": "0x509ee48",
+    "deleteSlot": "0xe0",
+    "deleteTarget": "0x92c60",
+    "selectorSetter": "0xb8f34",
+    "selector": 25007,
+    "namespace": "same selector as source=0 V2 list-derived categoryId through verified rename path",
+    "newInstructionWordsVerified": 156
+  },
+  "limits": [
+    "Only the exact default macOS ARM64 binary is enabled; other profiles require independent namespace and ABI evidence",
+    "Zero accepts native uint32 input but does not establish that default/system categories are mutable",
+    "Completion is native ACK, not readback of remote disappearance; no automatic retry after dispatch",
+    "No account mutation was performed during these controlled or static checks"
+  ]
+}

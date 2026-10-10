@@ -23,6 +23,10 @@ export async function verifyFriendCategoryRenameConsumer(packageRoot) {
   const isVerified = (profile) => verifiedProfiles.some((p) => matches(p, profile));
   assert.equal(verifiedProfiles.length, 4);
   assert.equal(profiles.length, 6);
+  const { profiles: deleteProfiles } = JSON.parse(
+    await readFile(join(packageRoot, 'docs/evidence/friend-category-delete-contract.json'), 'utf8'),
+  );
+  assert.equal(deleteProfiles.length, 1);
   for (const profile of [
     ...profiles,
     undefined,
@@ -75,6 +79,51 @@ export async function verifyFriendCategoryRenameConsumer(packageRoot) {
       services.close();
     }
   }
+  for (const profile of [
+    ...profiles,
+    undefined,
+    { ...deleteProfiles[0], wrapperSha256: '0'.repeat(64) },
+  ]) {
+    let acquisitions = 0;
+    const deleted = [];
+    const buddy = {
+      addKernelBuddyListener() {},
+      delCategory(...args) {
+        assert.equal(this, buddy);
+        assert.equal(args.length, 1);
+        deleted.push(args);
+        return { result: 0 };
+      },
+    };
+    const services = createNativeServices({
+      session: {
+        getBuddyService() {
+          acquisitions++;
+          return buddy;
+        },
+        getMsgService: () => ({ addKernelMsgListener() {} }),
+        getGroupService: () => ({ addKernelGroupListener() {} }),
+      },
+      version: profile?.clientVersion ?? 'unknown',
+      binaryProfile: profile,
+      events: { emit() {} },
+    });
+    acquisitions = 0;
+    try {
+      if (deleteProfiles.some((verified) => matches(verified, profile))) {
+        await services.invokeOperation('deleteFriendCategory', { categoryId: 0xffff_ffff });
+        assert.deepEqual(deleted, [[0xffff_ffff]]);
+      } else {
+        await assert.rejects(services.invokeOperation('deleteFriendCategory', { categoryId: 0 }), {
+          code: 'unsupported-native-contract',
+        });
+        assert.equal(acquisitions, 0);
+        assert.deepEqual(deleted, []);
+      }
+    } finally {
+      services.close();
+    }
+  }
   const worker = new EventEmitter(),
     calls = [];
   Object.assign(worker, {
@@ -108,6 +157,21 @@ export async function verifyFriendCategoryRenameConsumer(packageRoot) {
         prepareCommand('friend-category-rename', { 'category-id': id, name: 'new' }),
       );
     assert.equal(calls.length, 2);
+    await client.deleteFriendCategory(0);
+    const deletion = await prepareCommand('friend-category-delete', {
+      'category-id': '4294967295',
+    });
+    await deletion(client);
+    assert.deepEqual(
+      calls.slice(2).map(({ method, categoryId }) => ({ method, categoryId })),
+      [
+        { method: 'deleteFriendCategory', categoryId: 0 },
+        { method: 'deleteFriendCategory', categoryId: 0xffff_ffff },
+      ],
+    );
+    for (const id of ['-1', '1.5', '4294967296', 'abc'])
+      await assert.rejects(prepareCommand('friend-category-delete', { 'category-id': id }));
+    assert.equal(calls.length, 4);
   } finally {
     Object.assign(worker, { connected: false, exitCode: 0 });
     worker.emit('exit', 0, null);
@@ -119,6 +183,11 @@ export async function verifyFriendCategoryRenameConsumer(packageRoot) {
     friendCategoryRenameFacadeContract: true,
     friendCategoryRenameCliContract: true,
     nativeFriendCategoryRenameAttempted: false,
+    friendCategoryDeleteBinaryGateContract: true,
+    friendCategoryDeleteCompositionContract: true,
+    friendCategoryDeleteFacadeContract: true,
+    friendCategoryDeleteCliContract: true,
+    nativeFriendCategoryDeleteAttempted: false,
     accountUsed: false,
   };
 }

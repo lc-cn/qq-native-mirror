@@ -64,6 +64,13 @@ Keep their shared profile projection in the contact domain; flat friend queries
 must not acquire the complete category metadata contract. Commit identity caches
 only after the complete batch validates and the account is still alive.
 
+`features/contacts/friend-category-mutations.ts` owns category rename and deletion.
+Keep their argument tuples paired with their operation through a discriminated
+union. Inject independently measured capability decisions and a lazy Buddy port;
+validate input and reject unsupported binaries before acquiring it. This owner
+shares ACK validation, timeout and cancellation because those invariants are the
+same for both writes. Native ACK does not establish the remote category state.
+
 `features/messages/message-resolution.ts` owns peer conversion and the identity
 lookup needed by live delivery, queries and forwarding. Supply only user-ID
 resolution, the native UIN lookup method, cancellation and diagnostics. Native

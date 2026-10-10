@@ -1,4 +1,4 @@
-import type { FriendCategoryRenameContext } from '../../src/features/contacts/friend-category-rename.ts';
+import type { FriendCategoryMutationsContext } from '../../src/features/contacts/friend-category-mutations.ts';
 import type { ContactDirectoryContext } from '../../src/features/contacts/contact-directory.ts';
 import type { GroupQueriesContext } from '../../src/features/groups/group-queries.ts';
 import type { NativeMessageSenderContext } from '../../src/features/messages/native-message-sender.ts';
@@ -38,7 +38,7 @@ function verifyDomainPorts(
   webRead: QunWebReadContext,
   noticeRead: WebGroupNoticesContext,
   groupReads: GroupWebReadsContext,
-  categoryRename: FriendCategoryRenameContext,
+  categoryMutations: FriendCategoryMutationsContext,
 ) {
   // @ts-expect-error Resource orchestration cannot acquire unrelated Session services.
   forwardResources.getBuddyService();
@@ -151,10 +151,15 @@ function verifyDomainPorts(
   // @ts-expect-error A request cannot close its account or sibling reads.
   groupReads.close();
   // @ts-expect-error Category rename does not own friend removal.
-  categoryRename.getBuddyService()?.delBuddy();
+  categoryMutations.getBuddyService()?.delBuddy();
   // @ts-expect-error Native selectors are numbers, not category names or decimal strings.
-  categoryRename.getBuddyService()?.renameCategory?.('123', 'name');
-  const renameAck = categoryRename.getBuddyService()?.renameCategory?.(123, 'name');
+  categoryMutations.getBuddyService()?.renameCategory?.('123', 'name');
+  const renameAck = categoryMutations.getBuddyService()?.renameCategory?.(123, 'name');
+  // @ts-expect-error Delete uses a numeric native selector, not a category name.
+  categoryMutations.getBuddyService()?.delCategory?.('name');
+  const deleteAck = categoryMutations.getBuddyService()?.delCategory?.(123);
+  // @ts-expect-error Deletion acknowledgement requires result validation.
+  void deleteAck.result;
   // @ts-expect-error A native ACK remains unknown until the domain adapter validates it.
   void renameAck.result;
   // @ts-expect-error Group reads cannot dispatch message mutations.

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { createFriendCategoryRename } from '../src/features/contacts/friend-category-rename.ts';
+import { createFriendCategoryMutations } from '../src/features/contacts/friend-category-mutations.ts';
 
 test('exact two arguments and receiver; uint32 zero accepted without assuming business effect', async () => {
   const calls: unknown[][] = [];
@@ -11,7 +11,9 @@ test('exact two arguments and receiver; uint32 zero accepted without assuming bu
       return { result: 0, errMsg: 'private' };
     },
   };
-  const api = createFriendCategoryRename({
+  const api = createFriendCategoryMutations({
+    canRename: () => true,
+    canDelete: () => true,
     signal: new AbortController().signal,
     getBuddyService: () => service,
   });
@@ -27,7 +29,9 @@ test('exact two arguments and receiver; uint32 zero accepted without assuming bu
 test('invalid input and service getter retirement prevent native dispatch', async () => {
   let calls = 0,
     getters = 0;
-  const api = createFriendCategoryRename({
+  const api = createFriendCategoryMutations({
+    canRename: () => true,
+    canDelete: () => true,
     signal: new AbortController().signal,
     getBuddyService: () => {
       getters++;
@@ -58,14 +62,18 @@ test('method getter abort prevents dispatch and original native rejection is pre
       };
     },
   };
-  const api = createFriendCategoryRename({
+  const api = createFriendCategoryMutations({
+    canRename: () => true,
+    canDelete: () => true,
     signal: controller.signal,
     getBuddyService: () => service,
   });
   await assert.rejects(api.rename(1, 'name'), (error) => error === reason);
   assert.equal(calls, 0);
   const original = new Error('native rejected');
-  const failing = createFriendCategoryRename({
+  const failing = createFriendCategoryMutations({
+    canRename: () => true,
+    canDelete: () => true,
     signal: new AbortController().signal,
     getBuddyService: () => ({
       renameCategory() {
@@ -82,7 +90,9 @@ test('method getter abort prevents dispatch and original native rejection is pre
 test('close settles pending write unknown and observes late rejection without retries', async () => {
   let reject!: (error: unknown) => void,
     calls = 0;
-  const api = createFriendCategoryRename({
+  const api = createFriendCategoryMutations({
+    canRename: () => true,
+    canDelete: () => true,
     signal: new AbortController().signal,
     getBuddyService: () => ({
       renameCategory() {
@@ -114,7 +124,9 @@ test('malformed and nonzero ACK never disclose native wording', async () => {
       },
     },
   ]) {
-    const api = createFriendCategoryRename({
+    const api = createFriendCategoryMutations({
+      canRename: () => true,
+      canDelete: () => true,
       signal: new AbortController().signal,
       getBuddyService: () => ({ renameCategory: () => result }),
     });
@@ -128,7 +140,9 @@ test('malformed and nonzero ACK never disclose native wording', async () => {
 
 test('synchronous close during dispatch with resolved ACK retains unknown effect', async () => {
   let calls = 0;
-  const api = createFriendCategoryRename({
+  const api = createFriendCategoryMutations({
+    canRename: () => true,
+    canDelete: () => true,
     signal: new AbortController().signal,
     getBuddyService: () => ({
       renameCategory() {
@@ -153,7 +167,9 @@ test('close during result descriptor projection retains unknown effect', async (
       },
     },
   );
-  const api = createFriendCategoryRename({
+  const api = createFriendCategoryMutations({
+    canRename: () => true,
+    canDelete: () => true,
     signal: new AbortController().signal,
     getBuddyService: () => ({
       renameCategory() {
@@ -170,7 +186,9 @@ test('five second deadline settles once without replay and observes late rejecti
   t.mock.timers.enable({ apis: ['setTimeout'] });
   let calls = 0,
     reject!: (error: unknown) => void;
-  const api = createFriendCategoryRename({
+  const api = createFriendCategoryMutations({
+    canRename: () => true,
+    canDelete: () => true,
     signal: new AbortController().signal,
     getBuddyService: () => ({
       renameCategory() {

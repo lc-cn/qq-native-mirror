@@ -1,4 +1,7 @@
-import { captureRenameFriendCategory } from '../features/contacts/friend-categories.ts';
+import {
+  captureFriendCategoryId,
+  captureRenameFriendCategory,
+} from '../features/contacts/friend-categories.ts';
 import { captureGroupSearch } from '../features/groups/group-search-input.ts';
 import {
   captureCreateGroupFolder,
@@ -44,6 +47,7 @@ export function validateCommandFlags(command: string, flags: Record<string, stri
     'friend-categories': ['config', 'uin'],
     'friend-category-add': ['config', 'uin', 'name'],
     'friend-category-rename': ['config', 'uin', 'category-id', 'name'],
+    'friend-category-delete': ['config', 'uin', 'category-id'],
     groups: ['config', 'uin'],
     send: ['config', 'kind', 'target', 'text', 'message-file', 'uin'],
     nickname: ['config', 'uin', 'name'],
@@ -365,6 +369,12 @@ export async function prepareCommand(
       const name = required(flags, 'name');
       if (!name.trim()) throw new Error('--name must not be blank');
       return (client) => client.addFriendCategory(name);
+    }
+    case 'friend-category-delete': {
+      const rawId = required(flags, 'category-id');
+      if (!/^\d+$/.test(rawId)) throw new Error('--category-id must be a uint32 decimal integer');
+      const categoryId = captureFriendCategoryId(Number(rawId));
+      return (client) => client.deleteFriendCategory(categoryId);
     }
     case 'friend-categories':
       return (client) => client.listFriendCategories();

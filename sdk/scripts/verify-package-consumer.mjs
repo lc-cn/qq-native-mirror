@@ -51,6 +51,12 @@ if (files.some((path) => /^dist\/features\/messages\/message-elements\.(?:js|d\.
   throw new Error('Obsolete mixed message-element module remains in package');
 if (
   files.some((path) =>
+    /^dist\/features\/contacts\/friend-category-rename\.(?:js|d\.ts)$/.test(path),
+  )
+)
+  throw new Error('Obsolete category rename implementation remains in package');
+if (
+  files.some((path) =>
     /(^|\/)(\.local|test|scripts|node_modules)(\/|$)|\.(db|db-wal|db-shm)$/.test(path),
   )
 )
@@ -467,6 +473,10 @@ function subscribe(client: QQClient) {
  void renamedCategory;
  // @ts-expect-error Category selectors use numeric uint32 values, never names.
  client.renameFriendCategory('123', 'name');
+ const deletedCategory: Promise<void> = client.deleteFriendCategory(123);
+ void deletedCategory;
+ // @ts-expect-error Deletion also requires numeric category selectors.
+ client.deleteFriendCategory('123');
  const categories: Promise<FriendCategory[]> = client.listFriendCategories();
  const fileCount: Promise<number> = client.getGroupFileCount('123');
  void fileCount;

@@ -12,6 +12,7 @@ export interface NativeContractProfile {
 type NativeCapability =
   | 'categoryCreation'
   | 'categoryRenaming'
+  | 'categoryDeletion'
   | 'groupFileCount'
   | 'groupSearch'
   | 'groupFolderDeletion'
@@ -29,7 +30,8 @@ type BinaryContract = readonly [
 // another feature's evidence never grants an unlisted native operation.
 // Evidence: friend-category-create, group-file-count, group-search and
 // group-folder contract records under docs/evidence/. Category renaming has its
-// own platform-specific namespace evidence in friend-category-rename-contract.json.
+// own platform-specific namespace evidence in friend-category-rename-contract.json;
+// deletion uses its separate friend-category-delete-contract.json evidence.
 const binaryProfiles: readonly BinaryContract[] = [
   [
     'linux',
@@ -67,6 +69,7 @@ const binaryProfiles: readonly BinaryContract[] = [
     [
       'categoryCreation',
       'categoryRenaming',
+      'categoryDeletion',
       'groupFileCount',
       'groupSearch',
       'groupFolderDeletion',
@@ -172,6 +175,13 @@ export function supportsCategoryCreation(
   version: string,
 ): boolean {
   return matchesContract(profile, version, 'categoryCreation');
+}
+
+export function supportsCategoryDeletion(
+  profile: NativeContractProfile | undefined,
+  version: string,
+): boolean {
+  return matchesContract(profile, version, 'categoryDeletion');
 }
 
 export function supportsGroupFileCount(

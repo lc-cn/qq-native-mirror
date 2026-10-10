@@ -8,6 +8,7 @@ import { QQClient } from '../src/index.ts';
 import { prepareCommand, validateCommandFlags } from '../src/cli/command-plan.ts';
 import {
   supportsCategoryRenaming,
+  supportsCategoryDeletion,
   type NativeContractProfile,
 } from '../src/native/native-contracts.ts';
 
@@ -43,6 +44,12 @@ function fixture(
     renameCategory(...args: unknown[]) {
       assert.equal(this, buddy);
       assert.equal(args.length, 2);
+      calls.push(args);
+      return { result: 0 };
+    },
+    delCategory(...args: unknown[]) {
+      assert.equal(this, buddy);
+      assert.equal(args.length, 1);
       calls.push(args);
       return { result: 0 };
     },
@@ -91,6 +98,41 @@ test('rename enables only four exact binary profiles and preserves uint32, spell
     } finally {
       f.services.close();
     }
+  }
+});
+
+test('category deletion requires its independently measured binary before acquisition', async () => {
+  const measured = profiles.find((p) => p.platform === 'darwin' && p.arch === 'arm64')!;
+  for (const profile of [...profiles, undefined, { ...measured, wrapperSha256: '0'.repeat(64) }]) {
+    const enabled = profile === measured;
+    assert.equal(supportsCategoryDeletion(profile, profile?.clientVersion ?? ''), enabled);
+    const f = fixture(profile);
+    try {
+      if (enabled) {
+        await f.services.invokeOperation('deleteFriendCategory', { categoryId: 0xffff_ffff });
+        assert.deepEqual(f.calls, [[0xffff_ffff]]);
+      } else {
+        await assert.rejects(
+          f.services.invokeOperation('deleteFriendCategory', { categoryId: 1 }),
+          { code: 'unsupported-native-contract' },
+        );
+        assert.equal(f.acquired(), 0);
+        assert.deepEqual(f.calls, []);
+      }
+    } finally {
+      f.services.close();
+    }
+  }
+  const f = fixture(measured, 'wrong-version');
+  try {
+    for (const categoryId of [-1, 1.5, NaN, 0x1_0000_0000, '1'])
+      await assert.rejects(f.services.invokeOperation('deleteFriendCategory', { categoryId }));
+    await assert.rejects(f.services.invokeOperation('deleteFriendCategory', { categoryId: 0 }), {
+      code: 'unsupported-native-contract',
+    });
+    assert.equal(f.acquired(), 0);
+  } finally {
+    f.services.close();
   }
 });
 
@@ -183,6 +225,23 @@ test('public facade and prepared CLI dispatch captured numeric ID and untrimmed 
     }),
   );
   assert.equal(calls.length, 2);
+  await client.deleteFriendCategory(0);
+  const deletion = await prepareCommand('friend-category-delete', { 'category-id': '4294967295' });
+  await deletion(client);
+  assert.deepEqual(
+    calls.slice(2).map(({ method, categoryId }) => ({ method, categoryId })),
+    [
+      { method: 'deleteFriendCategory', categoryId: 0 },
+      { method: 'deleteFriendCategory', categoryId: 0xffff_ffff },
+    ],
+  );
+  for (const id of ['-1', '1.5', '4294967296', 'abc'])
+    await assert.rejects(prepareCommand('friend-category-delete', { 'category-id': id }));
+  await assert.rejects(client.deleteFriendCategory(NaN));
+  assert.throws(() =>
+    validateCommandFlags('friend-category-delete', { 'category-id': '1', name: 'unused' }),
+  );
+  assert.equal(calls.length, 4);
   Object.assign(worker, { connected: false, exitCode: 0 });
   worker.emit('exit', 0, null);
   await client.close();

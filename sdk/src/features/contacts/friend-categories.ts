@@ -115,7 +115,7 @@ export function friendCategoryName(value: unknown): string {
 }
 
 /** Category selectors inhabit the uint32 namespace; zero is not assumed mutable. */
-export function captureRenameFriendCategory(categoryId: unknown, name: unknown) {
+export function captureFriendCategoryId(categoryId: unknown): number {
   if (
     typeof categoryId !== 'number' ||
     !Number.isInteger(categoryId) ||
@@ -123,5 +123,9 @@ export function captureRenameFriendCategory(categoryId: unknown, name: unknown) 
     categoryId > 0xffff_ffff
   )
     throw new Error('Friend category ID must be a uint32 number');
-  return { categoryId, name: friendCategoryName(name) };
+  return categoryId;
+}
+
+export function captureRenameFriendCategory(categoryId: unknown, name: unknown) {
+  return { categoryId: captureFriendCategoryId(categoryId), name: friendCategoryName(name) };
 }
