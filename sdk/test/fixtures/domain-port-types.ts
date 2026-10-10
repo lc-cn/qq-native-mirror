@@ -244,3 +244,15 @@ function verifyWorkerOwnership(owner: NativeWorkerBootstrap, kernel: WorkerKerne
   kernel.getMsgService();
 }
 void verifyWorkerOwnership;
+
+import type { CapturedNativeMessage } from '../../src/features/messages/inbound-messages.ts';
+function verifyCapturedMessage(message: CapturedNativeMessage) {
+  // @ts-expect-error Queue consumers cannot replace the captured receipt identity.
+  message.msgId = '42';
+  // @ts-expect-error Snapshot consumers receive validated strings, not arbitrary native values.
+  const invalidTime: number = message.msgTime;
+  // @ts-expect-error Unrelated raw members remain with Message.raw, not the delivery snapshot.
+  message.nativeHandle.initialize();
+  void invalidTime;
+}
+void verifyCapturedMessage;

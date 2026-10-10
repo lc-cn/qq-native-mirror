@@ -321,5 +321,72 @@ export async function verifyReceivedConsumer(packagePath) {
   } finally {
     unknown.services.close();
   }
-  return { receivedMessageContract: true, nativeReceivedIdentityLookupAttempted: false };
+  // Receipt projection and dedup share one capture, even if raw properties have
+  // side effects. Only the fields used by projection are acquired; raw identity
+  // remains available to the application without evaluating unrelated members.
+  const snapshots = fixture([]);
+  try {
+    let unrelatedReads = 0;
+    const record = raw({ msgId: '1', peerUin: '456', senderUin: exact, elements: [] });
+    Object.defineProperty(record, 'unrelatedEnumerable', {
+      enumerable: true,
+      get() {
+        unrelatedReads++;
+        record.msgId = '2';
+        return null;
+      },
+    });
+    snapshots.listener().onRecvMsg([record]);
+    snapshots
+      .listener()
+      .onRecvMsg([raw({ msgId: '1', peerUin: '456', senderUin: exact, elements: [] })]);
+    snapshots
+      .listener()
+      .onRecvMsg([raw({ msgId: '2', peerUin: '456', senderUin: exact, elements: [] })]);
+    await flush();
+    const delivered = snapshots.events
+      .filter(([event]) => event === 'message')
+      .map(([, message]) => message);
+    assert.deepEqual(
+      delivered.map((message) => message.messageId),
+      ['1', '2'],
+    );
+    assert.equal(delivered[0].raw, record);
+    assert.equal(unrelatedReads, 0, 'No unrelated raw getter is acquired');
+    const counters = new Map();
+    const once = raw({ msgId: '3', peerUin: '456', senderUin: exact, elements: [] });
+    for (const name of [
+      'msgId',
+      'msgSeq',
+      'msgTime',
+      'peerUid',
+      'peerUin',
+      'senderUid',
+      'senderUin',
+      'sendNickName',
+      'elements',
+    ]) {
+      const value = once[name];
+      Object.defineProperty(once, name, {
+        enumerable: true,
+        get() {
+          counters.set(name, (counters.get(name) ?? 0) + 1);
+          return value;
+        },
+      });
+    }
+    snapshots.listener().onRecvMsg([once]);
+    await flush();
+    for (const count of counters.values()) assert.equal(count, 1);
+    assert.equal(counters.size, 9);
+    assert.equal(snapshots.events.filter(([event]) => event === 'message').length, 3);
+    assert.equal(snapshots.calls.length, 0);
+  } finally {
+    snapshots.services.close();
+  }
+  return {
+    receivedMessageContract: true,
+    receivedMessageSnapshotContract: true,
+    nativeReceivedIdentityLookupAttempted: false,
+  };
 }

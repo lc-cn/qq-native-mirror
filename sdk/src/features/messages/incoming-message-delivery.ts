@@ -1,15 +1,19 @@
-import { captureNativeMessage, messageIdentityUids } from './inbound-messages.ts';
+import {
+  captureNativeMessage,
+  messageIdentityUids,
+  type CapturedNativeMessage,
+} from './inbound-messages.ts';
 import { needsMentionLookup } from './inbound-mentions.ts';
 import type { NativeObject } from '../../native/native-object.ts';
 import type { Message } from '../../contracts/messages.ts';
 
 export interface IncomingMessageDeliveryContext {
   resolveMessages(
-    messages: NativeObject[],
+    messages: CapturedNativeMessage[],
     rawMessages: NativeObject[],
     signal: AbortSignal,
   ): Promise<(Message | undefined)[]>;
-  project(message: NativeObject, raw: NativeObject): Message;
+  project(message: CapturedNativeMessage, raw: NativeObject): Message;
   emitMessage(message: Message): void;
   diagnostic(stage: string): void;
   dispatch(rawMessages: NativeObject[]): void;
@@ -47,13 +51,13 @@ export function createIncomingMessageDelivery(context: IncomingMessageDeliveryCo
   const diagnostic = (stage: string) => {
     if (!closed) context.diagnostic(stage);
   };
-  const key = (message: NativeObject): string | undefined =>
+  const key = (message: CapturedNativeMessage): string | undefined =>
     message.msgId && message.peerUid
       ? JSON.stringify([message.chatType, message.peerUid, message.msgId])
       : message.chatType === 1 && message.msgId && message.peerUin
         ? JSON.stringify([1, 'uin', message.peerUin, message.msgId])
         : undefined;
-  type Received = { raw: NativeObject; message: NativeObject; key?: string };
+  type Received = { raw: NativeObject; message: CapturedNativeMessage; key?: string };
   const unseen = (messages: Received[]) =>
     messages.filter((value) => !value.key || !seen.has(value.key));
   const deliver = (messages: Received[], decoded: (Message | undefined)[]) => {
@@ -89,7 +93,8 @@ export function createIncomingMessageDelivery(context: IncomingMessageDeliveryCo
         )
           continue;
         try {
-          messages.push({ raw, message: captureNativeMessage(raw), key: key(raw) });
+          const message = captureNativeMessage(raw);
+          messages.push({ raw, message, key: key(message) });
         } catch {
           diagnostic('invalid-native-message');
         }

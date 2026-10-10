@@ -258,6 +258,18 @@ claiming to cancel a dispatched native operation. The session composition keeps
 system-message processing and native callback registration in their original
 order. Queried history does not share live-delivery deduplication state.
 
+`captureNativeMessage` supplies the delivery ports with a typed receipt snapshot.
+It reads the fields required for projection once, validates those captured values
+and copies the known element bodies before lookup can yield. Projection and the
+deduplication key use that same snapshot, rather than reading the original record
+again. Unrelated enumerable properties are not evaluated or carried into the
+snapshot; applications still receive the original `Message.raw`. Unknown element
+payloads retain their original object identity. Group messages do not acquire the
+unused private `peerUin` field. The outer callback filter retains its existing
+unsupported-conversation policy; the snapshot does not define a new proprietary
+ABI. Source and installed-consumer checks cover controlled accessor side effects
+and queued mutation, without claiming such accessors occur in QQ callbacks.
+
 `NativeMessageSender` owns element preparation, reserved correlation IDs and
 terminal receipt selection behind `send`, `sendPrepared` and `close`. Normal text,
 media and merged-forward cards use the same receipt path. It receives the Session's

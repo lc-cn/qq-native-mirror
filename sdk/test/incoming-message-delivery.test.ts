@@ -215,3 +215,33 @@ test('an unresolved decoded row still reaches callback dispatch with its origina
   await tick();
   assert.equal(dispatched[0][0], raw);
 });
+
+test('dedup uses the same captured identity and never reads unrelated raw getters', () => {
+  const f = fixture(),
+    raw = message('1');
+  let unrelatedReads = 0;
+  Object.defineProperty(raw, 'unrelated', {
+    enumerable: true,
+    get() {
+      unrelatedReads++;
+      raw.msgId = '2';
+      return null;
+    },
+  });
+  f.delivery.receive([raw]);
+  f.delivery.receive([message('1')]);
+  f.delivery.receive([message('2')]);
+  assert.deepEqual(f.emitted, ['1', '2']);
+  assert.equal(unrelatedReads, 0);
+  assert.deepEqual(f.diagnostics, []);
+  f.delivery.close();
+});
+
+test('invalid captured receipt is diagnosed without emission or dispatching its raw row', () => {
+  const f = fixture();
+  f.delivery.receive([{ ...message('1'), msgId: 'invalid' }]);
+  assert.deepEqual(f.emitted, []);
+  assert.deepEqual(f.diagnostics, ['invalid-native-message']);
+  assert.deepEqual(f.dispatches, [[]]);
+  f.delivery.close();
+});

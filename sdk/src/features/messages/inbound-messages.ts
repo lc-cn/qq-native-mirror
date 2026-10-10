@@ -59,11 +59,47 @@ export function messageIdentityUids(message: Native): string[] {
     ),
   ];
 }
+export interface CapturedNativeMessage {
+  readonly chatType: 1 | 2;
+  readonly msgId: string;
+  readonly msgSeq: string;
+  readonly msgTime: string;
+  readonly peerUid?: string;
+  readonly peerUin?: string;
+  readonly senderUid?: string;
+  readonly senderUin?: string;
+  readonly sendNickName?: string;
+  readonly elements: Native[];
+}
 /** Capture at callback receipt, including callbacks queued behind earlier lookups. */
-export function captureNativeMessage(raw: Native): Native {
-  metadata(raw);
-  if (!Array.isArray(raw.elements)) throw new Error('Invalid native message elements');
-  const elements = Array.from(raw.elements, (element) => {
+export function captureNativeMessage(raw: Native): CapturedNativeMessage {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw))
+    throw new Error('Invalid native message conversation');
+  const chatType = raw.chatType;
+  const fields = {
+    chatType,
+    msgId: raw?.msgId,
+    msgSeq: raw?.msgSeq,
+    msgTime: raw?.msgTime,
+    peerUid: raw?.peerUid,
+    peerUin: chatType === 1 ? raw.peerUin : undefined,
+    senderUid: raw?.senderUid,
+    senderUin: raw?.senderUin,
+    sendNickName: raw?.sendNickName,
+  };
+  for (const field of [
+    fields.peerUid,
+    fields.peerUin,
+    fields.senderUid,
+    fields.senderUin,
+    fields.sendNickName,
+  ])
+    if (field !== undefined && typeof field !== 'string')
+      throw new Error('Invalid native message identity metadata');
+  metadata(fields);
+  const sourceElements = raw.elements;
+  if (!Array.isArray(sourceElements)) throw new Error('Invalid native message elements');
+  const elements = Array.from(sourceElements, (element) => {
     if (!element || typeof element !== 'object' || Array.isArray(element))
       throw new Error('Invalid native message element');
     const descriptors = Object.getOwnPropertyDescriptors(element);
@@ -90,8 +126,8 @@ export function captureNativeMessage(raw: Native): Native {
     }
     return Object.create(Object.getPrototypeOf(element), descriptors);
   });
-  const captured = { ...raw, elements };
-  originalElements.set(captured, originalElements.get(raw) ?? Array.from(raw.elements));
+  const captured = { ...fields, elements } as CapturedNativeMessage;
+  originalElements.set(captured, originalElements.get(raw) ?? Array.from(sourceElements));
   return captured;
 }
 export function projectNativeMessage(
