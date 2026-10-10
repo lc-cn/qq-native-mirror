@@ -58,11 +58,9 @@ import { createGroupEvents, projectGroupInfo } from './features/groups/group-eve
 import { createGroupSystemEvents } from './features/groups/group-system-events.ts';
 import { projectGroupMuteList } from './features/groups/group-mute-list.ts';
 import { createRecallEvents } from './features/messages/recall-events.ts';
-import { needsMentionLookup } from './features/messages/inbound-mentions.ts';
+import { createIncomingMessageDelivery } from './features/messages/incoming-message-delivery.ts';
 import {
-  captureNativeMessage,
   decodeNativeMessages,
-  messageIdentityUids,
   projectNativeMessage,
 } from './features/messages/inbound-messages.ts';
 import {
@@ -167,11 +165,9 @@ export function createNativeServices(context: NativeServiceContext) {
     const callbackChannel = own(createNativeEventChannel(lifetime.signal));
     const { dispatch, call: eventCall } = callbackChannel;
     const uidCache = new Map<string, string>();
-    const receivedMessages = new Set<string>();
     const usedSendIds = new Set<string>();
     cleanupSteps.push(() => {
       uidCache.clear();
-      receivedMessages.clear();
       usedSendIds.clear();
     });
     const recallEvents = own(createRecallEvents(emit));
@@ -209,6 +205,7 @@ export function createNativeServices(context: NativeServiceContext) {
       messages: Native[],
       rawMessages = messages,
       live = false,
+      signal = lifetime.signal,
     ): Promise<(Message | undefined)[]> => {
       return decodeNativeMessages(
         messages,
@@ -217,7 +214,7 @@ export function createNativeServices(context: NativeServiceContext) {
           const value = await call(service('UixConvert'), 'getUin', uids);
           return value?.uinInfo;
         },
-        lifetime.signal,
+        signal,
         (stage) => {
           if (!closed) emit('diagnostic', { stage });
         },
@@ -225,36 +222,16 @@ export function createNativeServices(context: NativeServiceContext) {
       );
     };
     const resolvedMessage = async (message: Native) => (await resolvedMessages([message]))[0];
-    let receiveQueue: Promise<void> | undefined;
-    const receiveKey = (message: Native): string | undefined =>
-      message.msgId && message.peerUid
-        ? JSON.stringify([message.chatType, message.peerUid, message.msgId])
-        : message.chatType === 1 && message.msgId && message.peerUin
-          ? JSON.stringify([1, 'uin', message.peerUin, message.msgId])
-          : undefined;
-    const captureReceived = (raw: Native) => {
-      return { raw, message: captureNativeMessage(raw), key: receiveKey(raw) };
-    };
-    type Received = ReturnType<typeof captureReceived>;
-    const unseenReceived = (messages: Received[]) =>
-      messages.filter((message) => !message.key || !receivedMessages.has(message.key));
-    const deliverReceived = (messages: Received[], decoded: (Message | undefined)[]) => {
-      if (closed) return;
-      messages.forEach((message, index) => {
-        if (closed) return;
-        const converted = decoded[index];
-        if (!converted) return;
-        const key = message.key;
-        if (key && receivedMessages.has(key)) return;
-        if (key) {
-          receivedMessages.add(key);
-          if (receivedMessages.size > 10_000)
-            receivedMessages.delete(receivedMessages.values().next().value!);
-        }
-        emit('message', converted);
-      });
-      dispatch('Msg/onRecvMsg', [messages.map((message) => message.raw)]);
-    };
+    const incomingMessages = own(
+      createIncomingMessageDelivery({
+        resolveMessages: (messages, rawMessages, signal) =>
+          resolvedMessages(messages, rawMessages, true, signal),
+        project: toMessage,
+        emitMessage: (message) => emit('message', message),
+        diagnostic: (stage) => emit('diagnostic', { stage }),
+        dispatch: (rawMessages) => dispatch('Msg/onRecvMsg', [rawMessages]),
+      }),
+    );
     const listener = (family: string, overrides: Native) => {
       const wrapped = new Map<PropertyKey, (...args: unknown[]) => unknown>();
       const target = new Proxy(overrides, {
@@ -295,61 +272,7 @@ export function createNativeServices(context: NativeServiceContext) {
         if (closed) return;
         if (friendSystemEvents.hasAddedCandidate(messages)) friendSystemEvents.onRecvMsg(messages);
         if (closed) return;
-        const validMessages: Received[] = [];
-        for (const message of Array.from(messages)) {
-          if (
-            message &&
-            typeof message === 'object' &&
-            !Array.isArray(message) &&
-            message.chatType !== 1 &&
-            message.chatType !== 2
-          )
-            continue;
-          try {
-            validMessages.push(captureReceived(message));
-          } catch {
-            emit('diagnostic', { stage: 'invalid-native-message' });
-          }
-        }
-        if (
-          !receiveQueue &&
-          !validMessages.some(
-            (value) =>
-              messageIdentityUids(value.message).length ||
-              needsMentionLookup(value.message.elements),
-          )
-        ) {
-          const unseen = unseenReceived(validMessages);
-          deliverReceived(
-            unseen,
-            unseen.map((value) => toMessage(value.message, value.raw)),
-          );
-          return;
-        }
-        // A UID lookup may settle after another callback. Preserve delivery order
-        // across the entire callback batch and every subsequent queued batch.
-        const queued = (receiveQueue ?? Promise.resolve())
-          .catch(() => {})
-          .then(async () => {
-            if (closed) return;
-            const unseen = unseenReceived(validMessages);
-            deliverReceived(
-              unseen,
-              await resolvedMessages(
-                unseen.map((value) => value.message),
-                unseen.map((value) => value.raw),
-                true,
-              ),
-            );
-          });
-        receiveQueue = queued;
-        void queued
-          .catch(() => {
-            if (!closed) emit('diagnostic', { stage: 'invalid-native-message' });
-          })
-          .finally(() => {
-            if (receiveQueue === queued) receiveQueue = undefined;
-          });
+        incomingMessages.receive(messages);
       },
       onMsgInfoListUpdate: (messages: NativeMessage[]) => {
         if (closed) return;

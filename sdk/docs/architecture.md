@@ -74,6 +74,14 @@ callback alone means success. An invocation rejection overrides an earlier
 success callback. Timeout, abort and close interrupt pending work, and late
 callbacks cannot settle a removed waiter. It never retries a mutation.
 
+`IncomingMessageDelivery` owns callback snapshots, ordered delivery, the bounded
+message deduplication cache and cancellation. Its interface is `receive` and
+`close`; native lookup and projection are injected ports. Closing interrupts its
+own wait, signals the resolver, and suppresses late messages and callbacks without
+claiming to cancel a dispatched native operation. The session composition keeps
+system-message processing and native callback registration in their original
+order. Queried history does not share live-delivery deduplication state.
+
 The proprietary `.node` surface has no stable complete TypeScript declaration.
 Its type erasure is centralized in `src/native/native-object.ts`. This internal
 escape hatch is not proof of an ABI. Native results must pass adapter validation
