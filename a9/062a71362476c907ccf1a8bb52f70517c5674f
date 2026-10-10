@@ -1,0 +1,40 @@
+sdk/test/helpers/dependency-policy.ts
+  s_2104cc474f1ce5::t_87a40075f994dc 234-238
+  s_2104cc474f1ce5::t_4fbf87d8431aa0 239-241
+sdk/test/architecture.test.ts
+  s_2104cc474f1ce5::t_87a40075f994dc 259,275-289
+  s_2104cc474f1ce5::t_66b9ec35ef302e 290-292
+sdk/src/features/messages/message-resolution.ts
+  s_2104cc474f1ce5::t_659a1ca57e6a42 33-35
+  s_2104cc474f1ce5::t_321cbea3af46d7 1-32,36-70
+sdk/src/features/messages/inbound-messages.ts
+  s_2104cc474f1ce5::t_659a1ca57e6a42 168
+sdk/docs/architecture.md
+  s_2104cc474f1ce5::t_659a1ca57e6a42 525-534
+sdk/test/message-resolution.test.ts
+  s_2104cc474f1ce5::t_67cdfb0e96fcf9 22-28,30-33,35-42,51-53,66-68,75-80,94-95,97-102,106-114,124-146
+  s_2104cc474f1ce5::t_87a40075f994dc 1-21,29,34,43-50,54-65,69-74,81-93,96,103-105,115-123,147
+  s_2104cc474f1ce5::t_819b2dc419b439 148-153
+sdk/docs/development.md
+  s_2104cc474f1ce5::t_659a1ca57e6a42 63-69
+sdk/src/features/messages/native-identities.ts
+  s_2104cc474f1ce5::t_659a1ca57e6a42 12,22
+sdk/src/native-services.ts
+  s_2104cc474f1ce5::t_4e08c6729833af 38,52,114-126,131
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a9062a71362476c907ccf1a8bb52f70517c5674f",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
