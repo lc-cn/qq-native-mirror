@@ -22,6 +22,7 @@ import { verifyGroupEssenceConsumer } from './group-essence-consumer-contract.mj
 import { verifyWorkerReadCancellation } from './worker-read-consumer-contract.mjs';
 import { verifyClientFactoryConsumer } from './client-factory-consumer-contract.mjs';
 import { verifyWorkerErrorRoutes } from './worker-error-consumer-contract.mjs';
+import { verifyActionPortConsumer } from './action-port-consumer-contract.mjs';
 
 // Offline packaging check: controlled services and actual worker routing with a replacement kernel; no QQ native binaries or accounts.
 const root = fileURLToPath(new URL('../', import.meta.url));
@@ -199,29 +200,9 @@ const missing=fixture('unused',true);try{await assert.rejects(missing.module.inv
 `,
 );
 run(process.execPath, ['self-profile.mjs']);
-await writeFile(
-  join(destination, 'group-operations.mjs'),
-  `import assert from 'node:assert/strict';
-import {QQClient} from 'qq-native-client';
-import {createGroupOperations} from './node_modules/qq-native-client/dist/features/groups/group-operations.js';
-import {prepareCommand} from './node_modules/qq-native-client/dist/cli.js';
-const calls=[];
-const service={modifyMemberRole:(...args)=>{calls.push(['role',args]);},modifyMemberCardName:(...args)=>{calls.push(['card',args]);},kickMember:async(...args)=>{calls.push(['kick',args]);},quitGroup:(...args)=>{calls.push(['quit',args]);}};
-const module=createGroupOperations({getGroupService:()=>service},async()=> 'u_fixture');
-const client={};
-for(const method of ['setGroupAdmin','setGroupMemberCard','kickGroupMember','leaveGroup']){assert.equal(typeof QQClient.prototype[method],'function');}
-client.setGroupAdmin=(groupId,userId,enabled)=>module.invokeOperation('setGroupAdmin',{groupId,userId,enabled});
-client.setGroupMemberCard=(groupId,userId,card)=>module.invokeOperation('setGroupMemberCard',{groupId,userId,card});
-client.kickGroupMember=(groupId,userId,options)=>module.invokeOperation('kickGroupMember',{groupId,userId,options});
-client.leaveGroup=groupId=>module.invokeOperation('leaveGroup',{groupId});
-for(const [command,flags] of [['member-admin',{'user-id':'456',enabled:'true'}],['member-card',{'user-id':'456',card:''}],['group-kick',{'user-id':'456'}],['group-leave',{}]]){await (await prepareCommand(command,{'group-id':'123',...flags}))(client);}
-assert.deepEqual(calls,[['role',['123','u_fixture',3]],['card',['123','u_fixture','']],['kick',['123',['u_fixture'],false,'']],['quit',['123']]]);
-const strict=createGroupOperations({getGroupService:()=>({modifyGroupName(){},setGroupShutUp(){},setMemberShutUp(){}})},async()=> 'u_fixture');
-for(const [method,payload] of [['setGroupName',{name:'name'}],['setGroupMute',{enabled:true}],['setGroupMemberMute',{userId:'456',seconds:0}]]){await assert.rejects(strict.invokeOperation(method,{groupId:'123',...payload}),{code:'invalid-result'});}
-for(const [result,code] of [[{result:'denied'},'denied'],[{result:73},73],[{result:NaN},'invalid-result'],[{},'invalid-result']]){let attempts=0;const rejection=createGroupOperations({getGroupService:()=>({quitGroup(){attempts++;return result;}})},async()=> 'u_fixture');await assert.rejects(rejection.invokeOperation('leaveGroup',{groupId:'123'}),{code});assert.equal(attempts,1);}
-`,
+const actionPortChecks = await verifyActionPortConsumer(
+  join(destination, 'node_modules/qq-native-client'),
 );
-run(process.execPath, ['group-operations.mjs']);
 await writeFile(
   join(destination, 'group-members.mjs'),
   `import assert from 'node:assert/strict';
@@ -565,6 +546,7 @@ const receipt = {
     ...groupEssenceChecks,
     ...readCancellationChecks,
     ...workerErrorChecks,
+    ...actionPortChecks,
     ...publicContractChecks,
     privateFilesExcluded: true,
     installedImport: true,

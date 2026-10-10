@@ -21,7 +21,28 @@ const voidOperations = new Set<GroupOperation>([
   'kickGroupMember',
   'leaveGroup',
 ]);
-import type { NativeObject as Native } from '../../native/native-object.ts';
+export interface GroupMutationPort {
+  modifyGroupName?: (id: string, name: string, flag: boolean) => unknown;
+  modifyGroupRemark?: (id: string, remark: string) => unknown;
+  setGroupShutUp?: (id: string, enabled: boolean) => unknown;
+  setMemberShutUp?: (id: string, members: { uid: string; timeStamp: number }[]) => unknown;
+  modifyMemberCardName?: (id: string, uid: string, card: string) => unknown;
+  modifyMemberRole?: (id: string, uid: string, role: number) => unknown;
+  kickMember?: (id: string, uids: string[], reject: boolean, reason: string) => unknown;
+  quitGroup?: (id: string) => unknown;
+}
+type NativeGroupCall = {
+  [K in keyof GroupMutationPort]-?: {
+    method: K;
+    args: Parameters<NonNullable<GroupMutationPort[K]>>;
+  };
+}[keyof GroupMutationPort];
+export interface GroupOperationsContext {
+  getGroupService(): GroupMutationPort | null | undefined;
+  resolveUid(id: string): Promise<string>;
+  signal: AbortSignal;
+  awaitAlive<T>(value: T | PromiseLike<T>): Promise<T>;
+}
 function id(value: unknown, field: string): string {
   if (typeof value !== 'string' || !/^\d+$/.test(value))
     throw new Error(`${field} must be a numeric string`);
@@ -36,53 +57,59 @@ function boolean(value: unknown, field: string): boolean {
   if (typeof value !== 'boolean') throw new Error(`${field} must be a boolean`);
   return value;
 }
-export function createGroupOperations(
-  session: Native,
-  resolveUid: (id: string) => Promise<string>,
-) {
-  const memberUid = async (userId: string): Promise<string> =>
-    text(await resolveUid(userId), 'resolved UID');
+export function createGroupOperations(context: GroupOperationsContext) {
+  const { resolveUid, signal, awaitAlive } = context;
+  const alive = () => signal.throwIfAborted();
+  const memberUid = async (userId: string): Promise<string> => {
+    alive();
+    const value = await awaitAlive(resolveUid(userId));
+    alive();
+    return text(value, 'resolved UID');
+  };
   async function invokeOperation(
     method: GroupOperation,
     payload: Record<string, unknown>,
   ): Promise<void> {
+    alive();
     const groupId = id(payload.groupId, 'groupId');
-    let nativeMethod: string;
-    let args: unknown[];
+    let call: NativeGroupCall;
     switch (method) {
       case 'setGroupName':
-        nativeMethod = 'modifyGroupName';
-        args = [groupId, text(payload.name, 'name'), false];
+        call = { method: 'modifyGroupName', args: [groupId, text(payload.name, 'name'), false] };
         break;
       case 'setGroupRemark':
-        nativeMethod = 'modifyGroupRemark';
-        args = [groupId, text(payload.remark, 'remark', true)];
+        call = {
+          method: 'modifyGroupRemark',
+          args: [groupId, text(payload.remark, 'remark', true)],
+        };
         break;
       case 'setGroupMute':
-        nativeMethod = 'setGroupShutUp';
-        args = [groupId, boolean(payload.enabled, 'enabled')];
+        call = { method: 'setGroupShutUp', args: [groupId, boolean(payload.enabled, 'enabled')] };
         break;
       case 'setGroupMemberMute': {
         const userId = id(payload.userId, 'userId');
         const seconds = payload.seconds;
         if (typeof seconds !== 'number' || !Number.isSafeInteger(seconds) || seconds < 0)
           throw new Error('seconds must be a nonnegative safe integer');
-        nativeMethod = 'setMemberShutUp';
-        args = [groupId, [{ uid: await memberUid(userId), timeStamp: seconds }]];
+        call = {
+          method: 'setMemberShutUp',
+          args: [groupId, [{ uid: await memberUid(userId), timeStamp: seconds }]],
+        };
         break;
       }
       case 'setGroupMemberCard': {
         const userId = id(payload.userId, 'userId');
         const card = text(payload.card, 'card', true);
-        nativeMethod = 'modifyMemberCardName';
-        args = [groupId, await memberUid(userId), card];
+        call = { method: 'modifyMemberCardName', args: [groupId, await memberUid(userId), card] };
         break;
       }
       case 'setGroupAdmin': {
         const userId = id(payload.userId, 'userId');
         const enabled = boolean(payload.enabled, 'enabled');
-        nativeMethod = 'modifyMemberRole';
-        args = [groupId, await memberUid(userId), enabled ? 3 : 2];
+        call = {
+          method: 'modifyMemberRole',
+          args: [groupId, await memberUid(userId), enabled ? 3 : 2],
+        };
         break;
       }
       case 'kickGroupMember': {
@@ -100,27 +127,31 @@ export function createGroupOperations(
             ? false
             : boolean(options.rejectRejoin, 'rejectRejoin');
         const reason = options.reason === undefined ? '' : text(options.reason, 'reason', true);
-        nativeMethod = 'kickMember';
-        args = [groupId, [await memberUid(userId)], rejectRejoin, reason];
+        call = {
+          method: 'kickMember',
+          args: [groupId, [await memberUid(userId)], rejectRejoin, reason],
+        };
         break;
       }
       case 'leaveGroup':
-        nativeMethod = 'quitGroup';
-        args = [groupId];
+        call = { method: 'quitGroup', args: [groupId] };
         break;
       default:
         throw new Error(`Unsupported group operation: ${method}`);
     }
-    if (typeof session.getGroupService !== 'function')
-      throw new Error('Native service is missing getGroupService');
-    const service = session.getGroupService();
-    if (!service || typeof service[nativeMethod] !== 'function')
-      throw new Error(`Native group service is missing ${nativeMethod}`);
-    const result = await service[nativeMethod](...args);
+    alive();
+    const service = context.getGroupService();
+    alive();
+    const captured = service?.[call.method];
+    alive();
+    if (typeof captured !== 'function')
+      throw new Error(`Native group service is missing ${call.method}`);
+    const result: unknown = await awaitAlive(Reflect.apply(captured, service, call.args));
+    alive();
     if (result === undefined && voidOperations.has(method)) return;
     // GeneralCallResult methods require result zero; explicit failure or malformed
     // returns also reject for void methods. No mutation is retried.
-    if (!result || typeof result !== 'object' || result.result !== 0) {
+    if (!result || typeof result !== 'object' || (result as { result?: unknown }).result !== 0) {
       throw nativeResultError(`Native group ${method} failed`, result);
     }
   }

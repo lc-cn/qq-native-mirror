@@ -232,10 +232,21 @@ export function createNativeServices(context: NativeServiceContext) {
     );
     const friendRequests = own(createFriendRequests(guardedSession, emit));
     const groupRequests = own(createGroupRequests(guardedSession, emit));
-    const contactOperations = createContactOperations(guardedSession, uidFor);
+    const contactOperations = createContactOperations({
+      getBuddyService: () => service('Buddy'),
+      getProfileService: () => service('Profile'),
+      resolveUid: uidFor,
+      signal: lifetime.signal,
+      awaitAlive,
+    });
     const selfProfile = own(createSelfProfile(guardedSession, () => accountUid ?? ''));
     const groupNotices = createGroupNotices(guardedSession);
-    const groupOperations = createGroupOperations(guardedSession, uidFor);
+    const groupOperations = createGroupOperations({
+      getGroupService: () => service('Group'),
+      resolveUid: uidFor,
+      signal: lifetime.signal,
+      awaitAlive,
+    });
     const resolvePeer = async (value: unknown): Promise<NativePeer> => {
       if (!value || typeof value !== 'object' || Array.isArray(value))
         throw new Error('Unsupported peer type');

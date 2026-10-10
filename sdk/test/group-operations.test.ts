@@ -1,9 +1,25 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  createGroupOperations,
+  createGroupOperations as createWithContext,
+  type GroupMutationPort,
   type GroupOperation,
 } from '../src/features/groups/group-operations.ts';
+
+function createGroupOperations(
+  session: { getGroupService?: () => GroupMutationPort },
+  resolveUid: (id: string) => Promise<string>,
+) {
+  return createWithContext({
+    getGroupService() {
+      if (!session.getGroupService) throw new Error('Native service is missing getGroupService');
+      return session.getGroupService();
+    },
+    resolveUid,
+    signal: new AbortController().signal,
+    awaitAlive: async (value) => value,
+  });
+}
 
 test('group operations translate explicit calls to pinned native argument contracts', async () => {
   const calls: { method: string; args: unknown[] }[] = [];
@@ -220,3 +236,94 @@ test('void contracts retain explicit rejection codes and do not expose native re
     assert.equal(calls, 1);
   }
 });
+
+for (const stage of ['service', 'method', 'uid'] as const) {
+  test(`synchronous abort during ${stage} prevents mutation dispatch`, async () => {
+    const controller = new AbortController();
+    const reason = new Error('fixture aborted');
+    let calls = 0;
+    const service: GroupMutationPort = {
+      get modifyMemberRole() {
+        if (stage === 'method') controller.abort(reason);
+        return function (this: GroupMutationPort) {
+          assert.equal(this, service);
+          calls++;
+          return undefined;
+        };
+      },
+    };
+    const operations = createWithContext({
+      signal: controller.signal,
+      getGroupService() {
+        if (stage === 'service') controller.abort(reason);
+        return service;
+      },
+      async resolveUid() {
+        if (stage === 'uid') controller.abort(reason);
+        return 'u_fixture';
+      },
+      awaitAlive: async (value) => value,
+    });
+    await assert.rejects(
+      operations.invokeOperation('setGroupAdmin', { groupId: '123', userId: '456', enabled: true }),
+      (error) => error === reason,
+    );
+    assert.equal(calls, 0);
+  });
+}
+
+test('pending native completion is interrupted without replay and late rejection is observed', async () => {
+  const controller = new AbortController();
+  const reason = new Error('fixture closed');
+  let rejectNative!: (reason: unknown) => void;
+  let calls = 0;
+  const response = new Promise<unknown>((_, reject) => {
+    rejectNative = reject;
+  });
+  const service: GroupMutationPort = {
+    quitGroup() {
+      assert.equal(this, service);
+      calls++;
+      return response;
+    },
+  };
+  const operations = createWithContext({
+    signal: controller.signal,
+    getGroupService: () => service,
+    resolveUid: async () => 'u_fixture',
+    awaitAlive(value) {
+      return Promise.race([
+        Promise.resolve(value),
+        new Promise<never>((_, reject) =>
+          controller.signal.addEventListener('abort', () => reject(controller.signal.reason), {
+            once: true,
+          }),
+        ),
+      ]);
+    },
+  });
+  const pending = operations.invokeOperation('leaveGroup', { groupId: '123' });
+  controller.abort(reason);
+  await assert.rejects(pending, (error) => error === reason);
+  rejectNative(new Error('late native failure'));
+  await new Promise<void>((resolve) => setImmediate(resolve));
+  await assert.rejects(
+    operations.invokeOperation('leaveGroup', { groupId: '123' }),
+    (error) => error === reason,
+  );
+  assert.equal(calls, 1);
+});
+
+for (const absent of [undefined, null]) {
+  test(`absent service ${String(absent)} preserves fixed missing-method error`, async () => {
+    const operations = createWithContext({
+      signal: new AbortController().signal,
+      getGroupService: () => absent,
+      resolveUid: async () => 'u_fixture',
+      awaitAlive: async (value) => value,
+    });
+    await assert.rejects(operations.invokeOperation('leaveGroup', { groupId: '123' }), {
+      message: 'Native group service is missing quitGroup',
+    });
+  });
+}

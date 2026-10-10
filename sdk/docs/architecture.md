@@ -260,6 +260,19 @@ retain their separate counts and duplicate membership semantics. Single conversi
 misses remain uncached, preserving the existing policy. Construction does no native
 work, and close prevents cache hits, late commits and subsequent dispatch.
 
+`createContactOperations` and `createGroupOperations` receive separate mutation
+ports, not a Session or arbitrary service locator. The contact module owns profile
+lookup, remark and deletion validation; the group module owns its eight management
+actions. Each group method is paired with its native argument tuple by a type
+union, so adding a branch cannot silently mix another method's parameters.
+Both modules validate and capture input before UID lookup, retain the selected
+native receiver and acquire each method once. They use the Session's signal and
+wait owner: close interrupts pending lookups/completions and suppresses subsequent
+dispatch, while late native failures remain observed. They never retry a mutation.
+The existing per-method completion policy remains local to each domain; void
+confirms submission only, and result-bearing methods require a validated success
+code. These internal ports do not add types to the public package interface.
+
 The CLI entry retains help, configuration, explicit login selection and entry-URL
 handling. `command-plan` validates command flags and captures file-backed message
 inputs before the client is created; its prepared actions never initiate login.
@@ -380,5 +393,10 @@ are not evident from the code. Keep native provenance references next to the
 adapter contract. Avoid restating method names or adding a pattern without a real
 variation point. Add tests for lifetime, correlation and input/projection
 boundaries; do not mirror implementation line by line.
+
+Installed action checks exercise the compiled contact/group adapters and the real
+Session lifetime with controlled services. Their consumer helper has its own
+module in `scripts/`, rather than embedding action behavior in the packaging
+orchestrator. No native addon or account is used by these checks.
 
 See [Development guide](development.md) for the workflow and module placement rules.

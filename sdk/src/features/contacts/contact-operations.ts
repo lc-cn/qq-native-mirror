@@ -13,7 +13,20 @@ export interface ContactProfile {
   remark: string;
   raw: unknown;
 }
-import type { NativeObject as Native } from '../../native/native-object.ts';
+export interface BuddyMutationPort {
+  setBuddyRemark?: (request: { uid: string; remark: string }) => unknown;
+  delBuddy?: (request: { friendUid: string; tempBlock: boolean; tempBothDel: boolean }) => unknown;
+}
+export interface ContactProfilePort {
+  getCoreAndBaseInfo?: (store: string, uids: string[]) => unknown;
+}
+export interface ContactOperationsContext {
+  getBuddyService(): BuddyMutationPort | null | undefined;
+  getProfileService(): ContactProfilePort | null | undefined;
+  resolveUid(id: string): Promise<string>;
+  signal: AbortSignal;
+  awaitAlive<T>(value: T | PromiseLike<T>): Promise<T>;
+}
 function userId(value: unknown): string {
   if (typeof value !== 'string' || !/^\d+$/.test(value))
     throw new Error('userId must be a numeric string');
@@ -35,22 +48,47 @@ function checkResult(result: unknown, method: string): void {
     throw nativeResultError(`Native contact ${method} failed`, result);
   }
 }
-export function createContactOperations(
-  session: Native,
-  resolveUid: (id: string) => Promise<string>,
-) {
-  const call = (family: string, method: string, ...args: unknown[]) => {
-    if (typeof session[`get${family}Service`] !== 'function')
-      throw new Error(`Native service is missing get${family}Service`);
-    const service = session[`get${family}Service`]();
-    if (!service || typeof service[method] !== 'function')
-      throw new Error(`Native ${family} service is missing ${method}`);
-    return service[method](...args);
+/** Acquires only the contact methods needed by the selected operation.
+ * The Session owns cancellation; mutation calls are never retried. */
+export function createContactOperations(context: ContactOperationsContext) {
+  const { getBuddyService, getProfileService, resolveUid, signal, awaitAlive } = context;
+  const alive = () => signal.throwIfAborted();
+  const readProfile = (uid: string) => {
+    alive();
+    const service = getProfileService();
+    alive();
+    const method = service?.getCoreAndBaseInfo;
+    alive();
+    if (typeof method !== 'function')
+      throw new Error('Native Profile service is missing getCoreAndBaseInfo');
+    return Reflect.apply(method, service, ['nodeStore', [uid]]) as unknown;
+  };
+  const setRemark = (uid: string, remark: string) => {
+    alive();
+    const service = getBuddyService();
+    alive();
+    const method = service?.setBuddyRemark;
+    alive();
+    if (typeof method !== 'function')
+      throw new Error('Native Buddy service is missing setBuddyRemark');
+    return Reflect.apply(method, service, [{ uid, remark }]) as unknown;
+  };
+  const deleteBuddy = (uid: string, block: boolean, both: boolean) => {
+    alive();
+    const service = getBuddyService();
+    alive();
+    const method = service?.delBuddy;
+    alive();
+    if (typeof method !== 'function') throw new Error('Native Buddy service is missing delBuddy');
+    return Reflect.apply(method, service, [
+      { friendUid: uid, tempBlock: block, tempBothDel: both },
+    ]) as unknown;
   };
   async function invokeOperation(
     method: ContactOperation,
     payload: Record<string, unknown>,
   ): Promise<ContactProfile | void> {
+    alive();
     const id = userId(payload.userId);
     // Validate all mutation arguments before even resolving the account UID.
     let remark: string | undefined;
@@ -68,23 +106,27 @@ export function createContactOperations(
       if (options.both !== undefined) both = flag(options.both, 'both');
     } else if (method !== 'getUserProfile')
       throw new Error(`Unsupported contact operation: ${method}`);
-    const uid = await resolveUid(id);
+    alive();
+    const uid = await awaitAlive(resolveUid(id));
+    alive();
     if (typeof uid !== 'string' || !uid.trim())
       throw new Error('User UID resolution returned no UID');
     if (method === 'getUserProfile') {
-      const profiles = await call('Profile', 'getCoreAndBaseInfo', 'nodeStore', [uid]);
+      const profiles = await awaitAlive(readProfile(uid));
+      alive();
       if (!(profiles instanceof Map)) throw new Error('Native profile response must be a Map');
-      const profile = profiles.get(uid);
+      const profile: unknown = profiles.get(uid);
+      const row = profile as Record<string, unknown> | null | undefined;
       if (
         !profile ||
         typeof profile !== 'object' ||
         Array.isArray(profile) ||
-        !profile.coreInfo ||
-        typeof profile.coreInfo !== 'object' ||
-        Array.isArray(profile.coreInfo)
+        !row?.coreInfo ||
+        typeof row?.coreInfo !== 'object' ||
+        Array.isArray(row?.coreInfo)
       )
         throw new Error('Native profile response is missing the requested user');
-      const core = profile.coreInfo;
+      const core = row!.coreInfo as Record<string, unknown>;
       // CoreInfo declares both identifiers as strings. A Map entry alone cannot
       // validate a missing or contradictory native identity for the requested user.
       const { uid: profileUid, uin } = core;
@@ -106,8 +148,9 @@ export function createContactOperations(
     }
     const result =
       method === 'setFriendRemark'
-        ? await call('Buddy', 'setBuddyRemark', { uid, remark })
-        : await call('Buddy', 'delBuddy', { friendUid: uid, tempBlock: block, tempBothDel: both });
+        ? await awaitAlive(setRemark(uid, remark!))
+        : await awaitAlive(deleteBuddy(uid, block, both));
+    alive();
     checkResult(result, method);
   }
   return { invokeOperation };
