@@ -1,0 +1,49 @@
+sdk/README.md
+  s_2104cc474f1ce5::t_e66b42f1ebb4eb 70
+sdk/docs/contacts-groups.md
+  s_2104cc474f1ce5::t_4069c31967e1fe 8,83-85
+sdk/docs/evidence/friend-category-rename-contract.json
+  s_2104cc474f1ce5::t_1143340528012b 1-71
+sdk/scripts/friend-category-rename-consumer-contract.mjs
+  s_2104cc474f1ce5::t_52656dcff2a1d4 1-119
+sdk/scripts/verify-package-consumer.mjs
+  s_2104cc474f1ce5::t_70211fec662c25 32,206-208,481-484,565
+sdk/src/cli.ts
+  s_2104cc474f1ce5::t_7c87e60bbe592e 24
+sdk/src/cli/command-plan.ts
+  s_2104cc474f1ce5::t_a9ff9312ab93bc 1,46,358-363
+sdk/src/client/qq-client.ts
+  s_2104cc474f1ce5::t_42bb9f84f3d399 9-12,166-169
+sdk/src/features/contacts/friend-categories.ts
+  s_2104cc474f1ce5::t_71a4e639902a57 105-116
+sdk/src/features/contacts/friend-category-rename.ts
+  s_2104cc474f1ce5::t_d62db5338e3a60 1-91
+sdk/src/native-services.ts
+  s_2104cc474f1ce5::t_4e033d94ed9110 1,22,30-33,125-130,383-391
+sdk/src/native/native-contracts.ts
+  s_2104cc474f1ce5::t_f745c5d4f43b95 14,31-32,41,55,161-167
+sdk/src/runtime/operations.ts
+  s_2104cc474f1ce5::t_ce286259e2b374 8
+sdk/test/fixtures/domain-port-types.ts
+  s_2104cc474f1ce5::t_1d56d1819d2417 1,39,142-148
+sdk/test/friend-category-rename-profiles.test.ts
+  s_2104cc474f1ce5::t_abb117a0cb6105 1-175
+sdk/test/friend-category-rename.test.ts
+  s_2104cc474f1ce5::t_f986079a09a2cf 1-195
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "3e19b2444777fb29cc7f587cc4bc8232f471c061",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
