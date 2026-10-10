@@ -563,6 +563,7 @@ npm run check
 ```
 
 `check` runs formatting, zero-warning ESLint, strict source/test type checking,
+strict checking of the governed consumer tooling,
 deterministic tests, a clean build and verification of a newly packed/installed
 consumer. The package consumer uses fake services and an isolated replacement
 kernel; this command does not log into an account. Codec dependencies are packed
@@ -578,6 +579,23 @@ declaration between owned domains must not change its name or shape.
 The `SDK quality` GitHub workflow runs these gates independently of platform
 bundle and video-native CI. Runtime output is recreated from a clean `dist`
 directory so obsolete emitted modules cannot make a packaging check pass.
+
+`tsconfig.scripts.json` governs all TypeScript scripts, the shared face consumer
+and the module-reference collector. The face consumer binds dynamic installed imports to their source
+contracts, uses the actual installed Client with controlled IPC, and returns a
+valid synthetic send receipt. Type-aware lint rejects unobserved Promises even
+when prefixed with `void`. Negative gate fixtures prove that missing preparation
+awaits, missing action awaits and invalid receipts fail without executing those
+fixtures. Other JavaScript acceptance helpers still receive the existing syntax lint;
+strict JavaScript checking is an explicit migration, not a claim about every helper.
+
+The module-reference collector reads the local packed verifier and platform
+consumer helper closures without executing them. It checks supported static
+installed-module paths, including reviewed local loader calls and split path
+joins. Computed fixture paths require exact reviewed exceptions. This protects
+file references in the current build; exports, archive inclusion, generated
+fixture code and native behavior remain covered by their separate executable
+checks. All `ci/` changes now trigger SDK quality as well as platform CI.
 
 Static architecture tests require every TypeScript source module to participate
 in the formatting gate. Binary-directory ignores are anchored to the package root

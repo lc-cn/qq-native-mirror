@@ -153,3 +153,18 @@ real directory-lock ownership with replacement native/kernel ports. Changes to
 the platform consumer orchestrator trigger SDK quality as well as native CI.
 Always rebuild from clean `dist`; source tests cannot detect obsolete
 emitted modules left in a package.
+
+All TypeScript scripts and the first checked JavaScript consumer share
+`tsconfig.scripts.json`. When migrating a JavaScript helper, give dynamic installed imports the corresponding module
+types, retain faithful DTOs in controlled adapters and add type-aware Promise
+lint. Do not silence errors by assigning the whole installed module or fake
+client to `any`. Compiler/lint negative fixtures must reject broken verification
+code without executing it. Start with the checked face consumer as an example;
+the remaining JavaScript helpers are not yet all covered by this stricter project.
+
+Keep static consumer references in forms accepted by
+`scripts/consumer-module-references.ts`. A computed fixture path requires an exact
+reviewed exception with a reason and its compiled module inventory. The collector
+never executes a verifier or scans unrelated account executors. Run the separate
+CI path gate after building, then the actual packed consumer; passing either one
+does not establish the other.

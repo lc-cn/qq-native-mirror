@@ -23,7 +23,7 @@
     "lint:fix": "eslint . --fix --max-warnings=0",
     "format": "prettier --write src test scripts docs README.md package.json tsconfig*.json *.mjs .prettierrc.json",
     "format:check": "prettier --check src test scripts docs README.md package.json tsconfig*.json *.mjs .prettierrc.json",
-    "typecheck": "tsc --noEmit && tsc -p tsconfig.test.json",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.test.json && tsc -p tsconfig.scripts.json",
     "verify:package": "node scripts/verify-package-consumer.mjs",
     "check": "npm run format:check && npm run lint && npm run typecheck && npm test && npm run build && npm run verify:package",
     "clean": "node scripts/clean-dist.mjs"

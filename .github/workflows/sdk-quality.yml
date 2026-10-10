@@ -5,14 +5,12 @@ on:
   pull_request:
     paths:
       - 'sdk/**'
-      - 'ci/verify-consumer.mjs'
-      - 'ci/consumer-module-paths.test.mjs'
+      - 'ci/**'
       - '.github/workflows/sdk-quality.yml'
   push:
     paths:
       - 'sdk/**'
-      - 'ci/verify-consumer.mjs'
-      - 'ci/consumer-module-paths.test.mjs'
+      - 'ci/**'
       - '.github/workflows/sdk-quality.yml'
 
 permissions:

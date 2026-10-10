@@ -153,7 +153,7 @@ const stop = () => {
   receipt.interrupted = true;
   stopSignal.abort();
   process.exitCode = 130;
-  void client?.close().catch(() => {});
+  client?.close().catch(() => {});
 };
 const check = () => {
   if (receipt.interrupted) throw Error('Interrupted');

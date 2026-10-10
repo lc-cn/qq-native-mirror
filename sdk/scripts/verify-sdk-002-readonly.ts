@@ -164,7 +164,7 @@ let client: QQClient | undefined;
 const stop = () => {
   receipt.interrupted = true;
   process.exitCode = 130;
-  void client?.close().catch(() => {});
+  client?.close().catch(() => {});
 };
 const checkInterrupted = () => {
   if (receipt.interrupted) throw new Error('Interrupted');

@@ -46,4 +46,19 @@ export default defineConfig([
     files: ['test/**/*.{ts,mjs}', 'scripts/**/*.{ts,mjs}'],
     rules: { '@typescript-eslint/no-explicit-any': 'off' },
   },
+  {
+    files: ['scripts/**/*.ts', 'scripts/face-consumer-contract.mjs'],
+    languageOptions: {
+      parserOptions: { project: './tsconfig.scripts.json', tsconfigRootDir: import.meta.dirname },
+    },
+    rules: {
+      '@typescript-eslint/no-floating-promises': ['error', { ignoreVoid: false }],
+      '@typescript-eslint/await-thenable': 'error',
+      '@typescript-eslint/no-misused-promises': 'error',
+    },
+  },
+  {
+    files: ['scripts/face-consumer-contract.mjs', 'scripts/consumer-module-references.ts'],
+    rules: { '@typescript-eslint/no-explicit-any': 'error' },
+  },
 ]);
