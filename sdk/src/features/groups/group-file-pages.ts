@@ -186,6 +186,17 @@ export function createGroupFilePages(context: GroupFilePagesContext) {
         { code: 'unsupported-native-contract' },
       );
     return new Promise((resolve, reject) => {
+      const expire = () => {
+        if (request.done) return;
+        // Timer delays are rounded and wakeups need not coincide with the
+        // monotonic deadline. Keep ownership until that deadline actually passes.
+        const remaining = request.deadline - performance.now();
+        if (remaining > 0) {
+          request.timer = setTimeout(expire, Math.ceil(remaining));
+          return;
+        }
+        finish(request, { reason: new Error('Group file page query timed out') });
+      };
       const request: Request = {
         captured,
         deadline,
@@ -195,10 +206,7 @@ export function createGroupFilePages(context: GroupFilePagesContext) {
         done: false,
         dispatched: false,
         early: [],
-        timer: setTimeout(
-          () => finish(request, { reason: new Error('Group file page query timed out') }),
-          Math.max(0, deadline - performance.now()),
-        ),
+        timer: setTimeout(expire, Math.max(0, Math.ceil(deadline - performance.now()))),
         abort: () => finish(request, { reason: new Error('Group file page query cancelled') }),
       };
       operationSignal.addEventListener('abort', request.abort, { once: true });

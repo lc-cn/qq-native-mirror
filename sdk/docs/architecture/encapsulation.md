@@ -464,7 +464,9 @@ response validation, receiver handling and account cancellation. Composition can
 import input, operation or listing-codec implementations.
 
 `group-file-pages` owns the serialized page lane, early callback snapshots,
-request deadlines and complete traversal. `group-file-page-codec` copies the
+request deadlines and complete traversal. Timer wakeups recheck the monotonic
+page deadline and rearm when early; they cannot retire an active query and free
+the lane before its deadline. Queued requests retain their original deadlines. `group-file-page-codec` copies the
 measured fields from unknown own-data properties without acquiring services or
 interpreting selector values. The existing Msg listener forwards notifications;
 no second native listener is registered. Composition supplies one

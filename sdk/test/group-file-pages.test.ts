@@ -285,6 +285,43 @@ test('listing follows native cursor with new tokens and never returns budget/sta
   }
 });
 
+test('early timer wakeup retains the active page until its monotonic deadline', async (t) => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const timers = t.mock.method(globalThis, 'setTimeout');
+  let now = 100;
+  t.mock.method(performance, 'now', () => now);
+  const f = fixture();
+  try {
+    const first = f.owner.getGroupFilePage('123');
+    const queued = f.owner.getGroupFilePage('123');
+    let settled = false;
+    const outcomes = Promise.allSettled([first, queued]).then((value) => {
+      settled = true;
+      return value;
+    });
+    now = 5099.5;
+    // Run only the active timer callback: Node drains its microtasks before the
+    // next due timer; a single mock tick would run both callbacks as one batch.
+    const wakeup = timers.mock.calls[0].arguments[0] as () => void;
+    wakeup();
+    await Promise.resolve();
+    await Promise.resolve();
+    assert.equal(f.calls.length, 1, 'an early wakeup must not free the dispatch lane');
+    assert.equal(settled, false, 'the monotonic deadline has not elapsed');
+    now = 5100;
+    const expiry = timers.mock.calls.at(-1)!.arguments[0] as () => void;
+    expiry();
+    const result = await outcomes;
+    for (const outcome of result) {
+      assert.equal(outcome.status, 'rejected');
+      if (outcome.status === 'rejected') assert.match(String(outcome.reason), /timed out/);
+    }
+    assert.equal(f.calls.length, 1, 'queued time consumes the same page deadline');
+  } finally {
+    f.owner.close();
+  }
+});
+
 test('no callback uses actual fixed five-second deadline, queued time included', async () => {
   const f = fixture();
   const originalNow = performance.now;
