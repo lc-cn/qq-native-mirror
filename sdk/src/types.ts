@@ -69,6 +69,7 @@ export interface ClientEvents {
   'friend-list-updated': [FriendListUpdate];
   'group-list-updated': [GroupListUpdate];
   'group-members-updated': [GroupMemberUpdate];
+  'group-info-updated': [GroupInfoUpdate];
   qrcode: [{ image: Buffer; url: string }];
   authenticated: [Account];
   login: [Account];
@@ -86,6 +87,7 @@ export interface ClientEvents {
 
 export type ClientState = 'idle' | 'connecting' | 'online' | 'disconnected' | 'closing' | 'closed' | 'failed';
 export interface Friend { userId: string; uid: string; nickname: string; remark: string }
+export interface FriendCategory { categoryId: number; sortId: number; name: string; memberCount: number; onlineCount: number; friends: Friend[] }
 /** Projected Buddy metadata; optional remarks remain absent when not supplied. */
 export interface FriendChange { userId: string; uid: string; nickname: string; remark?: string }
 export interface FriendCategoryChange { categoryId: number; name: string; memberCount: number; friends: FriendChange[] }
@@ -107,6 +109,16 @@ export interface GroupMemberChange {
 }
 /** Metadata synchronization, not a classified member join/leave notice. */
 export interface GroupMemberUpdate { groupId: string; source: 'local' | 'remote'; members: GroupMemberChange[] }
+/** Detail metadata synchronization; no inferred join/leave or operator. */
+export interface GroupInfoUpdate {
+  groupId: string;
+  name: string;
+  memberCount: number;
+  maxMemberCount: number;
+  ownerUid: string;
+  ownerUserId: string;
+  description: string;
+}
 export type Peer = { type: 'private'; userId: string } | { type: 'group'; groupId: string };
 export type SendableMessageElement =
   | { type: 'text'; text: string }

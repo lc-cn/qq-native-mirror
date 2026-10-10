@@ -627,3 +627,48 @@ test('history query accepts successful empty list and preserves normalized long 
     } finally { f.services.close(); }
   }
 });
+
+test('friend and member query close rejects before deferred native responses settle',async()=>{
+ for(const stage of ['buddy','profile','members']){
+  let release!:(value:any)=>void;const deferred=new Promise(r=>release=r);let reached!:()=>void;const began=new Promise<void>(r=>reached=r);const calls:string[]=[];
+  const services=createNativeServices({getMsgService:()=>({addKernelMsgListener(){}}),getBuddyService:()=>({addKernelBuddyListener(){},getBuddyListV2(){calls.push('buddy');if(stage==='buddy'){reached();return deferred;}return{result:0,data:[{buddyUids:['u_fixture']}]};}}),getProfileService:()=>({getCoreAndBaseInfo(){calls.push('profile');reached();return deferred;}}),getGroupService:()=>({addKernelGroupListener(){},getAllMemberList(){calls.push('members');reached();return deferred;}})},'7.0.2-53644',()=>{});
+  const pending=services.invokeOperation(stage==='members'?'getGroupMembers':'listFriends',{groupId:'123'});void pending.catch(()=>{});await began;services.close();
+  let timer:ReturnType<typeof setTimeout>|undefined;
+  try{await assert.rejects(Promise.race([pending,new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('query did not settle on close')),50);})]),/closed|abort/i);}
+  finally{clearTimeout(timer);release(stage==='buddy'?{result:0,data:[{buddyUids:['u_fixture']}]}:stage==='profile'?new Map([['u_fixture',{coreInfo:{uid:'u_fixture',uin:'456',remark:''}}]]):{errCode:0,result:{finish:true,infos:new Map()}});await new Promise(r=>setImmediate(r));services.close();}
+  assert.deepEqual(calls,stage==='buddy'?['buddy']:stage==='profile'?['buddy','profile']:['members']);
+ }
+});
+test('member query rejects invalid IDs before service dispatch and never coerces input',async()=>{
+ let calls=0,coercions=0;const services=createNativeServices({getMsgService:()=>({addKernelMsgListener(){}}),getBuddyService:()=>({addKernelBuddyListener(){}}),getGroupService:()=>({addKernelGroupListener(){},getAllMemberList(){calls++;return{errCode:0,result:{finish:true,infos:new Map()}};}})},'7.0.2-53644',()=>{});
+ try{for(const groupId of [undefined,123,'bad','',{toString(){coercions++;return'123';}}])await assert.rejects(services.invokeOperation('getGroupMembers',{groupId}));assert.equal(calls,0);assert.equal(coercions,0);assert.deepEqual(await services.invokeOperation('getGroupMembers',{groupId:'00123'}),[]);assert.equal(calls,1);}finally{services.close();}
+});
+
+test('group remark dispatch reaches pinned native method once and preserves result error',async()=>{
+ const calls:unknown[][]=[];let result:unknown={result:0};const services=createNativeServices({getMsgService:()=>({addKernelMsgListener(){}}),getBuddyService:()=>({addKernelBuddyListener(){}}),getGroupService:()=>({addKernelGroupListener(){},modifyGroupRemark(...args:unknown[]){calls.push(args);return result;}})},'7.0.2-53644',()=>{});
+ try{await services.invokeOperation('setGroupRemark',{groupId:'00123',remark:''});assert.deepEqual(calls,[['00123','']]);result={result:73};await assert.rejects(services.invokeOperation('setGroupRemark',{groupId:'00123',remark:'exact'}),{code:73});assert.deepEqual(calls,[['00123',''],['00123','exact']]);await assert.rejects(services.invokeOperation('setGroupRemark',{groupId:'bad',remark:''}));assert.equal(calls.length,2);}finally{services.close();}
+});
+
+test('native group detail callback emits typed metadata and stops after close',()=>{
+ const listeners:any[]=[];const events:any[]=[];const services=createNativeServices({getMsgService:()=>({addKernelMsgListener(){}}),getBuddyService:()=>({addKernelBuddyListener(){}}),getGroupService:()=>({addKernelGroupListener(listener:any){listeners.push(listener);return listeners.length;}})},'7.0.2-53644',(event,payload)=>events.push({event,payload}));
+ const detail={groupCode:'123',groupName:'fixture',ownerUid:'u_owner',ownerUin:'456',fingerMemo:'description',memberNum:2,maxMemberNum:100};
+ try{for(const listener of listeners)listener.onGroupDetailInfoChange(detail);assert.deepEqual(events.filter(e=>e.event==='group-info-updated'),[{event:'group-info-updated',payload:{groupId:'123',name:'fixture',memberCount:2,maxMemberCount:100,ownerUid:'u_owner',ownerUserId:'456',description:'description'}}]);services.close();const count=events.length;for(const listener of listeners)listener.onGroupDetailInfoChange(detail);assert.equal(events.length,count);}finally{services.close();}
+});
+
+test('friend category route captures source before profile await, retaining native counts and duplicate relationships',async()=>{
+ let release!:(value:any)=>void;const profiles=new Promise(r=>release=r);let reached!:()=>void;const began=new Promise<void>(r=>reached=r);
+ const raw={result:0,data:[{categoryId:1,categorySortId:2,categroyName:'fixture',categroyMbCount:9,onlineCount:4,buddyUids:['u_fixture','u_fixture']}]};let profileCalls=0;
+ const services=createNativeServices({getMsgService:()=>({addKernelMsgListener(){}}),getGroupService:()=>({addKernelGroupListener(){}}),getBuddyService:()=>({addKernelBuddyListener(){},getBuddyListV2(...args:any[]){assert.deepEqual(args,['0',true,0]);return raw;}}),getProfileService:()=>({getCoreAndBaseInfo(...args:any[]){profileCalls++;assert.deepEqual(args,['nodeStore',['u_fixture']]);reached();return profiles;}})},'7.0.2-53644',()=>{});
+ try{const pending=services.invokeOperation('listFriendCategories');await began;raw.data[0].categroyName='mutated';raw.data[0].buddyUids.length=0;release(new Map([['u_fixture',{coreInfo:{uid:'u_fixture',uin:'123',nick:'name',remark:''}}]]));assert.deepEqual(await pending,[{categoryId:1,sortId:2,name:'fixture',memberCount:9,onlineCount:4,friends:[{uid:'u_fixture',userId:'123',nickname:'name',remark:''},{uid:'u_fixture',userId:'123',nickname:'name',remark:''}]}]);assert.equal(profileCalls,1);}finally{services.close();}
+});
+test('invalid friend categories reject before Profile dispatch',async()=>{
+ let profiles=0;let raw:any={result:0,data:new Array(1)};const services=createNativeServices({getMsgService:()=>({addKernelMsgListener(){}}),getGroupService:()=>({addKernelGroupListener(){}}),getBuddyService:()=>({addKernelBuddyListener(){},getBuddyListV2(){return raw;}}),getProfileService:()=>({getCoreAndBaseInfo(){profiles++;return new Map();}})},'7.0.2-53644',()=>{});
+ try{await assert.rejects(services.invokeOperation('listFriendCategories'));raw={result:73,data:[]};await assert.rejects(services.invokeOperation('listFriendCategories'),{code:73});assert.equal(profiles,0);}finally{services.close();}
+});
+test('friend categories close cancels either native query phase before settlement',async()=>{
+ for(const stage of ['buddy','profile']){let release!:(value:any)=>void;const deferred=new Promise(r=>release=r);let reached!:()=>void;const began=new Promise<void>(r=>reached=r);const calls:string[]=[];const raw={result:0,data:[]};
+ const services=createNativeServices({getMsgService:()=>({addKernelMsgListener(){}}),getGroupService:()=>({addKernelGroupListener(){}}),getBuddyService:()=>({addKernelBuddyListener(){},getBuddyListV2(){calls.push('buddy');if(stage==='buddy'){reached();return deferred;}return raw;}}),getProfileService:()=>({getCoreAndBaseInfo(){calls.push('profile');reached();return deferred;}})},'7.0.2-53644',()=>{});
+ const pending=services.invokeOperation('listFriendCategories');void pending.catch(()=>{});await began;services.close();let timer:ReturnType<typeof setTimeout>|undefined;
+ try{await assert.rejects(Promise.race([pending,new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('query remained pending')),50);})]),/closed|abort/i);}finally{clearTimeout(timer);release(stage==='buddy'?raw:new Map());await new Promise(r=>setImmediate(r));services.close();}assert.deepEqual(calls,stage==='buddy'?['buddy']:['buddy','profile']);
+ }
+});

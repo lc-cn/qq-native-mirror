@@ -16,6 +16,7 @@ import { verifyForwardResourceTypes } from './forward-resource-type-contract.mjs
 import { verifyDownloadConsumer } from './download-consumer-contract.mjs';
 import { verifyKernelSessionConsumer } from './kernel-session-consumer-contract.mjs';
 import { verifyReceivedForwardConsumer } from './received-forward-consumer-contract.mjs';
+import { verifyContactGroupConsumer } from './contact-group-consumer-contract.mjs';
 
 // Offline packaging check: fake workers/services only; never starts a native worker or loads native binaries.
 const root = fileURLToPath(new URL('../', import.meta.url));
@@ -34,6 +35,7 @@ await writeFile(join(destination, 'package.json'), JSON.stringify({ private: tru
 run('npm', ['install', '--offline', '--ignore-scripts', '--no-audit', '--no-fund', join(destination, packed.filename), join(root, '.local/artifacts/silk-wasm-3.7.1.tgz')]);
 await writeFile(join(destination, 'import.mjs'), `import {createClient, QQClient} from 'qq-native-client';\nif(typeof createClient !== 'function' || typeof QQClient !== 'function') throw new Error('Invalid exports');\n`);
 run(process.execPath, ['import.mjs']);
+const contactGroupChecks = await verifyContactGroupConsumer(join(destination, 'node_modules/qq-native-client'));
 const messageBatchChecks = await verifyMessageBatchConsumer(join(destination, 'node_modules/qq-native-client'));
 const historyLifecycleChecks = await verifyHistoryLifecycleConsumer(join(destination, 'node_modules/qq-native-client'));
 const forwardResourceChecks = await verifyForwardResourceConsumer(join(destination, 'node_modules/qq-native-client'));
@@ -241,7 +243,7 @@ const videoChecks = await verifyVideoConsumerContract(join(destination,'node_mod
 run(process.execPath,[cliEntry,'init','--config','qq.json','--data-dir','account','--download-mirror','https://gh-proxy.com/']);
 const configuration=JSON.parse(run(process.execPath,[cliEntry,'config','--config','qq.json']));
 if(configuration.wrapperPath || configuration.version || configuration.downloadMirrors?.[0]!=='https://gh-proxy.com/')throw new Error('Installed CLI default catalog configuration failed');
-await writeFile(join(destination, 'consumer.ts'), `import {createClient, type ClientOptions, type QQClient, type MessageRecall, type VideoCodec, type VideoInfo, type Message} from 'qq-native-client';
+await writeFile(join(destination, 'consumer.ts'), `import {createClient, type ClientOptions, type QQClient, type MessageRecall, type VideoCodec, type VideoInfo, type Message, type FriendCategory} from 'qq-native-client';
 const options: ClientOptions = {dataDir:'/account',videoCodecPath:'/codec.node',downloadMirrors:['https://gh-proxy.com/'],autoReconnect:false};
 const videoInfo: VideoInfo = {width:1280,height:720,duration:2.75,format:'png',image:Buffer.alloc(0)};
 const videoCodec: VideoCodec = {getVideoInfo:async (_filePath:string):Promise<VideoInfo>=>videoInfo};
@@ -255,6 +257,10 @@ function subscribe(client: QQClient) {
  client.on('request.group', request => request.sequence);
  client.on('group-list-updated', update => update.groups.map(group=>group.groupId));
  client.on('group-members-updated', update => update.members.map(member=>[member.uid,member.deleted,member.role]));
+ client.on('group-info-updated', update => [update.groupId,update.ownerUid,update.ownerUserId,update.description]);
+ const categories: Promise<FriendCategory[]> = client.listFriendCategories();
+ const remark: Promise<void> = client.setGroupRemark('123','');
+ void categories; void remark;
  const page = client.listGroupRequests({doubt:false,limit:20});
  const publish: Promise<void> = client.publishGroupNotice('123','example',{pinned:true,confirmRequired:false});
  const remove: Promise<void> = client.deleteGroupNotice('123','notice_id');
@@ -279,7 +285,7 @@ void factory; void options; void subscribe;
 run(process.execPath, [resolve(root, 'node_modules/typescript/bin/tsc'), '--noEmit', '--strict', '--types', 'node', '--module', 'NodeNext', '--target', 'ES2023', '--typeRoots', resolve(root, 'node_modules/@types'), 'consumer.ts']);
 const receipt = { checkedAt: new Date().toISOString(), package: packed.name, version: packed.version,
   integrity: packed.integrity, fileCount: files.length, checks: { privateFilesExcluded:true, installedImport:true, cliHelp:true, cliDefaultConfig:true, faceContract:true, messageQueryContract:true, historyQueryContract:true, nativeHistoryQueryAttempted:false, selfProfileContract:true, groupOperationContract:true, groupMemberQueryContract:true, groupMemberIdentityContract:true, groupMetadataEventContract:true, businessWatchContract:true, friendMetadataEventContract:true, nativeFriendMetadataObserved:false, friendListQueryContract:true, friendListBatchContract:true, friendProfileQueryContract:true, groupListQueryContract:true, nativeGroupListQueryAttempted:false, nativeFriendListQueryAttempted:false, declarations:true },
-  ...sessionStrategyChecks, ...downloadChecks, ...messageBatchChecks, ...historyLifecycleChecks, ...forwardResourceChecks, forwardResourceDeclarationsContract:forwardResourceTypeChecks.success, forwardResourceTypeChecks, ...receivedForwardChecks, ...forwardChecks, ...recallChecks, ...mentionChecks, ...sendChecks, ...receivedChecks, ...videoChecks, nativeExecuted:false, accountUsed:false };
+  ...contactGroupChecks, ...sessionStrategyChecks, ...downloadChecks, ...messageBatchChecks, ...historyLifecycleChecks, ...forwardResourceChecks, forwardResourceDeclarationsContract:forwardResourceTypeChecks.success, forwardResourceTypeChecks, ...receivedForwardChecks, ...forwardChecks, ...recallChecks, ...mentionChecks, ...sendChecks, ...receivedChecks, ...videoChecks, nativeExecuted:false, accountUsed:false };
 await mkdir(join(root, '.local'), {recursive:true});
 await writeFile(join(root, '.local/package-consumer-verification.json'), JSON.stringify(receipt, null, 2));
 await mkdir(join(root, '.local/research'), {recursive:true});

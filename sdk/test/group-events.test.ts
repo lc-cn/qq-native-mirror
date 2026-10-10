@@ -2,6 +2,25 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGroupEvents } from '../src/group-events.ts';
 
+test('group detail synchronization projects only declared metadata and preserves exact IDs', () => {
+  const events: [string, any][] = [];
+  const listener = createGroupEvents((event, value) => events.push([event, value]));
+  const raw = { groupCode: '900719925474099312345', groupName: '群', memberNum: 3, maxMemberNum: 200,
+    ownerUid: 'u_owner', ownerUin: '000123', fingerMemo: '', credential: 'fixture-secret' };
+  listener.onGroupDetailInfoChange(raw);
+  assert.deepEqual(events, [['group-info-updated', { groupId: raw.groupCode, name: '群', memberCount: 3,
+    maxMemberCount: 200, ownerUid: 'u_owner', ownerUserId: '000123', description: '' }]]);
+  events[0][1].name = 'changed';
+  assert.equal(raw.groupName, '群');
+  assert.doesNotMatch(JSON.stringify(events), /credential|fixture-secret/);
+  for (const value of [null, [], { ...raw, ownerUin: 123 }, { ...raw, ownerUid: '' },
+    { ...raw, memberNum: -1 }, { ...raw, maxMemberNum: 1.5 }, { ...raw, fingerMemo: undefined }]) {
+    listener.onGroupDetailInfoChange(value);
+    assert.deepEqual(events.at(-1), ['diagnostic', { stage: 'invalid-native-group-info-update' }]);
+  }
+  assert.equal(events.filter(([name]) => name === 'group-info-updated').length, 1);
+});
+
 test('group list callback kinds preserve their meanings and partial metadata', () => {
   const events: [string, any][] = [];
   const listener = createGroupEvents((event, value) => events.push([event, value]));

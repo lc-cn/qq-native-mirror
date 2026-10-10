@@ -1,0 +1,106 @@
+{
+  "schemaVersion": 1,
+  "sourceScope": "Working additions after a0b879e; previous six-platform CI does not cover these additions",
+  "sourceFiles": [
+    {
+      "path": "src/friend-categories.ts",
+      "sha256": "1c504fc075658933d436db95e7dd560fdea12c4ac07caf3dfe03b3f29d9adef1"
+    },
+    {
+      "path": "src/group-events.ts",
+      "sha256": "9aeb60f7ab4da85d6f7114529eacdbe561324034f88e2fa7b549e35973bc86be"
+    },
+    {
+      "path": "src/group-operations.ts",
+      "sha256": "fe03263d53e23964551f810f4b948cae4e0ddfe0021660e94f0048472213920a"
+    },
+    {
+      "path": "src/index.ts",
+      "sha256": "8908750cef3fe5436a4896aec6f79fc9468496f82451a56f7178f1db29a53e90"
+    },
+    {
+      "path": "src/native-services.ts",
+      "sha256": "f18a3867e7109d6861cf188a6958d0e17b083313c367f85e7c5a788cf210f327"
+    },
+    {
+      "path": "src/types.ts",
+      "sha256": "d2d2e8921cca8005830ddaa0a81fb81c5b51b421e6ce29d7f0fdc1182c3b8f59"
+    },
+    {
+      "path": "src/worker.ts",
+      "sha256": "cc1c872a8f7bc6da2942126ba32d0a3f7580962a5c71069f93170c1ab3ee9c6a"
+    },
+    {
+      "path": "src/cli.ts",
+      "sha256": "707eabd6be0ebb74f7fb0b59beb7c5cdb6a8da25e2cc41c9cadcef92f1dbb8ca"
+    },
+    {
+      "path": "scripts/contact-group-consumer-contract.mjs",
+      "sha256": "537683bbfbb8924ffb5df8c2d7ad98c9c789a38d953a53e6cd36a2efb58591ff"
+    },
+    {
+      "path": "scripts/verify-package-consumer.mjs",
+      "sha256": "2b568ed95661d3e0517044bb8858811c99386b930505864773f666aa3b5b298e"
+    },
+    {
+      "path": "test/worker-contact-routes.test.ts",
+      "sha256": "34814f4fc9f7f968589729b3a80ae1815c7762d2e041723c9acc0ea366ee9274"
+    }
+  ],
+  "addedPublicSurface": [
+    "listFriendCategories()",
+    "setGroupRemark(groupId,remark)",
+    "group-info-updated"
+  ],
+  "cli": [
+    "friend-categories",
+    "group-remark",
+    "watch all/normalized group-info-updated"
+  ],
+  "fixed": [
+    "Group member ID validation before IPC/native dispatch",
+    "Friend/member close cancellation before accepting native results/cache commit",
+    "Actual worker allowlist for both new actions"
+  ],
+  "verification": {
+    "fullRegressions": {
+      "passed": 615,
+      "failed": 0,
+      "skipped": 0,
+      "logSha256": "88f8ae8afa84744e7b20ad9ef6ef687d5310a4506eac5ce075cc13c6b402801d"
+    },
+    "queryRegressionsBeforeFix": {
+      "passed": 100,
+      "failed": 3
+    },
+    "actualWorkerRegressionBeforeFix": {
+      "failed": 1,
+      "firstFailure": "Unknown kernel request: listFriendCategories",
+      "laterActionNotReached": true
+    },
+    "actualWorkerRegressionAfterFix": {
+      "passed": 1,
+      "bothOperationsReached": true,
+      "kernelFixture": true,
+      "dlopenStubbed": true
+    },
+    "installedPackage": {
+      "sha256": "9ecc12e02b27fcb270f9a8866421265a06c8e32c134f5d5cf4a8e0f8a7e38cc6",
+      "size": 406545,
+      "regularFilesMatchedToTarball": 175,
+      "compiledFilesMatchedToRoot": 92,
+      "declarationsPassed": true,
+      "actualWorkerRoutesPassed": true,
+      "createdBeforeThisPublicEvidenceFile": true
+    }
+  },
+  "nativeExecuted": false,
+  "accountUsed": false,
+  "npmPublished": false,
+  "freshSixPlatformCiVerified": false,
+  "remaining": [
+    "Category mutation argument/completion contracts",
+    "Classified friend relationship and group member/mute event contracts",
+    "Real account acceptance of these additions"
+  ]
+}

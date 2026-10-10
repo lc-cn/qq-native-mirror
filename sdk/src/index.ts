@@ -1,6 +1,7 @@
 import { deserializeKernelError, KernelRequestError } from './errors.ts';
 import {captureMergedForward} from './merged-forward.ts';
 import {normalizeForwardResourceId} from './forward-resource-wire.ts';
+import { sendGroupId } from './send-input.ts';
 import {captureDownloadRequest} from './media-operations.ts';
 import { normalizeMessageQuery, normalizeMessageBatchQuery, normalizeHistoryQuery } from './message-query.ts';
 export { KernelRequestError, MergedForwardError } from './errors.ts';
@@ -13,7 +14,7 @@ import { fileURLToPath } from 'node:url';
 import { mkdir } from 'node:fs/promises';
 import { prepareNative } from './native-package.ts';
 import { normalizeLoginRequest } from './login-request.ts';
-import type { Account, ClientOptions, ClientEvents, LoginRequest, ClientState, Friend, Group, GroupMember, MessageInput, SentMessage, SentMergedForward, ForwardTextNode, MergedForwardOptions, ForwardResource, Message, Peer, HistoryOptions, KickOptions, UserProfile, DeleteFriendOptions, FriendRequest, NativeCallbackAudit } from './types.ts';
+import type { Account, ClientOptions, ClientEvents, LoginRequest, ClientState, Friend, FriendCategory, Group, GroupMember, MessageInput, SentMessage, SentMergedForward, ForwardTextNode, MergedForwardOptions, ForwardResource, Message, Peer, HistoryOptions, KickOptions, UserProfile, DeleteFriendOptions, FriendRequest, NativeCallbackAudit } from './types.ts';
 export type * from './types.ts';
 export type { VideoCodec, VideoInfo } from './video-codec-loader.ts';
 import type { GroupNoticeOptions, GroupNoticePage } from './types.ts';
@@ -247,9 +248,10 @@ export class QQClient extends EventEmitter<ClientEvents> {
     if (this.#state !== 'online') return Promise.reject(new Error('QQ client is not online; await login() first'));
     return this.request(method, payload);
   }
+  listFriendCategories(): Promise<FriendCategory[]> { return this.#operation('listFriendCategories'); }
   listFriends(): Promise<Friend[]> { return this.#operation('listFriends'); }
   listGroups(): Promise<Group[]> { return this.#operation('listGroups'); }
-  getGroupMembers(groupId: string): Promise<GroupMember[]> { return this.#operation('getGroupMembers', { groupId }); }
+  async getGroupMembers(groupId: string): Promise<GroupMember[]> { return this.#operation('getGroupMembers', { groupId: sendGroupId(groupId) }); }
   sendPrivateMessage(userId: string, message: MessageInput): Promise<SentMessage> { return this.#operation('sendPrivateMessage', { userId, message }); }
   sendGroupMessage(groupId: string, message: MessageInput): Promise<SentMessage> { return this.#operation('sendGroupMessage', { groupId, message }); }
   async getHistory(peer: Peer, options: HistoryOptions = {}): Promise<Message[]> {
@@ -286,6 +288,11 @@ export class QQClient extends EventEmitter<ClientEvents> {
   handleFriendRequest(request: Pick<FriendRequest, 'uid' | 'time'>, accept: boolean): Promise<void> { return this.#operation('handleFriendRequest', { request, accept }); }
   listGroupRequests(options: GroupRequestOptions = {}): Promise<GroupRequestPage> { return this.#operation('listGroupRequests', { options }); }
   handleGroupRequest(request: Pick<GroupRequest, 'groupId' | 'sequence' | 'type' | 'doubt'>, accept: boolean, reason?: string): Promise<void> { return this.#operation('handleGroupRequest', { request, accept, reason }); }
+  async setGroupRemark(groupId: string, remark: string): Promise<void> {
+    const capturedGroupId = sendGroupId(groupId);
+    if (typeof remark !== 'string') throw new Error('remark must be a string');
+    return this.#operation('setGroupRemark', { groupId: capturedGroupId, remark });
+  }
   setGroupName(groupId: string, name: string): Promise<void> { return this.#operation('setGroupName', { groupId, name }); }
   setGroupMute(groupId: string, enabled: boolean): Promise<void> { return this.#operation('setGroupMute', { groupId, enabled }); }
   setGroupMemberMute(groupId: string, userId: string, seconds: number): Promise<void> { return this.#operation('setGroupMemberMute', { groupId, userId, seconds }); }

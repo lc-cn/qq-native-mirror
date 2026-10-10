@@ -110,10 +110,11 @@ test('CLI mutation commands validate before dispatch and allow explicit empty ca
   const client = new Proxy({}, { get: (_, method) => async (...args: unknown[]) => { calls.push([method, ...args]); } }) as QQClient;
   await (await prepareCommand('member-card', { 'group-id': '123', 'user-id': '456', card: '' }))(client);
   await (await prepareCommand('friend-remark', { target: '456', remark: '' }))(client);
+  await (await prepareCommand('group-remark', { 'group-id': '123', remark: '' }))(client);
   await (await prepareCommand('request', { uid: 'u_req', time: '123', accept: 'false' }))(client);
-  assert.deepEqual(calls, [['setGroupMemberCard', '123', '456', ''], ['setFriendRemark', '456', ''], ['handleFriendRequest', { uid: 'u_req', time: '123' }, false]]);
+  assert.deepEqual(calls, [['setGroupMemberCard', '123', '456', ''], ['setFriendRemark', '456', ''], ['setGroupRemark', '123', ''], ['handleFriendRequest', { uid: 'u_req', time: '123' }, false]]);
   for (const [command, flags] of [['history', { kind: 'group', target: '123', limit: '101' }], ['member-admin', { 'group-id': '123', 'user-id': '456', enabled: 'yes' }], ['member-mute', { 'group-id': '123', 'user-id': '456', seconds: '-1' }], ['request', { uid: 'u', time: 'bad', accept: 'true' }]] as [string, Record<string, string>][]) await assert.rejects(prepareCommand(command, flags));
-  assert.equal(calls.length, 3);
+  assert.equal(calls.length, 4);
 });
 
 test('CLI subprocess help and invalid mutation arguments never need account configuration', () => {
@@ -190,15 +191,15 @@ test('watch defaults to message JSON lines and removes its own delivery listener
   cleanup(); cleanup(); events.emit('message', message);
   assert.equal(events.listenerCount('message'), 0); assert.equal(lines.length, 1);
 });
-test('watch all envelopes seven legacy business event families and unbinds each', () => {
+test('watch all envelopes business event families and unbinds each', () => {
   const events = new EventEmitter(), lines: string[] = [];
   const cleanup = observeWatchEvents(events as QQClient, 'all', line => lines.push(line));
-  const names = ['message', 'message-recalled', 'request.friend', 'request.group', 'friend-list-updated', 'group-list-updated', 'group-members-updated'];
+  const names = ['message', 'message-recalled', 'request.friend', 'request.group', 'friend-list-updated', 'group-list-updated', 'group-members-updated', 'group-info-updated'];
   names.forEach((event, i) => events.emit(event, { fixture: i }));
   events.emit('msf-status', { status: 1 }); events.emit('authenticated', { credential: 'fixture-secret' });
   assert.deepEqual(lines.map(line => JSON.parse(line)), names.map((event, i) => ({ event, payload: { fixture: i } })));
   cleanup(); names.forEach(event => assert.equal(events.listenerCount(event), 0));
-  events.emit('group-members-updated', {}); assert.equal(lines.length, 7);
+  events.emit('group-members-updated', {}); assert.equal(lines.length, names.length);
 });
 test('watch normalized uses typed recall metadata once and preserves legacy all mode', () => {
   const events = new EventEmitter(), lines: string[] = [];

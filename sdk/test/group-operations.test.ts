@@ -9,6 +9,8 @@ test('group operations translate explicit calls to pinned native argument contra
   const operations = createGroupOperations({ getGroupService: () => service }, async userId => { resolutions.push(userId); return 'u_resolved'; });
   const cases: [GroupOperation, Record<string, unknown>, string, unknown[]][] = [
     ['setGroupName', { name: '新群名' }, 'modifyGroupName', ['123', '新群名', false]],
+    ['setGroupRemark', { remark: '本地群备注' }, 'modifyGroupRemark', ['123', '本地群备注']],
+    ['setGroupRemark', { remark: '' }, 'modifyGroupRemark', ['123', '']],
     ['setGroupMute', { enabled: true }, 'setGroupShutUp', ['123', true]],
     ['setGroupMute', { enabled: false }, 'setGroupShutUp', ['123', false]],
     ['setGroupMemberMute', { userId: '456', seconds: 0 }, 'setMemberShutUp', ['123', [{ uid: 'u_resolved', timeStamp: 0 }]]],
@@ -32,6 +34,7 @@ test('invalid inputs do not resolve users or invoke native mutations', async () 
   const operations = createGroupOperations({ getGroupService: () => { invoked++; return {}; } }, async () => { invoked++; return 'u'; });
   const cases: [GroupOperation, Record<string, unknown>][] = [
     ['leaveGroup', { groupId: '' }], ['setGroupName', { name: ' ' }],
+    ['setGroupRemark', { remark: { toString: () => 'invalid' } }],
     ['setGroupMute', { enabled: 1 }], ['setGroupAdmin', { userId: '456', enabled: 'true' }],
     ['setGroupMemberMute', { userId: '456', seconds: -1 }], ['setGroupMemberMute', { userId: '456', seconds: 1.5 }],
     ['setGroupMemberMute', { userId: '456', seconds: Number.MAX_SAFE_INTEGER + 1 }],
@@ -70,10 +73,10 @@ test('void group contracts acknowledge dispatch once without requiring an invent
 
 test('result-bearing group contracts still reject missing or malformed completion', async () => {
   for (const result of [undefined, null, {}, 0, { result: '0' }]) {
-    const service = { modifyGroupName: () => result, setGroupShutUp: () => result, setMemberShutUp: () => result };
+    const service = { modifyGroupName: () => result, modifyGroupRemark: () => result, setGroupShutUp: () => result, setMemberShutUp: () => result };
     const operations = createGroupOperations({ getGroupService: () => service }, async () => 'u');
     for (const [method, payload] of [
-      ['setGroupName', { name: 'name' }], ['setGroupMute', { enabled: false }],
+      ['setGroupName', { name: 'name' }], ['setGroupRemark', { remark: '' }], ['setGroupMute', { enabled: false }],
       ['setGroupMemberMute', { userId: '456', seconds: 0 }],
     ] as [GroupOperation, Record<string, unknown>][]) {
       await assert.rejects(operations.invokeOperation(method, { groupId: '123', ...payload }), /failed/);

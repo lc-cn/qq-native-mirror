@@ -1,9 +1,9 @@
 /** Pinned callback shapes and enums: NapCatQQ 26d7533e0f5800fdff865ab2f2ad7692917e1076
- * listeners/NodeIKernelGroupListener.ts: onGroupListUpdate, onMemberInfoChange;
- * types/group.ts: GroupListUpdateType, DataSource, NTGroupMemberRole.
+ * listeners/NodeIKernelGroupListener.ts: onGroupListUpdate, onMemberInfoChange, onGroupDetailInfoChange;
+ * types/group.ts: GroupListUpdateType, DataSource, NTGroupMemberRole, GroupDetailInfo.
  * These are metadata synchronization callbacks, not inferred join/kick events.
  */
-import type { GroupChange, GroupListUpdate, GroupMemberChange, GroupMemberUpdate } from './types.ts';
+import type { GroupChange, GroupListUpdate, GroupMemberChange, GroupMemberUpdate, GroupInfoUpdate } from './types.ts';
 
 function object(value: unknown): Record<string, unknown> | undefined {
   return value !== null && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : undefined;
@@ -52,6 +52,22 @@ function member(uid: unknown, value: unknown): GroupMemberChange | undefined {
 export function createGroupEvents(emit: (event: string, payload: unknown) => void) {
   const invalid = (stage: string) => emit('diagnostic', { stage });
   return {
+    onGroupDetailInfoChange(value: unknown): void {
+      const raw = object(value);
+      if (!raw || !decimal(raw.groupCode) || typeof raw.groupName !== 'string'
+        || typeof raw.ownerUid !== 'string' || !raw.ownerUid.trim() || !decimal(raw.ownerUin)
+        || typeof raw.fingerMemo !== 'string'
+        || !Number.isSafeInteger(raw.memberNum) || (raw.memberNum as number) < 0
+        || !Number.isSafeInteger(raw.maxMemberNum) || (raw.maxMemberNum as number) < 0) {
+        invalid('invalid-native-group-info-update'); return;
+      }
+      const update: GroupInfoUpdate = {
+        groupId: raw.groupCode, name: raw.groupName,
+        memberCount: raw.memberNum as number, maxMemberCount: raw.maxMemberNum as number,
+        ownerUid: raw.ownerUid, ownerUserId: raw.ownerUin, description: raw.fingerMemo,
+      };
+      emit('group-info-updated', update);
+    },
     onGroupListUpdate(kind: unknown, values: unknown): void {
       const kinds = ['refresh', 'all', 'modified', 'removed'] as const;
       if (typeof kind !== 'number' || !Number.isInteger(kind) || kind < 0 || kind >= kinds.length || !Array.isArray(values)) {

@@ -47,7 +47,7 @@ function watchEventMode(mode: unknown): 'message' | 'all' | 'normalized' {
 /** Attach business deliveries before login; return exact listener cleanup. */
 export function observeWatchEvents(client: QQClient, mode: unknown = undefined, write: (line: string) => void = console.log): () => void {
   const selected = watchEventMode(mode);
-  const events = selected === 'message' ? ['message'] as const : ['message', selected === 'normalized' ? 'message.recalled' : 'message-recalled', 'request.friend', 'request.group', 'friend-list-updated', 'group-list-updated', 'group-members-updated'] as const;
+  const events = selected === 'message' ? ['message'] as const : ['message', selected === 'normalized' ? 'message.recalled' : 'message-recalled', 'request.friend', 'request.group', 'friend-list-updated', 'group-list-updated', 'group-members-updated', 'group-info-updated'] as const;
   const listeners = events.map(event => {
     const listener = (payload: unknown) => write(JSON.stringify(selected === 'message' ? payload : { event, payload }));
     client.on(event, listener);
@@ -63,6 +63,7 @@ const usage = `qq-native-client <command> [options]
   config --config FILE                 Check and display configuration
   login --config FILE [--method qr|restore|quick] [--uin UIN] [--qr-file FILE]
   contacts --config FILE [--uin UIN]    Restore login and list friends
+  friend-categories --config FILE [--uin UIN]  List categorized friends
   groups --config FILE [--uin UIN]      Restore login and list groups
   members --config FILE --group-id ID [--uin UIN]
   history --config FILE --kind private|group --target ID [--limit 20] [--before MESSAGE_ID] [--uin UIN]
@@ -87,6 +88,7 @@ const usage = `qq-native-client <command> [options]
   friend-remark --config FILE --target USER_ID --remark TEXT
   friend-delete --config FILE --target USER_ID [--block true|false] [--both true|false]
   group-name --config FILE --group-id ID --name TEXT
+  group-remark --config FILE --group-id ID --remark TEXT
   group-mute --config FILE --group-id ID --enabled true|false
   member-mute --config FILE --group-id ID --user-id ID --seconds SECONDS
   member-card --config FILE --group-id ID --user-id ID --card TEXT
@@ -231,8 +233,10 @@ export async function prepareCommand(command: string, flags: Record<string, stri
     case 'recall': { const target = peer(flags); const messageId = numeric(flags, 'message-id'); return client => client.recallMessage(target, messageId); }
     case 'download': { const target = peer(flags); const messageId = numeric(flags, 'message-id'); const elementId = numeric(flags, 'element-id'); const destination = resolve(required(flags, 'destination')); return client => client.downloadAttachment(target, messageId, elementId, destination); }
     case 'friend-remark': { const target = numeric(flags, 'target'); const remark = required(flags, 'remark', true); return client => client.setFriendRemark(target, remark); }
+    case 'friend-categories': return client => client.listFriendCategories();
     case 'friend-delete': { const target = numeric(flags, 'target'); const options = { block: bool(flags, 'block', false), both: bool(flags, 'both', false) }; return client => client.deleteFriend(target, options); }
     case 'group-name': { const group = numeric(flags, 'group-id'); const name = required(flags, 'name'); if (!name.trim()) throw new Error('--name must not be blank'); return client => client.setGroupName(group, name); }
+    case 'group-remark': { const group = numeric(flags, 'group-id'); const remark = required(flags, 'remark', true); return client => client.setGroupRemark(group, remark); }
     case 'group-mute': { const group = numeric(flags, 'group-id'); const enabled = bool(flags, 'enabled'); return client => client.setGroupMute(group, enabled); }
     case 'member-mute': { const group = numeric(flags, 'group-id'); const user = numeric(flags, 'user-id'); const seconds = Number(numeric(flags, 'seconds')); if (!Number.isSafeInteger(seconds)) throw new Error('--seconds must be a nonnegative safe integer'); return client => client.setGroupMemberMute(group, user, seconds); }
     case 'member-card': { const group = numeric(flags, 'group-id'); const user = numeric(flags, 'user-id'); const card = required(flags, 'card', true); return client => client.setGroupMemberCard(group, user, card); }
@@ -258,7 +262,7 @@ async function main() {
     init: ['config', 'data-dir', 'wrapper', 'client-version', 'app-id', 'qua', 'manifest', 'manifest-sha256', 'catalog', 'download-mirror'],
     config: ['config'], login: ['config', 'method', 'uin', 'qr-file'],
     members: ['config', 'uin', 'group-id'], history: ['config', 'uin', 'kind', 'target', 'limit', 'before'], message: ['config', 'uin', 'kind', 'target', 'message-id'], watch: ['config', 'uin', 'events'],
-    contacts: ['config', 'uin'], groups: ['config', 'uin'], send: ['config', 'kind', 'target', 'text', 'message-file', 'uin'],
+    contacts: ['config', 'uin'], 'friend-categories': ['config', 'uin'], groups: ['config', 'uin'], send: ['config', 'kind', 'target', 'text', 'message-file', 'uin'],
     nickname: ['config','uin','name'], signature: ['config','uin','text'],
     profile: ['config', 'uin', 'target'], requests: ['config', 'uin'], request: ['config', 'uin', 'uid', 'time', 'accept'],
     'forward-history': ['config', 'uin', 'kind', 'target', 'root-message-id', 'parent-message-id'], forward: ['config', 'uin', 'source-kind', 'source-target', 'kind', 'target', 'message-ids'],
@@ -268,7 +272,7 @@ async function main() {
     'group-requests': ['config', 'uin', 'doubt', 'limit', 'before'], 'group-request': ['config', 'uin', 'group-id', 'sequence', 'type', 'accept', 'doubt', 'reason'],
     recall: ['config', 'uin', 'kind', 'target', 'message-id'], download: ['config', 'uin', 'kind', 'target', 'message-id', 'element-id', 'destination'],
     'friend-remark': ['config', 'uin', 'target', 'remark'], 'friend-delete': ['config', 'uin', 'target', 'block', 'both'],
-    'group-name': ['config', 'uin', 'group-id', 'name'], 'group-mute': ['config', 'uin', 'group-id', 'enabled'],
+    'group-name': ['config', 'uin', 'group-id', 'name'], 'group-remark': ['config', 'uin', 'group-id', 'remark'], 'group-mute': ['config', 'uin', 'group-id', 'enabled'],
     'member-mute': ['config', 'uin', 'group-id', 'user-id', 'seconds'], 'member-card': ['config', 'uin', 'group-id', 'user-id', 'card'],
     'group-notices': ['config', 'uin', 'group-id'],
     'group-notice-publish': ['config', 'uin', 'group-id', 'text', 'image', 'pinned', 'confirm-required'], 'group-notice-delete': ['config', 'uin', 'group-id', 'notice-id'],

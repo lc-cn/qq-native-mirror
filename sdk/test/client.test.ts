@@ -526,3 +526,28 @@ test('resource lookup validates before IPC, preserves the exact reference and cl
   const closing=client.getForwardResource('r');const rejection=assert.rejects(closing,/closed/);await client.close();await rejection;assert.equal(worker.requests.filter(r=>r.method==='getForwardResource').length,2);
  }finally{await client.close();}
 });
+
+test('public member query validates group ID before IPC without coercion',async()=>{
+ const worker=new Worker(),client=new QQClient(worker as unknown as ChildProcess,500);worker.emit('message',{event:'ready',payload:{uin:'456',uid:'u_self'}});let coercions=0;
+ try{for(const id of [undefined,123,'bad','',{toString(){coercions++;return'123';}}])await assert.rejects(async()=>client.getGroupMembers(id as any));assert.equal(worker.requests.length,0);assert.equal(coercions,0);const pending=client.getGroupMembers('00123');const request=worker.requests.at(-1);assert.equal(request.groupId,'00123');worker.emit('message',{id:request.id,result:[]});assert.deepEqual(await pending,[]);}finally{await client.close();}
+});
+
+test('group remark public API validates before IPC and preserves empty or exact text',async()=>{
+ const worker=new Worker(),client=new QQClient(worker as unknown as ChildProcess,500);worker.emit('message',{event:'ready',payload:{uin:'456',uid:'u_self'}});let coercions=0;
+ try{
+  for(const [id,remark] of [[undefined,'x'],[123,'x'],['bad','x'],['123',undefined],['123',{toString(){coercions++;return'x';}}]])await assert.rejects(client.setGroupRemark(id as any,remark as any));
+  assert.equal(worker.requests.length,0);assert.equal(coercions,0);
+  for(const remark of ['', '  exact remark  ']){const pending=client.setGroupRemark('00123',remark);const request=worker.requests.at(-1);assert.equal(request.method,'setGroupRemark');assert.equal(request.groupId,'00123');assert.equal(request.remark,remark);worker.emit('message',{id:request.id,result:undefined});assert.equal(await pending,undefined);}
+ }finally{await client.close();}
+});
+
+test('public group detail metadata event forwards exact DTO and stops after close',async()=>{
+ const worker=new Worker(),client=new QQClient(worker as unknown as ChildProcess,500);const events:any[]=[];client.on('group-info-updated',update=>events.push(update));
+ const payload={groupId:'123',name:'fixture',memberCount:2,maxMemberCount:100,ownerUid:'u_owner',ownerUserId:'456',description:'description'};
+ worker.emit('message',{event:'group-info-updated',payload});assert.deepEqual(events,[payload]);await client.close();worker.emit('message',{event:'group-info-updated',payload});assert.deepEqual(events,[payload]);
+});
+
+test('public friend categories uses dedicated IPC operation and returns category DTO',async()=>{
+ const worker=new Worker(),client=new QQClient(worker as unknown as ChildProcess,500);worker.emit('message',{event:'ready',payload:{uin:'456',uid:'u_self'}});
+ try{const pending=client.listFriendCategories();const request=worker.requests.at(-1);assert.equal(request.method,'listFriendCategories');const categories=[{categoryId:1,sortId:2,name:'fixture',memberCount:9,onlineCount:4,friends:[]}];worker.emit('message',{id:request.id,result:categories});assert.deepEqual(await pending,categories);}finally{await client.close();}
+});

@@ -1,3 +1,4 @@
+import { captureFriendCategories, projectFriendCategories } from './friend-categories.ts';
 import { nativeResultError } from './errors.ts';
 import {captureMergedForward,sendCapturedMergedForward} from './merged-forward.ts';
 import {createLongMessageResponseTransport} from './long-message-response.ts';
@@ -27,7 +28,7 @@ import type { Friend, Group, GroupMember, Message, NativeCallbackAudit } from '.
 
 type Native = Record<string, any>;
 export interface NativePeer { chatType: 1 | 2; peerUid: string; guildId?: string }
-export type ServiceOperation = 'listFriends' | 'listGroups' | 'getGroupMembers' | 'sendPrivateMessage' | 'sendGroupMessage' | 'sendMergedForward' | 'getForwardResource' | 'getMessage' | 'getMessages' | 'getHistory' | 'recallMessage' | 'downloadAttachment' | SelfProfileOperation | 'listGroupNotices' | GroupNoticeOperation | GroupOperation | ContactOperation | FriendRequestOperation | GroupRequestOperation | ForwardOperation;
+export type ServiceOperation = 'listFriendCategories' | 'listFriends' | 'listGroups' | 'getGroupMembers' | 'sendPrivateMessage' | 'sendGroupMessage' | 'sendMergedForward' | 'getForwardResource' | 'getMessage' | 'getMessages' | 'getHistory' | 'recallMessage' | 'downloadAttachment' | SelfProfileOperation | 'listGroupNotices' | GroupNoticeOperation | GroupOperation | ContactOperation | FriendRequestOperation | GroupRequestOperation | ForwardOperation;
 export interface NativeMessage extends Native { msgId: string; peerUid: string; chatType: number }
 interface Waiter { event: string; check: (...args: any[]) => unknown; resolve: (value: any) => void; reject: (error: Error) => void; timer: ReturnType<typeof setTimeout> }
 
@@ -192,7 +193,7 @@ export function createNativeServices(session: Native, version: string, emit: (ev
     if (process.env.QQ_NATIVE_TRACE_FIELDS === '1') emit('diagnostic', { stage: `group-list-update:kind-${typeof kind === 'number' || typeof kind === 'boolean' ? String(kind) : typeof kind}:count-${Array.isArray(groups) ? groups.length : 'non-array'}` });
     groupEvents.onGroupListUpdate(kind, groups);
     dispatch('Group/onGroupListUpdate', [kind, groups]);
-  }, onMemberInfoChange: groupEvents.onMemberInfoChange });
+  }, onMemberInfoChange: groupEvents.onMemberInfoChange, onGroupDetailInfoChange: groupEvents.onGroupDetailInfoChange });
   const eventCall = async (event: string, check: Waiter['check'], invoke: () => any, timeoutMs = 10_000, checkReturn?: (value: any) => boolean) => {
     lifetime.signal.throwIfAborted();
     let waiter: Waiter;
@@ -308,11 +309,21 @@ export function createNativeServices(session: Native, version: string, emit: (ev
     async invokeOperation(method: ServiceOperation, payload: Native = {}): Promise<unknown> {
       if (closed) throw new Error('Native services are closed');
       switch (method) {
+        case 'listFriendCategories': {
+          if (!['7.0.2-53644', '3.2.32-52194', '9.9.33-52230'].includes(version)) throw new Error('Buddy list signature not verified for this native version');
+          const raw = await awaitAlive(call(service('Buddy'), 'getBuddyListV2', '0', true, 0));
+          const captured = captureFriendCategories(raw);
+          const profiles = await awaitAlive(call(service('Profile'), 'getCoreAndBaseInfo', 'nodeStore', [...captured.uniqueUIDs]));
+          const categories = projectFriendCategories(captured, profiles);
+          lifetime.signal.throwIfAborted();
+          for (const category of categories) for (const friend of category.friends) uidCache.set(friend.userId, friend.uid);
+          return categories;
+        }
         case 'listFriends': {
           // Windows 9.9.33 uses the same three-argument V2 contract in the pinned
           // upstream implementation; account-level Windows validation is pending.
           if (!['7.0.2-53644', '3.2.32-52194', '9.9.33-52230'].includes(version)) throw new Error('Buddy list signature not verified for this native version');
-          const result = await call(service('Buddy'), 'getBuddyListV2', '0', true, 0);
+          const result = await awaitAlive(call(service('Buddy'), 'getBuddyListV2', '0', true, 0));
           // Pinned getBuddyListV2 returns GeneralCallResult as well as data.
           // An empty data array does not establish a successful query.
           if (result?.result !== 0) throw nativeResultError('Native buddy list query failed', result);
@@ -323,7 +334,7 @@ export function createNativeServices(session: Native, version: string, emit: (ev
           const requested = categories.flatMap((category: any) => Array.from(category.buddyUids));
           if (!requested.every((uid): uid is string => typeof uid === 'string' && uid.length > 0)) throw new Error('Invalid native buddy UID');
           const uids = [...new Set<string>(requested)];
-          const profiles = await call(service('Profile'), 'getCoreAndBaseInfo', 'nodeStore', uids);
+          const profiles = await awaitAlive(call(service('Profile'), 'getCoreAndBaseInfo', 'nodeStore', uids));
           if (!(profiles instanceof Map)) throw new Error('Invalid native profile map');
           if (uids.some(uid => !profiles.has(uid))) throw new Error('Native buddy profiles are incomplete');
           const friends = uids.map((uid): Friend => {
@@ -336,6 +347,7 @@ export function createNativeServices(session: Native, version: string, emit: (ev
             return { userId: core.uin, uid, nickname: core.nick ?? '', remark: core.remark };
           });
           // A rejected batch must not leave usable entries from an earlier row.
+          lifetime.signal.throwIfAborted();
           for (const friend of friends) uidCache.set(friend.userId, friend.uid);
           return friends;
         }
@@ -363,7 +375,10 @@ export function createNativeServices(session: Native, version: string, emit: (ev
           finally {if(groupListRequest===request)groupListRequest=undefined;}
         }
         case 'getGroupMembers': {
-          const result = await call(service('Group'), 'getAllMemberList', String(payload.groupId), payload.refresh ?? false);
+          const groupId = sendGroupId(payload.groupId);
+          const refresh = payload.refresh ?? false;
+          if (typeof refresh !== 'boolean') throw new Error('refresh must be a boolean');
+          const result = await awaitAlive(call(service('Group'), 'getAllMemberList', groupId, refresh));
           // Pinned NodeIKernelGroupService.getAllMemberList reports errCode and
           // finish:true. A Map alone does not establish a successful full list.
           if (result?.errCode !== 0) throw nativeResultError('Native group member query failed', result, 'errCode');
@@ -382,6 +397,7 @@ export function createNativeServices(session: Native, version: string, emit: (ev
             return { userId: member.uin, uid, nickname: member.nick, card: member.cardName, role };
           });
           // Commit only a complete validated query; failures leave no partial cache.
+          lifetime.signal.throwIfAborted();
           for (const member of members) uidCache.set(member.userId, member.uid);
           return members;
         }
@@ -464,7 +480,7 @@ export function createNativeServices(session: Native, version: string, emit: (ev
           return listWebGroupNotices(guardedSession, accountId, payload.groupId, undefined, lifetime.signal);
         case 'publishGroupNotice': case 'deleteGroupNotice':
           return groupNotices.invokeOperation(method, payload);
-        case 'setGroupName': case 'setGroupMute': case 'setGroupMemberMute':
+        case 'setGroupName': case 'setGroupRemark': case 'setGroupMute': case 'setGroupMemberMute':
         case 'setGroupMemberCard': case 'setGroupAdmin': case 'kickGroupMember': case 'leaveGroup':
           return groupOperations.invokeOperation(method, payload);
         default: throw new Error(`Unsupported operation: ${String(method)}`);

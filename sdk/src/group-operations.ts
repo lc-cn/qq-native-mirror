@@ -4,7 +4,7 @@
  * These contracts are fake-tested; no real group mutation is part of verification.
  */
 import { nativeResultError } from './errors.ts';
-export type GroupOperation = 'setGroupName' | 'setGroupMute' | 'setGroupMemberMute' | 'setGroupMemberCard' | 'setGroupAdmin' | 'kickGroupMember' | 'leaveGroup';
+export type GroupOperation = 'setGroupName' | 'setGroupRemark' | 'setGroupMute' | 'setGroupMemberMute' | 'setGroupMemberCard' | 'setGroupAdmin' | 'kickGroupMember' | 'leaveGroup';
 // Pinned NodeIKernelGroupService declares void/Promise<void> for these four.
 // A void return acknowledges submission only, not remote permission or effect.
 const voidOperations = new Set<GroupOperation>(['setGroupMemberCard', 'setGroupAdmin', 'kickGroupMember', 'leaveGroup']);
@@ -29,6 +29,7 @@ export function createGroupOperations(session: Native, resolveUid: (id: string) 
     let args: unknown[];
     switch (method) {
       case 'setGroupName': nativeMethod = 'modifyGroupName'; args = [groupId, text(payload.name, 'name'), false]; break;
+      case 'setGroupRemark': nativeMethod = 'modifyGroupRemark'; args = [groupId, text(payload.remark, 'remark', true)]; break;
       case 'setGroupMute': nativeMethod = 'setGroupShutUp'; args = [groupId, boolean(payload.enabled, 'enabled')]; break;
       case 'setGroupMemberMute': {
         const userId = id(payload.userId, 'userId');
