@@ -1,0 +1,34 @@
+sdk/test/architecture.test.ts
+  s_2104cc474f1ce5::t_d31988318accbd 502,506
+sdk/src/runtime/media-contracts.ts
+  s_2104cc474f1ce5::t_d31988318accbd 18-38
+sdk/test/helpers/dependency-policy.ts
+  s_2104cc474f1ce5::t_d31988318accbd 236,240
+sdk/src/features/media/media-operations.ts
+  s_2104cc474f1ce5::t_9ebdfc3088e969 53
+  s_2104cc474f1ce5::t_d31988318accbd 8,37,69,92
+sdk/docs/architecture.md
+  s_2104cc474f1ce5::t_e04b9e4d802689 477-486
+sdk/test/fixtures/domain-port-types.ts
+  s_2104cc474f1ce5::t_d31988318accbd 353-383
+sdk/test/attachment-download-port.test.ts
+  s_2104cc474f1ce5::t_f9f11b9abf19a1 1-16,25,27-39,44-71,74-91,99-100,104-107,110-119,121-130,132-135
+  s_2104cc474f1ce5::t_61fae047863307 17-24,26,40-43,72-73,92-98,101-103,108-109,120,131
+  s_2104cc474f1ce5::t_69b05a6bf45114 136
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "76e927beb25f2dfddcd113cf03b8ae6af1fab933",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
