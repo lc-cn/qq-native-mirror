@@ -1,0 +1,42 @@
+sdk/test/fixtures/domain-port-types.ts
+  s_2104cc474f1ce5::t_e5fec9da0c3e2f 404-405,442-458
+sdk/test/architecture.test.ts
+  s_2104cc474f1ce5::t_f5e19cd89cfb78 277
+sdk/docs/architecture/encapsulation.md
+  s_2104cc474f1ce5::t_ce3851c228dd74 1-500
+sdk/docs/development.md
+  s_2104cc474f1ce5::t_ce3851c228dd74 123-129
+sdk/test/native-message-sender.test.ts
+  s_2104cc474f1ce5::t_e5fec9da0c3e2f 3-6,8-9,11,18-19,25,27,30,73,81,102-131,141-177,179
+  s_2104cc474f1ce5::t_765b05a80b71f0 132-140
+  s_2104cc474f1ce5::t_aad7b910c43272 178,180-183
+sdk/src/features/messages/native-message-sender.ts
+  s_2104cc474f1ce5::t_f5e19cd89cfb78 3-5,14,25,70-72,74,90,131-132,138
+  s_2104cc474f1ce5::t_c664be9214357b 2
+sdk/src/features/forward/merged-forward-card.ts
+  s_2104cc474f1ce5::t_f5e19cd89cfb78 1-3
+sdk/src/native/prepared-message-contracts.ts
+  s_2104cc474f1ce5::t_f5e19cd89cfb78 124-135
+sdk/docs/architecture.md
+  s_2104cc474f1ce5::t_3601e5a78177f5 51-70,111-113,117-119,123-125
+sdk/docs/architecture/lifecycle.md
+  s_2104cc474f1ce5::t_1969061b9eeb83 1-38
+sdk/docs/architecture/quality-gates.md
+  s_2104cc474f1ce5::t_361a873c5657f2 1-116
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "8406c70e56172529e5094d687bbd13100584c698",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
