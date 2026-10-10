@@ -1,0 +1,41 @@
+sdk/docs/architecture.md
+  s_2104cc474f1ce5::t_d00fc0b054abf2 482,507-520
+sdk/docs/development.md
+  s_2104cc474f1ce5::t_9e5166ddfdea64 38-42
+sdk/src/features/messages/recall-operation.ts
+  s_2104cc474f1ce5::t_6911b79470fa7c 1-44
+sdk/src/native-services.ts
+  s_2104cc474f1ce5::t_11142f8eabac48 67,450-463
+sdk/test/architecture.test.ts
+  s_2104cc474f1ce5::t_ddc10809f25ab9 10-13,168,182-186,192,194,196-220,308,315,324-325,360,368,372
+sdk/test/fixtures/domain-port-types.ts
+  s_2104cc474f1ce5::t_3e07933d6959a6 221-235
+sdk/test/helpers/dependency-policy.ts
+  s_2104cc474f1ce5::t_55a3d748d3622b 1-2,107
+sdk/test/helpers/external-dependencies.ts
+  s_2104cc474f1ce5::t_63b89a5dc43021 1-91
+sdk/test/helpers/source-dependencies.ts
+  s_2104cc474f1ce5::t_f37d89fdcca5f1 43,46-54,69-72
+sdk/test/native-services.test.ts
+  s_2104cc474f1ce5::t_4f9ca8e44d3633 1686-1713
+sdk/test/recall-operation.test.ts
+  s_2104cc474f1ce5::t_16c3cc2c36e256 1-158
+sdk/test/source-dependencies.test.ts
+  s_2104cc474f1ce5::t_eca3283b50ec6d 1-49
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "22c755c85c00ff23ab9d61fbbcb43b9c22269e09",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
