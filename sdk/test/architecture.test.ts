@@ -8,6 +8,7 @@ import { getFileInfo } from 'prettier';
 import { extractSourceDependencies } from './helpers/source-dependencies.ts';
 import {
   crossFeatureDependencies,
+  dynamicNativeOwners,
   dependencyViolation,
   sourceOwnershipViolation,
 } from './helpers/dependency-policy.ts';
@@ -228,6 +229,46 @@ test('native composition delegates forward resource orchestration to its domain 
     }),
     undefined,
   );
+});
+
+test('group-file composition cannot regain operation policy through input or adapter imports', () => {
+  for (const typeOnly of [false, true]) {
+    for (const to of [
+      'src/features/groups/group-file-input.ts',
+      'src/features/groups/group-file-operations.ts',
+    ])
+      assert.ok(dependencyViolation({ from: 'src/native-services.ts', to, typeOnly }));
+    assert.equal(
+      dependencyViolation({
+        from: 'src/native-services.ts',
+        to: 'src/features/groups/group-files.ts',
+        typeOnly,
+      }),
+      undefined,
+    );
+  }
+});
+
+test('dynamic native object permissions apply only to actual reviewed adapters and projectors', () => {
+  const to = 'src/native/native-object.ts';
+  for (const from of [
+    'src/features/groups/new-input.ts',
+    'src/features/messages/new-projector.ts',
+    'src/features/contacts/new-operation.ts',
+    'src/features/groups/group-files.ts',
+    'src/features/messages/send-input.ts',
+  ])
+    for (const typeOnly of [false, true])
+      assert.ok(dependencyViolation({ from, to, typeOnly }), `${from} inherited ${to}`);
+  for (const [from, reason] of Object.entries(dynamicNativeOwners)) {
+    assert.ok(reason.length > 0, `Missing dynamic object ownership reason: ${from}`);
+    assert.ok(
+      graph.get(join(projectRoot, from))?.some((edge) => edge.target === join(projectRoot, to)),
+      `Remove obsolete dynamic object permission: ${from}`,
+    );
+    assert.equal(dependencyViolation({ from, to, typeOnly: true }), undefined);
+    assert.ok(dependencyViolation({ from, to, typeOnly: false }));
+  }
 });
 
 test('package entry contains only public reexports', () => {
@@ -508,6 +549,7 @@ test('typed query, download and prepared element owners cannot regain the native
     'src/features/messages/outbound-elements.ts',
     'src/features/media/media-record.ts',
     'src/features/media/media-send.ts',
+    'src/features/groups/group-files.ts',
   ])
     assert.ok(dependencyViolation({ from, to: 'src/native/native-object.ts', typeOnly: true }));
 });

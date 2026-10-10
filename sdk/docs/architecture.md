@@ -507,6 +507,21 @@ RichMedia method and Session wait port, and native envelopes become copied publi
 DTOs only after validation. Public folder contracts expose no native service
 objects or mutable Session ownership.
 
+`features/groups/group-files` owns file-count and folder input capture and dispatch
+policy. Composition injects lazy method-specific ports and measured-profile
+decisions, then delegates named operations. The domain owner rejects unsupported
+contracts before acquiring native methods; the existing operation adapters retain
+response validation, receiver handling and account cancellation. Composition cannot
+import their input or operation implementations. This module adds no retries,
+listener, resource ledger or account lifetime.
+
+Feature access to `native/native-object` is denied by default, including type-only
+imports. Only the existing native projectors and legacy interop adapters have
+explicit permissions with ownership reasons. The gate rejects new input and
+operation modules and detects obsolete permissions when an import is removed.
+This keeps the proprietary dynamic escape hatch from becoming a general feature
+dependency.
+
 `runtime/native-listener-owner` owns callback proxy caching, shape-only audit,
 unknown callback dispatch and strong references. Composition supplies each native
 registration call and its business overrides; the owner cannot acquire services

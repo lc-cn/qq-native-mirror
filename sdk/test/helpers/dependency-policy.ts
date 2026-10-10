@@ -105,6 +105,20 @@ const featurePorts = new Set([
   'src/runtime/media-contracts.ts',
   'src/runtime/native-event-channel.ts',
 ]);
+
+// Existing native projections and legacy service adapters still consume the
+// proprietary dynamic object. New features use unknown results and narrow ports;
+// importing this type must require an explicit review, not a directory permission.
+export const dynamicNativeOwners: Readonly<Record<string, string>> = {
+  'src/features/contacts/contact-directory.ts': 'Project Buddy/Profile directory callbacks.',
+  'src/features/contacts/friend-requests.ts': 'Adapt the legacy Buddy request surface.',
+  'src/features/groups/group-queries.ts': 'Adapt Group callbacks and query results.',
+  'src/features/messages/inbound-messages.ts': 'Project version-dependent native messages.',
+  'src/features/messages/inbound-mentions.ts': 'Resolve native mention metadata.',
+  'src/features/messages/inbound-elements.ts': 'Project opaque received element variants.',
+  'src/features/messages/incoming-message-delivery.ts': 'Own delivery of opaque callback batches.',
+  'src/features/messages/native-message-sender.ts': 'Adapt the legacy Msg send surface.',
+};
 const facadeInputs = new Set([
   'src/features/contacts/friend-categories.ts',
   'src/features/forward/merged-forward-input.ts',
@@ -209,6 +223,14 @@ export function dependencyViolation({ from, to, typeOnly }: SourceDependency): s
       (typeOnly && to === 'src/features/forward/long-message-response.ts')
       ? undefined
       : 'Forward resource state and orchestration belong to the forward owner, not composition.';
+  if (
+    from === 'src/native-services.ts' &&
+    [
+      'src/features/groups/group-file-input.ts',
+      'src/features/groups/group-file-operations.ts',
+    ].includes(to)
+  )
+    return 'Group-file capture and operation orchestration belong to the group-files owner.';
   if (from === 'src/native-services.ts')
     return to.startsWith('src/features/') ||
       serviceRuntimeDependencies.has(to) ||
@@ -234,19 +256,10 @@ export function dependencyViolation({ from, to, typeOnly }: SourceDependency): s
       ? undefined
       : 'Runtime cannot depend on feature implementations or entry points.';
   if (from.startsWith('src/features/')) {
-    if (
-      [
-        'src/features/messages/message-query.ts',
-        'src/features/messages/message-queries.ts',
-        'src/features/media/media-operations.ts',
-        'src/features/messages/face-input.ts',
-        'src/features/messages/outbound-elements.ts',
-        'src/features/media/media-record.ts',
-        'src/features/media/media-send.ts',
-      ].includes(from) &&
-      to === 'src/native/native-object.ts'
-    )
-      return 'Query and attachment download owners use narrow ports rather than the native escape hatch.';
+    if (to === 'src/native/native-object.ts')
+      return typeOnly && Object.hasOwn(dynamicNativeOwners, from)
+        ? undefined
+        : 'Features use unknown results and narrow ports; dynamic native objects require exact ownership.';
     if (typeOnly && (nativeContracts.has(to) || featurePorts.has(to))) return;
     // Profile updates own a temporary native listener and preserve both lookup
     // and removal failures. This pure helper does not grant runtime composition.

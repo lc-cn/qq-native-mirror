@@ -1,16 +1,7 @@
 import { createFriendCategoryRename } from './features/contacts/friend-category-rename.ts';
 import { captureGroupSearch } from './features/groups/group-search-input.ts';
 import { createGroupSearch } from './features/groups/group-search.ts';
-import {
-  captureCreateGroupFolder,
-  captureDeleteGroupFolder,
-  captureGroupFileCount,
-} from './features/groups/group-file-input.ts';
-import {
-  createGroupFolder,
-  deleteGroupFolder,
-  getGroupFileCount,
-} from './features/groups/group-file-operations.ts';
+import { createGroupFiles } from './features/groups/group-files.ts';
 import { captureDownloadPayload } from './features/media/download-input.ts';
 import { createMessageQueries } from './features/messages/message-queries.ts';
 import { withCleanupFailure } from './runtime/cleanup.ts';
@@ -352,6 +343,32 @@ export function createNativeServices(context: NativeServiceContext) {
       sendPrepared: (peer, elements, onDispatch) => sender.sendPrepared(peer, elements, onDispatch),
       defer: (cleanup) => lifetime.defer(cleanup),
     });
+    const groupFiles = createGroupFiles({
+      signal: lifetime.signal,
+      awaitAlive,
+      supportsFileCount: () => supportsGroupFileCount(nativeContracts, version),
+      supportsFolderCreation: () => supportsGroupFolderCreation(nativeContracts, version),
+      supportsFolderDeletion: () => supportsGroupFolderDeletion(nativeContracts, version),
+      getFileCountService: () => {
+        const richMedia = service('RichMedia');
+        return {
+          batchGetGroupFileCount: (groups) => call(richMedia, 'batchGetGroupFileCount', groups),
+        };
+      },
+      getFolderCreationService: () => {
+        const richMedia = service('RichMedia');
+        return {
+          createGroupFolder: (groupId, name) => call(richMedia, 'createGroupFolder', groupId, name),
+        };
+      },
+      getFolderDeletionService: () => {
+        const richMedia = service('RichMedia');
+        return {
+          deleteGroupFolder: (groupId, folderId) =>
+            call(richMedia, 'deleteGroupFolder', groupId, folderId),
+        };
+      },
+    });
     return {
       async invokeOperation(
         method: ServiceOperation,
@@ -467,74 +484,12 @@ export function createNativeServices(context: NativeServiceContext) {
               );
             return groupSearch.searchGroup(group);
           }
-          case 'getGroupFileCount': {
-            const captured = captureGroupFileCount(payload.groupId);
-            if (!supportsGroupFileCount(nativeContracts, version))
-              throw Object.assign(
-                new Error('Group file count contract is not verified for this native binary'),
-                { code: 'unsupported-native-contract' },
-              );
-            return getGroupFileCount(
-              {
-                signal: lifetime.signal,
-                awaitAlive,
-                getRichMediaService: () => {
-                  const richMedia = service('RichMedia');
-                  return {
-                    batchGetGroupFileCount: (groups) =>
-                      call(richMedia, 'batchGetGroupFileCount', groups),
-                  };
-                },
-              },
-              captured.groupId,
-            );
-          }
-          case 'createGroupFolder': {
-            const captured = captureCreateGroupFolder(payload.groupId, payload.name);
-            if (!supportsGroupFolderCreation(nativeContracts, version))
-              throw Object.assign(
-                new Error('Group folder creation contract is not verified for this native binary'),
-                { code: 'unsupported-native-contract' },
-              );
-            return createGroupFolder(
-              {
-                signal: lifetime.signal,
-                awaitAlive,
-                getRichMediaService: () => {
-                  const richMedia = service('RichMedia');
-                  return {
-                    createGroupFolder: (groupId, name) =>
-                      call(richMedia, 'createGroupFolder', groupId, name),
-                  };
-                },
-              },
-              captured.groupId,
-              captured.name,
-            );
-          }
-          case 'deleteGroupFolder': {
-            const captured = captureDeleteGroupFolder(payload.groupId, payload.folderId);
-            if (!supportsGroupFolderDeletion(nativeContracts, version))
-              throw Object.assign(
-                new Error('Group folder deletion contract is not verified for this native binary'),
-                { code: 'unsupported-native-contract' },
-              );
-            return deleteGroupFolder(
-              {
-                signal: lifetime.signal,
-                awaitAlive,
-                getRichMediaService: () => {
-                  const richMedia = service('RichMedia');
-                  return {
-                    deleteGroupFolder: (groupId, folderId) =>
-                      call(richMedia, 'deleteGroupFolder', groupId, folderId),
-                  };
-                },
-              },
-              captured.groupId,
-              captured.folderId,
-            );
-          }
+          case 'getGroupFileCount':
+            return groupFiles.getGroupFileCount(payload.groupId);
+          case 'createGroupFolder':
+            return groupFiles.createGroupFolder(payload.groupId, payload.name);
+          case 'deleteGroupFolder':
+            return groupFiles.deleteGroupFolder(payload.groupId, payload.folderId);
           case 'setGroupName':
             return groupOperations.invokeOperation(method, payload);
           case 'getGroupEssencePage':

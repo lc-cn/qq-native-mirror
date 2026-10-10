@@ -148,7 +148,8 @@ function singleton(value: unknown): unknown {
 /** Single-group count, correlated by the uint64 group namespace, not row position
  * alone. Fixed source: services/NodeIKernelRichMediaService.ts#L250-L253 and
  * apis/group.ts#L492-L493 at 26d7533e0f5800fdff865ab2f2ad7692917e1076.
- * Binary profile gating belongs to the composition root. No callback, retry,
+ * Binary profile selection belongs to composition; the group-files owner gates
+ * dispatch before invoking this adapter. No callback, retry,
  * filesystem-capacity estimate or hardcoded file limit is inferred.
  */
 export async function getGroupFileCount(

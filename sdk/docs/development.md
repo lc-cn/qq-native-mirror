@@ -48,6 +48,18 @@ awaits the complete operation. Inject ticket/domain-key methods and the account
 wait port there; keep endpoint exchange, pagination and DTO validation in their
 existing group modules. The composition root only supplies ports and routes.
 
+`features/groups/group-files.ts` owns file-count and folder dispatch policy. Supply
+three lazy, operation-specific native ports and decisions bound to the measured
+binary profile. Input capture and rejection of unsupported operations happen there
+before native acquisition. The composition root routes calls to this owner;
+response validation remains in `group-file-operations.ts`. Do not pass a complete
+RichMedia service or introduce another account lifetime.
+
+New feature modules cannot import the dynamic `NativeObject` escape hatch. Use
+`unknown` for untrusted results and narrow typed ports for callable methods.
+Existing legacy adapters and native projectors have exact ownership entries with
+reasons in the dependency policy; remove an entry when its import disappears.
+
 `features/forward/forward-resource-owner.ts` owns lazy resource upload/read
 transports and merged card orchestration. Supply its narrow SSO, peer resolution
 and prepared card ports; keep wire schemas inside the forward domain. Register
