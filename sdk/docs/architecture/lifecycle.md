@@ -24,7 +24,7 @@
   fallible teardown. Offline/logout events still report the original transition.
   Cleanup diagnostics expose typed message/name/code records rather than native
   Error instances or arbitrary error properties.
-- Native connection callbacks, authentication polling and account startup dispatch
+- IPC messages, native connection callbacks, authentication polling and account startup dispatch
   their background Promises through `runtime/worker-task`. Expected failures stay
   with the authentication/account owner. An escaping rejection, such as a failure
   observer throwing, schedules a fatal exception after current Promise settlements;
@@ -36,6 +36,13 @@
   path does not await asynchronous Session cleanup. Applications must not install
   an exception handler in the worker that allows it to continue after fatal errors.
   Default Node stderr is an internal crash diagnostic, not a sanitized public DTO.
+- The worker computes a business result or error before attempting its one reply.
+  A sending exception is a transport failure: it does not become a business error
+  reply or cause another send attempt. Failed result/error delivery and failed close
+  acknowledgements use the same fatal worker task policy. Successful close retains
+  cancellation, awaited bootstrap cleanup, acknowledgement and exit in that order.
+  The synchronous message listener starts its owned asynchronous task immediately,
+  so cancellation controls keep their existing ordering and requests remain concurrent.
 - Error serialization includes only explicitly supported data fields. It never
   coerces an unknown object or invokes error accessors; invalid fields, trapping
   proxies and inaccessible progress records cannot prevent an RPC failure reply.

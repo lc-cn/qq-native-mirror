@@ -28,7 +28,7 @@ The `SDK quality` GitHub workflow runs these gates independently of platform
 bundle and video-native CI. Runtime output is recreated from a clean `dist`
 directory so obsolete emitted modules cannot make a packaging check pass.
 
-`tsconfig.scripts.json` governs all TypeScript scripts, the shared face,
+`tsconfig.scripts.json` governs all TypeScript scripts, the shared worker-delivery, face,
 group-search, group-essence, group-file page, element-preparation and mirror consumers, and the module-reference
 collector. Checked consumers bind dynamic installed imports to their source
 contracts. The face consumer returns a valid synthetic send receipt through the
@@ -52,6 +52,14 @@ require lint failure without executing either mutation. Isolated subprocess test
 cover connection, authentication polling and Session startup observer failures;
 they preserve Node's default fatal exception handling and also test the `warn`
 unhandled-rejection setting. These tests use controlled services, never an account.
+Source `no-misused-promises` also rejects asynchronous EventEmitter callbacks whose
+returned Promise would be discarded. Its negative fixture substitutes the actual
+IPC message handler without running it. Shared worker-delivery checks run against
+the source entry and newly installed compiled entry with a controlled bootstrap
+and failing sender. They verify one business invocation, one reply attempt, fatal
+exit for result/error/close-ack delivery failure, the exit release hook and normal
+acknowledged close. They do not initialize a native addon or prove real lock release;
+bootstrap lock ownership has its separate controlled acquisition tests.
 Negative gate fixtures prove that missing preparation/action awaits, invalid
 receipts and missing video thumbnail guards fail without executing those
 fixtures. Other JavaScript acceptance helpers still receive syntax lint; strict

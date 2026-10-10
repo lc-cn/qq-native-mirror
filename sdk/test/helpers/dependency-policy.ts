@@ -58,6 +58,7 @@ const workerDependencies = new Set([
   'src/worker/bootstrap.ts',
   'src/runtime/operations.ts',
   'src/runtime/worker-read-requests.ts',
+  'src/runtime/worker-task.ts',
 ]);
 const bootstrapDependencies = new Set([
   'src/kernel.ts',

@@ -24,6 +24,7 @@ import { verifyGroupEssenceConsumer } from './group-essence-consumer-contract.mj
 import { verifyWorkerReadCancellation } from './worker-read-consumer-contract.mjs';
 import { verifyClientFactoryConsumer } from './client-factory-consumer-contract.mjs';
 import { verifyWorkerErrorRoutes } from './worker-error-consumer-contract.mjs';
+import { verifyWorkerDelivery } from './worker-delivery-consumer-contract.mjs';
 import { verifyWorkerBootstrapConsumer } from './worker-bootstrap-consumer-contract.mjs';
 import { verifyActionPortConsumer } from './action-port-consumer-contract.mjs';
 import { verifyProfileRequestConsumer } from './profile-request-consumer-contract.mjs';
@@ -142,6 +143,10 @@ const readCancellationChecks = await verifyWorkerReadCancellation({
 const workerBootstrapChecks = await verifyWorkerBootstrapConsumer(
   join(destination, 'node_modules/qq-native-client'),
 );
+const workerDeliveryChecks = await verifyWorkerDelivery({
+  workerPath: join(destination, 'node_modules/qq-native-client/dist/worker.js'),
+  bootstrapPath: join(destination, 'node_modules/qq-native-client/dist/worker/bootstrap.js'),
+});
 const workerErrorChecks = await verifyWorkerErrorRoutes({
   errorsPath: join(destination, 'node_modules/qq-native-client/dist/errors.js'),
   QQClient: (
@@ -555,6 +560,7 @@ const receipt = {
     ...groupEssenceChecks,
     ...readCancellationChecks,
     ...workerErrorChecks,
+    ...workerDeliveryChecks,
     workerBootstrapChecks,
     ...actionPortChecks,
     ...profileRequestChecks,

@@ -3,6 +3,7 @@ import { createWorkerBootstrap } from './worker/bootstrap.ts';
 import type { ClientOptions, LoginRequest } from './contracts/client.ts';
 import { isServiceOperation, isCancellableRead } from './runtime/operations.ts';
 import { WorkerReadRequests } from './runtime/worker-read-requests.ts';
+import { observeWorkerTask } from './runtime/worker-task.ts';
 
 const send = (value: unknown) => {
   if (process.connected) process.send?.(value);
@@ -26,7 +27,7 @@ process.on('exit', () => {
   reads.close();
   bootstrap.releaseOnExit();
 });
-process.on('message', async (message: unknown) => {
+async function onMessage(message: unknown): Promise<void> {
   if (!message || typeof message !== 'object') return;
   const control = message as { control?: unknown; id?: unknown };
   if (control.control === 'cancel-read') {
@@ -41,8 +42,9 @@ process.on('message', async (message: unknown) => {
     login?: LoginRequest;
   };
   if (!Number.isSafeInteger(request.id) || request.id <= 0) return;
+  let result: unknown;
+  let closeSucceeded = false;
   try {
-    let result: unknown;
     if (request.method === 'init') {
       result = await bootstrap.initialize(request.options!);
     } else if (request.method === 'login') {
@@ -55,13 +57,21 @@ process.on('message', async (message: unknown) => {
     } else if (request.method === 'close') {
       reads.close();
       await bootstrap.close();
-      send({ id: request.id, result: null });
-      process.exit(0);
+      result = null;
+      closeSucceeded = true;
     } else throw new Error(`Unknown kernel request: ${request.method}`);
-    send({ id: request.id, result });
   } catch (error) {
     send({ id: request.id, error: serializeKernelError(error) });
+    return;
   }
+  // Sending can have partially succeeded before throwing. Never reinterpret a
+  // transport failure as a business error and attempt a second response.
+  send({ id: request.id, result });
+  if (closeSucceeded) process.exit(0);
+}
+process.on('message', (message: unknown) => {
+  // Call immediately: cancellation must not wait behind a dispatch microtask.
+  observeWorkerTask(onMessage(message));
 });
 process.on('disconnect', () => {
   reads.close();

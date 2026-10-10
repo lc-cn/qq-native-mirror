@@ -39,6 +39,7 @@ export default defineConfig([
     rules: {
       '@typescript-eslint/no-floating-promises': ['error', { ignoreVoid: false }],
       '@typescript-eslint/await-thenable': 'error',
+      '@typescript-eslint/no-misused-promises': 'error',
     },
   },
   {
@@ -55,6 +56,7 @@ export default defineConfig([
       'scripts/mirror-consumer-contract.mjs',
       'scripts/group-essence-consumer-contract.mjs',
       'scripts/group-file-pages-consumer-contract.mjs',
+      'scripts/worker-delivery-consumer-contract.mjs',
     ],
     languageOptions: {
       parserOptions: { project: './tsconfig.scripts.json', tsconfigRootDir: import.meta.dirname },
@@ -73,6 +75,7 @@ export default defineConfig([
       'scripts/mirror-consumer-contract.mjs',
       'scripts/group-essence-consumer-contract.mjs',
       'scripts/group-file-pages-consumer-contract.mjs',
+      'scripts/worker-delivery-consumer-contract.mjs',
       'scripts/consumer-module-references.ts',
     ],
     rules: { '@typescript-eslint/no-explicit-any': 'error' },
