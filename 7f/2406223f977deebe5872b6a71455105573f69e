@@ -1,0 +1,59 @@
+sdk/README.md
+  s_2104cc474f1ce5::t_f23b42b15c0914 143,255-256
+sdk/docs/contacts-groups.md
+  s_2104cc474f1ce5::t_076819decce192 1-47
+sdk/docs/evidence/contacts-groups-local.json
+  s_2104cc474f1ce5::t_8245c1ac373009 1-106
+sdk/docs/sdk-acceptance.md
+  s_2104cc474f1ce5::t_9b7bf1bb982d80 764-767
+sdk/scripts/contact-group-consumer-contract.mjs
+  s_2104cc474f1ce5::t_06c2c80cb9f101 1-57
+sdk/scripts/verify-package-consumer.mjs
+  s_2104cc474f1ce5::t_9274a4123be477 19,38,246,260-263,288
+sdk/src/cli.ts
+  s_2104cc474f1ce5::t_30630c69225510 50,66,91,236,239,265,275
+sdk/src/friend-categories.ts
+  s_2104cc474f1ce5::t_26f1217a73e3de 1-47
+sdk/src/group-events.ts
+  s_2104cc474f1ce5::t_00e2d29a8501f6 2-3,6,55-70
+sdk/src/group-operations.ts
+  s_2104cc474f1ce5::t_92ce0dd02ec7f8 7,32
+sdk/src/index.ts
+  s_2104cc474f1ce5::t_8bb0d2b27ece4a 4,17,251,254,291-295
+sdk/src/native-services.ts
+  s_2104cc474f1ce5::t_2b76d5ae3eafb2 1,31,196,312-321,326,337,350,378-381,400,483
+sdk/src/types.ts
+  s_2104cc474f1ce5::t_1da3d4c715288b 72,90,112-121
+sdk/src/worker.ts
+  s_2104cc474f1ce5::t_4371f0524e391f 12-13
+sdk/test/cli.test.ts
+  s_2104cc474f1ce5::t_ae32a18cae2ac3 113,115,117,194,197,202
+sdk/test/client.test.ts
+  s_2104cc474f1ce5::t_1ae5d0a0a4e658 529-553
+sdk/test/friend-categories.test.ts
+  s_2104cc474f1ce5::t_0150499ec4c718 1-43
+sdk/test/group-events.test.ts
+  s_2104cc474f1ce5::t_74a5172bf4c150 5-23
+sdk/test/group-operations.test.ts
+  s_2104cc474f1ce5::t_6031572b765f49 12-13,37,76,79
+sdk/test/native-services.test.ts
+  s_2104cc474f1ce5::t_a6fa90cbbfd537 630-674
+sdk/test/worker-contact-routes.test.ts
+  s_2104cc474f1ce5::t_ee446b267e40df 1-8
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "7f2406223f977deebe5872b6a71455105573f69e",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
