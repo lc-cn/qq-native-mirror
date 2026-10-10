@@ -5,13 +5,11 @@ import { access, copyFile, mkdir, open, readFile, stat, writeFile } from 'node:f
 import { constants } from 'node:fs';
 import { basename, dirname, extname, isAbsolute, join, sep } from 'node:path';
 import { promisify } from 'node:util';
-import type { VideoCodec } from './video-codec-loader.ts';
+import type { VideoCodec } from '../../runtime/media-contracts.ts';
 import { videoThumbnail } from './video-thumbnail.ts';
 
-export interface MediaTools {
-  ffmpeg: string;
-  ffprobe: string;
-}
+import type { MediaTools } from '../../runtime/media-contracts.ts';
+export type { MediaTools } from '../../runtime/media-contracts.ts';
 import type { NativeObject as Native } from '../../native/native-object.ts';
 const execute = promisify(execFile);
 async function md5(file: string): Promise<string> {

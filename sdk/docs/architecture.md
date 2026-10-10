@@ -78,6 +78,21 @@ positions. The record/video codecs and worker transport are actual substitution
 points used by platform implementations and controlled tests. Domain adapters use
 composition; a shared superclass would couple unrelated native contracts.
 
+`NativeServiceLifetime` owns the Session's dispatch guard, abort signal, native
+waits and resource ledger. Composition acquires modules in order and registers
+their cleanup with this owner. Close marks the Session inert, aborts waits and
+detaches the ledger before attempting every cleanup once. Retained service handles
+preserve native receiver identity; listener removal remains available for teardown,
+while other methods cannot dispatch after close. A native Promise that rejects
+after close is still observed, including synchronous close during argument
+evaluation. This owner does not cancel an already issued native operation.
+
+`runtime/media-contracts` owns the codec/tool ports independently of module
+loading, media-file preparation and native submission. Bundled and supplied
+codecs implement the same interfaces. Existing media-module type reexports and
+public `VideoCodec`/`VideoInfo` exports remain compatible; `RecordCodec` has one
+definition instead of separate loader and preparation declarations.
+
 `NativeEventChannel` is generic over callback arguments and projected results.
 It correlates native callbacks and method completion without assuming that a
 callback alone means success. An invocation rejection overrides an earlier
@@ -196,6 +211,18 @@ so `src/native/` remains checked. They also reject runtime dependency cycles, mi
 modules, implementation imports from public contracts, and transitive native/IO
 dependencies in pure input modules. They protect these boundaries during later
 feature work; renaming directories alone does not establish them.
+
+The dependency policy in `test/helpers/dependency-policy.ts` checks type imports
+as well as runtime imports. Storage depends on storage and public primitives;
+native bundle management additionally depends on storage. Runtime depends on its
+own modules, typed native contracts and the exact login-input validator. Features
+depend on their domain, public primitives and typed runtime/native ports. Only
+explicitly documented module pairs may collaborate across feature domains. The
+facade and CLI use reviewed input capture modules rather than native business
+operations. Native composition roots may assemble lower modules; lower modules
+cannot import those roots or the public facade. Obsolete cross-feature exceptions
+fail the gate rather than silently broadening access. Synthetic forbidden edges
+verify that newly added modules do not inherit permission from existing names.
 
 Comments should explain constraints, ownership, ABI evidence or decisions that
 are not evident from the code. Keep native provenance references next to the

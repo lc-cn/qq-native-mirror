@@ -49,7 +49,7 @@ import type {
   NativeCallbackAudit,
 } from './types.ts';
 export type * from './types.ts';
-export type { VideoCodec, VideoInfo } from './features/media/video-codec-loader.ts';
+export type { VideoCodec, VideoInfo } from './runtime/media-contracts.ts';
 import type { GroupNoticeOptions, GroupNoticePage } from './types.ts';
 import type { GroupRequest, GroupRequestOptions, GroupRequestPage } from './types.ts';
 

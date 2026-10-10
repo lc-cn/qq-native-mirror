@@ -1,13 +1,11 @@
 import type { NativeObject } from '../native/native-object.ts';
 import type { NativeContractProfile } from '../native/native-contracts.ts';
-import type { MediaTools } from '../features/media/media-send.ts';
-import type { RecordCodec } from '../features/media/media-record.ts';
-import type { VideoCodec } from '../features/media/video-codec-loader.ts';
+import type { MediaTools, RecordCodec, VideoCodec } from './media-contracts.ts';
 import type { NativeCallbackAudit } from '../types.ts';
 
 /** Dependencies for one account's native service composition.
  * Session is a proprietary, versioned dynamic surface. Its runtime method guards
- * remain in native-services; this type does not assert an unverified stable ABI.
+ * are owned by NativeServiceLifetime; this type does not assert an unverified stable ABI.
  */
 export interface NativeServiceContext {
   readonly session: NativeObject;

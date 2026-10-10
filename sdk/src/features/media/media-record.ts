@@ -4,13 +4,8 @@ import { copyFile, mkdir, mkdtemp, open, rm, stat } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { basename, dirname, isAbsolute, join, sep } from 'node:path';
 
-/** Exact pinned NapCat codec contract; no FFmpeg CLI SILK encoder is assumed.
- * https://github.com/NapNeko/NapCatQQ/blob/26d7533e0f5800fdff865ab2f2ad7692917e1076/packages/napcat-core/helper/ffmpeg/ffmpeg-addon.ts
- */
-export interface RecordCodec {
-  getDuration(filePath: string): Promise<number>;
-  convertToNTSilkTct?(inputPath: string, outputPath: string): Promise<void>;
-}
+import type { RecordCodec } from '../../runtime/media-contracts.ts';
+export type { RecordCodec } from '../../runtime/media-contracts.ts';
 import type { NativeObject as Native } from '../../native/native-object.ts';
 async function isSilk(file: string): Promise<boolean> {
   const handle = await open(file, 'r');

@@ -1,6 +1,6 @@
 import { readFile, writeFile, stat } from 'node:fs/promises';
 import { encode, decode, getWavFileInfo, isWav } from 'silk-wasm';
-import type { RecordCodec } from './media-record.ts';
+import type { RecordCodec } from '../../runtime/media-contracts.ts';
 
 const SAMPLE_RATE = 24000;
 const MAX_INPUT_BYTES = 32 * 1024 * 1024;

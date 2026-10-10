@@ -5,6 +5,7 @@ import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import ts from 'typescript';
 import { getFileInfo } from 'prettier';
+import { crossFeatureDependencies, dependencyViolation } from './helpers/dependency-policy.ts';
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const sourceRoot = join(projectRoot, 'src');
@@ -87,6 +88,64 @@ function dependencies(path: string): Dependency[] {
 }
 const graph = new Map(files.map((path) => [path, dependencies(path)]));
 const runtimeEdges = (path: string) => graph.get(path)!.filter((edge) => !edge.typeOnly);
+
+test('source dependency direction includes type-only imports and exact cross-feature collaboration', () => {
+  const observed = new Set<string>();
+  for (const [path, edges] of graph) {
+    for (const edge of edges) {
+      if (!edge.target) continue;
+      const from = label(path),
+        to = label(edge.target);
+      observed.add(`${from} → ${to}`);
+      assert.equal(
+        dependencyViolation({ from, to, typeOnly: edge.typeOnly }),
+        undefined,
+        `${from}:${edge.line} → ${to}: ${dependencyViolation({ from, to, typeOnly: edge.typeOnly })}`,
+      );
+    }
+  }
+  for (const { from, to, reason } of crossFeatureDependencies) {
+    assert.ok(reason.length > 0);
+    assert.ok(observed.has(`${from} → ${to}`), `Remove obsolete collaboration ${from} → ${to}`);
+  }
+});
+
+test('dependency policy rejects reverse, type-only and new cross-domain coupling', () => {
+  for (const [from, to] of [
+    ['src/features/groups/new-action.ts', 'src/index.ts'],
+    ['src/features/groups/new-action.ts', 'src/kernel.ts'],
+    ['src/features/groups/new-action.ts', 'src/native/native-package.ts'],
+    ['src/features/groups/new-action.ts', 'src/runtime/client-lifecycle.ts'],
+    ['src/features/groups/new-action.ts', 'src/features/media/media-send.ts'],
+    ['src/runtime/new-owner.ts', 'src/features/media/media-send.ts'],
+    ['src/native/new-bundle.ts', 'src/runtime/client-lifecycle.ts'],
+    ['src/storage/new-store.ts', 'src/native/native-package.ts'],
+    ['src/index.ts', 'src/features/groups/group-operations.ts'],
+    ['src/unowned.ts', 'src/runtime/client-lifecycle.ts'],
+  ]) {
+    for (const typeOnly of [false, true])
+      assert.ok(dependencyViolation({ from: from!, to: to!, typeOnly }), `${from} → ${to}`);
+  }
+  assert.equal(
+    dependencyViolation({ from: 'src/cli/client-command.ts', to: 'src/index.ts', typeOnly: true }),
+    undefined,
+  );
+  assert.equal(
+    dependencyViolation({
+      from: 'src/features/groups/new-action.ts',
+      to: 'src/runtime/media-contracts.ts',
+      typeOnly: true,
+    }),
+    undefined,
+  );
+  assert.ok(
+    dependencyViolation({
+      from: 'src/features/groups/new-action.ts',
+      to: 'src/runtime/media-contracts.ts',
+      typeOnly: false,
+    }),
+  );
+});
 
 test('all relative source imports and exports resolve, including type-only dependencies', () => {
   const diagnostics = ts

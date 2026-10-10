@@ -3,18 +3,8 @@ import { extname, isAbsolute } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { realpath, stat } from 'node:fs/promises';
 
-export interface VideoInfo {
-  width: number;
-  height: number;
-  /** Measured video duration in seconds. */
-  duration: number;
-  /** Thumbnail format, not the video container format. */
-  format: 'jpg' | 'jpeg' | 'png' | 'bmp' | 'bmp24';
-  image: Buffer;
-}
-export interface VideoCodec {
-  getVideoInfo(filePath: string): Promise<VideoInfo>;
-}
+import type { VideoCodec } from '../../runtime/media-contracts.ts';
+export type { VideoCodec, VideoInfo } from '../../runtime/media-contracts.ts';
 /** Only load an explicitly supplied local module. Standard Node addons use the
  * CommonJS loader; JS modules may provide named or default exports. */
 export async function loadVideoCodec(modulePath: string): Promise<VideoCodec> {

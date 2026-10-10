@@ -1,10 +1,8 @@
 import { isAbsolute } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { realpath, stat } from 'node:fs/promises';
-export interface RecordCodec {
-  getDuration(filePath: string): Promise<number>;
-  convertToNTSilkTct?(inputPath: string, outputPath: string): Promise<void>;
-}
+import type { RecordCodec } from '../../runtime/media-contracts.ts';
+export type { RecordCodec } from '../../runtime/media-contracts.ts';
 /** Load only a module explicitly supplied by the consumer, never download a codec. */
 export async function loadRecordCodec(modulePath: string): Promise<RecordCodec> {
   if (typeof modulePath !== 'string' || !isAbsolute(modulePath))

@@ -5,7 +5,8 @@ import {
   normalizeMessageBatchQuery,
   normalizeHistoryQuery,
 } from './features/messages/query-input.ts';
-import { cleanupAll, withCleanupFailure } from './runtime/cleanup.ts';
+import { withCleanupFailure } from './runtime/cleanup.ts';
+import { NativeServiceLifetime } from './runtime/native-service-lifetime.ts';
 import type { NativeServiceContext } from './runtime/native-service-context.ts';
 import { supportsCategoryCreation } from './native/native-contracts.ts';
 import { createFriendCategory } from './features/contacts/friend-category-create.ts';
@@ -77,90 +78,31 @@ function toMessage(message: Native, raw: unknown = message): Message {
 export function createNativeServices(context: NativeServiceContext) {
   const { session, version, auditCallback, binaryProfile: nativeContracts } = context;
   const emit = (event: string, payload: unknown) => {
-    if (!closed) context.events.emit(event, payload);
+    if (!lifetime.closed) context.events.emit(event, payload);
   };
   const { userId: accountId, uid: accountUid } = context.identity ?? {};
-  const lifetime = new AbortController();
-  let closed = false;
+  const lifetime = new NativeServiceLifetime();
   const listeners: Native[] = [];
-  const cleanupSteps: (() => void)[] = [() => lifetime.abort()];
-  const own = <T extends { close(): void }>(resource: T): T => {
-    cleanupSteps.push(() => resource.close());
-    return resource;
-  };
+  const own = <T extends { close(): void }>(resource: T): T => lifetime.own(resource);
   const close = () => {
-    // Retain native listener objects for the owned worker lifetime. A removal ABI
-    // is not verified for these listeners; closed callbacks become inert instead.
+    // Removal ABIs are not verified for these listeners. Retain native callback
+    // objects for the worker lifetime; callbacks consult the closed Session.
     void listeners;
-    if (closed) return;
-    closed = true;
-    cleanupAll(cleanupSteps);
+    lifetime.close();
   };
   try {
-    // Modules may retain services across awaits. Guard the actual method boundary,
-    // so stale work cannot dispatch a new mutation after Session shutdown.
-    const guardedSession = new Proxy(session, {
-      get(target, key) {
-        const member = Reflect.get(target, key);
-        if (typeof member !== 'function') return member;
-        return (...args: unknown[]) => {
-          if (closed) throw new Error('Native services are closed');
-          const value = Reflect.apply(member, target, args);
-          if (
-            typeof key !== 'string' ||
-            !/^get.+Service$/.test(key) ||
-            !value ||
-            typeof value !== 'object'
-          )
-            return value;
-          return new Proxy(value, {
-            get(serviceTarget, serviceKey) {
-              const method = Reflect.get(serviceTarget, serviceKey);
-              if (typeof method !== 'function') return method;
-              return (...serviceArgs: unknown[]) => {
-                if (
-                  closed &&
-                  !(typeof serviceKey === 'string' && /^removeKernel.+Listener$/.test(serviceKey))
-                )
-                  throw new Error('Native services are closed');
-                return Reflect.apply(method, serviceTarget, serviceArgs);
-              };
-            },
-          });
-        };
-      },
-    });
+    const guardedSession = lifetime.guardSession(session);
     const callbackChannel = own(createNativeEventChannel(lifetime.signal));
     const { dispatch, call: eventCall } = callbackChannel;
     const recallEvents = own(createRecallEvents(emit));
     const call = (object: Native, name: string, ...args: unknown[]) => {
-      if (closed) throw new Error('Native services are closed');
+      if (lifetime.closed) throw new Error('Native services are closed');
       if (!object || typeof object[name] !== 'function')
         throw new Error(`Native service is missing ${name}`);
       return object[name](...args);
     };
     const service = (name: string): Native => call(guardedSession, `get${name}Service`);
-    const awaitAlive = async <T>(value: T | PromiseLike<T>): Promise<T> => {
-      // The native call is evaluated before this helper. A synchronous callback can
-      // close the Session while returning a Promise that may reject much later.
-      const pending = Promise.resolve(value);
-      if (lifetime.signal.aborted) {
-        void pending.catch(() => {});
-        lifetime.signal.throwIfAborted();
-      }
-      let abort: () => void;
-      const stopped = new Promise<never>((_, reject) => {
-        abort = () => reject(new Error('Native services closed during operation'));
-        lifetime.signal.addEventListener('abort', abort, { once: true });
-      });
-      try {
-        const result = await Promise.race([pending, stopped]);
-        lifetime.signal.throwIfAborted();
-        return result;
-      } finally {
-        lifetime.signal.removeEventListener('abort', abort!);
-      }
-    };
+    const { awaitAlive } = lifetime;
     const directory = own(
       createContactDirectory({ signal: lifetime.signal, version, service, call, awaitAlive }),
     );
@@ -180,7 +122,7 @@ export function createNativeServices(context: NativeServiceContext) {
         },
         signal,
         (stage) => {
-          if (!closed) emit('diagnostic', { stage });
+          if (!lifetime.closed) emit('diagnostic', { stage });
         },
         live,
       );
@@ -204,7 +146,7 @@ export function createNativeServices(context: NativeServiceContext) {
           if (member !== undefined && typeof member !== 'function') return member;
           if (!wrapped.has(key))
             wrapped.set(key, (...args: unknown[]) => {
-              if (closed) return;
+              if (lifetime.closed) return;
               auditCallback?.({
                 family,
                 name: String(key),
@@ -227,19 +169,19 @@ export function createNativeServices(context: NativeServiceContext) {
     listener('Msg', {
       onRecvSysMsg: groupSystemEvents.onRecvSysMsg,
       onRecvMsg: (messages: NativeMessage[]) => {
-        if (closed) return;
+        if (lifetime.closed) return;
         if (!Array.isArray(messages)) {
           emit('diagnostic', { stage: 'invalid-native-message-batch' });
           return;
         }
         if (groupSystemEvents.hasMuteCandidate(messages)) groupSystemEvents.onRecvMsg(messages);
-        if (closed) return;
+        if (lifetime.closed) return;
         if (friendSystemEvents.hasAddedCandidate(messages)) friendSystemEvents.onRecvMsg(messages);
-        if (closed) return;
+        if (lifetime.closed) return;
         incomingMessages.receive(messages);
       },
       onMsgInfoListUpdate: (messages: NativeMessage[]) => {
-        if (closed) return;
+        if (lifetime.closed) return;
         if (!Array.isArray(messages)) {
           emit('diagnostic', { stage: 'invalid-native-message-update-batch' });
           return;
@@ -254,7 +196,7 @@ export function createNativeServices(context: NativeServiceContext) {
         }
       },
       onKickedOffLine: (...args: unknown[]) => {
-        if (!closed) emit('kicked', { info: args[0], args });
+        if (!lifetime.closed) emit('kicked', { info: args[0], args });
       },
     });
     const groupEvents = createGroupEvents(emit);
@@ -319,13 +261,11 @@ export function createNativeServices(context: NativeServiceContext) {
     );
     let longMessageTransport: ReturnType<typeof createLongMessageResponseTransport> | undefined;
     let forwardResourceTransport: ReturnType<typeof createForwardResourceTransport> | undefined;
-    cleanupSteps.push(
-      () => longMessageTransport?.close(),
-      () => forwardResourceTransport?.close(),
-    );
+    lifetime.defer(() => longMessageTransport?.close());
+    lifetime.defer(() => forwardResourceTransport?.close());
     return {
       async invokeOperation(method: ServiceOperation, payload: Native = {}): Promise<unknown> {
-        if (closed) throw new Error('Native services are closed');
+        if (lifetime.closed) throw new Error('Native services are closed');
         switch (method) {
           case 'addFriendCategory': {
             const name = friendCategoryName(payload.name);
