@@ -1,0 +1,129 @@
+{
+  "schemaVersion": 1,
+  "passed": true,
+  "receipt": {
+    "schemaVersion": 1,
+    "passed": true,
+    "source": {
+      "repository": "lc-cn/qq-native-mirror",
+      "commit": "7ec1a309da4137c5eef190482c731889f6341392",
+      "producerRunId": "38005239931",
+      "mainSha256": "685803fcaf965cdf827fffb2d79c08885182a3a718dc59b27670af07672f6988"
+    },
+    "platform": "darwin",
+    "arch": "arm64",
+    "node": "v24.19.0",
+    "actualDefaultCatalog": true,
+    "explicitSourceOverrides": false,
+    "downloadMirrors": [
+      "https://gh-proxy.com/"
+    ],
+    "catalogSha256": "ae486c9ffd96d12377f626377243baaa17b45a7afee9bfaa3134ce9fa73b9719",
+    "selectedVersion": {
+      "clientVersion": "7.0.2-53644",
+      "appId": "537391652",
+      "qua": "V1_MAC_7.0.2-53644_53644_GW_B"
+    },
+    "manifestSha256": "667c80d0284ffcfc4e0c270a6a7b09bfbbdf34ebe2cd452dc8fe016e99c3fa56",
+    "nativePaths": 1168,
+    "distinctNativeContents": 321,
+    "nativeExports": 104,
+    "requests": {
+      "cold": {
+        "catalog": 1,
+        "manifest": 1,
+        "payload": 321,
+        "payloadBytes": 54872832
+      },
+      "warm": {
+        "catalog": 1,
+        "manifest": 1,
+        "payload": 0,
+        "payloadBytes": 0
+      }
+    },
+    "coldPrepared": true,
+    "coldClosed": true,
+    "warmPrepared": true,
+    "warmClosed": true,
+    "allCacheHashesVerified": true,
+    "warmCacheReused": true,
+    "allWarmFileMtimesUnchanged": true,
+    "accountUsed": false,
+    "loginAttempted": false,
+    "restoreAttempted": false,
+    "businessQueryAttempted": false,
+    "nativeSendAttempted": false,
+    "signingAuthenticityEstablished": false,
+    "published": false,
+    "defaultsChanged": false
+  },
+  "parentAudit": {
+    "nativeExecuted": false,
+    "networkUsed": false,
+    "installedMainFilesCompared": 168,
+    "cachedNativePathsHashed": 1168,
+    "optionalAuxiliaryPhysicallyAbsent": true,
+    "numericalLatestVerified": true,
+    "logReceiptExactEquality": true,
+    "warmMtimeEvidence": "Actual verifier compared complete cold and warm vectors; independent and parent reviews inspect retained final cache only"
+  },
+  "bindings": [
+    {
+      "path": ".local/research/native-npm-38005239931-artifacts/release/qq-native-client-0.0.2.tgz",
+      "bytes": 452930,
+      "sha256": "685803fcaf965cdf827fffb2d79c08885182a3a718dc59b27670af07672f6988"
+    },
+    {
+      "path": ".local/github-mirror-publish/catalog.json",
+      "bytes": 4239,
+      "sha256": "ae486c9ffd96d12377f626377243baaa17b45a7afee9bfaa3134ce9fa73b9719"
+    },
+    {
+      "path": ".local/github-mirror-publish/packages/npm-0.0.2-ci-37962268125-attempt-1-darwin-arm64-codec-gzip-v1/667c80d0284ffcfc4e0c270a6a7b09bfbbdf34ebe2cd452dc8fe016e99c3fa56/manifest.json",
+      "bytes": 632108,
+      "sha256": "667c80d0284ffcfc4e0c270a6a7b09bfbbdf34ebe2cd452dc8fe016e99c3fa56"
+    },
+    {
+      "path": ".local/research/current-public-default-38005239931/receipt.json",
+      "bytes": 1534,
+      "sha256": "3d68789d551e0e669b6d5f5b93f34d0b66e8d803699f7b5eca4bec2718533107"
+    },
+    {
+      "path": ".local/research/current-public-default-38005239931/verification.log",
+      "bytes": 1264,
+      "sha256": "81de31272099c32c7d8d61a8f67d68702f86de0869cf7a37dbffc01406d31d13"
+    },
+    {
+      "path": ".local/research/current-public-default-38005239931/consumer/verify.mjs",
+      "bytes": 6926,
+      "sha256": "1494b277efeb5ff4337a3031c601dfab319b54423b837340efe9964f17abfe8a"
+    },
+    {
+      "path": ".local/research/current-public-default-38005239931/verify.mjs",
+      "bytes": 106,
+      "sha256": "326d807cbf3a29b608c0fcdb7ccf1daccdca15f6c6130b9b8e5cd85bc0ad159a"
+    },
+    {
+      "path": ".local/research/current-public-default-38005239931/consumer/package-lock.json",
+      "bytes": 1507,
+      "sha256": "4d6a4cd4e89bb08307961c93d47087fc3aec0d08a3f60468a6f66155d8cd5de6"
+    },
+    {
+      "path": ".local/research/current-public-default-38005239931/independent-review.json",
+      "bytes": 1843,
+      "sha256": "179553343113c779b14635ab69049ea61af7063f871608e0df098d42060a09f8"
+    },
+    {
+      "path": ".local/research/current-public-default-38005239931/independent-cache-files.json",
+      "bytes": 307053,
+      "sha256": "fb68543b8bdd3e3c369279a5ddd283c430d4566a72193363667211e52a514f5b"
+    },
+    {
+      "path": ".local/research/current-public-default-38005239931/parent-audit.py",
+      "bytes": 3943,
+      "sha256": "02bf3f8fff8289920a091684eeea083c9040ccab37f4a00f6fa3bb0516f8f1b5"
+    }
+  ],
+  "scope": "Local macOS arm64 current main with public default native mirror, initialization and cache only; no account, signing, six-platform public-default or registry publication claim"
+}
