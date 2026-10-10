@@ -9,6 +9,7 @@ test('group-file consumer uses source modules and a real controlled worker with 
     { source: true },
   );
   assert.equal(result.groupFileCompleteDtoContract, true);
+  assert.equal(result.groupFileLinuxX64CompositionContract, true);
   assert.equal(result.groupFileInstalledWorkerCliContract, true);
   assert.equal(result.groupFileWorkerCancellationContract, true);
   assert.equal(result.nativeGroupFileQueryAttempted, false);

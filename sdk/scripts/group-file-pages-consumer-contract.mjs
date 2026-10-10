@@ -236,6 +236,12 @@ export async function verifyGroupFilePagesConsumer(packageRoot, options = {}) {
     clientVersion: '3.2.32-52194',
     wrapperSha256: 'c302361f52494de257044e912e43ed244bb29ee59f59345d25a8959327828337',
   };
+  const linuxX64Profile = {
+    platform: 'linux',
+    arch: 'x64',
+    clientVersion: '3.2.32-52194',
+    wrapperSha256: '7882b8e3055cd38584861042befacd8be9939896f5cbbca6fa4a230926b48526',
+  };
   // Controlled replacements share the real worker-lifetime token ledger.
   // Their token producer must keep advancing across account compositions too.
   let nextCompositionToken = 1000;
@@ -280,7 +286,7 @@ export async function verifyGroupFilePagesConsumer(packageRoot, options = {}) {
     });
     return { services, acquired: () => acquired };
   }
-  for (const verifiedProfile of [profile, linuxArmProfile]) {
+  for (const verifiedProfile of [profile, linuxArmProfile, linuxX64Profile]) {
     const good = composition(verifiedProfile);
     try {
       assert.deepEqual(
@@ -295,29 +301,32 @@ export async function verifyGroupFilePagesConsumer(packageRoot, options = {}) {
       good.services.close();
     }
   }
-  for (const changedProfile of [
-    { ...linuxArmProfile, wrapperSha256: profile.wrapperSha256 },
-    { ...linuxArmProfile, clientVersion: '3.2.31-51457' },
-    { ...linuxArmProfile, arch: 'x64' },
-  ]) {
-    const bad = composition(changedProfile);
+  for (const supported of [profile, linuxArmProfile, linuxX64Profile]) {
+    for (const changedProfile of [
+      { ...supported, platform: 'unknown' },
+      { ...supported, arch: 'unknown' },
+      { ...supported, wrapperSha256: '0'.repeat(64) },
+      { ...supported, clientVersion: 'unverified' },
+    ]) {
+      const bad = composition(changedProfile);
+      try {
+        await assert.rejects(bad.services.invokeOperation('getGroupFilePage', { groupId }), {
+          code: 'unsupported-native-contract',
+        });
+        assert.equal(bad.acquired(), 0);
+      } finally {
+        bad.services.close();
+      }
+    }
+    const wrongVersion = composition(supported, 'unverified');
     try {
-      await assert.rejects(bad.services.invokeOperation('getGroupFilePage', { groupId }), {
+      await assert.rejects(wrongVersion.services.invokeOperation('getGroupFilePage', { groupId }), {
         code: 'unsupported-native-contract',
       });
-      assert.equal(bad.acquired(), 0);
+      assert.equal(wrongVersion.acquired(), 0);
     } finally {
-      bad.services.close();
+      wrongVersion.services.close();
     }
-  }
-  const wrongVersion = composition(linuxArmProfile, profile.clientVersion);
-  try {
-    await assert.rejects(wrongVersion.services.invokeOperation('getGroupFilePage', { groupId }), {
-      code: 'unsupported-native-contract',
-    });
-    assert.equal(wrongVersion.acquired(), 0);
-  } finally {
-    wrongVersion.services.close();
   }
   for (const [platform, arch] of [
     ['linux', 'x64'],
@@ -496,6 +505,7 @@ export function createKernel(native,options,emit){
     groupFilePaginationContract: true,
     groupFileCorrelationCloseContract: true,
     groupFileCompositionGateContract: true,
+    groupFileLinuxX64CompositionContract: true,
     groupFileInstalledWorkerCliContract: true,
     groupFileWorkerCancellationContract: true,
     nativeGroupFileQueryAttempted: false,

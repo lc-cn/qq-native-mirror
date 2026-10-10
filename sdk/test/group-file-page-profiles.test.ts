@@ -67,6 +67,7 @@ test('only separately inspected exact page binaries are enabled; other profiles 
     [
       ['darwin', 'arm64', '7.0.2-53644'],
       ['linux', 'arm64', '3.2.32-52194'],
+      ['linux', 'x64', '3.2.32-52194'],
     ],
   );
   assert.equal(evidence.nativeExecuted, false);

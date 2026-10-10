@@ -12,6 +12,12 @@
       "arch": "arm64",
       "clientVersion": "3.2.32-52194",
       "wrapperSha256": "c302361f52494de257044e912e43ed244bb29ee59f59345d25a8959327828337"
+    },
+    {
+      "platform": "linux",
+      "arch": "x64",
+      "clientVersion": "3.2.32-52194",
+      "wrapperSha256": "7882b8e3055cd38584861042befacd8be9939896f5cbbca6fa4a230926b48526"
     }
   ],
   "nativeExecuted": false,
@@ -123,13 +129,14 @@
     "projection": "Preserve all 11 folder and 22 file fields including local paths; uint64 stays decimal string, independent carriers and optional strings stay null. No type/transfer/time-unit interpretations."
   },
   "limits": [
-    "Only the exact measured macOS ARM64 and Linux ARM64 binaries are enabled; the other four defaults require independent binding, token and callback evidence.",
+    "Only the exact measured macOS ARM64 and Linux ARM64/x64 binaries are enabled; the other three defaults require independent binding, token and callback evidence.",
     "Static binary evidence and deterministic installed consumer checks do not prove real-account group-file results.",
-    "Linux ARM64 FE4F-present responses select Search; only the absent branch selects FileInfo, subject to downstream completion. Missing FileInfo fails at the SDK deadline.",
+    "Both inspected Linux binaries route FE4F-present responses to Search; only the absent branch selects FileInfo, subject to downstream completion. Missing FileInfo fails at the SDK deadline.",
     "Nonzero core completion can produce no callback, so bounded timeout is a failed read, never an empty success.",
     "Cancellation stops SDK waits or queued work; it cannot undo an issued native request."
   ],
   "platformProofs": {
-    "linux-arm64/3.2.32-52194": "group-file-page-linux-arm64-contract.json"
+    "linux-arm64/3.2.32-52194": "group-file-page-linux-arm64-contract.json",
+    "linux-x64/3.2.32-52194": "group-file-page-linux-x64-contract.json"
   }
 }

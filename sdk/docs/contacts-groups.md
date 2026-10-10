@@ -394,15 +394,21 @@ replacement. Duplicate tokens, token-budget exhaustion (100,000 requests) or an
 untrustworthy post-dispatch token retire this page lane until worker recreation.
 Core errors that produce no callback time out as failed reads, never empty success.
 
-The exact measured macOS ARM64 `7.0.2-53644` and Linux ARM64 `3.2.32-52194`
-binaries are enabled for this operation. The other four default binaries remain
+The exact measured macOS ARM64 `7.0.2-53644` and Linux ARM64/x64 `3.2.32-52194`
+binaries are enabled for this operation. The other three default binaries remain
 gated pending independent binding, token and callback evidence. The
-[Linux ARM64 record](evidence/group-file-page-linux-arm64-contract.json) proves a
+[Linux ARM64 record](evidence/group-file-page-linux-arm64-contract.json) and
+[Linux x64 record](evidence/group-file-page-linux-x64-contract.json) prove a
 conditional FileInfo route: responses containing selector `65103` (`FE4F`) select
 a separate Search callback. The SDK never substitutes that callback for a page;
 missing FileInfo or downstream completion fails at the deadline. Static inspection
 and controlled source/installed consumers validate the SDK contract; no real
 account file list was read in these checks.
+The x64 record also traces all 45 output fields and the nine full-width unsigned
+decimal strings to their actual N-API output slots. Independent interpretation of
+the formatter covers its non-padding instructions; it does not execute the addon.
+The native group-code parser uses `strtoull` without full-end validation, so the
+SDK retains its stricter decimal-only uint64 preflight.
 This working-source addition has not been published to npm.
 
 ## Search a group by number
