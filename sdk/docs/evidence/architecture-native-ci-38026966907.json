@@ -1,0 +1,171 @@
+{
+  "passed": true,
+  "runId": "38026966907",
+  "commit": "e5d840ab4ddf3cf4332e0aa4cbcee5014ad0e6ee",
+  "attempt": 1,
+  "selectedSmallFiles": {
+    "evidence/aggregated-main.consumer.json": {
+      "bytes": 5710,
+      "sha256": "01d54a16be1354cb17eb5abe0135a3b60e36b302c6bbe8df87bb5e1f77ed13bf"
+    },
+    "evidence/darwin-x64.consumer.json": {
+      "bytes": 5716,
+      "sha256": "91312e02c7605be8c235e5c4f9768be2c65d7ec2ce83a92709ff3dc0cf95ad0d"
+    },
+    "evidence/darwin-arm64.consumer.json": {
+      "bytes": 5722,
+      "sha256": "58d2d55592d7ef32d59a66851b3cfaae2c32a00e4769bb4754a97bd16c000216"
+    },
+    "evidence/linux-arm64.consumer.json": {
+      "bytes": 5716,
+      "sha256": "7d941298effb0da35a4df9379ee0da5ebc53e88d7ca6c0f81578b4f110ec4055"
+    },
+    "evidence/linux-x64.consumer.json": {
+      "bytes": 5710,
+      "sha256": "d41c44505ed50a5dfd369f92813a58b49cf7709a0894c35aa0bcce88d52d2c15"
+    },
+    "evidence/win32-arm64.consumer.json": {
+      "bytes": 5717,
+      "sha256": "c6aab01404c9d81f366099db901befffc208196aff7aac09ea4757309e9fdcb4"
+    },
+    "evidence/win32-x64.consumer.json": {
+      "bytes": 5711,
+      "sha256": "f2177bf776553987117206edca7752ecf25fe8e4d4ba0e973ee104ac03c4c9dc"
+    },
+    "qq-native-client-0.0.2.tgz": {
+      "bytes": 520898,
+      "sha256": "aa797d4bd56c62e2740fcf1d03aa38c548a6dae7309fc8a71f4c24cdf6647faf"
+    },
+    "release-manifest.json": {
+      "bytes": 4702,
+      "sha256": "3a991cb2169fb9c499e1039462bce5a687b6bac7e6b89c976e5e0244c3b54927"
+    },
+    "video-materials/video-materials-binding.json": {
+      "bytes": 3982,
+      "sha256": "47d80e846de0c9ed3c878f9448efe829b585428215494d51c15758eeddeca195"
+    },
+    "video-materials/video-materials.json": {
+      "bytes": 90307,
+      "sha256": "1dd502517e1a5919a39c3ffabb73fb9f9937c781fde9a176c7b683742a291305"
+    }
+  },
+  "rangeBytes": 611668,
+  "sixConsumerReceipts": [
+    {
+      "contactGroupChecks": {
+        "friendAddedEventContract": true,
+        "nativeFriendAddedObserved": false,
+        "friendCategoryCreationContract": true,
+        "nativeFriendCategoryCreationAttempted": false,
+        "contactGroupActualWorkerRoutes": true,
+        "kernelReplacedByFixture": true,
+        "nativeExecuted": false,
+        "accountUsed": false
+      },
+      "name": "qq-native-client-linux-x64",
+      "sha256": "d41c44505ed50a5dfd369f92813a58b49cf7709a0894c35aa0bcce88d52d2c15",
+      "exports": 98,
+      "node": "v24.20.0"
+    },
+    {
+      "contactGroupChecks": {
+        "friendAddedEventContract": true,
+        "nativeFriendAddedObserved": false,
+        "friendCategoryCreationContract": true,
+        "nativeFriendCategoryCreationAttempted": false,
+        "contactGroupActualWorkerRoutes": true,
+        "kernelReplacedByFixture": true,
+        "nativeExecuted": false,
+        "accountUsed": false
+      },
+      "name": "qq-native-client-linux-arm64",
+      "sha256": "7d941298effb0da35a4df9379ee0da5ebc53e88d7ca6c0f81578b4f110ec4055",
+      "exports": 98,
+      "node": "v24.20.0"
+    },
+    {
+      "contactGroupChecks": {
+        "friendAddedEventContract": true,
+        "nativeFriendAddedObserved": false,
+        "friendCategoryCreationContract": true,
+        "nativeFriendCategoryCreationAttempted": false,
+        "contactGroupActualWorkerRoutes": true,
+        "kernelReplacedByFixture": true,
+        "nativeExecuted": false,
+        "accountUsed": false
+      },
+      "name": "qq-native-client-darwin-x64",
+      "sha256": "91312e02c7605be8c235e5c4f9768be2c65d7ec2ce83a92709ff3dc0cf95ad0d",
+      "exports": 104,
+      "node": "v24.20.0"
+    },
+    {
+      "contactGroupChecks": {
+        "friendAddedEventContract": true,
+        "nativeFriendAddedObserved": false,
+        "friendCategoryCreationContract": true,
+        "nativeFriendCategoryCreationAttempted": false,
+        "contactGroupActualWorkerRoutes": true,
+        "kernelReplacedByFixture": true,
+        "nativeExecuted": false,
+        "accountUsed": false
+      },
+      "name": "qq-native-client-darwin-arm64",
+      "sha256": "58d2d55592d7ef32d59a66851b3cfaae2c32a00e4769bb4754a97bd16c000216",
+      "exports": 104,
+      "node": "v24.20.0"
+    },
+    {
+      "contactGroupChecks": {
+        "friendAddedEventContract": true,
+        "nativeFriendAddedObserved": false,
+        "friendCategoryCreationContract": true,
+        "nativeFriendCategoryCreationAttempted": false,
+        "contactGroupActualWorkerRoutes": true,
+        "kernelReplacedByFixture": true,
+        "nativeExecuted": false,
+        "accountUsed": false
+      },
+      "name": "qq-native-client-win32-x64",
+      "sha256": "f2177bf776553987117206edca7752ecf25fe8e4d4ba0e973ee104ac03c4c9dc",
+      "exports": 98,
+      "node": "v24.20.0"
+    },
+    {
+      "contactGroupChecks": {
+        "friendAddedEventContract": true,
+        "nativeFriendAddedObserved": false,
+        "friendCategoryCreationContract": true,
+        "nativeFriendCategoryCreationAttempted": false,
+        "contactGroupActualWorkerRoutes": true,
+        "kernelReplacedByFixture": true,
+        "nativeExecuted": false,
+        "accountUsed": false
+      },
+      "name": "qq-native-client-win32-arm64",
+      "sha256": "c6aab01404c9d81f366099db901befffc208196aff7aac09ea4757309e9fdcb4",
+      "exports": 98,
+      "node": "v24.20.0"
+    }
+  ],
+  "mainCompiledFrozenMatches": 134,
+  "sourceFrozenFiles": 67,
+  "sixVideoReceiptsThreeInputsBound": true,
+  "compiledNestedInventoryExact": true,
+  "snapshotSha256": "e5b9f00a3ee5840c5734c9a1a1bb3caa6785c00205da76ec43f72a850254edcf",
+  "fullZipDigestVerified": false,
+  "sixAuxiliaryActualBytesVerified": false,
+  "remoteNativeCacheReread": false,
+  "fullSevenPackageGateExecuted": false,
+  "remoteMaterialsArchivesDownloaded": false,
+  "nativeExecuted": false,
+  "accountUsed": false,
+  "proofTier": "official range/CRC verified selected member bytes plus manifest-bound receipts; auxiliary hashes are declared only",
+  "mainRegularFileCount": 230,
+  "mainTarball": {
+    "sha256": "aa797d4bd56c62e2740fcf1d03aa38c548a6dae7309fc8a71f4c24cdf6647faf",
+    "size": 520898
+  },
+  "officialArtifactId": 11660253631,
+  "scope": "Bounded official main-archive and receipt validation for e5d840a, separate from current CLI source and account acceptance"
+}
