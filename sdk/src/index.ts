@@ -1,4 +1,5 @@
 import { WorkerRpcChannel } from './runtime/worker-rpc-channel.ts';
+import { terminateWorker } from './runtime/worker-termination.ts';
 import { friendCategoryName } from './features/contacts/friend-categories.ts';
 import { deserializeKernelError, KernelRequestError } from './errors.ts';
 import { captureMergedForward } from './features/forward/merged-forward-input.ts';
@@ -396,20 +397,8 @@ export class QQClient extends EventEmitter<ClientEvents> {
     this.#retiringWorker = true;
     try {
       if (previous.exitCode == null && previous.signalCode == null) {
-        await new Promise<void>((resolve, reject) => {
-          const exit = () => {
-            clearTimeout(force);
-            clearTimeout(deadline);
-            resolve();
-          };
-          previous.once('exit', exit);
-          const force = setTimeout(() => previous.kill('SIGKILL'), 2000);
-          const deadline = setTimeout(() => {
-            previous.removeListener('exit', exit);
-            clearTimeout(force);
-            reject(new Error('Previous native worker did not exit'));
-          }, 4000);
-          previous.kill();
+        await terminateWorker(previous, {
+          timeoutMessage: 'Previous native worker did not exit',
         });
       }
     } finally {
@@ -607,20 +596,8 @@ export class QQClient extends EventEmitter<ClientEvents> {
   async #stopWorker(): Promise<void> {
     const worker = this.#worker;
     if (worker.exitCode != null || worker.signalCode != null) return;
-    await new Promise<void>((resolve, reject) => {
-      const exited = () => {
-        clearTimeout(force);
-        clearTimeout(deadline);
-        resolve();
-      };
-      worker.once('exit', exited);
-      const force = setTimeout(() => worker.kill('SIGKILL'), 2000);
-      const deadline = setTimeout(() => {
-        worker.removeListener('exit', exited);
-        clearTimeout(force);
-        reject(new Error('Native worker did not exit after shutdown'));
-      }, 4000);
-      worker.kill();
+    await terminateWorker(worker, {
+      timeoutMessage: 'Native worker did not exit after shutdown',
     });
   }
   async #finishClose(): Promise<void> {

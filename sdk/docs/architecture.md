@@ -74,6 +74,12 @@ callback alone means success. An invocation rejection overrides an earlier
 success callback. Timeout, abort and close interrupt pending work, and late
 callbacks cannot settle a removed waiter. It never retries a mutation.
 
+`terminateWorker` owns a single retirement attempt: exit observation, SIGKILL
+escalation and the exit deadline. All terminal paths remove its listener and
+timers, including synchronous failures from either kill call. Close and reconnect
+reuse this mechanism while retaining their own generation and account policies;
+a failed retirement never silently starts a replacement worker.
+
 `IncomingMessageDelivery` owns callback snapshots, ordered delivery, the bounded
 message deduplication cache and cancellation. Its interface is `receive` and
 `close`; native lookup and projection are injected ports. Closing interrupts its
