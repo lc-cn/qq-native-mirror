@@ -1,0 +1,29 @@
+.github/workflows/codec-mirror-consumer.yml
+  s_2104cc474f1ce5::t_9c05a9bc36701b 13-17,61-75,79,93-96
+ci/codec-mirror-consumer.mjs
+  s_2104cc474f1ce5::t_b9c08bdd55a264 7,16,20,27-36,54,74
+ci/current-main-binding.mjs
+  s_2104cc474f1ce5::t_a5367155ab7a12 1-37
+ci/current-main-binding.test.mjs
+  s_2104cc474f1ce5::t_ce5e04fcd242b3 1-13
+tools/acquire-current-public-main.py
+  s_2104cc474f1ce5::t_b7596c21604d51 1-172
+tools/acquire-current-public-main.test.py
+  s_2104cc474f1ce5::t_4e428791649f46 1-106
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "aebdc90feb274a462cb0925b71292a18597babac",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
