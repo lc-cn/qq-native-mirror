@@ -28,6 +28,7 @@ worker.ts (IPC boundary) -> kernel.ts (native session composition)
 | ----------------------------------------- | -------------------------------------------------------------------------------------------------------- |
 | `src/index.ts`                            | Public API facade, callback presentation and typed operations.                                           |
 | `src/cli.ts`, `src/worker.ts`             | Executable entry points. Their emitted URLs are runtime contracts.                                       |
+| `src/cli/`                                | Command planning and ownership of client execution, QR output, watches and process signals.              |
 | `src/kernel.ts`, `src/native-services.ts` | Compose one native session and domain adapters. They are composition roots, not public extension points. |
 | `src/runtime/`                            | Account/worker ownership, request/callback lifetimes and composition dependencies.                       |
 | `src/features/contacts/`, `groups/`       | Friend, category, group and request actions/events.                                                      |
@@ -122,6 +123,19 @@ the complete result validates and the Session remains alive. Categorized results
 retain their separate counts and duplicate membership semantics. Single conversion
 misses remain uncached, preserving the existing policy. Construction does no native
 work, and close prevents cache hits, late commits and subsequent dispatch.
+
+The CLI entry retains help, configuration, explicit login selection and entry-URL
+handling. `command-plan` validates command flags and captures file-backed message
+inputs before the client is created; its prepared actions never initiate login.
+`runClientCommand` owns the client, QR save queue, watch subscriptions and process
+signal handlers. Business listeners attach before login so readiness deliveries
+are retained. A failed older QR save cannot prevent a later image from being
+saved; the latest save still controls the post-login result. Signal shutdown
+prevents later action dispatch and queued QR writes, shares one close attempt,
+and preserves exit code 130. Teardown releases QR/login-error/watch/signal
+listeners and attempts every cleanup before awaiting client close. An already
+started file write is not cancellable; its completion cannot start another queued
+write or emit an output after shutdown.
 
 The proprietary `.node` surface has no stable complete TypeScript declaration.
 Its type erasure is centralized in `src/native/native-object.ts`. This internal
