@@ -1,0 +1,21 @@
+ci/verify-consumer.mjs
+  s_2104cc474f1ce5::t_b7efdf7d16e02b 26-27,196-198,310
+sdk/scripts/action-port-consumer-contract.mjs
+  s_2104cc474f1ce5::t_344698e5e91c50 196-217,219-239,241-248
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "93616635fa27912ad9c1485a4c11e28a6cbafa41",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
