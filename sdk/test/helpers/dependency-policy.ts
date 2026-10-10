@@ -9,6 +9,39 @@ export interface SourceDependency {
   typeOnly: boolean;
 }
 
+const entryOwners = new Set([
+  'src/index.ts',
+  'src/types.ts',
+  'src/errors.ts',
+  'src/cli.ts',
+  'src/worker.ts',
+  'src/kernel.ts',
+  'src/native-services.ts',
+]);
+const layers = new Set([
+  'client',
+  'cli',
+  'contracts',
+  'native',
+  'runtime',
+  'storage',
+  'validation',
+  'worker',
+]);
+const domains = new Set(['contacts', 'groups', 'messages', 'media', 'forward']);
+
+/** Ownership is checked even for modules with no imports. A dependency-free
+ * file must not silently establish another root or an unreviewed business domain.
+ */
+export function sourceOwnershipViolation(path: string): string | undefined {
+  if (entryOwners.has(path)) return;
+  const parts = path.split('/');
+  if (parts[0] === 'src' && parts.length >= 3 && layers.has(parts[1]!)) return;
+  if (parts[0] === 'src' && parts.length >= 4 && parts[1] === 'features' && domains.has(parts[2]!))
+    return;
+  return 'Source ownership is unclassified; assign its responsibility before adding the module.';
+}
+
 const primitives = new Set(['src/types.ts', 'src/errors.ts', 'src/validation/identifiers.ts']);
 const isContract = (path: string) => path.startsWith('src/contracts/');
 const contractDependencies: Record<string, readonly string[]> = {

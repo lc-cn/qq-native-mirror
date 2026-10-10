@@ -6,33 +6,47 @@ binaries; the public API does not require an installed QQ application.
 
 ## Responsibilities and dependency direction
 
+The process flow below shows runtime calls and ownership, not import permissions.
+
 ```text
-Application / CLI
-        |
-index.ts (public exports) -> client/create-client.ts (bundle and worker bootstrap)
-        |
-QQClient (public events and typed operations)
-        |
-ClientLifecycle (account state and worker generations)
-        |
-WorkerRpcChannel (request correlation and settlement)
-        |
-worker.ts (IPC) -> worker/bootstrap.ts (Node acquisition binding)
-                          |
-                  NativeWorkerBootstrap (initialization ownership)
-                          |
-                    kernel.ts (authentication composition)
-                                |
-                     KernelEnvironment (local preparation)
-                                |
-                     AccountSessionLifecycle
-                                |
-                   NativeServiceContext / native-services.ts
-                                |
-                contacts | groups | messages | media | forward
-                                |
-                    proprietary native services
+Parent process                           Isolated Node worker
+createClient -> QQClient                 worker.ts -> Node bootstrap
+                |                                      |
+         ClientLifecycle                 NativeWorkerBootstrap
+                |                                      |
+         WorkerRpcChannel --- IPC ---> kernel.ts
+                                           | composes
+                       +-------------------+-------------------+
+                       |                   |                   |
+                KernelEnvironment   AuthenticationAttempt  AccountSessionLifecycle
+                 local preparation     login attempt        authenticated lifetime
+                                                                |
+                                              injected createServices callback
+                                                                |
+                                                     native-services.ts
+                                                                |
+                                              contacts/groups/messages/media/forward
 ```
+
+Allowed source dependencies have a separate meaning. Composition roots assemble
+lower modules; injected callbacks let lower owners use implementations without
+importing the composition root.
+
+```text
+Public entry -> client facade/factory -> reviewed input and lifecycle modules
+Worker entry -> Node bootstrap -> initialization owner + kernel composition
+Kernel composition -> preparation + authentication + account lifetime + native composition
+Native composition -> domain adapters + shared request/event lifetime
+Domain adapters -> same domain + exact reviewed cross-domain pairs + typed ports
+Bundle management -> native modules + storage
+Storage -> storage + public primitives
+Public contracts -> exact reviewed type-only contract dependencies
+```
+
+The executable dependency policy includes type-only edges. Every source file must
+also belong to a reviewed layer or business domain, even when it has no imports.
+The diagrams are navigation aids; the exact permissions live in
+`test/helpers/dependency-policy.ts`.
 
 | Location                                  | Responsibility                                                                                           |
 | ----------------------------------------- | -------------------------------------------------------------------------------------------------------- |

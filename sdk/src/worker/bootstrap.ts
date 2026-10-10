@@ -14,7 +14,11 @@ export function createWorkerBootstrap(emit: (event: string, payload: unknown) =>
     {
       createDataDirectory: (path) => mkdir(path, { recursive: true, mode: 0o700 }),
       lockDataDirectory,
-      loadAddon: (target, path, flags) => process.dlopen(target, path, flags),
+      loadAddon: (target, path, flags) => {
+        // Node distinguishes omitted flags from an explicit undefined on Linux.
+        if (flags === undefined) process.dlopen(target, path);
+        else process.dlopen(target, path, flags);
+      },
       globalLoadFlags: constants.dlopen.RTLD_NOW | constants.dlopen.RTLD_GLOBAL,
       defaultPreloadLibraries: process.platform === 'linux' ? ['libgnutls.so.30'] : [],
       inspectNativeContracts,

@@ -6,7 +6,11 @@ import { fileURLToPath } from 'node:url';
 import ts from 'typescript';
 import { getFileInfo } from 'prettier';
 import { extractSourceDependencies } from './helpers/source-dependencies.ts';
-import { crossFeatureDependencies, dependencyViolation } from './helpers/dependency-policy.ts';
+import {
+  crossFeatureDependencies,
+  dependencyViolation,
+  sourceOwnershipViolation,
+} from './helpers/dependency-policy.ts';
 import {
   externalRuntimeDependencies,
   externalTypeDependencies,
@@ -49,6 +53,28 @@ function dependencies(path: string): Dependency[] {
 
 const graph = new Map(files.map((path) => [path, dependencies(path)]));
 const runtimeEdges = (path: string) => graph.get(path)!.filter((edge) => !edge.typeOnly);
+
+test('every source module has a reviewed owner even when it has no dependencies', () => {
+  for (const path of files)
+    assert.equal(sourceOwnershipViolation(label(path)), undefined, label(path));
+  for (const path of ['src/utils.ts', 'src/common/tool.ts', 'src/features/misc/operation.ts'])
+    assert.ok(sourceOwnershipViolation(path), `${path} bypassed ownership with no imports`);
+});
+
+test('import-equals dependencies participate in direction and cycle analysis', () => {
+  for (const typeOnly of [false, true]) {
+    const from = 'src/features/groups/new-action.ts';
+    const source = `import ${typeOnly ? 'type ' : ''}Facade = require('../../client/qq-client.ts');`;
+    const result = extractSourceDependencies(from, source);
+    assert.deepEqual(result.violations, []);
+    assert.deepEqual(result.dependencies, [
+      { specifier: '../../client/qq-client.ts', typeOnly, line: 1 },
+    ]);
+    const target = relativeTarget(join(projectRoot, from), result.dependencies[0]!.specifier);
+    assert.ok(target);
+    assert.ok(dependencyViolation({ from, to: label(target), typeOnly }));
+  }
+});
 
 test('source dependency direction includes type-only imports and exact cross-feature collaboration', () => {
   const observed = new Set<string>();

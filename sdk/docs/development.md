@@ -25,11 +25,26 @@ not establish interoperability with QQ or prove an account operation succeeded.
 | Compose an authenticated Session and feature adapters         | `kernel.ts` and `native-services.ts`                                                      |
 | CLI flags and client execution                                | `src/cli/`; executable entry remains `cli.ts`                                             |
 
+Follow the change through its owners:
+
+- A new operation starts in its domain contract and pure input capture. Add the
+  facade method and closed operation name, then the domain adapter and exhaustive
+  native dispatch. The CLI calls the public client. Validate the native contract
+  before enabling a platform capability.
+- A received callback starts in the domain projector. Route it through the
+  existing event/request owner and public event contract; test delivery, late
+  callbacks and close through that owner. Do not add a parallel native listener.
+- A bundle/bootstrap change starts in native selection or the worker acquisition
+  binding. Test the transaction owner, the real binding semantics and the packed
+  worker. Platform initialization CI checks the actual addon separately.
+
 Avoid a catch-all `utils`, `common` or base class for unrelated operations. A helper
 belongs next to the invariant it protects. Share it when callers actually have
 that same invariant, not because their code happens to look similar.
 
-The TypeScript dependency gate includes type-only edges. Cross-feature cooperation
+Every source file must have a reviewed layer or domain, including files without
+imports. The TypeScript dependency gate includes type-only edges and TypeScript
+`import = require()` declarations. Cross-feature cooperation
 requires an exact module pair with a reason in `test/helpers/dependency-policy.ts`.
 Computed imports and CommonJS loaders need a reviewed owner and exact loading
 form; new files do not inherit an existing loader exception. Features may use

@@ -31,7 +31,7 @@ export async function verifyWorkerBootstrapConsumer(packageRoot) {
       hook,
       `import {registerHooks} from 'node:module';
 ${mode === 'exit-delay' ? 'const originalExit=process.exit.bind(process);process.exit=(code)=>{const until=Date.now()+100;while(Date.now()<until){};originalExit(code);};' : ''}
-process.dlopen=()=>{process.send({fixture:'addon'});${mode === 'dlopen-fail' ? "throw Error('controlled addon failure');" : ''}};
+process.dlopen=(...args)=>{const bridge=args[1].endsWith('unused-bridge.node');if(args.length!==(bridge?3:2)||(bridge&&typeof args[2]!=='number'))throw Error('Controlled dlopen argument contract');process.send({fixture:'addon',bridge,argc:args.length});${mode === 'dlopen-fail' ? "throw Error('controlled addon failure');" : ''}};
 registerHooks({resolve(specifier,context,next){if(specifier==='node:fs/promises'&&${JSON.stringify(workerUrls)}.includes(context.parentURL))return {url:'fixture:mkdir',shortCircuit:true};return next(specifier,context);},load(url,context,next){
 if(url==='fixture:mkdir')return {format:'module',shortCircuit:true,source:${JSON.stringify(`import {mkdir as realMkdir} from 'node:fs/promises';let release;process.on('message',m=>{if(m?.control==='release')release?.();});export async function mkdir(path,options){${mode === 'mkdir-hold' ? "process.send({fixture:'mkdir-held'});await new Promise(r=>release=r);" : ''}return realMkdir(path,options);}`)}};
 if(url===${JSON.stringify(contractsUrl)})return {format:'module',shortCircuit:true,source:'export async function inspectNativeContracts(){return undefined;}'};
@@ -68,6 +68,7 @@ if(url===${JSON.stringify(kernelUrl)})return {format:'module',shortCircuit:true,
           wrapperPath: join(directory, 'unused.node'),
           version: 'fixture',
           preloadLibraries: [],
+          ...(mode === 'bridge' ? { bridgePath: join(directory, 'unused-bridge.node') } : {}),
         },
       });
     const reply = async (id) => {
@@ -121,6 +122,18 @@ if(url===${JSON.stringify(kernelUrl)})return {format:'module',shortCircuit:true,
       assert.equal(await exists(first), false);
       assert.equal(await exists(second), false);
     }
+    const bridged = await spawn('bridge');
+    bridged.init(1, join(directory, 'bridge'));
+    assert.equal((await bridged.reply(1)).error, undefined);
+    assert.deepEqual(
+      bridged.events.filter((e) => e.fixture === 'addon').map((e) => [e.bridge, e.argc]),
+      [
+        [true, 3],
+        [false, 2],
+      ],
+    );
+    await bridged.close();
+    assert.equal(await exists(join(directory, 'bridge')), false);
     const pendingDir = join(directory, 'preparing'),
       pending = await spawn('prepare-hold');
     pending.init(1, pendingDir);

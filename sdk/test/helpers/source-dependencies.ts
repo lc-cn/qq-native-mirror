@@ -104,7 +104,11 @@ export function extractSourceDependencies(path: string, source: string) {
     return false;
   }
   function visit(node: ts.Node) {
-    if (ts.isImportDeclaration(node) && ts.isStringLiteral(node.moduleSpecifier)) {
+    if (ts.isImportEqualsDeclaration(node) && ts.isExternalModuleReference(node.moduleReference)) {
+      const expression = node.moduleReference.expression;
+      if (expression && ts.isStringLiteral(expression)) add(node, expression.text, node.isTypeOnly);
+      else reject(node);
+    } else if (ts.isImportDeclaration(node) && ts.isStringLiteral(node.moduleSpecifier)) {
       const clause = node.importClause,
         bindings = clause?.namedBindings;
       const inline =
