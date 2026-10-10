@@ -13,13 +13,20 @@ export async function verifyFriendCategoryRenameConsumer(packageRoot) {
   const { profiles } = JSON.parse(
     await readFile(join(packageRoot, 'docs/evidence/group-search-contract.json'), 'utf8'),
   );
+  const { profiles: verifiedProfiles } = JSON.parse(
+    await readFile(join(packageRoot, 'docs/evidence/friend-category-rename-contract.json'), 'utf8'),
+  );
+  const matches = (a, b) =>
+    a &&
+    b &&
+    ['platform', 'arch', 'clientVersion', 'wrapperSha256'].every((key) => a[key] === b[key]);
+  const isVerified = (profile) => verifiedProfiles.some((p) => matches(p, profile));
+  assert.equal(verifiedProfiles.length, 3);
   assert.equal(profiles.length, 6);
   for (const profile of [
     ...profiles,
     undefined,
-    ...profiles
-      .filter((p) => p.platform === 'linux')
-      .map((p) => ({ ...p, wrapperSha256: '0'.repeat(64) })),
+    ...profiles.filter(isVerified).map((p) => ({ ...p, wrapperSha256: '0'.repeat(64) })),
   ]) {
     let acquisitions = 0;
     const calls = [];
@@ -47,9 +54,7 @@ export async function verifyFriendCategoryRenameConsumer(packageRoot) {
     });
     acquisitions = 0;
     try {
-      const verified = profiles.some(
-        (p) => p.platform === 'linux' && JSON.stringify(p) === JSON.stringify(profile),
-      );
+      const verified = isVerified(profile);
       if (verified) {
         assert.equal(
           await services.invokeOperation('renameFriendCategory', {

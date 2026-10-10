@@ -1,5 +1,5 @@
 {
-  "evidence": "actual ELF static instruction and relocation inspection; controlled source and installed consumer tests are separate",
+  "evidence": "actual ELF and Mach-O static instruction inspection; controlled source and installed consumer tests are separate",
   "operation": "renameFriendCategory",
   "nativeMethod": "renameCategory",
   "arguments": [
@@ -57,11 +57,38 @@
       "namespaceEvidenceSha256": "66358884d1024067ab72774fc4c0a2e8d8027a07f5743f84deaf33e9a5bd3a48",
       "namespaceScope": "same instance cache categoryId uint32 at row offset0; refresh success returns to cached path",
       "callback": "GOT89dbd08 RELATIVE1027 ->8751180 +16 addresspoint8751190,slot2 1765028 \u2192 work1765348 \u2192 invoke17655ac \u2192 shared17655e4 result int32/errMsg UTF8 properties176564c/17656b4 and resolve17656e8"
+    },
+    {
+      "platform": "darwin",
+      "arch": "arm64",
+      "clientVersion": "7.0.2-53644",
+      "wrapperSha256": "fbc8ad9b328d05e16784d76b0181dda894c17001179dbf8c0d5dd00dc6271358",
+      "method": {
+        "function": "0x8a3a88",
+        "argc": "0x8a3ae4 ->0x8a96f0 compare2",
+        "argument0": "0x8a3af0 ->0x8a978c ->0x2b82f44 native uint32; SDK forbids permissive string input",
+        "argument1": "0x8a3b00 ->0x885920 ->0x2b82dec UTF8 string",
+        "nativeSlot": "0x8a3b78 vtable+0xe8"
+      },
+      "sdkListArguments": [
+        "0",
+        true,
+        0
+      ],
+      "abiEvidenceSha256": "0b52180d0e6a66714f11f7c6a27c47f3bd8cbe5b0c49df77b6ed9470f2164329",
+      "namespaceEvidenceSha256": "93e403c4c57f484e14f3cd4021510e3abff0a6c725012b8497b1eddfc014fde9",
+      "namespaceScope": "same instance this+c0 cache row0 copied to JS categoryId; refresh success delegates to cached V2; actual source0 selects0x98024 member-buffer updates and scalar formatter preserves category row0",
+      "source0ReceiptSha256": "d21a83c7a46f7c23616954068721ca12e28e903136be366f47b163e9e23925ae",
+      "callback": {
+        "constructor": "0x8a96a0 ->0x83d134 ->0x8642d0, vtable0x514f0d0",
+        "dispatch": "0xb22fc4 ->0xb23054 ->work0xb23154 ->0xb23290",
+        "normalResult": "result int32 at0xb232e8; errMsg UTF8 at0xb23368; resolve0xb233b0"
+      },
+      "abiRecheckSha256": "1fcc9f47e4a889b15c30eb6499b1cf0ebaf337c51f8b34971dbba1a5e1ac0f38"
     }
   ],
   "unsupportedPlatforms": [
     "darwin-x64",
-    "darwin-arm64",
     "win32-x64",
     "win32-arm64"
   ],

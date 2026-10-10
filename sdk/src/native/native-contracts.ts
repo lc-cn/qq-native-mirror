@@ -29,7 +29,7 @@ type BinaryContract = readonly [
 // another feature's evidence never grants an unlisted native operation.
 // Evidence: friend-category-create, group-file-count, group-search and
 // group-folder contract records under docs/evidence/. Category renaming has its
-// own Linux-only namespace evidence in friend-category-rename-contract.json.
+// own platform-specific namespace evidence in friend-category-rename-contract.json.
 const binaryProfiles: readonly BinaryContract[] = [
   [
     'linux',
@@ -66,6 +66,7 @@ const binaryProfiles: readonly BinaryContract[] = [
     'fbc8ad9b328d05e16784d76b0181dda894c17001179dbf8c0d5dd00dc6271358',
     [
       'categoryCreation',
+      'categoryRenaming',
       'groupFileCount',
       'groupSearch',
       'groupFolderDeletion',

@@ -17,6 +17,21 @@ const profiles = (
   ) as { profiles: NativeContractProfile[] }
 ).profiles;
 
+const verifiedProfiles = (
+  JSON.parse(
+    readFileSync(
+      new URL('../docs/evidence/friend-category-rename-contract.json', import.meta.url),
+      'utf8',
+    ),
+  ) as { profiles: NativeContractProfile[] }
+).profiles;
+const verified = (profile: NativeContractProfile) =>
+  verifiedProfiles.some((p) =>
+    (['platform', 'arch', 'clientVersion', 'wrapperSha256'] as const).every(
+      (key) => p[key] === profile[key],
+    ),
+  );
+
 function fixture(
   profile: NativeContractProfile | undefined,
   version = profile?.clientVersion ?? 'unknown',
@@ -49,16 +64,14 @@ function fixture(
   return { services, calls, acquired: () => acquired };
 }
 
-test('rename enables only both exact Linux binaries and preserves uint32, spelling, receiver and two arguments', async () => {
+test('rename enables only three exact binary profiles and preserves uint32, spelling, receiver and two arguments', async () => {
   assert.equal(profiles.length, 6);
+  assert.equal(verifiedProfiles.length, 3);
   for (const profile of profiles) {
-    assert.equal(
-      supportsCategoryRenaming(profile, profile.clientVersion),
-      profile.platform === 'linux',
-    );
+    assert.equal(supportsCategoryRenaming(profile, profile.clientVersion), verified(profile));
     const f = fixture(profile);
     try {
-      if (profile.platform === 'linux') {
+      if (verified(profile)) {
         assert.equal(
           await f.services.invokeOperation('renameFriendCategory', {
             categoryId: 0xffff_ffff,
@@ -82,47 +95,48 @@ test('rename enables only both exact Linux binaries and preserves uint32, spelli
 });
 
 test('missing and mismatched provenance or invalid input cannot acquire Buddy or rename', async () => {
-  const linux = profiles.find((p) => p.platform === 'linux')!;
-  for (const profile of [
-    undefined,
-    ...(['platform', 'arch', 'clientVersion', 'wrapperSha256'] as const).map((key) => ({
-      ...linux,
-      [key]: 'unknown',
-    })),
-  ]) {
-    const f = fixture(profile);
+  for (const binary of profiles.filter(verified)) {
+    for (const profile of [
+      undefined,
+      ...(['platform', 'arch', 'clientVersion', 'wrapperSha256'] as const).map((key) => ({
+        ...binary,
+        [key]: 'unknown',
+      })),
+    ]) {
+      const f = fixture(profile);
+      try {
+        await assert.rejects(
+          f.services.invokeOperation('renameFriendCategory', { categoryId: 1, name: 'new' }),
+        );
+        assert.equal(f.acquired(), 0);
+        assert.deepEqual(f.calls, []);
+      } finally {
+        f.services.close();
+      }
+    }
+    const mismatch = fixture(binary, 'wrong-version');
     try {
       await assert.rejects(
-        f.services.invokeOperation('renameFriendCategory', { categoryId: 1, name: 'new' }),
+        mismatch.services.invokeOperation('renameFriendCategory', { categoryId: 1, name: 'new' }),
+      );
+      assert.equal(mismatch.acquired(), 0);
+    } finally {
+      mismatch.services.close();
+    }
+    const f = fixture(binary);
+    try {
+      for (const categoryId of [-1, 1.5, NaN, 0x1_0000_0000, '1'])
+        await assert.rejects(
+          f.services.invokeOperation('renameFriendCategory', { categoryId, name: 'new' }),
+        );
+      await assert.rejects(
+        f.services.invokeOperation('renameFriendCategory', { categoryId: 1, name: ' ' }),
       );
       assert.equal(f.acquired(), 0);
       assert.deepEqual(f.calls, []);
     } finally {
       f.services.close();
     }
-  }
-  const mismatch = fixture(linux, 'wrong-version');
-  try {
-    await assert.rejects(
-      mismatch.services.invokeOperation('renameFriendCategory', { categoryId: 1, name: 'new' }),
-    );
-    assert.equal(mismatch.acquired(), 0);
-  } finally {
-    mismatch.services.close();
-  }
-  const f = fixture(linux);
-  try {
-    for (const categoryId of [-1, 1.5, NaN, 0x1_0000_0000, '1'])
-      await assert.rejects(
-        f.services.invokeOperation('renameFriendCategory', { categoryId, name: 'new' }),
-      );
-    await assert.rejects(
-      f.services.invokeOperation('renameFriendCategory', { categoryId: 1, name: ' ' }),
-    );
-    assert.equal(f.acquired(), 0);
-    assert.deepEqual(f.calls, []);
-  } finally {
-    f.services.close();
   }
 });
 
