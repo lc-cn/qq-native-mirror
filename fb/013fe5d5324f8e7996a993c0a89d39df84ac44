@@ -1,0 +1,71 @@
+.github/workflows/sdk-quality.yml
+  s_2104cc474f1ce5::t_1b6f1c3d2cecd8 8,13
+ci/verify-consumer.mjs
+  s_2104cc474f1ce5::t_50b44c984d788e 32,77,320
+sdk/docs/architecture.md
+  s_2104cc474f1ce5::t_ad918c759b56be 20-24,45,97-126,144-146,245-251
+sdk/docs/development.md
+  s_2104cc474f1ce5::t_2dcf80e57f9623 11-26,104-107
+sdk/scripts/download-consumer-contract.mjs
+  s_2104cc474f1ce5::t_de590cb4b172b5 273,280-287
+sdk/scripts/forward-consumer-contract.mjs
+  s_2104cc474f1ce5::t_43a82984ce4a2d 337,344-352
+sdk/scripts/forward-resource-consumer-contract.mjs
+  s_2104cc474f1ce5::t_37164c37e9d31a 282,289-296
+sdk/scripts/history-lifecycle-consumer-contract.mjs
+  s_2104cc474f1ce5::t_2749fa3180af34 160-161,169-177
+sdk/scripts/verify-package-consumer.mjs
+  s_2104cc474f1ce5::t_e65827aa821f07 25,130-132,551
+sdk/scripts/worker-bootstrap-consumer-contract.mjs
+  s_2104cc474f1ce5::t_080f4d67f3e242 1-234
+sdk/src/runtime/client-lifecycle.ts
+  s_2104cc474f1ce5::t_9b7f9991c389f7 359,364,393,396,402
+sdk/src/runtime/worker-termination.ts
+  s_2104cc474f1ce5::t_5904fe041b87e9 6-9,51-56
+sdk/src/worker.ts
+  s_2104cc474f1ce5::t_bc8dbc8cd50550 2,7-23,27,47-50,53-54,57
+sdk/src/worker/bootstrap.ts
+  s_2104cc474f1ce5::t_62130274025c68 1-28
+sdk/src/worker/native-bootstrap.ts
+  s_2104cc474f1ce5::t_033654b47fa89a 1-226
+sdk/test/architecture.test.ts
+  s_2104cc474f1ce5::t_dda2208cdbb53f 125-133
+sdk/test/client-lifecycle-module.test.ts
+  s_2104cc474f1ce5::t_43995e296689df 18,22-29
+sdk/test/client-video-default.test.ts
+  s_2104cc474f1ce5::t_0b0f558131279d 30-37
+sdk/test/client-wait-for-login.test.ts
+  s_2104cc474f1ce5::t_210b841a52c1ea 9-10,21-29
+sdk/test/client.test.ts
+  s_2104cc474f1ce5::t_a14e9e55e64044 9-10,18-26,654
+sdk/test/fixtures/domain-port-types.ts
+  s_2104cc474f1ce5::t_150e08d3a2afd4 236-246
+sdk/test/helpers/dependency-policy.ts
+  s_2104cc474f1ce5::t_ef463d986d6b2e 25,28-30,36-43,151-159
+sdk/test/helpers/external-dependencies.ts
+  s_2104cc474f1ce5::t_71eef2c55d60cb 77
+sdk/test/login-requests.test.ts
+  s_2104cc474f1ce5::t_16864c190630ba 13,22-30,164
+sdk/test/merged-forward-client.test.ts
+  s_2104cc474f1ce5::t_2bb9d47bb1ca08 9-10,18-26
+sdk/test/worker-bootstrap.test.ts
+  s_2104cc474f1ce5::t_7c0a6ecb97523d 1-440
+sdk/test/worker-termination.test.ts
+  s_2104cc474f1ce5::t_c227ee31b8921f 93-120
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "fb013fe5d5324f8e7996a993c0a89d39df84ac44",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
