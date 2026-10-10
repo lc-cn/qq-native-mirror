@@ -1,11 +1,7 @@
+import { friendCategoryName } from './friend-categories.ts';
+export { friendCategoryName } from './friend-categories.ts';
 import { nativeResultError } from '../../errors.ts';
 import type { CreatedFriendCategory } from '../../types.ts';
-
-export function friendCategoryName(value: unknown): string {
-  if (typeof value !== 'string' || !value.trim())
-    throw new Error('Friend category name must be a nonblank string');
-  return value;
-}
 
 function field(value: unknown, key: string): unknown {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return;

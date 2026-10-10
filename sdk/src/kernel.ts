@@ -1,3 +1,5 @@
+import { serializeKernelError } from './errors.ts';
+import { withCleanupFailure } from './runtime/cleanup.ts';
 import type { NativeContractProfile } from './native/native-contracts.ts';
 import { createNativeServices, type ServiceOperation } from './native-services.ts';
 import { normalizeLoginRequest } from './native/login-request.ts';
@@ -75,13 +77,50 @@ export function createKernel(
     clearTimeout(poll);
     timeout = poll = undefined;
   };
+  // Detach before teardown: reentrant native notifications cannot reuse a Session.
+  const detachServices = () => {
+    const services = nativeServices;
+    nativeServices = undefined;
+    return services;
+  };
+  const cleanupFailure = (services: typeof nativeServices): { error: unknown } | undefined => {
+    try {
+      services?.close();
+    } catch (error) {
+      return { error };
+    }
+  };
+  const reportCleanupFailure = (cleanup: unknown, primary?: Error) => {
+    const failures = primary ? [primary] : ([] as unknown[]);
+    const append = (error: unknown) => {
+      if (error instanceof AggregateError) for (const item of error.errors) append(item);
+      else failures.push(error);
+    };
+    append(cleanup);
+    notify('diagnostic', {
+      stage: 'native-cleanup',
+      cleanupFailures: failures.map((error) => {
+        const serialized = serializeKernelError(error);
+        return {
+          message: serialized.message,
+          ...(serialized.name !== undefined ? { name: serialized.name } : {}),
+          ...(serialized.code !== undefined ? { code: serialized.code } : {}),
+        };
+      }),
+    });
+  };
   const fail = (error: Error) => {
     generation++;
+    identity = undefined;
+    requesting = false;
     clearTimers();
     const current = pending;
     pending = undefined;
-    current?.reject(error);
-    notify('login-error', error);
+    const failure = cleanupFailure(detachServices());
+    const result = failure ? withCleanupFailure(error, failure.error) : error;
+    current?.reject(result);
+    if (failure) reportCleanupFailure(failure.error, error);
+    notify('login-error', result);
   };
   const invoke = (object: NativeObject, method: string, ...args: unknown[]) => {
     if (typeof object[method] !== 'function') throw new Error(`Native kernel is missing ${method}`);
@@ -93,12 +132,14 @@ export function createKernel(
     generation++;
     identity = undefined;
     requesting = false;
-    nativeServices?.close();
-    nativeServices = undefined;
+    const services = detachServices();
     clearTimers();
     const current = pending;
     pending = undefined;
-    current?.reject(new Error('Native account became offline'));
+    const original = new Error('Native account became offline');
+    const failure = cleanupFailure(services);
+    current?.reject(failure ? withCleanupFailure(original, failure.error) : original);
+    if (failure) reportCleanupFailure(failure.error, original);
     const info = { ...details, retryable: false };
     notify('offline', info);
     notify('disconnected', info);
@@ -182,8 +223,8 @@ export function createKernel(
         return;
       }
       if (!active() || pending !== expectedPending) {
-        nativeServices?.close();
-        nativeServices = undefined;
+        const failure = cleanupFailure(detachServices());
+        if (failure) reportCleanupFailure(failure.error);
         return;
       }
       identity = { ...account };
@@ -588,11 +629,15 @@ export function createKernel(
       onLogoutSucceed: () => {
         generation++;
         clearTimers();
-        pending?.reject(new Error('Native account logged out during login'));
-        pending = undefined;
-        nativeServices?.close();
-        nativeServices = undefined;
         identity = undefined;
+        requesting = false;
+        const current = pending;
+        pending = undefined;
+        const services = detachServices();
+        const original = new Error('Native account logged out during login');
+        const failure = cleanupFailure(services);
+        current?.reject(failure ? withCleanupFailure(original, failure.error) : original);
+        if (failure) reportCleanupFailure(failure.error, original);
         notify('logout', undefined);
       },
     });
@@ -662,10 +707,13 @@ export function createKernel(
       if (closed) return;
       closed = true;
       generation++;
-      nativeServices?.close();
+      const services = detachServices();
+      identity = undefined;
+      requesting = false;
       clearTimers();
       pending?.reject(new Error('Client closed during login'));
       pending = undefined;
+      services?.close();
       // No native teardown contract has been verified. Owning Node worker exit
       // is required to release native singleton state and its threads.
     },

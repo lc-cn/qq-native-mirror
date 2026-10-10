@@ -1,5 +1,5 @@
-import { normalizeHistoryQuery } from '../messages/message-query.ts';
-import type { Peer } from '../../types.ts';
+import { own, downloadStrings } from './download-input.ts';
+export { captureDownloadRequest, captureDownloadPayload } from './download-input.ts';
 import { nativeResultError } from '../../errors.ts';
 import { constants } from 'node:fs';
 import { mkdir, stat, mkdtemp, copyFile, rm } from 'node:fs/promises';
@@ -8,50 +8,6 @@ import { dirname, isAbsolute, join } from 'node:path';
 import type { NativeObject as Native } from '../../native/native-object.ts';
 import type { NativeEventChannel } from '../../runtime/native-event-channel.ts';
 type EventCall = NativeEventChannel['call'];
-function own(value: unknown, key: string): unknown {
-  if (
-    !value ||
-    typeof value !== 'object' ||
-    Array.isArray(value) ||
-    ![Object.prototype, null].includes(Object.getPrototypeOf(value))
-  )
-    throw new Error('Attachment fields require a plain object');
-  const descriptor = Object.getOwnPropertyDescriptor(value, key);
-  if (descriptor && !('value' in descriptor))
-    throw new Error('Attachment fields require own data properties');
-  return descriptor?.value;
-}
-function downloadStrings(messageId: unknown, elementId: unknown, destination: unknown) {
-  if (
-    typeof messageId !== 'string' ||
-    !/^\d+$/.test(messageId) ||
-    typeof elementId !== 'string' ||
-    !/^\d+$/.test(elementId)
-  )
-    throw new Error('Attachment requires numeric messageId and elementId strings');
-  if (typeof destination !== 'string' || destination.includes('\0') || !isAbsolute(destination))
-    throw new Error('Attachment destination must be an absolute local path');
-  return { messageId, elementId, destination };
-}
-export function captureDownloadRequest(
-  peer: unknown,
-  messageId: unknown,
-  elementId: unknown,
-  destination: unknown,
-): { peer: Peer; messageId: string; elementId: string; destination: string } {
-  const captured = normalizeHistoryQuery(peer, {}).peer;
-  return { peer: captured, ...downloadStrings(messageId, elementId, destination) };
-}
-export function captureDownloadPayload(
-  payload: unknown,
-): ReturnType<typeof captureDownloadRequest> {
-  return captureDownloadRequest(
-    own(payload, 'peer'),
-    own(payload, 'messageId'),
-    own(payload, 'elementId'),
-    own(payload, 'destination'),
-  );
-}
 function completionData(value: unknown, key: string): unknown {
   try {
     return own(value, key);

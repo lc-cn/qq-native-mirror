@@ -1,15 +1,15 @@
 import { WorkerRpcChannel } from './runtime/worker-rpc-channel.ts';
-import { friendCategoryName } from './features/contacts/friend-category-create.ts';
+import { friendCategoryName } from './features/contacts/friend-categories.ts';
 import { deserializeKernelError, KernelRequestError } from './errors.ts';
-import { captureMergedForward } from './features/forward/merged-forward.ts';
+import { captureMergedForward } from './features/forward/merged-forward-input.ts';
 import { normalizeForwardResourceId } from './features/forward/forward-resource-wire.ts';
 import { sendGroupId } from './features/messages/send-input.ts';
-import { captureDownloadRequest } from './features/media/media-operations.ts';
+import { captureDownloadRequest } from './features/media/download-input.ts';
 import {
   normalizeMessageQuery,
   normalizeMessageBatchQuery,
   normalizeHistoryQuery,
-} from './features/messages/message-query.ts';
+} from './features/messages/query-input.ts';
 export { KernelRequestError, MergedForwardError } from './errors.ts';
 export type { MergedForwardFailure, MergedForwardProgress } from './errors.ts';
 import { EventEmitter } from 'node:events';

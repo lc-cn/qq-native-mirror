@@ -1,5 +1,5 @@
 import { isAbsolute } from 'node:path';
-import { validateFaceId } from './message-elements.ts';
+import { validateFaceId } from './face-input.ts';
 import type { SendableMessageElement } from '../../types.ts';
 
 export function sendUserId(value: unknown, allowAll = false): string {

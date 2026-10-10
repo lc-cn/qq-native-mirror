@@ -37,6 +37,18 @@ worker.ts (IPC boundary) -> kernel.ts (native session composition)
 | `test/`                                   | Deterministic regression fixtures, including worker substitution.                                        |
 | `scripts/`                                | Build tools, installed-consumer checks and separately authorized acceptance executors.                   |
 
+The parent facade and CLI import pure input modules (`query-input`,
+`download-input`, `merged-forward-input`, `send-input`, `face-input`, and
+contact-category projection/validation).
+Native operation modules reuse that implementation and retain internal reexports
+for existing contract consumers. Input capture therefore does not require the
+parent to depend on native querying, media-file writes or forward submission.
+
+`src/runtime/operations.ts` owns the closed business-operation vocabulary. The
+worker derives its classifier from it, and native dispatch handles the same union
+exhaustively. Adding a name without a corresponding native branch fails type
+checking; the worker no longer maintains a second handwritten allowlist.
+
 Feature modules may depend on public contracts and narrow native/runtime ports.
 They do not import the public Client or compose other account sessions. Relative
 internal paths are private; only the package root and CLI are public entry points.
@@ -79,6 +91,15 @@ RPC storage and settlement use `unknown` internally.
   or native mutation. Recheck session lifetime after asynchronous work.
 - Native callbacks without a request nonce use coalescing or invalidation where
   required. A failed channel cannot safely accept a retry's late callback.
+- Native composition is transactional: a failure stops callbacks and unwinds
+  successfully acquired modules. Normal close is idempotent and attempts every
+  cleanup. A single teardown error retains its identity/code; multiple failures
+  retain their original values in an `AggregateError`. Cleanup never retries a
+  native operation.
+- Account state, generation, timers and pending settlement converge before
+  fallible teardown. Offline/logout events still report the original transition.
+  Cleanup diagnostics expose typed message/name/code records rather than native
+  Error instances or arbitrary error properties.
 - Error serialization includes only explicitly supported fields. Native objects,
   tickets, arbitrary causes and stacks are not part of the IPC error DTO.
 - Tests using controlled services prove SDK behavior, not real native/account
@@ -105,6 +126,11 @@ from npm's populated cache for the offline consumer installation.
 The `SDK quality` GitHub workflow runs these gates independently of platform
 bundle and video-native CI. Runtime output is recreated from a clean `dist`
 directory so obsolete emitted modules cannot make a packaging check pass.
+
+Static architecture tests also reject runtime dependency cycles, missing internal
+modules, implementation imports from public contracts, and transitive native/IO
+dependencies in pure input modules. They protect these boundaries during later
+feature work; renaming directories alone does not establish them.
 
 Comments should explain constraints, ownership, ABI evidence or decisions that
 are not evident from the code. Keep native provenance references next to the

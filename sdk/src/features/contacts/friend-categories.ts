@@ -96,3 +96,9 @@ export function projectFriendCategories(
     friends: category.uids.map((uid) => ({ ...friends.get(uid)! })),
   }));
 }
+
+export function friendCategoryName(value: unknown): string {
+  if (typeof value !== 'string' || !value.trim())
+    throw new Error('Friend category name must be a nonblank string');
+  return value;
+}

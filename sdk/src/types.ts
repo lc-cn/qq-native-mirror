@@ -77,6 +77,19 @@ export interface NativeCallbackAudit {
   argumentTypes: string[];
   count: number;
 }
+/** Explicit error fields suitable for diagnostic events across worker IPC. */
+export interface DiagnosticFailure {
+  message: string;
+  name?: string;
+  code?: string | number;
+}
+
+/** Runtime diagnostics expose supported fields rather than native error objects. */
+export interface DiagnosticInfo {
+  stage: string;
+  cleanupFailures?: DiagnosticFailure[];
+}
+
 export interface ClientEvents {
   state: [ClientState];
   message: [Message];
@@ -108,7 +121,7 @@ export interface ClientEvents {
   'qr-scanned': [undefined];
   'login-error': [Error];
   loginError: [Error];
-  diagnostic: [{ stage: string }];
+  diagnostic: [DiagnosticInfo];
   'native-callback': [{ family: string; name: string; argumentTypes: string[] }];
   terminated: [Error];
   log: [{ stream: 'stdout' | 'stderr'; text: string }];

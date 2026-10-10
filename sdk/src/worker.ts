@@ -3,53 +3,12 @@ import { constants } from 'node:os';
 import { mkdir } from 'node:fs/promises';
 import { createKernel } from './kernel.ts';
 import type { ClientOptions, LoginRequest } from './types.ts';
-import type { ServiceOperation } from './native-services.ts';
+import { isServiceOperation } from './runtime/operations.ts';
 import { lockDataDirectory } from './storage/data-directory-lock.ts';
 import { loadRecordCodec } from './features/media/record-codec-loader.ts';
 import { loadVideoCodec } from './features/media/video-codec-loader.ts';
 import { builtinRecordCodec } from './features/media/builtin-record-codec.ts';
 import { inspectNativeContracts } from './native/native-contracts.ts';
-
-const operations = new Set([
-  'addFriendCategory',
-  'listFriends',
-  'listFriendCategories',
-  'listGroups',
-  'getGroupInfo',
-  'listGroupMutedMembers',
-  'getGroupMembers',
-  'sendPrivateMessage',
-  'sendGroupMessage',
-  'sendMergedForward',
-  'getMessage',
-  'getMessages',
-  'getHistory',
-  'recallMessage',
-  'getForwardMessages',
-  'getForwardResource',
-  'forwardMessages',
-  'setGroupName',
-  'setGroupRemark',
-  'setGroupMute',
-  'setGroupMemberMute',
-  'setGroupMemberCard',
-  'setGroupAdmin',
-  'kickGroupMember',
-  'leaveGroup',
-  'setNickname',
-  'setSignature',
-  'listGroupNotices',
-  'publishGroupNotice',
-  'deleteGroupNotice',
-  'downloadAttachment',
-  'getUserProfile',
-  'setFriendRemark',
-  'deleteFriend',
-  'listFriendRequests',
-  'handleFriendRequest',
-  'listGroupRequests',
-  'handleGroupRequest',
-]);
 
 let kernel: ReturnType<typeof createKernel> | undefined;
 let releaseDataLock: (() => void) | undefined;
@@ -130,9 +89,9 @@ process.on('message', async (message: unknown) => {
       result = { exports: Object.keys(native.exports) };
     } else if (request.method === 'login' && kernel) {
       result = await kernel.login(request.login!);
-    } else if (operations.has(request.method) && kernel) {
+    } else if (isServiceOperation(request.method) && kernel) {
       const { id: _id, method, ...payload } = request;
-      result = await kernel.invokeOperation(method as ServiceOperation, payload);
+      result = await kernel.invokeOperation(method, payload);
     } else if (request.method === 'close') {
       await kernel?.close();
       send({ id: request.id, result: null });
