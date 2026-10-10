@@ -202,6 +202,34 @@ test('dependency policy rejects reverse, type-only and new cross-domain coupling
   );
 });
 
+test('native composition delegates forward resource orchestration to its domain owner', () => {
+  const from = 'src/native-services.ts';
+  for (const to of [
+    'src/features/forward/merged-forward.ts',
+    'src/features/forward/merged-forward-input.ts',
+    'src/features/forward/forward-resource-transport.ts',
+    'src/features/forward/forward-resource-wire.ts',
+    'src/features/forward/new-resource.ts',
+  ])
+    for (const typeOnly of [false, true])
+      assert.ok(dependencyViolation({ from, to, typeOnly }), `${from} inherited ${to}`);
+  assert.ok(
+    dependencyViolation({
+      from,
+      to: 'src/features/forward/long-message-response.ts',
+      typeOnly: false,
+    }),
+  );
+  assert.equal(
+    dependencyViolation({
+      from,
+      to: 'src/features/forward/long-message-response.ts',
+      typeOnly: true,
+    }),
+    undefined,
+  );
+});
+
 test('package entry contains only public reexports', () => {
   const entry = join(sourceRoot, 'index.ts');
   const tree = ts.createSourceFile(

@@ -308,6 +308,14 @@ The composition root binds those ports and selects a method; it does not impleme
 query control flow. Whole-batch validation precedes asynchronous projection, and
 the existing Session lifetime observes pending work and blocks dispatch after close.
 
+`features/forward/forward-resource-owner` owns the Session's lazy upload and read
+transports and their orchestration. Its SSO port contains one native method; the
+composition root supplies peer resolution, prepared card sending and the account
+signal. Read preflight precedes native service acquisition; merged sending still
+captures input, resolves the destination, checks cancellation, then uploads and
+sends the card. Two deferred cleanup entries retain the original upload/read order
+and account cleanup error semantics. Construction never acquires native services.
+
 `createForwardMessages` owns existing-message forwarding and merged-content reads.
 Its narrow message port exposes only `getMultiMsg` and `forwardMsg`; peer resolution
 and single/batch decoding are injected separately. It captures validated inputs

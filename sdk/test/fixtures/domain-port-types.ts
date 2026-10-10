@@ -7,6 +7,7 @@ import type { GroupOperationsContext } from '../../src/features/groups/group-ope
 import type { SelfProfileContext } from '../../src/features/contacts/self-profile.ts';
 import type { GroupNoticesContext } from '../../src/features/groups/group-notices.ts';
 import type { ForwardMessagesContext } from '../../src/features/forward/forward-messages.ts';
+import type { ForwardResourceOwnerContext } from '../../src/features/forward/forward-resource-owner.ts';
 import type { QunWebReadContext } from '../../src/features/groups/qun-web-read.ts';
 import type { WebGroupNoticesContext } from '../../src/features/groups/web-group-notices.ts';
 import type { GroupWebReadsContext } from '../../src/features/groups/group-web-reads.ts';
@@ -33,11 +34,21 @@ function verifyDomainPorts(
   groupRequests: GroupRequestsContext,
   notices: GroupNoticesContext,
   forward: ForwardMessagesContext,
+  forwardResources: ForwardResourceOwnerContext,
   webRead: QunWebReadContext,
   noticeRead: WebGroupNoticesContext,
   groupReads: GroupWebReadsContext,
   categoryRename: FriendCategoryRenameContext,
 ) {
+  // @ts-expect-error Resource orchestration cannot acquire unrelated Session services.
+  forwardResources.getBuddyService();
+  // @ts-expect-error The SSO transport cannot submit ordinary messages.
+  forwardResources.getMessageService().sendMsg();
+  const nativeForwardResponse = forwardResources
+    .getMessageService()
+    .sendSsoCmdReqByContend('command', Buffer.alloc(0));
+  // @ts-expect-error Native resource envelopes require validation by the transport.
+  void nativeForwardResponse.rspbuffer;
   // @ts-expect-error A contact directory cannot acquire arbitrary native services.
   contacts.service('Group');
   // @ts-expect-error A group query cannot acquire arbitrary native services.

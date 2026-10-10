@@ -1,4 +1,5 @@
 import { isCancellableRead } from './operations.ts';
+import { normalizeKernelError } from '../errors.ts';
 
 /** A worker response carries an opaque business result, never a native assertion. */
 export type WorkerRpcResponse =
@@ -51,11 +52,10 @@ export class WorkerRpcChannel {
           const outcome = this.policy.timeout?.(method, error) ?? error;
           void Promise.resolve(outcome).then(
             (value) => pending.reject(this.policy.failure(method, value)),
-            (failure) =>
-              pending.reject(failure instanceof Error ? failure : new Error(String(failure))),
+            (failure) => pending.reject(normalizeKernelError(failure)),
           );
         } catch (failure) {
-          pending.reject(failure instanceof Error ? failure : new Error(String(failure)));
+          pending.reject(normalizeKernelError(failure));
         }
       }, timeoutMs);
       const entry: Pending = { method, resolve, reject, timer };
@@ -73,7 +73,7 @@ export class WorkerRpcChannel {
           if (error) fail(error);
         });
       } catch (error) {
-        fail(error instanceof Error ? error : new Error(String(error)));
+        fail(normalizeKernelError(error));
       }
     });
   }

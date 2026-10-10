@@ -11,7 +11,6 @@ import {
   deleteGroupFolder,
   getGroupFileCount,
 } from './features/groups/group-file-operations.ts';
-import { captureMergedForward } from './features/forward/merged-forward-input.ts';
 import { captureDownloadPayload } from './features/media/download-input.ts';
 import { createMessageQueries } from './features/messages/message-queries.ts';
 import { withCleanupFailure } from './runtime/cleanup.ts';
@@ -34,19 +33,8 @@ import {
 } from './features/contacts/friend-categories.ts';
 import { createContactDirectory } from './features/contacts/contact-directory.ts';
 import { createNativeEventChannel } from './runtime/native-event-channel.ts';
-import { sendCapturedMergedForward } from './features/forward/merged-forward.ts';
-import {
-  createLongMessageResponseTransport,
-  type LongMessageResponseService,
-} from './features/forward/long-message-response.ts';
-import {
-  buildForwardResourceRequest,
-  normalizeForwardResourceId,
-} from './features/forward/forward-resource-wire.ts';
-import {
-  createForwardResourceTransport,
-  type ForwardResourceService,
-} from './features/forward/forward-resource-transport.ts';
+import { createForwardResourceOwner } from './features/forward/forward-resource-owner.ts';
+import type { LongMessageResponseService } from './features/forward/long-message-response.ts';
 import { queryNativeMessage } from './features/messages/message-query.ts';
 import { createSelfProfile } from './features/contacts/self-profile.ts';
 import { createGroupWebReads } from './features/groups/group-web-reads.ts';
@@ -356,10 +344,14 @@ export function createNativeServices(context: NativeServiceContext) {
       decode: resolvedMessages,
       awaitAlive,
     });
-    let longMessageTransport: ReturnType<typeof createLongMessageResponseTransport> | undefined;
-    let forwardResourceTransport: ReturnType<typeof createForwardResourceTransport> | undefined;
-    lifetime.defer(() => longMessageTransport?.close());
-    lifetime.defer(() => forwardResourceTransport?.close());
+    const forwardResources = createForwardResourceOwner({
+      selfUid: accountUid ?? '',
+      signal: lifetime.signal,
+      resolvePeer,
+      getMessageService: () => service('Msg') as LongMessageResponseService,
+      sendPrepared: (peer, elements, onDispatch) => sender.sendPrepared(peer, elements, onDispatch),
+      defer: (cleanup) => lifetime.defer(cleanup),
+    });
     return {
       async invokeOperation(
         method: ServiceOperation,
@@ -414,30 +406,10 @@ export function createNativeServices(context: NativeServiceContext) {
             const input = captureSendInput(payload.message, true);
             return sender.send({ chatType: 2, peerUid: groupId }, input);
           }
-          case 'sendMergedForward': {
-            const captured = captureMergedForward(payload.peer, payload.nodes, payload.options);
-            const destination = await resolvePeer(captured.peer);
-            lifetime.signal.throwIfAborted();
-            return sendCapturedMergedForward(
-              captured,
-              accountUid ?? '',
-              () =>
-                (longMessageTransport ??= createLongMessageResponseTransport(
-                  service('Msg') as LongMessageResponseService,
-                )),
-              (card, onDispatch) => sender.sendPrepared(destination, [card], onDispatch),
-              lifetime.signal,
-            );
-          }
-          case 'getForwardResource': {
-            const resourceId = normalizeForwardResourceId(payload.resourceId),
-              selfUid = accountUid ?? '';
-            buildForwardResourceRequest(selfUid, resourceId); // Preflight before obtaining any native service.
-            lifetime.signal.throwIfAborted();
-            return (forwardResourceTransport ??= createForwardResourceTransport(
-              service('Msg') as ForwardResourceService,
-            )).read(selfUid, resourceId, { signal: lifetime.signal });
-          }
+          case 'sendMergedForward':
+            return forwardResources.sendMerged(payload.peer, payload.nodes, payload.options);
+          case 'getForwardResource':
+            return forwardResources.readResource(payload.resourceId);
           case 'getMessage':
             return messageQueries.getMessage(payload.peer, payload.messageId);
           case 'getMessages':

@@ -91,6 +91,10 @@ const serviceRuntimeDependencies = new Set([
   'src/runtime/native-event-channel.ts',
   'src/runtime/operations.ts',
 ]);
+const serviceForwardDependencies = new Set([
+  'src/features/forward/forward-messages.ts',
+  'src/features/forward/forward-resource-owner.ts',
+]);
 const nativeContracts = new Set([
   'src/native/native-object.ts',
   'src/native/native-contracts.ts',
@@ -195,6 +199,11 @@ export function dependencyViolation({ from, to, typeOnly }: SourceDependency): s
     return kernelDependencies.has(to) || (typeOnly && to === 'src/native/native-object.ts')
       ? undefined
       : 'Authentication composes its environment and account lifetime, not feature implementations.';
+  if (from === 'src/native-services.ts' && to.startsWith('src/features/forward/'))
+    return serviceForwardDependencies.has(to) ||
+      (typeOnly && to === 'src/features/forward/long-message-response.ts')
+      ? undefined
+      : 'Forward resource state and orchestration belong to the forward owner, not composition.';
   if (from === 'src/native-services.ts')
     return to.startsWith('src/features/') ||
       serviceRuntimeDependencies.has(to) ||

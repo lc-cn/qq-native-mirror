@@ -48,6 +48,12 @@ awaits the complete operation. Inject ticket/domain-key methods and the account
 wait port there; keep endpoint exchange, pagination and DTO validation in their
 existing group modules. The composition root only supplies ports and routes.
 
+`features/forward/forward-resource-owner.ts` owns lazy resource upload/read
+transports and merged card orchestration. Supply its narrow SSO, peer resolution
+and prepared card ports; keep wire schemas inside the forward domain. Register
+upload and read cleanup independently in the account ledger. The dependency gate
+prevents composition from importing their transport or wire implementations.
+
 Native callback wrappers belong to `runtime/native-listener-owner`; business
 callback definitions and registration order belong to composition. Supply a
 captured registration function instead of a Session or service locator. Keep

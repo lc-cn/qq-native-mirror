@@ -190,3 +190,60 @@ test('offline cancels a pending read once and preserves reserved correlation fie
   await failed;
   assert.deepEqual(cancelled, [1]);
 });
+
+test('opaque send failure settles immediately, cancels once and removes its timer', async (context) => {
+  context.mock.timers.enable({ apis: ['setTimeout'] });
+  let coercions = 0;
+  let timeouts = 0;
+  const cancelled: number[] = [];
+  let callback: ((error: Error | null) => void) | undefined;
+  const opaque = {
+    toString() {
+      coercions++;
+      throw new Error('private coercion');
+    },
+  };
+  const channel = new WorkerRpcChannel(
+    () => ({
+      send(_message, value) {
+        callback = value;
+        throw opaque;
+      },
+      cancelRead(id) {
+        cancelled.push(id);
+      },
+    }),
+    {
+      failure: (_method, error) => error,
+      responseFailure: () => new Error('native'),
+      timeout: (_method, error) => {
+        timeouts++;
+        return error;
+      },
+    },
+  );
+  await assert.rejects(channel.request('getGroupEssencePage', {}, 10), /Kernel request failed/);
+  callback?.(new Error('late send error'));
+  channel.receive({ id: 1, result: 'late response' });
+  context.mock.timers.tick(20);
+  assert.equal(coercions, 0);
+  assert.equal(timeouts, 0);
+  assert.deepEqual(cancelled, [1]);
+});
+
+test('hostile timeout retirement rejection is normalized without an unobserved continuation', async (context) => {
+  context.mock.timers.enable({ apis: ['setTimeout'] });
+  let coercions = 0;
+  const opaque = {
+    toString() {
+      coercions++;
+      throw new Error('private retirement');
+    },
+  };
+  const f = fixture(() => Promise.reject(opaque));
+  const rejected = assert.rejects(f.channel.request('login', {}, 10), /Kernel request failed/);
+  context.mock.timers.tick(10);
+  await rejected;
+  f.callbacks[0](new Error('late callback'));
+  assert.equal(coercions, 0);
+});
