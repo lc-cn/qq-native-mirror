@@ -1,0 +1,62 @@
+sdk/test/cli-command-plan.test.ts
+  s_2104cc474f1ce5::t_f1113536bb1eee 122-134
+  s_2104cc474f1ce5::t_0f0cea49b8f0e8 135-145
+sdk/src/native-services.ts
+  s_2104cc474f1ce5::t_0b3aa4c5f38155 3-12,22-23,544-573,586-587,589
+sdk/scripts/public-contract-consumer.mjs
+  s_2104cc474f1ce5::t_ad88f163ee47ce 96-101
+sdk/src/features/groups/group-file-operations.ts
+  s_2104cc474f1ce5::t_d2a761766013a8 2-7,50-89,99,102
+  s_2104cc474f1ce5::t_9fceb20cec1f6f 90-98,100-101,103
+sdk/test/client.test.ts
+  s_2104cc474f1ce5::t_f1113536bb1eee 1013-1036
+  s_2104cc474f1ce5::t_4cbc9fcd516e1f 1037-1042
+sdk/src/features/groups/group-file-input.ts
+  s_2104cc474f1ce5::t_d2a761766013a8 3-4,7-12,20-27
+sdk/src/contracts/groups.ts
+  s_2104cc474f1ce5::t_d2a761766013a8 84-91
+sdk/test/fixtures/domain-port-types.ts
+  s_2104cc474f1ce5::t_ad88f163ee47ce 208-220
+sdk/docs/architecture.md
+  s_2104cc474f1ce5::t_2ecbe5b6f19a7d 402-413
+sdk/docs/contacts-groups.md
+  s_2104cc474f1ce5::t_0ed0ca0dbd17ca 277-278,286-320
+sdk/docs/evidence/group-folder-create-contract.json
+  s_2104cc474f1ce5::t_3979f37af5a540 1-219
+sdk/scripts/contact-group-consumer-contract.mjs
+  s_2104cc474f1ce5::t_7c23900c58a7ea 26,71-76,289-326,329-330,364-572,835-838
+sdk/src/cli.ts
+  s_2104cc474f1ce5::t_0d331417003753 56
+sdk/src/cli/command-plan.ts
+  s_2104cc474f1ce5::t_cd2004da0b85ec 3,69,382-388
+sdk/src/client/qq-client.ts
+  s_2104cc474f1ce5::t_bc213c651208ab 3,43,280-283
+sdk/src/native/native-contracts.ts
+  s_2104cc474f1ce5::t_efa6bdf7ae62aa 12-24,26-31,37-43,50-56,63-69,76-82,89-95,102-110,122,141,146-147,151-152,161,168,175-189
+sdk/src/runtime/operations.ts
+  s_2104cc474f1ce5::t_b7806d57073694 27
+sdk/test/fixtures/public-type-names.json
+  s_2104cc474f1ce5::t_78a6909cdedc74 29
+sdk/test/group-file-operations.test.ts
+  s_2104cc474f1ce5::t_7088d02dc6e904 174-211,223-224,271-321
+sdk/test/group-folder-create-profiles.test.ts
+  s_2104cc474f1ce5::t_832065ff83a665 1-33
+sdk/test/group-folder-create.test.ts
+  s_2104cc474f1ce5::t_2dc9ce3e7fc4b0 1-159
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "cf3edbab4c3cb32c6791da2fe1830cf5e6d502db",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
