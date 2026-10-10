@@ -107,6 +107,12 @@ Use intrinsic Map operations for native membership maps, and commit the complete
 validated member batch only after checking Session retirement. Keep this policy
 inside the group query owner rather than in service composition or the UID cache.
 
+Metadata events retain their partial-field semantics. Capture optional fields
+once, validate the whole batch and guard projection failures with a fixed
+diagnostic. Keep the application emit call outside that guard so an application
+listener error is not mislabeled as invalid native data. Use intrinsic Map
+enumeration for member callbacks, matching the query owner's storage policy.
+
 Element decoding belongs to `features/messages/inbound-elements`; add no file
 preparation or native querying there. Local image/file staging and reply-reference
 construction belong to `outbound-elements`, using the specific staging/query

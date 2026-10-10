@@ -184,3 +184,111 @@ test('projected notification objects are independent of native payloads', () => 
   assert.equal(member.nick, 'original');
   assert.doesNotMatch(JSON.stringify(events), /fixture-secret|credential|unknown/);
 });
+
+test('partial metadata fields are captured once before validation and publication', () => {
+  const events: [string, unknown][] = [];
+  const listener = createGroupEvents((event, value) => events.push([event, value]));
+  let groupReads = 0;
+  let roleReads = 0;
+  listener.onGroupListUpdate(2, [
+    {
+      groupCode: '123',
+      get groupName() {
+        return ++groupReads === 1 ? 'captured' : 99;
+      },
+    },
+  ]);
+  listener.onMemberInfoChange(
+    '123',
+    0,
+    new Map([
+      [
+        'u',
+        {
+          get role() {
+            return ++roleReads === 1 ? 3 : 'invalid';
+          },
+        },
+      ],
+    ]),
+  );
+  assert.deepEqual(events, [
+    ['group-list-updated', { kind: 'modified', groups: [{ groupId: '123', name: 'captured' }] }],
+    [
+      'group-members-updated',
+      { groupId: '123', source: 'local', members: [{ uid: 'u', role: 'admin' }] },
+    ],
+  ]);
+  assert.equal(groupReads, 1);
+  assert.equal(roleReads, 1);
+});
+
+test('member projection uses real Map entries despite an overridden iterator', () => {
+  const events: [string, unknown][] = [];
+  const listener = createGroupEvents((event, value) => events.push([event, value]));
+  let calls = 0;
+  const values = new Map<string, unknown>();
+  values[Symbol.iterator] = function* () {
+    calls++;
+    yield ['fabricated', {}];
+    return undefined;
+  };
+  listener.onMemberInfoChange('123', 1, values);
+  assert.deepEqual(events, [
+    ['group-members-updated', { groupId: '123', source: 'remote', members: [] }],
+  ]);
+  assert.equal(calls, 0);
+});
+
+test('later projection exceptions become atomic diagnostics and allow downstream dispatch', () => {
+  const events: [string, unknown][] = [];
+  const listener = createGroupEvents((event, value) => events.push([event, value]));
+  let downstream = 0;
+  const bad = {
+    get groupCode() {
+      throw new Error('fixture-secret');
+    },
+  };
+  assert.doesNotThrow(() => {
+    listener.onGroupListUpdate(0, [{ groupCode: '123' }, bad]);
+    downstream++;
+  });
+  assert.doesNotThrow(() => {
+    listener.onMemberInfoChange(
+      '123',
+      0,
+      new Map([
+        ['good', {}],
+        [
+          'bad',
+          {
+            get nick() {
+              throw new Error('fixture-secret');
+            },
+          },
+        ],
+      ]),
+    );
+    downstream++;
+  });
+  assert.equal(downstream, 2);
+  assert.deepEqual(events, [
+    ['diagnostic', { stage: 'invalid-native-group-list-update' }],
+    ['diagnostic', { stage: 'invalid-native-group-member-update' }],
+  ]);
+});
+
+test('application emit errors remain visible rather than becoming native diagnostics', () => {
+  const error = new Error('application observer failed');
+  const listener = createGroupEvents(() => {
+    throw error;
+  });
+  assert.throws(
+    () => listener.onGroupListUpdate(0, [{ groupCode: '123' }]),
+    (value) => value === error,
+  );
+  assert.throws(
+    () => listener.onMemberInfoChange('123', 0, new Map()),
+    (value) => value === error,
+  );
+});

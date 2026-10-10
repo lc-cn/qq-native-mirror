@@ -51,58 +51,61 @@ export function projectGroupInfo(value: unknown): GroupInfoUpdate {
 }
 function group(value: unknown): GroupChange | undefined {
   const raw = object(value);
-  if (!raw || !decimal(raw.groupCode)) return;
-  const result: GroupChange = { groupId: raw.groupCode };
-  if (raw.groupName !== undefined) {
-    if (typeof raw.groupName !== 'string') return;
-    result.name = raw.groupName;
+  if (!raw) return;
+  const groupCode = raw.groupCode;
+  if (!decimal(groupCode)) return;
+  const result: GroupChange = { groupId: groupCode };
+  const groupName = raw.groupName;
+  if (groupName !== undefined) {
+    if (typeof groupName !== 'string') return;
+    result.name = groupName;
   }
   for (const [input, output] of [
     ['memberCount', 'memberCount'],
     ['maxMember', 'maxMemberCount'],
   ] as const) {
-    if (raw[input] === undefined) continue;
-    if (typeof raw[input] !== 'number' || !Number.isSafeInteger(raw[input]) || raw[input] < 0)
-      return;
-    result[output] = raw[input];
+    const value = raw[input];
+    if (value === undefined) continue;
+    if (typeof value !== 'number' || !Number.isSafeInteger(value) || value < 0) return;
+    result[output] = value;
   }
   return result;
 }
 function member(uid: unknown, value: unknown): GroupMemberChange | undefined {
   const raw = object(value);
-  if (typeof uid !== 'string' || !uid.trim() || !raw || (raw.uid !== undefined && raw.uid !== uid))
-    return;
+  if (typeof uid !== 'string' || !uid.trim() || !raw) return;
+  const explicitUid = raw.uid;
+  if (explicitUid !== undefined && explicitUid !== uid) return;
   const result: GroupMemberChange = { uid };
-  if (raw.uin !== undefined) {
-    if (!decimal(raw.uin)) return;
-    result.userId = raw.uin;
+  const uin = raw.uin;
+  if (uin !== undefined) {
+    if (!decimal(uin)) return;
+    result.userId = uin;
   }
   for (const [input, output] of [
     ['nick', 'nickname'],
     ['cardName', 'card'],
   ] as const) {
-    if (raw[input] === undefined) continue;
-    if (typeof raw[input] !== 'string') return;
-    result[output] = raw[input];
+    const value = raw[input];
+    if (value === undefined) continue;
+    if (typeof value !== 'string') return;
+    result[output] = value;
   }
-  if (raw.role !== undefined) {
+  const role = raw.role;
+  if (role !== undefined) {
     const roles = ['unspecified', 'stranger', 'member', 'admin', 'owner'] as const;
-    if (
-      typeof raw.role !== 'number' ||
-      !Number.isInteger(raw.role) ||
-      raw.role < 0 ||
-      raw.role >= roles.length
-    )
+    if (typeof role !== 'number' || !Number.isInteger(role) || role < 0 || role >= roles.length)
       return;
-    result.role = roles[raw.role];
+    result.role = roles[role];
   }
   for (const [input, output] of [
     ['isDelete', 'deleted'],
     ['isChangeRole', 'roleChanged'],
   ] as const) {
-    if (raw[input] === undefined) continue;
-    if (typeof raw[input] !== 'boolean') return;
-    result[output] = raw[input];
+    const value = raw[input];
+    if (value === undefined) continue;
+    if (typeof value !== 'boolean') return;
+    result[output] = value;
   }
   return result;
 }
@@ -131,7 +134,13 @@ export function createGroupEvents(emit: (event: string, payload: unknown) => voi
         invalid('invalid-native-group-list-update');
         return;
       }
-      const groups = Array.from(values, group);
+      let groups: (GroupChange | undefined)[];
+      try {
+        groups = Array.from(values, group);
+      } catch {
+        invalid('invalid-native-group-list-update');
+        return;
+      }
       if (groups.some((value) => value === undefined)) {
         invalid('invalid-native-group-list-update');
         return;
@@ -144,7 +153,14 @@ export function createGroupEvents(emit: (event: string, payload: unknown) => voi
         invalid('invalid-native-group-member-update');
         return;
       }
-      const members = [...values].map(([uid, value]) => member(uid, value));
+      let members: (GroupMemberChange | undefined)[];
+      try {
+        const entries: IterableIterator<[unknown, unknown]> = Map.prototype.entries.call(values);
+        members = Array.from(entries, ([uid, value]) => member(uid, value));
+      } catch {
+        invalid('invalid-native-group-member-update');
+        return;
+      }
       if (members.some((value) => value === undefined)) {
         invalid('invalid-native-group-member-update');
         return;

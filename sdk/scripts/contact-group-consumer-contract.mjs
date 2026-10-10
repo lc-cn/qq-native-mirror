@@ -203,6 +203,59 @@ export async function verifyContactGroupConsumer(packageRoot) {
   });
   assert.equal(lines.length, 1);
   assert.equal(lines[0].event, 'group-info-updated');
+  let eventNameReads = 0;
+  listener.onGroupListUpdate(2, [
+    {
+      groupCode: '123',
+      get groupName() {
+        return ++eventNameReads === 1 ? 'captured' : 123;
+      },
+    },
+  ]);
+  assert.equal(eventNameReads, 1);
+  assert.deepEqual(lines.at(-1).payload, {
+    kind: 'modified',
+    groups: [{ groupId: '123', name: 'captured' }],
+  });
+  let eventRoleReads = 0;
+  const eventMembers = new Map([
+    [
+      'u_snapshot',
+      {
+        get role() {
+          return ++eventRoleReads === 1 ? 3 : 4;
+        },
+      },
+    ],
+  ]);
+  Object.defineProperty(eventMembers, Symbol.iterator, {
+    value() {
+      throw Error('Overridden member iterator must not run');
+    },
+  });
+  listener.onMemberInfoChange('123', 1, eventMembers);
+  assert.equal(eventRoleReads, 1);
+  assert.deepEqual(lines.at(-1).payload, {
+    groupId: '123',
+    source: 'remote',
+    members: [{ uid: 'u_snapshot', role: 'admin' }],
+  });
+  const boundedDiagnostics = [];
+  const throwingEvents = createGroupEvents((name, value) => boundedDiagnostics.push([name, value]));
+  assert.doesNotThrow(() =>
+    throwingEvents.onGroupListUpdate(2, [
+      { groupCode: '123' },
+      {
+        groupCode: '456',
+        get groupName() {
+          throw Error('private projection fixture');
+        },
+      },
+    ]),
+  );
+  assert.deepEqual(boundedDiagnostics, [
+    ['diagnostic', { stage: 'invalid-native-group-list-update' }],
+  ]);
   const { createGroupSystemEvents } = await load('features/groups/group-system-events.js');
   const membership = createGroupSystemEvents((name, payload) => events.emit(name, payload));
   membership.onRecvSysMsg([18, 2, 8, 34, 26, 7, 18, 5, 8, 123, 32, 130, 1]);
@@ -918,6 +971,9 @@ export async function verifyContactGroupConsumer(packageRoot) {
   assert.equal(events.listenerCount('group-mute'), 0);
   assert.equal(events.listenerCount('friend-added'), 0);
   return {
+    groupEventCapturedScalarsContract: true,
+    groupEventIntrinsicMapContract: true,
+    groupEventProjectionFailureContract: true,
     groupQueryCapturedDtoContract: true,
     groupMemberIntrinsicMapContract: true,
     groupFileCountControlledContract: true,

@@ -346,6 +346,15 @@ commit hook only after the whole batch validates and the Session remains alive.
 Closing invalidates the module and clears its query bookkeeping; the owning
 Session first aborts pending callbacks and native waits.
 
+`createGroupEvents` owns partial group/member metadata projection. Each optional
+field is captured once before validation; native role states and update kinds
+retain their distinct meanings. Member enumeration reads the Map's intrinsic
+storage. An invalid row or projection exception discards the whole batch and
+emits a fixed diagnostic without its payload. Application emitter exceptions are
+outside that projection guard and keep their original identity. Metadata event
+projection and full-list query validation are separate contracts; neither implies
+a verified join/kick action or successful native query.
+
 `createGroupSearch` owns the group-number search queue, same-keyword coalescing,
 whole-batch projection and failed-channel quarantine. Its narrow lazy port exposes
 only `searchGroup`, returning unknown data. The facade and CLI share a pure uint64
