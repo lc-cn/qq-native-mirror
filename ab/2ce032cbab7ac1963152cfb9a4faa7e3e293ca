@@ -1,0 +1,51 @@
+sdk/test/architecture.test.ts
+  s_2104cc474f1ce5::t_abfc849f5fb7a7 58-77,83,86
+  s_2104cc474f1ce5::t_3634aa87524f72 78-82,84-85,87-92,490,511
+sdk/test/helpers/external-dependencies.ts
+  s_2104cc474f1ce5::t_20b1c95a50f343 58-59
+sdk/test/client-factory-consumer.test.ts
+  s_2104cc474f1ce5::t_eb795be0c9ea00 12-13
+sdk/src/native/native-manifest.ts
+  s_2104cc474f1ce5::t_3f6dc6d091407d 1-73
+  s_2104cc474f1ce5::t_8ee16f248edaa4 74-99
+sdk/src/native/native-directory-verification.ts
+  s_2104cc474f1ce5::t_3f6dc6d091407d 1-37
+  s_2104cc474f1ce5::t_b85098f8afa5af 38-44
+sdk/scripts/client-factory-consumer-contract.mjs
+  s_2104cc474f1ce5::t_eb795be0c9ea00 8,118-122,124,142-251
+  s_2104cc474f1ce5::t_a9b2414f25d6f5 252-293
+sdk/test/helpers/dependency-policy.ts
+  s_2104cc474f1ce5::t_20b1c95a50f343 171-185,188
+  s_2104cc474f1ce5::t_9b2672a8060481 186-187,328
+sdk/docs/architecture/encapsulation.md
+  s_2104cc474f1ce5::t_3fc1487cf554aa 523-554
+sdk/docs/development.md
+  s_2104cc474f1ce5::t_3fc1487cf554aa 20-22
+  s_2104cc474f1ce5::t_6130c0571743cb 11-19,23-28
+sdk/docs/architecture.md
+  s_2104cc474f1ce5::t_3fc1487cf554aa 65-66
+sdk/src/cli.ts
+  s_2104cc474f1ce5::t_aba82123a60f6d 7
+sdk/src/native/native-package.ts
+  s_2104cc474f1ce5::t_a7293fb3686e68 3-4,12-19,21-22,24,36,65,84,88,159,173,180,196,207,216,228
+sdk/test/installed-native.test.ts
+  s_2104cc474f1ce5::t_867a1b0f1b1e71 28-29,142-143
+sdk/test/native-video-package.test.ts
+  s_2104cc474f1ce5::t_59d0793114d843 57-58
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ab2ce032cbab7ac1963152cfb9a4faa7e3e293ca",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
