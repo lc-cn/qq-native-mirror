@@ -1,0 +1,39 @@
+sdk/README.md
+  s_2104cc474f1ce5::t_1c3a918629f23d 209-210
+sdk/docs/contact-group-query.md
+  s_2104cc474f1ce5::t_d514bb159efc1a 1-11
+sdk/docs/evidence/contact-group-query-local.json
+  s_2104cc474f1ce5::t_3cc41437716781 1-128
+sdk/docs/evidence/old-linux-buddy-static.json
+  s_2104cc474f1ce5::t_1115a21eaa6ab4 1-89
+sdk/docs/linux-runtime.md
+  s_2104cc474f1ce5::t_c4d4bdc2ed045d 56,193-199
+sdk/docs/npm-first-publish.md
+  s_2104cc474f1ce5::t_103570ad4da796 126-128
+sdk/docs/sdk-acceptance.md
+  s_2104cc474f1ce5::t_8a013ba59db9f5 755-762
+sdk/src/contact-operations.ts
+  s_2104cc474f1ce5::t_57fa204c34f39f 57,59-63
+sdk/src/group-requests.ts
+  s_2104cc474f1ce5::t_a864bc122bb50c 52-54
+sdk/test/contact-operations.test.ts
+  s_2104cc474f1ce5::t_4b5a502859cc8d 6,13-33
+sdk/test/group-requests.test.ts
+  s_2104cc474f1ce5::t_4d906bb001322e 43-69
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a0b879eb12caa96d0afc3f709a27b86165c3f6c8",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
