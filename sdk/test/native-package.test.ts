@@ -14,6 +14,95 @@ import { prepareNative, safeRelative } from '../src/native/native-package.ts';
 import type { NativeManifest } from '../src/types.ts';
 const sha = (value: string | Buffer) => createHash('sha256').update(value).digest('hex');
 
+test('failed installation waits for sibling downloads, releases staging and permits repair', async (t) => {
+  const dir = await mkdtemp(join(tmpdir(), 'qq-install-failure-'));
+  t.after(() => rm(dir, { recursive: true, force: true }));
+  const wrapper = Buffer.from('fake wrapper never executed');
+  const dependency = Buffer.from('fake slow dependency');
+  const body = JSON.stringify({
+    schemaVersion: 1,
+    id: 'failed-installation',
+    platform: process.platform,
+    arch: process.arch,
+    wrapper: 'wrapper.node',
+    version: { clientVersion: 'fixture', appId: '1', qua: 'fixture' },
+    files: [
+      { path: 'wrapper.node', url: './wrapper', sha256: sha(wrapper) },
+      { path: 'lib/dependency.bin', url: './dependency', sha256: sha(dependency) },
+    ],
+  });
+  const options = {
+    dataDir: dir,
+    cacheDir: dir,
+    manifestUrl: 'https://fixture.example/manifest.json',
+    manifestSha256: sha(body),
+  };
+  const failure = new Error('controlled wrapper download failure');
+  let slowStarted!: () => void;
+  let releaseSlow!: () => void;
+  let releaseFailure!: () => void;
+  const slowStartedPromise = new Promise<void>((resolve) => {
+    slowStarted = resolve;
+  });
+  const slowPromise = new Promise<void>((resolve) => {
+    releaseSlow = resolve;
+  });
+  const failurePromise = new Promise<void>((resolve) => {
+    releaseFailure = resolve;
+  });
+  const original = globalThis.fetch;
+  t.after(() => {
+    globalThis.fetch = original;
+  });
+  globalThis.fetch = async (input) => {
+    const url = String(input);
+    if (url.endsWith('/manifest.json')) return new Response(body);
+    if (url.endsWith('/wrapper')) {
+      await failurePromise;
+      throw failure;
+    }
+    slowStarted();
+    await slowPromise;
+    return new Response(dependency);
+  };
+  let settled = false;
+  const observed = prepareNative(options).then(
+    () => {
+      settled = true;
+      return undefined;
+    },
+    (error: unknown) => {
+      settled = true;
+      return error;
+    },
+  );
+  await slowStartedPromise;
+  releaseFailure();
+  try {
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    assert.equal(settled, false, 'staging owner must wait for its active sibling');
+  } finally {
+    releaseSlow();
+  }
+  assert.equal(await observed, failure);
+  assert.equal(
+    (await readdir(dir)).some((name) => name.startsWith('.download-') || name.endsWith('.lock')),
+    false,
+  );
+  globalThis.fetch = async (input) => {
+    const url = String(input);
+    return new Response(
+      url.endsWith('/manifest.json') ? body : url.endsWith('/wrapper') ? wrapper : dependency,
+    );
+  };
+  const repaired = await prepareNative(options);
+  assert.deepEqual(await readFile(repaired.wrapperPath), wrapper);
+  assert.deepEqual(
+    await readFile(join(dirname(repaired.wrapperPath), 'lib/dependency.bin')),
+    dependency,
+  );
+});
+
 test('native cache installation needs no symlink creation privilege', async (t) => {
   const dir = await mkdtemp(join(tmpdir(), 'qq-cache-no-symlink-'));
   t.after(() => rm(dir, { recursive: true, force: true }));

@@ -121,6 +121,13 @@ test('dependency policy rejects reverse, type-only and new cross-domain coupling
     ['src/runtime/account-session-lifecycle.ts', 'src/native-services.ts'],
     ['src/runtime/account-session-lifecycle.ts', 'src/kernel.ts'],
     ['src/native/new-bundle.ts', 'src/runtime/client-lifecycle.ts'],
+    ['src/native/native-bundle-installer.ts', 'src/native/native-package.ts'],
+    ['src/native/native-bundle-installer.ts', 'src/native/native-catalog.ts'],
+    ['src/native/native-bundle-installer.ts', 'src/native/native-installed-storage.ts'],
+    ['src/native/native-bundle-installer.ts', 'node:http'],
+    ['src/native/new-bundle.ts', 'src/native/native-bundle-installer.ts'],
+    ['src/storage/native-package-lock.ts', 'src/native/native-package.ts'],
+    ['src/storage/native-package-lock.ts', 'node:child_process'],
     ['src/storage/new-store.ts', 'src/native/native-package.ts'],
     ['src/index.ts', 'src/features/groups/group-operations.ts'],
     ['src/index.ts', 'src/runtime/client-lifecycle.ts'],
@@ -165,7 +172,7 @@ test('dependency policy rejects reverse, type-only and new cross-domain coupling
   );
 });
 
-test('package entry contains only public reexports and client modules own explicit IO dependencies', () => {
+test('package entry contains only public reexports and resource owners use explicit IO dependencies', () => {
   const entry = join(sourceRoot, 'index.ts');
   const tree = ts.createSourceFile(
     entry,
@@ -180,13 +187,19 @@ test('package entry contains only public reexports and client modules own explic
       'The package entry must not acquire resources or implement client behavior.',
     );
   for (const [path, edges] of graph) {
-    if (!label(path).startsWith('src/client/')) continue;
+    if (
+      !label(path).startsWith('src/client/') &&
+      !['src/native/native-bundle-installer.ts', 'src/storage/native-package-lock.ts'].includes(
+        label(path),
+      )
+    )
+      continue;
     for (const edge of edges) {
       if (edge.target) continue;
       assert.equal(
         dependencyViolation({ from: label(path), to: edge.specifier, typeOnly: edge.typeOnly }),
         undefined,
-        `${label(path)} → ${edge.specifier}: unreviewed client IO dependency`,
+        `${label(path)} → ${edge.specifier}: unreviewed owner IO dependency`,
       );
     }
   }

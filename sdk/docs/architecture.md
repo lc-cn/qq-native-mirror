@@ -126,6 +126,17 @@ including its cleanup error, rather than retained as an online Session. Reentran
 readiness during construction cannot allocate a second adapter. Native singleton
 threads still require worker exit: this module does not invent a Session destructor.
 
+`prepareNative` selects explicit, installed or catalog-backed bundles and checks the
+manifest, device, version and Node constraints. `installVerifiedBundle` owns a
+verified mirror bundle's cache validation, in-process queue, package lock, content
+cache, bounded download workers, staging directory and publication. Its caller
+receives only the installed root, never the queue or partially staged files. The
+installer waits for every download worker before removing staging; a failed
+installation releases its lock and cannot remove a later queue entry. Installed
+npm object hydration retains its own format and verification policy. Both paths
+use the storage-owned package lock; bundle storage does not depend on source
+selection or business modules.
+
 `qun-web-read` owns the QQ group HTTP read transport shared by notices and essence
 pages: native ticket acquisition, cookie exchange, redirect validation, timeout,
 abort and cookie hashing. Its named worker context and two fixed read endpoints

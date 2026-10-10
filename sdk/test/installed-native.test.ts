@@ -25,8 +25,10 @@ test('installed platform bundle integrity and explicit source precedence', async
   for (const name of [
     'native/native-installed-storage.ts',
     'native/native-package.ts',
+    'native/native-bundle-installer.ts',
     'native/native-catalog.ts',
     'storage/process-lock.ts',
+    'storage/native-package-lock.ts',
     'contracts/client.ts',
     'contracts/native.ts',
   ]) {
@@ -135,8 +137,10 @@ async function objectFixture() {
   for (const name of [
     'native/native-installed-storage.ts',
     'native/native-package.ts',
+    'native/native-bundle-installer.ts',
     'native/native-catalog.ts',
     'storage/process-lock.ts',
+    'storage/native-package-lock.ts',
     'contracts/client.ts',
     'contracts/native.ts',
   ]) {

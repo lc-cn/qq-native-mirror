@@ -83,6 +83,21 @@ export const crossFeatureDependencies = [
 
 export function dependencyViolation({ from, to, typeOnly }: SourceDependency): string | undefined {
   if (!to.startsWith('src/')) {
+    if (from === 'src/native/native-bundle-installer.ts')
+      return [
+        'node:crypto',
+        'node:zlib',
+        'node:fs',
+        'node:fs/promises',
+        'node:path',
+        'node:os',
+      ].includes(to)
+        ? undefined
+        : 'The bundle installer uses its injected download port rather than owning network selection.';
+    if (from === 'src/storage/native-package-lock.ts')
+      return ['node:crypto', 'node:fs/promises'].includes(to)
+        ? undefined
+        : 'Package locking only owns lock publication, waiting and reclamation.';
     if (from === 'src/client/qq-client.ts')
       return to === 'node:events' || (typeOnly && to === 'node:child_process')
         ? undefined
@@ -99,6 +114,17 @@ export function dependencyViolation({ from, to, typeOnly }: SourceDependency): s
         : 'The factory only loads its reviewed Node bootstrap dependencies.';
     return 'External dependencies require reviewed module ownership.';
   }
+  if (from === 'src/native/native-bundle-installer.ts')
+    return to === 'src/storage/native-package-lock.ts' ||
+      (typeOnly && to === 'src/contracts/native.ts')
+      ? undefined
+      : 'The installer cannot depend on bundle source selection or account composition.';
+  if (to === 'src/native/native-bundle-installer.ts' && from !== 'src/native/native-package.ts')
+    return 'Only verified bundle preparation may dispatch an installation.';
+  if (from === 'src/storage/native-package-lock.ts')
+    return to === 'src/storage/process-lock.ts'
+      ? undefined
+      : 'Package locking uses the shared process-lock primitive, not bundle management.';
   if (from === 'src/types.ts')
     return typeOnly && isContract(to)
       ? undefined

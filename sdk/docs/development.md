@@ -8,17 +8,18 @@ not establish interoperability with QQ or prove an account operation succeeded.
 
 ## Choose the owner before writing the code
 
-| Change                                                | Owner                                                                 |
-| ----------------------------------------------------- | --------------------------------------------------------------------- |
-| Public data shape or event payload                    | Relevant `src/contracts/` domain; compose event tuples in `events.ts` |
-| Public client method or callback presentation         | `src/client/qq-client.ts`; `index.ts` remains a reexport-only entry   |
-| Native bundle selection and worker bootstrap          | `src/client/create-client.ts`                                         |
-| Pure validation and input snapshots                   | Feature input module, shared by facade and worker                     |
-| Native callback projection or operation               | Relevant `src/features/` domain                                       |
-| Request correlation, shutdown or account ownership    | Existing `src/runtime/` lifetime owner                                |
-| Platform archive selection, provenance or cache       | `src/native/`; locking remains in `src/storage/`                      |
-| Compose an authenticated Session and feature adapters | `kernel.ts` and `native-services.ts`                                  |
-| CLI flags and client execution                        | `src/cli/`; executable entry remains `cli.ts`                         |
+| Change                                                | Owner                                                                            |
+| ----------------------------------------------------- | -------------------------------------------------------------------------------- |
+| Public data shape or event payload                    | Relevant `src/contracts/` domain; compose event tuples in `events.ts`            |
+| Public client method or callback presentation         | `src/client/qq-client.ts`; `index.ts` remains a reexport-only entry              |
+| Native bundle selection and worker bootstrap          | `src/client/create-client.ts`                                                    |
+| Pure validation and input snapshots                   | Feature input module, shared by facade and worker                                |
+| Native callback projection or operation               | Relevant `src/features/` domain                                                  |
+| Request correlation, shutdown or account ownership    | Existing `src/runtime/` lifetime owner                                           |
+| Bundle source selection and manifest constraints      | `src/native/native-package.ts`                                                   |
+| Mirror installation transaction and content cache     | `src/native/native-bundle-installer.ts`; package locking stays in `src/storage/` |
+| Compose an authenticated Session and feature adapters | `kernel.ts` and `native-services.ts`                                             |
+| CLI flags and client execution                        | `src/cli/`; executable entry remains `cli.ts`                                    |
 
 Avoid a catch-all `utils`, `common` or base class for unrelated operations. A helper
 belongs next to the invariant it protects. Share it when callers actually have
