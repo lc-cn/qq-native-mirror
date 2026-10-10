@@ -1,0 +1,19 @@
+sdk/test/consumer-tooling-gates.test.mjs
+  s_2104cc474f1ce5::t_63cb5e05ff2ad9 58-66
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "01cde43369ec1c8235ec4f70020ce3a56348f4ee",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
