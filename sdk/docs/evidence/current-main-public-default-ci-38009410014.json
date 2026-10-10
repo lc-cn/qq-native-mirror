@@ -1,0 +1,362 @@
+{
+  "schemaVersion": 1,
+  "scope": "Actual six-platform current SDK with public default native mirror; no account operations, npm publish or signing authenticity claim",
+  "ci": {
+    "repository": "lc-cn/qq-native-mirror",
+    "runId": "38009410014",
+    "runAttempt": 1,
+    "sourceCommit": "d468492fb802d4253a7df3a019f9efecb7ec8e64",
+    "url": "https://github.com/lc-cn/qq-native-mirror/actions/runs/38009410014",
+    "status": "completed",
+    "conclusion": "success"
+  },
+  "sdk": {
+    "producerCommit": "7ec1a309da4137c5eef190482c731889f6341392",
+    "producerRunId": "38005239931",
+    "runtimeSourceCommit": "5907793ad848c68b3183ac5c2f2b06fbd1a5e0cf",
+    "mainSha256": "685803fcaf965cdf827fffb2d79c08885182a3a718dc59b27670af07672f6988",
+    "mainBytes": 452930,
+    "sourceKind": "Validated CI aggregate artifact; no new SDK GitHub release created"
+  },
+  "nativeMirror": {
+    "sourceCommit": "6cae1ec0a5e1bfb03cb7871083915b3d03272347",
+    "sourceRunId": "37962268125",
+    "mirrorTag": "native-npm-v0.0.2-ci-37962268125-attempt-1",
+    "catalogSha256": "ae486c9ffd96d12377f626377243baaa17b45a7afee9bfaa3134ce9fa73b9719",
+    "proxyExplicit": "https://gh-proxy.com/",
+    "defaultsChanged": false
+  },
+  "independentAudit": {
+    "passed": true,
+    "runId": "38009410014",
+    "commit": "d468492fb802d4253a7df3a019f9efecb7ec8e64",
+    "runAttempt": 1,
+    "readOnlyLocalAudit": true,
+    "nativeExecutedByAuditor": false,
+    "accountUsedByAuditor": false,
+    "platforms": [
+      {
+        "device": "linux-x64",
+        "zipSha256": "d53291bb65ca0f4401d37cb04d51ff6806b69791f2febf2fc8b7726455577f17",
+        "mainMembers": 168,
+        "compiledRootMatches": 90,
+        "nativePathsDeclared": 19,
+        "nativeCacheReread": false,
+        "cold": {
+          "requests": 23,
+          "payloadRequests": 19,
+          "bytes": 70197335,
+          "payloadBytes": 70170661
+        },
+        "warm": {
+          "requests": 2,
+          "payloadRequests": 0,
+          "bytes": 13337,
+          "payloadBytes": 0
+        },
+        "exports": 98,
+        "videoLogJsonMatched": [
+          "3_consumer (linux, x64, ubuntu-24.04).txt",
+          "consumer (linux, x64, ubuntu-24.04)/10_Verify immutable source and candidate mirror, decode and prepare without account.txt"
+        ],
+        "consumerLogJsonMatched": false,
+        "consumerEvidence": "artifact-bound receipt + successful job steps + reviewed compiled probe contract",
+        "videoBinarySha256": "195312a9613fd716e2df52a11d409571bdb5959e1537e12f475c2048c6c9f88d"
+      },
+      {
+        "device": "win32-x64",
+        "zipSha256": "25ff6dcb6bbbb80cde10fe0a671ad27f3b75987933775addf80c326d68ccebc3",
+        "mainMembers": 168,
+        "compiledRootMatches": 90,
+        "nativePathsDeclared": 32,
+        "nativeCacheReread": false,
+        "cold": {
+          "requests": 35,
+          "payloadRequests": 31,
+          "bytes": 66791770,
+          "payloadBytes": 66753092
+        },
+        "warm": {
+          "requests": 2,
+          "payloadRequests": 0,
+          "bytes": 19339,
+          "payloadBytes": 0
+        },
+        "exports": 98,
+        "videoLogJsonMatched": [
+          "4_consumer (win32, x64, windows-2022).txt",
+          "consumer (win32, x64, windows-2022)/10_Verify immutable source and candidate mirror, decode and prepare without account.txt"
+        ],
+        "consumerLogJsonMatched": false,
+        "consumerEvidence": "artifact-bound receipt + successful job steps + reviewed compiled probe contract",
+        "videoBinarySha256": "8aa259dd3fbf15d451ff52ca8f542be11ecc5a1824267e65f9dfead16d0e4424"
+      },
+      {
+        "device": "linux-arm64",
+        "zipSha256": "695095a461b360f86b3832e874718b61180b9ed4c2d05a65c37ad0a854dad575",
+        "mainMembers": 168,
+        "compiledRootMatches": 90,
+        "nativePathsDeclared": 20,
+        "nativeCacheReread": false,
+        "cold": {
+          "requests": 24,
+          "payloadRequests": 20,
+          "bytes": 72176794,
+          "payloadBytes": 72149208
+        },
+        "warm": {
+          "requests": 2,
+          "payloadRequests": 0,
+          "bytes": 13793,
+          "payloadBytes": 0
+        },
+        "exports": 98,
+        "videoLogJsonMatched": [
+          "0_consumer (linux, arm64, ubuntu-24.04-arm).txt",
+          "consumer (linux, arm64, ubuntu-24.04-arm)/10_Verify immutable source and candidate mirror, decode and prepare without account.txt"
+        ],
+        "consumerLogJsonMatched": false,
+        "consumerEvidence": "artifact-bound receipt + successful job steps + reviewed compiled probe contract",
+        "videoBinarySha256": "8eff4ebdf6b704b1a3aa4a25a328c0949ce81b1b8db220ef5bf3f310fe3ac741"
+      },
+      {
+        "device": "darwin-x64",
+        "zipSha256": "401a1083aca46b7190da2cf6afc310c32243f17bddd861e39bff3bc9f8d97301",
+        "mainMembers": 168,
+        "compiledRootMatches": 90,
+        "nativePathsDeclared": 1168,
+        "nativeCacheReread": false,
+        "cold": {
+          "requests": 325,
+          "payloadRequests": 321,
+          "bytes": 61190224,
+          "payloadBytes": 59917534
+        },
+        "warm": {
+          "requests": 2,
+          "payloadRequests": 0,
+          "bytes": 636345,
+          "payloadBytes": 0
+        },
+        "exports": 104,
+        "videoLogJsonMatched": [
+          "1_consumer (darwin, x64, macos-15-intel).txt",
+          "consumer (darwin, x64, macos-15-intel)/10_Verify immutable source and candidate mirror, decode and prepare without account.txt"
+        ],
+        "consumerLogJsonMatched": false,
+        "consumerEvidence": "artifact-bound receipt + successful job steps + reviewed compiled probe contract",
+        "videoBinarySha256": "29147dd3c7a10b6b2f16e1b5df3f5e75b10b5d09f8ebc2a3bf2202e23c09799e"
+      },
+      {
+        "device": "darwin-arm64",
+        "zipSha256": "216f2ef2bc9cb7e3952728c58db3b974cd2723ec138a99f1ff5285c43c769726",
+        "mainMembers": 168,
+        "compiledRootMatches": 90,
+        "nativePathsDeclared": 1168,
+        "nativeCacheReread": false,
+        "cold": {
+          "requests": 325,
+          "payloadRequests": 321,
+          "bytes": 56145526,
+          "payloadBytes": 54872832
+        },
+        "warm": {
+          "requests": 2,
+          "payloadRequests": 0,
+          "bytes": 636347,
+          "payloadBytes": 0
+        },
+        "exports": 104,
+        "videoLogJsonMatched": [
+          "2_consumer (darwin, arm64, macos-15).txt",
+          "consumer (darwin, arm64, macos-15)/10_Verify immutable source and candidate mirror, decode and prepare without account.txt"
+        ],
+        "consumerLogJsonMatched": false,
+        "consumerEvidence": "artifact-bound receipt + successful job steps + reviewed compiled probe contract",
+        "videoBinarySha256": "101a8eb635806b8c06fd55e3353a5a129d643c42198a3eb0dcaca7eefeab74c4"
+      },
+      {
+        "device": "win32-arm64",
+        "zipSha256": "13d1acf2fa3a1961e61c33a0a576f3d8fd01b185b0a630f28a51bd2bb3e79735",
+        "mainMembers": 168,
+        "compiledRootMatches": 90,
+        "nativePathsDeclared": 27,
+        "nativeCacheReread": false,
+        "cold": {
+          "requests": 30,
+          "payloadRequests": 26,
+          "bytes": 54239478,
+          "payloadBytes": 54205332
+        },
+        "warm": {
+          "requests": 2,
+          "payloadRequests": 0,
+          "bytes": 17073,
+          "payloadBytes": 0
+        },
+        "exports": 98,
+        "videoLogJsonMatched": [
+          "5_consumer (win32, arm64, windows-11-arm).txt",
+          "consumer (win32, arm64, windows-11-arm)/10_Verify immutable source and candidate mirror, decode and prepare without account.txt"
+        ],
+        "consumerLogJsonMatched": false,
+        "consumerEvidence": "artifact-bound receipt + successful job steps + reviewed compiled probe contract",
+        "videoBinarySha256": "0bc059cf78869272ea4ad79eb6e4be54d394ec4cf3a2e3cd9c9b1d83d1e7b021"
+      }
+    ],
+    "artifactMembersHashed": 36
+  },
+  "parentAudit": {
+    "passed": true,
+    "runId": "38009410014",
+    "verificationCommit": "d468492fb802d4253a7df3a019f9efecb7ec8e64",
+    "nativeExecutedByParent": false,
+    "accountUsedByParent": false,
+    "artifactMembersRehashed": 36,
+    "compiledFilesCompared": 540,
+    "actualVideoInputs": 18,
+    "allVideoBinaryHashesMatchSelectedManifests": true,
+    "devices": [
+      "linux-x64",
+      "win32-x64",
+      "linux-arm64",
+      "darwin-x64",
+      "darwin-arm64",
+      "win32-arm64"
+    ],
+    "bindings": [
+      {
+        "path": ".local/research/current-main-public-default-ci-38009410014/run.json",
+        "bytes": 12334,
+        "sha256": "53204eca2497bdf7a93448c9b5496bbe5ab4225b4508cd6f4d32a8db2118f581"
+      },
+      {
+        "path": ".local/research/current-main-public-default-ci-38009410014/jobs.json",
+        "bytes": 21216,
+        "sha256": "c03012950edeb62b8eb9b228933fb6278a7cc6926669c359b4179661e8cdbd91"
+      },
+      {
+        "path": ".local/research/current-main-public-default-ci-38009410014/artifacts.json",
+        "bytes": 4263,
+        "sha256": "0d0a64e640724784f75bb36f6476b5d41acdfba329ee7932f9a1d83ddc5ee0ca"
+      },
+      {
+        "path": ".local/research/current-main-public-default-ci-38009410014/logs.zip",
+        "bytes": 128845,
+        "sha256": "1e3065f82b0df467cb332fab7c398d8feba19b8a9e581325e56d2316a8e388df"
+      },
+      {
+        "path": ".local/research/current-main-public-default-ci-38009410014/download-integrity.json",
+        "bytes": 13044,
+        "sha256": "b11394254f6b6da5be7e96f16722d66cb0906971a215fc4b1ee07708b9ca265c"
+      },
+      {
+        "path": ".local/research/current-main-public-default-ci-38009410014/independent-audit.json",
+        "bytes": 6401,
+        "sha256": "36dd6d62ee799eb918df16f4cdca3ae0282d2e6c62d775711cc2b5e3bc272855"
+      },
+      {
+        "path": ".local/research/current-main-public-default-ci-38009410014/independent-member-hashes.json",
+        "bytes": 7413,
+        "sha256": "46af0e5a6efa0db2b3ae6a5aa12b592bad0535b6086d05ee40aa55ea43d4ffe2"
+      },
+      {
+        "path": ".local/research/current-main-public-default-ci-38009410014/audit-artifacts.py",
+        "bytes": 7926,
+        "sha256": "b3a93139765cdc9437b9344eea36ec9d1a402c6cc582086ffc1329d07f358c5d"
+      },
+      {
+        "path": ".local/research/current-main-public-default-ci-38009410014/download.py",
+        "bytes": 3554,
+        "sha256": "b57c5bc5c2b6afee49c94fee57c7b3dc8dbc684528e894adc9e097c578f752c5"
+      },
+      {
+        "path": ".local/research/current-main-public-default-ci-38009410014/parent-audit.py",
+        "bytes": 4342,
+        "sha256": "6411a68263fdbb3c5989d89569353116a2c8603d7025ba642af7b26a7a1eb92c"
+      }
+    ],
+    "scope": "Current main public default initialization/cache/codec on six actual platforms; remote cache was checked by CI verifier, not redownloaded or reread by parent; no account or signing authenticity claim"
+  },
+  "failedPredecessor": {
+    "runId": "38009229223",
+    "sourceCommit": "aebdc90feb274a462cb0925b71292a18597babac",
+    "conclusion": "failure",
+    "cause": "Windows test compared native backslash relative paths to ZIP slash paths; failed before acquisition/native execution",
+    "fix": "Normalize relative filesystem paths with as_posix in extraction fixture assertion",
+    "evidence": [
+      {
+        "path": ".local/research/current-main-public-default-ci-38009229223/run.json",
+        "sha256": "4fe8230c5bde080202be56b21b1b1cb005026e7673782ac0879036376c2ef0ab"
+      },
+      {
+        "path": ".local/research/current-main-public-default-ci-38009229223/jobs.json",
+        "sha256": "49eade25428961ec5775c2e0162feea577d78195232ca90e7062fc3284598958"
+      },
+      {
+        "path": ".local/research/current-main-public-default-ci-38009229223/logs.zip",
+        "sha256": "780bb7e35d52cc9449e2e470362cc070d6da3c2bc2c32515c2c28952cf64068f"
+      },
+      {
+        "path": ".local/research/current-main-public-default-ci-38009229223/windows-x64.log",
+        "sha256": "dbc21596d112eb09242684655e84698e77630accc5c34cb4cfcf50a76d087aa4"
+      },
+      {
+        "path": ".local/research/current-main-public-default-ci-38009229223/windows-arm64.log",
+        "sha256": "29585df3aeb793e5fd5019bb33c1714df0520ac989bf7ec16f85a6b5b886cc99"
+      }
+    ]
+  },
+  "builderBindings": [
+    {
+      "path": ".github/workflows/codec-mirror-consumer.yml",
+      "bytes": 3869,
+      "sha256": "5bd0bae86f3c8c9826068d2cf81fd2fa3b61db04f9334f9eaa88e766580ad775"
+    },
+    {
+      "path": "ci/codec-mirror-consumer.mjs",
+      "bytes": 15091,
+      "sha256": "d9c448f004324d8fa374f948dccf5d8d88a6837c5173eeec4bb3a1b6475095ca"
+    },
+    {
+      "path": "ci/current-main-binding.mjs",
+      "bytes": 3829,
+      "sha256": "8966239f9e52b60f81f2c424ff4c023446f46d207c89f303593689e7dbaff749"
+    },
+    {
+      "path": "ci/current-main-binding.test.mjs",
+      "bytes": 2621,
+      "sha256": "4a16d4fa952f5c3b4d9c5f545636cf385cb17d54724dec0d506dc16d5c129dff"
+    },
+    {
+      "path": "tools/acquire-current-public-main.py",
+      "bytes": 8770,
+      "sha256": "910ffd4f2e001970b180c58d243966b1e290c937db9babec0eaa53bfc1e0071f"
+    },
+    {
+      "path": "tools/acquire-current-public-main.test.py",
+      "bytes": 5806,
+      "sha256": "fd8e7e16f2c82c7f210442e1f3e3040e5883d2f966716addd01ad3817a1f634c"
+    },
+    {
+      "path": "public-ci/mirror-consumer.mjs",
+      "bytes": 5711,
+      "sha256": "31355843a53cf610423d09b2ffdd3e76c2d7030639b4503cc6791355b4981c93"
+    },
+    {
+      "path": "sdk/scripts/verify-video-native.mjs",
+      "bytes": 6383,
+      "sha256": "4b8b525e05655fbd887f23e8c42821db8d2c2ca5e918394935e4f68dd4df5339"
+    },
+    {
+      "path": "sdk/scripts/local-first-publish.mjs",
+      "bytes": 13170,
+      "sha256": "093387963558f28fa8caf6a10308aeb85bcc63c54dc61ebd81d91653b1d65259"
+    }
+  ],
+  "loginAttempted": false,
+  "restoreAttempted": false,
+  "nativeSendAttempted": false,
+  "npmPublished": false,
+  "signingAuthenticityEstablished": false
+}

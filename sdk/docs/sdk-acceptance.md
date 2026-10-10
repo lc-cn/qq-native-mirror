@@ -726,3 +726,22 @@ The exact aggregate main from production run `38005239931`, producer source `7ec
 The public default catalog selected `7.0.2-53644`, manifest SHA256 `667c80d0284ffcfc4e0c270a6a7b09bfbbdf34ebe2cd452dc8fe016e99c3fa56`, retaining the existing native source `6cae1ec...` / run `37962268125`. The cold pass downloaded 321 distinct gzip payloads totaling 54,872,832 bytes, restored all 1,168 original paths, initialized 104 exports and closed. The warm pass fetched metadata again but downloaded no native payload; every native path SHA/size/modification-time vector remained unchanged. Independent and parent reviews rehash the actual installed main and all retained cache paths and compare the receipt to the execution log. [Bound local proof](evidence/current-sdk-public-default-arm64.json) records the exact main, catalog, manifest, verifier, lockfile and review identities.
 
 This establishes current-main public-default preparation/cache behavior on this local device only. Both data directories were newly empty and no login, restore, account query or message operation occurred. It does not transfer this newest-main public proof to the other five devices or establish signing authenticity. Existing full defaults, experimental pruned auxiliaries and registry publication remain unchanged; the separately prepared account batch remains unexecuted.
+
+## Current production main with the public default mirror on all six platforms
+
+[CI 38009410014](https://github.com/lc-cn/qq-native-mirror/actions/runs/38009410014), verifier source `d468492fb802d4253a7df3a019f9efecb7ec8e64`, passed on all six actual Linux/macOS/Windows x64/arm64 runners with Node 24.20.0. The new main is acquired from the fixed successful production aggregate `7ec1a309...` / run `38005239931`; its complete seven-package/receipt/materials gate passes before selecting the main. Native mirror source remains separately fixed to `6cae1ec...` / run `37962268125`. No SDK GitHub release is assumed or created. Four binding and five acquisition boundary tests pass on each device, including actual Windows paths.
+
+Each consumer installs only the main with optional packages omitted, leaves vendor version/wrapper/manifest/catalog options absent in `createClient`, uses the actual public default catalog with the explicitly configured gh-proxy transport, prepares a fresh cache, decodes three owned video fixtures, closes and prepares/closes again with no native payload download. The public codec-bearing default catalog and its two preserved older Linux rows remain unchanged.
+
+| Actual device | Cold native payload bytes | Warm payload bytes | Native exports |
+| --- | ---: | ---: | ---: |
+| Linux x64 | 70,170,661 | 0 | 98 |
+| Linux arm64 | 72,149,208 | 0 | 98 |
+| macOS x64 | 59,917,534 | 0 | 104 |
+| macOS arm64 | 54,872,832 | 0 | 104 |
+| Windows x64 | 66,753,092 | 0 | 98 |
+| Windows arm64 | 54,205,332 | 0 | 98 |
+
+Independent and parent reviews check all six official ZIP digests and 36 artifact members, identical pinned 452,930-byte main tarballs, all 90 compiled JS/declaration files per main and separately bound source/acquisition metadata. All 18 actual video input receipts match the real platform logs, and each actual codec binary SHA matches the selected public manifest. The native cache is hash-checked by the actual CI consumer; local reviewers do not reread remote caches. The consumer receipt itself is not printed to the log, so its evidence is the source-bound artifact plus successful job steps, rather than claimed receipt-to-log JSON equality. Warm file modification times are not newly claimed by this CI probe. [Bound six-platform proof](evidence/current-main-public-default-ci-38009410014.json) retains these distinctions.
+
+Predecessor run `38009229223` failed both Windows extraction tests before acquisition/native loading because the fixture compared native backslash paths to ZIP slash paths. Normalizing the fixture's relative paths with `as_posix()` fixes that issue without changing archive/source gates; the failed source, full logs and both Windows traces remain retained. This acceptance establishes public default initialization/cache/local media behavior for the current main on six platforms. It does not establish new authenticated business operations or signing authenticity; no account, npm publication, inventory promotion or default change occurred.
