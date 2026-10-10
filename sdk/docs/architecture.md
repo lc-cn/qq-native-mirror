@@ -9,7 +9,9 @@ binaries; the public API does not require an installed QQ application.
 ```text
 Application / CLI
         |
-QQClient (public lifecycle and typed operations)
+QQClient (public events and typed operations)
+        |
+ClientLifecycle (account state and worker generations)
         |
 WorkerRpcChannel (request correlation and settlement)
         |
@@ -24,10 +26,10 @@ worker.ts (IPC boundary) -> kernel.ts (native session composition)
 
 | Location                                  | Responsibility                                                                                           |
 | ----------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| `src/index.ts`                            | Public facade, account state, worker generations and reconnect policy.                                   |
+| `src/index.ts`                            | Public API facade, callback presentation and typed operations.                                           |
 | `src/cli.ts`, `src/worker.ts`             | Executable entry points. Their emitted URLs are runtime contracts.                                       |
 | `src/kernel.ts`, `src/native-services.ts` | Compose one native session and domain adapters. They are composition roots, not public extension points. |
-| `src/runtime/`                            | Request/callback lifecycle mechanisms and named composition dependencies.                                |
+| `src/runtime/`                            | Account/worker ownership, request/callback lifetimes and composition dependencies.                       |
 | `src/features/contacts/`, `groups/`       | Friend, category, group and request actions/events.                                                      |
 | `src/features/messages/`                  | Message input capture, native projection, querying and recall.                                           |
 | `src/features/media/`, `forward/`         | Media codecs and forward-resource transports.                                                            |
@@ -58,8 +60,14 @@ internal paths are private; only the package root and CLI are public entry point
 `QQClient` inherits from `EventEmitter` to implement the public event contract.
 `WorkerRpcChannel` owns its pending map, IDs, timer cleanup and settlement. It
 accepts a transport and a failure policy; callers cannot mutate pending state.
-Worker generations and login retirement stay in the Client because they concern
-account lifecycle, rather than transport correlation.
+`ClientLifecycle` owns account state, login/restore coalescing, worker generations,
+automatic restore policy and shutdown. Its interface exposes state/account snapshots
+and request/login/reconnect/close; no pending maps or worker handles escape. Its named
+context supplies the worker factory, event sink and native-export update hook.
+`QQClient` keeps the existing `EventEmitter` API, QR/error presentation, callback audit
+and message aliases. State transitions still happen before their public events, and
+facade methods return the lifecycle's login/reconnect/close Promises directly so
+coalesced callers retain the same Promise identity.
 
 `createNativeServices` receives one `NativeServiceContext`: session, version,
 event sink, authenticated identity, media implementations and measured binary
