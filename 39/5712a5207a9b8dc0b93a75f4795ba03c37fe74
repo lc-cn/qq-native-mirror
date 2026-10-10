@@ -1,0 +1,21 @@
+sdk/docs/evidence/current-sdk-public-default-arm64.json
+  s_2104cc474f1ce5::t_f0e258d655711a 1-129
+sdk/docs/sdk-acceptance.md
+  s_2104cc474f1ce5::t_a81c62ab35c968 721-728
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "395712a5207a9b8dc0b93a75f4795ba03c37fe74",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
