@@ -5,6 +5,7 @@ import type { ContactOperationsContext } from '../../src/features/contacts/conta
 import type { GroupOperationsContext } from '../../src/features/groups/group-operations.ts';
 import type { SelfProfileContext } from '../../src/features/contacts/self-profile.ts';
 import type { GroupNoticesContext } from '../../src/features/groups/group-notices.ts';
+import type { ForwardMessagesContext } from '../../src/features/forward/forward-messages.ts';
 import type {
   GroupRequestsContext,
   GroupRequestListener,
@@ -27,6 +28,7 @@ function verifyDomainPorts(
   requests: FriendRequestsContext,
   groupRequests: GroupRequestsContext,
   notices: GroupNoticesContext,
+  forward: ForwardMessagesContext,
 ) {
   // @ts-expect-error A contact directory cannot acquire arbitrary native services.
   contacts.service('Group');
@@ -109,6 +111,22 @@ function verifyDomainPorts(
   ticket.domainPskeyMap.get('qun.qq.com');
   // @ts-expect-error Deletion completion remains unknown until validated.
   void bulletin.result;
+  // @ts-expect-error Forwarding cannot acquire arbitrary account services.
+  forward.getGroupService();
+  // @ts-expect-error The forward port cannot submit a new message.
+  forward.getMessageService()?.sendMsg();
+  const forwarded = forward
+    .getMessageService()
+    ?.forwardMsg?.(
+      ['1'],
+      { chatType: 2, peerUid: '123' },
+      [{ chatType: 2, peerUid: '456' }],
+      new Map(),
+    );
+  // @ts-expect-error Forward acknowledgements require result validation.
+  void forwarded.result;
+  // @ts-expect-error Native reads require an exact conversation descriptor.
+  forward.getMessageService()?.getMultiMsg?.({ type: 'group', groupId: '123' }, '1', '1');
   // @ts-expect-error Query doubt must retain its native boolean type.
   groupRequests.getGroupService()?.getSingleScreenNotifies?.('false', '', 20);
   const groupPage = groupRequests.getGroupService()?.getSingleScreenNotifies?.(false, '', 20);

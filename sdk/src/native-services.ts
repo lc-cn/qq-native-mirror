@@ -288,12 +288,15 @@ export function createNativeServices(context: NativeServiceContext) {
         return { chatType: 1, peerUid: await uidFor(String(peer.userId ?? peer.id)) };
       throw new Error('Unsupported peer type');
     };
-    const forwardMessages = createForwardMessages(
-      guardedSession,
-      resolvePeer,
-      resolvedMessage,
-      lifetime.signal,
-      resolvedMessages,
+    const forwardMessages = own(
+      createForwardMessages({
+        getMessageService: () => service('Msg'),
+        resolvePeer,
+        decodeMessage: resolvedMessage,
+        signal: lifetime.signal,
+        awaitAlive,
+        decodeMessages: resolvedMessages,
+      }),
     );
     const sender = own(
       createNativeMessageSender({

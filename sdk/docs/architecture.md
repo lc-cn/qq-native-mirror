@@ -237,6 +237,19 @@ The composition root binds those ports and selects a method; it does not impleme
 query control flow. Whole-batch validation precedes asynchronous projection, and
 the existing Session lifetime observes pending work and blocks dispatch after close.
 
+`createForwardMessages` owns existing-message forwarding and merged-content reads.
+Its narrow message port exposes only `getMultiMsg` and `forwardMsg`; peer resolution
+and single/batch decoding are injected separately. It captures validated inputs
+before asynchronous resolution, resolves source then destination, and preserves
+the original native argument order and receiver. A merged read validates its
+entire raw batch before decoding, allowing mixed source conversations. Local close
+and Session abort stop pending resolution, native completion and decoding without
+replaying an operation. Closing during a getter prevents the next dispatch or a
+successful return; single decoding stops before another record is started. Late
+promises remain observed and completed waits remove their abort subscriptions.
+This module registers no native listeners. A successful forward result confirms
+native acceptance only, with no new message IDs or destination delivery receipt.
+
 `GroupQueries` owns full-list selection, per-group query coalescing, failed-channel
 quarantine and complete member-result validation. The query port exposes only the four verified Group read methods; native method
 returns stay `unknown` until their receiving validator checks them. Service and
