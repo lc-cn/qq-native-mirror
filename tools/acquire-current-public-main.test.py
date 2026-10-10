@@ -57,7 +57,7 @@ class Contracts(unittest.TestCase):
             with self.assertRaises(ValueError): a.verify_archive(path, '0'*64, len(body))
             with self.assertRaises(ValueError): a.verify_archive(path, hashlib.sha256(body).hexdigest(), len(body)+1)
             out = Path(tmp)/'out'; out.mkdir(); a.extract_aggregate(path, out)
-            self.assertEqual({str(p.relative_to(out)) for p in out.rglob('*') if p.is_file()}, a.EXPECTED)
+            self.assertEqual({p.relative_to(out).as_posix() for p in out.rglob('*') if p.is_file()}, a.EXPECTED)
 
     def test_unsafe_duplicate_symlink_and_missing_members_rejected_before_writes(self):
         def link(z):
