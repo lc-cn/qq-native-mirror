@@ -389,6 +389,31 @@ export async function verifyQunWebConsumer(installedRoot) {
     const projected = await services.invokeOperation('listGroupNotices', { groupId: '123' });
     assert.equal(projected.notices[0].noticeId, 'notice');
     assert.equal(composition.calls.filter(([name]) => name === 'http').length, 2);
+    const cancelled = new AbortController();
+    const reason = Error('Synthetic request retired before dispatch');
+    cancelled.abort(reason);
+    for (const method of ['listGroupNotices', 'getGroupEssencePage', 'listGroupEssenceMessages'])
+      await assert.rejects(
+        services.invokeOperation(method, { groupId: '123' }, cancelled.signal),
+        (error) => error === reason,
+      );
+    assert.equal(composition.calls.filter(([name]) => name === 'http').length, 2);
+    globalThis.fetch = async (...args) => {
+      const response = await composition.context.fetchImpl(...args);
+      return new URL(args[0]).pathname === '/cgi-bin/group_digest/digest_list'
+        ? Response.json({
+            retcode: 0,
+            data: { msg_list: [], is_end: true, group_role: 2, config_page_url: 'synthetic' },
+          })
+        : response;
+    };
+    const page = await services.invokeOperation('getGroupEssencePage', { groupId: '123' });
+    assert.deepEqual(page.messages, []);
+    assert.equal(page.isEnd, true);
+    assert.deepEqual(
+      await services.invokeOperation('listGroupEssenceMessages', { groupId: '123' }),
+      [],
+    );
   } finally {
     globalThis.fetch = priorFetch;
     services.close();
@@ -416,6 +441,7 @@ export async function verifyQunWebConsumer(installedRoot) {
     groupWebHttpAccessorIsolationContract: true,
     groupWebInstalledCompositionPreflight: true,
     groupWebInstalledCompositionContract: true,
+    groupWebInstalledReadOwnerContract: true,
     groupWebInstalledCliContract: true,
     nativeExecuted: false,
     accountUsed: false,

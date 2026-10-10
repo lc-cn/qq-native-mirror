@@ -43,8 +43,7 @@ import {
 } from './features/forward/forward-resource-transport.ts';
 import { queryNativeMessage } from './features/messages/message-query.ts';
 import { createSelfProfile } from './features/contacts/self-profile.ts';
-import { listWebGroupNotices } from './features/groups/web-group-notices.ts';
-import { requestQunPage, type QunWebReadContext } from './features/groups/qun-web-read.ts';
+import { createGroupWebReads } from './features/groups/group-web-reads.ts';
 import { createGroupNotices } from './features/groups/group-notices.ts';
 import { createForwardMessages } from './features/forward/forward-messages.ts';
 import { createGroupRequests } from './features/groups/group-requests.ts';
@@ -55,10 +54,6 @@ import { decodeElements } from './features/messages/message-elements.ts';
 import { createNativeMessageSender } from './features/messages/native-message-sender.ts';
 /** Native contracts extracted from local NapCat; this module never sends at startup. */
 import { createGroupOperations } from './features/groups/group-operations.ts';
-import {
-  getGroupEssencePage,
-  listGroupEssenceMessages,
-} from './features/groups/group-essence-list.ts';
 import { setGroupEssenceMessage } from './features/groups/group-essence.ts';
 import { createGroupEvents } from './features/groups/group-events.ts';
 import { createGroupQueries } from './features/groups/group-queries.ts';
@@ -115,12 +110,12 @@ export function createNativeServices(context: NativeServiceContext) {
     };
     const service = (name: string): Native => call(guardedSession, `get${name}Service`);
     const { awaitAlive } = lifetime;
-    const qunReadContext = (accountId: string, signal: AbortSignal): QunWebReadContext => ({
+    const groupWebReads = createGroupWebReads({
       accountId,
-      signal,
+      signal: lifetime.signal,
       getTicketService: () => service('Ticket'),
       getTipOffService: () => service('TipOff'),
-      awaitAlive: (value) => awaitAlive(value, signal),
+      awaitAlive,
     });
     const directory = own(
       createContactDirectory({
@@ -478,26 +473,8 @@ export function createNativeServices(context: NativeServiceContext) {
           case 'setNickname':
           case 'setSignature':
             return selfProfile.invokeOperation(method, payload);
-          case 'listGroupNotices': {
-            if (!accountId)
-              throw new Error('Group notice listing requires the authenticated account identity');
-            const signal = requestSignal
-              ? AbortSignal.any([lifetime.signal, requestSignal])
-              : lifetime.signal;
-            signal.throwIfAborted();
-            return awaitAlive(
-              listWebGroupNotices(
-                {
-                  accountId,
-                  signal,
-                  readPage: (parameters) =>
-                    requestQunPage(qunReadContext(accountId, signal), 'notices', parameters),
-                },
-                payload.groupId,
-              ),
-              signal,
-            );
-          }
+          case 'listGroupNotices':
+            return groupWebReads.listGroupNotices(payload.groupId, requestSignal);
           case 'publishGroupNotice':
           case 'deleteGroupNotice':
             return groupNotices.invokeOperation(method, payload);
@@ -581,22 +558,17 @@ export function createNativeServices(context: NativeServiceContext) {
           case 'setGroupName':
             return groupOperations.invokeOperation(method, payload);
           case 'getGroupEssencePage':
-          case 'listGroupEssenceMessages': {
-            if (!accountId)
-              throw new Error('Group essence listing requires the authenticated account identity');
-            const signal = requestSignal
-              ? AbortSignal.any([lifetime.signal, requestSignal])
-              : lifetime.signal;
-            signal.throwIfAborted();
-            return awaitAlive<unknown>(
-              (method === 'getGroupEssencePage' ? getGroupEssencePage : listGroupEssenceMessages)(
-                qunReadContext(accountId, signal),
-                payload.groupId,
-                payload.options,
-              ),
-              signal,
+            return groupWebReads.getGroupEssencePage(
+              payload.groupId,
+              payload.options,
+              requestSignal,
             );
-          }
+          case 'listGroupEssenceMessages':
+            return groupWebReads.listGroupEssenceMessages(
+              payload.groupId,
+              payload.options,
+              requestSignal,
+            );
           case 'setGroupEssenceMessage':
             return setGroupEssenceMessage(
               {

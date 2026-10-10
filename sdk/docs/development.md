@@ -42,6 +42,12 @@ Avoid a catch-all `utils`, `common` or base class for unrelated operations. A he
 belongs next to the invariant it protects. Share it when callers actually have
 that same invariant, not because their code happens to look similar.
 
+`features/groups/group-web-reads.ts` owns the three account-bound HTTP read
+operations. It combines the request and account signals, checks the account and
+awaits the complete operation. Inject ticket/domain-key methods and the account
+wait port there; keep endpoint exchange, pagination and DTO validation in their
+existing group modules. The composition root only supplies ports and routes.
+
 Every source file must have a reviewed layer or domain, including files without
 imports. The TypeScript dependency gate includes type-only edges and TypeScript
 `import = require()` declarations. Cross-feature cooperation

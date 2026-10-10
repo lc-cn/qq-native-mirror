@@ -8,6 +8,7 @@ import type { GroupNoticesContext } from '../../src/features/groups/group-notice
 import type { ForwardMessagesContext } from '../../src/features/forward/forward-messages.ts';
 import type { QunWebReadContext } from '../../src/features/groups/qun-web-read.ts';
 import type { WebGroupNoticesContext } from '../../src/features/groups/web-group-notices.ts';
+import type { GroupWebReadsContext } from '../../src/features/groups/group-web-reads.ts';
 import type {
   GroupRequestsContext,
   GroupRequestListener,
@@ -33,6 +34,7 @@ function verifyDomainPorts(
   forward: ForwardMessagesContext,
   webRead: QunWebReadContext,
   noticeRead: WebGroupNoticesContext,
+  groupReads: GroupWebReadsContext,
 ) {
   // @ts-expect-error A contact directory cannot acquire arbitrary native services.
   contacts.service('Group');
@@ -131,6 +133,12 @@ function verifyDomainPorts(
   void forwarded.result;
   // @ts-expect-error HTTP group reads cannot acquire arbitrary account services.
   webRead.getGroupService();
+  // @ts-expect-error Read orchestration has no arbitrary native service locator.
+  groupReads.service('Group');
+  // @ts-expect-error A request cannot close its account or sibling reads.
+  groupReads.close();
+  // @ts-expect-error Group reads cannot dispatch message mutations.
+  groupReads.getTicketService()?.sendMsg();
   // @ts-expect-error Client tickets cannot turn into message submission.
   webRead.getTicketService()?.sendMsg();
   // @ts-expect-error Domain-key acquisition keeps an explicit native boolean.
