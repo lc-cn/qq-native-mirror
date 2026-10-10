@@ -47,9 +47,9 @@ import { decodeElements } from './features/messages/message-elements.ts';
 import { createNativeMessageSender } from './features/messages/native-message-sender.ts';
 /** Native contracts extracted from local NapCat; this module never sends at startup. */
 import { createGroupOperations } from './features/groups/group-operations.ts';
-import { createGroupEvents, projectGroupInfo } from './features/groups/group-events.ts';
+import { createGroupEvents } from './features/groups/group-events.ts';
+import { createGroupQueries } from './features/groups/group-queries.ts';
 import { createGroupSystemEvents } from './features/groups/group-system-events.ts';
-import { projectGroupMuteList } from './features/groups/group-mute-list.ts';
 import { createRecallEvents } from './features/messages/recall-events.ts';
 import { createIncomingMessageDelivery } from './features/messages/incoming-message-delivery.ts';
 import {
@@ -57,14 +57,7 @@ import {
   projectNativeMessage,
 } from './features/messages/inbound-messages.ts';
 import { captureSendInput, sendUserId, sendGroupId } from './features/messages/send-input.ts';
-import type {
-  Friend,
-  Group,
-  GroupMember,
-  GroupInfoUpdate,
-  GroupMutedMember,
-  Message,
-} from './types.ts';
+import type { Friend, Message } from './types.ts';
 
 import type { NativeObject as Native } from './native/native-object.ts';
 import type { NativePeer, NativeMessage } from './native/message-contracts.ts';
@@ -148,8 +141,6 @@ export function createNativeServices(context: NativeServiceContext) {
       uidCache.clear();
     });
     const recallEvents = own(createRecallEvents(emit));
-    let groupListRequest: Promise<unknown> | undefined;
-    let groupListInvalidated = false;
     const call = (object: Native, name: string, ...args: unknown[]) => {
       if (closed) throw new Error('Native services are closed');
       if (!object || typeof object[name] !== 'function')
@@ -286,83 +277,18 @@ export function createNativeServices(context: NativeServiceContext) {
         dispatch('Group/onGroupDetailInfoChange', [value]);
       },
     });
-    // Detail callbacks carry a group ID but no request nonce. Coalesce concurrent
-    // reads, and quarantine failed channels so late results cannot satisfy retries.
-    const groupInfoQueries = new Map<string, Promise<GroupInfoUpdate>>();
-    const invalidGroupInfoQueries = new Set<string>();
-    cleanupSteps.push(() => {
-      groupInfoQueries.clear();
-      invalidGroupInfoQueries.clear();
-    });
-    const getGroupInfo = async (id: string): Promise<GroupInfoUpdate> => {
-      lifetime.signal.throwIfAborted();
-      if (invalidGroupInfoQueries.has(id))
-        throw new Error('Group detail query channel is invalid; recreate the Session');
-      let pending = groupInfoQueries.get(id);
-      if (!pending) {
-        pending = eventCall(
-          'Group/onGroupDetailInfoChange',
-          (raw: unknown) => {
-            if (
-              raw === null ||
-              typeof raw !== 'object' ||
-              Object.getOwnPropertyDescriptor(raw, 'groupCode')?.value !== id
-            )
-              return;
-            return projectGroupInfo(raw);
-          },
-          () => call(service('Group'), 'getGroupDetailInfo', id, 2),
-          5000,
-          nativeCallSucceeded,
-        )
-          .catch((error) => {
-            invalidGroupInfoQueries.add(id);
-            throw error;
-          })
-          .finally(() => {
-            groupInfoQueries.delete(id);
-          });
-        groupInfoQueries.set(id, pending);
-      }
-      const value = await pending;
-      lifetime.signal.throwIfAborted();
-      return { ...value };
-    };
-    const groupMuteQueries = new Map<string, Promise<GroupMutedMember[]>>();
-    const invalidGroupMuteQueries = new Set<string>();
-    cleanupSteps.push(() => {
-      groupMuteQueries.clear();
-      invalidGroupMuteQueries.clear();
-    });
-    const listGroupMutedMembers = async (id: string): Promise<GroupMutedMember[]> => {
-      lifetime.signal.throwIfAborted();
-      if (invalidGroupMuteQueries.has(id))
-        throw new Error('Group mute-list query channel is invalid; recreate the Session');
-      let pending = groupMuteQueries.get(id);
-      if (!pending) {
-        pending = eventCall(
-          'Group/onShutUpMemberListChanged',
-          (groupId: unknown, members: unknown) => {
-            if (groupId !== id) return;
-            return projectGroupMuteList(members);
-          },
-          () => call(service('Group'), 'getGroupShutUpMemberList', id),
-          5000,
-          nativeCallSucceeded,
-        )
-          .catch((error) => {
-            invalidGroupMuteQueries.add(id);
-            throw error;
-          })
-          .finally(() => {
-            groupMuteQueries.delete(id);
-          });
-        groupMuteQueries.set(id, pending);
-      }
-      const value = await pending;
-      lifetime.signal.throwIfAborted();
-      return value.map((member) => ({ ...member }));
-    };
+    const groupQueries = own(
+      createGroupQueries({
+        signal: lifetime.signal,
+        service,
+        call,
+        eventCall,
+        awaitAlive,
+        commitMembers: (members) => {
+          for (const member of members) uidCache.set(member.userId, member.uid);
+        },
+      }),
+    );
     const uidFor = async (id: string): Promise<string> => {
       if (id.startsWith('u_')) return id;
       if (uidCache.has(id)) return uidCache.get(id)!;
@@ -429,9 +355,9 @@ export function createNativeServices(context: NativeServiceContext) {
             );
           }
           case 'listGroupMutedMembers':
-            return listGroupMutedMembers(sendGroupId(payload.groupId));
+            return groupQueries.listGroupMutedMembers(sendGroupId(payload.groupId));
           case 'getGroupInfo':
-            return getGroupInfo(sendGroupId(payload.groupId));
+            return groupQueries.getGroupInfo(sendGroupId(payload.groupId));
           case 'listFriendCategories': {
             if (!['7.0.2-53644', '3.2.32-52194', '9.9.33-52230'].includes(version))
               throw new Error('Buddy list signature not verified for this native version');
@@ -496,106 +422,13 @@ export function createNativeServices(context: NativeServiceContext) {
             for (const friend of friends) uidCache.set(friend.userId, friend.uid);
             return friends;
           }
-          case 'listGroups': {
-            if (groupListInvalidated)
-              throw new Error('Group list query channel invalidated; create a new Session');
-            if (groupListRequest) return groupListRequest;
-            const request = eventCall(
-              'Group/onGroupListUpdate',
-              (update: number, groups: Native[]) => {
-                // Source: NapCatQQ packages/napcat-core/types/group.ts GroupListUpdateType.
-                // REFRESHALL=0 and GETALL=1 are full lists; MODIFIED/REMOVE and new native
-                // update kinds can carry partial or empty deltas. Never return those.
-                if (update !== 0 && update !== 1) return undefined;
-                if (!Array.isArray(groups)) throw new Error('Invalid native group list');
-                return Array.from(groups, (group): Group => {
-                  if (
-                    !group ||
-                    typeof group !== 'object' ||
-                    Array.isArray(group) ||
-                    typeof group.groupCode !== 'string' ||
-                    !/^\d+$/.test(group.groupCode) ||
-                    typeof group.groupName !== 'string' ||
-                    !Number.isSafeInteger(group.memberCount) ||
-                    group.memberCount < 0 ||
-                    !Number.isSafeInteger(group.maxMember) ||
-                    group.maxMember < 0
-                  )
-                    throw new Error('Invalid native group list');
-                  return {
-                    groupId: group.groupCode,
-                    name: group.groupName,
-                    memberCount: group.memberCount,
-                    maxMemberCount: group.maxMember,
-                  };
-                });
-              },
-              () => call(service('Group'), 'getGroupList', payload.refresh ?? true),
-              10_000,
-              nativeCallSucceeded,
+          case 'listGroups':
+            return groupQueries.listGroups(payload.refresh ?? true);
+          case 'getGroupMembers':
+            return groupQueries.getGroupMembers(
+              sendGroupId(payload.groupId),
+              payload.refresh ?? false,
             );
-            groupListRequest = request;
-            try {
-              return await request;
-            } catch (error) {
-              groupListInvalidated = true;
-              throw error;
-            } finally {
-              if (groupListRequest === request) groupListRequest = undefined;
-            }
-          }
-          case 'getGroupMembers': {
-            const groupId = sendGroupId(payload.groupId);
-            const refresh = payload.refresh ?? false;
-            if (typeof refresh !== 'boolean') throw new Error('refresh must be a boolean');
-            const result = await awaitAlive(
-              call(service('Group'), 'getAllMemberList', groupId, refresh),
-            );
-            // Pinned NodeIKernelGroupService.getAllMemberList reports errCode and
-            // finish:true. A Map alone does not establish a successful full list.
-            if (result?.errCode !== 0)
-              throw nativeResultError('Native group member query failed', result, 'errCode');
-            const infos = result?.result?.infos;
-            if (!(infos instanceof Map)) throw new Error('Invalid native group member map');
-            if (result.result.finish !== true)
-              throw Object.assign(new Error('Native group member list is incomplete'), {
-                code: 'incomplete-result',
-              });
-            const members = [...infos.entries()].map(([uid, member]): GroupMember => {
-              // Pinned GroupMember identity and display fields are strings. Do not
-              // invent an identity by coercing a number/object or substituting keys.
-              if (
-                typeof uid !== 'string' ||
-                !uid.trim() ||
-                !member ||
-                typeof member !== 'object' ||
-                Array.isArray(member) ||
-                member.uid !== uid ||
-                typeof member.uin !== 'string' ||
-                !/^\d+$/.test(member.uin) ||
-                typeof member.nick !== 'string' ||
-                typeof member.cardName !== 'string'
-              )
-                throw new Error('Invalid native group member');
-              if (typeof member.role !== 'number')
-                throw new Error('Unknown native group member role');
-              const role = ({ 4: 'owner', 3: 'admin', 2: 'member' } as const)[
-                member.role as 2 | 3 | 4
-              ];
-              if (!role) throw new Error('Unknown native group member role');
-              return {
-                userId: member.uin,
-                uid,
-                nickname: member.nick,
-                card: member.cardName,
-                role,
-              };
-            });
-            // Commit only a complete validated query; failures leave no partial cache.
-            lifetime.signal.throwIfAborted();
-            for (const member of members) uidCache.set(member.userId, member.uid);
-            return members;
-          }
           case 'sendPrivateMessage': {
             const userId = sendUserId(payload.userId);
             const input = captureSendInput(payload.message, false);

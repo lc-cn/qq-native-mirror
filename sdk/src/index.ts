@@ -1,4 +1,5 @@
 import { ClientLifecycle } from './runtime/client-lifecycle.ts';
+import type { ServiceOperation } from './runtime/operations.ts';
 import { friendCategoryName } from './features/contacts/friend-categories.ts';
 import { captureMergedForward } from './features/forward/merged-forward-input.ts';
 import { normalizeForwardResourceId } from './features/forward/forward-resource-wire.ts';
@@ -138,7 +139,7 @@ export class QQClient extends EventEmitter<ClientEvents> {
   reconnect(login?: LoginRequest): Promise<Account> {
     return this.#lifecycle.reconnect(login);
   }
-  #operation<T>(method: string, payload: object = {}): Promise<T> {
+  #operation<T>(method: ServiceOperation, payload: object = {}): Promise<T> {
     if (this.state !== 'online')
       return Promise.reject(new Error('QQ client is not online; await login() first'));
     return this.request<T>(method, payload);

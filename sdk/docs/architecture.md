@@ -47,8 +47,9 @@ for existing contract consumers. Input capture therefore does not require the
 parent to depend on native querying, media-file writes or forward submission.
 
 `src/runtime/operations.ts` owns the closed business-operation vocabulary. The
+public facade constrains its private operation dispatcher to that union, the
 worker derives its classifier from it, and native dispatch handles the same union
-exhaustively. Adding a name without a corresponding native branch fails type
+exhaustively. The low-level public `request(string, ...)` remains compatible. Adding a name without a corresponding native branch fails type
 checking; the worker no longer maintains a second handwritten allowlist.
 
 Feature modules may depend on public contracts and narrow native/runtime ports.
@@ -104,6 +105,15 @@ subscription order. Construction performs no native work. A callback success sti
 waits for native completion, failed IDs remain reserved until teardown, and an
 operation is never replayed. The Session aborts pending work before closing the
 sender; deferred preparation cannot dispatch after shutdown.
+
+`GroupQueries` owns full-list selection, per-group query coalescing, failed-channel
+quarantine and complete member-result validation. The four read methods use the
+Session's shared callback channel and do not register listeners. Detail/mute
+callers receive separate DTO copies; full-list callers retain the existing shared
+result semantics. Member results update the account's UID cache through one
+commit hook only after the whole batch validates and the Session remains alive.
+Closing invalidates the module and clears its query bookkeeping; the owning
+Session first aborts pending callbacks and native waits.
 
 The proprietary `.node` surface has no stable complete TypeScript declaration.
 Its type erasure is centralized in `src/native/native-object.ts`. This internal
