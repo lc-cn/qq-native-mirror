@@ -1,0 +1,33 @@
+sdk/docs/architecture.md
+  s_2104cc474f1ce5::t_234a8b5fcfc8ae 235-239
+sdk/scripts/message-batch-consumer-contract.mjs
+  s_2104cc474f1ce5::t_5eb1a12a87ccd9 100,102,108-304
+sdk/src/features/messages/message-queries.ts
+  s_2104cc474f1ce5::t_89d6fe8a22046d 13,18,20,31-59,63-67,69,72-74,78-82,84,87-90,99-101,105-109,111-117,120-122
+sdk/src/features/messages/message-query.ts
+  s_2104cc474f1ce5::t_7eba892b6eb82f 9-14,40,43,71,106,125,144
+sdk/test/architecture.test.ts
+  s_2104cc474f1ce5::t_58de5d3bfe6c3a 408-415
+sdk/test/fixtures/domain-port-types.ts
+  s_2104cc474f1ce5::t_f8803287cc50f2 175-189
+sdk/test/helpers/dependency-policy.ts
+  s_2104cc474f1ce5::t_7e007a18c9c97d 208-215
+sdk/test/message-queries.test.ts
+  s_2104cc474f1ce5::t_829ed305671784 4-7,25,36,38-46,90-94,104-109,113,164-252
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "917b162c237d0a66789313f6919da4ec7c819535",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
