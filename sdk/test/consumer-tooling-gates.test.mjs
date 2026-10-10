@@ -16,7 +16,7 @@ function replaceOnce(value, before, after) {
   assert.equal(value.split(before).length - 1, 1, `Fixture anchor must occur once: ${before}`);
   return value.replace(before, after);
 }
-function diagnostics(replacement) {
+function diagnostics(replacement, checkedFile = helper) {
   const configPath = resolve(root, 'tsconfig.scripts.json');
   const config = ts.readConfigFile(configPath, ts.sys.readFile);
   assert.equal(config.error, undefined);
@@ -24,11 +24,11 @@ function diagnostics(replacement) {
   assert.deepEqual(parsed.errors, []);
   const host = ts.createCompilerHost(parsed.options);
   const originalRead = host.readFile.bind(host);
-  host.readFile = (path) => (resolve(path) === helper ? replacement : originalRead(path));
+  host.readFile = (path) => (resolve(path) === checkedFile ? replacement : originalRead(path));
   const program = ts.createProgram(parsed.fileNames, parsed.options, host);
   return ts
     .getPreEmitDiagnostics(program)
-    .filter((item) => item.file && resolve(item.file.fileName) === helper);
+    .filter((item) => item.file && resolve(item.file.fileName) === checkedFile);
 }
 
 test('consumer compiler gate rejects missing preparation await and fabricated send receipts without running the helper', () => {
@@ -54,29 +54,72 @@ test('consumer compiler gate rejects missing preparation await and fabricated se
   );
 });
 
-test('typed consumer lint rejects unobserved action Promise without spawning its fake client', async () => {
-  const eslint = new ESLint({
-    cwd: root,
-    // These lintText calls repeatedly change one in-memory file. CI single-run
-    // inference treats later parses as autofixes and loses imported action types.
-    // Use the persistent program only here; the actual disk lint gate is unchanged.
-    overrideConfig: {
-      languageOptions: { parserOptions: { disallowAutomaticSingleRunInference: true } },
-    },
-  });
-  const good = await eslint.lintText(source, { filePath: helper });
-  assert.equal(good[0].errorCount, 0, 'Actual checked helper must pass its lint gate first');
-  for (const invocation of ['action(client);', 'void action(client);']) {
-    const missingAwait = replaceOnce(source, 'await action(client);', invocation);
-    const results = await eslint.lintText(missingAwait, { filePath: helper });
-    assert.ok(
-      results[0].messages.some(
-        (message) => message.ruleId === '@typescript-eslint/no-floating-promises',
+const groupSearchHelper = resolve(root, 'scripts/group-search-consumer-contract.mjs');
+const groupSearchSource = readFileSync(groupSearchHelper, 'utf8');
+
+test('group-search consumer compiler rejects missing preparation await and invalid match DTO without running its worker', () => {
+  assert.deepEqual(diagnostics(groupSearchSource, groupSearchHelper), []);
+  assert.ok(
+    diagnostics(
+      replaceOnce(
+        groupSearchSource,
+        'const plan = await prepareCommand(',
+        'const plan = prepareCommand(',
       ),
-      `Unobserved action must reject: ${invocation}`,
-    );
-  }
+      groupSearchHelper,
+    ).some((item) => item.code === 2349),
+    'The installed CLI plan must retain its asynchronous preparation contract',
+  );
+  assert.ok(
+    diagnostics(
+      replaceOnce(groupSearchSource, "name: 'fixture',", 'name: 123,'),
+      groupSearchHelper,
+    ).some((item) => item.code === 2322),
+    'Controlled results must retain the public GroupSearchMatch contract',
+  );
 });
+
+for (const fixture of [
+  {
+    name: 'face',
+    file: helper,
+    source,
+    invocation: 'await action(client);',
+    ignored: 'action(client);',
+  },
+  {
+    name: 'group-search',
+    file: groupSearchHelper,
+    source: groupSearchSource,
+    invocation: 'const match = await plan(client);',
+    ignored: 'plan(client); const match = undefined;',
+  },
+]) {
+  test(`${fixture.name} typed consumer lint rejects unobserved action Promise without running the helper`, async () => {
+    const eslint = new ESLint({
+      cwd: root,
+      // These lintText calls repeatedly change one in-memory file. CI single-run
+      // inference treats later parses as autofixes and loses imported action types.
+      // Use the persistent program only here; the actual disk lint gate is unchanged.
+      overrideConfig: {
+        languageOptions: { parserOptions: { disallowAutomaticSingleRunInference: true } },
+      },
+    });
+    const good = await eslint.lintText(fixture.source, { filePath: fixture.file });
+    assert.equal(good[0].errorCount, 0, 'Actual checked helper must pass its lint gate first');
+    for (const prefix of ['', 'void ']) {
+      const invocation = `${prefix}${fixture.ignored}`;
+      const missingAwait = replaceOnce(fixture.source, fixture.invocation, invocation);
+      const results = await eslint.lintText(missingAwait, { filePath: fixture.file });
+      assert.ok(
+        results[0].messages.some(
+          (message) => message.ruleId === '@typescript-eslint/no-floating-promises',
+        ),
+        `Unobserved action must reject: ${invocation}`,
+      );
+    }
+  });
+}
 
 test('collector never executes consumers or scans excluded account executors, and rejects root escape/computed import', async () => {
   const directory = await realpath(await mkdtemp(join(tmpdir(), 'consumer-static-gate-')));

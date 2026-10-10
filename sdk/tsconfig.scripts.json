@@ -8,5 +8,10 @@
     "allowJs": true,
     "checkJs": true
   },
-  "include": ["src/**/*.ts", "scripts/**/*.ts", "scripts/face-consumer-contract.mjs"]
+  "include": [
+    "src/**/*.ts",
+    "scripts/**/*.ts",
+    "scripts/face-consumer-contract.mjs",
+    "scripts/group-search-consumer-contract.mjs"
+  ]
 }

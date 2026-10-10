@@ -5,17 +5,24 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-/** Compiled SDK only; all native services and kernel responses are controlled. */
+/** Compiled SDK only; all native services and kernel responses are controlled.
+ * @param {string} packageRoot
+ */
 export async function verifyGroupSearchConsumer(packageRoot) {
-  const load = (name) => import(pathToFileURL(join(packageRoot, 'dist', name)).href);
+  /** @type {Promise<typeof import('../src/native-services.ts')>} */
+  const servicesModule = import(pathToFileURL(join(packageRoot, 'dist/native-services.js')).href);
+  /** @type {Promise<typeof import('../src/native/native-contracts.ts')>} */
+  const contractsModule = import(
+    pathToFileURL(join(packageRoot, 'dist/native/native-contracts.js')).href
+  );
+  /** @type {Promise<typeof import('../src/cli.ts')>} */
+  const cliModule = import(pathToFileURL(join(packageRoot, 'dist/cli.js')).href);
+  /** @type {Promise<typeof import('../src/index.ts')>} */
+  const clientModule = import(pathToFileURL(join(packageRoot, 'dist/index.js')).href);
   const [{ createNativeServices }, { supportsGroupSearch }, { prepareCommand }, { QQClient }] =
-    await Promise.all([
-      load('native-services.js'),
-      load('native/native-contracts.js'),
-      load('cli.js'),
-      load('index.js'),
-    ]);
+    await Promise.all([servicesModule, contractsModule, cliModule, clientModule]);
   const version = '7.0.2-53644';
+  /** @satisfies {import('../src/native/native-contracts.ts').NativeContractProfile} */
   const profile = {
     platform: 'darwin',
     arch: 'arm64',
@@ -43,6 +50,7 @@ export async function verifyGroupSearchConsumer(packageRoot) {
       },
     ],
   };
+  /** @satisfies {import('../src/contracts/groups.ts').GroupSearchMatch} */
   const expected = {
     groupId: '123',
     name: 'fixture',
@@ -51,10 +59,18 @@ export async function verifyGroupSearchConsumer(packageRoot) {
     ownerUid: 'u_owner',
     description: 'description',
   };
+  /**
+   * @param {unknown} response
+   * @param {import('../src/native/native-contracts.ts').NativeContractProfile} nativeContracts
+   */
   function fixture(response = result, nativeContracts = profile, pending = false) {
-    let listener,
-      calls = 0,
+    /** @type {{onSearchGroupResult(value:unknown):void}|undefined} */
+    let listener;
+    let calls = 0,
       registrations = 0;
+    /** @type {import('../src/features/groups/group-search.ts').GroupSearchPort & {
+     * addKernelSearchListener(value:{onSearchGroupResult(response:unknown):void}):void
+     * }} */
     const search = {
       addKernelSearchListener(value) {
         listener = value;
@@ -70,6 +86,7 @@ export async function verifyGroupSearchConsumer(packageRoot) {
           penetrate: '',
         });
         if (pending) return new Promise(() => {});
+        assert.ok(listener, 'Search must register its listener before invoking native search');
         listener.onSearchGroupResult(response);
         return { result: 0 };
       },
@@ -130,6 +147,7 @@ export async function verifyGroupSearchConsumer(packageRoot) {
   const rejected = assert.rejects(request, /closed|abort/i);
   await new Promise((resolve) => setImmediate(resolve));
   waiting.services.close();
+  /** @type {ReturnType<typeof setTimeout>|undefined} */
   let timer;
   try {
     await Promise.race([
@@ -142,13 +160,15 @@ export async function verifyGroupSearchConsumer(packageRoot) {
     clearTimeout(timer);
   }
   const plan = await prepareCommand('group-search', { 'group-id': target });
-  assert.equal(await plan({ searchGroup: async (id) => id }), target);
   await assert.rejects(() =>
     prepareCommand('group-search', { 'group-id': '18446744073709551616' }),
   );
   assert.equal(typeof QQClient.prototype.searchGroup, 'function');
   const directory = await mkdtemp(join(tmpdir(), 'qq-search-worker-'));
-  let client, child;
+  /** @type {import('../src/index.ts').QQClient|undefined} */
+  let client;
+  /** @type {import('node:child_process').ChildProcess|undefined} */
+  let child;
   try {
     const kernelUrl = pathToFileURL(await realpath(join(packageRoot, 'dist/kernel.js'))).href;
     const hook = join(directory, 'hook.mjs');
@@ -171,13 +191,17 @@ export async function verifyGroupSearchConsumer(packageRoot) {
       },
     });
     await client.login({ method: 'restore', uin: '123' });
-    assert.deepEqual(await client.searchGroup(target), expected);
+    // Exercise the installed CLI action through the actual facade and controlled
+    // worker; a string-returning fake cannot stand in for GroupSearchMatch.
+    const match = await plan(client);
+    assert.deepEqual(match, expected);
     await client.close();
   } finally {
     if (client) await client.close();
     if (child && child.exitCode === null && child.signalCode === null) {
-      const exited = new Promise((resolve) => child.once('exit', resolve));
-      child.kill();
+      const worker = child;
+      const exited = new Promise((resolve) => worker.once('exit', resolve));
+      worker.kill();
       await exited;
     }
     await rm(directory, { recursive: true, force: true });

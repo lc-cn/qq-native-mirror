@@ -580,10 +580,12 @@ The `SDK quality` GitHub workflow runs these gates independently of platform
 bundle and video-native CI. Runtime output is recreated from a clean `dist`
 directory so obsolete emitted modules cannot make a packaging check pass.
 
-`tsconfig.scripts.json` governs all TypeScript scripts, the shared face consumer
-and the module-reference collector. The face consumer binds dynamic installed imports to their source
-contracts, uses the actual installed Client with controlled IPC, and returns a
-valid synthetic send receipt. Type-aware lint rejects unobserved Promises even
+`tsconfig.scripts.json` governs all TypeScript scripts, the shared face and group-search consumers
+and the module-reference collector. The checked consumers bind dynamic installed imports to their source
+contracts and use the actual installed Client with controlled IPC. The face consumer
+returns a valid synthetic send receipt. The group-search CLI action runs through the installed
+Client and controlled worker, returning the complete `GroupSearchMatch` rather than
+a fabricated string result. Type-aware lint rejects unobserved Promises even
 when prefixed with `void`. Negative gate fixtures prove that missing preparation
 awaits, missing action awaits and invalid receipts fail without executing those
 fixtures. Other JavaScript acceptance helpers still receive the existing syntax lint;

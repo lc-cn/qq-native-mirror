@@ -154,12 +154,12 @@ the platform consumer orchestrator trigger SDK quality as well as native CI.
 Always rebuild from clean `dist`; source tests cannot detect obsolete
 emitted modules left in a package.
 
-All TypeScript scripts and the first checked JavaScript consumer share
+All TypeScript scripts and the checked face and group-search JavaScript consumers share
 `tsconfig.scripts.json`. When migrating a JavaScript helper, give dynamic installed imports the corresponding module
 types, retain faithful DTOs in controlled adapters and add type-aware Promise
 lint. Do not silence errors by assigning the whole installed module or fake
 client to `any`. Compiler/lint negative fixtures must reject broken verification
-code without executing it. Start with the checked face consumer as an example;
+code without executing it. Use the checked face and group-search consumers as examples;
 the remaining JavaScript helpers are not yet all covered by this stricter project.
 
 Keep static consumer references in forms accepted by
