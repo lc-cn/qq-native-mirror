@@ -4,6 +4,7 @@ import type { NativeMessageSenderContext } from '../../src/features/messages/nat
 import type { ContactOperationsContext } from '../../src/features/contacts/contact-operations.ts';
 import type { GroupOperationsContext } from '../../src/features/groups/group-operations.ts';
 import type { SelfProfileContext } from '../../src/features/contacts/self-profile.ts';
+import type { GroupNoticesContext } from '../../src/features/groups/group-notices.ts';
 import type {
   GroupRequestsContext,
   GroupRequestListener,
@@ -25,6 +26,7 @@ function verifyDomainPorts(
   selfProfile: SelfProfileContext,
   requests: FriendRequestsContext,
   groupRequests: GroupRequestsContext,
+  notices: GroupNoticesContext,
 ) {
   // @ts-expect-error A contact directory cannot acquire arbitrary native services.
   contacts.service('Group');
@@ -93,6 +95,20 @@ function verifyDomainPorts(
   // @ts-expect-error Both application notification entry points are required.
   const incompleteGroupListener: GroupRequestListener = { onGroupNotifiesUpdated() {} };
   void incompleteGroupListener;
+  // @ts-expect-error Bulletin operations cannot acquire unrelated native services.
+  notices.getProfileService();
+  // @ts-expect-error The bulletin port cannot change group membership.
+  notices.getGroupService()?.kickMember('123', ['u_fixture'], false, '');
+  // @ts-expect-error The ticket port cannot submit messages.
+  notices.getTipOffService()?.sendMsg();
+  // @ts-expect-error Ticket refresh uses a native boolean.
+  notices.getTipOffService()?.getPskey?.(['qun.qq.com'], 'true');
+  const ticket = notices.getTipOffService()?.getPskey?.(['qun.qq.com'], true);
+  const bulletin = notices.getGroupService()?.deleteGroupBulletin?.('123', 'private-key', 'id');
+  // @ts-expect-error Ticket maps require native result validation.
+  ticket.domainPskeyMap.get('qun.qq.com');
+  // @ts-expect-error Deletion completion remains unknown until validated.
+  void bulletin.result;
   // @ts-expect-error Query doubt must retain its native boolean type.
   groupRequests.getGroupService()?.getSingleScreenNotifies?.('false', '', 20);
   const groupPage = groupRequests.getGroupService()?.getSingleScreenNotifies?.(false, '', 20);

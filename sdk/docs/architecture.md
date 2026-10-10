@@ -316,6 +316,22 @@ cleanup failure retains its original value. A void decision completion confirms
 dispatch only. The local and multi-platform installed-consumer checks share the
 same controlled composition contract; they do not approve real group requests.
 
+`createGroupNotices` owns bulletin input capture, local image preparation, domain
+ticket acquisition, upload and publication. Its injected ports expose only the
+ticket method and three bulletin methods; they cannot acquire account services or
+change group membership. Services and methods are acquired lazily and captured
+once with their original receiver. Inputs are captured before asynchronous work,
+so caller changes cannot replace validated options during ticket acquisition.
+Image paths are canonicalized and checked before requesting a ticket; publication
+requires both successful upload status and complete picture metadata. Local close
+and Session abort settle pending file, ticket and mutation waits without issuing
+the next step. Late native promises remain observed, and synchronous close during
+method or result access prevents dispatch or successful completion. Cancellation
+cannot undo a mutation already issued. Successful publication supplies no verified
+notice ID or recipient receipt; void deletion confirms dispatch only. The shared
+installed-package contract exercises these rules with controlled services and
+does not request real tickets or modify group announcements.
+
 The CLI entry retains help, configuration, explicit login selection and entry-URL
 handling. `command-plan` validates command flags and captures file-backed message
 inputs before the client is created; its prepared actions never initiate login.

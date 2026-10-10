@@ -25,6 +25,7 @@ import { verifyWorkerErrorRoutes } from './worker-error-consumer-contract.mjs';
 import { verifyActionPortConsumer } from './action-port-consumer-contract.mjs';
 import { verifyProfileRequestConsumer } from './profile-request-consumer-contract.mjs';
 import { verifyGroupRequestConsumer } from './group-request-consumer-contract.mjs';
+import { verifyGroupNoticeConsumer } from './group-notice-consumer-contract.mjs';
 
 // Offline packaging check: controlled services and actual worker routing with a replacement kernel; no QQ native binaries or accounts.
 const root = fileURLToPath(new URL('../', import.meta.url));
@@ -187,6 +188,9 @@ const actionPortChecks = await verifyActionPortConsumer(
   join(destination, 'node_modules/qq-native-client'),
 );
 const groupRequestChecks = await verifyGroupRequestConsumer(
+  join(destination, 'node_modules/qq-native-client'),
+);
+const groupNoticeChecks = await verifyGroupNoticeConsumer(
   join(destination, 'node_modules/qq-native-client'),
 );
 await writeFile(
@@ -535,6 +539,7 @@ const receipt = {
     ...actionPortChecks,
     ...profileRequestChecks,
     ...groupRequestChecks,
+    ...groupNoticeChecks,
     ...publicContractChecks,
     privateFilesExcluded: true,
     installedImport: true,

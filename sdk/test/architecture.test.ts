@@ -81,6 +81,8 @@ test('dependency policy rejects reverse, type-only and new cross-domain coupling
     ['src/features/contacts/self-profile.ts', 'src/runtime/account-session-lifecycle.ts'],
     ['src/features/groups/group-requests.ts', 'src/runtime/native-service-context.ts'],
     ['src/features/groups/group-requests.ts', 'src/runtime/account-session-lifecycle.ts'],
+    ['src/features/groups/group-notices.ts', 'src/runtime/native-service-context.ts'],
+    ['src/features/groups/group-notices.ts', 'src/runtime/account-session-lifecycle.ts'],
     ['src/features/contacts/new-profile.ts', 'src/runtime/cleanup.ts'],
     ['src/features/messages/native-message-sender.ts', 'src/runtime/native-service-context.ts'],
     ['src/features/groups/new-action.ts', 'src/runtime/native-service-context.ts'],

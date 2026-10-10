@@ -261,7 +261,14 @@ export function createNativeServices(context: NativeServiceContext) {
         awaitAlive,
       }),
     );
-    const groupNotices = createGroupNotices(guardedSession);
+    const groupNotices = own(
+      createGroupNotices({
+        getGroupService: () => service('Group'),
+        getTipOffService: () => service('TipOff'),
+        signal: lifetime.signal,
+        awaitAlive,
+      }),
+    );
     const groupOperations = createGroupOperations({
       getGroupService: () => service('Group'),
       resolveUid: uidFor,

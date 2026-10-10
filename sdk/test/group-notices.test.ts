@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtemp, writeFile, rm, readFile, realpath } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createGroupNotices } from '../src/features/groups/group-notices.ts';
+import { createGroupNotices as createWithContext } from '../src/features/groups/group-notices.ts';
 import { createNativeServices } from '../src/native-services.ts';
 
 test('worker notice input rejects unknown group identifiers before acquiring a ticket', async () => {
@@ -71,7 +71,12 @@ function fixture() {
     calls,
     group,
     tipoff,
-    module: createGroupNotices({ getGroupService: () => group, getTipOffService: () => tipoff }),
+    module: createWithContext({
+      getGroupService: () => group,
+      getTipOffService: () => tipoff,
+      signal: new AbortController().signal,
+      awaitAlive: async (value) => value,
+    }),
   };
 }
 
@@ -232,4 +237,155 @@ test('invalid input and ticket failures never invoke native publication', async 
     /domain key/,
   );
   assert.equal(f.calls.length, 0);
+});
+
+test('notice options and native method getters are captured once with original receiver', async () => {
+  let reads = 0,
+    methodReads = 0,
+    calls = 0;
+  const group = {
+    get publishGroupBulletin() {
+      methodReads++;
+      return function (this: typeof group, _id: string, _key: string, value: { pinned: number }) {
+        assert.equal(this, group);
+        assert.equal(value.pinned, 0);
+        calls++;
+        return { result: 0 };
+      };
+    },
+  };
+  const module = createWithContext({
+    signal: new AbortController().signal,
+    getGroupService: () => group,
+    getTipOffService: () => ({
+      getPskey: () => ({ result: 0, domainPskeyMap: new Map([['qun.qq.com', 'fake']]) }),
+    }),
+    awaitAlive: async (value) => value,
+  });
+  try {
+    await module.invokeOperation('publishGroupNotice', {
+      groupId: '123',
+      text: 'fake',
+      get options() {
+        return ++reads === 1 ? {} : { pinned: true };
+      },
+    });
+    assert.equal(reads, 1);
+    assert.equal(methodReads, 1);
+    assert.equal(calls, 1);
+  } finally {
+    module.close();
+  }
+});
+
+for (const stage of ['ticket', 'group', 'method', 'ack'] as const) {
+  test(`notice synchronous close at ${stage} prevents dispatch or successful completion`, async () => {
+    let calls = 0;
+    const module = createWithContext({
+      signal: new AbortController().signal,
+      getTipOffService() {
+        if (stage === 'ticket') module.close();
+        return {
+          getPskey: () => ({ result: 0, domainPskeyMap: new Map([['qun.qq.com', 'fake']]) }),
+        };
+      },
+      getGroupService() {
+        if (stage === 'group') module.close();
+        return {
+          get deleteGroupBulletin() {
+            if (stage === 'method') module.close();
+            return () => {
+              calls++;
+              return {
+                get result() {
+                  if (stage === 'ack') module.close();
+                  return 0;
+                },
+              };
+            };
+          },
+        };
+      },
+      awaitAlive: async (value) => value,
+    });
+    await assert.rejects(
+      module.invokeOperation('deleteGroupNotice', { groupId: '123', noticeId: 'id' }),
+      /closed/,
+    );
+    assert.equal(calls, stage === 'ack' ? 1 : 0);
+    module.close();
+  });
+}
+
+for (const stage of ['ticket', 'delete', 'publish'] as const) {
+  test(`local close interrupts stalled ${stage} and observes late rejection without retry`, async () => {
+    let rejectNative!: (error: unknown) => void;
+    let started!: () => void;
+    const began = new Promise<void>((resolve) => {
+      started = resolve;
+    });
+    const stalled = new Promise<unknown>((_, reject) => {
+      rejectNative = reject;
+    });
+    let mutations = 0;
+    const module = createWithContext({
+      signal: new AbortController().signal,
+      getTipOffService: () => ({
+        getPskey() {
+          if (stage === 'ticket') {
+            started();
+            return stalled;
+          }
+          return { result: 0, domainPskeyMap: new Map([['qun.qq.com', 'fake']]) };
+        },
+      }),
+      getGroupService: () => ({
+        deleteGroupBulletin() {
+          mutations++;
+          started();
+          return stalled;
+        },
+        publishGroupBulletin() {
+          mutations++;
+          started();
+          return stalled;
+        },
+      }),
+      awaitAlive: async (value) => value,
+    });
+    const pending = module.invokeOperation(
+      stage === 'publish' ? 'publishGroupNotice' : 'deleteGroupNotice',
+      { groupId: '123', noticeId: 'id', text: 'fake' },
+    );
+    await began;
+    module.close();
+    await assert.rejects(pending, /closed/);
+    rejectNative(new Error('late synthetic failure'));
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    assert.equal(mutations, stage === 'ticket' ? 0 : 1);
+  });
+}
+
+test('notice native rejection retains original identity and is never retried', async () => {
+  const error = Object.freeze({ opaque: 'fixture' });
+  let calls = 0;
+  const module = createWithContext({
+    signal: new AbortController().signal,
+    getTipOffService: () => ({
+      getPskey() {
+        calls++;
+        throw error;
+      },
+    }),
+    getGroupService() {
+      assert.fail('no group acquisition');
+    },
+    awaitAlive: async (value) => value,
+  });
+  await assert.rejects(
+    module.invokeOperation('publishGroupNotice', { groupId: '123', text: 'fake' }),
+    (value) => value === error,
+  );
+  assert.equal(calls, 1);
+  module.close();
 });
