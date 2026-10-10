@@ -257,6 +257,9 @@ function subscribe(client: QQClient) {
  client.on('request.group', request => request.sequence);
  client.on('group-list-updated', update => update.groups.map(group=>group.groupId));
  client.on('group-members-updated', update => update.members.map(member=>[member.uid,member.deleted,member.role]));
+ client.on('group-admin', update => [update.groupId,update.memberUid,update.enabled]);
+ client.on('group-mute', update => [update.groupId,update.scope,update.durationSeconds,update.operatorUid,update.memberUid]);
+ void client.listGroupMutedMembers('123').then(values=>values.map(value=>[value.role,value.shutUpTime]));
  client.on('group-membership', update => [update.groupId,update.kind,update.memberUid,update.operatorUid,update.code]);
  void client.getGroupInfo('123').then(value=>value.description);
  client.on('group-info-updated', update => [update.groupId,update.ownerUid,update.ownerUserId,update.description]);

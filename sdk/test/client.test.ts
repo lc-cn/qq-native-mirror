@@ -575,3 +575,13 @@ test('membership system events are delivered through public IPC and suppressed a
   worker.emit('message',{event:'group-membership',payload});assert.deepEqual(events,[payload]);
   await client.close();worker.emit('message',{event:'group-membership',payload});assert.equal(events.length,1);
 });
+
+
+test('public muted-member query preserves numeric string group ID and rejects invalid JavaScript before IPC',async()=>{
+ const worker=new Worker(),client=new QQClient(worker as unknown as ChildProcess,500);
+ try{
+  await assert.rejects(client.listGroupMutedMembers('123'),/not online/);worker.emit('message',{event:'ready',payload:{uin:'456',uid:'u_fixture'}});
+  for(const id of [null,undefined,123,'bad','0'])await assert.rejects(client.listGroupMutedMembers(id as unknown as string));assert.equal(worker.requests.length,0);
+  const pending=client.listGroupMutedMembers('000123'),request=worker.requests.at(-1);assert.equal(request.method,'listGroupMutedMembers');assert.equal(request.groupId,'000123');worker.emit('message',{id:request.id,result:[]});assert.deepEqual(await pending,[]);
+ }finally{await client.close();}
+});

@@ -21,15 +21,16 @@ import { createImageElement, createFileElement, createReplyElement, decodeElemen
 import { createGroupOperations, type GroupOperation } from './group-operations.ts';
 import { createGroupEvents, projectGroupInfo } from './group-events.ts';
 import { createGroupSystemEvents } from './group-system-events.ts';
+import { projectGroupMuteList } from './group-mute-list.ts';
 import { createRecallEvents } from './recall-events.ts';
 import { needsMentionLookup } from './inbound-mentions.ts';
 import { captureNativeMessage, decodeNativeMessages, messageIdentityUids, projectNativeMessage } from './inbound-messages.ts';
 import { captureSendInput, sendUserId, sendGroupId, sentReceipt } from './send-input.ts';
-import type { Friend, Group, GroupMember, GroupInfoUpdate, Message, NativeCallbackAudit } from './types.ts';
+import type { Friend, Group, GroupMember, GroupInfoUpdate, GroupMutedMember, Message, NativeCallbackAudit } from './types.ts';
 
 type Native = Record<string, any>;
 export interface NativePeer { chatType: 1 | 2; peerUid: string; guildId?: string }
-export type ServiceOperation = 'listFriendCategories' | 'listFriends' | 'listGroups' | 'getGroupInfo' | 'getGroupMembers' | 'sendPrivateMessage' | 'sendGroupMessage' | 'sendMergedForward' | 'getForwardResource' | 'getMessage' | 'getMessages' | 'getHistory' | 'recallMessage' | 'downloadAttachment' | SelfProfileOperation | 'listGroupNotices' | GroupNoticeOperation | GroupOperation | ContactOperation | FriendRequestOperation | GroupRequestOperation | ForwardOperation;
+export type ServiceOperation = 'listFriendCategories' | 'listFriends' | 'listGroups' | 'getGroupInfo' | 'listGroupMutedMembers' | 'getGroupMembers' | 'sendPrivateMessage' | 'sendGroupMessage' | 'sendMergedForward' | 'getForwardResource' | 'getMessage' | 'getMessages' | 'getHistory' | 'recallMessage' | 'downloadAttachment' | SelfProfileOperation | 'listGroupNotices' | GroupNoticeOperation | GroupOperation | ContactOperation | FriendRequestOperation | GroupRequestOperation | ForwardOperation;
 export interface NativeMessage extends Native { msgId: string; peerUid: string; chatType: number }
 interface Waiter { event: string; check: (...args: any[]) => unknown; resolve: (value: any) => void; reject: (error: Error) => void; timer: ReturnType<typeof setTimeout> }
 
@@ -156,6 +157,8 @@ export function createNativeServices(session: Native, version: string, emit: (ev
     onRecvMsg: (messages: NativeMessage[]) => {
       if (closed) return;
       if (!Array.isArray(messages)) { emit('diagnostic', { stage: 'invalid-native-message-batch' }); return; }
+      if (groupSystemEvents.hasMuteCandidate(messages)) groupSystemEvents.onRecvMsg(messages);
+      if (closed) return;
       const validMessages: Received[] = [];
       for (const message of Array.from(messages)) {
         if (message && typeof message === 'object' && !Array.isArray(message) && message.chatType !== 1 && message.chatType !== 2) continue;
@@ -253,6 +256,25 @@ export function createNativeServices(session: Native, version: string, emit: (ev
     lifetime.signal.throwIfAborted();
     return { ...value };
   };
+  const groupMuteQueries = new Map<string, Promise<GroupMutedMember[]>>();
+  const invalidGroupMuteQueries = new Set<string>();
+  const listGroupMutedMembers = async (id: string): Promise<GroupMutedMember[]> => {
+    lifetime.signal.throwIfAborted();
+    if (invalidGroupMuteQueries.has(id)) throw new Error('Group mute-list query channel is invalid; recreate the Session');
+    let pending = groupMuteQueries.get(id);
+    if (!pending) {
+      pending = eventCall('Group/onShutUpMemberListChanged', (groupId: unknown, members: unknown) => {
+        if (groupId !== id) return;
+        return projectGroupMuteList(members);
+      }, () => call(service('Group'), 'getGroupShutUpMemberList', id), 5000, result => result?.result === 0)
+        .catch(error => { invalidGroupMuteQueries.add(id); throw error; })
+        .finally(() => { groupMuteQueries.delete(id); });
+      groupMuteQueries.set(id, pending);
+    }
+    const value = await pending;
+    lifetime.signal.throwIfAborted();
+    return value.map(member => ({ ...member }));
+  };
   const uidFor = async (id: string): Promise<string> => {
     if (id.startsWith('u_')) return id;
     if (uidCache.has(id)) return uidCache.get(id)!;
@@ -332,6 +354,7 @@ export function createNativeServices(session: Native, version: string, emit: (ev
     async invokeOperation(method: ServiceOperation, payload: Native = {}): Promise<unknown> {
       if (closed) throw new Error('Native services are closed');
       switch (method) {
+        case 'listGroupMutedMembers': return listGroupMutedMembers(sendGroupId(payload.groupId));
         case 'getGroupInfo': return getGroupInfo(sendGroupId(payload.groupId));
         case 'listFriendCategories': {
           if (!['7.0.2-53644', '3.2.32-52194', '9.9.33-52230'].includes(version)) throw new Error('Buddy list signature not verified for this native version');
@@ -514,6 +537,7 @@ export function createNativeServices(session: Native, version: string, emit: (ev
       closed = true;
       lifetime.abort();
       groupInfoQueries.clear(); invalidGroupInfoQueries.clear();
+      groupMuteQueries.clear(); invalidGroupMuteQueries.clear();
       longMessageTransport?.close();
       forwardResourceTransport?.close();
       usedSendIds.clear();

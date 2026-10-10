@@ -14,7 +14,7 @@ import { fileURLToPath } from 'node:url';
 import { mkdir } from 'node:fs/promises';
 import { prepareNative } from './native-package.ts';
 import { normalizeLoginRequest } from './login-request.ts';
-import type { Account, ClientOptions, ClientEvents, LoginRequest, ClientState, Friend, FriendCategory, Group, GroupMember, GroupInfoUpdate, MessageInput, SentMessage, SentMergedForward, ForwardTextNode, MergedForwardOptions, ForwardResource, Message, Peer, HistoryOptions, KickOptions, UserProfile, DeleteFriendOptions, FriendRequest, NativeCallbackAudit } from './types.ts';
+import type { Account, ClientOptions, ClientEvents, LoginRequest, ClientState, Friend, FriendCategory, Group, GroupMember, GroupInfoUpdate, GroupMutedMember, MessageInput, SentMessage, SentMergedForward, ForwardTextNode, MergedForwardOptions, ForwardResource, Message, Peer, HistoryOptions, KickOptions, UserProfile, DeleteFriendOptions, FriendRequest, NativeCallbackAudit } from './types.ts';
 export type * from './types.ts';
 export type { VideoCodec, VideoInfo } from './video-codec-loader.ts';
 import type { GroupNoticeOptions, GroupNoticePage } from './types.ts';
@@ -251,6 +251,7 @@ export class QQClient extends EventEmitter<ClientEvents> {
   listFriendCategories(): Promise<FriendCategory[]> { return this.#operation('listFriendCategories'); }
   listFriends(): Promise<Friend[]> { return this.#operation('listFriends'); }
   listGroups(): Promise<Group[]> { return this.#operation('listGroups'); }
+  async listGroupMutedMembers(groupId:string): Promise<GroupMutedMember[]> { return this.#operation('listGroupMutedMembers', {groupId:sendGroupId(groupId)}); }
   async getGroupInfo(groupId: string): Promise<GroupInfoUpdate> { return this.#operation('getGroupInfo', { groupId: sendGroupId(groupId) }); }
   async getGroupMembers(groupId: string): Promise<GroupMember[]> { return this.#operation('getGroupMembers', { groupId: sendGroupId(groupId) }); }
   sendPrivateMessage(userId: string, message: MessageInput): Promise<SentMessage> { return this.#operation('sendPrivateMessage', { userId, message }); }

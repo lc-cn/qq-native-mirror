@@ -1,0 +1,91 @@
+{
+  "runId": "38014518589",
+  "sourceCommit": "7f2406223f977deebe5872b6a71455105573f69e",
+  "attempt": 1,
+  "officialConclusion": "success",
+  "officialArtifactId": 11656890115,
+  "zipDeclaredBytes": 388162246,
+  "actualRangeBytes": 571463,
+  "selectedSmallMemberCount": 11,
+  "main": {
+    "bytes": 481711,
+    "sha256": "3af8ca595933444edec3b896ab19744c70961e860238f56d824274b52140783f"
+  },
+  "actualCompiledFilesMatched": 92,
+  "committedFrozenSourceFilesMatched": 46,
+  "sixConsumerReceipts": [
+    {
+      "platform": "linux",
+      "arch": "x64",
+      "node": "v24.20.0",
+      "exports": 98,
+      "prepared": true,
+      "closed": true,
+      "loginAttempted": false,
+      "accountUsed": false,
+      "receiptSha256": "c1759b083225d92f149e18ea8e040e1d4da52679176a00e38ab771fb4bbecf3b"
+    },
+    {
+      "platform": "linux",
+      "arch": "arm64",
+      "node": "v24.20.0",
+      "exports": 98,
+      "prepared": true,
+      "closed": true,
+      "loginAttempted": false,
+      "accountUsed": false,
+      "receiptSha256": "2710151c7f50ad1e81163e0909fe84b5f469ef11994868b5eb48ac4fdb6c438c"
+    },
+    {
+      "platform": "darwin",
+      "arch": "x64",
+      "node": "v24.20.0",
+      "exports": 104,
+      "prepared": true,
+      "closed": true,
+      "loginAttempted": false,
+      "accountUsed": false,
+      "receiptSha256": "f63496407660e2ea3497046ef1ec23c907662cc3aa9de46a8ed25b788e8b4cfb"
+    },
+    {
+      "platform": "darwin",
+      "arch": "arm64",
+      "node": "v24.20.0",
+      "exports": 104,
+      "prepared": true,
+      "closed": true,
+      "loginAttempted": false,
+      "accountUsed": false,
+      "receiptSha256": "6c3114cc8827670892d63dce1b6d04da4702a2faf95938bbde7ea38a5ae4d4ed"
+    },
+    {
+      "platform": "win32",
+      "arch": "x64",
+      "node": "v24.20.0",
+      "exports": 98,
+      "prepared": true,
+      "closed": true,
+      "loginAttempted": false,
+      "accountUsed": false,
+      "receiptSha256": "519aea612213de9bdaeaa2a0117797cd86ab60919a2f5b7da62b6f00844eea35"
+    },
+    {
+      "platform": "win32",
+      "arch": "arm64",
+      "node": "v24.20.0",
+      "exports": 98,
+      "prepared": true,
+      "closed": true,
+      "loginAttempted": false,
+      "accountUsed": false,
+      "receiptSha256": "a2230884b667d353d9a0ab5ba7c3fe1495059179fbfb2b96b1809abe661f1cdc"
+    }
+  ],
+  "fullZipDigestVerified": false,
+  "sixAuxiliaryActualBytesVerified": false,
+  "fullSevenPackageGateExecuted": false,
+  "remoteMaterialsArchivesDownloaded": false,
+  "accountUsed": false,
+  "npmPublished": false,
+  "scope": "CI consumers prepared/closed and source-bound main bytes; not account business acceptance or six auxiliary byte reread"
+}

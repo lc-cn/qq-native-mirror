@@ -1,12 +1,12 @@
 # Friends, categories and groups
 
-These are working-source additions for the next candidate, not published `0.0.1` features. Six-platform CI run `38014518589` targets revision `7f24062` (categories/remarks/detail event); the subsequent group detail query and system-message event additions need their own CI evidence. Controlled service/worker and installed-package checks are separate from real account acceptance.
+These are working-source additions for the next candidate, not published `0.0.1` features. Six-platform CI run `38014518589` succeeded for revision `7f24062` (categories/remarks/detail event); subsequent group detail, membership/admin/mute events and mute-list additions need independent CI evidence. The [7f CI audit](evidence/contacts-groups-ci-38014518589.json) independently matched the actual main package's 92 compiled files to 46 committed source files and six platform prepare/close receipts, using 571463 bytes of bounded official ranges. It did not re-read six large auxiliary packages or verify the complete ZIP digest. Controlled service/worker and installed-package checks are separate from real account acceptance.
 
 | Area | Available methods/events | Remaining work |
 | --- | --- | --- |
 | Friends | Lists/profiles, remarks/deletion, request listing/handling, `request.friend`, `friend-list-updated` | Sending applications; independent added/deleted/profile/remark notices |
 | Friend categories | `listFriendCategories`; categorized `friend-list-updated` metadata | Create/delete/rename/reorder categories and move friends; parameters and completion responses need verification |
-| Group queries | Lists/members/`getGroupInfo`, `group-list-updated`, `group-members-updated`, `group-info-updated`, `group-membership` | Mute-list queries; complete join/admin/mute notifications and real membership-event acceptance |
+| Group queries | Lists/members/`getGroupInfo`/`listGroupMutedMembers`, `group-list-updated`, `group-members-updated`, `group-info-updated`, `group-membership`, `group-admin`, `group-mute` | Complete join classification and real event/query acceptance |
 | Group actions | Name/remark, all/member mute, member card/admin/kick, leave, notices and requests | Create/search/join/invite, member titles, essence messages and group files |
 
 ## Categorized friends
@@ -73,3 +73,26 @@ Operator UID is emitted only from a valid nested protobuf operator field. Ambigu
 Source hookup and wire schema: [registered system callback](https://github.com/NapNeko/NapCatQQ/blob/26d7533e0f5800fdff865ab2f2ad7692917e1076/packages/napcat-onebot/index.ts#L288), [schema](https://github.com/NapNeko/NapCatQQ/blob/26d7533e0f5800fdff865ab2f2ad7692917e1076/packages/napcat-core/packet/transformer/proto/message/message.ts#L59), [classification](https://github.com/NapNeko/NapCatQQ/blob/26d7533e0f5800fdff865ab2f2ad7692917e1076/packages/napcat-onebot/api/msg.ts#L1437).
 
 These later additions passed 628 regressions and an installed compiled-consumer check including actual child-worker routing with a replacement kernel. Wire packets and services were controlled fixtures; no new native account operation or live event delivery was verified. See [group query and system-event local evidence](evidence/group-query-system-events-local.json).
+
+## Administrators and mute events
+
+```ts
+client.on('group-admin', event => {
+  // {groupId,memberUid,enabled}; native UID, no fabricated operator.
+});
+client.on('group-mute', event => {
+  // {groupId,scope:'member'|'all',durationSeconds:string,enabled,
+  //  operatorUid,memberUid?:string}; duration '0' lifts mute.
+});
+const members = await client.listGroupMutedMembers('123456');
+```
+
+Administrator sys-message type 44 must contain exactly one enable/disable branch with a valid subject UID. Optional boolean fields are validated but do not override the explicit branch. Mute events use the real Msg receive callback's first group gray-tip element: `chatType=2`, `msgType=5`, gray-tip subtype 4, group-element type 8. The source explicitly defines duration in seconds; its canonical integer string is preserved without conversion through a floating-point number. Empty member UID means all-member mute. No lookup, refresh or inferred timestamp is added.
+
+The normal message path only enables mute parsing for known mute candidates. Candidate batches are validated before any mute event is emitted; malformed or sparse batches produce a bounded diagnostic. Mute duplicates use native message ID plus event fields, so identical operations with different message IDs remain distinct. Sys-message and mute dedup channels are distinct and share the existing bounded cache. Closing prevents further events. Both events are included in normalized/all CLI watch.
+
+`listGroupMutedMembers` requires both native `result:0` and a matching `onShutUpMemberListChanged(groupId,members)` callback. Same-group reads coalesce into independent arrays/DTOs; timeout, close or explicit rejection remains an error, never an empty success. Failed per-group channels are quarantined because callbacks have no request nonce, and unsolicited same-group snapshots may satisfy reads. DTO fields are `{uid,userId,nickname,card,role,shutUpTime}`; all five declared native roles are preserved. `shutUpTime` is an opaque native number: its unit and expiry meaning are not established by this contract, so it is not renamed or calculated as remaining seconds. CLI: `group-muted --config ./qq.json --group-id 123456`.
+
+Primary sources: [administrator schema](https://github.com/NapNeko/NapCatQQ/blob/26d7533e0f5800fdff865ab2f2ad7692917e1076/packages/napcat-core/packet/transformer/proto/message/groupAdmin.ts), [gray-tip ban path](https://github.com/NapNeko/NapCatQQ/blob/26d7533e0f5800fdff865ab2f2ad7692917e1076/packages/napcat-onebot/api/group.ts#L39), [seconds field](https://github.com/NapNeko/NapCatQQ/blob/26d7533e0f5800fdff865ab2f2ad7692917e1076/packages/napcat-core/types/msg.ts#L469), [native list DTO](https://github.com/NapNeko/NapCatQQ/blob/26d7533e0f5800fdff865ab2f2ad7692917e1076/packages/napcat-core/types/notify.ts#L50), [list callback pairing](https://github.com/NapNeko/NapCatQQ/blob/26d7533e0f5800fdff865ab2f2ad7692917e1076/packages/napcat-core/apis/group.ts#L108).
+
+[Local evidence](evidence/group-admin-mute-local.json): 641 regressions passed, installed consumer and actual child-worker routes verified with a replacement kernel; 181 regular package files and all 96 compiled files matched before the later docs/evidence append. These are controlled-service/wire checks, with no real account operation or live delivery claim.

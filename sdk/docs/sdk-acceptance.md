@@ -770,3 +770,8 @@ Working source now adds `listFriendCategories`, `setGroupRemark` and `group-info
 ## Group detail reads and membership system events
 
 The subsequent working source adds `getGroupInfo` and `group-membership`; 628 full regressions passed, plus installed compiled-consumer/actual worker routing with a replacement kernel. The 410619-byte package (SHA256 `982156fd261b5c49ae91468613938ee65a2c14bb89d4c4fb1153dd829b4d4503`) matched 178 installed regular files and all 94 compiled files, before the later public evidence/docs append. See [contract and limits](contacts-groups.md) and [local receipt](evidence/group-query-system-events-local.json). No native account operation, live system-message delivery, npm publication or fresh six-platform CI is claimed by these checks.
+
+
+## Administrator/mute events and mute-list reads
+
+Working-source `group-admin`, `group-mute`, and `listGroupMutedMembers` passed 641 full regressions and installed compiled-consumer/actual worker routing with a replacement kernel. Candidate TGZ SHA256 `f72d28e71d85d5379d078cc6e57367d1a9c9a726076d3f1025f34996978b6e13` (415278 bytes) matched 181 installed regular files and 96 compiled files before later docs/evidence were appended. The initial two diagnostic regressions and controlled-listener fixture timeout were fixed and retained as evidence. See [contracts](contacts-groups.md) and [local receipt](evidence/group-admin-mute-local.json). No live account operation, incoming event observation, npm publication or new six-platform CI is claimed.

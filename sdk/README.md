@@ -257,3 +257,6 @@ Working source now adds `listFriendCategories()`, `setGroupRemark(groupId, remar
 
 
 Working-source group additions include `getGroupInfo(groupId)` and `group-membership` with finite known classification, raw unknown codes and optional native UIDs. CLI adds `group-info`; normalized/all watch includes membership events. See [friends and groups coverage](docs/contacts-groups.md) for source-backed contracts, 628 local regressions and the installed-consumer evidence limits. These additions are not published `0.0.1` features.
+
+
+Working source also exposes `group-admin` and `group-mute` events plus `listGroupMutedMembers(groupId)`/CLI `group-muted`. These use explicit native branches and gray-tip enums, retain seconds as strings and preserve the mute list's opaque native time. The [coverage and evidence](docs/contacts-groups.md) distinguish 641 local regressions/installed-consumer checks from live account delivery.

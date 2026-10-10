@@ -47,7 +47,7 @@ function watchEventMode(mode: unknown): 'message' | 'all' | 'normalized' {
 /** Attach business deliveries before login; return exact listener cleanup. */
 export function observeWatchEvents(client: QQClient, mode: unknown = undefined, write: (line: string) => void = console.log): () => void {
   const selected = watchEventMode(mode);
-  const events = selected === 'message' ? ['message'] as const : ['message', selected === 'normalized' ? 'message.recalled' : 'message-recalled', 'request.friend', 'request.group', 'friend-list-updated', 'group-list-updated', 'group-members-updated', 'group-info-updated', 'group-membership'] as const;
+  const events = selected === 'message' ? ['message'] as const : ['message', selected === 'normalized' ? 'message.recalled' : 'message-recalled', 'request.friend', 'request.group', 'friend-list-updated', 'group-list-updated', 'group-members-updated', 'group-info-updated', 'group-membership', 'group-admin', 'group-mute'] as const;
   const listeners = events.map(event => {
     const listener = (payload: unknown) => write(JSON.stringify(selected === 'message' ? payload : { event, payload }));
     client.on(event, listener);
@@ -88,6 +88,7 @@ const usage = `qq-native-client <command> [options]
   friend-remark --config FILE --target USER_ID --remark TEXT
   friend-delete --config FILE --target USER_ID [--block true|false] [--both true|false]
   group-name --config FILE --group-id ID --name TEXT
+  group-muted --config FILE --group-id ID
   group-info --config FILE --group-id ID
   group-remark --config FILE --group-id ID --remark TEXT
   group-mute --config FILE --group-id ID --enabled true|false
@@ -234,6 +235,7 @@ export async function prepareCommand(command: string, flags: Record<string, stri
     case 'recall': { const target = peer(flags); const messageId = numeric(flags, 'message-id'); return client => client.recallMessage(target, messageId); }
     case 'download': { const target = peer(flags); const messageId = numeric(flags, 'message-id'); const elementId = numeric(flags, 'element-id'); const destination = resolve(required(flags, 'destination')); return client => client.downloadAttachment(target, messageId, elementId, destination); }
     case 'friend-remark': { const target = numeric(flags, 'target'); const remark = required(flags, 'remark', true); return client => client.setFriendRemark(target, remark); }
+    case 'group-muted': { const groupId = numeric(flags, 'group-id'); return client => client.listGroupMutedMembers(groupId); }
     case 'group-info': { const groupId = numeric(flags, 'group-id'); return client => client.getGroupInfo(groupId); }
     case 'friend-categories': return client => client.listFriendCategories();
     case 'friend-delete': { const target = numeric(flags, 'target'); const options = { block: bool(flags, 'block', false), both: bool(flags, 'both', false) }; return client => client.deleteFriend(target, options); }
@@ -274,6 +276,7 @@ async function main() {
     'group-requests': ['config', 'uin', 'doubt', 'limit', 'before'], 'group-request': ['config', 'uin', 'group-id', 'sequence', 'type', 'accept', 'doubt', 'reason'],
     recall: ['config', 'uin', 'kind', 'target', 'message-id'], download: ['config', 'uin', 'kind', 'target', 'message-id', 'element-id', 'destination'],
     'friend-remark': ['config', 'uin', 'target', 'remark'], 'friend-delete': ['config', 'uin', 'target', 'block', 'both'],
+    'group-muted': ['config', 'uin', 'group-id'],
     'group-info': ['config', 'uin', 'group-id'],
     'group-name': ['config', 'uin', 'group-id', 'name'], 'group-remark': ['config', 'uin', 'group-id', 'remark'], 'group-mute': ['config', 'uin', 'group-id', 'enabled'],
     'member-mute': ['config', 'uin', 'group-id', 'user-id', 'seconds'], 'member-card': ['config', 'uin', 'group-id', 'user-id', 'card'],

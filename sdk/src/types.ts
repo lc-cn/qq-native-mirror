@@ -71,6 +71,8 @@ export interface ClientEvents {
   'group-members-updated': [GroupMemberUpdate];
   'group-info-updated': [GroupInfoUpdate];
   'group-membership': [GroupMembershipEvent];
+  'group-admin': [GroupAdminEvent];
+  'group-mute': [GroupMuteEvent];
   qrcode: [{ image: Buffer; url: string }];
   authenticated: [Account];
   login: [Account];
@@ -90,6 +92,8 @@ export type ClientState = 'idle' | 'connecting' | 'online' | 'disconnected' | 'c
 export interface Friend { userId: string; uid: string; nickname: string; remark: string }
 /** System-message metadata; unknown codes stay unknown and operator may be absent. */
 export interface GroupMembershipEvent { groupId: string; direction: 'increase' | 'decrease'; code: number; kind: 'invite' | 'leave' | 'kick' | 'kick-me' | 'disband' | 'unknown'; memberUid?: string; operatorUid?: string }
+export interface GroupAdminEvent { groupId: string; memberUid: string; enabled: boolean }
+export interface GroupMuteEvent { groupId: string; scope: 'member' | 'all'; durationSeconds: string; enabled: boolean; memberUid?: string; operatorUid: string }
 export interface FriendCategory { categoryId: number; sortId: number; name: string; memberCount: number; onlineCount: number; friends: Friend[] }
 /** Projected Buddy metadata; optional remarks remain absent when not supplied. */
 export interface FriendChange { userId: string; uid: string; nickname: string; remark?: string }
@@ -220,3 +224,6 @@ export interface OfflineInfo {
 export interface GroupNoticeOptions { imagePath?: string; pinned?: boolean; confirmRequired?: boolean }
 
 export type { WebGroupNotice as GroupNotice, WebGroupNoticeResult as GroupNoticePage } from './web-group-notices.ts';
+
+/** Native shutUpTime is preserved; its unit/expiry interpretation is not established. */
+export interface GroupMutedMember { uid:string; userId:string; nickname:string; card:string; role:'unspecified'|'stranger'|'member'|'admin'|'owner'; shutUpTime:number }

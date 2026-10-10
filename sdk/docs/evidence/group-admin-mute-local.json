@@ -1,0 +1,150 @@
+{
+  "checkedAt": "2026-10-10T02:15:11.448620+00:00",
+  "features": [
+    "group-admin",
+    "group-mute",
+    "listGroupMutedMembers"
+  ],
+  "regressions": {
+    "passed": 641,
+    "failed": 0,
+    "skipped": 0
+  },
+  "initialRegressionFailure": {
+    "count": 2,
+    "cause": "Normal malformed records entered mute parsing, producing redundant diagnostics",
+    "fixed": "Only known mute-candidate batches enter mute projection; whole batch retained for atomic validation"
+  },
+  "initialConsumerFailure": {
+    "cause": "Fixture retained last registered Group listener, dropping query callback",
+    "fixed": "Fixture delivers callback to all registered listeners"
+  },
+  "sourceCommit": "26d7533e0f5800fdff865ab2f2ad7692917e1076",
+  "primarySourceBlobs": [
+    {
+      "path": "packages/napcat-core/packet/transformer/proto/message/groupAdmin.ts",
+      "gitBlob": "96026deda3156aa060b093cf4bc67ff4e2ec9f04",
+      "sha256": "1b9518f470c30fbc4f4e861e0be0b13bdd2d6477f1869c790270b14514df378f"
+    },
+    {
+      "path": "packages/napcat-onebot/api/group.ts",
+      "gitBlob": "bc22494301be16724cb1e948c2095b1765655313",
+      "sha256": "3c2faa968a4eeb8ba292256122eb90e92f32716a61b458968f4e1aa01847a042"
+    },
+    {
+      "path": "packages/napcat-onebot/event/notice/OB11GroupBanEvent.ts",
+      "gitBlob": "87540f6b4e90e12b20e01ec144c5c84efd9fe0f4",
+      "sha256": "80962aa40aaa6425430da0808e24d2f3b40515f21066ea078664f44912bad172"
+    },
+    {
+      "path": "packages/napcat-core/types/msg.ts",
+      "gitBlob": "8b1278e679f520a5e8a9916adc9fb473dca70c7d",
+      "sha256": "92b05a40339733a22ca0662232041e4c2d0b323d88b47d11b466daf82a2ccf9c"
+    },
+    {
+      "local": "group-return-api-pinned.ts",
+      "gitBlob": "4949dabe83de37e42570d0c5e63036c0eb1e662a",
+      "sha256": "999ce32535ec94dd008562b93db95d07204d7fe858e9cf8d4413f6d76fe057bf"
+    },
+    {
+      "local": "friend-events-notify-pinned.ts",
+      "gitBlob": "d798af8c00051541b271099dc299ac67a69b4a01",
+      "sha256": "9e584203e817c2bbc26ca5b50a51070a74a387947f1ac9ee00c566d514a371f6"
+    },
+    {
+      "local": "group-events-listener-pinned.ts",
+      "gitBlob": "bbb0443ce5bb2cb0b1cb19f42fb9db804375c6e9",
+      "sha256": "cee7370172b3ccebeda8f9a9061d71fa035ee00e183c2d0891091a7c68eb3f02"
+    },
+    {
+      "local": "group-return-service-pinned.ts",
+      "gitBlob": "c7c65fd6ea5ff76836ef6d90b04b864a70087992",
+      "sha256": "dce848cf2a0c15c27442e3e2e7892df32b30feb98f663c26a7770b7012e3bf21"
+    },
+    {
+      "local": "group-mute-list-action-pinned.ts",
+      "gitBlob": "6ccea3b911dc1aa9b2f39261b3bc7356e227b1c8",
+      "sha256": "80b9293f666cf0b0c7facee10b8591ccec05170225e0e851d4185f623d70845c"
+    }
+  ],
+  "sourceFiles": [
+    {
+      "path": "src/group-system-events.ts",
+      "sha256": "f3ed1f364ef11e7990d6a4af1aabe6fd29da7419a27d03c71af46b492837f647"
+    },
+    {
+      "path": "src/group-mute-list.ts",
+      "sha256": "ba3e9f3302fa0b4ce840c7c691bb0bbccaaf022479611de7a63065adfde02115"
+    },
+    {
+      "path": "src/types.ts",
+      "sha256": "f7487bd8b450022834fff9721a6227d50c760690b3cfadbfbc851d9d6c0cb312"
+    },
+    {
+      "path": "src/native-services.ts",
+      "sha256": "af651c0af2b554e57b29d9ec06f2a49069a203ecfbe30f814a313e61b24a5859"
+    },
+    {
+      "path": "src/index.ts",
+      "sha256": "1bbaf87e1b1678e0c9c8b2a71c1627f748d3b0d997b50eddddbd553c54e3e6d5"
+    },
+    {
+      "path": "src/worker.ts",
+      "sha256": "e93b1bebf9c73a25253ebcbbd2d8799680c4b756a5380fc39eda8414e0ef0a09"
+    },
+    {
+      "path": "src/cli.ts",
+      "sha256": "f584a274c45021be903bf13faa28384732ca0f00d11702cb4012a01963bbe138"
+    },
+    {
+      "path": "scripts/contact-group-consumer-contract.mjs",
+      "sha256": "db77c79daff5254e9f99ae1f499189d7c5996a30d84fba6d52206a4927e8046c"
+    },
+    {
+      "path": "scripts/verify-package-consumer.mjs",
+      "sha256": "d80eee84e18c1e1025d0258197b61e2d6dd2ed409531625f36b8deb376d25e28"
+    },
+    {
+      "path": "test/group-system-events.test.ts",
+      "sha256": "bd51a119ddf48570806fc6a473cc70a587140140cddb2b26ade385d113ffdf1b"
+    },
+    {
+      "path": "test/group-mute-list.test.ts",
+      "sha256": "a1cd49a2cbcc9c809001c03cdd409967d4bdae877414ccee5460ac065694fbb2"
+    },
+    {
+      "path": "test/client.test.ts",
+      "sha256": "22d08c9e673d2035fce94ae5667c231d76bfea0c9d96d86064b41b4c212b1b48"
+    }
+  ],
+  "installedPackage": {
+    "packageSha256": "f72d28e71d85d5379d078cc6e57367d1a9c9a726076d3f1025f34996978b6e13",
+    "packageBytes": 415278,
+    "regularFiles": 181,
+    "compiledFiles": 96,
+    "allInstalledRegularFilesMatch": true,
+    "allCompiledMatch": true,
+    "createdBeforeUpdatedPublicDocs": true,
+    "nativeExecuted": false,
+    "accountUsed": false
+  },
+  "actualWorkerRoutes": [
+    "listFriendCategories",
+    "setGroupRemark",
+    "getGroupInfo",
+    "listGroupMutedMembers"
+  ],
+  "wireAndServiceFixtures": true,
+  "independentFocusedReviewPassed": 16,
+  "timeContract": {
+    "eventDuration": "Canonical seconds integer string from explicit native type",
+    "muteListShutUpTime": "Opaque native number; no unit/expiry derivation"
+  },
+  "scope": {
+    "nativeExecuted": false,
+    "accountUsed": false,
+    "liveEventDeliveryVerified": false,
+    "npmPublished": false,
+    "freshSixPlatformCiVerified": false
+  }
+}
