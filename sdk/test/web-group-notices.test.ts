@@ -1,6 +1,36 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { listWebGroupNotices } from '../src/features/groups/web-group-notices.ts';
+import { listWebGroupNotices as listWithContext } from '../src/features/groups/web-group-notices.ts';
+import { requestQunPage, type QunWebReadContext } from '../src/features/groups/qun-web-read.ts';
+function listWebGroupNotices(
+  session: Pick<QunWebReadContext, 'getTicketService'> &
+    Partial<Pick<QunWebReadContext, 'getTipOffService'>>,
+  accountId: string,
+  groupId: unknown,
+  fetchImpl: typeof fetch,
+  signal = new AbortController().signal,
+) {
+  return listWithContext(
+    {
+      accountId,
+      signal,
+      readPage: (parameters) =>
+        requestQunPage(
+          {
+            ...session,
+            getTipOffService: session.getTipOffService ?? (() => undefined),
+            accountId,
+            fetchImpl,
+            signal,
+            awaitAlive: async (value) => value,
+          },
+          'notices',
+          parameters,
+        ),
+    },
+    groupId,
+  );
+}
 function fixture(responses: Response[]) {
   const requests: { url: string; init: RequestInit }[] = [];
   const native: unknown[][] = [];
@@ -145,4 +175,41 @@ test('validation, redirects, response errors and fetch errors fail without crede
     }) as typeof fetch),
     (error: Error) => error.message === 'Group notice HTTP request failed',
   );
+});
+
+test('notice projection getter cancellation cannot publish a successful DTO', async () => {
+  for (const stage of ['status', 'feed', 'picture']) {
+    const controller = new AbortController();
+    const pic = { id: 'id', w: '1', h: '2' };
+    const feed = { fid: 'id', u: 123, pubt: 1, msg: { text: 'fake', pics: [pic] } };
+    const raw = { ec: 0, feeds: [feed] };
+    if (stage === 'status')
+      Object.defineProperty(raw, 'ec', {
+        get() {
+          controller.abort();
+          return 0;
+        },
+      });
+    if (stage === 'feed')
+      Object.defineProperty(feed, 'fid', {
+        get() {
+          controller.abort();
+          return 'id';
+        },
+      });
+    if (stage === 'picture')
+      Object.defineProperty(pic, 'id', {
+        get() {
+          controller.abort();
+          return 'id';
+        },
+      });
+    await assert.rejects(
+      listWithContext(
+        { accountId: '123', signal: controller.signal, readPage: async () => raw },
+        '456',
+      ),
+      /cancelled/,
+    );
+  }
 });

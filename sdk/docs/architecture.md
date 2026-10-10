@@ -345,6 +345,22 @@ notice ID or recipient receipt; void deletion confirms dispatch only. The shared
 installed-package contract exercises these rules with controlled services and
 does not request real tickets or modify group announcements.
 
+`requestQunPage` owns the shared group HTTP read transport: client/domain ticket
+acquisition, cookie exchange, redirect policy, BKN hashing and request cancellation.
+Its two narrow ticket ports expose no account or message operations. Native service
+and method acquisition is lazy, captured once and checked for cancellation before
+dispatch. Acquisition and credential projection share a fixed-error boundary;
+proprietary exceptions and sensitive URLs do not become caller diagnostics.
+Query parameters are captured before acquiring a ticket, preserving duplicate
+parameter order. The request lifetime covers HTTP completion, response cleanup and
+JSON parsing, observes late failures and releases late responses after cancellation.
+The fixed HTTPS QQ redirect policy and timeout remain with this transport. It does
+not cache tickets or retry a read. `listWebGroupNotices` owns only the fixed notice
+query and result projection through its injected page reader; it cannot request
+native tickets or choose another endpoint. Its fixed query does not establish
+complete pagination. Essence reads reuse the transport while retaining their
+separate numbered-page, explicit-end-marker and overlap rules.
+
 The CLI entry retains help, configuration, explicit login selection and entry-URL
 handling. `command-plan` validates command flags and captures file-backed message
 inputs before the client is created; its prepared actions never initiate login.

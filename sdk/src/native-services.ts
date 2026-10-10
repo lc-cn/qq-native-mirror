@@ -28,6 +28,7 @@ import {
 import { queryNativeMessage } from './features/messages/message-query.ts';
 import { createSelfProfile } from './features/contacts/self-profile.ts';
 import { listWebGroupNotices } from './features/groups/web-group-notices.ts';
+import { requestQunPage, type QunWebReadContext } from './features/groups/qun-web-read.ts';
 import { createGroupNotices } from './features/groups/group-notices.ts';
 import { createForwardMessages } from './features/forward/forward-messages.ts';
 import { createGroupRequests } from './features/groups/group-requests.ts';
@@ -102,6 +103,13 @@ export function createNativeServices(context: NativeServiceContext) {
     };
     const service = (name: string): Native => call(guardedSession, `get${name}Service`);
     const { awaitAlive } = lifetime;
+    const qunReadContext = (accountId: string, signal: AbortSignal): QunWebReadContext => ({
+      accountId,
+      signal,
+      getTicketService: () => service('Ticket'),
+      getTipOffService: () => service('TipOff'),
+      awaitAlive: (value) => awaitAlive(value, signal),
+    });
     const directory = own(
       createContactDirectory({
         signal: lifetime.signal,
@@ -445,7 +453,15 @@ export function createNativeServices(context: NativeServiceContext) {
               : lifetime.signal;
             signal.throwIfAborted();
             return awaitAlive(
-              listWebGroupNotices(guardedSession, accountId, payload.groupId, undefined, signal),
+              listWebGroupNotices(
+                {
+                  accountId,
+                  signal,
+                  readPage: (parameters) =>
+                    requestQunPage(qunReadContext(accountId, signal), 'notices', parameters),
+                },
+                payload.groupId,
+              ),
               signal,
             );
           }
@@ -502,7 +518,7 @@ export function createNativeServices(context: NativeServiceContext) {
             signal.throwIfAborted();
             return awaitAlive<unknown>(
               (method === 'getGroupEssencePage' ? getGroupEssencePage : listGroupEssenceMessages)(
-                { session: guardedSession, accountId, signal },
+                qunReadContext(accountId, signal),
                 payload.groupId,
                 payload.options,
               ),

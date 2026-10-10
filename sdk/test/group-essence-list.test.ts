@@ -53,7 +53,15 @@ function fixture(raw: unknown = reply()) {
     assert.equal(requests.length, 2, 'no retry or speculative native fallback');
     return { ok: true, json: async () => raw } as Response;
   }) as typeof fetch;
-  return { context: { session, accountId: '789', fetchImpl }, native, requests };
+  const context = {
+    getTicketService: () => session.getTicketService(),
+    getTipOffService: () => session.getTipOffService(),
+    accountId: '789',
+    fetchImpl,
+    signal: new AbortController().signal,
+    awaitAlive: async <T>(value: T | PromiseLike<T>) => value,
+  };
+  return { context, session, native, requests };
 }
 
 test('one HTTP page preserves identifiers, content, flags and exact query while withholding credentials', async () => {
@@ -209,7 +217,7 @@ test('close during native ticket wait prevents HTTP and suppresses a late result
     release = resolve;
   });
   const f = fixture();
-  f.context.session.getTicketService = () => ({ forceFetchClientKey: () => ticket as any });
+  f.context.getTicketService = () => ({ forceFetchClientKey: () => ticket as any });
   const operation = getGroupEssencePage({ ...f.context, signal: controller.signal }, '123');
   const rejected = assert.rejects(operation, /cancelled/);
   controller.abort();
@@ -224,7 +232,7 @@ test('actual service dispatch chooses HTTP/ticket path and never calls the nativ
   globalThis.fetch = f.context.fetchImpl;
   const services = createNativeServices({
     session: {
-      ...f.context.session,
+      ...f.session,
       getBuddyService: () => ({ addKernelBuddyListener() {} }),
       getMsgService: () => ({ addKernelMsgListener() {} }),
       getGroupService: () => ({

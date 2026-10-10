@@ -6,6 +6,8 @@ import type { GroupOperationsContext } from '../../src/features/groups/group-ope
 import type { SelfProfileContext } from '../../src/features/contacts/self-profile.ts';
 import type { GroupNoticesContext } from '../../src/features/groups/group-notices.ts';
 import type { ForwardMessagesContext } from '../../src/features/forward/forward-messages.ts';
+import type { QunWebReadContext } from '../../src/features/groups/qun-web-read.ts';
+import type { WebGroupNoticesContext } from '../../src/features/groups/web-group-notices.ts';
 import type {
   GroupRequestsContext,
   GroupRequestListener,
@@ -29,6 +31,8 @@ function verifyDomainPorts(
   groupRequests: GroupRequestsContext,
   notices: GroupNoticesContext,
   forward: ForwardMessagesContext,
+  webRead: QunWebReadContext,
+  noticeRead: WebGroupNoticesContext,
 ) {
   // @ts-expect-error A contact directory cannot acquire arbitrary native services.
   contacts.service('Group');
@@ -125,6 +129,19 @@ function verifyDomainPorts(
     );
   // @ts-expect-error Forward acknowledgements require result validation.
   void forwarded.result;
+  // @ts-expect-error HTTP group reads cannot acquire arbitrary account services.
+  webRead.getGroupService();
+  // @ts-expect-error Client tickets cannot turn into message submission.
+  webRead.getTicketService()?.sendMsg();
+  // @ts-expect-error Domain-key acquisition keeps an explicit native boolean.
+  webRead.getTipOffService()?.getPskey?.(['qun.qq.com'], 'true');
+  const webTicket = webRead.getTicketService()?.forceFetchClientKey?.('');
+  // @ts-expect-error Client ticket responses remain unknown until sanitized validation.
+  void webTicket.clientKey;
+  // @ts-expect-error Notice projection cannot acquire native tickets.
+  noticeRead.getTicketService();
+  // @ts-expect-error A fixed notice reader cannot select an unrelated endpoint.
+  noticeRead.readPage('essence', new URLSearchParams());
   // @ts-expect-error Native reads require an exact conversation descriptor.
   forward.getMessageService()?.getMultiMsg?.({ type: 'group', groupId: '123' }, '1', '1');
   // @ts-expect-error Query doubt must retain its native boolean type.

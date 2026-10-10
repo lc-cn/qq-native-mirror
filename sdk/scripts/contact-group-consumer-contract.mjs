@@ -402,11 +402,12 @@ export async function verifyContactGroupConsumer(packageRoot) {
   const pageRequests = [];
   const page = await getGroupEssencePage(
     {
-      session: {
-        getTicketService: () => ({
-          forceFetchClientKey: async () => ({ result: 0, clientKey: 'synthetic-installed-ticket' }),
-        }),
-      },
+      getTicketService: () => ({
+        forceFetchClientKey: async () => ({ result: 0, clientKey: 'synthetic-installed-ticket' }),
+      }),
+      getTipOffService: () => undefined,
+      signal: new AbortController().signal,
+      awaitAlive: async (value) => value,
       accountId: '123',
       fetchImpl: async (url) => {
         pageRequests.push(new URL(url));

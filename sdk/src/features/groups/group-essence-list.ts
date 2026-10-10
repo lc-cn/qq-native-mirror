@@ -67,7 +67,7 @@ export async function getGroupEssencePage(
   options: unknown = undefined,
 ): Promise<GroupEssencePage> {
   const query = captureGroupEssencePage(groupId, options);
-  context.signal?.throwIfAborted();
+  context.signal.throwIfAborted();
   const raw = await requestQunPage(
     context,
     'essence',
@@ -77,7 +77,7 @@ export async function getGroupEssencePage(
       group_code: query.groupId,
     }),
   );
-  context.signal?.throwIfAborted();
+  context.signal.throwIfAborted();
   const code = field(raw, 'retcode');
   if (typeof code !== 'number' || !Number.isSafeInteger(code)) throw invalid();
   if (code !== 0) throw nativeResultError('Group essence page returned failure', { result: code });
@@ -114,7 +114,7 @@ export async function getGroupEssencePage(
     groupRole: uint32(field(data, 'group_role')),
   };
   string(field(data, 'config_page_url')); // Credential-bearing URLs stay in the worker.
-  context.signal?.throwIfAborted();
+  context.signal.throwIfAborted();
   return page;
 }
 
@@ -132,9 +132,9 @@ export async function listGroupEssenceMessages(
   const messages: GroupEssenceMessage[] = [];
   const seen = new Set<string>();
   for (let pageStart = 0; pageStart < query.maxPages; pageStart++) {
-    context.signal?.throwIfAborted();
+    context.signal.throwIfAborted();
     const page = await getGroupEssencePage(context, query.groupId, { pageStart, pageLimit: 50 });
-    context.signal?.throwIfAborted();
+    context.signal.throwIfAborted();
     for (const message of page.messages) {
       const key = `${message.sequence}:${message.random}`;
       if (seen.has(key))

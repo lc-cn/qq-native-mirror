@@ -56,7 +56,19 @@ function fixture(pages: unknown[]) {
     assert.ok(requested.length <= pages.length, 'no extra page after failure or termination');
     return { ok: true, json: async () => pages[requested.length - 1] } as Response;
   }) as typeof fetch;
-  return { context: { session, accountId: '789', fetchImpl }, requested, tickets: () => tickets };
+  return {
+    context: {
+      getTicketService: () => session.getTicketService(),
+      getTipOffService: () => undefined,
+      accountId: '789',
+      fetchImpl,
+      signal: new AbortController().signal,
+      awaitAlive: async <T>(value: T | PromiseLike<T>) => value,
+    },
+    requested,
+    session,
+    tickets: () => tickets,
+  };
 }
 
 test('complete read uses numbered 50-row pages and stops on the explicit end marker', async () => {
@@ -164,8 +176,8 @@ test('full read budget is captured before awaiting the first ticket and accessor
     resume = resolve;
   });
   const f = fixture([page([9], false)]);
-  const original = f.context.session.getTicketService;
-  f.context.session.getTicketService = () => ({
+  const original = f.context.getTicketService;
+  f.context.getTicketService = () => ({
     forceFetchClientKey: async () => {
       await wait;
       return original().forceFetchClientKey();
@@ -218,7 +230,7 @@ test('native dispatch uses the full HTTP reader and guarded account lifetime, ne
   globalThis.fetch = f.context.fetchImpl;
   const services = createNativeServices({
     session: {
-      ...f.context.session,
+      ...f.session,
       getBuddyService: () => ({ addKernelBuddyListener() {} }),
       getMsgService: () => ({ addKernelMsgListener() {} }),
       getGroupService: () => ({

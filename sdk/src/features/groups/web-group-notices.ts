@@ -5,15 +5,23 @@
  */
 import type { WebGroupNoticeResult } from '../../contracts/groups.ts';
 export type { WebGroupNotice, WebGroupNoticeResult } from '../../contracts/groups.ts';
-import type { NativeObject as Native } from '../../native/native-object.ts';
-import { requestQunPage } from './qun-web-read.ts';
+export interface WebGroupNoticesContext {
+  accountId: string;
+  signal: AbortSignal;
+  readPage(parameters: URLSearchParams): Promise<unknown>;
+}
+function record(value: unknown): Record<string, unknown> | undefined {
+  return value && typeof value === 'object' ? (value as Record<string, unknown>) : undefined;
+}
 export async function listWebGroupNotices(
-  session: Native,
-  accountId: string,
+  context: WebGroupNoticesContext,
   groupId: unknown,
-  fetchImpl: typeof fetch = fetch,
-  signal?: AbortSignal,
 ): Promise<WebGroupNoticeResult> {
+  const { accountId, signal, readPage } = context;
+  const alive = () => {
+    if (signal.aborted) throw new Error('Group notice listing cancelled');
+  };
+  alive();
   if (typeof groupId !== 'string' || !/^\d+$/.test(accountId) || !/^\d+$/.test(groupId))
     throw new Error('accountId and groupId must be numeric strings');
   const query = new URLSearchParams({
@@ -27,45 +35,60 @@ export async function listWebGroupNotices(
     s: '-1',
   });
   query.append('n', '20');
-  const raw = (await requestQunPage(
-    { session, accountId, fetchImpl, signal },
-    'notices',
-    query,
-  )) as Native;
-  if (!raw || raw.ec !== 0 || !Array.isArray(raw.feeds))
+  const raw = await readPage(query);
+  alive();
+  const result = record(raw);
+  const status = result?.ec,
+    feeds = result?.feeds;
+  alive();
+  if (status !== 0 || !Array.isArray(feeds))
     throw new Error('Group notice list returned failure or invalid feeds');
-  const notices = raw.feeds
-    .filter((feed: unknown) => feed !== null && feed !== undefined)
-    .map((feed: Native) => {
+  const notices = feeds
+    .filter((feed) => feed !== null && feed !== undefined)
+    .map((value) => {
+      alive();
+      const feed = record(value),
+        msg = record(feed?.msg);
+      const fid = feed?.fid,
+        sender = feed?.u,
+        time = feed?.pubt,
+        text = msg?.text;
       if (
-        typeof feed.fid !== 'string' ||
-        !Number.isSafeInteger(feed.u) ||
-        !Number.isFinite(feed.pubt) ||
-        typeof feed.msg?.text !== 'string'
+        typeof fid !== 'string' ||
+        typeof sender !== 'number' ||
+        !Number.isSafeInteger(sender) ||
+        typeof time !== 'number' ||
+        !Number.isFinite(time) ||
+        typeof text !== 'string'
       )
         throw new Error('Group notice list returned an invalid notice');
-      const pics = feed.msg.pics ?? [];
-      if (
-        !Array.isArray(pics) ||
-        pics.some(
-          (pic: Native) =>
-            !pic ||
-            typeof pic.id !== 'string' ||
-            typeof pic.w !== 'string' ||
-            typeof pic.h !== 'string',
-        )
-      )
-        throw new Error('Group notice list returned invalid pictures');
+      const pics = msg?.pics ?? [];
+      if (!Array.isArray(pics)) throw new Error('Group notice list returned invalid pictures');
+      const images = pics.map((value) => {
+        const pic = record(value),
+          id = pic?.id,
+          width = pic?.w,
+          height = pic?.h;
+        if (typeof id !== 'string' || typeof width !== 'string' || typeof height !== 'string')
+          throw new Error('Group notice list returned invalid pictures');
+        alive();
+        return { id, width, height };
+      });
+      const settings = feed?.settings,
+        readCount = feed?.read_num;
+      alive();
       return {
-        noticeId: feed.fid,
-        senderId: String(feed.u),
-        publishTime: feed.pubt,
-        text: feed.msg.text,
-        images: pics.map((pic: Native) => ({ id: pic.id, width: pic.w, height: pic.h })),
-        settings: feed.settings,
-        readCount: feed.read_num,
-        raw: feed,
+        noticeId: fid,
+        senderId: String(sender),
+        publishTime: time,
+        text,
+        images,
+        settings,
+        // Preserve the existing optional passthrough, without adding a validation claim.
+        readCount: readCount as number | undefined,
+        raw: value,
       };
     });
-  return { notices, raw };
+  alive();
+  return { notices, raw: result! };
 }

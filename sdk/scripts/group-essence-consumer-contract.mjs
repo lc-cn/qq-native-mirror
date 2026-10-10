@@ -35,20 +35,20 @@ export async function verifyGroupEssenceConsumer(packageRoot) {
     let ticketCalls = 0;
     const context = {
       accountId: '789',
-      session: {
-        getTicketService: () => ({
-          forceFetchClientKey: async () => {
-            ticketCalls++;
-            return { result: 0, clientKey: 'private-fixture-ticket' };
-          },
+      signal: new AbortController().signal,
+      awaitAlive: async (value) => value,
+      getTicketService: () => ({
+        forceFetchClientKey: async () => {
+          ticketCalls++;
+          return { result: 0, clientKey: 'private-fixture-ticket' };
+        },
+      }),
+      getTipOffService: () => ({
+        getPskey: async () => ({
+          result: 0,
+          domainPskeyMap: new Map([['qun.qq.com', 'private-fixture-domain']]),
         }),
-        getTipOffService: () => ({
-          getPskey: async () => ({
-            result: 0,
-            domainPskeyMap: new Map([['qun.qq.com', 'private-fixture-domain']]),
-          }),
-        }),
-      },
+      }),
       fetchImpl: async (url, init) => {
         assert.equal(init.redirect, 'manual');
         const parsed = new URL(url);
