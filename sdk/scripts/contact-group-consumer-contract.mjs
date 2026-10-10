@@ -20,6 +20,7 @@ registerHooks({load(url,context,next){
  return {format:'module',shortCircuit:true,source:\`export function createKernel(_native,_options,emit){if(_options.nativeContracts!==undefined)throw Error('Caller-provided native contract reached kernel');return {
   async prepare(){},async close(){},async login(){const account={uin:'123',uid:'u_fixture'};emit('ready',account);emit('friend-added',{uid:'u_fixture_friend',messageId:'9'});return account;},
   async invokeOperation(method,payload){if(method==='addFriendCategory')return {categoryId:8,name:payload.name};if(method==='listGroupMutedMembers')return [];if(method==='getGroupInfo')return {groupId:payload.groupId,name:'fixture',memberCount:0,maxMemberCount:200,ownerUid:'u_fixture',ownerUserId:'123',description:''};if(method==='listFriendCategories')return [{categoryId:1,sortId:0,name:'fixture',memberCount:0,onlineCount:0,friends:[]}];
+   if(method==='setGroupEssenceMessage'){if(payload.groupId!=='123'||payload.messageId!=='9876543210123456789'||typeof payload.enabled!=='boolean')throw Error('Invalid essence IPC intent');return;}
    if(method==='setGroupRemark')return {method,groupId:payload.groupId,remark:payload.remark};throw Error('Unexpected fixture operation');}
  };}\`};
 }});
@@ -69,6 +70,15 @@ registerHooks({load(url,context,next){
       groupId: '000123',
       remark: '',
     });
+    for (const enabled of [true, false])
+      assert.equal(
+        await client.setGroupEssenceMessage('123', '9876543210123456789', enabled),
+        undefined,
+      );
+    await assert.rejects(
+      client.setGroupEssenceMessage('0', '9876543210123456789', true),
+      /group identifier/,
+    );
   } finally {
     try {
       await client.close();
@@ -127,12 +137,20 @@ export async function verifyContactGroupConsumer(packageRoot) {
   await (
     await prepareCommand('group-remark', { 'group-id': '123', remark: '' })
   )({ setGroupRemark: async (...args) => calls.push(args) });
+  await (
+    await prepareCommand('group-essence', {
+      'group-id': '123',
+      'message-id': '9876543210123456789',
+      enabled: 'false',
+    })
+  )({ setGroupEssenceMessage: async (...args) => calls.push(args) });
   assert.deepEqual(calls, [
     ['muted', '123'],
     ['info', '123'],
     ['add-category', ' 新分组 '],
     'categories',
     ['123', ''],
+    ['123', '9876543210123456789', false],
   ]);
   const events = new EventEmitter(),
     lines = [];
@@ -182,11 +200,29 @@ export async function verifyContactGroupConsumer(packageRoot) {
   const { createNativeServices } = await load('native-services.js');
   let compiledMsg;
   const groupListeners = [];
+  const essenceCalls = [];
   const compiledServices = createNativeServices({
     session: {
       getMsgService: () => ({
         addKernelMsgListener(value) {
           compiledMsg = value;
+        },
+        getMsgsByMsgId(peer, ids) {
+          assert.deepEqual(peer, { chatType: 2, peerUid: '123' });
+          assert.deepEqual(ids, ['9876543210123456789']);
+          return {
+            result: 0,
+            msgList: [
+              {
+                chatType: 2,
+                peerUid: '123',
+                msgId: ids[0],
+                msgSeq: '9',
+                msgRandom: '4294967295',
+                elements: [],
+              },
+            ],
+          };
         },
       }),
       getBuddyService: () => ({ addKernelBuddyListener() {} }),
@@ -197,6 +233,14 @@ export async function verifyContactGroupConsumer(packageRoot) {
         getGroupShutUpMemberList(id) {
           for (const listener of groupListeners) listener.onShutUpMemberListChanged(id, []);
           return { result: 0 };
+        },
+        addGroupEssence(request) {
+          essenceCalls.push(['add', request]);
+          return { errCode: 0, result: { errorCode: 0 } };
+        },
+        removeGroupEssence(request) {
+          essenceCalls.push(['remove', request]);
+          return { errCode: 0, result: { errorCode: 8, wording: 'must not be serialized' } };
         },
       }),
     },
@@ -224,6 +268,16 @@ export async function verifyContactGroupConsumer(packageRoot) {
       await compiledServices.invokeOperation('listGroupMutedMembers', { groupId: '123' }),
       [],
     );
+    const intent = { groupId: '123', messageId: '9876543210123456789' };
+    await compiledServices.invokeOperation('setGroupEssenceMessage', { ...intent, enabled: true });
+    await assert.rejects(
+      compiledServices.invokeOperation('setGroupEssenceMessage', { ...intent, enabled: false }),
+      (error) => error.code === 8 && !error.message.includes('must not'),
+    );
+    assert.deepEqual(essenceCalls, [
+      ['add', { groupCode: '123', msgSeq: 9, msgRandom: 4294967295 }],
+      ['remove', { groupCode: '123', msgSeq: 9, msgRandom: 4294967295 }],
+    ]);
   } finally {
     compiledServices.close();
   }
@@ -267,6 +321,8 @@ export async function verifyContactGroupConsumer(packageRoot) {
   assert.equal(events.listenerCount('group-mute'), 0);
   assert.equal(events.listenerCount('friend-added'), 0);
   return {
+    groupEssenceControlledContract: true,
+    nativeGroupEssenceMutationAttempted: false,
     friendAddedEventContract: true,
     nativeFriendAddedObserved: false,
     friendCategoryCreationContract: true,

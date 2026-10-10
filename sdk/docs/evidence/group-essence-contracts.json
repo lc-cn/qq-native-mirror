@@ -1,0 +1,71 @@
+{
+  "schemaVersion": 1,
+  "proofTier": "fixed primary source and byte-checked native static contracts; controlled SDK acknowledgement policy",
+  "sourceCommit": "26d7533e0f5800fdff865ab2f2ad7692917e1076",
+  "staticBinaries": [
+    {
+      "platform": "linux",
+      "arch": "arm64",
+      "clientVersion": "3.2.32-52194",
+      "wrapperSha256": "c302361f52494de257044e912e43ed244bb29ee59f59345d25a8959327828337",
+      "methods": [
+        "addGroupEssence",
+        "removeGroupEssence"
+      ]
+    },
+    {
+      "platform": "darwin",
+      "arch": "arm64",
+      "clientVersion": "7.0.2-53644",
+      "wrapperSha256": "fbc8ad9b328d05e16784d76b0181dda894c17001179dbf8c0d5dd00dc6271358",
+      "methods": [
+        "addGroupEssence",
+        "removeGroupEssence"
+      ]
+    }
+  ],
+  "argumentContract": {
+    "groupCode": "decimal string -> uint64",
+    "msgSeq": "uint32",
+    "msgRandom": "uint32"
+  },
+  "responseContract": {
+    "outerStatus": "errCode:int32",
+    "innerStatus": "result.errorCode:uint32",
+    "additionalNativeResponseFieldsExposed": false
+  },
+  "sdkPolicy": {
+    "requiresExactGroupMessage": true,
+    "nativeCallsPerMutation": 1,
+    "automaticRetry": false,
+    "acknowledgementRequiresBothNumericZero": true,
+    "nonzeroOrMalformedStatusRejects": true,
+    "remoteEffectClaimed": false
+  },
+  "linuxCoreFacts": {
+    "outerZeroOr2001002LocallyAdmitted": true,
+    "status2001002NormalizedToOuterZeroEmptyResponse": true,
+    "emptyResponseInnerDefaultZero": true,
+    "innerStatusesLocallyAdmitted": [
+      0,
+      11002,
+      11007
+    ],
+    "specialStatusBusinessMeaningsRecovered": false
+  },
+  "oneBotCaller": {
+    "checksEitherStatus": false,
+    "wrapsFulfilledPromiseAsOk": true
+  },
+  "privateByteReceiptSha256": {
+    "group-essence-linux-arm64-static/receipt.json": "fb5e2f4f7efeb172a0ca63c7a7323d8fdb16491c9218b31db8c97663b7bca8c2",
+    "group-essence-linux-arm64-static/core-status.json": "69280fb37388304a0e20011de2ec9ca195ce948768ad263a05f06e51ea2738b9",
+    "group-essence-darwin-arm64-static/receipt.json": "7fbaca3789d7789f7504b4e72ef2eeb7eb071781090d6c5eb3f58018e88b9da4",
+    "group-essence-darwin-arm64-static/remove-shared-completion-and-source-review.json": "1fab1bea7ee4e017742378c0349515bdc5c051a09ae7af908fe6af386d759712",
+    "group-essence-onebot-fixed/verified.json": "2622d12fccdb1ba81e2a47639032318b43f7e79007567d90ef17f51009886e2a"
+  },
+  "nativeExecuted": false,
+  "accountUsed": false,
+  "serverMutationAccepted": false,
+  "otherPlatformVersionsVerified": false
+}

@@ -453,6 +453,10 @@ function subscribe(client: QQClient) {
  const createdCategory: Promise<CreatedFriendCategory> = client.addFriendCategory('分组');
  const categories: Promise<FriendCategory[]> = client.listFriendCategories();
  const remark: Promise<void> = client.setGroupRemark('123','');
+ const essence: Promise<void> = client.setGroupEssenceMessage('123','9876543210123456789',true);
+ // @ts-expect-error Essence enablement is an explicit boolean.
+ client.setGroupEssenceMessage('123','9','true');
+ void essence;
  void categories; void remark;
  const page = client.listGroupRequests({doubt:false,limit:20});
  const publish: Promise<void> = client.publishGroupNotice('123','example',{pinned:true,confirmRequired:false});

@@ -2,12 +2,12 @@
 
 These are working-source additions for the next candidate, not published `0.0.1` features. Six-platform CI run `38014518589` succeeded for revision `7f24062` (categories/remarks/detail event); Revision `b0dee1c` group detail/membership additions also passed six-platform CI `38015512259`; its [bounded artifact audit](evidence/group-query-system-events-ci-38015512259.json) matched 94 compiled files to 47 source files and six native prepare/close receipts. Revision `9deaa56` administrator/mute events and mute-list additions passed CI `38016572108`; its [independent bounded artifact audit](evidence/group-admin-mute-ci-38016572108.json) matched 96 compiled files to 48 committed source files and six prepare/close receipts using 582496 bytes of actual ranges. Revision `8d2da41` category creation passed six-platform CI `38017928237`; its [independent bounded artifact audit](evidence/friend-category-create-ci-38017928237.json) matched 100 compiled files to 50 committed source files and seven manifest-bound receipts using 590577 bytes of actual ranges. The later friend-added source requires its own CI. The [7f CI audit](evidence/contacts-groups-ci-38014518589.json) independently matched the actual main package's 92 compiled files to 46 committed source files and six platform prepare/close receipts, using 571463 bytes of bounded official ranges. It did not re-read six large auxiliary packages or verify the complete ZIP digest. Controlled service/worker and installed-package checks are separate from real account acceptance.
 
-| Area              | Available methods/events                                                                                                                                                   | Remaining work                                                                                           |
-| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| Friends           | Lists/profiles, remarks/deletion, request listing/handling, `request.friend`, `friend-list-updated`, `friend-added`                                                        | Sending applications; independent deleted/profile/remark notices                                         |
-| Friend categories | `listFriendCategories`, `addFriendCategory`; categorized `friend-list-updated` metadata                                                                                    | Delete/rename/reorder categories and move friends; parameters and completion responses need verification |
-| Group queries     | Lists/members/`getGroupInfo`/`listGroupMutedMembers`, `group-list-updated`, `group-members-updated`, `group-info-updated`, `group-membership`, `group-admin`, `group-mute` | Complete join classification and real event/query acceptance                                             |
-| Group actions     | Name/remark, all/member mute, member card/admin/kick, leave, notices and requests                                                                                          | Create/search/join/invite, member titles, essence messages and group files                               |
+| Area              | Available methods/events                                                                                                                                                   | Remaining work                                                                                             |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| Friends           | Lists/profiles, remarks/deletion, request listing/handling, `request.friend`, `friend-list-updated`, `friend-added`                                                        | Sending applications; independent deleted/profile/remark notices                                           |
+| Friend categories | `listFriendCategories`, `addFriendCategory`; categorized `friend-list-updated` metadata                                                                                    | Delete/rename/reorder categories and move friends; parameters and completion responses need verification   |
+| Group queries     | Lists/members/`getGroupInfo`/`listGroupMutedMembers`, `group-list-updated`, `group-members-updated`, `group-info-updated`, `group-membership`, `group-admin`, `group-mute` | Complete join classification and real event/query acceptance                                               |
+| Group actions     | Name/remark, all/member mute, member card/admin/kick, leave, notices, requests and essence add/remove                                                                      | Create/search/join/invite, member titles, essence listing/events, group files and real mutation acceptance |
 
 ## Categorized friends
 
@@ -37,6 +37,46 @@ client.on('group-info-updated', (info) => {
 CLI: `qq-native-client group-remark --config ./qq.json --group-id 123456 --remark ''`. Both `watch --events all` and `normalized` include detail metadata; default watch remains message-only.
 
 ## Remaining contracts
+
+### Group essence messages
+
+```ts
+await client.setGroupEssenceMessage('123456', '9876543210123456789', true);
+await client.setGroupEssenceMessage('123456', '9876543210123456789', false);
+```
+
+The SDK captures group/message IDs and an explicit boolean before IPC. It queries
+the exact group message once, verifies the conversation and derives native
+`msgSeq`/`msgRandom` as uint32 values. The public message ID remains a string and
+is never substituted for either wire field. Group IDs must fit native uint64.
+An absent/mismatched message, malformed field or Session shutdown prevents dispatch.
+The native add/remove method is invoked once and is never automatically retried.
+
+Essence responses contain outer `errCode` and inner `result.errorCode`. Both must
+be explicit numeric zero for the SDK to acknowledge the native return; other
+numeric codes reject with their code and malformed statuses reject as
+`invalid-result`. Native response wording and message objects are not serialized.
+This is a conservative acknowledgement policy, not proof of a server state change.
+Fixed upstream OneBot callers treat any fulfilled Promise as success and do not
+validate these layers. Actual Linux ARM64 core inspection also shows a special
+status (`2001002`) normalized to a double-zero response; its business meaning is
+unverified. The SDK does not accept additional nonzero inner statuses or infer
+their meanings. Real permission/effect acceptance, listing and essence events
+remain required. No group mutation was performed during these controlled checks.
+
+CLI: `qq-native-client group-essence --config ./qq.json --group-id 123456 --message-id 9876543210123456789 --enabled true`.
+Use `false` explicitly to remove an essence designation. These commands use the
+same explicit login/restore selection and shutdown ownership as other account
+commands; invalid intent rejects before configuration or native loading.
+
+Parameter and result codecs were inspected in the actual default Linux ARM64
+and Darwin ARM64 binaries for both methods. The
+[static contract summary](evidence/group-essence-contracts.json) binds the exact
+versions, binary digests and inspection receipts. Other platform/version account behavior
+still requires its own evidence. The pinned source call path is
+[GroupApi](https://github.com/NapNeko/NapCatQQ/blob/26d7533e0f5800fdff865ab2f2ad7692917e1076/packages/napcat-core/apis/group.ts#L379-L436).
+
+### Remaining event and category contracts
 
 Relationship events require native notifications/system messages with target, subject, operator, cause, correlation and deduplication rules. Generic metadata changes cannot establish whether someone left voluntarily or was kicked. Unknown callback arguments remain unprojected.
 

@@ -27,11 +27,22 @@ const facadeInputs = new Set([
   'src/features/messages/query-input.ts',
   'src/features/messages/face-input.ts',
   'src/features/media/download-input.ts',
+  'src/features/groups/group-essence-input.ts',
 ]);
 
 // Cross-domain collaboration is reviewed at exact module pairs. A new feature
 // does not gain permission to import an entire neighboring feature directory.
 export const crossFeatureDependencies = [
+  {
+    from: 'src/features/groups/group-essence-input.ts',
+    to: 'src/features/messages/send-input.ts',
+    reason: 'Essence actions share pure group identifier validation.',
+  },
+  {
+    from: 'src/features/groups/group-essence-input.ts',
+    to: 'src/features/messages/query-input.ts',
+    reason: 'Essence actions resolve an exact message using pure query input capture.',
+  },
   {
     from: 'src/features/media/download-input.ts',
     to: 'src/features/messages/query-input.ts',

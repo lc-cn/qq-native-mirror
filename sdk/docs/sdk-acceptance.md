@@ -54,10 +54,10 @@ The smaller implemented API surface does not reduce these requirements.
 
 ## Source and package baseline
 
-Architecture revision `dacd917` passed 744 deterministic tests, formatting,
+Architecture revision `9ab5949` passed 753 deterministic tests, formatting,
 zero-warning lint, strict source/test typing, a clean build and an actual
-packed/installed consumer. Its [SDK quality CI](https://github.com/lc-cn/qq-native-mirror/actions/runs/38028189671)
-passed. The independent local candidate contained 140 emitted files matching both
+packed/installed consumer. Its [SDK quality CI](https://github.com/lc-cn/qq-native-mirror/actions/runs/38030149184)
+passed. The independent local candidate contained 144 emitted files matching both
 the archive and installed tree. These checks used no QQ account; this working
 `0.0.2` candidate has not been published to npm.
 
@@ -82,7 +82,7 @@ and trusted publishing](npm-first-publish.md).
 | Account lifecycle  | QR, restore, quick login, readiness, restart, close and explicit reconnect policy                                                                   | Current-source account acceptance, quick login, concurrent two-account acceptance and unverified platform/version account cells                 |
 | Messaging          | Text/face/media inputs, reception, bounded replay handling, history, lookups, recall and forwarding                                                 | Current private/group delivery, rich-content download/hash checks, group sends and unresolved [file recall](file-recall-investigation.md)       |
 | Friends/categories | Reads, remarks, deletion, request handling, empty category creation and list/add notifications                                                      | Category rename/delete/reorder/member moves and friend applications; connect mutation selectors to list/create identifiers before exposing them |
-| Groups             | Reads, membership/admin/mute metadata, bounded requests, explicit management and notices                                                            | Create/search/join/invite, titles, essence messages, group files, remaining event classification and real management/request acceptance         |
+| Groups             | Reads, membership/admin/mute metadata, bounded requests, explicit management/notices and essence add/remove with two-layer acknowledgement          | Create/search/join/invite, titles, essence listing/events, group files, remaining event classification and real mutation/request acceptance     |
 | Security signing   | Native provenance and bounded host/provider investigation                                                                                           | Authentic provider/host contract and unresolved detection propagation; login does not establish signature authenticity                          |
 | Architecture/CLI   | Owned lifetimes, typed operation vocabulary, dependency gates, planning before native work, watch before login and teardown                         | Preserve these contracts while implementing all remaining client capabilities; [architecture](architecture.md)                                  |
 

@@ -44,6 +44,7 @@ import { decodeElements } from './features/messages/message-elements.ts';
 import { createNativeMessageSender } from './features/messages/native-message-sender.ts';
 /** Native contracts extracted from local NapCat; this module never sends at startup. */
 import { createGroupOperations } from './features/groups/group-operations.ts';
+import { setGroupEssenceMessage } from './features/groups/group-essence.ts';
 import { createGroupEvents } from './features/groups/group-events.ts';
 import { createGroupQueries } from './features/groups/group-queries.ts';
 import { createGroupSystemEvents } from './features/groups/group-system-events.ts';
@@ -419,6 +420,20 @@ export function createNativeServices(context: NativeServiceContext) {
           case 'deleteGroupNotice':
             return groupNotices.invokeOperation(method, payload);
           case 'setGroupName':
+            return groupOperations.invokeOperation(method, payload);
+          case 'setGroupEssenceMessage':
+            return setGroupEssenceMessage(
+              {
+                signal: lifetime.signal,
+                awaitAlive,
+                query: (groupId, messageId) =>
+                  queryNativeMessage(service('Msg'), { chatType: 2, peerUid: groupId }, messageId),
+                invoke: (name, request) => call(service('Group'), name, request),
+              },
+              payload.groupId,
+              payload.messageId,
+              payload.enabled,
+            );
           case 'setGroupRemark':
           case 'setGroupMute':
           case 'setGroupMemberMute':

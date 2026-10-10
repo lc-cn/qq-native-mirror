@@ -46,6 +46,7 @@ const usage = `qq-native-client <command> [options]
   friend-remark --config FILE --target USER_ID --remark TEXT
   friend-delete --config FILE --target USER_ID [--block true|false] [--both true|false]
   group-name --config FILE --group-id ID --name TEXT
+  group-essence --config FILE --group-id ID --message-id ID --enabled true|false
   group-muted --config FILE --group-id ID
   group-info --config FILE --group-id ID
   group-remark --config FILE --group-id ID --remark TEXT

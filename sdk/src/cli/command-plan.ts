@@ -6,6 +6,7 @@ import { validateFaceId } from '../features/messages/face-input.ts';
 import { normalizeMessageBatchQuery } from '../features/messages/query-input.ts';
 import { captureMergedForward } from '../features/forward/merged-forward-input.ts';
 import { normalizeForwardResourceId } from '../features/forward/forward-resource-wire.ts';
+import { captureGroupEssenceRequest } from '../features/groups/group-essence-input.ts';
 
 /** Checks command flags before configuration access or native client creation. */
 export function validateCommandFlags(command: string, flags: Record<string, string>): void {
@@ -52,6 +53,7 @@ export function validateCommandFlags(command: string, flags: Record<string, stri
     'group-muted': ['config', 'uin', 'group-id'],
     'group-info': ['config', 'uin', 'group-id'],
     'group-name': ['config', 'uin', 'group-id', 'name'],
+    'group-essence': ['config', 'uin', 'group-id', 'message-id', 'enabled'],
     'group-remark': ['config', 'uin', 'group-id', 'remark'],
     'group-mute': ['config', 'uin', 'group-id', 'enabled'],
     'member-mute': ['config', 'uin', 'group-id', 'user-id', 'seconds'],
@@ -357,6 +359,15 @@ export async function prepareCommand(
       const group = numeric(flags, 'group-id');
       const remark = required(flags, 'remark', true);
       return (client) => client.setGroupRemark(group, remark);
+    }
+    case 'group-essence': {
+      const captured = captureGroupEssenceRequest(
+        numeric(flags, 'group-id'),
+        numeric(flags, 'message-id'),
+        bool(flags, 'enabled'),
+      );
+      return (client) =>
+        client.setGroupEssenceMessage(captured.groupId, captured.messageId, captured.enabled);
     }
     case 'group-mute': {
       const group = numeric(flags, 'group-id');

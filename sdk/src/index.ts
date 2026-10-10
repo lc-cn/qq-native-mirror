@@ -4,6 +4,7 @@ import { friendCategoryName } from './features/contacts/friend-categories.ts';
 import { captureMergedForward } from './features/forward/merged-forward-input.ts';
 import { normalizeForwardResourceId } from './features/forward/forward-resource-wire.ts';
 import { sendGroupId } from './features/messages/send-input.ts';
+import { captureGroupEssenceRequest } from './features/groups/group-essence-input.ts';
 import { captureDownloadRequest } from './features/media/download-input.ts';
 import {
   normalizeMessageQuery,
@@ -264,6 +265,17 @@ export class QQClient extends EventEmitter<ClientEvents> {
   }
   setGroupName(groupId: string, name: string): Promise<void> {
     return this.#operation('setGroupName', { groupId, name });
+  }
+  /** Native acknowledgement requires both status layers to be zero.
+   * This does not confirm remote state; the mutation is issued once, without retry.
+   */
+  async setGroupEssenceMessage(
+    groupId: string,
+    messageId: string,
+    enabled: boolean,
+  ): Promise<void> {
+    const captured = captureGroupEssenceRequest(groupId, messageId, enabled);
+    return this.#operation('setGroupEssenceMessage', captured);
   }
   setGroupMute(groupId: string, enabled: boolean): Promise<void> {
     return this.#operation('setGroupMute', { groupId, enabled });

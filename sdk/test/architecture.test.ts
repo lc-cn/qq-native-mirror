@@ -192,6 +192,7 @@ const pureModules = new Set([
   'src/errors.ts',
   'src/features/contacts/friend-categories.ts',
   'src/features/messages/query-input.ts',
+  'src/features/groups/group-essence-input.ts',
   'src/features/media/download-input.ts',
   'src/features/forward/merged-forward-input.ts',
   'src/features/messages/send-input.ts',
@@ -203,6 +204,7 @@ const pureModules = new Set([
 const pureRoots = [
   'features/contacts/friend-categories.ts',
   'features/messages/query-input.ts',
+  'features/groups/group-essence-input.ts',
   'features/media/download-input.ts',
   'features/forward/merged-forward-input.ts',
   'features/messages/send-input.ts',

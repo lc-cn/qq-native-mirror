@@ -15,6 +15,7 @@ function help(entry: string) {
   assert.equal(result.status, 0);
   assert.match(result.stdout, /qq-native-client <command>/);
   assert.match(result.stdout, /forward-resource/);
+  assert.match(result.stdout, /group-essence/);
   assert.equal(result.stderr, '');
 }
 function missingResource(entry: string) {
@@ -28,6 +29,22 @@ function missingResource(entry: string) {
 test('actual source CLI canonical entry runs help and preflight errors without config/native', () => {
   help(cli);
   missingResource(cli);
+});
+test('essence CLI validates intent before reading config or starting native code', () => {
+  const result = invoke(cli, [
+    'group-essence',
+    '--config',
+    '/does-not-exist.json',
+    '--group-id',
+    '123',
+    '--message-id',
+    '9',
+    '--enabled',
+    '1',
+  ]);
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /--enabled must be true or false/);
+  assert.doesNotMatch(result.stderr, /wrapper|dlopen|catalog|ENOENT/);
 });
 test(
   'actual source CLI through a POSIX npm-bin-style symlink executes the same commands',
