@@ -10,6 +10,11 @@ on:
         type: string
         default: 29fd6b763a1323ddcb9a71b1b369188fdc2bf8d7bc4133c19dcc41de8bd60ee7
         description: SHA256 of immutable catalog-backups JSON for default mode
+      sdk_main_source:
+        type: choice
+        options: [baseline, production-38005239931]
+        default: baseline
+        description: SDK source only; immutable native mirror source stays unchanged
       source_tag:
         type: string
         default: npm-v0.0.2-ci-37962268125
@@ -53,9 +58,25 @@ jobs:
       - name: Linux system dependencies
         if: matrix.platform == 'linux'
         run: sudo apt-get update && sudo apt-get install -y libx11-xcb1 libgnutls30
+      - name: Current-main binding contracts
+        run: node --test ci/current-main-binding.test.mjs
+      - uses: actions/setup-python@v6
+        if: inputs.sdk_main_source == 'production-38005239931'
+        with:
+          python-version: '3.13'
+          architecture: ${{ matrix.arch }}
+      - name: Artifact acquisition boundary contracts
+        if: inputs.sdk_main_source == 'production-38005239931'
+        run: python tools/acquire-current-public-main.test.py
+      - name: Acquire complete verified current production artifact
+        if: inputs.sdk_main_source == 'production-38005239931'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python tools/acquire-current-public-main.py out/current-main-source
       - name: Verify immutable source and candidate mirror, decode and prepare without account
         env:
           GH_TOKEN: ${{ github.token }}
+          SDK_MAIN_SOURCE: ${{ inputs.sdk_main_source }}
           MIRROR_MODE: ${{ inputs.mode }}
           CATALOG_BACKUP_SHA256: ${{ inputs.catalog_backup_sha256 }}
           SOURCE_TAG: ${{ inputs.source_tag }}
@@ -69,4 +90,8 @@ jobs:
           path: |
             out/codec-mirror-consumer.json
             out/codec-video.json
+            out/qq-native-client-0.0.2.tgz
+            out/sdk-source-binding.json
+            out/current-main-source/release-manifest.json
+            out/current-main-source/acquisition-binding.json
           if-no-files-found: error

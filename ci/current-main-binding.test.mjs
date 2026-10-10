@@ -1,0 +1,13 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {mkdtemp,rm} from 'node:fs/promises';import {tmpdir} from 'node:os';import {join} from 'node:path';
+import {CURRENT_MAIN,validateCurrentMainMetadata,validateCurrentMainAcquisition,loadCurrentMain} from './current-main-binding.mjs';
+const fixture=()=>({...CURRENT_MAIN,schemaVersion:2,packages:[{name:'qq-native-client',...CURRENT_MAIN},...Array.from({length:6},(_,i)=>({name:'aux'+i}))],aggregateReceipt:{path:'evidence/aggregated-main.consumer.json',sha256:'a'.repeat(64)}});
+test('new main identity is independent of immutable native mirror',()=>{const m=fixture();assert.equal(validateCurrentMainMetadata(m).sha256,CURRENT_MAIN.sha256);assert.notEqual(CURRENT_MAIN.commit,'6cae1ec0a5e1bfb03cb7871083915b3d03272347');});
+test('bad main digest, size, identity and missing aggregate fail closed',()=>{for(const field of ['commit','runId','runAttempt','schemaVersion']){const m=fixture();m[field]='wrong';assert.throws(()=>validateCurrentMainMetadata(m));}for(const field of ['sha256','size','integrity','tarball']){const m=fixture();m.packages[0][field]='wrong';assert.throws(()=>validateCurrentMainMetadata(m));}const m=fixture();delete m.aggregateReceipt;assert.throws(()=>validateCurrentMainMetadata(m));});
+test('full release gate failure cannot be bypassed by valid main metadata',async()=>{const dir=await mkdtemp(join(tmpdir(),'main-binding-'));try{let calls=0;await assert.rejects(loadCurrentMain(dir,{validate:async()=>{calls++;throw Error('receipt mismatch');}}),/receipt mismatch/);assert.equal(calls,1);await assert.rejects(loadCurrentMain(dir,{validate:async()=>({manifest:fixture(),videoMaterials:{pending:true},videoMaterialsPending:true})}));}finally{await rm(dir,{recursive:true,force:true});}});
+
+test('acquisition proof binds actual ZIP and cannot claim account/native or omit offline gate',()=>{
+ const b={schemaVersion:1,...CURRENT_MAIN,workflowPath:'.github/workflows/native-npm.yml',artifact:{id:11650703913,name:'npm-release',size:388134440,sha256:'0bfdfe0cf747f9c33fa777749605b9451da1d5c4cd9712caff647f3cd550d7cc'},main:{name:'qq-native-client',...CURRENT_MAIN},offlineValidated:true,nativeExecuted:false,accountUsed:false,published:false};
+ assert.equal(validateCurrentMainAcquisition(b),b);
+ for(const key of ['offlineValidated','nativeExecuted','accountUsed','published']){const wrong=structuredClone(b);wrong[key]=!wrong[key];assert.throws(()=>validateCurrentMainAcquisition(wrong));}
+ const wrong=structuredClone(b);wrong.artifact.sha256='f'.repeat(64);assert.throws(()=>validateCurrentMainAcquisition(wrong));
+});
