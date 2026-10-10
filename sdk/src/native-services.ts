@@ -16,6 +16,7 @@ import { captureDownloadPayload } from './features/media/download-input.ts';
 import { createMessageQueries } from './features/messages/message-queries.ts';
 import { withCleanupFailure } from './runtime/cleanup.ts';
 import { NativeServiceLifetime } from './runtime/native-service-lifetime.ts';
+import { NativeListenerOwner } from './runtime/native-listener-owner.ts';
 import type { NativeServiceContext } from './runtime/native-service-context.ts';
 import {
   supportsCategoryCreation,
@@ -94,12 +95,13 @@ export function createNativeServices(context: NativeServiceContext) {
   };
   const { userId: accountId, uid: accountUid } = context.identity ?? {};
   const lifetime = new NativeServiceLifetime();
-  const listeners: Native[] = [];
+  // Retained until worker exit: listener removal ABIs are not verified.
+  let listenerOwner: NativeListenerOwner | undefined;
   const own = <T extends { close(): void }>(resource: T): T => lifetime.own(resource);
   const close = () => {
     // Removal ABIs are not verified for these listeners. Retain native callback
     // objects for the worker lifetime; callbacks consult the closed Session.
-    void listeners;
+    void listenerOwner;
     lifetime.close();
   };
   try {
@@ -170,37 +172,23 @@ export function createNativeServices(context: NativeServiceContext) {
         dispatch: (rawMessages) => dispatch('Msg/onRecvMsg', [rawMessages]),
       }),
     );
+    const callbacks = (listenerOwner = new NativeListenerOwner({
+      isClosed: () => lifetime.closed,
+      auditCallback,
+      dispatch,
+    }));
     const listener = (
       family: string,
       overrides: Native,
       acquired?: Native,
       retainBeforeAdd = false,
     ) => {
-      const wrapped = new Map<PropertyKey, (...args: unknown[]) => unknown>();
-      const target = new Proxy(overrides, {
-        get: (object, key) => {
-          const member = object[key as string];
-          if (member !== undefined && typeof member !== 'function') return member;
-          if (!wrapped.has(key))
-            wrapped.set(key, (...args: unknown[]) => {
-              if (lifetime.closed) return;
-              auditCallback?.({
-                family,
-                name: String(key),
-                argumentTypes: args.map((value) =>
-                  value === null ? 'null' : Array.isArray(value) ? 'array' : typeof value,
-                ),
-              });
-              return typeof member === 'function'
-                ? Reflect.apply(member, object, args)
-                : dispatch(`${family}/${String(key)}`, args);
-            });
-          return wrapped.get(key);
-        },
+      callbacks.register({
+        family,
+        overrides,
+        retainBeforeAdd,
+        add: (target) => call(acquired ?? service(family), `addKernel${family}Listener`, target),
       });
-      if (retainBeforeAdd) listeners.push(target);
-      call(acquired ?? service(family), `addKernel${family}Listener`, target);
-      if (!retainBeforeAdd) listeners.push(target);
     };
     const groupSystemEvents = own(createGroupSystemEvents(emit));
     const friendSystemEvents = own(createFriendSystemEvents(emit));

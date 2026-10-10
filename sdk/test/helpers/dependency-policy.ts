@@ -86,6 +86,7 @@ const kernelDependencies = new Set([
 const serviceRuntimeDependencies = new Set([
   'src/runtime/cleanup.ts',
   'src/runtime/native-service-lifetime.ts',
+  'src/runtime/native-listener-owner.ts',
   'src/runtime/native-service-context.ts',
   'src/runtime/native-event-channel.ts',
   'src/runtime/operations.ts',

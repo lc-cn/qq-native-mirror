@@ -478,6 +478,14 @@ RichMedia method and Session wait port, and native envelopes become copied publi
 DTOs only after validation. Public folder contracts expose no native service
 objects or mutable Session ownership.
 
+`runtime/native-listener-owner` owns callback proxy caching, shape-only audit,
+unknown callback dispatch and strong references. Composition supplies each native
+registration call and its business overrides; the owner cannot acquire services
+or authenticate. Registration runs once, preserving the Search before-add and
+Msg/Group after-add retention rules. Close suppresses callback execution through
+the account lifetime but does not clear references or guess a listener-removal
+ABI. Audit exceptions and synchronous reentrancy retain their existing behavior.
+
 ## Lifecycle and error contracts
 
 - One worker owns one account data directory. Locks prevent concurrent owners.
