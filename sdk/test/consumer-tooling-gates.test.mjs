@@ -55,7 +55,15 @@ test('consumer compiler gate rejects missing preparation await and fabricated se
 });
 
 test('typed consumer lint rejects unobserved action Promise without spawning its fake client', async () => {
-  const eslint = new ESLint({ cwd: root });
+  const eslint = new ESLint({
+    cwd: root,
+    // These lintText calls repeatedly change one in-memory file. CI single-run
+    // inference treats later parses as autofixes and loses imported action types.
+    // Use the persistent program only here; the actual disk lint gate is unchanged.
+    overrideConfig: {
+      languageOptions: { parserOptions: { disallowAutomaticSingleRunInference: true } },
+    },
+  });
   const good = await eslint.lintText(source, { filePath: helper });
   assert.equal(good[0].errorCount, 0, 'Actual checked helper must pass its lint gate first');
   for (const invocation of ['action(client);', 'void action(client);']) {
