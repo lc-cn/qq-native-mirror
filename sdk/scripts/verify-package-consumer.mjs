@@ -18,7 +18,7 @@ import { verifyKernelSessionConsumer } from './kernel-session-consumer-contract.
 import { verifyReceivedForwardConsumer } from './received-forward-consumer-contract.mjs';
 import { verifyContactGroupConsumer } from './contact-group-consumer-contract.mjs';
 
-// Offline packaging check: fake workers/services only; never starts a native worker or loads native binaries.
+// Offline packaging check: controlled services and actual worker routing with a replacement kernel; no QQ native binaries or accounts.
 const root = fileURLToPath(new URL('../', import.meta.url));
 const destination = await mkdtemp(join(tmpdir(), 'qq-package-consumer-'));
 const run = (command, args, cwd = destination) => execFileSync(command, args, {
@@ -257,6 +257,8 @@ function subscribe(client: QQClient) {
  client.on('request.group', request => request.sequence);
  client.on('group-list-updated', update => update.groups.map(group=>group.groupId));
  client.on('group-members-updated', update => update.members.map(member=>[member.uid,member.deleted,member.role]));
+ client.on('group-membership', update => [update.groupId,update.kind,update.memberUid,update.operatorUid,update.code]);
+ void client.getGroupInfo('123').then(value=>value.description);
  client.on('group-info-updated', update => [update.groupId,update.ownerUid,update.ownerUserId,update.description]);
  const categories: Promise<FriendCategory[]> = client.listFriendCategories();
  const remark: Promise<void> = client.setGroupRemark('123','');

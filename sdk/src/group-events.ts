@@ -9,6 +9,21 @@ function object(value: unknown): Record<string, unknown> | undefined {
   return value !== null && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : undefined;
 }
 function decimal(value: unknown): value is string { return typeof value === 'string' && /^\d+$/.test(value); }
+/** Capture only data properties so callback/query consumers share one atomic DTO. */
+export function projectGroupInfo(value: unknown): GroupInfoUpdate {
+  const raw = object(value);
+  if (!raw) throw new Error('Invalid native group detail');
+  const field = (key: string) => Object.getOwnPropertyDescriptor(raw, key)?.value;
+  const groupId = field('groupCode'), name = field('groupName'), ownerUid = field('ownerUid'), ownerUserId = field('ownerUin');
+  const description = field('fingerMemo'), memberCount = field('memberNum'), maxMemberCount = field('maxMemberNum');
+  if (!decimal(groupId) || typeof name !== 'string' || typeof ownerUid !== 'string' || !ownerUid.trim()
+    || !decimal(ownerUserId) || typeof description !== 'string'
+    || typeof memberCount !== 'number' || !Number.isSafeInteger(memberCount) || memberCount < 0
+    || typeof maxMemberCount !== 'number' || !Number.isSafeInteger(maxMemberCount) || maxMemberCount < 0) {
+    throw new Error('Invalid native group detail');
+  }
+  return { groupId, name, memberCount, maxMemberCount, ownerUid, ownerUserId, description };
+}
 function group(value: unknown): GroupChange | undefined {
   const raw = object(value);
   if (!raw || !decimal(raw.groupCode)) return;
@@ -53,19 +68,9 @@ export function createGroupEvents(emit: (event: string, payload: unknown) => voi
   const invalid = (stage: string) => emit('diagnostic', { stage });
   return {
     onGroupDetailInfoChange(value: unknown): void {
-      const raw = object(value);
-      if (!raw || !decimal(raw.groupCode) || typeof raw.groupName !== 'string'
-        || typeof raw.ownerUid !== 'string' || !raw.ownerUid.trim() || !decimal(raw.ownerUin)
-        || typeof raw.fingerMemo !== 'string'
-        || !Number.isSafeInteger(raw.memberNum) || (raw.memberNum as number) < 0
-        || !Number.isSafeInteger(raw.maxMemberNum) || (raw.maxMemberNum as number) < 0) {
-        invalid('invalid-native-group-info-update'); return;
-      }
-      const update: GroupInfoUpdate = {
-        groupId: raw.groupCode, name: raw.groupName,
-        memberCount: raw.memberNum as number, maxMemberCount: raw.maxMemberNum as number,
-        ownerUid: raw.ownerUid, ownerUserId: raw.ownerUin, description: raw.fingerMemo,
-      };
+      let update: GroupInfoUpdate;
+      try { update = projectGroupInfo(value); }
+      catch { invalid('invalid-native-group-info-update'); return; }
       emit('group-info-updated', update);
     },
     onGroupListUpdate(kind: unknown, values: unknown): void {

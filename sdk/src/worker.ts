@@ -9,7 +9,7 @@ import { loadRecordCodec } from './record-codec-loader.ts';
 import { loadVideoCodec } from './video-codec-loader.ts';
 import { builtinRecordCodec } from './builtin-record-codec.ts';
 
-const operations = new Set(['listFriends', 'listFriendCategories', 'listGroups', 'getGroupMembers', 'sendPrivateMessage', 'sendGroupMessage', 'sendMergedForward', 'getMessage', 'getMessages', 'getHistory', 'recallMessage', 'getForwardMessages', 'getForwardResource', 'forwardMessages',
+const operations = new Set(['listFriends', 'listFriendCategories', 'listGroups', 'getGroupInfo', 'getGroupMembers', 'sendPrivateMessage', 'sendGroupMessage', 'sendMergedForward', 'getMessage', 'getMessages', 'getHistory', 'recallMessage', 'getForwardMessages', 'getForwardResource', 'forwardMessages',
   'setGroupName', 'setGroupRemark', 'setGroupMute', 'setGroupMemberMute', 'setGroupMemberCard', 'setGroupAdmin', 'kickGroupMember', 'leaveGroup',
   'setNickname', 'setSignature', 'listGroupNotices', 'publishGroupNotice', 'deleteGroupNotice', 'downloadAttachment', 'getUserProfile', 'setFriendRemark', 'deleteFriend', 'listFriendRequests', 'handleFriendRequest', 'listGroupRequests', 'handleGroupRequest']);
 

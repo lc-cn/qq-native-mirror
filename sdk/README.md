@@ -254,3 +254,6 @@ The legacy opt-in catalog covers macOS arm64 and Linux x64/arm64 and remains ava
 首发使用 GitHub Actions 在六个平台验收通过后汇总的 `npm-release` 产物：本地验证并依次发布六个辅包和主包，由维护者完成 npm 登录与发布验证。首发完成后再为七个包配置 Trusted Publisher。详见 [本地首发流程](docs/npm-first-publish.md)。
 
 Working source now adds `listFriendCategories()`, `setGroupRemark(groupId, remark)` and `group-info-updated`, with CLI commands and complete worker routing. [Friend/category/group coverage](docs/contacts-groups.md) records the remaining action and event contracts. These additions postdate source `a0b879e` and are not covered by its six-platform CI or the published `0.0.1`.
+
+
+Working-source group additions include `getGroupInfo(groupId)` and `group-membership` with finite known classification, raw unknown codes and optional native UIDs. CLI adds `group-info`; normalized/all watch includes membership events. See [friends and groups coverage](docs/contacts-groups.md) for source-backed contracts, 628 local regressions and the installed-consumer evidence limits. These additions are not published `0.0.1` features.

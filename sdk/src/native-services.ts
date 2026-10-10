@@ -19,16 +19,17 @@ import { downloadAttachment, captureDownloadPayload } from './media-operations.t
 import { createImageElement, createFileElement, createReplyElement, decodeElements, faceElement } from './message-elements.ts';
 /** Native contracts extracted from local NapCat; this module never sends at startup. */
 import { createGroupOperations, type GroupOperation } from './group-operations.ts';
-import { createGroupEvents } from './group-events.ts';
+import { createGroupEvents, projectGroupInfo } from './group-events.ts';
+import { createGroupSystemEvents } from './group-system-events.ts';
 import { createRecallEvents } from './recall-events.ts';
 import { needsMentionLookup } from './inbound-mentions.ts';
 import { captureNativeMessage, decodeNativeMessages, messageIdentityUids, projectNativeMessage } from './inbound-messages.ts';
 import { captureSendInput, sendUserId, sendGroupId, sentReceipt } from './send-input.ts';
-import type { Friend, Group, GroupMember, Message, NativeCallbackAudit } from './types.ts';
+import type { Friend, Group, GroupMember, GroupInfoUpdate, Message, NativeCallbackAudit } from './types.ts';
 
 type Native = Record<string, any>;
 export interface NativePeer { chatType: 1 | 2; peerUid: string; guildId?: string }
-export type ServiceOperation = 'listFriendCategories' | 'listFriends' | 'listGroups' | 'getGroupMembers' | 'sendPrivateMessage' | 'sendGroupMessage' | 'sendMergedForward' | 'getForwardResource' | 'getMessage' | 'getMessages' | 'getHistory' | 'recallMessage' | 'downloadAttachment' | SelfProfileOperation | 'listGroupNotices' | GroupNoticeOperation | GroupOperation | ContactOperation | FriendRequestOperation | GroupRequestOperation | ForwardOperation;
+export type ServiceOperation = 'listFriendCategories' | 'listFriends' | 'listGroups' | 'getGroupInfo' | 'getGroupMembers' | 'sendPrivateMessage' | 'sendGroupMessage' | 'sendMergedForward' | 'getForwardResource' | 'getMessage' | 'getMessages' | 'getHistory' | 'recallMessage' | 'downloadAttachment' | SelfProfileOperation | 'listGroupNotices' | GroupNoticeOperation | GroupOperation | ContactOperation | FriendRequestOperation | GroupRequestOperation | ForwardOperation;
 export interface NativeMessage extends Native { msgId: string; peerUid: string; chatType: number }
 interface Waiter { event: string; check: (...args: any[]) => unknown; resolve: (value: any) => void; reject: (error: Error) => void; timer: ReturnType<typeof setTimeout> }
 
@@ -150,7 +151,8 @@ export function createNativeServices(session: Native, version: string, emit: (ev
     call(service(family), `addKernel${family}Listener`, target);
     listeners.push(target);
   };
-  listener('Msg', {
+  const groupSystemEvents = createGroupSystemEvents(emit);
+  listener('Msg', { onRecvSysMsg: groupSystemEvents.onRecvSysMsg,
     onRecvMsg: (messages: NativeMessage[]) => {
       if (closed) return;
       if (!Array.isArray(messages)) { emit('diagnostic', { stage: 'invalid-native-message-batch' }); return; }
@@ -193,7 +195,7 @@ export function createNativeServices(session: Native, version: string, emit: (ev
     if (process.env.QQ_NATIVE_TRACE_FIELDS === '1') emit('diagnostic', { stage: `group-list-update:kind-${typeof kind === 'number' || typeof kind === 'boolean' ? String(kind) : typeof kind}:count-${Array.isArray(groups) ? groups.length : 'non-array'}` });
     groupEvents.onGroupListUpdate(kind, groups);
     dispatch('Group/onGroupListUpdate', [kind, groups]);
-  }, onMemberInfoChange: groupEvents.onMemberInfoChange, onGroupDetailInfoChange: groupEvents.onGroupDetailInfoChange });
+  }, onMemberInfoChange: groupEvents.onMemberInfoChange, onGroupDetailInfoChange: (value: unknown) => { groupEvents.onGroupDetailInfoChange(value); dispatch('Group/onGroupDetailInfoChange', [value]); } });
   const eventCall = async (event: string, check: Waiter['check'], invoke: () => any, timeoutMs = 10_000, checkReturn?: (value: any) => boolean) => {
     lifetime.signal.throwIfAborted();
     let waiter: Waiter;
@@ -229,6 +231,27 @@ export function createNativeServices(session: Native, version: string, emit: (ev
       waiters.delete(waiter!); clearTimeout(waiter!.timer);
       lifetime.signal.removeEventListener('abort', abort);
     }
+  };
+  // Detail callbacks carry a group ID but no request nonce. Coalesce concurrent
+  // reads, and quarantine failed channels so late results cannot satisfy retries.
+  const groupInfoQueries = new Map<string, Promise<GroupInfoUpdate>>();
+  const invalidGroupInfoQueries = new Set<string>();
+  const getGroupInfo = async (id: string): Promise<GroupInfoUpdate> => {
+    lifetime.signal.throwIfAborted();
+    if (invalidGroupInfoQueries.has(id)) throw new Error('Group detail query channel is invalid; recreate the Session');
+    let pending = groupInfoQueries.get(id);
+    if (!pending) {
+      pending = eventCall('Group/onGroupDetailInfoChange', (raw: unknown) => {
+        if (raw === null || typeof raw !== 'object' || Object.getOwnPropertyDescriptor(raw, 'groupCode')?.value !== id) return;
+        return projectGroupInfo(raw);
+      }, () => call(service('Group'), 'getGroupDetailInfo', id, 2), 5000, result => result?.result === 0)
+        .catch(error => { invalidGroupInfoQueries.add(id); throw error; })
+        .finally(() => { groupInfoQueries.delete(id); });
+      groupInfoQueries.set(id, pending);
+    }
+    const value = await pending;
+    lifetime.signal.throwIfAborted();
+    return { ...value };
   };
   const uidFor = async (id: string): Promise<string> => {
     if (id.startsWith('u_')) return id;
@@ -309,6 +332,7 @@ export function createNativeServices(session: Native, version: string, emit: (ev
     async invokeOperation(method: ServiceOperation, payload: Native = {}): Promise<unknown> {
       if (closed) throw new Error('Native services are closed');
       switch (method) {
+        case 'getGroupInfo': return getGroupInfo(sendGroupId(payload.groupId));
         case 'listFriendCategories': {
           if (!['7.0.2-53644', '3.2.32-52194', '9.9.33-52230'].includes(version)) throw new Error('Buddy list signature not verified for this native version');
           const raw = await awaitAlive(call(service('Buddy'), 'getBuddyListV2', '0', true, 0));
@@ -489,10 +513,12 @@ export function createNativeServices(session: Native, version: string, emit: (ev
     close() {
       closed = true;
       lifetime.abort();
+      groupInfoQueries.clear(); invalidGroupInfoQueries.clear();
       longMessageTransport?.close();
       forwardResourceTransport?.close();
       usedSendIds.clear();
       recallEvents.close();
+      groupSystemEvents.close();
       selfProfile.close();
       friendRequests.close();
       groupRequests.close();

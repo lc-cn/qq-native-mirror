@@ -1,0 +1,117 @@
+{
+  "checkedAt": "2026-10-10T02:01:49.845263+00:00",
+  "features": [
+    "getGroupInfo",
+    "group-membership"
+  ],
+  "primarySourceCommit": "26d7533e0f5800fdff865ab2f2ad7692917e1076",
+  "primarySourceBlobs": [
+    {
+      "path": "packages/napcat-onebot/index.ts",
+      "sha256": "e76d07630379b14ab821657cb21db2f75964e12971eb3c6e60e96a4d5d87d11a",
+      "gitBlob": "838af29b6b4690bf43d2f5d3e9e0f13fecfe4007"
+    },
+    {
+      "path": "packages/napcat-core/packet/transformer/proto/message/message.ts",
+      "sha256": "4b2d1ce7a4f0ef771f5496b9374c05a32dc82406bd1b5762b1af8560e475046c",
+      "gitBlob": "fdcb65760c37073eee6cb313431311a80243826a"
+    },
+    {
+      "path": "packages/napcat-core/listeners/NodeIKernelMsgListener.ts",
+      "sha256": "b775a29002ffa32a55dbb6a13ab1d4c0de14cad8be06ac207e6d2cacf126c149",
+      "gitBlob": "21c79a211f41f3187608042ad98d72441e995ff1"
+    },
+    {
+      "path": "packages/napcat-onebot/api/msg.ts",
+      "sha256": "18f2ec2c7d40d028ea7d74cdce62e5f8c0fd0acf074874ea45a6b59c3a7fb9a8",
+      "gitBlob": "055227c97203b6ccb496dc1de0e6d12ea33acf75"
+    }
+  ],
+  "sourceFiles": [
+    {
+      "path": "src/group-system-events.ts",
+      "sha256": "e67cb3b19505a81ac0c94398c0f783e7436460b0f08025cc97ee44de3ea6c1f4"
+    },
+    {
+      "path": "src/group-events.ts",
+      "sha256": "f376d4682b87df431a40b60fd15377167dcbe181df3d7d15616b53d921430a7b"
+    },
+    {
+      "path": "src/native-services.ts",
+      "sha256": "43412b32904eeaa7a3f4c1975d60730557a68dc79c57c0b214a0f1b1b9dc4b82"
+    },
+    {
+      "path": "src/types.ts",
+      "sha256": "25980518b3d32557df50f5854748c73a0ceee865c5211de1f1df7807a644b0ea"
+    },
+    {
+      "path": "src/index.ts",
+      "sha256": "b487881f1e25ddcd642c23bbeb997063cdc47ea0bb46626c189d1930f84888de"
+    },
+    {
+      "path": "src/worker.ts",
+      "sha256": "53a7625ba9bb3edf83a292c226c59c2d0fd47e5e549c077024bff440936a7677"
+    },
+    {
+      "path": "src/cli.ts",
+      "sha256": "2a3517804836fac167b427568131ad8dbe3eed87a54c69e3b08b377b7b0dc47e"
+    },
+    {
+      "path": "scripts/contact-group-consumer-contract.mjs",
+      "sha256": "7d0c9c42b7cb6da9c6ea67bf664e21beed5b1587592829e6e5958159d2ba3277"
+    },
+    {
+      "path": "scripts/verify-package-consumer.mjs",
+      "sha256": "3880a24d100d81cc7f2a92a7d5652d9a771e3bff28f3f07d207497d4275d19d0"
+    }
+  ],
+  "regressions": {
+    "passed": 628,
+    "failed": 0,
+    "skipped": 0
+  },
+  "installedPackage": {
+    "packageSha256": "982156fd261b5c49ae91468613938ee65a2c14bb89d4c4fb1153dd829b4d4503",
+    "packageBytes": 410619,
+    "regularFiles": 178,
+    "compiledFiles": 94,
+    "allInstalledRegularFilesMatch": true,
+    "allCompiledMatch": true,
+    "createdBeforeUpdatedPublicDocs": true,
+    "nativeExecuted": false,
+    "accountUsed": false
+  },
+  "actualWorkerRoutes": {
+    "kernelReplacedByFixture": true,
+    "methods": [
+      "listFriendCategories",
+      "setGroupRemark",
+      "getGroupInfo"
+    ]
+  },
+  "systemEvents": {
+    "wireFixtures": true,
+    "actualMsgListenerHookupFixture": true,
+    "classification": "known finite codes; others unknown",
+    "optionalOperator": "structured protobuf only",
+    "identityQueriesIssued": false
+  },
+  "groupQuery": {
+    "nativeSuccessAndValidCallbackRequired": true,
+    "sameGroupCoalesced": true,
+    "failedGroupChannelQuarantined": true,
+    "deadlineMilliseconds": 5000,
+    "unsolicitedMatchingSnapshotMaySatisfyRead": true
+  },
+  "independentReview": {
+    "focusedTestsPassed": 15,
+    "blockingFindings": []
+  },
+  "scope": {
+    "nativeExecuted": false,
+    "accountUsed": false,
+    "realEventDeliveryVerified": false,
+    "npmPublished": false,
+    "freshSixPlatformCiVerified": false
+  }
+}

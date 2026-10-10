@@ -551,3 +551,27 @@ test('public friend categories uses dedicated IPC operation and returns category
  const worker=new Worker(),client=new QQClient(worker as unknown as ChildProcess,500);worker.emit('message',{event:'ready',payload:{uin:'456',uid:'u_self'}});
  try{const pending=client.listFriendCategories();const request=worker.requests.at(-1);assert.equal(request.method,'listFriendCategories');const categories=[{categoryId:1,sortId:2,name:'fixture',memberCount:9,onlineCount:4,friends:[]}];worker.emit('message',{id:request.id,result:categories});assert.deepEqual(await pending,categories);}finally{await client.close();}
 });
+
+
+test('group detail validates before IPC, preserves native errors, and is available only online', async () => {
+  const worker = new Worker(), client = new QQClient(worker as unknown as ChildProcess, 500);
+  try {
+    await assert.rejects(client.getGroupInfo('123'), /not online/);
+    worker.emit('message', {event:'ready',payload:{uin:'456',uid:'u_fixture'}});
+    for (const value of [null, undefined, 123, '', '0', 'bad']) await assert.rejects(client.getGroupInfo(value as unknown as string));
+    assert.equal(worker.requests.length,0);
+    const pending=client.getGroupInfo('000123'), request=worker.requests.at(-1);
+    assert.equal(request.method,'getGroupInfo');assert.equal(request.groupId,'000123');
+    worker.emit('message',{id:request.id,error:{message:'denied',code:73}});
+    await assert.rejects(pending,{operation:'getGroupInfo',code:73});
+    assert.equal(worker.requests.length,1);
+  } finally { await client.close(); }
+});
+
+test('membership system events are delivered through public IPC and suppressed after close', async () => {
+  const worker=new Worker(),client=new QQClient(worker as unknown as ChildProcess,500), events:unknown[]=[];
+  const payload={groupId:'123',direction:'decrease',kind:'unknown',code:999};
+  client.on('group-membership',value=>events.push(value));
+  worker.emit('message',{event:'group-membership',payload});assert.deepEqual(events,[payload]);
+  await client.close();worker.emit('message',{event:'group-membership',payload});assert.equal(events.length,1);
+});

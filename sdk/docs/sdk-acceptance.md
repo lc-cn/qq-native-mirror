@@ -765,3 +765,8 @@ Predecessor run `38009229223` failed both Windows extraction tests before acquis
 ## Friend categories, group remark and detail synchronization
 
 Working source now adds `listFriendCategories`, `setGroupRemark` and `group-info-updated`, plus CLI and actual worker routing. Friend/member query waits are lifetime-aware and group IDs are validated before IPC/native dispatch. [Coverage and remaining contracts](contacts-groups.md) distinguish these additions from category management and relationship/membership semantic events. All 615 regressions passed, and a freshly installed package passed declaration and controlled child-worker checks; no real account or group action was executed. These additions postdate the successful `a0b879e` CI cohort, so fresh six-platform verification remains separate.
+
+
+## Group detail reads and membership system events
+
+The subsequent working source adds `getGroupInfo` and `group-membership`; 628 full regressions passed, plus installed compiled-consumer/actual worker routing with a replacement kernel. The 410619-byte package (SHA256 `982156fd261b5c49ae91468613938ee65a2c14bb89d4c4fb1153dd829b4d4503`) matched 178 installed regular files and all 94 compiled files, before the later public evidence/docs append. See [contract and limits](contacts-groups.md) and [local receipt](evidence/group-query-system-events-local.json). No native account operation, live system-message delivery, npm publication or fresh six-platform CI is claimed by these checks.

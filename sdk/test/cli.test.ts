@@ -240,3 +240,11 @@ test('actual batch and merged-send CLI entries reach their existing validators b
  const merged=spawnSync(process.execPath,['src/cli.ts','send-forward','--config',config,'--kind','group','--target','123','--nodes-file','/nonexistent-forward-nodes-fixture.json'],{encoding:'utf8'});
  assert.equal(merged.status,1);assert.match(merged.stderr,/ENOENT.*nonexistent-forward-nodes-fixture/);assert.doesNotMatch(merged.stderr,/Unknown command|Unknown option|nonexistent-forward-cli-fixture-config/);
 });
+
+
+test('group-info CLI validates ID before dispatch', async () => {
+  const calls:unknown[]=[];
+  await assert.rejects(prepareCommand('group-info',{'group-id':'bad'}));
+  await (await prepareCommand('group-info',{'group-id':'123'}))({getGroupInfo:async id=>{calls.push(id);return {};}} as QQClient);
+  assert.deepEqual(calls,['123']);
+});
