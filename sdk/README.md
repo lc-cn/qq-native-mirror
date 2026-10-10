@@ -125,7 +125,7 @@ evidence with remaining restore/query differences. Windows and macOS x64 account
 business acceptance is pending. Historical results cover their recorded source,
 native version and operation, not every later revision.
 
-Friend applications, remaining category management, group creation/search/join/
+Friend applications, remaining category management, group creation/join/
 invite, complete group file lifecycle/events and cross-platform account/media
 acceptance remain required. Signature authenticity and detection propagation are
 unresolved. Login success and vendor file hashes do not establish authentic signing.

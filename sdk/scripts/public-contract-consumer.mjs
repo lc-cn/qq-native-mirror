@@ -86,7 +86,14 @@ declare const receipt: SentMergedForward;
 const sent: SentMessage = receipt;
 declare const notices: GroupNoticePage;
 const webNotices: WebGroupNoticeResult = notices;
-void [request, sent, webNotices];
+declare const search: GroupSearchMatch;
+const searchGroup: Group = search;
+const ownerUid: string = search.ownerUid;
+// @ts-expect-error Search snapshots do not invent a numeric owner account.
+search.ownerUserId;
+declare const client: import('qq-native-client').QQClient;
+const searchResult: Promise<GroupSearchMatch | undefined> = client.searchGroup('123');
+void [request, sent, webNotices, searchGroup, ownerUid, searchResult];
 `,
   );
   const program = ts.createProgram([consumer, join(dist, 'types.d.ts')], options);

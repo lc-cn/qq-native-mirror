@@ -187,3 +187,21 @@ function verifyMessageQueryPort(context: MessageQueriesContext) {
   service?.getMsgsByMsgId?.({ chatType: 3, peerUid: '123' }, ['1']);
 }
 void verifyMessageQueryPort;
+
+import type { GroupSearchContext } from '../../src/features/groups/group-search.ts';
+function verifyGroupSearchPort(context: GroupSearchContext) {
+  const service = context.getSearchService();
+  // @ts-expect-error Search cannot mutate membership through its port.
+  service?.addGroup('123');
+  // @ts-expect-error Search has no arbitrary service acquisition.
+  context.service('Group');
+  const result = service?.searchGroup?.({
+    keyWords: '123',
+    groupNum: 25,
+    exactSearch: false,
+    penetrate: '',
+  });
+  // @ts-expect-error Native acknowledgement is unknown until validated.
+  void result.result;
+}
+void verifyGroupSearchPort;

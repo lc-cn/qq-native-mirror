@@ -92,6 +92,47 @@ const groupFileCountProfiles = [
   ],
 ] as const satisfies readonly BinaryContract[];
 
+// Search request, acknowledgement and callback codecs are independently inspected.
+// Version equality alone cannot establish this ABI.
+const groupSearchProfiles = [
+  [
+    'linux',
+    'x64',
+    '3.2.32-52194',
+    '7882b8e3055cd38584861042befacd8be9939896f5cbbca6fa4a230926b48526',
+  ],
+  [
+    'linux',
+    'arm64',
+    '3.2.32-52194',
+    'c302361f52494de257044e912e43ed244bb29ee59f59345d25a8959327828337',
+  ],
+  [
+    'darwin',
+    'arm64',
+    '7.0.2-53644',
+    'fbc8ad9b328d05e16784d76b0181dda894c17001179dbf8c0d5dd00dc6271358',
+  ],
+  [
+    'darwin',
+    'x64',
+    '7.0.2-53644',
+    'e91c58872d3d498f2d3ac1c304ab3ae4602d016274cf3e0f0cb651ad765f1f54',
+  ],
+  [
+    'win32',
+    'x64',
+    '9.9.33-52230',
+    '63112ab9161e127f5f7e17998a7196e143808923fb54cbbf7b4e21426187a5f0',
+  ],
+  [
+    'win32',
+    'arm64',
+    '9.9.33-52230',
+    '54e5a6ce127a1f973f28e38ddfbf1338403ea323a141546a6578dd25332c928a',
+  ],
+] as const satisfies readonly BinaryContract[];
+
 export async function inspectNativeContracts(
   wrapperPath: string,
   version: unknown,
@@ -102,7 +143,7 @@ export async function inspectNativeContracts(
       : undefined;
   if (
     typeof clientVersion !== 'string' ||
-    ![...categoryProfiles, ...groupFileCountProfiles].some(
+    ![...categoryProfiles, ...groupFileCountProfiles, ...groupSearchProfiles].some(
       ([platform, arch, tag]) =>
         platform === process.platform && arch === process.arch && tag === clientVersion,
     )
@@ -148,4 +189,11 @@ export function supportsGroupFileCount(
   version: string,
 ): boolean {
   return matchesContract(profile, version, groupFileCountProfiles);
+}
+
+export function supportsGroupSearch(
+  profile: NativeContractProfile | undefined,
+  version: string,
+): boolean {
+  return matchesContract(profile, version, groupSearchProfiles);
 }

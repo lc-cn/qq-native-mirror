@@ -1,3 +1,5 @@
+import { captureGroupSearch } from './features/groups/group-search-input.ts';
+import { createGroupSearch } from './features/groups/group-search.ts';
 import { captureGroupFileCount } from './features/groups/group-file-input.ts';
 import { deleteGroupFolder, getGroupFileCount } from './features/groups/group-file-operations.ts';
 import { captureMergedForward } from './features/forward/merged-forward-input.ts';
@@ -6,7 +8,11 @@ import { createMessageQueries } from './features/messages/message-queries.ts';
 import { withCleanupFailure } from './runtime/cleanup.ts';
 import { NativeServiceLifetime } from './runtime/native-service-lifetime.ts';
 import type { NativeServiceContext } from './runtime/native-service-context.ts';
-import { supportsCategoryCreation, supportsGroupFileCount } from './native/native-contracts.ts';
+import {
+  supportsCategoryCreation,
+  supportsGroupFileCount,
+  supportsGroupSearch,
+} from './native/native-contracts.ts';
 import { createFriendCategory } from './features/contacts/friend-category-create.ts';
 import { createFriendSystemEvents } from './features/contacts/friend-system-events.ts';
 import { friendCategoryName } from './features/contacts/friend-categories.ts';
@@ -152,7 +158,12 @@ export function createNativeServices(context: NativeServiceContext) {
         dispatch: (rawMessages) => dispatch('Msg/onRecvMsg', [rawMessages]),
       }),
     );
-    const listener = (family: string, overrides: Native) => {
+    const listener = (
+      family: string,
+      overrides: Native,
+      acquired?: Native,
+      retainBeforeAdd = false,
+    ) => {
       const wrapped = new Map<PropertyKey, (...args: unknown[]) => unknown>();
       const target = new Proxy(overrides, {
         get: (object, key) => {
@@ -175,8 +186,9 @@ export function createNativeServices(context: NativeServiceContext) {
           return wrapped.get(key);
         },
       });
-      call(service(family), `addKernel${family}Listener`, target);
-      listeners.push(target);
+      if (retainBeforeAdd) listeners.push(target);
+      call(acquired ?? service(family), `addKernel${family}Listener`, target);
+      if (!retainBeforeAdd) listeners.push(target);
     };
     const groupSystemEvents = own(createGroupSystemEvents(emit));
     const friendSystemEvents = own(createFriendSystemEvents(emit));
@@ -236,6 +248,26 @@ export function createNativeServices(context: NativeServiceContext) {
         eventCall,
         awaitAlive,
         commitMembers: directory.rememberMembers,
+      }),
+    );
+    let searchRegistrationAttempted = false;
+    let searchHandle: Native | undefined;
+    const groupSearch = own(
+      createGroupSearch({
+        signal: lifetime.signal,
+        awaitAlive,
+        eventCall,
+        getSearchService: () => {
+          if (!searchRegistrationAttempted) {
+            const search = service('Search');
+            lifetime.signal.throwIfAborted();
+            searchHandle = search;
+            searchRegistrationAttempted = true;
+            listener('Search', {}, search, true);
+            lifetime.signal.throwIfAborted();
+          }
+          return searchHandle;
+        },
       }),
     );
     const friendRequests = own(
@@ -468,6 +500,15 @@ export function createNativeServices(context: NativeServiceContext) {
           case 'publishGroupNotice':
           case 'deleteGroupNotice':
             return groupNotices.invokeOperation(method, payload);
+          case 'searchGroup': {
+            const group = captureGroupSearch(payload.groupId);
+            if (!supportsGroupSearch(nativeContracts, version))
+              throw Object.assign(
+                new Error('Group search contract is not verified for this native binary'),
+                { code: 'unsupported-native-contract' },
+              );
+            return groupSearch.searchGroup(group);
+          }
           case 'getGroupFileCount': {
             const captured = captureGroupFileCount(payload.groupId);
             if (!supportsGroupFileCount(nativeContracts, version))

@@ -97,3 +97,25 @@ test('normalization preserves file resolution and rejects unsupported input befo
   assert.throws(() => normalizeMessage([{ type: 'unknown' }]), /Unsupported send element: unknown/);
   assert.throws(() => normalizeMessage(''), /must not be empty/);
 });
+
+test('group-search prepares uint64 identity before client and keeps original spelling', async () => {
+  validateCommandFlags('group-search', { config: 'fixture', 'group-id': '00123' });
+  await assert.rejects(
+    prepareCommand('group-search', { 'group-id': '18446744073709551616' }),
+    /uint64/,
+  );
+  const flags = { 'group-id': '00123' };
+  const action = await prepareCommand('group-search', flags);
+  flags['group-id'] = '999';
+  let captured = '';
+  assert.equal(
+    await action({
+      searchGroup: async (id: string) => {
+        captured = id;
+        return undefined;
+      },
+    } as QQClient),
+    undefined,
+  );
+  assert.equal(captured, '00123');
+});

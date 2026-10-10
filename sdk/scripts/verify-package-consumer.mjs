@@ -26,6 +26,7 @@ import { verifyActionPortConsumer } from './action-port-consumer-contract.mjs';
 import { verifyProfileRequestConsumer } from './profile-request-consumer-contract.mjs';
 import { verifyGroupRequestConsumer } from './group-request-consumer-contract.mjs';
 import { verifyGroupNoticeConsumer } from './group-notice-consumer-contract.mjs';
+import { verifyGroupSearchConsumer } from './group-search-consumer-contract.mjs';
 import { verifyQunWebConsumer } from './qun-web-consumer-contract.mjs';
 
 // Offline packaging check: controlled services and actual worker routing with a replacement kernel; no QQ native binaries or accounts.
@@ -192,6 +193,9 @@ const groupRequestChecks = await verifyGroupRequestConsumer(
   join(destination, 'node_modules/qq-native-client'),
 );
 const groupNoticeChecks = await verifyGroupNoticeConsumer(
+  join(destination, 'node_modules/qq-native-client'),
+);
+const groupSearchChecks = await verifyGroupSearchConsumer(
   join(destination, 'node_modules/qq-native-client'),
 );
 const groupWebChecks = await verifyQunWebConsumer(
@@ -545,6 +549,7 @@ const receipt = {
     ...groupRequestChecks,
     ...groupNoticeChecks,
     ...groupWebChecks,
+    groupSearchChecks,
     ...publicContractChecks,
     privateFilesExcluded: true,
     installedImport: true,

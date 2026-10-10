@@ -51,6 +51,7 @@ const usage = `qq-native-client <command> [options]
   group-essence --config FILE --group-id ID --message-id ID --enabled true|false
   group-muted --config FILE --group-id ID
   group-info --config FILE --group-id ID
+  group-search --config FILE --group-id ID
   group-file-count --config FILE --group-id ID
   group-folder-delete --config FILE --group-id ID --folder-id ID
   group-remark --config FILE --group-id ID --remark TEXT

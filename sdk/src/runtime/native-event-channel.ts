@@ -5,7 +5,7 @@ interface Waiter {
   check(args: unknown[]): unknown;
   resolve(value: unknown): void;
   reject(error: unknown): void;
-  stop(error: Error): void;
+  stop(error: unknown): void;
 }
 
 /** Correlates callbacks without treating callback success as native completion.
@@ -20,7 +20,7 @@ export function createNativeEventChannel(signal: AbortSignal) {
   return {
     dispatch(event: string, args: unknown[]): void {
       for (const waiter of [...waiters]) {
-        if (waiter.event !== event) continue;
+        if (!waiters.has(waiter) || waiter.event !== event) continue;
         try {
           const value = waiter.check(args);
           if (value !== undefined) {
@@ -39,10 +39,13 @@ export function createNativeEventChannel(signal: AbortSignal) {
       invoke: () => unknown,
       timeoutMs = 10_000,
       checkReturn?: (value: unknown) => boolean,
+      requestSignal?: AbortSignal,
     ): Promise<Value> {
       signal.throwIfAborted();
+      requestSignal?.throwIfAborted();
       if (closed) throw closedError();
-      let stop!: (error: Error) => void;
+      const activeSignal = requestSignal ? AbortSignal.any([signal, requestSignal]) : signal;
+      let stop!: (error: unknown) => void;
       const stopped = new Promise<never>((_, reject) => {
         stop = reject;
       });
@@ -54,8 +57,13 @@ export function createNativeEventChannel(signal: AbortSignal) {
       void result.catch(() => {});
       const failed = result.then(() => new Promise<never>(() => {}));
       void failed.catch(() => {});
-      const abort = () => stop(closedError());
-      signal.addEventListener('abort', abort, { once: true });
+      const abort = () => {
+        // Retire correlation synchronously: a native callback may run again
+        // before the rejected invocation resumes its finally block.
+        waiters.delete(waiter);
+        stop(signal.aborted ? closedError() : requestSignal?.reason);
+      };
+      activeSignal.addEventListener('abort', abort, { once: true });
       const timer = setTimeout(() => {
         waiters.delete(waiter);
         const error = new Error(`Native operation timed out: ${event}`);
@@ -70,12 +78,12 @@ export function createNativeEventChannel(signal: AbortSignal) {
           failed,
           stopped,
         ]);
-        signal.throwIfAborted();
+        activeSignal.throwIfAborted();
         if (closed) throw closedError();
         if (checkReturn && !checkReturn(returned))
           throw nativeResultError(`Native operation rejected: ${event}`, returned);
         const value = await Promise.race([result, stopped]);
-        signal.throwIfAborted();
+        activeSignal.throwIfAborted();
         if (closed) throw closedError();
         return value as Value;
       } catch (error) {
@@ -85,7 +93,7 @@ export function createNativeEventChannel(signal: AbortSignal) {
         waiters.delete(waiter);
         active.delete(waiter);
         clearTimeout(timer);
-        signal.removeEventListener('abort', abort);
+        activeSignal.removeEventListener('abort', abort);
       }
     },
     close(): void {

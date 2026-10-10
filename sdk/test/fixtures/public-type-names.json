@@ -40,6 +40,7 @@
   "GroupRequest",
   "GroupRequestOptions",
   "GroupRequestPage",
+  "GroupSearchMatch",
   "HistoryOptions",
   "KickOptions",
   "LoginRequest",

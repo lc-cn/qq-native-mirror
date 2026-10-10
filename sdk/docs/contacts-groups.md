@@ -2,12 +2,12 @@
 
 These are working-source additions for the next candidate, not published `0.0.1` features. Six-platform CI run `38014518589` succeeded for revision `7f24062` (categories/remarks/detail event); Revision `b0dee1c` group detail/membership additions also passed six-platform CI `38015512259`; its [bounded artifact audit](evidence/group-query-system-events-ci-38015512259.json) matched 94 compiled files to 47 source files and six native prepare/close receipts. Revision `9deaa56` administrator/mute events and mute-list additions passed CI `38016572108`; its [independent bounded artifact audit](evidence/group-admin-mute-ci-38016572108.json) matched 96 compiled files to 48 committed source files and six prepare/close receipts using 582496 bytes of actual ranges. Revision `8d2da41` category creation passed six-platform CI `38017928237`; its [independent bounded artifact audit](evidence/friend-category-create-ci-38017928237.json) matched 100 compiled files to 50 committed source files and seven manifest-bound receipts using 590577 bytes of actual ranges. The later friend-added source requires its own CI. The [7f CI audit](evidence/contacts-groups-ci-38014518589.json) independently matched the actual main package's 92 compiled files to 46 committed source files and six platform prepare/close receipts, using 571463 bytes of bounded official ranges. It did not re-read six large auxiliary packages or verify the complete ZIP digest. Controlled service/worker and installed-package checks are separate from real account acceptance.
 
-| Area              | Available methods/events                                                                                                                                                   | Remaining work                                                                                                                                        |
-| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Friends           | Lists/profiles, remarks/deletion, request listing/handling, `request.friend`, `friend-list-updated`, `friend-added`                                                        | Sending applications; independent deleted/profile/remark notices                                                                                      |
-| Friend categories | `listFriendCategories`, `addFriendCategory`; categorized `friend-list-updated` metadata                                                                                    | Delete/rename/reorder categories and move friends; parameters and completion responses need verification                                              |
-| Group queries     | Lists/members/`getGroupInfo`/`listGroupMutedMembers`, `group-list-updated`, `group-members-updated`, `group-info-updated`, `group-membership`, `group-admin`, `group-mute` | Complete join classification and real event/query acceptance                                                                                          |
-| Group actions     | Name/remark, all/member mute, member card/admin/kick, leave, notices, requests, essence add/remove folder deletion acknowledgement and single-group file count             | Create/search/join/invite, member titles, live essence pagination and add/remove events, remaining group file operations and real mutation acceptance |
+| Area              | Available methods/events                                                                                                                                                   | Remaining work                                                                                                                                 |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| Friends           | Lists/profiles, remarks/deletion, request listing/handling, `request.friend`, `friend-list-updated`, `friend-added`                                                        | Sending applications; independent deleted/profile/remark notices                                                                               |
+| Friend categories | `listFriendCategories`, `addFriendCategory`; categorized `friend-list-updated` metadata                                                                                    | Delete/rename/reorder categories and move friends; parameters and completion responses need verification                                       |
+| Group queries     | Lists/members/`getGroupInfo`/`listGroupMutedMembers`, `group-list-updated`, `group-members-updated`, `group-info-updated`, `group-membership`, `group-admin`, `group-mute` | Complete join classification and real event/query acceptance                                                                                   |
+| Group actions     | Name/remark, all/member mute, member card/admin/kick, leave, notices, requests, essence add/remove folder deletion acknowledgement and single-group file count             | Create/join/invite, member titles, live essence pagination and add/remove events, remaining group file operations and real mutation acceptance |
 
 ## Categorized friends
 
@@ -312,3 +312,39 @@ A reliable file list remains unresolved. The pinned upstream callback contains a
 `reqId`. The upstream caller accepts any matching callback family. Serializing
 SDK requests alone cannot identify unsolicited notifications. The SDK must first
 verify that correlation rather than returning a potentially unrelated list.
+
+## Search a group by number
+
+```ts
+const match = await client.searchGroup('123456');
+if (match) console.log(match.groupId, match.name, match.description);
+```
+
+CLI: `qq-native-client group-search --config ./qq.json --group-id 123456`.
+
+The input is a positive decimal uint64 string. The returned `GroupSearchMatch`
+contains group ID, name, member counts, native owner UID and `fingerMemo` as
+`description`; an owner account number is not inferred. This is a search snapshot,
+not proof of membership, permissions or a complete search catalog.
+
+The adapter requires a successful native acknowledgement and a matching callback.
+The inspected serializer spells its status property `errorode`, despite the
+upstream declaration spelling `errorCode`. Requiring numeric zero is a conservative
+SDK policy; the native core's status meanings have not been established. The
+entire callback batch validates before returning a match. Only a validated terminal
+page without the requested ID returns `undefined`; incomplete pages, timeouts and
+failures remain errors. The five-second callback deadline does not paginate or retry.
+
+Different keywords serialize, simultaneous identical keywords coalesce, and each
+caller receives its own DTO. Callbacks carry no request nonce, so a same-keyword
+unsolicited snapshot can satisfy a read. A failed search invalidates further
+searches in that Session. Close retires pending and queued work; it cannot undo an
+already issued native call. Unknown binary profiles fail before Search acquisition.
+Static binary inspection and controlled/installed tests do not establish real
+account search success, signing authenticity or cross-platform account support.
+
+The [search binary contract](evidence/group-search-contract.json) binds the six
+inspected default OS/architecture binaries to their exact versions and SHA-256.
+It records request/acknowledgement/callback codecs and listener registration,
+including the distinction between `fingerMemo` and `groupMemo`. This is static
+contract evidence, not a real native search receipt.

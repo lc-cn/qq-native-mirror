@@ -266,6 +266,18 @@ commit hook only after the whole batch validates and the Session remains alive.
 Closing invalidates the module and clears its query bookkeeping; the owning
 Session first aborts pending callbacks and native waits.
 
+`createGroupSearch` owns the group-number search queue, same-keyword coalescing,
+whole-batch projection and failed-channel quarantine. Its narrow lazy port exposes
+only `searchGroup`, returning unknown data. The facade and CLI share a pure uint64
+input capture module; composition checks the measured binary contract before
+acquiring Search or registering its one retained listener. Native callback objects
+remain retained until worker exit. The shared callback channel accepts a local
+abort signal, so feature close retires its waiter without closing sibling reads.
+The callback has no nonce: a matching unsolicited snapshot may satisfy a read;
+failure prevents another dispatch in that Session. Successful callers receive
+separate DTOs, and incomplete empty pages never become an absence result. This
+module performs no automatic paging, retries, account-ID conversion or mutations.
+
 `ContactDirectory` owns the account's UID cache, recipient resolution and validated
 friend/category reads. Its lazy Buddy, Profile and UID ports expose only the three native methods it
 actually uses, returning `unknown`; it cannot acquire arbitrary native services.

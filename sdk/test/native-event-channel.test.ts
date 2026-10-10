@@ -98,3 +98,120 @@ test('synchronous callback waits for successful return validation', async () => 
     (error) => error instanceof Error && 'code' in error && error.code === 7,
   );
 });
+
+test('request cancellation retires its waiter while sibling calls remain usable', async (context) => {
+  context.mock.timers.enable({ apis: ['setTimeout'] });
+  const channel = fixture();
+  const controller = new AbortController();
+  const reason = new Error('cancel this read');
+  let checks = 0;
+  let rejectLate!: (error: unknown) => void;
+  const pending = channel.call(
+    'cancelled',
+    (value: number) => {
+      checks++;
+      return value;
+    },
+    () =>
+      new Promise((_, reject) => {
+        rejectLate = reject;
+      }),
+    100,
+    undefined,
+    controller.signal,
+  );
+  controller.abort(reason);
+  channel.dispatch('cancelled', [0]);
+  assert.equal(checks, 0);
+  await assert.rejects(pending, (error) => error === reason);
+  channel.dispatch('cancelled', [1]);
+  context.mock.timers.tick(100);
+  assert.equal(checks, 0);
+  rejectLate(new Error('late native failure'));
+  assert.equal(
+    await channel.call(
+      'sibling',
+      (value: number) => value,
+      () => {
+        channel.dispatch('sibling', [42]);
+        return { result: 0 };
+      },
+    ),
+    42,
+  );
+});
+
+test('pre-aborted request cannot invoke native code', async () => {
+  const channel = fixture();
+  const reason = new Error('already cancelled');
+  let invoked = false;
+  await assert.rejects(
+    channel.call(
+      'reply',
+      (value: number) => value,
+      () => {
+        invoked = true;
+      },
+      100,
+      undefined,
+      AbortSignal.abort(reason),
+    ),
+    (error) => error === reason,
+  );
+  assert.equal(invoked, false);
+});
+
+test('reentrant account abort stops the remainder of an in-flight callback batch', async () => {
+  const controller = new AbortController();
+  const channel = createNativeEventChannel(controller.signal);
+  let siblingChecks = 0;
+  const first = channel.call(
+    'reply',
+    (value: number) => {
+      controller.abort();
+      return value;
+    },
+    () => ({ result: 0 }),
+  );
+  const sibling = channel.call(
+    'reply',
+    (value: number) => {
+      siblingChecks++;
+      return value;
+    },
+    () => ({ result: 0 }),
+  );
+  const failures = [assert.rejects(first), assert.rejects(sibling)];
+  channel.dispatch('reply', [42]);
+  await Promise.all(failures);
+  assert.equal(siblingChecks, 0);
+});
+
+test('cancellation during invocation or projection prevents a success', async () => {
+  for (const phase of ['invoke', 'project', 'return']) {
+    const channel = fixture();
+    const controller = new AbortController();
+    const reason = new Error('request retired');
+    await assert.rejects(
+      channel.call(
+        'reply',
+        (value: number) => {
+          if (phase === 'project') controller.abort(reason);
+          return value;
+        },
+        () => {
+          channel.dispatch('reply', [42]);
+          if (phase === 'invoke') controller.abort(reason);
+          return { result: 0 };
+        },
+        100,
+        () => {
+          if (phase === 'return') controller.abort(reason);
+          return true;
+        },
+        controller.signal,
+      ),
+      (error) => error === reason,
+    );
+  }
+});

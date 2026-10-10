@@ -1,3 +1,4 @@
+import { captureGroupSearch } from '../features/groups/group-search-input.ts';
 import {
   captureDeleteGroupFolder,
   captureGroupFileCount,
@@ -62,6 +63,7 @@ export function validateCommandFlags(command: string, flags: Record<string, stri
     'group-info': ['config', 'uin', 'group-id'],
     'group-name': ['config', 'uin', 'group-id', 'name'],
     'group-essence': ['config', 'uin', 'group-id', 'message-id', 'enabled'],
+    'group-search': ['config', 'uin', 'group-id'],
     'group-file-count': ['config', 'uin', 'group-id'],
     'group-folder-delete': ['config', 'uin', 'group-id', 'folder-id'],
     'group-remark': ['config', 'uin', 'group-id', 'remark'],
@@ -366,6 +368,10 @@ export async function prepareCommand(
       const name = required(flags, 'name');
       if (!name.trim()) throw new Error('--name must not be blank');
       return (client) => client.setGroupName(group, name);
+    }
+    case 'group-search': {
+      const group = captureGroupSearch(required(flags, 'group-id'));
+      return (client) => client.searchGroup(group);
     }
     case 'group-file-count': {
       const captured = captureGroupFileCount(required(flags, 'group-id'));

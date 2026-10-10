@@ -1,3 +1,4 @@
+import { captureGroupSearch } from '../features/groups/group-search-input.ts';
 import {
   captureDeleteGroupFolder,
   captureGroupFileCount,
@@ -37,6 +38,7 @@ import type {
   GroupEssenceMessage,
   GroupEssenceListOptions,
   Group,
+  GroupSearchMatch,
   GroupMember,
   GroupInfoUpdate,
   GroupMutedMember,
@@ -265,6 +267,9 @@ export class QQClient extends EventEmitter<ClientEvents> {
     reason?: string,
   ): Promise<void> {
     return this.#operation('handleGroupRequest', { request, accept, reason });
+  }
+  async searchGroup(groupId: string): Promise<GroupSearchMatch | undefined> {
+    return this.#operation('searchGroup', { groupId: captureGroupSearch(groupId) });
   }
   async getGroupFileCount(groupId: string): Promise<number> {
     return this.#operation('getGroupFileCount', captureGroupFileCount(groupId));

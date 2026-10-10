@@ -74,6 +74,13 @@ export interface Group {
   maxMemberCount: number;
 }
 
+/** A matched native search snapshot; ownerUid is not a numeric account ID. */
+export interface GroupSearchMatch extends Group {
+  ownerUid: string;
+  /** Native fingerMemo, distinct from groupMemo. */
+  description: string;
+}
+
 export interface GroupMember {
   userId: string;
   uid: string;

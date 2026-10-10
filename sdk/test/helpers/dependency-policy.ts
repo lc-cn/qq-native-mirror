@@ -63,6 +63,7 @@ const facadeInputs = new Set([
   'src/features/media/download-input.ts',
   'src/features/groups/group-essence-input.ts',
   'src/features/groups/group-file-input.ts',
+  'src/features/groups/group-search-input.ts',
 ]);
 
 // Cross-domain collaboration is reviewed at exact module pairs. A new feature

@@ -987,3 +987,26 @@ test('public muted-member query preserves numeric string group ID and rejects in
     await client.close();
   }
 });
+
+test('public group search validates before IPC and preserves its complete DTO', async () => {
+  const worker = new Worker(),
+    client = new QQClient(worker as unknown as ChildProcess, 500);
+  worker.emit('message', { event: 'ready', payload: { uin: '456', uid: 'u_self' } });
+  await assert.rejects(client.searchGroup('18446744073709551616'), /uint64/);
+  assert.equal(worker.requests.length, 0);
+  const pending = client.searchGroup('00123');
+  const sent = worker.requests.at(-1)!;
+  assert.equal(sent.method, 'searchGroup');
+  assert.equal(sent.groupId, '00123');
+  const match = {
+    groupId: '123',
+    name: 'g',
+    memberCount: 1,
+    maxMemberCount: 2,
+    ownerUid: 'u_owner',
+    description: 'finger',
+  };
+  worker.emit('message', { id: sent.id, result: match });
+  assert.deepEqual(await pending, match);
+  await client.close();
+});
