@@ -2,6 +2,7 @@ assets/
 remaining-assets/
 gzip-assets/
 sdk/node_modules/
+sdk/.local/
 sdk/dist/
 sdk/native/*-*/
 out/

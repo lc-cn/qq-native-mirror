@@ -19,7 +19,30 @@ const contractDependencies: Record<string, readonly string[]> = {
   ],
   'src/contracts/forward.ts': ['src/contracts/messages.ts'],
 };
-const composition = new Set(['src/worker.ts', 'src/kernel.ts', 'src/native-services.ts']);
+const workerDependencies = new Set([
+  'src/kernel.ts',
+  'src/runtime/operations.ts',
+  'src/runtime/worker-read-requests.ts',
+  'src/storage/data-directory-lock.ts',
+  'src/features/media/record-codec-loader.ts',
+  'src/features/media/video-codec-loader.ts',
+  'src/features/media/builtin-record-codec.ts',
+  'src/native/native-contracts.ts',
+]);
+const kernelDependencies = new Set([
+  'src/native-services.ts',
+  'src/native/login-request.ts',
+  'src/runtime/account-session-lifecycle.ts',
+  'src/runtime/kernel-environment.ts',
+  'src/runtime/cleanup.ts',
+]);
+const serviceRuntimeDependencies = new Set([
+  'src/runtime/cleanup.ts',
+  'src/runtime/native-service-lifetime.ts',
+  'src/runtime/native-service-context.ts',
+  'src/runtime/native-event-channel.ts',
+  'src/runtime/operations.ts',
+]);
 const nativeContracts = new Set([
   'src/native/native-object.ts',
   'src/native/native-contracts.ts',
@@ -83,6 +106,16 @@ export const crossFeatureDependencies = [
 
 export function dependencyViolation({ from, to, typeOnly }: SourceDependency): string | undefined {
   if (!to.startsWith('src/')) {
+    if (from === 'src/runtime/kernel-environment.ts')
+      return ['node:fs/promises', 'node:path', 'node:os'].includes(to)
+        ? undefined
+        : 'Environment preparation owns local configuration, not transports or account actions.';
+    if (from === 'src/worker.ts')
+      return ['node:os', 'node:fs/promises'].includes(to)
+        ? undefined
+        : 'The worker only acquires its reviewed process and directory dependencies.';
+    if (from === 'src/kernel.ts' || from === 'src/native-services.ts')
+      return 'Authentication and service composition delegate IO to their resource owners.';
     if (from === 'src/native/native-bundle-installer.ts')
       return [
         'node:crypto',
@@ -143,13 +176,26 @@ export function dependencyViolation({ from, to, typeOnly }: SourceDependency): s
       : 'Public contracts are type-only; the entry reexports them through the compatibility barrel.';
   if (primitives.has(from)) return 'Public primitives cannot depend on implementation.';
   if (primitives.has(to)) return;
-  if (composition.has(from))
-    return to === 'src/index.ts' ||
-      to.startsWith('src/client/') ||
-      to === 'src/cli.ts' ||
-      to.startsWith('src/cli/')
-      ? 'Native composition cannot depend on application entry points.'
-      : undefined;
+  if (from === 'src/worker.ts')
+    return workerDependencies.has(to)
+      ? undefined
+      : 'The worker owns IPC and native bootstrap, not domain operation composition.';
+  if (from === 'src/kernel.ts')
+    return kernelDependencies.has(to) || (typeOnly && to === 'src/native/native-object.ts')
+      ? undefined
+      : 'Authentication composes its environment and account lifetime, not feature implementations.';
+  if (from === 'src/native-services.ts')
+    return to.startsWith('src/features/') ||
+      serviceRuntimeDependencies.has(to) ||
+      to === 'src/native/native-contracts.ts' ||
+      (typeOnly && nativeContracts.has(to))
+      ? undefined
+      : 'Service composition cannot acquire bundles, account directories or authentication owners.';
+  if (from === 'src/runtime/kernel-environment.ts')
+    return typeOnly &&
+      ['src/native/native-object.ts', 'src/runtime/account-session-lifecycle.ts'].includes(to)
+      ? undefined
+      : 'Environment preparation uses injected callbacks and does not interpret authentication state.';
   if (from.startsWith('src/storage/'))
     return to.startsWith('src/storage/') ? undefined : 'Storage cannot depend on higher layers.';
   if (from.startsWith('src/native/'))

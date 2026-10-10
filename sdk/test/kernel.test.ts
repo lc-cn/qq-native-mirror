@@ -249,7 +249,7 @@ for (const rememberPassword of [undefined, false, true]) {
       () => {},
     );
     try {
-      await assert.rejects(kernel.login({ method: 'qr' }), /mock-stop/);
+      await assert.rejects(kernel.login({ method: 'qr' }), /^Error: Native login failed$/);
       assert.deepEqual(
         calls,
         rememberPassword === undefined

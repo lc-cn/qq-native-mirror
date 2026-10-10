@@ -138,6 +138,18 @@ test('dependency policy rejects reverse, type-only and new cross-domain coupling
     ['src/client/new-facade.ts', 'src/runtime/client-lifecycle.ts'],
     ['src/client/new-facade.ts', 'node:fs'],
     ['src/kernel.ts', 'src/client/qq-client.ts'],
+    ['src/kernel.ts', 'src/features/groups/group-operations.ts'],
+    ['src/kernel.ts', 'src/storage/data-directory-lock.ts'],
+    ['src/kernel.ts', 'node:fs/promises'],
+    ['src/worker.ts', 'src/native-services.ts'],
+    ['src/worker.ts', 'src/features/groups/group-operations.ts'],
+    ['src/native-services.ts', 'src/kernel.ts'],
+    ['src/native-services.ts', 'src/runtime/kernel-environment.ts'],
+    ['src/native-services.ts', 'src/native/native-package.ts'],
+    ['src/native-services.ts', 'src/storage/data-directory-lock.ts'],
+    ['src/runtime/kernel-environment.ts', 'src/kernel.ts'],
+    ['src/runtime/kernel-environment.ts', 'src/native-services.ts'],
+    ['src/runtime/kernel-environment.ts', 'node:child_process'],
     ['src/native-services.ts', 'src/client/create-client.ts'],
     ['src/unowned.ts', 'src/runtime/client-lifecycle.ts'],
     ['src/contracts/groups.ts', 'src/features/groups/group-queries.ts'],
@@ -189,9 +201,14 @@ test('package entry contains only public reexports and resource owners use expli
   for (const [path, edges] of graph) {
     if (
       !label(path).startsWith('src/client/') &&
-      !['src/native/native-bundle-installer.ts', 'src/storage/native-package-lock.ts'].includes(
-        label(path),
-      )
+      ![
+        'src/native/native-bundle-installer.ts',
+        'src/storage/native-package-lock.ts',
+        'src/runtime/kernel-environment.ts',
+        'src/kernel.ts',
+        'src/native-services.ts',
+        'src/worker.ts',
+      ].includes(label(path))
     )
       continue;
     for (const edge of edges) {

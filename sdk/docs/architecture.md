@@ -19,6 +19,8 @@ WorkerRpcChannel (request correlation and settlement)
         |
 worker.ts (IPC boundary) -> kernel.ts (authentication composition)
                                 |
+                     KernelEnvironment (local preparation)
+                                |
                      AccountSessionLifecycle
                                 |
                    NativeServiceContext / native-services.ts
@@ -78,6 +80,27 @@ Internal Session, transport and codec ports stay in their existing ownership lay
 public native manifest data is distinct from the proprietary native service types.
 
 ## Encapsulation and variation points
+
+`KernelEnvironment` owns one cached preparation promise, local directories, device
+configuration, Session factory selection and engine/login initialization. It does
+not connect or authenticate. `kernel.ts` owns authentication generation, pending
+login, identity checks, timers and offline transitions. Acquired handles become
+visible to that state machine before engine initialization and listener
+registration: native calls can synchronously invoke callbacks. A rejected
+preparation is retained rather than replaying native initialization; factory
+selection occurs before invocation, never by catching a failure and trying
+another signature. Login failure notifications treat arbitrary native arguments
+as opaque and use a fixed public error, so serialization cannot interrupt pending
+settlement or disclose the payload.
+
+The three composition roots have different import permissions. The worker owns
+IPC and reviewed native bootstrap dependencies. Authentication may compose the
+environment and account lifetime, but cannot import feature implementations or
+bundle storage. Service composition assembles domain adapters and its reviewed
+runtime ports; it cannot acquire bundles, account locks or authentication owners.
+The environment accepts callbacks without importing the kernel or interpreting
+its state. Architecture tests check these constraints for runtime and type edges,
+including each owner's Node IO dependencies.
 
 The package entry only reexports its public interface. `createClient` selects and
 validates a bundle, resolves package-relative worker/bridge paths, and releases

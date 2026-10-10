@@ -18,6 +18,7 @@ not establish interoperability with QQ or prove an account operation succeeded.
 | Request correlation, shutdown or account ownership    | Existing `src/runtime/` lifetime owner                                           |
 | Bundle source selection and manifest constraints      | `src/native/native-package.ts`                                                   |
 | Mirror installation transaction and content cache     | `src/native/native-bundle-installer.ts`; package locking stays in `src/storage/` |
+| Prepare local engine/login configuration              | `src/runtime/kernel-environment.ts`; no connection or authentication             |
 | Compose an authenticated Session and feature adapters | `kernel.ts` and `native-services.ts`                                             |
 | CLI flags and client execution                        | `src/cli/`; executable entry remains `cli.ts`                                    |
 

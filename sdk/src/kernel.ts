@@ -8,9 +8,7 @@ import type {
   AccountIdentity,
   AccountSessionOptions,
 } from './runtime/account-session-lifecycle.ts';
-import { mkdir } from 'node:fs/promises';
-import { join } from 'node:path';
-import { hostname, platform, release } from 'node:os';
+import { createKernelEnvironment } from './runtime/kernel-environment.ts';
 
 // QQ exports are proprietary and versioned; this boundary intentionally validates
 // the required methods at runtime rather than asserting a stable upstream API.
@@ -34,7 +32,6 @@ export function createKernel(
   emit: (event: string, payload: unknown) => void,
 ) {
   let loginService: NativeObject | undefined;
-  let listener: NativeObject | undefined;
   let startupSession: NativeObject | undefined;
   let accountSession: NativeObject | undefined;
   let sessionStrategy: 'startup' | 'direct' | undefined;
@@ -44,7 +41,6 @@ export function createKernel(
   let lastMsfStatus: { status: unknown; reason: unknown } | undefined;
   let accountMsfConnected = false;
   let closed = false;
-  let initialized = false;
   let generation = 0;
   let pending:
     | {
@@ -116,7 +112,6 @@ export function createKernel(
     if (typeof object[method] !== 'function') throw new Error(`Native kernel is missing ${method}`);
     return object[method](...args);
   };
-  const noop = () => {};
   const transitionOffline = (details: Record<string, unknown>) => {
     if (closed) return;
     generation++;
@@ -322,188 +317,127 @@ export function createKernel(
       if (active()) fail(error instanceof Error ? error : new Error(String(error)));
     }
   };
-  const initialize = async () => {
-    if (closed) throw new Error('Client is closed');
-    if (initialized) return;
-    const globalDir = join(options.dataDir, 'global');
-    await mkdir(globalDir, { recursive: true });
-    if (closed) throw new Error('Client is closed');
-    const nativePlatform = { win32: 3, darwin: 4, linux: 5 }[
-      platform() as 'win32' | 'darwin' | 'linux'
-    ];
-    if (!nativePlatform) throw new Error(`Unsupported platform: ${platform()}`);
-    notify('diagnostic', { stage: 'engine-get' });
-    const engine = invoke(wrapper.NodeIQQNTWrapperEngine ?? {}, 'get');
-    notify('diagnostic', { stage: 'login-service-get' });
-    loginService = invoke(wrapper.NodeIKernelLoginService ?? {}, 'get');
-    notify('diagnostic', { stage: 'session-create' });
-    const startupFactory = wrapper.NodeIQQNTStartupSessionWrapper;
-    const accountFactory = wrapper.NodeIQQNTWrapperSession;
-    // Choose from the exported surface before dispatching either factory.
-    // A thrown native call may already have effects; never use it as a probe
-    // for another signature or Session strategy.
-    if (
-      typeof startupFactory?.create === 'function' &&
-      typeof accountFactory?.getNTWrapperSession === 'function'
-    ) {
-      sessionStrategy = 'startup';
-      startupSession = invoke(startupFactory, 'create');
-      accountSession = invoke(accountFactory, 'getNTWrapperSession', 'nt_1');
-    } else if (typeof accountFactory?.create === 'function') {
-      sessionStrategy = 'direct';
-      accountSession = invoke(accountFactory, 'create');
-    } else throw new Error('Native kernel has no supported Session creation surface');
-    // Retain session instances; native login initialization may depend on them.
-    void startupSession;
-    void accountSession;
-    const osVersion = options.device?.osVersion ?? release();
-    const hostName = options.device?.hostname ?? hostname();
-    const engineCallbacks = callbacks(
-      [
-        'onLog',
-        'onGetSrvCalTime',
-        'onShowErrUITips',
-        'fixPicImgType',
-        'getAppSetting',
-        'onInstallFinished',
-        'onUpdateGeneralFlag',
-        'onGetOfflineMsg',
-      ],
-      {},
-      'Global',
-    );
-    notify('diagnostic', { stage: 'engine-init' });
-    invoke(
-      engine,
-      'initWithDeskTopConfig',
-      {
-        base_path_prefix: '',
-        platform_type: nativePlatform,
-        app_type: 4,
-        app_version: options.version.clientVersion,
-        os_version: osVersion,
-        use_xlog: false,
-        qua: options.version.qua,
-        global_path_config: { desktopGlobalPath: globalDir },
-        thumb_config: { maxSide: 324, minSide: 48, longLimit: 6, density: 2 },
-      },
-      new Proxy(engineCallbacks, { get: (target, key) => Reflect.get(target, key) ?? noop }),
-    );
-    notify('diagnostic', { stage: 'login-config' });
-    invoke(loginService!, 'initConfig', {
-      machineId: '',
-      appid: options.version.appId,
-      platVer: osVersion,
-      commonPath: globalDir,
-      clientVer: options.version.clientVersion,
-      hostName,
-      externalVersion: false,
-    });
-    if (options.rememberPassword !== undefined) {
-      if (typeof options.rememberPassword !== 'boolean')
-        throw new TypeError('rememberPassword must be boolean');
-      invoke(loginService!, 'setRemerberPwd', options.rememberPassword);
-    }
-    listener = Object.fromEntries(
-      [
-        'onLoginConnected',
-        'onLoginDisConnected',
-        'onLoginConnecting',
-        'onQRCodeGetPicture',
-        'onQRCodeLoginPollingStarted',
-        'onQRCodeSessionUserScaned',
-        'onQRCodeLoginSucceed',
-        'onQRCodeSessionFailed',
-        'onLoginFailed',
-        'onLogoutSucceed',
-        'onLogoutFailed',
-        'onUserLoggedIn',
-        'onQRCodeSessionQuickLoginFailed',
-        'onPasswordLoginFailed',
-        'OnConfirmUnusualDeviceFailed',
-        'onQQLoginNumLimited',
-        'onLoginState',
-        'onLoginRecordUpdate',
-      ].map((name) => [name, auditedNoop('Login', name)]),
-    );
-    Object.assign(listener, {
-      onLoginConnected: () => {
-        void beginAuthentication();
-      },
-      onLoginDisConnected: (...args: unknown[]) => {
-        transitionOffline({
-          source: 'login',
-          kind: forcedOffline ? 'forced' : 'unknown',
-          args,
-          ...(lastMsfStatus ?? {}),
-        });
-      },
-      onQRCodeGetPicture: (data: { pngBase64QrcodeData: string; qrcodeUrl: string }) => {
-        if (!pending) return;
-        const image = Buffer.from(
-          data.pngBase64QrcodeData.replace(/^data:image\/\w+;base64,/, ''),
-          'base64',
-        );
-        notify('qrcode', { image, url: data.qrcodeUrl });
-      },
-      onQRCodeSessionUserScaned: () => notify('qr-scanned', undefined),
-      onQRCodeLoginSucceed: (account: AccountIdentity) => {
-        if (!pending) return;
-        const authentication = pending;
-        const attempt = generation;
-        const uin = nativeAccountNumber(account?.uin);
-        if (uin === undefined || typeof account?.uid !== 'string' || !account.uid.trim()) {
-          fail(new Error('Invalid native login identity'));
-          return;
-        }
-        if (!pending.authenticationIssued) {
-          fail(new Error('Native authentication arrived before the login request was issued'));
-          return;
-        }
-        if (
-          pending.method !== 'qr' &&
-          (pending.targetUin === undefined || uin !== pending.targetUin)
-        ) {
-          fail(new Error('Native login account does not match the requested account'));
-          return;
-        }
-        const accountIdentity = { uid: account.uid, uin };
-        notify('authenticated', { ...accountIdentity });
-        if (closed || generation !== attempt || pending !== authentication) return;
-        startAccountSession(accountIdentity);
-      },
-      onQRCodeSessionFailed: (type: number, code: number) =>
-        fail(new Error(`QR login failed (${type}, ${code})`)),
-      onLoginFailed: (...details: unknown[]) =>
-        fail(new Error(`Native login failed: ${JSON.stringify(details)}`)),
-      onUserLoggedIn: (uin: unknown) =>
-        fail(new Error(`Account already logged in: ${String(uin)}`)),
-      onLogoutSucceed: () => {
-        generation++;
-        clearTimers();
-        identity = undefined;
-        requesting = false;
-        const current = pending;
-        pending = undefined;
-        const services = detachSession();
-        const original = new Error('Native account logged out during login');
-        const failure = cleanupFailure(services);
-        current?.reject(failure ? withCleanupFailure(original, failure.error) : original);
-        if (failure) reportCleanupFailure(failure.error, original);
-        notify('logout', undefined);
-      },
-    });
-    // Local NapCat returns a no-op for newly added callbacks. Preserve that behavior
-    // while keeping a strong reference for native asynchronous callback delivery.
-    listener = new Proxy(listener, {
-      get: (target, key) => Reflect.get(target, key) ?? auditedNoop('Login', String(key)),
-    });
-    notify('diagnostic', { stage: 'login-listener' });
-    invoke(loginService!, 'addKernelLoginListener', listener);
-    initialized = true;
-  };
-  let preparation: Promise<void> | undefined;
-  const prepare = () => (preparation ??= initialize());
+  const environment = createKernelEnvironment({
+    wrapper,
+    options,
+    isClosed: () => closed,
+    diagnostic: (payload) => notify('diagnostic', payload),
+    onAcquired: (value) => {
+      ({ loginService, accountSession, startupSession, sessionStrategy } = value);
+    },
+    engineCallbacks: () => {
+      return callbacks(
+        [
+          'onLog',
+          'onGetSrvCalTime',
+          'onShowErrUITips',
+          'fixPicImgType',
+          'getAppSetting',
+          'onInstallFinished',
+          'onUpdateGeneralFlag',
+          'onGetOfflineMsg',
+        ],
+        {},
+        'Global',
+      );
+    },
+    loginCallbacks: () => {
+      const listener = Object.fromEntries(
+        [
+          'onLoginConnected',
+          'onLoginDisConnected',
+          'onLoginConnecting',
+          'onQRCodeGetPicture',
+          'onQRCodeLoginPollingStarted',
+          'onQRCodeSessionUserScaned',
+          'onQRCodeLoginSucceed',
+          'onQRCodeSessionFailed',
+          'onLoginFailed',
+          'onLogoutSucceed',
+          'onLogoutFailed',
+          'onUserLoggedIn',
+          'onQRCodeSessionQuickLoginFailed',
+          'onPasswordLoginFailed',
+          'OnConfirmUnusualDeviceFailed',
+          'onQQLoginNumLimited',
+          'onLoginState',
+          'onLoginRecordUpdate',
+        ].map((name) => [name, auditedNoop('Login', name)]),
+      );
+      Object.assign(listener, {
+        onLoginConnected: () => {
+          void beginAuthentication();
+        },
+        onLoginDisConnected: (...args: unknown[]) => {
+          transitionOffline({
+            source: 'login',
+            kind: forcedOffline ? 'forced' : 'unknown',
+            args,
+            ...(lastMsfStatus ?? {}),
+          });
+        },
+        onQRCodeGetPicture: (data: { pngBase64QrcodeData: string; qrcodeUrl: string }) => {
+          if (!pending) return;
+          const image = Buffer.from(
+            data.pngBase64QrcodeData.replace(/^data:image\/\w+;base64,/, ''),
+            'base64',
+          );
+          notify('qrcode', { image, url: data.qrcodeUrl });
+        },
+        onQRCodeSessionUserScaned: () => notify('qr-scanned', undefined),
+        onQRCodeLoginSucceed: (account: AccountIdentity) => {
+          if (!pending) return;
+          const authentication = pending;
+          const attempt = generation;
+          const uin = nativeAccountNumber(account?.uin);
+          if (uin === undefined || typeof account?.uid !== 'string' || !account.uid.trim()) {
+            fail(new Error('Invalid native login identity'));
+            return;
+          }
+          if (!pending.authenticationIssued) {
+            fail(new Error('Native authentication arrived before the login request was issued'));
+            return;
+          }
+          if (
+            pending.method !== 'qr' &&
+            (pending.targetUin === undefined || uin !== pending.targetUin)
+          ) {
+            fail(new Error('Native login account does not match the requested account'));
+            return;
+          }
+          const accountIdentity = { uid: account.uid, uin };
+          notify('authenticated', { ...accountIdentity });
+          if (closed || generation !== attempt || pending !== authentication) return;
+          startAccountSession(accountIdentity);
+        },
+        onQRCodeSessionFailed: (type: number, code: number) =>
+          fail(new Error(`QR login failed (${type}, ${code})`)),
+        onLoginFailed: () => fail(new Error('Native login failed')),
+        onUserLoggedIn: (uin: unknown) =>
+          fail(new Error(`Account already logged in: ${String(uin)}`)),
+        onLogoutSucceed: () => {
+          generation++;
+          clearTimers();
+          identity = undefined;
+          requesting = false;
+          const current = pending;
+          pending = undefined;
+          const services = detachSession();
+          const original = new Error('Native account logged out during login');
+          const failure = cleanupFailure(services);
+          current?.reject(failure ? withCleanupFailure(original, failure.error) : original);
+          if (failure) reportCleanupFailure(failure.error, original);
+          notify('logout', undefined);
+        },
+      });
+      // Local NapCat returns a no-op for newly added callbacks. Preserve that behavior
+      // while keeping a strong reference for native asynchronous callback delivery.
+      return new Proxy(listener, {
+        get: (target, key) => Reflect.get(target, key) ?? auditedNoop('Login', String(key)),
+      });
+    },
+  });
+  const prepare = environment.prepare;
   return {
     /** Initialize the local environment without connecting or authenticating. */
     prepare,

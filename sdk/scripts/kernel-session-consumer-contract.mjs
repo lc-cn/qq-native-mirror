@@ -9,7 +9,7 @@ import { pathToFileURL } from 'node:url';
  */
 export async function verifyKernelSessionConsumer(packageRoot) {
   const { createKernel } = await import(pathToFileURL(join(packageRoot, 'dist/kernel.js')).href);
-  async function fixture(accountFactory, startupFactory) {
+  async function fixture(accountFactory, startupFactory, loginFailure) {
     const dataDir = await mkdtemp(join(tmpdir(), 'qq-installed-session-'));
     let loginListener;
     const events = [];
@@ -23,6 +23,10 @@ export async function verifyKernelSessionConsumer(packageRoot) {
       },
       getMsfStatus: () => 0,
       getQRCodePicture() {
+        if (loginFailure !== undefined) {
+          loginListener.onLoginFailed(loginFailure);
+          return true;
+        }
         loginListener.onQRCodeLoginSucceed({ uin: '123', uid: 'u_fake' });
         return true;
       },
@@ -201,5 +205,37 @@ export async function verifyKernelSessionConsumer(packageRoot) {
   } finally {
     await unsupported.close();
   }
-  return { sessionStrategyContract: true, nativeSessionStrategyLoginAttempted: false };
+  const circular = {};
+  circular.self = circular;
+  for (const payload of [
+    circular,
+    1n,
+    {
+      toJSON() {
+        throw new Error('Opaque payload must not be evaluated');
+      },
+    },
+    'SYNTHETIC_PRIVATE_VALUE',
+  ]) {
+    const f = await fixture({ create: () => ({}) }, undefined, payload);
+    try {
+      const prepared = f.kernel.prepare();
+      assert.equal(f.kernel.prepare(), prepared);
+      await prepared;
+      await assert.rejects(f.kernel.login({ method: 'qr' }), (error) => {
+        assert.equal(error.message, 'Native login failed');
+        return true;
+      });
+      assert.equal(f.events.filter((name) => name === 'login-error').length, 1);
+      assert.equal(f.events.includes('authenticated'), false);
+      assert.equal(f.events.includes('ready'), false);
+    } finally {
+      await f.close();
+    }
+  }
+  return {
+    sessionStrategyContract: true,
+    opaqueLoginFailureContract: true,
+    nativeSessionStrategyLoginAttempted: false,
+  };
 }
