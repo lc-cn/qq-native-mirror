@@ -490,12 +490,20 @@ ABI. Audit exceptions and synchronous reentrancy retain their existing behavior.
 mention interpretation. It has no filesystem or native-operation dependency;
 its complete runtime closure is checked by the pure-module gate. Unknown native
 elements retain their original objects. `outbound-elements` owns local image and
-attachment preparation and validated reply references. It accepts only the image
+attachment preparation and validated reply references. It accepts only the shared media
 staging and message-ID query ports, preserving their receivers and native request
 shapes. `native-message-sender` composes these constructors and keeps concurrent
 preparation, send correlation and account-close checks. Face construction belongs
 to the shared pure `face-input` owner. Internal paths are private; the former mixed
 module is removed from source and packed output without changing public exports.
+
+`runtime/media-contracts` owns the one `MediaStagingPort` used by image, record,
+video preparation and the message sender. Its native request retains the fixed
+eight fields and its result stays unknown until each constructor validates the
+cache path. It cannot send messages, query history or acquire services. Codec and
+file lifetimes remain with the media constructors; video retains its existing
+abort/deadline checks, while image and record retain the sender's completion
+checks. The port shares the native method contract, not a new preparation policy.
 
 ## Lifecycle and error contracts
 

@@ -1,16 +1,20 @@
 import type { NativeObject as Native } from '../../native/native-object.ts';
 import type { NativePeer, NativeMessage } from '../../native/message-contracts.ts';
-import type { MediaTools, RecordCodec, VideoCodec } from '../../runtime/media-contracts.ts';
+import type {
+  MediaTools,
+  RecordCodec,
+  VideoCodec,
+  MediaStagingPort,
+} from '../../runtime/media-contracts.ts';
 import type { MessageIdQueryPort } from './message-query.ts';
 import type { NativeEventChannel } from '../../runtime/native-event-channel.ts';
 import { sentReceipt } from './send-input.ts';
 import { createImageElement, createFileElement, createReplyElement } from './outbound-elements.ts';
-import type { ImageStagingPort } from './outbound-elements.ts';
 import { faceElement } from './face-input.ts';
 import { createVideoElement } from '../media/media-send.ts';
 import { createRecordElement } from '../media/media-record.ts';
 
-export interface MessageSendPort extends MessageIdQueryPort, ImageStagingPort {
+export interface MessageSendPort extends MessageIdQueryPort, MediaStagingPort {
   generateMsgUniqueId?: (chatType: 1 | 2, serverTime: unknown) => unknown;
   sendMsg?: (
     id: string,

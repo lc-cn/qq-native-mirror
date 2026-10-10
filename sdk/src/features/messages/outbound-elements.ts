@@ -3,22 +3,9 @@ import { readFile, stat, mkdir, copyFile } from 'node:fs/promises';
 import { basename, dirname, isAbsolute } from 'node:path';
 import { queryNativeMessage } from './message-query.ts';
 import type { MessageIdQueryPort } from './message-query.ts';
+import type { MediaStagingPort } from '../../runtime/media-contracts.ts';
 import type { NativePeer } from '../../native/message-contracts.ts';
 import type { NativeObject as Native } from '../../native/native-object.ts';
-
-/** Only the local image staging operation used by this constructor. */
-export interface ImageStagingPort {
-  getRichMediaFilePathForGuild?: (request: {
-    md5HexStr: string;
-    fileName: string;
-    elementType: number;
-    elementSubType: number;
-    thumbSize: number;
-    needCreate: boolean;
-    downloadType: number;
-    file_uuid: string;
-  }) => unknown;
-}
 
 /** Contract: NapCatQQ native MsgService + OneBot file converter, fixed commit:
  * https://github.com/NapNeko/NapCatQQ/blob/26d7533e0f5800fdff865ab2f2ad7692917e1076/packages/napcat-onebot/api/file.ts#L62-L87
@@ -61,7 +48,7 @@ function dimensions(data: Buffer): { width: number; height: number; gif: boolean
 }
 export async function createImageElement(
   file: string,
-  msgService: ImageStagingPort,
+  msgService: MediaStagingPort,
 ): Promise<Native> {
   if (typeof file !== 'string' || !isAbsolute(file))
     throw new Error('Image requires an absolute local file path');

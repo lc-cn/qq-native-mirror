@@ -1,3 +1,20 @@
+/** Native cache allocation shared by image, record and video preparation.
+ * Allocation does not send a message. Each caller validates the unknown path
+ * and owns its file/codec lifetime; this port cannot acquire a Session.
+ */
+export interface MediaStagingPort {
+  getRichMediaFilePathForGuild?: (request: {
+    md5HexStr: string;
+    fileName: string;
+    elementType: number;
+    elementSubType: number;
+    thumbSize: number;
+    needCreate: boolean;
+    downloadType: number;
+    file_uuid: string;
+  }) => unknown;
+}
+
 /** Ports supplied by bundled codecs, consumer modules or command-line tools.
  * Contract ownership is independent of module loading and media preparation.
  */

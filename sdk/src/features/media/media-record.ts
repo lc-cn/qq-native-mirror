@@ -4,7 +4,7 @@ import { copyFile, mkdir, mkdtemp, open, rm, stat } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { basename, dirname, isAbsolute, join, sep } from 'node:path';
 
-import type { RecordCodec } from '../../runtime/media-contracts.ts';
+import type { RecordCodec, MediaStagingPort } from '../../runtime/media-contracts.ts';
 export type { RecordCodec } from '../../runtime/media-contracts.ts';
 import type { NativeObject as Native } from '../../native/native-object.ts';
 async function isSilk(file: string): Promise<boolean> {
@@ -28,7 +28,7 @@ async function isSilk(file: string): Promise<boolean> {
  */
 export async function createRecordElement(
   file: string,
-  msgService: Native,
+  msgService: MediaStagingPort,
   codec?: RecordCodec,
 ): Promise<Native> {
   if (!codec || typeof codec.getDuration !== 'function')

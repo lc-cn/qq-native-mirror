@@ -274,9 +274,9 @@ function verifyCapturedMessage(message: CapturedNativeMessage) {
 }
 void verifyCapturedMessage;
 
-import type { ImageStagingPort } from '../../src/features/messages/outbound-elements.ts';
+import type { MediaStagingPort } from '../../src/runtime/media-contracts.ts';
 import type { MessageIdQueryPort } from '../../src/features/messages/message-query.ts';
-function verifyElementPreparationPorts(image: ImageStagingPort, reply: MessageIdQueryPort) {
+function verifyElementPreparationPorts(image: MediaStagingPort, reply: MessageIdQueryPort) {
   // @ts-expect-error Image staging cannot send messages.
   image.sendMsg('42', {}, [], new Map());
   // @ts-expect-error Staging requires its exact request object, not a path scalar.
@@ -302,3 +302,40 @@ function verifyElementPreparationPorts(image: ImageStagingPort, reply: MessageId
   void queried.msgList;
 }
 void verifyElementPreparationPorts;
+
+import type { createRecordElement } from '../../src/features/media/media-record.ts';
+import type { createVideoElement } from '../../src/features/media/media-send.ts';
+function verifyAudioVideoStagingPorts(
+  record: Parameters<typeof createRecordElement>[1],
+  video: Parameters<typeof createVideoElement>[1],
+) {
+  const sharedRecord: MediaStagingPort = record;
+  const sharedVideo: MediaStagingPort = video;
+  void sharedRecord;
+  void sharedVideo;
+  // @ts-expect-error Voice preparation cannot submit messages.
+  record.sendMsg('42', {}, [], new Map());
+  // @ts-expect-error Video preparation cannot query messages.
+  video.getMsgsByMsgId({}, ['42']);
+  // @ts-expect-error Neither preparation port can acquire unrelated services.
+  record.getBuddyService();
+  // @ts-expect-error Native cache allocation requires its structured request.
+  video.getRichMediaFilePathForGuild?.('path');
+  const request = {
+    md5HexStr: 'hash',
+    fileName: 'media',
+    elementType: 4,
+    elementSubType: 0,
+    thumbSize: 0,
+    needCreate: true,
+    downloadType: 1,
+    file_uuid: '',
+  };
+  const recordPath = record.getRichMediaFilePathForGuild?.(request);
+  const videoPath = video.getRichMediaFilePathForGuild?.(request);
+  // @ts-expect-error Voice allocation output remains unknown until validated.
+  void recordPath.path;
+  // @ts-expect-error Video allocation output remains unknown until validated.
+  void videoPath.path;
+}
+void verifyAudioVideoStagingPorts;

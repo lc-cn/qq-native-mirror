@@ -5,7 +5,7 @@ import { access, copyFile, mkdir, open, readFile, stat, writeFile } from 'node:f
 import { constants } from 'node:fs';
 import { basename, dirname, extname, isAbsolute, join, sep } from 'node:path';
 import { promisify } from 'node:util';
-import type { VideoCodec } from '../../runtime/media-contracts.ts';
+import type { VideoCodec, MediaStagingPort } from '../../runtime/media-contracts.ts';
 import { videoThumbnail } from './video-thumbnail.ts';
 
 import type { MediaTools } from '../../runtime/media-contracts.ts';
@@ -25,7 +25,7 @@ async function md5(file: string): Promise<string> {
 function alive(signal?: AbortSignal): void {
   if (signal?.aborted) throw new Error('Video preparation aborted');
 }
-async function measured<T>(invoke: () => Promise<T>, signal?: AbortSignal): Promise<T> {
+async function measured<T>(invoke: () => T | PromiseLike<T>, signal?: AbortSignal): Promise<T> {
   alive(signal);
   let timer: ReturnType<typeof setTimeout> | undefined;
   let abort: () => void = () => {};
@@ -65,7 +65,7 @@ async function validateMp4Header(file: string, size: number): Promise<void> {
 }
 export async function createVideoElement(
   file: string,
-  msgService: Native,
+  msgService: MediaStagingPort,
   tools?: MediaTools,
   codec?: VideoCodec,
   signal?: AbortSignal,
@@ -155,7 +155,7 @@ export async function createVideoElement(
   const fileName = basename(file);
   const destination = await measured(
     () =>
-      msgService.getRichMediaFilePathForGuild({
+      msgService.getRichMediaFilePathForGuild!({
         md5HexStr: videoMd5,
         fileName,
         elementType: 5,

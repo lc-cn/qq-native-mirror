@@ -61,6 +61,13 @@ ports. The sender owns orchestration and receipt correlation. Test element
 projection independently of outbound filesystem setup; installed-consumer checks
 exercise both from the fresh archive and reject the removed mixed module.
 
+Use `runtime/media-contracts.MediaStagingPort` for native cache allocation across
+image, record and video constructors. Keep its result unknown until validating
+the absolute path and retain the method receiver and existing acquisition timing.
+Do not pass a complete MsgService to a constructor that only allocates a path.
+Codec execution, temporary-file cleanup and cancellation keep their existing
+owners; a shared type does not change those lifetimes.
+
 Every source file must have a reviewed layer or domain, including files without
 imports. The TypeScript dependency gate includes type-only edges and TypeScript
 `import = require()` declarations. Cross-feature cooperation
