@@ -1,0 +1,39 @@
+sdk/docs/architecture/encapsulation.md
+  s_2104cc474f1ce5::t_96e3ae291e3c61 180-186
+sdk/docs/development.md
+  s_2104cc474f1ce5::t_30e05c39816f72 62-66
+sdk/src/features/messages/inbound-elements.ts
+  s_2104cc474f1ce5::t_cbc44769b3f946 13-15,33,39,53,70-75,83,88
+sdk/src/features/messages/inbound-mentions.ts
+  s_2104cc474f1ce5::t_7b41635ad1377b 5,10,60
+sdk/src/features/messages/inbound-messages.ts
+  s_2104cc474f1ce5::t_e8dd2a94fba9e1 4-19,30,55-56,58,65,76-81,83,111-137,139-146,178,183
+sdk/src/features/messages/message-resolution.ts
+  s_2104cc474f1ce5::t_ff62409b37766e 4-8,62-63
+sdk/test/architecture.test.ts
+  s_2104cc474f1ce5::t_9a8c8205ad8ba9 281-282,308
+sdk/test/fixtures/domain-port-types.ts
+  s_2104cc474f1ce5::t_23c180fd96734b 296-297
+sdk/test/helpers/dependency-policy.ts
+  s_2104cc474f1ce5::t_cabe7e2a5755fd 233
+sdk/test/incoming-message-delivery.test.ts
+  s_2104cc474f1ce5::t_2bad9eb87bc79d 4-7,28,33,105-108
+sdk/test/message-snapshot.test.ts
+  s_2104cc474f1ce5::t_d5868533ef8b50 73-76
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a08267592a3be338c9f4f84d39e49a2a94eaafde",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
