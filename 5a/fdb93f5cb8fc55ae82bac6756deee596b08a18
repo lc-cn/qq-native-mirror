@@ -1,0 +1,68 @@
+sdk/src/features/groups/web-group-notices.ts
+  s_2104cc474f1ce5::t_2d0eb0ddd2eba7 13,17
+sdk/src/native/native-contracts.ts
+  s_2104cc474f1ce5::t_9b6849db432a65 12-13,52-93,105,121,124,129,138-151
+sdk/test/group-notices.test.ts
+  s_2104cc474f1ce5::t_9b6849db432a65 8-42
+  s_2104cc474f1ce5::t_2ab011646ae20b 43-47
+sdk/src/native-services.ts
+  s_2104cc474f1ce5::t_2d0eb0ddd2eba7 1-2,9,233-236,256-257,278,407-428
+sdk/test/architecture.test.ts
+  s_2104cc474f1ce5::t_926dd7d211fa45 8,38-43,45,80-81,357-395
+  s_2104cc474f1ce5::t_cba7a4d8238c3e 396
+sdk/test/group-file-count-profiles.test.ts
+  s_2104cc474f1ce5::t_6a1cf4bf5d56c3 1-82
+  s_2104cc474f1ce5::t_3fdc9ada4e7f0c 83-85
+sdk/README.md
+  s_2104cc474f1ce5::t_3ff81e479a09cc 65-72
+sdk/docs/architecture.md
+  s_2104cc474f1ce5::t_a90474a51e726d 224-227,273-275,350-354
+sdk/docs/contacts-groups.md
+  s_2104cc474f1ce5::t_3d4ea750cfa480 10,286-314
+sdk/docs/development.md
+  s_2104cc474f1ce5::t_b6e523415d08e9 32-34
+sdk/docs/evidence/group-file-count-contract.json
+  s_2104cc474f1ce5::t_3c0095b2b56949 1-383
+sdk/docs/sdk-acceptance.md
+  s_2104cc474f1ce5::t_19c03c58142c35 78-87
+sdk/scripts/contact-group-consumer-contract.mjs
+  s_2104cc474f1ce5::t_68fdc6a19c573c 27,72-74,118,479-567,576-577
+sdk/scripts/verify-package-consumer.mjs
+  s_2104cc474f1ce5::t_38c3fa2718b9a2 495-498
+sdk/src/cli.ts
+  s_2104cc474f1ce5::t_f18de218cf66c6 54
+sdk/src/cli/command-plan.ts
+  s_2104cc474f1ce5::t_83166db7ca5afe 1-4,65,370-373
+sdk/src/client/qq-client.ts
+  s_2104cc474f1ce5::t_045d2cb6398d25 1-4,269-272
+sdk/src/features/groups/group-file-input.ts
+  s_2104cc474f1ce5::t_4c3fa3568819c9 12-19
+sdk/src/features/groups/group-file-operations.ts
+  s_2104cc474f1ce5::t_ae8229000359fc 2,14,70-156
+sdk/src/features/messages/native-message-sender.ts
+  s_2104cc474f1ce5::t_0613a3831f518e 3-4,16-38,41-42,46,54-55,105,107-113,115,118,129-147,173-176
+sdk/src/runtime/operations.ts
+  s_2104cc474f1ce5::t_5ce03d47234bab 24
+sdk/test/group-file-count.test.ts
+  s_2104cc474f1ce5::t_fba0887de6e945 1-253
+sdk/test/helpers/source-dependencies.ts
+  s_2104cc474f1ce5::t_1b6c3f4c86fbd0 1-148
+sdk/test/native-message-sender.test.ts
+  s_2104cc474f1ce5::t_f2f2692ffc4d9c 16,21,52-54,56-63,125-135,156-224
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "5afdb93f5cb8fc55ae82bac6756deee596b08a18",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
