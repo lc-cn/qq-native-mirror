@@ -88,7 +88,7 @@ process.on('message', async (message: unknown) => {
             event,
             payload:
               payload instanceof Error
-                ? { message: payload.message }
+                ? { message: serializeKernelError(payload).message }
                 : Buffer.isBuffer((payload as { image?: unknown })?.image)
                   ? {
                       ...(payload as object),

@@ -273,8 +273,14 @@ RPC storage and settlement use `unknown` internally.
   fallible teardown. Offline/logout events still report the original transition.
   Cleanup diagnostics expose typed message/name/code records rather than native
   Error instances or arbitrary error properties.
-- Error serialization includes only explicitly supported fields. Native objects,
-  tickets, arbitrary causes and stacks are not part of the IPC error DTO.
+- Error serialization includes only explicitly supported data fields. It never
+  coerces an unknown object or invokes error accessors; invalid fields, trapping
+  proxies and inaccessible progress records cannot prevent an RPC failure reply.
+  Normal Error messages, names, finite numeric/string codes and validated merged
+  progress retain their contracts. Callback failure paths share this projection
+  and preserve ordinary Error identity. Error events retain their message-only
+  payload. Native objects, tickets, arbitrary causes and stacks are not part of
+  the IPC error DTO.
 - Tests using controlled services prove SDK behavior, not real native/account
   interoperability. Account acceptance and platform CI evidence remain separate.
 

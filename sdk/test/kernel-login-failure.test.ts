@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { createKernel } from '../src/kernel.ts';
 
-async function fixture() {
+async function fixture(failureFactory?: () => unknown) {
   const dataDir = await mkdtemp(join(tmpdir(), 'qq-login-failure-fake-'));
   let listener: any;
   let notifyConnected!: () => void;
@@ -28,6 +28,7 @@ async function fixture() {
           getMsfStatus: () => 0,
           getQRCodePicture() {
             requests++;
+            if (failureFactory) throw failureFactory();
             return true;
           },
         }),
@@ -101,6 +102,49 @@ for (const name of ['circular', 'bigint', 'throwing-toJSON', 'sensitive-string']
       assert.doesNotThrow(() => f.listener().onLoginFailed(payload));
       assert.equal(f.events.length, count);
       await assert.rejects(f.kernel.login({ method: 'qr' }), /closed/);
+    } finally {
+      await f.cleanup();
+    }
+  });
+}
+
+for (const kind of ['opaque', 'revoked', 'message-accessor']) {
+  test(`native QR throw ${kind} settles once without escaping the callback`, async () => {
+    let projections = 0;
+    const f = await fixture(() => {
+      if (kind === 'revoked') {
+        const revoked = Proxy.revocable({}, {});
+        revoked.revoke();
+        return revoked.proxy;
+      }
+      if (kind === 'message-accessor') {
+        const error = Error('private');
+        Object.defineProperty(error, 'message', {
+          get() {
+            projections++;
+            throw Error('private');
+          },
+        });
+        return error;
+      }
+      return {
+        toString() {
+          projections++;
+          throw Error('private');
+        },
+      };
+    });
+    try {
+      const { pending } = await f.begin();
+      await assert.rejects(pending, { message: 'Kernel request failed' });
+      await new Promise<void>((resolve) => setImmediate(resolve));
+      assert.equal(projections, 0);
+      assert.equal(f.requests(), 1);
+      assert.equal(f.events.filter(([event]) => event === 'login-error').length, 1);
+      assert.equal(
+        f.events.some(([event]) => event === 'ready'),
+        false,
+      );
     } finally {
       await f.cleanup();
     }

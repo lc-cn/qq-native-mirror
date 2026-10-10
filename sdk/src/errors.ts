@@ -50,29 +50,59 @@ export interface SerializedKernelError {
   code?: string | number;
   mergedForward?: MergedForwardFailure;
 }
+/** Inspect data properties only: proprietary errors may contain accessors or proxies.
+ * A bounded prototype walk supports inherited Error fields without invoking code.
+ */
+function dataField(value: unknown, key: string): unknown {
+  if (!value || (typeof value !== 'object' && typeof value !== 'function')) return;
+  try {
+    const seen = new Set<object>();
+    let object: object | null = value;
+    for (let depth = 0; object && depth < 64; depth++) {
+      if (seen.has(object)) return;
+      seen.add(object);
+      const descriptor = Object.getOwnPropertyDescriptor(object, key);
+      if (descriptor) return 'value' in descriptor ? descriptor.value : undefined;
+      object = Object.getPrototypeOf(object);
+    }
+  } catch {
+    // Revoked proxies and trapping descriptor/prototype handlers are opaque.
+  }
+}
+function instanceOf(
+  value: unknown,
+  constructor: abstract new (...args: never[]) => Error,
+): boolean {
+  try {
+    return value instanceof constructor;
+  } catch {
+    return false;
+  }
+}
 function mergedFailure(value: unknown): MergedForwardFailure | undefined {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return;
-  const v = value as Record<string, unknown>;
+  const phase = dataField(value, 'phase');
+  const uploadCompletion = dataField(value, 'uploadCompletion');
+  const cardCompletion = dataField(value, 'cardCompletion');
+  const resourceId = dataField(value, 'resourceId');
   if (
-    typeof v.phase !== 'string' ||
-    !['upload', 'card', 'operation'].includes(v.phase) ||
-    typeof v.uploadCompletion !== 'string' ||
-    !['not-dispatched', 'unknown', 'resource-received'].includes(v.uploadCompletion) ||
-    typeof v.cardCompletion !== 'string' ||
-    !['not-dispatched', 'unknown'].includes(v.cardCompletion)
+    (phase !== 'upload' && phase !== 'card' && phase !== 'operation') ||
+    (uploadCompletion !== 'not-dispatched' &&
+      uploadCompletion !== 'unknown' &&
+      uploadCompletion !== 'resource-received') ||
+    (cardCompletion !== 'not-dispatched' && cardCompletion !== 'unknown')
   )
     return;
   if (
-    v.resourceId !== undefined &&
-    (typeof v.resourceId !== 'string' || !v.resourceId || Buffer.byteLength(v.resourceId) > 4096)
+    resourceId !== undefined &&
+    (typeof resourceId !== 'string' || !resourceId || Buffer.byteLength(resourceId) > 4096)
   )
     return;
-  if ((v.uploadCompletion === 'resource-received') !== (typeof v.resourceId === 'string')) return;
+  if ((uploadCompletion === 'resource-received') !== (typeof resourceId === 'string')) return;
   return {
-    phase: v.phase as MergedForwardFailure['phase'],
-    uploadCompletion: v.uploadCompletion as MergedForwardProgress['uploadCompletion'],
-    cardCompletion: v.cardCompletion as MergedForwardProgress['cardCompletion'],
-    ...(v.resourceId === undefined ? {} : { resourceId: v.resourceId as string }),
+    phase,
+    uploadCompletion,
+    cardCompletion,
+    ...(typeof resourceId === 'string' ? { resourceId } : {}),
   };
 }
 /** Retain the reported result field, without exposing the rest of a native response. */
@@ -91,18 +121,47 @@ export function nativeResultError(
 }
 /** Preserve explicit error fields only; never serialize arbitrary native objects, causes or stacks. */
 export function serializeKernelError(error: unknown): SerializedKernelError {
+  const isError = instanceOf(error, Error);
+  const message = isError ? dataField(error, 'message') : undefined;
+  const opaque = (typeof error === 'object' && error !== null) || typeof error === 'function';
   const result: SerializedKernelError = {
-    message: error instanceof Error ? error.message : String(error),
+    message: isError
+      ? typeof message === 'string'
+        ? message
+        : 'Kernel request failed'
+      : opaque
+        ? 'Kernel request failed'
+        : String(error),
   };
-  if (error instanceof Error) {
-    result.name = error.name;
-    const code = (error as Error & { code?: unknown }).code;
+  if (isError) {
+    const name = dataField(error, 'name');
+    if (typeof name === 'string') result.name = name;
+    const code = dataField(error, 'code');
     if (typeof code === 'string' || (typeof code === 'number' && Number.isFinite(code)))
       result.code = code;
-    if (error instanceof MergedForwardError)
-      result.mergedForward = mergedFailure({ phase: error.phase, ...error.progress });
+    if (instanceOf(error, MergedForwardError)) {
+      const progress = dataField(error, 'progress');
+      result.mergedForward = mergedFailure({
+        phase: dataField(error, 'phase'),
+        uploadCompletion: dataField(progress, 'uploadCompletion'),
+        cardCompletion: dataField(progress, 'cardCompletion'),
+        resourceId: dataField(progress, 'resourceId'),
+      });
+    }
   }
   return result;
+}
+/** Internal normalization for callback failure paths. Ordinary errors with a
+ * safely readable data message retain identity; opaque values never coerce.
+ */
+export function normalizeKernelError(error: unknown): Error {
+  if (instanceOf(error, Error) && typeof dataField(error, 'message') === 'string')
+    return error as Error;
+  const serialized = serializeKernelError(error);
+  const normalized = new Error(serialized.message);
+  if (serialized.name !== undefined) normalized.name = serialized.name;
+  if (serialized.code !== undefined) Object.assign(normalized, { code: serialized.code });
+  return normalized;
 }
 export function deserializeKernelError(operation: string, error: unknown): KernelRequestError {
   if (typeof error === 'string') return new KernelRequestError(operation, error);

@@ -1,4 +1,4 @@
-import { serializeKernelError } from './errors.ts';
+import { normalizeKernelError, serializeKernelError } from './errors.ts';
 import { withCleanupFailure } from './runtime/cleanup.ts';
 import { createNativeServices, type ServiceOperation } from './native-services.ts';
 import { normalizeLoginRequest } from './native/login-request.ts';
@@ -314,7 +314,7 @@ export function createKernel(
         }
       }
     } catch (error) {
-      if (active()) fail(error instanceof Error ? error : new Error(String(error)));
+      if (active()) fail(normalizeKernelError(error));
     }
   };
   const environment = createKernelEnvironment({
@@ -476,7 +476,7 @@ export function createKernel(
           invoke(loginService!, 'connect');
         }
       } catch (error) {
-        if (generation === attempt) fail(error instanceof Error ? error : new Error(String(error)));
+        if (generation === attempt) fail(normalizeKernelError(error));
       }
       return result;
     },

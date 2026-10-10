@@ -21,6 +21,7 @@ import { verifyPublicContracts } from './public-contract-consumer.mjs';
 import { verifyGroupEssenceConsumer } from './group-essence-consumer-contract.mjs';
 import { verifyWorkerReadCancellation } from './worker-read-consumer-contract.mjs';
 import { verifyClientFactoryConsumer } from './client-factory-consumer-contract.mjs';
+import { verifyWorkerErrorRoutes } from './worker-error-consumer-contract.mjs';
 
 // Offline packaging check: controlled services and actual worker routing with a replacement kernel; no QQ native binaries or accounts.
 const root = fileURLToPath(new URL('../', import.meta.url));
@@ -118,6 +119,20 @@ const readCancellationChecks = await verifyWorkerReadCancellation({
   workerPath: join(destination, 'node_modules/qq-native-client/dist/worker.js'),
   kernelPath: join(destination, 'node_modules/qq-native-client/dist/kernel.js'),
   nativeServicesPath: join(destination, 'node_modules/qq-native-client/dist/native-services.js'),
+});
+const workerErrorChecks = await verifyWorkerErrorRoutes({
+  errorsPath: join(destination, 'node_modules/qq-native-client/dist/errors.js'),
+  QQClient: (
+    await import(
+      pathToFileURL(join(destination, 'node_modules/qq-native-client/dist/index.js')).href
+    )
+  ).QQClient,
+  workerPath: join(destination, 'node_modules/qq-native-client/dist/worker.js'),
+  kernelPath: join(destination, 'node_modules/qq-native-client/dist/kernel.js'),
+  nativeContractsPath: join(
+    destination,
+    'node_modules/qq-native-client/dist/native/native-contracts.js',
+  ),
 });
 const historyLifecycleChecks = await verifyHistoryLifecycleConsumer(
   join(destination, 'node_modules/qq-native-client'),
@@ -539,6 +554,7 @@ const receipt = {
     ...clientFactoryChecks,
     ...groupEssenceChecks,
     ...readCancellationChecks,
+    ...workerErrorChecks,
     ...publicContractChecks,
     privateFilesExcluded: true,
     installedImport: true,

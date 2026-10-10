@@ -1,6 +1,7 @@
 import { mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { hostname, platform, release, type } from 'node:os';
+import { normalizeKernelError } from '../errors.ts';
 import type { NativeObject } from '../native/native-object.ts';
 import type { NativeContractProfile } from '../native/native-contracts.ts';
 import type { NativeServiceContext } from './native-service-context.ts';
@@ -175,7 +176,7 @@ export class AccountSessionLifecycle {
       this.#services = services;
       this.#completed = true;
     } catch (error) {
-      this.#context.failed(error instanceof Error ? error : new Error(String(error)));
+      this.#context.failed(normalizeKernelError(error));
       return;
     } finally {
       this.#completing = false;
@@ -283,8 +284,7 @@ export class AccountSessionLifecycle {
       this.#startReturned = true;
       this.#complete();
     } catch (error) {
-      if (this.#active())
-        this.#context.failed(error instanceof Error ? error : new Error(String(error)));
+      if (this.#active()) this.#context.failed(normalizeKernelError(error));
     }
   }
 

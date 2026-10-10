@@ -308,3 +308,48 @@ test('close detaches service before fallible reentrant cleanup and preserves err
     await f.dispose();
   }
 });
+
+for (const failureAt of ['start', 'compose']) {
+  test(`opaque ${failureAt} failure settles the Session without coercion or replay`, async () => {
+    let projections = 0;
+    let dispatches = 0;
+    const opaque = {
+      toString() {
+        projections++;
+        throw Error('private');
+      },
+    };
+    const f = await fixture({
+      ...(failureAt === 'start'
+        ? {
+            startNative() {
+              dispatches++;
+              throw opaque;
+            },
+          }
+        : {
+            createServices() {
+              dispatches++;
+              throw opaque;
+            },
+          }),
+    });
+    try {
+      f.owner.begin();
+      await f.initialized;
+      f.callbacks.session!.onOpentelemetryInit({ is_init: true });
+      await flush();
+      assert.equal(f.errors.length, 1);
+      assert.equal(f.errors[0]!.message, 'Kernel request failed');
+      assert.equal(projections, 0);
+      assert.equal(dispatches, 1);
+      assert.equal(f.ready.length, 0);
+      f.owner.begin();
+      await flush();
+      assert.equal(dispatches, 1);
+      assert.equal(f.errors.length, 1);
+    } finally {
+      await f.dispose();
+    }
+  });
+}
