@@ -59,6 +59,10 @@ New feature modules cannot import the dynamic `NativeObject` escape hatch. Use
 `unknown` for untrusted results and narrow typed ports for callable methods.
 Existing legacy adapters and native projectors have exact ownership entries with
 reasons in the dependency policy; remove an entry when its import disappears.
+Contact directory reads validate unknown Buddy, Profile and UID conversion results.
+Keep their shared profile projection in the contact domain; flat friend queries
+must not acquire the complete category metadata contract. Commit identity caches
+only after the complete batch validates and the account is still alive.
 
 `features/messages/message-resolution.ts` owns peer conversion and the identity
 lookup needed by live delivery, queries and forwarding. Supply only user-ID

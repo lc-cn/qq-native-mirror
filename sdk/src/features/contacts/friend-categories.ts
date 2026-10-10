@@ -63,21 +63,21 @@ export function captureFriendCategories(rawV2Result: unknown): CapturedFriendCat
   });
 }
 
-/** Validate every requested profile before constructing any category projection. */
-export function projectFriendCategories(
-  captured: CapturedFriendCategories,
-  profiles: unknown,
-): FriendCategory[] {
+/** Validate the complete requested profile batch before exposing any friend. */
+export function projectFriends(uids: readonly string[], profiles: unknown): Friend[] {
   if (!(profiles instanceof Map)) throw new Error('Invalid native profile map');
   const friends = new Map<string, Friend>();
-  for (const uid of captured.uniqueUIDs) {
-    if (!profiles.has(uid)) throw new Error('Native buddy profiles are incomplete');
-    const core = field(profiles.get(uid), 'coreInfo');
+  for (const uid of uids) {
+    if (!Map.prototype.has.call(profiles, uid))
+      throw new Error('Native buddy profiles are incomplete');
+    const core = field(Map.prototype.get.call(profiles, uid), 'coreInfo');
     const actualUid = field(core, 'uid'),
       userId = field(core, 'uin'),
       nickname = field(core, 'nick'),
       remark = field(core, 'remark');
     if (
+      typeof actualUid !== 'string' ||
+      !actualUid.trim() ||
       actualUid !== uid ||
       typeof userId !== 'string' ||
       !/^\d+$/.test(userId) ||
@@ -87,6 +87,17 @@ export function projectFriendCategories(
       throw new Error('Invalid native buddy profile');
     friends.set(uid, { uid, userId, nickname: nickname ?? '', remark });
   }
+  return [...friends.values()];
+}
+
+/** Category metadata and duplicate memberships retain their separate contract. */
+export function projectFriendCategories(
+  captured: CapturedFriendCategories,
+  profiles: unknown,
+): FriendCategory[] {
+  const friends = new Map(
+    projectFriends(captured.uniqueUIDs, profiles).map((friend) => [friend.uid, friend]),
+  );
   return captured.categories.map((category) => ({
     categoryId: category.categoryId,
     sortId: category.sortId,

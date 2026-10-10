@@ -257,6 +257,8 @@ test('dynamic native object permissions apply only to actual reviewed adapters a
     'src/features/contacts/new-operation.ts',
     'src/features/groups/group-files.ts',
     'src/features/messages/message-resolution.ts',
+    'src/features/contacts/contact-directory.ts',
+    'src/features/contacts/friend-categories.ts',
     'src/features/messages/send-input.ts',
   ])
     for (const typeOnly of [false, true])

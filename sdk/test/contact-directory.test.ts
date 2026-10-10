@@ -16,6 +16,7 @@ const tick = () => new Promise((resolve) => setImmediate(resolve));
 function fixture(version = '7.0.2-53644') {
   const calls: { method: string; args: unknown[] }[] = [];
   let buddy: unknown = { result: 0, data: [{ buddyUids: ['u_a'] }] };
+  let converted: unknown;
   let profiles: unknown = new Map([['u_a', profile()]]);
   const directory = createContactDirectory({
     signal: new AbortController().signal,
@@ -35,7 +36,7 @@ function fixture(version = '7.0.2-53644') {
     getUidService: () => ({
       getUid(...args) {
         calls.push({ method: 'getUid', args });
-        return { uidInfo: new Map([[args[0][0], 'u_converted']]) };
+        return converted ?? { uidInfo: new Map([[args[0][0], 'u_converted']]) };
       },
     }),
     awaitAlive: async (value) => value,
@@ -45,6 +46,9 @@ function fixture(version = '7.0.2-53644') {
     calls,
     setBuddy(value: unknown) {
       buddy = value;
+    },
+    setConverted(value: unknown) {
+      converted = value;
     },
     setProfiles(value: unknown) {
       profiles = value;
@@ -283,3 +287,78 @@ for (const absent of [undefined, null])
       });
       directory.close();
     });
+
+test('UID conversion requires a real exact-keyed Map and does not invoke counterfeit get', async () => {
+  const f = fixture();
+  let calls = 0;
+  f.setConverted({
+    uidInfo: {
+      get() {
+        calls++;
+        return 'u_forged';
+      },
+    },
+  });
+  await assert.rejects(f.directory.uidFor('999'), /Could not resolve/);
+  assert.equal(calls, 0);
+  for (const mapping of [
+    new Map([['998', 'u_other']]),
+    new Map([['999', 'u_mask*']]),
+    new Map([['999', 123]]),
+  ]) {
+    f.setConverted({ uidInfo: mapping });
+    await assert.rejects(f.directory.uidFor('999'), /Could not resolve/);
+  }
+  f.setConverted({ uidInfo: new Map([['999', 'u_exact']]) });
+  assert.equal(await f.directory.uidFor('999'), 'u_exact');
+  assert.equal(await f.directory.uidFor('999'), 'u_exact');
+  assert.equal(f.calls.filter((row) => row.method === 'getUid').length, 6);
+  f.directory.close();
+});
+
+test('plain friend lists need only memberships and share strict profile projection with categories', async () => {
+  const f = fixture();
+  f.setBuddy({ result: 0, data: [{ buddyUids: ['u_a', 'u_a'] }] });
+  assert.deepEqual(await f.directory.listFriends(), [
+    { userId: '123', uid: 'u_a', nickname: 'fixture', remark: '' },
+  ]);
+  let reads = 0;
+  f.setProfiles(
+    new Map([
+      [
+        'u_a',
+        {
+          coreInfo: {
+            uid: 'u_a',
+            uin: '456',
+            get remark() {
+              reads++;
+              return 'unexpected';
+            },
+          },
+        },
+      ],
+    ]),
+  );
+  await assert.rejects(f.directory.listFriends(), /profile/);
+  assert.equal(reads, 0);
+  assert.equal(await f.directory.uidFor('456'), 'u_converted');
+  f.directory.close();
+});
+
+test('UID result inspection closing the directory cannot return a converted identifier', async () => {
+  const f = fixture();
+  f.setConverted(
+    new Proxy(
+      { uidInfo: new Map([['999', 'u_valid']]) },
+      {
+        getOwnPropertyDescriptor(target, key) {
+          f.directory.close();
+          return Reflect.getOwnPropertyDescriptor(target, key);
+        },
+      },
+    ),
+  );
+  await assert.rejects(f.directory.uidFor('999'), /closed/);
+  assert.equal(f.calls.filter((row) => row.method === 'getUid').length, 1);
+});

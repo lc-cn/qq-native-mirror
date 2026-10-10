@@ -1,7 +1,10 @@
-import type { NativeObject as Native } from '../../native/native-object.ts';
 import type { Friend, FriendCategory } from '../../contracts/contacts.ts';
 import type { GroupMember } from '../../contracts/groups.ts';
-import { captureFriendCategories, projectFriendCategories } from './friend-categories.ts';
+import {
+  captureFriendCategories,
+  projectFriendCategories,
+  projectFriends,
+} from './friend-categories.ts';
 import { nativeResultError } from '../../errors.ts';
 export interface BuddyDirectoryPort {
   getBuddyListV2?: (category: string, refresh: boolean, source: number) => unknown;
@@ -20,6 +23,12 @@ export interface ContactDirectoryContext {
   getUidService(): UidDirectoryPort | null | undefined;
   awaitAlive<T>(value: T | PromiseLike<T>): Promise<T>;
 }
+function field(value: unknown, key: string): unknown {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
+  const descriptor = Object.getOwnPropertyDescriptor(value, key);
+  return descriptor && 'value' in descriptor ? descriptor.value : undefined;
+}
+
 /** Owns validated contact identities for one Session. Failed batches never commit
  * partial entries, and converted identifiers are intentionally not cached.
  */
@@ -64,11 +73,15 @@ export function createContactDirectory(context: ContactDirectoryContext) {
     alive();
     if (id.startsWith('u_')) return id;
     if (uidCache.has(id)) return uidCache.get(id)!;
-    const converted = (await awaitAlive(convertUid(id))) as Native;
+    const converted = await awaitAlive(convertUid(id));
     alive();
-    const uid = converted?.uidInfo?.get(id);
+    const mapping = field(converted, 'uidInfo');
+    if (!(mapping instanceof Map) || !Map.prototype.has.call(mapping, id))
+      throw new Error('Could not resolve user identifier');
+    const uid: unknown = Map.prototype.get.call(mapping, id);
     if (typeof uid !== 'string' || !uid || uid.includes('*'))
       throw new Error('Could not resolve user identifier');
+    alive();
     return uid;
   };
   const listFriendCategories = async (): Promise<FriendCategory[]> => {
@@ -91,42 +104,25 @@ export function createContactDirectory(context: ContactDirectoryContext) {
     // upstream implementation; account-level Windows validation is pending.
     if (!['7.0.2-53644', '3.2.32-52194', '9.9.33-52230'].includes(version))
       throw new Error('Buddy list signature not verified for this native version');
-    const result = (await awaitAlive(buddyList())) as Native;
+    const result = await awaitAlive(buddyList());
     alive();
     // Pinned getBuddyListV2 returns GeneralCallResult as well as data.
     // An empty data array does not establish a successful query.
-    if (result?.result !== 0) throw nativeResultError('Native buddy list query failed', result);
-    if (!Array.isArray(result?.data)) throw new Error('Invalid native buddy list');
-    // Materialize holes before validation; flatMap/some would skip them.
-    const categories = Array.from(result.data);
-    if (categories.some((category) => !Array.isArray((category as Native)?.buddyUids)))
-      throw new Error('Invalid native buddy list');
-    const requested = categories.flatMap((category) => Array.from((category as Native).buddyUids));
+    const status = field(result, 'result');
+    if (status !== 0) throw nativeResultError('Native buddy list query failed', { result: status });
+    const data = field(result, 'data');
+    if (!Array.isArray(data)) throw new Error('Invalid native buddy list');
+    // List friends requires only membership IDs, not categorized metadata.
+    const requested = Array.from(data).flatMap((category) => {
+      const members = field(category, 'buddyUids');
+      if (!Array.isArray(members)) throw new Error('Invalid native buddy list');
+      return Array.from(members);
+    });
     if (!requested.every((uid): uid is string => typeof uid === 'string' && uid.length > 0))
       throw new Error('Invalid native buddy UID');
-    const uids = [...new Set<string>(requested)];
+    const uids = [...new Set(requested)];
     const profiles = await awaitAlive(coreProfiles(uids));
-    if (!(profiles instanceof Map)) throw new Error('Invalid native profile map');
-    if (uids.some((uid) => !profiles.has(uid)))
-      throw new Error('Native buddy profiles are incomplete');
-    const friends = uids.map((uid): Friend => {
-      const profile = profiles.get(uid);
-      const core = profile?.coreInfo;
-      if (
-        !core ||
-        typeof core !== 'object' ||
-        Array.isArray(core) ||
-        typeof core.uid !== 'string' ||
-        !core.uid.trim() ||
-        core.uid !== uid ||
-        typeof core.uin !== 'string' ||
-        !/^\d+$/.test(core.uin) ||
-        typeof core.remark !== 'string' ||
-        (core.nick !== undefined && typeof core.nick !== 'string')
-      )
-        throw new Error('Invalid native buddy profile');
-      return { userId: core.uin, uid, nickname: core.nick ?? '', remark: core.remark };
-    });
+    const friends = projectFriends(uids, profiles);
     // A rejected batch must not leave usable entries from an earlier row.
     alive();
     for (const friend of friends) uidCache.set(friend.userId, friend.uid);

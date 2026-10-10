@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   captureFriendCategories,
   projectFriendCategories,
+  projectFriends,
 } from '../src/features/contacts/friend-categories.ts';
 
 const category = (uids = ['u_a']) => ({
@@ -132,4 +133,23 @@ test('all profile rows must validate, preserving optional nickname and requiring
       /profile/,
     );
   assert.throws(() => projectFriendCategories(captured, {}), /map/);
+});
+
+test('shared friend projection rejects an incomplete batch before exposing rows and bypasses Map overrides', () => {
+  class NativeMap extends Map<string, unknown> {
+    override get(): never {
+      throw new Error('overridden get must not execute');
+    }
+    override has(): never {
+      throw new Error('overridden has must not execute');
+    }
+  }
+  const profiles = new NativeMap([['u_a', profile()]]);
+  assert.equal(projectFriends(['u_a'], profiles)[0].uid, 'u_a');
+  assert.throws(() => projectFriends(['u_a', 'u_missing'], profiles), /incomplete/);
+  const captured = captureFriendCategories({ result: 0, data: [category()] });
+  assert.deepEqual(
+    projectFriendCategories(captured, profiles)[0].friends,
+    projectFriends(['u_a'], profiles),
+  );
 });

@@ -363,6 +363,11 @@ the complete result validates and the Session remains alive. Categorized results
 retain their separate counts and duplicate membership semantics. Single conversion
 misses remain uncached, preserving the existing policy. Construction does no native
 work, and close prevents cache hits, late commits and subsequent dispatch.
+Buddy and UID conversion results remain unknown until their fields are validated.
+Flat and categorized friend reads share one profile projector, while flat reads
+require only category memberships. UID conversion requires a native Map entry for
+the requested identifier; a map-shaped object cannot supply a recipient identity.
+These owners have no permission to import the dynamic native-object escape hatch.
 
 `createContactOperations` and `createGroupOperations` receive separate mutation
 ports, not a Session or arbitrary service locator. The contact module owns profile
