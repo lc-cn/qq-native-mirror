@@ -64,7 +64,7 @@ node scripts/download-npm-candidate.mjs npm-v0.0.1-ci-RUN_ID /absolute/path/npm-
 
 ## 0.0.2 候选准备
 
-源码版本与六个辅包的精确 pin 已提升到 `0.0.2`；已发布版本仍为 `0.0.1`。候选包含首发后的 SDK 查询、事件与生命周期修复，仍需同一次六平台构建、聚合消费者和 schema 2 摘要校验完成后才可本地发布。归档不等于 npm 发布，账号验收与签名真实性也不由构建成功证明。
+源码版本与六个辅包的精确 pin 已提升到 `0.0.2`。以下保留早期候选过程；当前生产候选的六平台构建和永久归档已完成，固定来源及下载入口见本文末尾。候选包含首发后的 SDK 查询、事件与生命周期修复。归档不等于 npm 发布，账号验收与签名真实性也不由构建成功证明。
 
 在辅包尚未发布时，源码 lock 的六个 QQ 辅包条目仅声明目标版本、optional、os/cpu，不填写尚未知的 resolved/integrity，也不沿用 0.0.1 的字节摘要。锁定的其他依赖保持原有真实摘要。独立 macOS arm64 构建目录已验证在线及缓存齐备后的离线 `npm ci --ignore-scripts`；此时六个未发布 QQ 辅包没有安装，编译依赖完整。六平台候选 CI 会从固定源逐文件验证并构建辅包，通过独立本地 registry 安装主包验收，release manifest 绑定实际生成包的摘要。七包发布并逐一核对入库后，再用官方 registry 生成这些辅包的完整 lock；这项准备不宣称未知原生包具有已验证的 registry 完整性。
 
@@ -122,3 +122,20 @@ node scripts/upload-npm-native-mirror.mjs /absolute/path/npm-candidate /absolute
 默认入口另行使用消费者工作流 `mode=default` 验收：实际 `createClient` 不传 wrapper、version、manifest 或 catalog；仍省略安装辅包，以确保使用默认 catalog。候选入口通过不替代这次默认路径验证。npm 保持 0.0.1，本次没有登录或发送。
 
 默认入口的 [run 37969129032](https://github.com/lc-cn/qq-native-mirror/actions/runs/37969129032) 已实际全部通过，验收源码 `956f67ec88a31208b179edb0671d5ad4f025ddbb`。六平台仅安装固定候选主包、不传任何内核/catalog定位输入，真实冷初始化/关闭、自动解码三个视频样本及第二次零payload下载均通过。收据、原生解码日志、API终态与默认路径源码分支经独立核对，详见 `docs/evidence/codec-default-ci-37969129032.json`。官方npm七包latest再次只读核对仍均为0.0.1；本轮没有发包或账号操作。
+
+## 当前生产候选的永久归档（2026-10-10）
+
+[npm-v0.0.2-ci-38005239931](https://github.com/lc-cn/qq-native-mirror/releases/tag/npm-v0.0.2-ci-38005239931) 保存了成功生产 [run 38005239931](https://github.com/lc-cn/qq-native-mirror/actions/runs/38005239931) 的七个原始 npm tarball。源提交固定为 `7ec1a309da4137c5eef190482c731889f6341392`，run attempt 为 1；原始 tarball 未重新打包。该生产运行已完成六个平台的构建、视频重链接、实际安装消费者和聚合校验，595 项回归通过。归档另外包含原始 manifest、七份原始收据组成的严格证据压缩包及两份原始视频材料 JSON，共 11 个资产、389,087,406 字节。GitHub release ID 为 `408464850`，是已公开的 prerelease，并未成为 latest。
+
+所有 11 个资产的官方 SHA256 和大小均与源产物一致。既有候选下载器也已通过完整七包/schema 2/收据/视频材料校验：5 个小资产（主包、manifest、证据压缩包及两份视频材料 JSON）经显式 `gh-proxy.com` 从远端实际下载，6 个大辅包使用重新校验的原 CI 本地缓存；这次回读不代表七包冷下载。独立审计和父代理复核均逐一重算全部 11 个本地文件摘要，证据解压出的七份收据与源 CI 原始字节相同。[归档证据](evidence/npm-candidate-archive-38005239931.json) 保留具体资产身份、来源与回读范围。
+
+在空目录下载并校验这一固定候选：
+
+```sh
+node scripts/download-npm-candidate.mjs npm-v0.0.2-ci-38005239931 /absolute/path/npm-candidate-38005239931 --proxy=https://gh-proxy.com/
+node scripts/local-first-publish.mjs /absolute/path/npm-candidate-38005239931
+```
+
+不需要代理时省略 `--proxy`。这两个命令不发布 npm、不执行 native、不操作账号。后续本地发布使用前文的显式 `--publish` 流程，维护者自行完成 npm 验证；本次归档没有发起 npm 发布。
+
+同一主包另通过 [run 38009410014](https://github.com/lc-cn/qq-native-mirror/actions/runs/38009410014) 的六平台公开默认镜像实际验收。默认原生镜像仍分别绑定 `6cae1ec...` / run `37962268125`，本次归档未修改默认 catalog。安装、初始化、缓存和媒体解码证据不能代替新版本的真实账号业务验收或签名真实性验证。

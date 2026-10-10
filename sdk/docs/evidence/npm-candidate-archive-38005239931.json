@@ -1,0 +1,244 @@
+{
+  "schemaVersion": 1,
+  "repository": "lc-cn/qq-native-mirror",
+  "version": "0.0.2",
+  "sourceRunId": "38005239931",
+  "sourceRunAttempt": 1,
+  "sourceRunUrl": "https://github.com/lc-cn/qq-native-mirror/actions/runs/38005239931",
+  "productionSource": "7ec1a309da4137c5eef190482c731889f6341392",
+  "sdkRuntimeSource": "5907793ad848c68b3183ac5c2f2b06fbd1a5e0cf",
+  "release": {
+    "id": 408464850,
+    "tag": "npm-v0.0.2-ci-38005239931",
+    "url": "https://github.com/lc-cn/qq-native-mirror/releases/tag/npm-v0.0.2-ci-38005239931",
+    "publishedAt": "2026-10-10T00:54:28Z",
+    "targetCommit": "7ec1a309da4137c5eef190482c731889f6341392",
+    "prerelease": true,
+    "draft": false,
+    "isLatest": false,
+    "independentLatestTag": "native-v1",
+    "independentLatestId": 406733186
+  },
+  "assets": [
+    {
+      "name": "acceptance-evidence.tar.gz",
+      "id": 626614066,
+      "bytes": 2742,
+      "sha256": "a2e329d0647c4d0820055481f08af538d3777fea7d23c840f4936e00f7d19768"
+    },
+    {
+      "name": "qq-native-client-0.0.2.tgz",
+      "id": 626613919,
+      "bytes": 452930,
+      "sha256": "685803fcaf965cdf827fffb2d79c08885182a3a718dc59b27670af07672f6988"
+    },
+    {
+      "name": "qq-native-client-darwin-arm64-0.0.2.tgz",
+      "id": 626603370,
+      "bytes": 59911874,
+      "sha256": "316d7aaab0635f4eab23fac254cf0318ae8feddbc0f813c2f03d389e0b23b2ea"
+    },
+    {
+      "name": "qq-native-client-darwin-x64-0.0.2.tgz",
+      "id": 626603374,
+      "bytes": 65852269,
+      "sha256": "5a545b45e733de310066ba7fd1f4f7a76be0a5dd9878acd7fb53bbe69c1d1466"
+    },
+    {
+      "name": "qq-native-client-linux-arm64-0.0.2.tgz",
+      "id": 626603376,
+      "bytes": 72005609,
+      "sha256": "ee66e976b515d458ddd5fe7447a90c2a0cb1b7880e6acb85d302a09d18421a90"
+    },
+    {
+      "name": "qq-native-client-linux-x64-0.0.2.tgz",
+      "id": 626603387,
+      "bytes": 70030138,
+      "sha256": "f747197c7f4fcb18f3018ba11ad39f69681f023dd11768ff53132788b41f0e33"
+    },
+    {
+      "name": "qq-native-client-win32-arm64-0.0.2.tgz",
+      "id": 626612107,
+      "bytes": 54122033,
+      "sha256": "1dd45e18a7179620e1b1c560da8535a89216617b65ddd104daa6d26bb868b5b4"
+    },
+    {
+      "name": "qq-native-client-win32-x64-0.0.2.tgz",
+      "id": 626603379,
+      "bytes": 66610827,
+      "sha256": "fcba66c1f2af2dd729d97d13c5648f703956098bb54dfea1cf5fb93fe98b8646"
+    },
+    {
+      "name": "release-manifest.json",
+      "id": 626614007,
+      "bytes": 4702,
+      "sha256": "a155c39781f49f645bf5b4af260c6d7b62ea784ed4794872c946927669682c11"
+    },
+    {
+      "name": "video-materials-binding.json",
+      "id": 626614102,
+      "bytes": 3982,
+      "sha256": "5ba497c130195d7dac168957cab6c5de9686cc70a4a8d57879781279af2e8877"
+    },
+    {
+      "name": "video-materials.json",
+      "id": 626614154,
+      "bytes": 90300,
+      "sha256": "7018dd006b56570070f6aa584cf42aaed61b8a7947b59240e44bd7e76fdc7dbc"
+    }
+  ],
+  "allOfficialAssetSizeSha256Verified": true,
+  "readback": {
+    "validated": true,
+    "completeSevenPackageGatePassed": true,
+    "remoteAssetCount": 5,
+    "cachedAssetCount": 6,
+    "httpGetRequests": 5,
+    "transport": "explicit https://gh-proxy.com/ for public assets; gh API metadata direct",
+    "files": [
+      {
+        "name": "qq-native-client-linux-x64-0.0.2.tgz",
+        "bytes": 70030138,
+        "sha256": "f747197c7f4fcb18f3018ba11ad39f69681f023dd11768ff53132788b41f0e33",
+        "transport": "original-CI-retained-cache"
+      },
+      {
+        "name": "qq-native-client-linux-arm64-0.0.2.tgz",
+        "bytes": 72005609,
+        "sha256": "ee66e976b515d458ddd5fe7447a90c2a0cb1b7880e6acb85d302a09d18421a90",
+        "transport": "original-CI-retained-cache"
+      },
+      {
+        "name": "qq-native-client-darwin-x64-0.0.2.tgz",
+        "bytes": 65852269,
+        "sha256": "5a545b45e733de310066ba7fd1f4f7a76be0a5dd9878acd7fb53bbe69c1d1466",
+        "transport": "original-CI-retained-cache"
+      },
+      {
+        "name": "qq-native-client-darwin-arm64-0.0.2.tgz",
+        "bytes": 59911874,
+        "sha256": "316d7aaab0635f4eab23fac254cf0318ae8feddbc0f813c2f03d389e0b23b2ea",
+        "transport": "original-CI-retained-cache"
+      },
+      {
+        "name": "qq-native-client-win32-x64-0.0.2.tgz",
+        "bytes": 66610827,
+        "sha256": "fcba66c1f2af2dd729d97d13c5648f703956098bb54dfea1cf5fb93fe98b8646",
+        "transport": "original-CI-retained-cache"
+      },
+      {
+        "name": "qq-native-client-win32-arm64-0.0.2.tgz",
+        "bytes": 54122033,
+        "sha256": "1dd45e18a7179620e1b1c560da8535a89216617b65ddd104daa6d26bb868b5b4",
+        "transport": "original-CI-retained-cache"
+      },
+      {
+        "name": "qq-native-client-0.0.2.tgz",
+        "bytes": 452930,
+        "sha256": "685803fcaf965cdf827fffb2d79c08885182a3a718dc59b27670af07672f6988",
+        "transport": "remote-GitHub-release-via-explicit-proxy"
+      },
+      {
+        "name": "release-manifest.json",
+        "bytes": 4702,
+        "sha256": "a155c39781f49f645bf5b4af260c6d7b62ea784ed4794872c946927669682c11",
+        "transport": "remote-GitHub-release-via-explicit-proxy"
+      },
+      {
+        "name": "acceptance-evidence.tar.gz",
+        "bytes": 2742,
+        "sha256": "a2e329d0647c4d0820055481f08af538d3777fea7d23c840f4936e00f7d19768",
+        "transport": "remote-GitHub-release-via-explicit-proxy"
+      },
+      {
+        "name": "video-materials-binding.json",
+        "bytes": 3982,
+        "sha256": "5ba497c130195d7dac168957cab6c5de9686cc70a4a8d57879781279af2e8877",
+        "transport": "remote-GitHub-release-via-explicit-proxy"
+      },
+      {
+        "name": "video-materials.json",
+        "bytes": 90300,
+        "sha256": "7018dd006b56570070f6aa584cf42aaed61b8a7947b59240e44bd7e76fdc7dbc",
+        "transport": "remote-GitHub-release-via-explicit-proxy"
+      }
+    ],
+    "sevenReceiptsIdenticalToOriginalCi": true,
+    "allElevenPhysicalReadbackFileSizeSha256RecomputedByParent": true,
+    "independentlyReviewed": true
+  },
+  "videoMaterials": {
+    "repository": "lc-cn/qq-native-mirror",
+    "commit": "7ec1a309da4137c5eef190482c731889f6341392",
+    "runId": "38005239931",
+    "runAttempt": 1,
+    "materialsTag": "video-npm-v0.0.2-ci-38005239931-attempt-1",
+    "materialAssets": 12,
+    "onlineVerified": true,
+    "npmPublished": false
+  },
+  "publicDefaultAcceptance": {
+    "runId": "38009410014",
+    "url": "https://github.com/lc-cn/qq-native-mirror/actions/runs/38009410014",
+    "nativeMirrorSource": "6cae1ec0a5e1bfb03cb7871083915b3d03272347",
+    "nativeMirrorRunId": "37962268125"
+  },
+  "defaultNativeCatalogChanged": false,
+  "npmPublished": false,
+  "nativeExecutedByArchiveOrReadback": false,
+  "accountUsedByArchiveOrReadback": false,
+  "authenticatedBusinessCompatibilityVerifiedByArchive": false,
+  "signingAuthenticityVerified": false,
+  "privateAudits": [
+    {
+      "file": "archive-plan.json",
+      "bytes": 4279,
+      "sha256": "948c2fabd3b35106be31ccbc128fd90599006906cc8d6b47269ebda1520145d7"
+    },
+    {
+      "file": "pre-upload-review.json",
+      "bytes": 915,
+      "sha256": "7ade285423046aea2288b956a90141a185d6a281d9642a8e76349a2772d6442b"
+    },
+    {
+      "file": "upload-attempt.json",
+      "bytes": 337,
+      "sha256": "71cc3c61226192e64b8fc33c5e37e66101d4aa828baead989c19f6849f8d8a6b"
+    },
+    {
+      "file": "upload-command-result.json",
+      "bytes": 167,
+      "sha256": "af0085469f849798cb9f9596efb41d1c4cde1fd9f7b8a6e92107a7e4b81e5f03"
+    },
+    {
+      "file": "remote-release-metadata.json",
+      "bytes": 22689,
+      "sha256": "7fed11e20ca81558914a87b310bd90f22f112fbec9b422e18e762fa364aec22a"
+    },
+    {
+      "file": "remote-assets-metadata.json",
+      "bytes": 19029,
+      "sha256": "3bde3b6ebe114409dde3e80b25d438753c011090dafb91461543b22bee28cfe4"
+    },
+    {
+      "file": "remote-latest-metadata.json",
+      "bytes": 1839192,
+      "sha256": "1a2da566dfd014fe57af46e9dfc05d17d1d82cf3742670a6bba18e568c2f171f"
+    },
+    {
+      "file": "post-upload-review.json",
+      "bytes": 2599,
+      "sha256": "8043801029210f2075cabfd0dc2c6a17134a95e497bfc6c21a87763a4d288032"
+    },
+    {
+      "file": "download-readback.json",
+      "bytes": 2927,
+      "sha256": "3b4412886ebfc53ef82aa7aeba23adefe2da1822dc2235a768a729bd6baf09ad"
+    },
+    {
+      "file": "readback-review.json",
+      "bytes": 818,
+      "sha256": "81a169b4d554cb65641afec1d61131b4e9c8d9702bd6e29224e9ccb72992be92"
+    }
+  ]
+}
