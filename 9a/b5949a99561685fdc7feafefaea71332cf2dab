@@ -1,0 +1,47 @@
+sdk/docs/architecture.md
+  s_2104cc474f1ce5::t_dfc74e2dc909fc 81-95,215-226
+sdk/src/features/media/builtin-record-codec.ts
+  s_2104cc474f1ce5::t_a221bade9f6373 3
+sdk/src/features/media/media-record.ts
+  s_2104cc474f1ce5::t_5316459e4cb91f 7-8
+sdk/src/features/media/media-send.ts
+  s_2104cc474f1ce5::t_cd58244eea18ac 8,11-12
+sdk/src/features/media/record-codec-loader.ts
+  s_2104cc474f1ce5::t_2b6bef7193f33f 4-5
+sdk/src/features/media/video-codec-loader.ts
+  s_2104cc474f1ce5::t_6ffc3958eb7704 6-7
+sdk/src/index.ts
+  s_2104cc474f1ce5::t_a5d5aa3ed1f7ef 52
+sdk/src/kernel.ts
+  s_2104cc474f1ce5::t_d4892176b61d37 7-8
+sdk/src/native-services.ts
+  s_2104cc474f1ce5::t_088f3d576751f6 8-9,81,84,86,88-89,91,94,99,105,125,149,172,178,180,184,199,264-265,268
+sdk/src/runtime/media-contracts.ts
+  s_2104cc474f1ce5::t_9cd5ca45282d26 1-29
+sdk/src/runtime/native-service-context.ts
+  s_2104cc474f1ce5::t_062d06a0f39b37 3,8
+sdk/src/runtime/native-service-lifetime.ts
+  s_2104cc474f1ce5::t_312ddab2f78da4 1-105
+sdk/test/architecture.test.ts
+  s_2104cc474f1ce5::t_f849e8b873c4a3 8,92-149
+sdk/test/helpers/dependency-policy.ts
+  s_2104cc474f1ce5::t_571bf8cb210283 1-111
+sdk/test/native-service-lifetime.test.ts
+  s_2104cc474f1ce5::t_d40577f13cae85 1-131
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "9ab5949a99561685fdc7feafefaea71332cf2dab",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
