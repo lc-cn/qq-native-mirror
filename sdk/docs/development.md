@@ -8,20 +8,22 @@ not establish interoperability with QQ or prove an account operation succeeded.
 
 ## Choose the owner before writing the code
 
-| Change                                                | Owner                                                                                     |
-| ----------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| Public data shape or event payload                    | Relevant `src/contracts/` domain; compose event tuples in `events.ts`                     |
-| Public client method or callback presentation         | `src/client/qq-client.ts`; `index.ts` remains a reexport-only entry                       |
-| Native bundle selection and worker bootstrap          | `src/client/create-client.ts`                                                             |
-| Shared account/group identifier rules                 | `src/validation/identifiers.ts`; preserve string IDs and operation-specific native limits |
-| Pure validation and input snapshots                   | Feature input module, shared by facade and worker                                         |
-| Native callback projection or operation               | Relevant `src/features/` domain                                                           |
-| Request correlation, shutdown or account ownership    | Existing `src/runtime/` lifetime owner                                                    |
-| Bundle source selection and manifest constraints      | `src/native/native-package.ts`                                                            |
-| Mirror installation transaction and content cache     | `src/native/native-bundle-installer.ts`; package locking stays in `src/storage/`          |
-| Prepare local engine/login configuration              | `src/runtime/kernel-environment.ts`; no connection or authentication                      |
-| Compose an authenticated Session and feature adapters | `kernel.ts` and `native-services.ts`                                                      |
-| CLI flags and client execution                        | `src/cli/`; executable entry remains `cli.ts`                                             |
+| Change                                                        | Owner                                                                                     |
+| ------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| Public data shape or event payload                            | Relevant `src/contracts/` domain; compose event tuples in `events.ts`                     |
+| Public client method or callback presentation                 | `src/client/qq-client.ts`; `index.ts` remains a reexport-only entry                       |
+| Native bundle selection and worker bootstrap                  | `src/client/create-client.ts`                                                             |
+| Shared account/group identifier rules                         | `src/validation/identifiers.ts`; preserve string IDs and operation-specific native limits |
+| Pure validation and input snapshots                           | Feature input module, shared by facade and worker                                         |
+| Native callback projection or operation                       | Relevant `src/features/` domain                                                           |
+| Request correlation, shutdown or account ownership            | Existing `src/runtime/` lifetime owner                                                    |
+| Bundle source selection and manifest constraints              | `src/native/native-package.ts`                                                            |
+| Mirror installation transaction and content cache             | `src/native/native-bundle-installer.ts`; package locking stays in `src/storage/`          |
+| Worker initialization state and candidate ownership           | `src/worker/native-bootstrap.ts`; reserve initialization before any await                 |
+| Bind Node addon loading, codecs and account-directory locking | `src/worker/bootstrap.ts`; `worker.ts` remains the IPC entry                              |
+| Prepare local engine/login configuration                      | `src/runtime/kernel-environment.ts`; no connection or authentication                      |
+| Compose an authenticated Session and feature adapters         | `kernel.ts` and `native-services.ts`                                                      |
+| CLI flags and client execution                                | `src/cli/`; executable entry remains `cli.ts`                                             |
 
 Avoid a catch-all `utils`, `common` or base class for unrelated operations. A helper
 belongs next to the invariant it protects. Share it when callers actually have
@@ -99,5 +101,8 @@ private state for a test. Use a reproducer for a lifecycle bug before fixing it.
 The package gate checks the actual archive, imports its public root, compiles its
 declarations and exercises its worker routing with controlled services. It also
 rejects missing declaration dependencies and private/development files in the
-archive. Always rebuild from clean `dist`; source tests cannot detect obsolete
+archive. The shared worker-bootstrap consumer also verifies compiled IPC and
+real directory-lock ownership with replacement native/kernel ports. Changes to
+the platform consumer orchestrator trigger SDK quality as well as native CI.
+Always rebuild from clean `dist`; source tests cannot detect obsolete
 emitted modules left in a package.

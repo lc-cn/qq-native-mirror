@@ -6,6 +6,8 @@ import { QQClient } from '../src/index.ts';
 
 class Worker extends EventEmitter {
   connected = true;
+  autoExitAfterClose = true;
+  exitCode: number | null = null;
   stdout = new EventEmitter();
   stderr = new EventEmitter();
   requests: { id: number; method: string; login?: unknown }[] = [];
@@ -16,7 +18,15 @@ class Worker extends EventEmitter {
     this.requests.push(value);
     callback(null);
     if (value.method === 'close')
-      queueMicrotask(() => this.emit('message', { id: value.id, result: null }));
+      queueMicrotask(() => {
+        this.emit('message', { id: value.id, result: null });
+        setImmediate(() => {
+          if (!this.autoExitAfterClose) return;
+          this.connected = false;
+          this.exitCode = 0;
+          this.emit('exit', 0, null);
+        });
+      });
   }
   kill() {
     this.connected = false;

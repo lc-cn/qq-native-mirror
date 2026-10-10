@@ -22,14 +22,25 @@ const contractDependencies: Record<string, readonly string[]> = {
   'src/contracts/forward.ts': ['src/contracts/messages.ts'],
 };
 const workerDependencies = new Set([
-  'src/kernel.ts',
+  'src/worker/bootstrap.ts',
   'src/runtime/operations.ts',
   'src/runtime/worker-read-requests.ts',
+]);
+const bootstrapDependencies = new Set([
+  'src/kernel.ts',
   'src/storage/data-directory-lock.ts',
   'src/features/media/record-codec-loader.ts',
   'src/features/media/video-codec-loader.ts',
   'src/features/media/builtin-record-codec.ts',
   'src/native/native-contracts.ts',
+  'src/worker/native-bootstrap.ts',
+]);
+const bootstrapTypeDependencies = new Set([
+  'src/kernel.ts',
+  'src/native/native-object.ts',
+  'src/native/native-contracts.ts',
+  'src/runtime/operations.ts',
+  'src/runtime/media-contracts.ts',
 ]);
 const kernelDependencies = new Set([
   'src/native-services.ts',
@@ -137,7 +148,15 @@ export function dependencyViolation({ from, to, typeOnly }: SourceDependency): s
   if (from === 'src/worker.ts')
     return workerDependencies.has(to)
       ? undefined
-      : 'The worker owns IPC and native bootstrap, not domain operation composition.';
+      : 'The worker owns IPC and delegates native acquisition to its bootstrap owner.';
+  if (from === 'src/worker/bootstrap.ts')
+    return bootstrapDependencies.has(to)
+      ? undefined
+      : 'The Node bootstrap binds only reviewed acquisition and kernel ports.';
+  if (from === 'src/worker/native-bootstrap.ts')
+    return to === 'src/runtime/cleanup.ts' || (typeOnly && bootstrapTypeDependencies.has(to))
+      ? undefined
+      : 'The worker owner uses injected acquisitions, not feature implementations or IO.';
   if (from === 'src/kernel.ts')
     return kernelDependencies.has(to) || (typeOnly && to === 'src/native/native-object.ts')
       ? undefined

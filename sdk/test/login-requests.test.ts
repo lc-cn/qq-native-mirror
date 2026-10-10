@@ -10,6 +10,7 @@ import { createKernel } from '../src/kernel.ts';
 
 class Worker extends EventEmitter {
   connected = true;
+  autoExitAfterClose = true;
   exitCode: number | null = null;
   requests: any[] = [];
   send(value: any, callback: (error: Error | null) => void) {
@@ -18,7 +19,15 @@ class Worker extends EventEmitter {
     if (value.method === 'init')
       queueMicrotask(() => this.emit('message', { id: value.id, result: { exports: [] } }));
     if (value.method === 'close')
-      queueMicrotask(() => this.emit('message', { id: value.id, result: null }));
+      queueMicrotask(() => {
+        this.emit('message', { id: value.id, result: null });
+        setImmediate(() => {
+          if (!this.autoExitAfterClose) return;
+          this.connected = false;
+          this.exitCode = 0;
+          this.emit('exit', 0, null);
+        });
+      });
   }
   kill() {
     this.connected = false;
@@ -152,7 +161,7 @@ test('factory owns configured login across preparation and deferred automatic lo
         this.requests.push(value); callback(null);
         if (value.method === 'init') queueMicrotask(() => this.emit('message', { id: value.id, result: { exports: [] } }));
         if (value.method === 'login') queueMicrotask(() => this.emit('message', { id: value.id, result: { uin: '123', uid: 'mock' } }));
-        if (value.method === 'close') queueMicrotask(() => this.emit('message', { id: value.id, result: null }));
+        if (value.method === 'close') queueMicrotask(() => { this.emit('message', { id: value.id, result: null }); setImmediate(() => { this.connected = false; this.exitCode = 0; this.emit('exit', 0, null); }); });
       }
       kill() { this.connected = false; this.exitCode = 0; queueMicrotask(() => this.emit('exit', 0, null)); return true; }
     }

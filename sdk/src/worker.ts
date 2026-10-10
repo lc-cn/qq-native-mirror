@@ -1,22 +1,30 @@
 import { serializeKernelError } from './errors.ts';
-import { constants } from 'node:os';
-import { mkdir } from 'node:fs/promises';
-import { createKernel } from './kernel.ts';
+import { createWorkerBootstrap } from './worker/bootstrap.ts';
 import type { ClientOptions, LoginRequest } from './contracts/client.ts';
 import { isServiceOperation, isCancellableRead } from './runtime/operations.ts';
 import { WorkerReadRequests } from './runtime/worker-read-requests.ts';
-import { lockDataDirectory } from './storage/data-directory-lock.ts';
-import { loadRecordCodec } from './features/media/record-codec-loader.ts';
-import { loadVideoCodec } from './features/media/video-codec-loader.ts';
-import { builtinRecordCodec } from './features/media/builtin-record-codec.ts';
-import { inspectNativeContracts } from './native/native-contracts.ts';
 
-let kernel: ReturnType<typeof createKernel> | undefined;
-let releaseDataLock: (() => void) | undefined;
+const send = (value: unknown) => {
+  if (process.connected) process.send?.(value);
+};
+const bootstrap = createWorkerBootstrap((event, payload) =>
+  send({
+    event,
+    payload:
+      payload instanceof Error
+        ? { message: serializeKernelError(payload).message }
+        : Buffer.isBuffer((payload as { image?: unknown })?.image)
+          ? {
+              ...(payload as object),
+              image: (payload as { image: Buffer }).image.toString('base64'),
+            }
+          : payload,
+  }),
+);
 const reads = new WorkerReadRequests();
 process.on('exit', () => {
   reads.close();
-  releaseDataLock?.();
+  bootstrap.releaseOnExit();
 });
 process.on('message', async (message: unknown) => {
   if (!message || typeof message !== 'object') return;
@@ -33,92 +41,25 @@ process.on('message', async (message: unknown) => {
     login?: LoginRequest;
   };
   if (!Number.isSafeInteger(request.id) || request.id <= 0) return;
-  const send = (value: unknown) => {
-    if (process.connected) process.send?.(value);
-  };
-  let acquired = false;
   try {
     let result: unknown;
     if (request.method === 'init') {
-      if (kernel || releaseDataLock) throw new Error('Native worker is already initialized');
-      const options = request.options!;
-      await mkdir(options.dataDir, { recursive: true, mode: 0o700 });
-      const release = lockDataDirectory(options.dataDir);
-      releaseDataLock = release;
-      acquired = true;
-      const bridge: { exports: { preloadLibrary?: (path: string) => void } } = { exports: {} };
-      if (options.bridgePath)
-        process.dlopen(
-          bridge,
-          options.bridgePath,
-          constants.dlopen.RTLD_NOW | constants.dlopen.RTLD_GLOBAL,
-        );
-      for (const library of options.preloadLibraries ??
-        (process.platform === 'linux' ? ['libgnutls.so.30'] : [])) {
-        if (!bridge.exports.preloadLibrary)
-          throw new Error('Registration bridge does not support library preloading');
-        bridge.exports.preloadLibrary(library);
-      }
-      const nativeContracts = await inspectNativeContracts(options.wrapperPath!, options.version);
-      const native = { exports: {} };
-      process.dlopen(native, options.wrapperPath!);
-      const recordCodec =
-        options.recordCodecPath === undefined
-          ? builtinRecordCodec
-          : await loadRecordCodec(options.recordCodecPath);
-      const videoCodec =
-        options.videoCodecPath === undefined
-          ? undefined
-          : await loadVideoCodec(options.videoCodecPath);
-      kernel = createKernel(
-        native.exports,
-        {
-          dataDir: options.dataDir,
-          version: options.version!,
-          device: options.device,
-          loginTimeoutMs: options.timeoutMs,
-          rememberPassword: options.rememberPassword,
-          mediaTools: options.mediaTools,
-          recordCodec,
-          videoCodec,
-          nativeContracts,
-        },
-        (event, payload) =>
-          send({
-            event,
-            payload:
-              payload instanceof Error
-                ? { message: serializeKernelError(payload).message }
-                : Buffer.isBuffer((payload as { image?: unknown })?.image)
-                  ? {
-                      ...(payload as object),
-                      image: (payload as { image: Buffer }).image.toString('base64'),
-                    }
-                  : payload,
-          }),
-      );
-      await kernel.prepare();
-      result = { exports: Object.keys(native.exports) };
-    } else if (request.method === 'login' && kernel) {
-      result = await kernel.login(request.login!);
-    } else if (isServiceOperation(request.method) && kernel) {
+      result = await bootstrap.initialize(request.options!);
+    } else if (request.method === 'login') {
+      result = await bootstrap.login(request.login!);
+    } else if (isServiceOperation(request.method)) {
       const { id: _id, method, ...payload } = request;
-      const activeKernel = kernel;
       result = await (isCancellableRead(method)
-        ? reads.run(request.id, (signal) => activeKernel.invokeOperation(method, payload, signal))
-        : activeKernel.invokeOperation(method, payload));
+        ? reads.run(request.id, (signal) => bootstrap.invokeOperation(method, payload, signal))
+        : bootstrap.invokeOperation(method, payload));
     } else if (request.method === 'close') {
       reads.close();
-      await kernel?.close();
+      await bootstrap.close();
       send({ id: request.id, result: null });
       process.exit(0);
     } else throw new Error(`Unknown kernel request: ${request.method}`);
     send({ id: request.id, result });
   } catch (error) {
-    if (acquired && !kernel) {
-      releaseDataLock?.();
-      releaseDataLock = undefined;
-    }
     send({ id: request.id, error: serializeKernelError(error) });
   }
 });

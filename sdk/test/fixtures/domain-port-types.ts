@@ -233,3 +233,14 @@ function verifyRecallPort(context: RecallContext) {
   void returned.result;
 }
 void verifyRecallPort;
+
+import type { NativeWorkerBootstrap, WorkerKernel } from '../../src/worker/native-bootstrap.ts';
+function verifyWorkerOwnership(owner: NativeWorkerBootstrap, kernel: WorkerKernel) {
+  // @ts-expect-error Bootstrap acquisition dependencies are private to the owner.
+  owner.dependencies.loadAddon({}, 'unreviewed.node');
+  // @ts-expect-error Business callers cannot obtain an unprepared kernel.
+  owner.kernel.prepare();
+  // @ts-expect-error The worker kernel interface cannot acquire raw Session services.
+  kernel.getMsgService();
+}
+void verifyWorkerOwnership;

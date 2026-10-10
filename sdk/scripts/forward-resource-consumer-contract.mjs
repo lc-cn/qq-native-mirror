@@ -279,13 +279,21 @@ export async function verifyForwardResourceConsumer(packagePath) {
   const worker = new EventEmitter();
   Object.assign(worker, {
     connected: true,
+    exitCode: null,
     stdout: new EventEmitter(),
     stderr: new EventEmitter(),
     send(value, callback) {
       requests.push(value);
       callback(null);
       if (value.method === 'close')
-        queueMicrotask(() => worker.emit('message', { id: value.id, result: null }));
+        queueMicrotask(() => {
+          worker.emit('message', { id: value.id, result: null });
+          setImmediate(() => {
+            worker.connected = false;
+            worker.exitCode = 0;
+            worker.emit('exit', 0, null);
+          });
+        });
     },
     kill() {
       this.connected = false;

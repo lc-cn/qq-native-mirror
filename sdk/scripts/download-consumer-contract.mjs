@@ -270,13 +270,21 @@ export async function checkDownloadContract({ QQClient, createNativeServices, pr
       worker = new EventEmitter();
     Object.assign(worker, {
       connected: true,
+      exitCode: null,
       stdout: new EventEmitter(),
       stderr: new EventEmitter(),
       send(request, done) {
         requests.push(request);
         done(null);
         if (request.method === 'close')
-          queueMicrotask(() => worker.emit('message', { id: request.id, result: null }));
+          queueMicrotask(() => {
+            worker.emit('message', { id: request.id, result: null });
+            setImmediate(() => {
+              worker.connected = false;
+              worker.exitCode = 0;
+              worker.emit('exit', 0, null);
+            });
+          });
       },
       kill() {
         this.connected = false;

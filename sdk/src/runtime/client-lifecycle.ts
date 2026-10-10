@@ -356,11 +356,12 @@ export class ClientLifecycle {
   close(): Promise<void> {
     return (this.#closePromise ??= this.#finishClose());
   }
-  async #stopWorker(): Promise<void> {
+  async #stopWorker(waitForExit = false): Promise<void> {
     const worker = this.#worker;
     if (worker.exitCode != null || worker.signalCode != null) return;
     await terminateWorker(worker, {
       timeoutMessage: 'Native worker did not exit after shutdown',
+      waitForExit,
     });
   }
   async #finishClose(): Promise<void> {
@@ -389,14 +390,16 @@ export class ClientLifecycle {
     }
     this.#closing = true;
     this.#setState('closing');
+    let acknowledged = false;
     try {
       await this.request('close', {}, 2000);
+      acknowledged = true;
     } finally {
       this.#closed = true;
       this.#account = undefined;
       this.#rpc.rejectPending(new Error('QQ client closed'));
       try {
-        await this.#stopWorker();
+        await this.#stopWorker(acknowledged);
         this.#setState('closed');
       } catch (error) {
         this.#setState('failed');

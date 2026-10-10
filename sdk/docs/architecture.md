@@ -17,7 +17,11 @@ ClientLifecycle (account state and worker generations)
         |
 WorkerRpcChannel (request correlation and settlement)
         |
-worker.ts (IPC boundary) -> kernel.ts (authentication composition)
+worker.ts (IPC) -> worker/bootstrap.ts (Node acquisition binding)
+                          |
+                  NativeWorkerBootstrap (initialization ownership)
+                          |
+                    kernel.ts (authentication composition)
                                 |
                      KernelEnvironment (local preparation)
                                 |
@@ -38,6 +42,7 @@ worker.ts (IPC boundary) -> kernel.ts (authentication composition)
 | `src/cli.ts`, `src/worker.ts`             | Executable entry points. Their emitted URLs are runtime contracts.                                       |
 | `src/cli/`                                | Command planning and ownership of client execution, QR output, watches and process signals.              |
 | `src/kernel.ts`, `src/native-services.ts` | Compose one native session and domain adapters. They are composition roots, not public extension points. |
+| `src/worker/`                             | Native initialization ownership and the Node acquisition binding; no business DTO or IPC presentation.   |
 | `src/runtime/`                            | Account/worker ownership, request/callback lifetimes and composition dependencies.                       |
 | `src/features/contacts/`, `groups/`       | Friend, category, group and request actions/events.                                                      |
 | `src/features/messages/`                  | Message input capture, native projection, querying and recall.                                           |
@@ -89,6 +94,36 @@ public native manifest data is distinct from the proprietary native service type
 
 ## Encapsulation and variation points
 
+`NativeWorkerBootstrap` owns initialization for exactly one Node worker. It
+reserves initialization synchronously before creating the data directory, keeps
+its candidate kernel private and permits login/business dispatch only after
+`prepare` succeeds. Same-directory and different-directory duplicate requests
+cannot acquire a second lock, load the addon again or replace the candidate.
+An initialization failure is terminal for that worker; the parent owns worker
+retirement rather than replaying native singleton initialization.
+
+Close retires initialization before closing its candidate once. Every resumed
+acquisition stage checks that initialization is still active. A candidate returned
+after reentrant close is retired without preparation, and a late prepare result
+cannot publish readiness. Kernel callbacks after failure or close are suppressed.
+Primary initialization failures retain cleanup failures rather than replacing
+them. Native loading can leave process-owned threads; once loading is attempted,
+the account-directory lock remains owned until the synchronous process-exit hook.
+Directory-only failures release their acquisition once. Close does not invent a
+native addon unload or a QQ Session destructor.
+
+`worker/bootstrap` binds the actual Node ports: directory creation and locking,
+RTLD_GLOBAL bridge loading, default Linux library preload, measured wrapper
+provenance, codecs and kernel creation. `worker.ts` presents events, correlates
+IPC requests, propagates read cancellation and exits the process. These owners
+have separate exact dependency permissions; a new file in `worker/` inherits
+none of them. Controlled checks exercise both the owner interface and the actual
+compiled IPC entry, with addon loading and kernel behavior substituted. Installed worker checks cover same/different-directory
+initialization races, preparation gates, native-touched failure locks, orderly
+close, disconnect, directory reuse and close during pending initialization. They
+run against the packed archive locally and on all six native-package CI hosts;
+fake loading does not establish QQ addon or account interoperability.
+
 `KernelEnvironment` owns one cached preparation promise, local directories, device
 configuration, Session factory selection and engine/login initialization. It does
 not connect or authenticate. `AuthenticationAttempt` owns one captured login request, account matching,
@@ -106,7 +141,9 @@ as opaque and use a fixed public error, so serialization cannot interrupt pendin
 settlement or disclose the payload.
 
 The three composition roots have different import permissions. The worker owns
-IPC and reviewed native bootstrap dependencies. Authentication may compose the
+IPC and imports its bootstrap factory. The Node binding owns reviewed loader,
+codec, provenance and account-lock dependencies; the bootstrap owner accepts
+those ports without importing filesystem or feature implementations. Authentication may compose the
 environment and account lifetime, but cannot import feature implementations or
 bundle storage. Service composition assembles domain adapters and its reviewed
 runtime ports; it cannot acquire bundles, account locks or authentication owners.
@@ -205,9 +242,13 @@ callbacks cannot settle a removed waiter. It never retries a mutation.
 
 `terminateWorker` owns a single retirement attempt: exit observation, SIGKILL
 escalation and the exit deadline. All terminal paths remove its listener and
-timers, including synchronous failures from either kill call. Close and reconnect
-reuse this mechanism while retaining their own generation and account policies;
-a failed retirement never silently starts a replacement worker.
+timers, including synchronous failures from either kill call. After a successful
+close acknowledgement, the parent waits for voluntary exit before the existing
+SIGKILL deadline; an immediate SIGTERM could interrupt the worker's synchronous
+exit cleanup. Unacknowledged shutdown and reconnect retain immediate termination.
+Close resolves only after observed process exit, not the acknowledgement. A failed
+retirement never silently starts a replacement worker. Installed IPC checks hold
+fake exit cleanup briefly to prove the parent does not preempt lock release.
 
 `IncomingMessageDelivery` owns callback snapshots, ordered delivery, the bounded
 message deduplication cache and cancellation. Its interface is `receive` and

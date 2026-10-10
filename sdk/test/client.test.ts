@@ -6,6 +6,8 @@ import { QQClient } from '../src/index.ts';
 
 class Worker extends EventEmitter {
   connected = true;
+  autoExitAfterClose = true;
+  exitCode: number | null = null;
   stdout = new EventEmitter();
   stderr = new EventEmitter();
   requests: any[] = [];
@@ -13,7 +15,15 @@ class Worker extends EventEmitter {
     this.requests.push(value);
     callback(null);
     if (value.method === 'close')
-      queueMicrotask(() => this.emit('message', { id: value.id, result: null }));
+      queueMicrotask(() => {
+        this.emit('message', { id: value.id, result: null });
+        setImmediate(() => {
+          if (!this.autoExitAfterClose) return;
+          this.connected = false;
+          this.exitCode = 0;
+          this.emit('exit', 0, null);
+        });
+      });
   }
   kill() {
     this.connected = false;
@@ -641,6 +651,7 @@ test('login interrupted by disconnect retains disconnected state after rejection
 
 test('close resolves only after worker exit, not merely the native close response', async () => {
   class ExitControlledWorker extends Worker {
+    override autoExitAfterClose = false;
     kill() {
       this.connected = false;
       return true;

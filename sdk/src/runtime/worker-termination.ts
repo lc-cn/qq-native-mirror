@@ -3,6 +3,10 @@ import type { ChildProcess } from 'node:child_process';
 export interface WorkerTerminationOptions {
   /** Preserve the owning lifecycle's operation-specific timeout description. */
   timeoutMessage?: string;
+  /** A successful close acknowledgement promises voluntary process exit.
+   * Give its synchronous exit cleanup a grace period before force termination.
+   */
+  waitForExit?: boolean;
   forceDelayMs?: number;
   deadlineMs?: number;
 }
@@ -44,10 +48,12 @@ export function terminateWorker(
         }),
       options.deadlineMs ?? 4000,
     );
-    try {
-      worker.kill();
-    } catch (error) {
-      finish({ error });
+    if (!options.waitForExit) {
+      try {
+        worker.kill();
+      } catch (error) {
+        finish({ error });
+      }
     }
   });
 }

@@ -27,7 +27,14 @@ class FakeVideoWorker extends EventEmitter {
         const account = { uin: '456', uid: 'u_fixture' };
         this.emit('message', { event: 'ready', payload: account });
         this.emit('message', { id: value.id, result: account });
-      } else if (value.method === 'close') this.emit('message', { id: value.id, result: null });
+      } else if (value.method === 'close') {
+        this.emit('message', { id: value.id, result: null });
+        setImmediate(() => {
+          this.connected = false;
+          this.exitCode = 0;
+          this.emit('exit', 0, null);
+        });
+      }
     });
   }
   kill() {

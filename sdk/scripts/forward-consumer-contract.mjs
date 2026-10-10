@@ -334,15 +334,22 @@ export async function verifyForwardConsumer(packageRoot) {
       { EventEmitter } = await import('node:events');
     class Worker extends EventEmitter {
       connected = true;
+      exitCode = null;
       stdout = new EventEmitter();
       stderr = new EventEmitter();
       requests = [];
       send(request, callback) {
         this.requests.push(request);
         callback(null);
-        queueMicrotask(() =>
-          this.emit('message', { id: request.id, result: request.method === 'close' ? null : [] }),
-        );
+        queueMicrotask(() => {
+          this.emit('message', { id: request.id, result: request.method === 'close' ? null : [] });
+          if (request.method === 'close')
+            setImmediate(() => {
+              this.connected = false;
+              this.exitCode = 0;
+              this.emit('exit', 0, null);
+            });
+        });
       }
       kill() {
         this.connected = false;

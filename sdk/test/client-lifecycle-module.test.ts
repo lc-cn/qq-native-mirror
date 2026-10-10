@@ -15,12 +15,18 @@ function workerFixture() {
       sent.push(message);
       callback(null);
       if (message.method === 'close' || message.method === 'init')
-        queueMicrotask(() =>
+        queueMicrotask(() => {
           events.emit('message', {
             id: message.id,
             result: message.method === 'init' ? { exports: ['fixture-export'] } : null,
-          }),
-        );
+          });
+          if (message.method === 'close')
+            setImmediate(() => {
+              worker.connected = false;
+              worker.exitCode = 0;
+              events.emit('exit', 0, null);
+            });
+        });
     },
     kill() {
       worker.exitCode = 0;

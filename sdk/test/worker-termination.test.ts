@@ -90,3 +90,31 @@ test('synchronous exit from initial kill cancels timers installed before dispatc
   assert.deepEqual(f.signals, [undefined]);
   assert.equal(f.events.listenerCount('exit'), 0);
 });
+
+test('acknowledged shutdown waits for voluntary exit without sending a signal', async (context) => {
+  context.mock.timers.enable({ apis: ['setTimeout'] });
+  const f = fixture();
+  const pending = terminateWorker(f.worker, { ...options, waitForExit: true });
+  assert.deepEqual(f.signals, []);
+  f.events.emit('exit', 0);
+  await pending;
+  context.mock.timers.tick(50);
+  assert.deepEqual(f.signals, []);
+  assert.equal(f.events.listenerCount('exit'), 0);
+});
+
+test('acknowledged shutdown escalates once only after the exit grace expires', async (context) => {
+  context.mock.timers.enable({ apis: ['setTimeout'] });
+  const f = fixture();
+  const pending = assert.rejects(
+    terminateWorker(f.worker, { ...options, waitForExit: true }),
+    /fixture retirement timed out/,
+  );
+  context.mock.timers.tick(9);
+  assert.deepEqual(f.signals, []);
+  context.mock.timers.tick(1);
+  assert.deepEqual(f.signals, ['SIGKILL']);
+  context.mock.timers.tick(10);
+  await pending;
+  assert.equal(f.events.listenerCount('exit'), 0);
+});

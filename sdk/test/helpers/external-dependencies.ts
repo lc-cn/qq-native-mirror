@@ -74,7 +74,7 @@ export const externalRuntimeDependencies: Readonly<Record<string, readonly strin
   'src/storage/data-directory-lock.ts': ['node:crypto', 'node:fs', 'node:path'],
   'src/storage/native-package-lock.ts': ['node:crypto', 'node:fs/promises'],
   'src/storage/process-lock.ts': ['node:crypto', 'node:fs'],
-  'src/worker.ts': ['node:fs/promises', 'node:os'],
+  'src/worker/bootstrap.ts': ['node:fs/promises', 'node:os'],
 };
 
 export const externalTypeDependencies: Readonly<Record<string, readonly string[]>> = {
