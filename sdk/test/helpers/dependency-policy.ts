@@ -206,6 +206,9 @@ export function dependencyViolation({ from, to, typeOnly }: SourceDependency): s
       : 'Runtime cannot depend on feature implementations or entry points.';
   if (from.startsWith('src/features/')) {
     if (typeOnly && (nativeContracts.has(to) || featurePorts.has(to))) return;
+    // Profile updates own a temporary native listener and preserve both lookup
+    // and removal failures. This pure helper does not grant runtime composition.
+    if (from === 'src/features/contacts/self-profile.ts' && to === 'src/runtime/cleanup.ts') return;
     if (to.startsWith('src/features/')) {
       if (from.split('/')[2] === to.split('/')[2]) return;
       if (crossFeatureDependencies.some((edge) => edge.from === from && edge.to === to)) return;

@@ -230,7 +230,14 @@ export function createNativeServices(context: NativeServiceContext) {
         commitMembers: directory.rememberMembers,
       }),
     );
-    const friendRequests = own(createFriendRequests(guardedSession, emit));
+    const friendRequests = own(
+      createFriendRequests({
+        getBuddyService: () => service('Buddy'),
+        emit,
+        signal: lifetime.signal,
+        awaitAlive,
+      }),
+    );
     const groupRequests = own(createGroupRequests(guardedSession, emit));
     const contactOperations = createContactOperations({
       getBuddyService: () => service('Buddy'),
@@ -239,7 +246,14 @@ export function createNativeServices(context: NativeServiceContext) {
       signal: lifetime.signal,
       awaitAlive,
     });
-    const selfProfile = own(createSelfProfile(guardedSession, () => accountUid ?? ''));
+    const selfProfile = own(
+      createSelfProfile({
+        getProfileService: () => service('Profile'),
+        resolveSelfUid: () => accountUid ?? '',
+        signal: lifetime.signal,
+        awaitAlive,
+      }),
+    );
     const groupNotices = createGroupNotices(guardedSession);
     const groupOperations = createGroupOperations({
       getGroupService: () => service('Group'),

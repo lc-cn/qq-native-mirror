@@ -23,6 +23,7 @@ import { verifyWorkerReadCancellation } from './worker-read-consumer-contract.mj
 import { verifyClientFactoryConsumer } from './client-factory-consumer-contract.mjs';
 import { verifyWorkerErrorRoutes } from './worker-error-consumer-contract.mjs';
 import { verifyActionPortConsumer } from './action-port-consumer-contract.mjs';
+import { verifyProfileRequestConsumer } from './profile-request-consumer-contract.mjs';
 
 // Offline packaging check: controlled services and actual worker routing with a replacement kernel; no QQ native binaries or accounts.
 const root = fileURLToPath(new URL('../', import.meta.url));
@@ -178,28 +179,9 @@ await writeFile(
   ]),
 );
 run(process.execPath, ['faces.mjs']);
-await writeFile(
-  join(destination, 'self-profile.mjs'),
-  `import assert from 'node:assert/strict';
-import {QQClient} from 'qq-native-client';
-import {createSelfProfile} from './node_modules/qq-native-client/dist/features/contacts/self-profile.js';
-import {prepareCommand} from './node_modules/qq-native-client/dist/cli.js';
-for(const text of ['','  spaced signature  ']){let actual;const action=await prepareCommand('signature',{text});await action({setSignature:async value=>{actual=value;}});assert.equal(actual,text);}
-assert.equal(typeof QQClient.prototype.setSignature,'function');
-function fixture(nickname='original nickname',missing=false) {
- let listener; const writes=[];
- const service={addKernelProfileListener(value){listener=value;return 1;},removeKernelProfileListener(){},
-  fetchUserDetailInfo(trace,uids,source,biz){assert.equal(trace,'BuddyProfileStore');assert.deepEqual(uids,['self']);assert.equal(source,1);assert.deepEqual(biz,[0]);listener.onUserDetailInfoChanged({uid:'self',simpleInfo:{coreInfo:missing?{}:{nick:nickname},baseInfo:{longNick:'original signature',sex:255,birthday_year:2000,birthday_month:1,birthday_day:2}}});return{result:0};},
-  modifyDesktopMiniProfile(payload){writes.push(payload);return{result:0};}};
- return {module:createSelfProfile({getProfileService:()=>service},()=> 'self'),writes};
-}
-const birthday={birthday_year:'2000',birthday_month:'1',birthday_day:'2'};
-const nickname=fixture();try{await nickname.module.invokeOperation('setNickname',{name:'new nickname'});assert.deepEqual(nickname.writes,[{nick:'new nickname',longNick:'original signature',sex:255,birthday,location:undefined}]);}finally{nickname.module.close();}
-for(const text of ['new signature','']){const f=fixture();try{await f.module.invokeOperation('setSignature',{text});assert.deepEqual(f.writes,[{nick:'original nickname',longNick:text,sex:255,birthday,location:undefined}]);}finally{f.module.close();}}
-const missing=fixture('unused',true);try{await assert.rejects(missing.module.invokeOperation('setSignature',{text:'new'}),/nickname|preserv|profile/i);assert.equal(missing.writes.length,0);}finally{missing.module.close();}
-`,
+const profileRequestChecks = await verifyProfileRequestConsumer(
+  join(destination, 'node_modules/qq-native-client'),
 );
-run(process.execPath, ['self-profile.mjs']);
 const actionPortChecks = await verifyActionPortConsumer(
   join(destination, 'node_modules/qq-native-client'),
 );
@@ -547,6 +529,7 @@ const receipt = {
     ...readCancellationChecks,
     ...workerErrorChecks,
     ...actionPortChecks,
+    ...profileRequestChecks,
     ...publicContractChecks,
     privateFilesExcluded: true,
     installedImport: true,

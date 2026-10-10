@@ -3,6 +3,11 @@ import type { GroupQueriesContext } from '../../src/features/groups/group-querie
 import type { NativeMessageSenderContext } from '../../src/features/messages/native-message-sender.ts';
 import type { ContactOperationsContext } from '../../src/features/contacts/contact-operations.ts';
 import type { GroupOperationsContext } from '../../src/features/groups/group-operations.ts';
+import type { SelfProfileContext } from '../../src/features/contacts/self-profile.ts';
+import type {
+  FriendRequestsContext,
+  FriendBuddyListener,
+} from '../../src/features/contacts/friend-requests.ts';
 
 /** Compile-only negative contracts: feature dependencies cannot regain the full
  * native Session, and unchecked native responses must remain unknown.
@@ -13,6 +18,8 @@ function verifyDomainPorts(
   sender: NativeMessageSenderContext,
   contactActions: ContactOperationsContext,
   groupActions: GroupOperationsContext,
+  selfProfile: SelfProfileContext,
+  requests: FriendRequestsContext,
 ) {
   // @ts-expect-error A contact directory cannot acquire arbitrary native services.
   contacts.service('Group');
@@ -49,6 +56,31 @@ function verifyDomainPorts(
   void deleted.result;
   // @ts-expect-error A group mutation response is still unknown at its port.
   void renamed.result;
+  // @ts-expect-error Profile updates do not own the complete native Session.
+  selfProfile.getBuddyService();
+  // @ts-expect-error Profile updates cannot send messages.
+  selfProfile.getProfileService()?.sendMsg();
+  // @ts-expect-error Request handling cannot acquire arbitrary native services.
+  requests.service('Group');
+  // @ts-expect-error Request handling does not own friend deletion.
+  requests.getBuddyService()?.delBuddy({});
+  const requested = requests.getBuddyService()?.getBuddyReq?.();
+  const fetched = selfProfile
+    .getProfileService()
+    ?.fetchUserDetailInfo?.('BuddyProfileStore', ['self'], 1, [0]);
+  requests.getBuddyService()?.approvalFriendRequest?.({
+    friendUid: 'u_fixture',
+    reqTime: '1',
+    // @ts-expect-error Approval requires an explicit boolean, not truthy coercion.
+    accept: 'yes',
+  });
+  // @ts-expect-error Native request results require validation.
+  void requested.result;
+  // @ts-expect-error Profile fetch completion does not establish a validated detail.
+  void fetched.simpleInfo;
+  // @ts-expect-error Buddy registration requires both owned callback entry points.
+  const incompleteListener: FriendBuddyListener = { onBuddyReqChange() {} };
+  void incompleteListener;
 
   const buddy = contacts.getBuddyService()?.getBuddyListV2?.('0', true, 0);
   const profile = contacts.getProfileService()?.getCoreAndBaseInfo?.('nodeStore', ['u_fixture']);

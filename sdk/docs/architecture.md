@@ -273,6 +273,32 @@ The existing per-method completion policy remains local to each domain; void
 confirms submission only, and result-bearing methods require a validated success
 code. These internal ports do not add types to the public package interface.
 
+`createSelfProfile` owns one temporary Profile listener and a serialized
+nickname/signature update. Its four-method port preserves opaque registration
+IDs. It captures the selected input before awaiting UID/detail, retains the
+existing profile fields and requires both the matching callback and successful
+fetch completion before modification. Registration may close synchronously;
+the returned listener ID is still released once before settlement. Lookup state,
+timers and cancellation hooks detach before fallible removal. A removal failure
+settles the lookup and prevents mutation; combined operation/cleanup failures
+retain both values. Undocumented removal promises are observed without waiting
+or claiming remote completion. Its exact dependency on the pure runtime cleanup
+helper grants no permission to compose accounts or acquire other runtime owners.
+
+`createFriendRequests` owns its single Buddy listener, request deduplication and
+uncorrelated list query. Its port contains only registration/removal, listing and
+approval. Notifications validate a whole materialized batch before any event,
+including sparse-array holes. Request/decision inputs are captured once. Native
+success alone cannot complete a list; a failed query invalidates listing while
+unsolicited requests and explicit decisions remain available. Local close and
+Session abort retire pending waits and callback publication before attempting
+listener removal. Synchronous observer close stops the current batch; registration
+that returns after abort releases the acquired ID once. Approval is never automatic
+or replayed, and void completion still confirms dispatch only.
+Each pending wait has a removable abort subscription. Completed queries do not
+attach to a shared forever-pending Promise; an isolated installed-consumer check
+verifies bounded Promise retention over repeated completed queries.
+
 The CLI entry retains help, configuration, explicit login selection and entry-URL
 handling. `command-plan` validates command flags and captures file-backed message
 inputs before the client is created; its prepared actions never initiate login.

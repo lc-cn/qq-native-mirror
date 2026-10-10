@@ -47,16 +47,61 @@ function normalize(raw: unknown): NativeFriendRequestDTO {
     raw,
   };
 }
-export function createFriendRequests(
-  session: Native,
-  emit: (event: string, payload: unknown) => void,
-) {
-  if (typeof session.getBuddyService !== 'function')
-    throw new Error('Native service is missing getBuddyService');
-  const service = session.getBuddyService();
-  if (!service || typeof service.addKernelBuddyListener !== 'function')
-    throw new Error('Native Buddy service is missing addKernelBuddyListener');
+export interface FriendBuddyListener {
+  onBuddyListChange(values: unknown): void;
+  onBuddyReqChange(notification: unknown): void;
+}
+export interface FriendBuddyPort {
+  addKernelBuddyListener?: (listener: FriendBuddyListener) => unknown;
+  removeKernelBuddyListener?: (id: unknown) => unknown;
+  getBuddyReq?: () => unknown;
+  approvalFriendRequest?: (request: {
+    friendUid: string;
+    reqTime: string;
+    accept: boolean;
+  }) => unknown;
+}
+export interface FriendRequestsContext {
+  getBuddyService(): FriendBuddyPort | null | undefined;
+  emit(event: string, payload: unknown): void;
+  signal: AbortSignal;
+  awaitAlive<T>(value: T | PromiseLike<T>): Promise<T>;
+}
+export function createFriendRequests(context: FriendRequestsContext) {
+  const { signal, awaitAlive } = context;
   let closed = false;
+  const controller = new AbortController();
+  const awaitValue = async <T>(value: T | PromiseLike<T>): Promise<T> => {
+    const pending = Promise.resolve(value);
+    if (controller.signal.aborted) {
+      void pending.catch(() => {});
+      throw controller.signal.reason;
+    }
+    let abort!: () => void;
+    const stopped = new Promise<never>((_, reject) => {
+      abort = () => reject(controller.signal.reason);
+      controller.signal.addEventListener('abort', abort, { once: true });
+    });
+    try {
+      return await Promise.race([awaitAlive(pending), stopped]);
+    } finally {
+      controller.signal.removeEventListener('abort', abort);
+    }
+  };
+  const alive = () => {
+    signal.throwIfAborted();
+    if (closed) throw new Error('Friend request service is closed');
+  };
+  alive();
+  const service = context.getBuddyService();
+  alive();
+  const add = service?.addKernelBuddyListener;
+  alive();
+  if (typeof add !== 'function')
+    throw new Error('Native Buddy service is missing addKernelBuddyListener');
+  const emit = (event: string, payload: unknown) => {
+    if (!closed && !signal.aborted) context.emit(event, payload);
+  };
   const seen = new Set<string>();
   const waiters = new Set<{
     resolve: (requests: NativeFriendRequestDTO[]) => void;
@@ -71,7 +116,7 @@ export function createFriendRequests(
         if (!closed) friendEvents.onBuddyListChange(values);
       },
       onBuddyReqChange(notification: unknown) {
-        if (closed) return;
+        if (closed || signal.aborted) return;
         try {
           if (
             !notification ||
@@ -79,10 +124,9 @@ export function createFriendRequests(
             !Array.isArray((notification as Native).buddyReqs)
           )
             throw new Error('Invalid native friend request notification');
-          const requests = (notification as Native).buddyReqs.map(
-            normalize,
-          ) as NativeFriendRequestDTO[];
+          const requests = Array.from((notification as Native).buddyReqs, normalize);
           for (const request of requests) {
+            if (closed || signal.aborted) return;
             if (request.decided || request.initiator) continue;
             const key = `${request.uid}:${request.time}`;
             if (seen.has(key)) continue;
@@ -98,13 +142,44 @@ export function createFriendRequests(
     },
     { get: (object, key) => Reflect.get(object, key) ?? (() => {}) },
   );
-  const listenerId = service.addKernelBuddyListener(listener);
-  const call = (method: string, ...args: unknown[]) => {
-    if (closed) throw new Error('Friend request service is closed');
-    if (typeof service[method] !== 'function')
-      throw new Error(`Native Buddy service is missing ${method}`);
-    return service[method](...args);
+  let listenerId: unknown;
+  let registered = false;
+  let removed = false;
+  const remove = () => {
+    if (!registered || removed) return;
+    removed = true;
+    const method = service?.removeKernelBuddyListener;
+    if (typeof method === 'function') Reflect.apply(method, service, [listenerId]);
   };
+  const callList = () => {
+    alive();
+    const method = service?.getBuddyReq;
+    alive();
+    if (typeof method !== 'function')
+      throw new Error('Native Buddy service is missing getBuddyReq');
+    return Reflect.apply(method, service, []) as unknown;
+  };
+  const callApproval = (request: { friendUid: string; reqTime: string; accept: boolean }) => {
+    alive();
+    const method = service?.approvalFriendRequest;
+    alive();
+    if (typeof method !== 'function')
+      throw new Error('Native Buddy service is missing approvalFriendRequest');
+    return Reflect.apply(method, service, [request]) as unknown;
+  };
+  signal.addEventListener('abort', retire, { once: true });
+  try {
+    listenerId = Reflect.apply(add, service, [listener]);
+    registered = true;
+    if (closed || signal.aborted) {
+      close();
+      remove();
+      alive();
+    }
+  } catch (error) {
+    signal.removeEventListener('abort', retire);
+    throw error;
+  }
   async function list(): Promise<NativeFriendRequestDTO[]> {
     if (listing) return listing;
     if (queryInvalidated)
@@ -124,15 +199,23 @@ export function createFriendRequests(
       Promise.all([
         notification,
         Promise.resolve()
-          .then(() => call('getBuddyReq'))
+          .then(() => awaitValue(callList()))
           .then((result) => {
-            if (!result || result.result !== 0)
+            if (
+              !result ||
+              typeof result !== 'object' ||
+              (result as { result?: unknown }).result !== 0
+            )
               throw nativeResultError(
                 'Native getBuddyReq failed or returned an invalid result',
                 result,
               );
+            alive();
           }),
-      ]).then(([requests]) => requests),
+      ]).then(([requests]) => {
+        alive();
+        return requests;
+      }),
       new Promise<never>((_, reject) => {
         timer = setTimeout(
           () => reject(new Error('Native friend request notification timed out')),
@@ -157,37 +240,57 @@ export function createFriendRequests(
     method: FriendRequestOperation,
     payload: Record<string, unknown> = {},
   ): Promise<NativeFriendRequestDTO[] | void> {
-    if (closed) throw new Error('Friend request service is closed');
-    if (method === 'listFriendRequests') return list();
+    alive();
+    if (method === 'listFriendRequests') {
+      const requests = await list();
+      alive();
+      return requests;
+    }
     if (method !== 'handleFriendRequest')
       throw new Error(`Unsupported friend request operation: ${method}`);
-    if (!payload.request || typeof payload.request !== 'object' || Array.isArray(payload.request))
+    const capturedRequest = payload.request;
+    if (!capturedRequest || typeof capturedRequest !== 'object' || Array.isArray(capturedRequest))
       throw new Error('request must be an object');
-    const request = payload.request as Native;
+    const request = capturedRequest as Native;
     const uid = nonempty(request.uid, 'request.uid');
     const time = nonempty(request.time, 'request.time');
     if (!/^\d+$/.test(time)) throw new Error('request.time must be a numeric string');
-    if (typeof payload.accept !== 'boolean') throw new Error('accept must be a boolean');
-    const result = await call('approvalFriendRequest', {
-      friendUid: uid,
-      reqTime: time,
-      accept: payload.accept,
-    });
+    const accept = payload.accept;
+    if (typeof accept !== 'boolean') throw new Error('accept must be a boolean');
+    alive();
+    const result = await awaitValue(
+      callApproval({
+        friendUid: uid,
+        reqTime: time,
+        accept,
+      }),
+    );
+    alive();
     // Upstream void confirms dispatch only. Explicit native errors still reject.
-    if (result !== undefined && (!result || typeof result !== 'object' || result.result !== 0))
+    if (
+      result !== undefined &&
+      (!result || typeof result !== 'object' || (result as { result?: unknown }).result !== 0)
+    )
       throw nativeResultError(
         'Native approvalFriendRequest failed or returned an invalid result',
         result,
       );
+    alive();
   }
-  function close() {
+  function retire() {
     if (closed) return;
     closed = true;
+    controller.abort(
+      signal.aborted ? signal.reason : new Error('Friend request service is closed'),
+    );
+    signal.removeEventListener('abort', retire);
     for (const waiter of waiters) waiter.reject(new Error('Friend request service is closed'));
     waiters.clear();
     seen.clear();
-    if (typeof service.removeKernelBuddyListener === 'function')
-      service.removeKernelBuddyListener(listenerId);
+  }
+  function close() {
+    retire();
+    remove();
   }
   return { invokeOperation, close };
 }
