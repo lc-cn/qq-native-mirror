@@ -110,7 +110,6 @@ const featurePorts = new Set([
 // proprietary dynamic object. New features use unknown results and narrow ports;
 // importing this type must require an explicit review, not a directory permission.
 export const dynamicNativeOwners: Readonly<Record<string, string>> = {
-  'src/features/groups/group-queries.ts': 'Adapt Group callbacks and query results.',
   'src/features/messages/inbound-messages.ts': 'Project version-dependent native messages.',
   'src/features/messages/inbound-mentions.ts': 'Resolve native mention metadata.',
   'src/features/messages/inbound-elements.ts': 'Project opaque received element variants.',

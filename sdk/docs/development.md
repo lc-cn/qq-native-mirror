@@ -102,6 +102,11 @@ its type. Validate the full batch before publication and check account retiremen
 after projection. Preserve opaque `raw` identity separately from those validated
 scalars; this does not require a dynamic native-object port.
 
+Group query envelopes and rows follow the same capture-before-validation rule.
+Use intrinsic Map operations for native membership maps, and commit the complete
+validated member batch only after checking Session retirement. Keep this policy
+inside the group query owner rather than in service composition or the UID cache.
+
 Element decoding belongs to `features/messages/inbound-elements`; add no file
 preparation or native querying there. Local image/file staging and reply-reference
 construction belong to `outbound-elements`, using the specific staging/query

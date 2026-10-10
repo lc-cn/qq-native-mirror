@@ -334,6 +334,11 @@ quarantine and complete member-result validation. The query port exposes only th
 returns stay `unknown` until their receiving validator checks them. Service and
 method acquisition remain lazy, methods are captured once, and their original
 receiver is retained. Close or abort during either getter prevents dispatch.
+Full-list and member rows remain unknown until their scalar fields have been
+captured once and validated. DTO construction uses that captured data, so an
+accessor cannot replace a validated string with another value. Member enumeration
+uses the native Map's intrinsic entries rather than an instance override. These
+rules live in the query owner; composition only supplies the port and commit hook.
 The callback reads use the Session's shared channel and do not register listeners. Detail/mute
 callers receive separate DTO copies; full-list callers retain the existing shared
 result semantics. Member results update the account's UID cache through one

@@ -286,6 +286,79 @@ export async function verifyContactGroupConsumer(packageRoot) {
     assert.equal(calls, 1, 'close gate must prevent a second dispatch');
   }
   const { createNativeServices } = await load('native-services.js');
+  // Exercise the installed composition, not just the source projector: native
+  // accessors must never publish or cache a different value after validation.
+  const capturedMember = {
+    uid: 'u_snapshot',
+    uin: '456',
+    nick: 'snapshot',
+    cardName: 'card',
+    role: 2,
+  };
+  let cardReads = 0;
+  Object.defineProperty(capturedMember, 'cardName', {
+    get: () => (++cardReads === 1 ? 'card' : 123),
+  });
+  const nativeMembers = new Map([['u_snapshot', capturedMember]]);
+  Object.defineProperty(nativeMembers, 'entries', {
+    value() {
+      throw Error('Overridden Map iterator must not run');
+    },
+  });
+  const capturedGroup = { groupCode: '123', groupName: 'snapshot', memberCount: 1, maxMember: 200 };
+  let nameReads = 0;
+  Object.defineProperty(capturedGroup, 'groupName', {
+    get: () => (++nameReads === 1 ? 'snapshot' : 123),
+  });
+  const groupSnapshots = createNativeServices({
+    version: '7.0.2-53644',
+    events: { emit() {} },
+    session: {
+      getMsgService: () => ({ addKernelMsgListener() {} }),
+      getBuddyService: () => ({ addKernelBuddyListener() {} }),
+      getGroupService: () => ({
+        addKernelGroupListener() {},
+        getAllMemberList() {
+          return { errCode: 0, result: { finish: true, infos: nativeMembers } };
+        },
+      }),
+    },
+  });
+  try {
+    assert.deepEqual(await groupSnapshots.invokeOperation('getGroupMembers', { groupId: '123' }), [
+      { userId: '456', uid: 'u_snapshot', nickname: 'snapshot', card: 'card', role: 'member' },
+    ]);
+    assert.equal(cardReads, 1);
+  } finally {
+    groupSnapshots.close();
+  }
+  // Full-list projection uses the installed query owner and real callback
+  // channel. Metadata events have a separate projection contract.
+  const { createGroupQueries } = await load('features/groups/group-queries.js');
+  const { createNativeEventChannel } = await load('runtime/native-event-channel.js');
+  const groupSignal = new AbortController().signal;
+  const groupChannel = createNativeEventChannel(groupSignal);
+  const groupQueries = createGroupQueries({
+    signal: groupSignal,
+    getGroupService: () => ({
+      getGroupList() {
+        groupChannel.dispatch('Group/onGroupListUpdate', [0, [capturedGroup]]);
+        return { result: 0 };
+      },
+    }),
+    eventCall: groupChannel.call,
+    awaitAlive: async (value) => value,
+    commitMembers() {},
+  });
+  try {
+    assert.deepEqual(await groupQueries.listGroups(), [
+      { groupId: '123', name: 'snapshot', memberCount: 1, maxMemberCount: 200 },
+    ]);
+    assert.equal(nameReads, 1);
+  } finally {
+    groupQueries.close();
+    groupChannel.close();
+  }
   const folderProfiles = [
     {
       platform: 'linux',
@@ -845,6 +918,8 @@ export async function verifyContactGroupConsumer(packageRoot) {
   assert.equal(events.listenerCount('group-mute'), 0);
   assert.equal(events.listenerCount('friend-added'), 0);
   return {
+    groupQueryCapturedDtoContract: true,
+    groupMemberIntrinsicMapContract: true,
     groupFileCountControlledContract: true,
     nativeGroupFileCountAttempted: false,
     groupFolderDeleteControlledContract: true,

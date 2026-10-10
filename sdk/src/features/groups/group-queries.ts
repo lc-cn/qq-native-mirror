@@ -1,4 +1,3 @@
-import type { NativeObject as Native } from '../../native/native-object.ts';
 import type {
   Group,
   GroupInfoUpdate,
@@ -9,6 +8,9 @@ import type { NativeEventChannel } from '../../runtime/native-event-channel.ts';
 import { nativeResultError } from '../../errors.ts';
 import { projectGroupInfo } from './group-events.ts';
 import { projectGroupMuteList } from './group-mute-list.ts';
+function record(value: unknown): Record<string, unknown> | undefined {
+  return value && typeof value === 'object' ? (value as Record<string, unknown>) : undefined;
+}
 export interface GroupQueryPort {
   getGroupDetailInfo?: (id: string, source: number) => unknown;
   getGroupShutUpMemberList?: (id: string) => unknown;
@@ -69,8 +71,7 @@ export function createGroupQueries(context: GroupQueriesContext) {
     if (typeof method !== 'function') throw new Error('Native service is missing getAllMemberList');
     return Reflect.apply(method, group, [id, refresh]) as unknown;
   };
-  const nativeCallSucceeded = (value: unknown) =>
-    (value as { result?: unknown } | null | undefined)?.result === 0;
+  const nativeCallSucceeded = (value: unknown) => record(value)?.result === 0;
   let groupListRequest: Promise<Group[]> | undefined;
   let groupListInvalidated = false;
   const groupInfoQueries = new Map<string, Promise<GroupInfoUpdate>>();
@@ -151,32 +152,33 @@ export function createGroupQueries(context: GroupQueriesContext) {
     }
     const request = eventCall(
       'Group/onGroupListUpdate',
-      (update: number, groups: Native[]) => {
+      (update: unknown, groups: unknown) => {
         // Source: NapCatQQ packages/napcat-core/types/group.ts GroupListUpdateType.
         // REFRESHALL=0 and GETALL=1 are full lists; MODIFIED/REMOVE and new native
         // update kinds can carry partial or empty deltas. Never return those.
         if (update !== 0 && update !== 1) return undefined;
         if (!Array.isArray(groups)) throw new Error('Invalid native group list');
         return Array.from(groups, (group): Group => {
+          if (!group || typeof group !== 'object' || Array.isArray(group))
+            throw new Error('Invalid native group list');
+          const row = record(group)!;
+          const groupId = row.groupCode;
+          const name = row.groupName;
+          const memberCount = row.memberCount;
+          const maxMemberCount = row.maxMember;
           if (
-            !group ||
-            typeof group !== 'object' ||
-            Array.isArray(group) ||
-            typeof group.groupCode !== 'string' ||
-            !/^\d+$/.test(group.groupCode) ||
-            typeof group.groupName !== 'string' ||
-            !Number.isSafeInteger(group.memberCount) ||
-            group.memberCount < 0 ||
-            !Number.isSafeInteger(group.maxMember) ||
-            group.maxMember < 0
+            typeof groupId !== 'string' ||
+            !/^\d+$/.test(groupId) ||
+            typeof name !== 'string' ||
+            typeof memberCount !== 'number' ||
+            !Number.isSafeInteger(memberCount) ||
+            memberCount < 0 ||
+            typeof maxMemberCount !== 'number' ||
+            !Number.isSafeInteger(maxMemberCount) ||
+            maxMemberCount < 0
           )
             throw new Error('Invalid native group list');
-          return {
-            groupId: group.groupCode,
-            name: group.groupName,
-            memberCount: group.memberCount,
-            maxMemberCount: group.maxMember,
-          };
+          return { groupId, name, memberCount, maxMemberCount };
         });
       },
       () => requestGroupList(refresh ?? true),
@@ -202,43 +204,53 @@ export function createGroupQueries(context: GroupQueriesContext) {
     alive();
     refresh = refresh ?? false;
     if (typeof refresh !== 'boolean') throw new Error('refresh must be a boolean');
-    const result = (await awaitAlive(requestMembers(groupId, refresh))) as Native;
+    const result: unknown = await awaitAlive(requestMembers(groupId, refresh));
     // Pinned NodeIKernelGroupService.getAllMemberList reports errCode and
     // finish:true. A Map alone does not establish a successful full list.
-    if (result?.errCode !== 0)
-      throw nativeResultError('Native group member query failed', result, 'errCode');
-    const infos = result?.result?.infos;
+    const errCode = record(result)?.errCode;
+    if (errCode !== 0)
+      throw nativeResultError('Native group member query failed', { errCode }, 'errCode');
+    const response = record(record(result)?.result);
+    const infos = response?.infos;
     if (!(infos instanceof Map)) throw new Error('Invalid native group member map');
-    if (result.result.finish !== true)
+    if (response?.finish !== true)
       throw Object.assign(new Error('Native group member list is incomplete'), {
         code: 'incomplete-result',
       });
-    const members = [...infos.entries()].map(([uid, member]): GroupMember => {
-      // Pinned GroupMember identity and display fields are strings. Do not
-      // invent an identity by coercing a number/object or substituting keys.
+    const entries: IterableIterator<[unknown, unknown]> = Map.prototype.entries.call(infos);
+    const members = Array.from(entries, ([uid, member]): GroupMember => {
       if (
         typeof uid !== 'string' ||
         !uid.trim() ||
         !member ||
         typeof member !== 'object' ||
-        Array.isArray(member) ||
-        member.uid !== uid ||
-        typeof member.uin !== 'string' ||
-        !/^\d+$/.test(member.uin) ||
-        typeof member.nick !== 'string' ||
-        typeof member.cardName !== 'string'
+        Array.isArray(member)
       )
         throw new Error('Invalid native group member');
-      if (typeof member.role !== 'number') throw new Error('Unknown native group member role');
-      const role = ({ 4: 'owner', 3: 'admin', 2: 'member' } as const)[member.role as 2 | 3 | 4];
+      const row = record(member)!;
+      const memberUid = row.uid;
+      const userId = row.uin;
+      const nickname = row.nick;
+      const card = row.cardName;
+      const nativeRole = row.role;
+      if (
+        memberUid !== uid ||
+        typeof userId !== 'string' ||
+        !/^\d+$/.test(userId) ||
+        typeof nickname !== 'string' ||
+        typeof card !== 'string'
+      )
+        throw new Error('Invalid native group member');
+      const role =
+        nativeRole === 4
+          ? 'owner'
+          : nativeRole === 3
+            ? 'admin'
+            : nativeRole === 2
+              ? 'member'
+              : undefined;
       if (!role) throw new Error('Unknown native group member role');
-      return {
-        userId: member.uin,
-        uid,
-        nickname: member.nick,
-        card: member.cardName,
-        role,
-      };
+      return { userId, uid, nickname, card, role };
     });
     // Commit only a complete validated query; failures leave no partial cache.
     alive();

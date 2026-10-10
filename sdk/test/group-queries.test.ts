@@ -360,3 +360,112 @@ for (const entry of queryCases) {
     }
   }
 }
+
+test('member fields are captured once before validated full-batch commit', async () => {
+  const f = fixture();
+  let reads = 0;
+  const row = {
+    ...member,
+    get cardName() {
+      return ++reads === 1 ? 'captured' : 123;
+    },
+  };
+  f.setResult({ errCode: 0, result: { finish: true, infos: new Map([['u_member', row]]) } });
+  const rows = await f.queries.getGroupMembers('789');
+  assert.equal(reads, 1);
+  assert.equal(rows[0].card, 'captured');
+  assert.equal(f.commits[0][0].card, 'captured');
+  f.queries.close();
+  f.channel.close();
+});
+
+test('member Map storage is authoritative rather than overridden entries', async () => {
+  const f = fixture();
+  const infos = new Map<string, unknown>();
+  let calls = 0;
+  infos.entries = () => {
+    calls++;
+    return new Map([['u_member', member]]).entries();
+  };
+  f.setResult({ errCode: 0, result: { finish: true, infos } });
+  assert.deepEqual(await f.queries.getGroupMembers('789'), []);
+  assert.equal(calls, 0);
+  assert.deepEqual(f.commits, [[]]);
+  f.queries.close();
+  f.channel.close();
+});
+
+test('full-list row fields and member envelope are each captured once', async () => {
+  const f = fixture();
+  let names = 0;
+  const pending = f.queries.listGroups();
+  f.channel.dispatch('Group/onGroupListUpdate', [
+    0,
+    [
+      {
+        groupCode: '789',
+        get groupName() {
+          return ++names === 1 ? 'captured' : 123;
+        },
+        memberCount: 1,
+        maxMember: 10,
+      },
+    ],
+  ]);
+  assert.equal((await pending)[0].name, 'captured');
+  assert.equal(names, 1);
+  let envelopes = 0;
+  f.setResult({
+    errCode: 0,
+    get result() {
+      envelopes++;
+      return envelopes === 1
+        ? { finish: true, infos: new Map([['u_member', member]]) }
+        : { finish: false };
+    },
+  });
+  assert.equal((await f.queries.getGroupMembers('789')).length, 1);
+  assert.equal(envelopes, 1);
+  f.queries.close();
+  f.channel.close();
+});
+
+test('member projection closing the owner cannot commit or publish the batch', async () => {
+  const f = fixture();
+  f.setResult({
+    errCode: 0,
+    result: {
+      finish: true,
+      infos: new Map([
+        [
+          'u_member',
+          {
+            ...member,
+            get cardName() {
+              f.queries.close();
+              return 'card';
+            },
+          },
+        ],
+      ]),
+    },
+  });
+  await assert.rejects(f.queries.getGroupMembers('789'), /closed/);
+  assert.equal(f.commits.length, 0);
+  f.channel.close();
+});
+
+test('member failure code is captured once without changing native error policy', async () => {
+  const f = fixture();
+  let reads = 0;
+  f.setResult({
+    get errCode() {
+      return ++reads === 1 ? 12 : 0;
+    },
+  });
+  await assert.rejects(f.queries.getGroupMembers('789'), { code: 12 });
+  assert.equal(reads, 1);
+  assert.equal(f.commits.length, 0);
+  f.queries.close();
+  f.channel.close();
+});
