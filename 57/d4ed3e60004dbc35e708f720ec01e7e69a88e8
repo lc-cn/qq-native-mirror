@@ -1,0 +1,37 @@
+sdk/test/architecture.test.ts
+  s_2104cc474f1ce5::t_4d0359ba39d20d 205-232
+sdk/test/forward-resource-owner.test.ts
+  s_2104cc474f1ce5::t_bad5a349f084ff 1-171
+sdk/docs/development.md
+  s_2104cc474f1ce5::t_82d03eacca43ed 51-56
+sdk/test/helpers/dependency-policy.ts
+  s_2104cc474f1ce5::t_4d0359ba39d20d 94-97,202-206
+sdk/test/fixtures/domain-port-types.ts
+  s_2104cc474f1ce5::t_82d03eacca43ed 10,37,43-51
+sdk/docs/architecture.md
+  s_2104cc474f1ce5::t_c5a3c990494b36 311-318
+sdk/src/features/forward/forward-resource-owner.ts
+  s_2104cc474f1ce5::t_d4a4b0048358fc 1-62
+sdk/src/native-services.ts
+  s_2104cc474f1ce5::t_4361107ced58ec 36-37,347-354,409-412
+sdk/src/runtime/worker-rpc-channel.ts
+  s_2104cc474f1ce5::t_626bd2a86ac807 2,55,58,76
+sdk/test/worker-rpc-channel.test.ts
+  s_2104cc474f1ce5::t_43f4435d586b2d 193-249
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "57d4ed3e60004dbc35e708f720ec01e7e69a88e8",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
