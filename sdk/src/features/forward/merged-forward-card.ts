@@ -1,3 +1,6 @@
+import type { ForwardCardElement } from '../../native/prepared-message-contracts.ts';
+export type { ForwardCardElement } from '../../native/prepared-message-contracts.ts';
+
 /** Owned offline formatter; fixed field facts and ARK=10 provenance are documented
  * in docs/merged-forward-card-internal.md. The formatter itself only constructs data; the public pipeline controls upload/send.
  */
@@ -6,11 +9,6 @@ export interface ForwardCardInput {
   cardId: string;
   nodes: Array<{ displayName: string; text: string }>;
   options?: { title?: string; summary?: string; prompt?: string };
-}
-export interface ForwardCardElement {
-  elementType: 10;
-  elementId: '';
-  arkElement: { bytesData: string };
 }
 const MAX = 1024 * 1024;
 function record(

@@ -120,6 +120,13 @@ ports. The sender owns orchestration and receipt correlation. Test element
 projection independently of outbound filesystem setup; installed-consumer checks
 exercise both from the fresh archive and reject the removed mixed module.
 
+Keep SDK-constructed native envelopes in `native/prepared-message-contracts.ts`.
+The sender accepts their closed `PreparedSendElement` union; the ordinary builder
+union and the ARK forward-card variant stay separate. Capture the whole ordinary
+input batch before preparing any element, including direct internal sender calls.
+Do not restore a dynamic object array to accommodate a new envelope: declare its
+actual constructed fields and test its submission through the existing sender.
+
 Use `runtime/media-contracts.MediaStagingPort` for native cache allocation across
 image, record and video constructors. Keep its result unknown until validating
 the absolute path and retain the method receiver and existing acquisition timing.

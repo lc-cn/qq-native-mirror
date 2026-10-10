@@ -121,3 +121,15 @@ export type PreparedMessageElement =
   | PreparedVideoElement
   | PreparedFaceElement
   | PreparedReplyElement;
+
+/** ARK envelope emitted only by the validated merged-forward formatter. Keeping
+ * it separate preserves the ordinary message builders' closed element union.
+ */
+export interface ForwardCardElement {
+  elementType: 10;
+  elementId: '';
+  arkElement: { bytesData: string };
+}
+
+/** The two SDK construction paths accepted by native message submission. */
+export type PreparedSendElement = PreparedMessageElement | ForwardCardElement;

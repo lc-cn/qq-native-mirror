@@ -1,26 +1,33 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { createNativeMessageSender } from '../src/features/messages/native-message-sender.ts';
+import {
+  createNativeMessageSender,
+  type MessageSendPort,
+} from '../src/features/messages/native-message-sender.ts';
 import { createNativeEventChannel } from '../src/runtime/native-event-channel.ts';
-import type { NativeObject } from '../src/native/native-object.ts';
+import { buildMergedForwardCard } from '../src/features/forward/merged-forward-card.ts';
+import type { PreparedSendElement } from '../src/native/prepared-message-contracts.ts';
 const peer = { chatType: 2 as const, peerUid: '123' };
-function fixture() {
+function fixture(uidFor: (id: string) => Promise<string> = async () => 'u_fixture') {
   const controller = new AbortController();
   const channel = createNativeEventChannel(controller.signal);
   const calls: string[] = [];
   let unique: unknown = 'unique';
   let sendCalls = 0;
   let invoke: () => unknown = () => ({ result: 0 });
-  const msg: NativeObject = {
+  const submitted: PreparedSendElement[][] = [];
+  const msg: MessageSendPort = {
     generateMsgUniqueId() {
       assert.equal(this, msg);
       calls.push('unique');
       return unique;
     },
-    sendMsg(_id: string, destination: NativeObject) {
+    sendMsg(id, destination, elements) {
       assert.equal(this, msg);
+      assert.equal(id, '0');
       calls.push('send');
       sendCalls++;
+      submitted.push(elements);
       channel.dispatch('Msg/onMsgInfoListUpdate', [
         [
           {
@@ -63,7 +70,7 @@ function fixture() {
       };
     },
     awaitAlive: async (value) => value,
-    uidFor: async () => 'u_fixture',
+    uidFor,
     eventCall: channel.call,
   });
   return {
@@ -71,6 +78,7 @@ function fixture() {
     channel,
     controller,
     calls,
+    submitted,
     get sendCalls() {
       return sendCalls;
     },
@@ -90,6 +98,88 @@ test('construction is lazy and send keeps native ordering, correct peer correlat
   assert.deepEqual(f.calls, ['Msg', 'MSF', 'time', 'unique', 'send']);
   f.sender.close();
   f.channel.close();
+});
+test('sender captures all elements before UID resolution can mutate caller input', async () => {
+  const input = [
+    { type: 'at', userId: '123' },
+    { type: 'text', text: 'captured' },
+  ];
+  const f = fixture(async () => {
+    input[1]!.text = 'mutated';
+    input.length = 1;
+    return 'u_fixture';
+  });
+  try {
+    await f.sender.send(peer, input);
+    const elements = f.submitted[0]!;
+    assert.equal(elements.length, 2);
+    assert.deepEqual(elements[1], {
+      elementType: 1,
+      elementId: '',
+      textElement: {
+        content: 'captured',
+        atType: 0,
+        atUid: '',
+        atTinyId: '',
+        atNtUid: '',
+      },
+    });
+  } finally {
+    f.sender.close();
+    f.channel.close();
+  }
+});
+const sparseInput = new Array<unknown>(2);
+sparseInput[0] = { type: 'text', text: 'valid' };
+for (const [name, input] of [
+  [
+    'later invalid face',
+    [
+      { type: 'at', userId: '123' },
+      { type: 'face', id: '14' },
+    ],
+  ],
+  ['sparse batch', sparseInput],
+  ['relative media path', [{ type: 'image', file: 'relative.png' }]],
+  ['raw card input', [{ elementType: 10, elementId: '', arkElement: { bytesData: '{}' } }]],
+] as const) {
+  test(`sender rejects ${name} before UID or native acquisition`, async () => {
+    let uidCalls = 0;
+    const f = fixture(async () => {
+      uidCalls++;
+      return 'u_fixture';
+    });
+    try {
+      await assert.rejects(f.sender.send(peer, input));
+      assert.equal(uidCalls, 0);
+      assert.deepEqual(f.calls, []);
+    } finally {
+      f.sender.close();
+      f.channel.close();
+    }
+  });
+}
+test('prepared forward cards use the same sender without rewriting the envelope', async () => {
+  const card = buildMergedForwardCard({
+    resourceId: 'fixture-resource',
+    cardId: '12345678-1234-4123-8123-123456789abc',
+    nodes: [{ displayName: 'fixture', text: 'captured' }],
+  });
+  const batch = [card];
+  const f = fixture();
+  let dispatched = 0;
+  try {
+    const receipt = await f.sender.sendPrepared(peer, batch, () => dispatched++);
+    assert.equal(receipt.messageId, '42');
+    assert.equal(dispatched, 1);
+    assert.equal(f.sendCalls, 1);
+    assert.equal(f.submitted[0], batch);
+    assert.equal(f.submitted[0]![0], card);
+    assert.deepEqual(f.calls, ['Msg', 'MSF', 'time', 'unique', 'send']);
+  } finally {
+    f.sender.close();
+    f.channel.close();
+  }
 });
 test('invalid correlation and duplicate correlation never dispatch another send', async () => {
   const f = fixture();

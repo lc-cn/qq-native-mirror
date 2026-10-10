@@ -1,6 +1,8 @@
-import type { NativeObject as Native } from '../../native/native-object.ts';
 import type { NativePeer, NativeMessage } from '../../native/message-contracts.ts';
-import type { PreparedMessageElement } from '../../native/prepared-message-contracts.ts';
+import type {
+  PreparedMessageElement,
+  PreparedSendElement,
+} from '../../native/prepared-message-contracts.ts';
 import type {
   MediaTools,
   RecordCodec,
@@ -9,7 +11,7 @@ import type {
 } from '../../runtime/media-contracts.ts';
 import type { MessageIdQueryPort } from './message-query.ts';
 import type { NativeEventChannel } from '../../runtime/native-event-channel.ts';
-import { sentReceipt } from './send-input.ts';
+import { captureSendInput, sentReceipt } from './send-input.ts';
 import { createImageElement, createFileElement, createReplyElement } from './outbound-elements.ts';
 import { faceElement } from './face-input.ts';
 import { createVideoElement } from '../media/media-send.ts';
@@ -20,7 +22,7 @@ export interface MessageSendPort extends MessageIdQueryPort, MediaStagingPort {
   sendMsg?: (
     id: string,
     peer: NativePeer & { guildId: string },
-    elements: Native[],
+    elements: PreparedSendElement[],
     attributes: Map<unknown, unknown>,
   ) => unknown;
 }
@@ -65,14 +67,13 @@ export function createNativeMessageSender(context: NativeMessageSenderContext) {
     peer: NativePeer,
   ): Promise<PreparedMessageElement[]> => {
     alive();
-    const elements = typeof input === 'string' ? [{ type: 'text', text: input }] : input;
-    if (!Array.isArray(elements) || !elements.length)
-      throw new Error('Message must contain elements');
+    // Capture the complete caller batch before any asynchronous preparation.
+    // Constructors then consume the same discriminated contract as the facade.
+    const elements = captureSendInput(input, peer.chatType === 2);
     return Promise.all(
-      elements.map(async (element: Native): Promise<PreparedMessageElement> => {
+      elements.map(async (element): Promise<PreparedMessageElement> => {
         alive();
         if (element.type === 'text') {
-          if (typeof element.text !== 'string') throw new Error('Invalid text element');
           return {
             elementType: 1,
             elementId: '',
@@ -86,9 +87,7 @@ export function createNativeMessageSender(context: NativeMessageSenderContext) {
           };
         }
         if (element.type === 'at') {
-          if (peer.chatType !== 2) throw new Error('Mentions require a group peer');
-          const id = String(element.userId ?? element.id ?? '');
-          if (!id) throw new Error('Mention requires userId');
+          const id = element.userId;
           const all = id === 'all';
           return {
             elementType: 1,
@@ -129,13 +128,14 @@ export function createNativeMessageSender(context: NativeMessageSenderContext) {
             peer,
             elementMessageService('getMsgsByMsgId'),
           );
-        throw new Error(`Unsupported message element: ${String(element.type)}`);
+        const unsupported: never = element;
+        throw new Error(`Unsupported message element: ${String(unsupported)}`);
       }),
     );
   };
   const sendPreparedElements = async (
     peer: NativePeer,
-    elements: Native[],
+    elements: PreparedSendElement[],
     onDispatch?: () => void,
   ) => {
     alive();

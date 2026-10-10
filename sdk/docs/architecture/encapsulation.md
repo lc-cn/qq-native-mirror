@@ -1,0 +1,500 @@
+# Encapsulation and variation points
+
+`NativeWorkerBootstrap` owns initialization for exactly one Node worker. It
+reserves initialization synchronously before creating the data directory, keeps
+its candidate kernel private and permits login/business dispatch only after
+`prepare` succeeds. Same-directory and different-directory duplicate requests
+cannot acquire a second lock, load the addon again or replace the candidate.
+An initialization failure is terminal for that worker; the parent owns worker
+retirement rather than replaying native singleton initialization.
+
+Close retires initialization before closing its candidate once. Every resumed
+acquisition stage checks that initialization is still active. A candidate returned
+after reentrant close is retired without preparation, and a late prepare result
+cannot publish readiness. Kernel callbacks after failure or close are suppressed.
+Primary initialization failures retain cleanup failures rather than replacing
+them. Native loading can leave process-owned threads; once loading is attempted,
+the account-directory lock remains owned until the synchronous process-exit hook.
+Directory-only failures release their acquisition once. Close does not invent a
+native addon unload or a QQ Session destructor.
+
+`worker/bootstrap` binds the actual Node ports: directory creation and locking,
+RTLD_GLOBAL bridge loading, default Linux library preload, measured wrapper
+provenance, codecs and kernel creation. `worker.ts` presents events, correlates
+IPC requests, propagates read cancellation and exits the process. These owners
+have separate exact dependency permissions; a new file in `worker/` inherits
+none of them. Controlled checks exercise both the owner interface and the actual
+compiled IPC entry, with addon loading and kernel behavior substituted. Installed worker checks cover same/different-directory
+initialization races, preparation gates, native-touched failure locks, orderly
+close, disconnect, directory reuse and close during pending initialization. They
+run against the packed archive locally and on all six native-package CI hosts;
+fake loading does not establish QQ addon or account interoperability.
+
+`KernelEnvironment` owns one cached preparation promise, local directories, device
+configuration, Session factory selection and engine/login initialization. It does
+not connect or authenticate. `AuthenticationAttempt` owns one captured login request, account matching,
+connection request, QR/restore/quick dispatch, polling and the original login
+deadline. Its Promise resolves only at account Session readiness. Its login port
+contains only the methods that authentication uses; it cannot start Sessions or
+load bundles. The Kernel owns the current attempt reference, account generation,
+identity and offline transitions. Acquired handles become
+visible to that state machine before engine initialization and listener
+registration: native calls can synchronously invoke callbacks. A rejected
+preparation is retained rather than replaying native initialization; factory
+selection occurs before invocation, never by catching a failure and trying
+another signature. Login failure notifications treat arbitrary native arguments
+as opaque and use a fixed public error, so serialization cannot interrupt pending
+settlement or disclose the payload.
+
+The three composition roots have different import permissions. The worker owns
+IPC and imports its bootstrap factory. The Node binding owns reviewed loader,
+codec, provenance and account-lock dependencies; the bootstrap owner accepts
+those ports without importing filesystem or feature implementations. Authentication may compose the
+environment and account lifetime, but cannot import feature implementations or
+bundle storage. Service composition assembles domain adapters and its reviewed
+runtime ports; it cannot acquire bundles, account locks or authentication owners.
+The environment accepts callbacks without importing the kernel or interpreting
+its state. Architecture tests check these constraints for runtime and type edges,
+including each owner's Node IO dependencies.
+
+The package entry only reexports its public interface. `createClient` selects and
+validates a bundle, resolves package-relative worker/bridge paths, and releases
+the worker if initialization fails. It constructs the same `QQClient` class
+exported from the root. The facade does not import bundle preparation or file IO;
+its lifecycle owns process requests and retirement. Composition and lower layers
+cannot import `src/client/`. New files in that directory do not inherit these
+modules' dependency permissions. Both relative and external imports are checked.
+
+`QQClient` inherits from `EventEmitter` to implement the public event contract.
+`WorkerRpcChannel` owns its pending map, IDs, timer cleanup and settlement. It
+accepts a transport and a failure policy; callers cannot mutate pending state.
+`ClientLifecycle` owns account state, login/restore coalescing, worker generations,
+automatic restore policy and shutdown. Its interface exposes state/account snapshots
+and request/login/reconnect/close; no pending maps or worker handles escape. Its named
+context supplies the worker factory, event sink and native-export update hook.
+`QQClient` keeps the existing `EventEmitter` API, QR/error presentation, callback audit
+and message aliases. State transitions still happen before their public events, and
+facade methods return the lifecycle's login/reconnect/close Promises directly so
+coalesced callers retain the same Promise identity.
+
+`createNativeServices` receives one `NativeServiceContext`: session, version,
+event sink, authenticated identity, media implementations and measured binary
+provenance. Optional dependencies are named rather than encoded by argument
+positions. The record/video codecs and worker transport are actual substitution
+points used by platform implementations and controlled tests. Domain adapters use
+composition; a shared superclass would couple unrelated native contracts.
+
+`AccountSessionLifecycle` owns startup for one authenticated account, retained
+Session callbacks, the native-readiness/start-completion gates and the acquired
+business adapter. Its interface is `begin`, `invokeOperation` and `close`; it does
+not expose services, readiness flags or callback handles. A named context supplies
+the already selected native start strategy, business adapter factory and account
+transition hooks. The factory is a real variation point: production composes the
+native services; controlled tests supply an adapter through the same interface.
+The authentication attempt retains login/restore selection, account matching,
+request deadlines and terminal settlement. The Kernel retains account generations
+and interpretation of offline notifications. Invalidation stops authentication
+work before account teardown; failure/offline settlement retains cleanup errors.
+Close retains its distinct contracts: pending login rejects with the closing
+error, while cleanup failure rejects close with its original value. Raw Session
+instances are prepared before LoginService initialization because native versions
+may depend on them; they are not a second business-service owner.
+
+The Session owner buffers early readiness until native start succeeds, and never
+falls back after a dispatched start fails. Close detaches its business adapter
+before fallible cleanup; retained callbacks cannot publish after close or generation
+replacement. A business adapter returned after reentrant close is released once,
+including its cleanup error, rather than retained as an online Session. Reentrant
+readiness during construction cannot allocate a second adapter. Native singleton
+threads still require worker exit: this module does not invent a Session destructor.
+
+`prepareNative` selects explicit, installed or catalog-backed bundles and checks the
+manifest, device, version and Node constraints. `installVerifiedBundle` owns a
+verified mirror bundle's cache validation, in-process queue, package lock, content
+cache, bounded download workers, staging directory and publication. Its caller
+receives only the installed root, never the queue or partially staged files. The
+installer waits for every download worker before removing staging; a failed
+installation releases its lock and cannot remove a later queue entry. Installed
+npm object hydration retains its own format and verification policy. Both paths
+use the storage-owned package lock; bundle storage does not depend on source
+selection or business modules.
+
+`qun-web-read` owns the QQ group HTTP read transport shared by notices and essence
+pages: native ticket acquisition, cookie exchange, redirect validation, timeout,
+abort and cookie hashing. Its named worker context and two fixed read endpoints
+keep transport ownership independent of feature DTO validation. Credentials stay
+local to each request. A feature does not retry or switch protocols after dispatch.
+
+`NativeServiceLifetime` owns the Session's dispatch guard, abort signal, native
+waits and resource ledger. Composition acquires modules in order and registers
+their cleanup with this owner. Close marks the Session inert, aborts waits and
+detaches the ledger before attempting every cleanup once. Retained service handles
+preserve native receiver identity; listener removal remains available for teardown,
+while other methods cannot dispatch after close. A native Promise that rejects
+after close is still observed, including synchronous close during argument
+evaluation. This owner does not cancel an already issued native operation.
+
+`runtime/media-contracts` owns the codec/tool ports independently of module
+loading, media-file preparation and native submission. Bundled and supplied
+codecs implement the same interfaces. Existing media-module type reexports and
+public `VideoCodec`/`VideoInfo` exports remain compatible; `RecordCodec` has one
+definition instead of separate loader and preparation declarations.
+
+`NativeEventChannel` is generic over callback arguments and projected results.
+It correlates native callbacks and method completion without assuming that a
+callback alone means success. An invocation rejection overrides an earlier
+success callback. Timeout, abort and close interrupt pending work, and late
+callbacks cannot settle a removed waiter. It never retries a mutation.
+
+`terminateWorker` owns a single retirement attempt: exit observation, SIGKILL
+escalation and the exit deadline. All terminal paths remove its listener and
+timers, including synchronous failures from either kill call. After a successful
+close acknowledgement, the parent waits for voluntary exit before the existing
+SIGKILL deadline; an immediate SIGTERM could interrupt the worker's synchronous
+exit cleanup. Unacknowledged shutdown and reconnect retain immediate termination.
+Close resolves only after observed process exit, not the acknowledgement. A failed
+retirement never silently starts a replacement worker. Installed IPC checks hold
+fake exit cleanup briefly to prove the parent does not preempt lock release.
+
+`IncomingMessageDelivery` owns callback snapshots, ordered delivery, the bounded
+message deduplication cache and cancellation. Its interface is `receive` and
+`close`; native lookup and projection are injected ports. Closing interrupts its
+own wait, signals the resolver, and suppresses late messages and callbacks without
+claiming to cancel a dispatched native operation. The session composition keeps
+system-message processing and native callback registration in their original
+order. Queried history does not share live-delivery deduplication state.
+
+`captureNativeMessage` supplies the delivery ports with a typed receipt snapshot.
+It reads the fields required for projection once, validates those captured values
+and copies the known element bodies before lookup can yield. Projection and the
+deduplication key use that same snapshot, rather than reading the original record
+again. Unrelated enumerable properties are not evaluated or carried into the
+snapshot; applications still receive the original `Message.raw`. Unknown element
+payloads retain their original object identity. Group messages do not acquire the
+unused private `peerUin` field. The outer callback filter retains its existing
+unsupported-conversation policy; the snapshot does not define a new proprietary
+ABI. Source and installed-consumer checks cover controlled accessor side effects
+and queued mutation, without claiming such accessors occur in QQ callbacks.
+
+`NativeMessageSender` owns element preparation, reserved correlation IDs and
+terminal receipt selection behind `send`, `sendPrepared` and `close`. Normal text,
+media and merged-forward cards use the same receipt path. It receives the Session's
+callback channel rather than registering another listener, preserving send/recall
+subscription order. Its narrow ports expose only message preparation/query/send and server time; it
+cannot request arbitrary native services. Native responses stay `unknown` until
+the receiving validator checks them. Media configuration depends on codec ports,
+not the account composition context. Construction performs no native work. A callback success still
+waits for native completion, failed IDs remain reserved until teardown, and an
+operation is never replayed. The Session aborts pending work before closing the
+sender; deferred preparation cannot dispatch after shutdown.
+
+`createMessageQueries` owns peer capture, exact/batch/history reads, asynchronous record
+projection and batch reordering through injected native-read and resolver ports. The query port exposes only
+`getMsgsByMsgId` and `getMsgsIncludeSelf`; returned values remain `unknown` until
+the response validator checks status and the complete message batch, then narrows
+them to validated message records. ID queries retain service-before-peer ordering;
+history retains peer-before-service ordering. Method capture preserves the native
+receiver and checks retirement before dispatch. Cancellation interrupts resolver
+and decode waits and prevents a final success; it does not undo an issued query.
+The composition root binds those ports and selects a method; it does not implement
+query control flow. Whole-batch validation precedes asynchronous projection, and
+the existing Session lifetime observes pending work and blocks dispatch after close.
+
+`features/forward/forward-resource-owner` owns the Session's lazy upload and read
+transports and their orchestration. Its SSO port contains one native method; the
+composition root supplies peer resolution, prepared card sending and the account
+signal. Read preflight precedes native service acquisition; merged sending still
+captures input, resolves the destination, checks cancellation, then uploads and
+sends the card. Two deferred cleanup entries retain the original upload/read order
+and account cleanup error semantics. Construction never acquires native services.
+
+`createForwardMessages` owns existing-message forwarding and merged-content reads.
+Its narrow message port exposes only `getMultiMsg` and `forwardMsg`; peer resolution
+and single/batch decoding are injected separately. It captures validated inputs
+before asynchronous resolution, resolves source then destination, and preserves
+the original native argument order and receiver. A merged read validates its
+entire raw batch before decoding, allowing mixed source conversations. Local close
+and Session abort stop pending resolution, native completion and decoding without
+replaying an operation. Closing during a getter prevents the next dispatch or a
+successful return; single decoding stops before another record is started. Late
+promises remain observed and completed waits remove their abort subscriptions.
+This module registers no native listeners. A successful forward result confirms
+native acceptance only, with no new message IDs or destination delivery receipt.
+
+`GroupQueries` owns full-list selection, per-group query coalescing, failed-channel
+quarantine and complete member-result validation. The query port exposes only the four verified Group read methods; native method
+returns stay `unknown` until their receiving validator checks them. Service and
+method acquisition remain lazy, methods are captured once, and their original
+receiver is retained. Close or abort during either getter prevents dispatch.
+Full-list and member rows remain unknown until their scalar fields have been
+captured once and validated. DTO construction uses that captured data, so an
+accessor cannot replace a validated string with another value. Member enumeration
+uses the native Map's intrinsic entries rather than an instance override. These
+rules live in the query owner; composition only supplies the port and commit hook.
+The callback reads use the Session's shared channel and do not register listeners. Detail/mute
+callers receive separate DTO copies; full-list callers retain the existing shared
+result semantics. Member results update the account's UID cache through one
+commit hook only after the whole batch validates and the Session remains alive.
+Closing invalidates the module and clears its query bookkeeping; the owning
+Session first aborts pending callbacks and native waits.
+
+`createGroupEvents` owns partial group/member metadata projection. Each optional
+field is captured once before validation; native role states and update kinds
+retain their distinct meanings. Member enumeration reads the Map's intrinsic
+storage. An invalid row or projection exception discards the whole batch and
+emits a fixed diagnostic without its payload. Application emitter exceptions are
+outside that projection guard and keep their original identity. Metadata event
+projection and full-list query validation are separate contracts; neither implies
+a verified join/kick action or successful native query.
+
+`createGroupSearch` owns the group-number search queue, same-keyword coalescing,
+whole-batch projection and failed-channel quarantine. Its narrow lazy port exposes
+only `searchGroup`, returning unknown data. The facade and CLI share a pure uint64
+input capture module; composition checks the measured binary contract before
+acquiring Search or registering its one retained listener. Native callback objects
+remain retained until worker exit. The shared callback channel accepts a local
+abort signal, so feature close retires its waiter without closing sibling reads.
+The callback has no nonce: a matching unsolicited snapshot may satisfy a read;
+failure prevents another dispatch in that Session. Successful callers receive
+separate DTOs, and incomplete empty pages never become an absence result. This
+module performs no automatic paging, retries, account-ID conversion or mutations.
+
+`ContactDirectory` owns the account's UID cache, recipient resolution and validated
+friend/category reads. Its lazy Buddy, Profile and UID ports expose only the three native methods it
+actually uses, returning `unknown`; it cannot acquire arbitrary native services.
+A method is captured once with its original receiver, and close or abort during
+acquisition prevents dispatch. It receives whole validated member batches from
+`GroupQueries`; no cache reference escapes. Buddy/profile queries commit only after
+the complete result validates and the Session remains alive. Categorized results
+retain their separate counts and duplicate membership semantics. Single conversion
+misses remain uncached, preserving the existing policy. Construction does no native
+work, and close prevents cache hits, late commits and subsequent dispatch.
+Buddy and UID conversion results remain unknown until their fields are validated.
+Flat and categorized friend reads share one profile projector, while flat reads
+require only category memberships. UID conversion requires a native Map entry for
+the requested identifier; a map-shaped object cannot supply a recipient identity.
+These owners have no permission to import the dynamic native-object escape hatch.
+
+`createFriendCategoryMutations` owns category creation, rename and deletion through a narrow
+Buddy port. Its discriminated request union binds each operation to its native
+argument tuple. Input capture and independent binary capability checks precede
+acquisition; each selected method keeps its receiver and dispatches once. Both
+writes require an explicit int32 zero ACK, share the account signal and a local
+five-second deadline, and observe late rejections. Closing after dispatch leaves
+the remote effect unknown. This shared lifecycle does not grant deletion to a
+binary whose rename contract alone is verified.
+Creation has its own capability decision and receipt projector: it returns the
+native category identity/name rather than a void ACK. Its native method is
+captured once and invoked with the original receiver and an explicit second
+`undefined` argument. Close during acquisition prevents dispatch; close during
+receipt projection prevents a successful DTO from escaping. Composition only
+injects the port and capability decisions, then routes these three actions.
+
+`createContactOperations` and `createGroupOperations` receive separate mutation
+ports, not a Session or arbitrary service locator. The contact module owns profile
+lookup, remark and deletion validation; the group module owns its eight management
+actions. Each group method is paired with its native argument tuple by a type
+union, so adding a branch cannot silently mix another method's parameters.
+Both modules validate and capture input before UID lookup, retain the selected
+native receiver and acquire each method once. They use the Session's signal and
+wait owner: close interrupts pending lookups/completions and suppresses subsequent
+dispatch, while late native failures remain observed. They never retry a mutation.
+The existing per-method completion policy remains local to each domain; void
+confirms submission only, and result-bearing methods require a validated success
+code. These internal ports do not add types to the public package interface.
+
+`createSelfProfile` owns one temporary Profile listener and a serialized
+nickname/signature update. Its four-method port preserves opaque registration
+IDs. It captures the selected input before awaiting UID/detail, retains the
+existing profile fields and requires both the matching callback and successful
+fetch completion before modification. Registration may close synchronously;
+the returned listener ID is still released once before settlement. Lookup state,
+timers and cancellation hooks detach before fallible removal. A removal failure
+settles the lookup and prevents mutation; combined operation/cleanup failures
+retain both values. Undocumented removal promises are observed without waiting
+or claiming remote completion. Its exact dependency on the pure runtime cleanup
+helper grants no permission to compose accounts or acquire other runtime owners.
+
+`createFriendRequests` owns its single Buddy listener, request deduplication and
+uncorrelated list query. Its port contains only registration/removal, listing and
+approval. Notifications validate a whole materialized batch before any event,
+including sparse-array holes. Request/decision inputs are captured once. Native
+notification carriers and each DTO scalar are also captured once as unknown and
+validated before projection. Accessors cannot replace a checked value with a
+different type during event publication. The original `raw` object remains opaque
+and retains its identity for existing consumers; typed fields never reread it.
+This owner has no dynamic native-object permission.
+Native success alone cannot complete a list; a failed query invalidates listing while
+unsolicited requests and explicit decisions remain available. Local close and
+Session abort retire pending waits and callback publication before attempting
+listener removal. Synchronous observer close stops the current batch; registration
+that returns after abort releases the acquired ID once. Approval is never automatic
+or replayed, and void completion still confirms dispatch only.
+Each pending wait has a removable abort subscription. Completed queries do not
+attach to a shared forever-pending Promise; an isolated installed-consumer check
+verifies bounded Promise retention over repeated completed queries.
+
+`createGroupRequests` owns its Group application listener, bounded deduplication
+and the serialized page queue. Its four-method port can register/remove the
+listener, read one notification page and submit one explicit decision. It cannot
+query unrelated account data or change group membership. Page callbacks have no
+request ID: calls remain serialized, match the requested `doubt` flag and require
+both the page and successful native completion. Any failed dispatched query
+quarantines further listing; unsolicited notifications and explicit decisions
+remain available. Inputs are captured before queueing, including the caller's
+cursor and decision reason. Local close and Session abort stop callbacks and
+pending waits before listener removal, including queued cursors and unresolved
+decision acknowledgements. Native calls already issued are observed without
+replay. A callback observer that closes the module stops the remainder of the
+batch. Undocumented removal promises are observed without waiting; a synchronous
+cleanup failure retains its original value. A void decision completion confirms
+dispatch only. The local and multi-platform installed-consumer checks share the
+same controlled composition contract; they do not approve real group requests.
+
+`createGroupNotices` owns bulletin input capture, local image preparation, domain
+ticket acquisition, upload and publication. Its injected ports expose only the
+ticket method and three bulletin methods; they cannot acquire account services or
+change group membership. Services and methods are acquired lazily and captured
+once with their original receiver. Inputs are captured before asynchronous work,
+so caller changes cannot replace validated options during ticket acquisition.
+Image paths are canonicalized and checked before requesting a ticket; publication
+requires both successful upload status and complete picture metadata. Local close
+and Session abort settle pending file, ticket and mutation waits without issuing
+the next step. Late native promises remain observed, and synchronous close during
+method or result access prevents dispatch or successful completion. Cancellation
+cannot undo a mutation already issued. Successful publication supplies no verified
+notice ID or recipient receipt; void deletion confirms dispatch only. The shared
+installed-package contract exercises these rules with controlled services and
+does not request real tickets or modify group announcements.
+
+`requestQunPage` owns the shared group HTTP read transport: client/domain ticket
+acquisition, cookie exchange, redirect policy, BKN hashing and request cancellation.
+Its two narrow ticket ports expose no account or message operations. Native service
+and method acquisition is lazy, captured once and checked for cancellation before
+dispatch. Acquisition and credential projection share a fixed-error boundary;
+proprietary exceptions and sensitive URLs do not become caller diagnostics.
+Query parameters are captured before acquiring a ticket, preserving duplicate
+parameter order. The request lifetime covers HTTP completion, response cleanup and
+JSON parsing, observes late failures and releases late responses after cancellation.
+The fixed HTTPS QQ redirect policy and timeout remain with this transport. It does
+not cache tickets or retry a read. `listWebGroupNotices` owns only the fixed notice
+query and result projection through its injected page reader; it cannot request
+native tickets or choose another endpoint. Its fixed query does not establish
+complete pagination. Essence reads reuse the transport while retaining their
+separate numbered-page, explicit-end-marker and overlap rules.
+
+The CLI entry retains help, configuration, explicit login selection and entry-URL
+handling. `command-plan` validates command flags and captures file-backed message
+inputs before the client is created; its prepared actions never initiate login.
+`runClientCommand` owns the client, QR save queue, watch subscriptions and process
+signal handlers. Business listeners attach before login so readiness deliveries
+are retained. A failed older QR save cannot prevent a later image from being
+saved; the latest save still controls the post-login result. Signal shutdown
+prevents later action dispatch and queued QR writes, shares one close attempt,
+and preserves exit code 130. Teardown releases QR/login-error/watch/signal
+listeners and attempts every cleanup before awaiting client close. An already
+started file write is not cancellable; its completion cannot start another queued
+write or emit an output after shutdown.
+
+The proprietary `.node` surface has no stable complete TypeScript declaration.
+Its type erasure is centralized in `src/native/native-object.ts`. This internal
+escape hatch is not proof of an ABI. Native results must pass adapter validation
+before becoming public DTOs; public/IPC inputs start as `unknown`. Business dispatch receives a
+`Record<string, unknown>` rather than inheriting the proprietary object escape
+hatch; field validation belongs to the receiving operation. The existing
+low-level `QQClient.request` default result type is retained for compatibility;
+RPC storage and settlement use `unknown` internally.
+
+Attachment download receives `AttachmentDownloadPort`, which exposes only the
+existing rich-media download request. The downloader cannot acquire other native
+services or submit messages; dependency and compile-only negative gates enforce
+that restriction. Callback payloads and native return values remain `unknown`.
+The support check still precedes filesystem IO, and dispatch reads the method
+again on the original receiver after staging. A successful callback waits for
+native invocation completion; rejection or close prevents destination publication,
+and late native failure remains observed. A narrow type does not freeze a dynamic
+getter or replace runtime completion/file validation.
+
+`native/prepared-message-contracts` owns the exact text, image, file, record,
+video, face and reply envelopes constructed by the SDK. Builders return their
+specific variant, and ordinary sender preparation uses their discriminated union.
+These data declarations have no dynamic native-object inheritance or index signature;
+compile-only negative gates use the actual builder return types so widening them
+back to `any` cannot silently pass. The same owner declares the independently
+constructed ARK forward-card envelope. `PreparedSendElement` combines that envelope
+with the ordinary builder union only at native submission; cards remain outside
+ordinary public message input. The formatter preserves its former type reexport.
+The sender captures the entire input batch before asynchronous preparation and
+uses the closed prepared union instead of a dynamic native-object array. Invalid
+later elements cannot start earlier UID or media work. This capture copies
+validated fields; it does not establish descriptor-safe getter handling.
+Reply fields still use their existing nonempty string checks before construction.
+Video thumbnail lookup remains a typed Map lookup, including the possibility
+that a requested key is absent. This internal model does not assert a complete
+callback ABI: raw received elements retain their existing projection contracts.
+
+The native contract registry stores each measured binary identity once, with an
+explicit list of independently inspected capabilities. Matching requires OS,
+architecture, client version and SHA-256 together; capability predicates never
+infer support from a different operation. Worker inspection measures the bytes,
+and service composition gates the operation before lazy native acquisition.
+Adding a new profile requires its own capability list and evidence. Folder deletion
+and creation use the same provenance check as category creation, file counts and group search.
+Their input capture remains pure, their adapters receive only the required
+RichMedia method and Session wait port, and native envelopes become copied public
+DTOs only after validation. Public folder contracts expose no native service
+objects or mutable Session ownership.
+
+`features/groups/group-files` owns file-count and folder input capture and dispatch
+policy. Composition injects lazy method-specific ports and measured-profile
+decisions, then delegates named operations. The domain owner rejects unsupported
+contracts before acquiring native methods; the existing operation adapters retain
+response validation, receiver handling and account cancellation. Composition cannot
+import their input or operation implementations. This module adds no retries,
+listener, resource ledger or account lifetime.
+
+Feature access to `native/native-object` is denied by default, including type-only
+imports. Only the existing native projectors and legacy interop adapters have
+explicit permissions with ownership reasons. The gate rejects new input and
+operation modules and detects obsolete permissions when an import is removed.
+This keeps the proprietary dynamic escape hatch from becoming a general feature
+dependency.
+
+`features/messages/message-resolution` combines peer conversion with the message
+projection used by live delivery, queries and forwarding. Composition supplies
+one narrow UIN lookup port and its diagnostic/UID-resolution callbacks rather
+than interpreting message fields. The dependency gate prevents composition from
+importing receive projectors directly. Existing snapshot, identity deadline,
+delivery ordering and account-close owners remain in place. Native UIN results
+stay `unknown` until `native-identities` validates the Map and copies only positive
+decimal identities for the requested UIDs; the lookup port does not promise a
+verified native result shape.
+
+`runtime/native-listener-owner` owns callback proxy caching, shape-only audit,
+unknown callback dispatch and strong references. Composition supplies each native
+registration call and its business overrides; the owner cannot acquire services
+or authenticate. Registration runs once, preserving the Search before-add and
+Msg/Group after-add retention rules. Close suppresses callback execution through
+the account lifetime but does not clear references or guess a listener-removal
+ABI. Audit exceptions and synchronous reentrancy retain their existing behavior.
+
+`features/messages/inbound-elements` owns receive-only element projection and
+mention interpretation. It has no filesystem or native-operation dependency;
+its complete runtime closure is checked by the pure-module gate. Unknown native
+elements retain their original objects. `outbound-elements` owns local image and
+attachment preparation and validated reply references. It accepts only the shared media
+staging and message-ID query ports, preserving their receivers and native request
+shapes. `native-message-sender` composes these constructors and keeps concurrent
+preparation, send correlation and account-close checks. Face construction belongs
+to the shared pure `face-input` owner. Internal paths are private; the former mixed
+module is removed from source and packed output without changing public exports.
+
+`runtime/media-contracts` owns the one `MediaStagingPort` used by image, record,
+video preparation and the message sender. Its native request retains the fixed
+eight fields and its result stays unknown until each constructor validates the
+cache path. It cannot send messages, query history or acquire services. Codec and
+file lifetimes remain with the media constructors; video retains its existing
+abort/deadline checks, while image and record retain the sender's completion
+checks. The port shares the native method contract, not a new preparation policy.
+
+[Architecture overview](../architecture.md) · [Development guide](../development.md)

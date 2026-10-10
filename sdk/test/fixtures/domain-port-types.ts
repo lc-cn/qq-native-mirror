@@ -401,6 +401,8 @@ import type {
   createReplyElement,
 } from '../../src/features/messages/outbound-elements.ts';
 import type { PreparedMessageElement } from '../../src/native/prepared-message-contracts.ts';
+import type { buildMergedForwardCard } from '../../src/features/forward/merged-forward-card.ts';
+import type { MessageSendPort } from '../../src/features/messages/native-message-sender.ts';
 function verifyPreparedElementResults(
   face: ReturnType<typeof faceElement>,
   image: Awaited<ReturnType<typeof createImageElement>>,
@@ -437,3 +439,20 @@ function verifyPreparedElementResults(
   void mismatched;
 }
 void verifyPreparedElementResults;
+
+function verifyPreparedSubmission(
+  service: MessageSendPort,
+  card: ReturnType<typeof buildMergedForwardCard>,
+  ordinary: PreparedMessageElement,
+) {
+  const destination = { chatType: 2 as const, peerUid: '123', guildId: 'fixture' };
+  service.sendMsg?.('0', destination, [ordinary, card], new Map());
+  // @ts-expect-error Raw public inputs cannot enter the prepared native submission port.
+  service.sendMsg?.('0', destination, [{ type: 'text', text: 'fixture' }], new Map());
+  // @ts-expect-error Native submission accepts only envelopes constructed by the SDK.
+  service.sendMsg?.('0', destination, [{ elementType: 99, elementId: '' }], new Map());
+  // @ts-expect-error Forward cards are not an ordinary message builder variant.
+  const ordinaryCard: PreparedMessageElement = card;
+  void ordinaryCard;
+}
+void verifyPreparedSubmission;
