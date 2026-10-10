@@ -1,0 +1,31 @@
+sdk/docs/architecture.md
+  s_2104cc474f1ce5::t_f758f935cca38a 605,609-613
+sdk/docs/development.md
+  s_2104cc474f1ce5::t_e6de82f89435e6 157,162
+sdk/docs/sdk-acceptance.md
+  s_2104cc474f1ce5::t_5338c35df14f81 57-61,63-75
+sdk/eslint.config.mjs
+  s_2104cc474f1ce5::t_04f9dfb59b6b13 56,73
+sdk/scripts/group-essence-consumer-contract.mjs
+  s_2104cc474f1ce5::t_ff56b9ad739f6a 2-4,8-10,12-13,16-26,40-42,52,54,57,75-76,91-104,120,150-196,207-208
+sdk/test/consumer-tooling-gates.test.mjs
+  s_2104cc474f1ce5::t_cc18935f0cb2f6 82-117,155-161
+sdk/tsconfig.scripts.json
+  s_2104cc474f1ce5::t_e7d2baac9575b8 17-18
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "46ab2a56b9fae18042b88ef517437d112132e19d",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
