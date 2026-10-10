@@ -101,16 +101,20 @@ test('rename enables only four exact binary profiles and preserves uint32, spell
   }
 });
 
-test('category deletion requires its independently measured binary before acquisition', async () => {
-  const measured = profiles.find((p) => p.platform === 'darwin' && p.arch === 'arm64')!;
-  for (const profile of [...profiles, undefined, { ...measured, wrapperSha256: '0'.repeat(64) }]) {
-    const enabled = profile === measured;
-    assert.equal(supportsCategoryDeletion(profile, profile?.clientVersion ?? ''), enabled);
+test('category deletion requires one of three independently measured exact binaries before acquisition', async () => {
+  const measured = profiles.filter(
+    (p) => p.platform === 'linux' || (p.platform === 'darwin' && p.arch === 'arm64'),
+  );
+  assert.equal(measured.length, 3);
+  for (const profile of profiles) {
+    const enabled = measured.includes(profile);
+    assert.equal(supportsCategoryDeletion(profile, profile.clientVersion), enabled);
     const f = fixture(profile);
     try {
       if (enabled) {
+        await f.services.invokeOperation('deleteFriendCategory', { categoryId: 0 });
         await f.services.invokeOperation('deleteFriendCategory', { categoryId: 0xffff_ffff });
-        assert.deepEqual(f.calls, [[0xffff_ffff]]);
+        assert.deepEqual(f.calls, [[0], [0xffff_ffff]]);
       } else {
         await assert.rejects(
           f.services.invokeOperation('deleteFriendCategory', { categoryId: 1 }),
@@ -123,16 +127,40 @@ test('category deletion requires its independently measured binary before acquis
       f.services.close();
     }
   }
-  const f = fixture(measured, 'wrong-version');
-  try {
-    for (const categoryId of [-1, 1.5, NaN, 0x1_0000_0000, '1'])
-      await assert.rejects(f.services.invokeOperation('deleteFriendCategory', { categoryId }));
-    await assert.rejects(f.services.invokeOperation('deleteFriendCategory', { categoryId: 0 }), {
-      code: 'unsupported-native-contract',
-    });
-    assert.equal(f.acquired(), 0);
-  } finally {
-    f.services.close();
+  for (const binary of measured) {
+    for (const profile of [
+      undefined,
+      ...(['platform', 'arch', 'clientVersion', 'wrapperSha256'] as const).map((key) => ({
+        ...binary,
+        [key]: 'unknown',
+      })),
+    ]) {
+      const f = fixture(profile);
+      try {
+        assert.equal(supportsCategoryDeletion(profile, binary.clientVersion), false);
+        await assert.rejects(
+          f.services.invokeOperation('deleteFriendCategory', { categoryId: 1 }),
+          { code: 'unsupported-native-contract' },
+        );
+        assert.equal(f.acquired(), 0);
+        assert.deepEqual(f.calls, []);
+      } finally {
+        f.services.close();
+      }
+    }
+    const f = fixture(binary, 'wrong-version');
+    try {
+      assert.equal(supportsCategoryDeletion(binary, 'wrong-version'), false);
+      for (const categoryId of [-1, 1.5, NaN, 0x1_0000_0000, '1'])
+        await assert.rejects(f.services.invokeOperation('deleteFriendCategory', { categoryId }));
+      await assert.rejects(f.services.invokeOperation('deleteFriendCategory', { categoryId: 0 }), {
+        code: 'unsupported-native-contract',
+      });
+      assert.equal(f.acquired(), 0);
+      assert.deepEqual(f.calls, []);
+    } finally {
+      f.services.close();
+    }
   }
 });
 

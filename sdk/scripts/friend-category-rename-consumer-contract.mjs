@@ -26,7 +26,12 @@ export async function verifyFriendCategoryRenameConsumer(packageRoot) {
   const { profiles: deleteProfiles } = JSON.parse(
     await readFile(join(packageRoot, 'docs/evidence/friend-category-delete-contract.json'), 'utf8'),
   );
-  assert.equal(deleteProfiles.length, 1);
+  assert.equal(deleteProfiles.length, 3);
+  assert.deepEqual(deleteProfiles.map(({ platform, arch }) => `${platform}-${arch}`).sort(), [
+    'darwin-arm64',
+    'linux-arm64',
+    'linux-x64',
+  ]);
   for (const profile of [
     ...profiles,
     undefined,
@@ -79,11 +84,18 @@ export async function verifyFriendCategoryRenameConsumer(packageRoot) {
       services.close();
     }
   }
-  for (const profile of [
+  const deletionCases = [
     ...profiles,
     undefined,
-    { ...deleteProfiles[0], wrapperSha256: '0'.repeat(64) },
-  ]) {
+    ...deleteProfiles.flatMap((profile) =>
+      ['platform', 'arch', 'clientVersion', 'wrapperSha256'].map((key) => ({
+        ...profile,
+        [key]: 'unverified',
+      })),
+    ),
+  ].map((profile) => ({ profile, version: profile?.clientVersion ?? 'unknown' }));
+  deletionCases.push(...deleteProfiles.map((profile) => ({ profile, version: 'wrong-version' })));
+  for (const { profile, version } of deletionCases) {
     let acquisitions = 0;
     const deleted = [];
     const buddy = {
@@ -104,13 +116,16 @@ export async function verifyFriendCategoryRenameConsumer(packageRoot) {
         getMsgService: () => ({ addKernelMsgListener() {} }),
         getGroupService: () => ({ addKernelGroupListener() {} }),
       },
-      version: profile?.clientVersion ?? 'unknown',
+      version,
       binaryProfile: profile,
       events: { emit() {} },
     });
     acquisitions = 0;
     try {
-      if (deleteProfiles.some((verified) => matches(verified, profile))) {
+      if (
+        profile?.clientVersion === version &&
+        deleteProfiles.some((verified) => matches(verified, profile))
+      ) {
         await services.invokeOperation('deleteFriendCategory', { categoryId: 0xffff_ffff });
         assert.deepEqual(deleted, [[0xffff_ffff]]);
       } else {
@@ -185,6 +200,7 @@ export async function verifyFriendCategoryRenameConsumer(packageRoot) {
     nativeFriendCategoryRenameAttempted: false,
     friendCategoryDeleteBinaryGateContract: true,
     friendCategoryDeleteCompositionContract: true,
+    friendCategoryDeleteVerifiedProfileCount: deleteProfiles.length,
     friendCategoryDeleteFacadeContract: true,
     friendCategoryDeleteCliContract: true,
     nativeFriendCategoryDeleteAttempted: false,

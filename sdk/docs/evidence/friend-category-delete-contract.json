@@ -7,6 +7,18 @@
       "arch": "arm64",
       "clientVersion": "7.0.2-53644",
       "wrapperSha256": "fbc8ad9b328d05e16784d76b0181dda894c17001179dbf8c0d5dd00dc6271358"
+    },
+    {
+      "platform": "linux",
+      "arch": "arm64",
+      "clientVersion": "3.2.32-52194",
+      "wrapperSha256": "c302361f52494de257044e912e43ed244bb29ee59f59345d25a8959327828337"
+    },
+    {
+      "platform": "linux",
+      "arch": "x64",
+      "clientVersion": "3.2.32-52194",
+      "wrapperSha256": "7882b8e3055cd38584861042befacd8be9939896f5cbbca6fa4a230926b48526"
     }
   ],
   "nativeMethod": "delCategory",
@@ -34,12 +46,58 @@
     "selectorSetter": "0xb8f34",
     "selector": 25007,
     "namespace": "same selector as source=0 V2 list-derived categoryId through verified rename path",
-    "newInstructionWordsVerified": 156
+    "newInstructionWordsVerified": 156,
+    "platform": "darwin",
+    "arch": "arm64"
   },
   "limits": [
-    "Only the exact default macOS ARM64 binary is enabled; other profiles require independent namespace and ABI evidence",
+    "Only the exact macOS ARM64 and two Linux 3.2.32-52194 binaries are enabled; other profiles require independent namespace and ABI evidence",
     "Zero accepts native uint32 input but does not establish that default/system categories are mutable",
     "Completion is native ACK, not readback of remote disappearance; no automatic retry after dispatch",
     "No account mutation was performed during these controlled or static checks"
+  ],
+  "linuxStaticEvidence": [
+    {
+      "platform": "linux",
+      "arch": "arm64",
+      "clientVersion": "3.2.32-52194",
+      "wrapperSha256": "c302361f52494de257044e912e43ed244bb29ee59f59345d25a8959327828337",
+      "inspectionSha256": "ad666af507e8110777acc8909a37c0093e20ce4b99c0a0fae31fb899d85e2b1a",
+      "responseBridgeSha256": "23c0c417e2e4742e87e2dee5ffe88dd1af6720d1575af53fceaa5eb7baf13d36",
+      "categoryNamespaceSha256": "66358884d1024067ab72774fc4c0a2e8d8027a07f5743f84deaf33e9a5bd3a48",
+      "instanceCarrierSha256": "a10d746f77ba26a83066b2887e13bd1158d4074ca195314ec44554ea4178c002",
+      "sessionTargetSha256": "a99319e5655644d1ff4b1225180c80678b55a6d52a3de08b73503dc67b9079a3",
+      "sessionVtable": "0x86af3e0",
+      "buddyGetterSlot": "0x150",
+      "buddyGetterTarget": "0x8e721c",
+      "coreVtable": "0x86b56b8",
+      "deleteSlot": "0xe0",
+      "deleteTarget": "0x97783c",
+      "selector": 25007,
+      "namespace": "SDK source=0 V2 list categoryId through independently verified rename selector",
+      "instancePath": "Concrete Session getter returns constructed Buddy shared pair; napi_wrap carrier first pointer is the delCategory receiver",
+      "nativeAccountEffectVerified": false
+    },
+    {
+      "platform": "linux",
+      "arch": "x64",
+      "clientVersion": "3.2.32-52194",
+      "wrapperSha256": "7882b8e3055cd38584861042befacd8be9939896f5cbbca6fa4a230926b48526",
+      "inspectionSha256": "2052d089d6a5b5999fc30011ed87acbba087bd20c5e79bbfae298551a0f22462",
+      "responseBridgeSha256": "d6ce32737513458c3bdddf2d652e4ce7df54003c9aae35da06bd37d7f9844fdd",
+      "categoryNamespaceSha256": "3437830fb05ed62e0178daf0f0b4e25e29b06464d6d1dc3851001a1163729bf0",
+      "instanceCarrierSha256": "a10d746f77ba26a83066b2887e13bd1158d4074ca195314ec44554ea4178c002",
+      "sessionTargetSha256": "a99319e5655644d1ff4b1225180c80678b55a6d52a3de08b73503dc67b9079a3",
+      "sessionVtable": "0x8b84be0",
+      "buddyGetterSlot": "0x150",
+      "buddyGetterTarget": "0x291b5d0",
+      "coreVtable": "0x8b8aeb8",
+      "deleteSlot": "0xe0",
+      "deleteTarget": "0x29b24d0",
+      "selector": 25007,
+      "namespace": "SDK source=0 V2 list categoryId through independently verified rename selector",
+      "instancePath": "Concrete Session getter returns constructed Buddy shared pair; napi_wrap carrier first pointer is the delCategory receiver",
+      "nativeAccountEffectVerified": false
+    }
   ]
 }

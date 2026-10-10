@@ -41,6 +41,7 @@ const binaryProfiles: readonly BinaryContract[] = [
     [
       'categoryCreation',
       'categoryRenaming',
+      'categoryDeletion',
       'groupFileCount',
       'groupSearch',
       'groupFolderDeletion',
@@ -55,6 +56,7 @@ const binaryProfiles: readonly BinaryContract[] = [
     [
       'categoryCreation',
       'categoryRenaming',
+      'categoryDeletion',
       'groupFileCount',
       'groupSearch',
       'groupFolderDeletion',
