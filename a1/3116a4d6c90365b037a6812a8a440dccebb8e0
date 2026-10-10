@@ -1,0 +1,53 @@
+sdk/docs/architecture.md
+  s_2104cc474f1ce5::t_d0a24dfa1eec01 209-215
+sdk/docs/contacts-groups.md
+  s_2104cc474f1ce5::t_4a52a811616e34 204-211
+sdk/docs/development.md
+  s_2104cc474f1ce5::t_3aca40014b03c2 49-55
+sdk/scripts/verify-package-consumer.mjs
+  s_2104cc474f1ce5::t_06764bc0b7ce36 4,22,108-117,536
+sdk/scripts/worker-read-consumer-contract.mjs
+  s_2104cc474f1ce5::t_e2274f3b2b0183 1-139
+sdk/src/kernel.ts
+  s_2104cc474f1ce5::t_cb219d8ac32a17 552,556
+sdk/src/native-services.ts
+  s_2104cc474f1ce5::t_7a7ddf38479cf0 272-276,417,420-423,425-426,428,435,438-441,444,448,450
+sdk/src/runtime/account-session-lifecycle.ts
+  s_2104cc474f1ce5::t_ff5d10d701b05b 29-33,294,297
+sdk/src/runtime/client-lifecycle.ts
+  s_2104cc474f1ce5::t_cc252cfe50c92a 64-81
+sdk/src/runtime/native-service-lifetime.ts
+  s_2104cc474f1ce5::t_d1a7b27e119009 75-78,86-90,93-99,103,106
+sdk/src/runtime/operations.ts
+  s_2104cc474f1ce5::t_d93cca9e80c2a2 58-68
+sdk/src/runtime/worker-read-requests.ts
+  s_2104cc474f1ce5::t_e32a3ce2c4a3b8 1-49
+sdk/src/runtime/worker-rpc-channel.ts
+  s_2104cc474f1ce5::t_28755bb9590031 1-2,11-12,19,47,61-62,65-68,71-72,93,97-104
+sdk/src/worker.ts
+  s_2104cc474f1ce5::t_256f657c4b2b26 6-7,16-20,22-28,35,106-109,111,125-128
+sdk/test/native-service-lifetime.test.ts
+  s_2104cc474f1ce5::t_007620c03b7da0 132-168
+sdk/test/worker-read-requests.test.ts
+  s_2104cc474f1ce5::t_1aeadb787b2b2d 1-150
+sdk/test/worker-read-routes.test.ts
+  s_2104cc474f1ce5::t_3af72e661378fd 1-22
+sdk/test/worker-rpc-channel.test.ts
+  s_2104cc474f1ce5::t_d1f17ed5bb6bab 86-192
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a13116a4d6c90365b037a6812a8a440dccebb8e0",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
