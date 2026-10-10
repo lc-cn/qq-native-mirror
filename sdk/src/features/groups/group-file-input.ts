@@ -9,3 +9,11 @@ export function captureDeleteGroupFolder(groupId: unknown, folderId: unknown) {
     throw new Error('folderId must be a nonempty string');
   return { groupId: group, folderId };
 }
+
+/** The native group selector is uint64; retain the caller's decimal spelling. */
+export function captureGroupFileCount(groupId: unknown) {
+  const group = sendGroupId(groupId);
+  if (BigInt(group) > 0xffff_ffff_ffff_ffffn)
+    throw new Error('groupId exceeds the native uint64 range');
+  return { groupId: group };
+}

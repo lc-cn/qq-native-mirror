@@ -29,6 +29,9 @@ that same invariant, not because their code happens to look similar.
 
 The TypeScript dependency gate includes type-only edges. Cross-feature cooperation
 requires an exact module pair with a reason in `test/helpers/dependency-policy.ts`.
+Computed imports and CommonJS loaders need a reviewed owner and exact loading
+form; new files do not inherit an existing loader exception. Features may use
+narrow typed ports but cannot depend on the account composition context.
 Changing the policy should explain the real ownership relationship; granting an
 entire directory access to another one makes future coupling invisible.
 

@@ -24,6 +24,7 @@ registerHooks({load(url,context,next){
    if(method==='listGroupEssenceMessages'){if(payload.groupId!=='123'||payload.options.maxPages!==2)throw Error('Invalid full essence IPC');return [];}
    if(method==='setGroupEssenceMessage'){if(payload.groupId!=='123'||payload.messageId!=='9876543210123456789'||typeof payload.enabled!=='boolean')throw Error('Invalid essence IPC intent');return;}
    if(method==='deleteGroupFolder'){if(payload.groupId!=='18446744073709551615'||payload.folderId!==' opaque/文件夹 ')throw Error('Invalid folder IPC');return;}
+   if(method==='getGroupFileCount'){if(payload.groupId!=='18446744073709551615')throw Error('Invalid file count IPC');return 4294967295;}
    if(method==='setGroupRemark')return {method,groupId:payload.groupId,remark:payload.remark};throw Error('Unexpected fixture operation');}
  };}\`};
 }});
@@ -68,6 +69,9 @@ registerHooks({load(url,context,next){
     );
     await assert.rejects(client.deleteGroupFolder('18446744073709551616', 'folder'), /uint64/);
     await assert.rejects(client.deleteGroupFolder('123', ''), /nonempty/);
+    assert.equal(await client.getGroupFileCount('18446744073709551615'), 4294967295);
+    await assert.rejects(client.getGroupFileCount('18446744073709551616'), /uint64/);
+    await assert.rejects(client.getGroupFileCount('0'), /group identifier/);
     await assert.rejects(client.addFriendCategory(' '), /nonblank/);
     assert.deepEqual(await client.listGroupMutedMembers('000123'), []);
     assert.equal((await client.getGroupInfo('000123')).groupId, '000123');
@@ -111,6 +115,7 @@ registerHooks({load(url,context,next){
   }
   return {
     contactGroupActualWorkerRoutes: true,
+    groupFileCountActualWorkerRoute: true,
     groupEssenceFullActualWorkerRoute: true,
     kernelReplacedByFixture: true,
     nativeExecuted: false,
@@ -471,6 +476,95 @@ export async function verifyContactGroupConsumer(packageRoot) {
   } finally {
     categoryServices.close();
   }
+  const countCalls = [];
+  const countPlan = await prepareCommand('group-file-count', { 'group-id': '000123' });
+  assert.equal(
+    await countPlan({
+      getGroupFileCount: async (group) => {
+        countCalls.push(group);
+        return 0;
+      },
+    }),
+    0,
+  );
+  assert.deepEqual(countCalls, ['000123']);
+  await assert.rejects(
+    prepareCommand('group-file-count', { 'group-id': '18446744073709551616' }),
+    /uint64/,
+  );
+  await assert.rejects(prepareCommand('group-file-count', { 'group-id': '0' }));
+  const countFixture = (response, profile = categoryProfile) => {
+    let acquisitions = 0,
+      dispatches = 0;
+    const native = {
+      batchGetGroupFileCount(groups) {
+        assert.equal(this, native);
+        assert.deepEqual(groups, ['000123']);
+        dispatches++;
+        return response;
+      },
+    };
+    const services = createNativeServices({
+      version: categoryProfile.clientVersion,
+      binaryProfile: profile,
+      events: { emit() {} },
+      session: {
+        getMsgService: () => ({ addKernelMsgListener() {} }),
+        getGroupService: () => ({ addKernelGroupListener() {} }),
+        getBuddyService: () => ({ addKernelBuddyListener() {}, removeKernelBuddyListener() {} }),
+        getRichMediaService: () => {
+          acquisitions++;
+          return native;
+        },
+      },
+    });
+    return { services, acquisitions: () => acquisitions, dispatches: () => dispatches };
+  };
+  for (const [response, expectedCode] of [
+    [{ result: 0, groupCodes: ['123'], groupFileCounts: [4294967295] }, undefined],
+    [{ result: -7, errMsg: 'PRIVATE' }, -7],
+    [{ result: '0', groupCodes: ['123'], groupFileCounts: [0] }, 'invalid-result'],
+    [{ result: 0, groupCodes: ['456'], groupFileCounts: [1] }, 'invalid-result'],
+    [{ result: 0, groupCodes: ['123'], groupFileCounts: [] }, 'invalid-result'],
+    [{ result: 0, groupCodes: ['123'], groupFileCounts: [-1] }, 'invalid-result'],
+  ]) {
+    const f = countFixture(response);
+    try {
+      assert.equal(f.acquisitions(), 0, 'service selection must remain lazy');
+      const pending = f.services.invokeOperation('getGroupFileCount', { groupId: '000123' });
+      if (expectedCode === undefined) assert.equal(await pending, 4294967295);
+      else
+        await assert.rejects(
+          pending,
+          (error) => error.code === expectedCode && !error.message.includes('PRIVATE'),
+        );
+      assert.equal(f.dispatches(), 1);
+    } finally {
+      f.services.close();
+    }
+  }
+  const unknown = countFixture({}, { ...categoryProfile, wrapperSha256: 'unverified' });
+  try {
+    await assert.rejects(
+      unknown.services.invokeOperation('getGroupFileCount', { groupId: '000123' }),
+    );
+    assert.equal(unknown.acquisitions(), 0);
+  } finally {
+    unknown.services.close();
+  }
+  let rejectLate;
+  const closing = countFixture(
+    new Promise((_, reject) => {
+      rejectLate = reject;
+    }),
+  );
+  const pendingCount = assert.rejects(
+    closing.services.invokeOperation('getGroupFileCount', { groupId: '000123' }),
+  );
+  closing.services.close();
+  rejectLate(Error('late count failure'));
+  await pendingCount;
+  assert.equal(closing.dispatches(), 1);
   membership.close();
   stop();
   assert.equal(events.listenerCount('group-info-updated'), 0);
@@ -479,6 +573,8 @@ export async function verifyContactGroupConsumer(packageRoot) {
   assert.equal(events.listenerCount('group-mute'), 0);
   assert.equal(events.listenerCount('friend-added'), 0);
   return {
+    groupFileCountControlledContract: true,
+    nativeGroupFileCountAttempted: false,
     groupFolderDeleteControlledContract: true,
     nativeGroupFolderDeleteAttempted: false,
     groupEssenceControlledContract: true,

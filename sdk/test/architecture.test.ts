@@ -5,6 +5,7 @@ import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import ts from 'typescript';
 import { getFileInfo } from 'prettier';
+import { extractSourceDependencies } from './helpers/source-dependencies.ts';
 import { crossFeatureDependencies, dependencyViolation } from './helpers/dependency-policy.ts';
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -34,58 +35,14 @@ function relativeTarget(from: string, specifier: string): string | undefined {
   return candidates.find((candidate) => fileSet.has(candidate));
 }
 function dependencies(path: string): Dependency[] {
-  const tree = ts.createSourceFile(path, readFileSync(path, 'utf8'), ts.ScriptTarget.Latest, true);
-  const result: Dependency[] = [];
-  function add(node: ts.Node, specifier: string, typeOnly: boolean) {
-    result.push({
-      specifier,
-      typeOnly,
-      line: tree.getLineAndCharacterOfPosition(node.getStart(tree)).line + 1,
-      ...(specifier.startsWith('.') ? { target: relativeTarget(path, specifier) } : {}),
-    });
-  }
-  function visit(node: ts.Node) {
-    if (ts.isImportDeclaration(node) && ts.isStringLiteral(node.moduleSpecifier)) {
-      const clause = node.importClause;
-      const bindings = clause?.namedBindings;
-      const onlyNamedTypes =
-        !clause?.name &&
-        bindings &&
-        ts.isNamedImports(bindings) &&
-        bindings.elements.length > 0 &&
-        bindings.elements.every((entry) => entry.isTypeOnly);
-      add(node, node.moduleSpecifier.text, clause?.isTypeOnly === true || onlyNamedTypes === true);
-    } else if (
-      ts.isExportDeclaration(node) &&
-      node.moduleSpecifier &&
-      ts.isStringLiteral(node.moduleSpecifier)
-    ) {
-      const clause = node.exportClause;
-      const onlyNamedTypes =
-        clause &&
-        ts.isNamedExports(clause) &&
-        clause.elements.length > 0 &&
-        clause.elements.every((entry) => entry.isTypeOnly);
-      add(node, node.moduleSpecifier.text, node.isTypeOnly || onlyNamedTypes === true);
-    } else if (
-      ts.isImportTypeNode(node) &&
-      ts.isLiteralTypeNode(node.argument) &&
-      ts.isStringLiteral(node.argument.literal)
-    ) {
-      add(node, node.argument.literal.text, true);
-    } else if (
-      ts.isCallExpression(node) &&
-      node.expression.kind === ts.SyntaxKind.ImportKeyword &&
-      node.arguments.length === 1 &&
-      ts.isStringLiteral(node.arguments[0]!)
-    ) {
-      add(node, node.arguments[0]!.text, false);
-    }
-    ts.forEachChild(node, visit);
-  }
-  visit(tree);
-  return result;
+  const extracted = extractSourceDependencies(label(path), readFileSync(path, 'utf8'));
+  assert.deepEqual(extracted.violations, [], extracted.violations.join('\n'));
+  return extracted.dependencies.map((edge) => ({
+    ...edge,
+    ...(edge.specifier.startsWith('.') ? { target: relativeTarget(path, edge.specifier) } : {}),
+  }));
 }
+
 const graph = new Map(files.map((path) => [path, dependencies(path)]));
 const runtimeEdges = (path: string) => graph.get(path)!.filter((edge) => !edge.typeOnly);
 
@@ -120,6 +77,8 @@ test('dependency policy rejects reverse, type-only and new cross-domain coupling
     ['src/features/groups/new-action.ts', 'src/kernel.ts'],
     ['src/features/groups/new-action.ts', 'src/native/native-package.ts'],
     ['src/features/groups/new-action.ts', 'src/runtime/client-lifecycle.ts'],
+    ['src/features/messages/native-message-sender.ts', 'src/runtime/native-service-context.ts'],
+    ['src/features/groups/new-action.ts', 'src/runtime/native-service-context.ts'],
     ['src/features/groups/new-action.ts', 'src/features/media/media-send.ts'],
     ['src/runtime/new-owner.ts', 'src/features/media/media-send.ts'],
     ['src/runtime/account-session-lifecycle.ts', 'src/native-services.ts'],
@@ -394,4 +353,44 @@ test('every TypeScript source module participates in the formatting gate', async
     assert.equal(info.ignored, false, `${label(path)} is silently excluded from formatting`);
     assert.equal(info.inferredParser, 'typescript', `${label(path)} has no TypeScript formatter`);
   }
+});
+
+test('module loading extraction rejects computed imports and CommonJS aliases outside exact loaders', () => {
+  for (const text of [
+    'import(target)',
+    'import(`./${name}.js`)',
+    'require("./hidden")',
+    'require.resolve("./hidden")',
+    'require["resolve"]("./hidden")',
+    'const r=require; r("x")',
+    'import {createRequire as factory} from "node:module"; const r=factory(import.meta.url); r.resolve("x")',
+    'const {resolve:lookup}=require; lookup("x")',
+  ]) {
+    assert.ok(
+      extractSourceDependencies('src/features/fixture.ts', text).violations.length > 0,
+      text,
+    );
+  }
+  const literal = extractSourceDependencies('src/features/fixture.ts', 'import("./child.js")');
+  assert.deepEqual(
+    literal.dependencies.map((edge) => [edge.specifier, edge.typeOnly]),
+    [['./child.js', false]],
+  );
+  for (const [path, text] of [
+    ['src/features/media/record-codec-loader.ts', 'import(pathToFileURL(file).href)'],
+    ['src/features/media/video-codec-loader.ts', 'createRequire(import.meta.url)(file)'],
+    [
+      'src/native/native-package.ts',
+      'createRequire(import.meta.url).resolve(`${name}/manifest.json`)',
+    ],
+  ]) {
+    assert.deepEqual(extractSourceDependencies(path!, text!).violations, []);
+    assert.ok(extractSourceDependencies('src/features/new-loader.ts', text!).violations.length > 0);
+  }
+  assert.ok(
+    extractSourceDependencies(
+      'src/features/media/video-codec-loader.ts',
+      'createRequire(import.meta.url)(other)',
+    ).violations.length > 0,
+  );
 });

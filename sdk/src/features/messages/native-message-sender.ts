@@ -1,6 +1,7 @@
 import type { NativeObject as Native } from '../../native/native-object.ts';
 import type { NativePeer, NativeMessage } from '../../native/message-contracts.ts';
-import type { NativeServiceContext } from '../../runtime/native-service-context.ts';
+import type { MediaTools, RecordCodec, VideoCodec } from '../../runtime/media-contracts.ts';
+import type { MessageIdQueryPort } from './message-query.ts';
 import type { NativeEventChannel } from '../../runtime/native-event-channel.ts';
 import { sentReceipt } from './send-input.ts';
 import {
@@ -12,14 +13,37 @@ import {
 import { createVideoElement } from '../media/media-send.ts';
 import { createRecordElement } from '../media/media-record.ts';
 
+export interface MessageSendPort extends MessageIdQueryPort {
+  generateMsgUniqueId?: (chatType: 1 | 2, serverTime: unknown) => unknown;
+  sendMsg?: (
+    id: string,
+    peer: NativePeer & { guildId: string },
+    elements: Native[],
+    attributes: Map<unknown, unknown>,
+  ) => unknown;
+  getRichMediaFilePathForGuild?: (request: {
+    md5HexStr: string;
+    fileName: string;
+    elementType: number;
+    elementSubType: number;
+    thumbSize: number;
+    needCreate: boolean;
+    downloadType: number;
+    file_uuid: string;
+  }) => unknown;
+}
+export interface ServerTimePort {
+  getServerTime?: () => unknown;
+}
+
 export interface NativeMessageSenderContext {
   signal: AbortSignal;
-  service(name: string): Native;
-  call(object: Native, name: string, ...args: unknown[]): unknown;
+  getMessageService(): MessageSendPort;
+  getServerTimeService(): ServerTimePort;
   awaitAlive<T>(value: T | PromiseLike<T>): Promise<T>;
   uidFor(id: string): Promise<string>;
   eventCall: NativeEventChannel['call'];
-  media?: NativeServiceContext['media'];
+  media?: { tools?: MediaTools; recordCodec?: RecordCodec; videoCodec?: VideoCodec };
 }
 /** Owns element preparation and send correlation, never account state or retries.
  * Uses the Session's shared callback channel so send/recall subscription order is stable.
@@ -27,7 +51,8 @@ export interface NativeMessageSenderContext {
  * before cleanup; sender close then invalidates future use and clears reserved IDs.
  */
 export function createNativeMessageSender(context: NativeMessageSenderContext) {
-  const { signal, service, call, awaitAlive, uidFor, eventCall } = context;
+  const { signal, getMessageService, getServerTimeService, awaitAlive, uidFor, eventCall } =
+    context;
   const { tools: mediaTools, recordCodec, videoCodec } = context.media ?? {};
   let closed = false;
   const usedSendIds = new Set<string>();
@@ -77,14 +102,20 @@ export function createNativeMessageSender(context: NativeMessageSenderContext) {
           };
         }
         if (element.type === 'face') return faceElement(element.id);
-        if (element.type === 'image') return createImageElement(element.file, service('Msg'));
+        if (element.type === 'image') return createImageElement(element.file, getMessageService());
         if (element.type === 'video')
-          return createVideoElement(element.file, service('Msg'), mediaTools, videoCodec, signal);
+          return createVideoElement(
+            element.file,
+            getMessageService(),
+            mediaTools,
+            videoCodec,
+            signal,
+          );
         if (element.type === 'record')
-          return createRecordElement(element.file, service('Msg'), recordCodec);
+          return createRecordElement(element.file, getMessageService(), recordCodec);
         if (element.type === 'file') return createFileElement(element.file, element.name);
         if (element.type === 'reply')
-          return createReplyElement(element.messageId, peer, service('Msg'));
+          return createReplyElement(element.messageId, peer, getMessageService());
         throw new Error(`Unsupported message element: ${String(element.type)}`);
       }),
     );
@@ -95,10 +126,25 @@ export function createNativeMessageSender(context: NativeMessageSenderContext) {
     onDispatch?: () => void,
   ) => {
     alive();
-    const messages = service('Msg');
-    const uniqueId = await awaitAlive(
-      call(messages, 'generateMsgUniqueId', peer.chatType, call(service('MSF'), 'getServerTime')),
-    );
+    const messages = getMessageService();
+    alive();
+    const msf = getServerTimeService();
+    alive();
+    const getServerTime = msf.getServerTime;
+    alive();
+    if (typeof getServerTime !== 'function')
+      throw new Error('Native service is missing getServerTime');
+    const serverTime: unknown = Reflect.apply(getServerTime, msf, []);
+    alive();
+    const generateMsgUniqueId = messages.generateMsgUniqueId;
+    alive();
+    if (typeof generateMsgUniqueId !== 'function')
+      throw new Error('Native service is missing generateMsgUniqueId');
+    const generated: unknown = Reflect.apply(generateMsgUniqueId, messages, [
+      peer.chatType,
+      serverTime,
+    ]);
+    const uniqueId = await awaitAlive(generated);
     alive();
     if (typeof uniqueId !== 'string' || !uniqueId.trim())
       throw new Error('Invalid native send correlation identifier');
@@ -124,7 +170,10 @@ export function createNativeMessageSender(context: NativeMessageSenderContext) {
         alive();
         onDispatch?.();
         alive();
-        return call(messages, 'sendMsg', '0', destination, elements, new Map());
+        const sendMsg = messages.sendMsg;
+        alive();
+        if (typeof sendMsg !== 'function') throw new Error('Native service is missing sendMsg');
+        return Reflect.apply(sendMsg, messages, ['0', destination, elements, new Map()]) as unknown;
       },
       10_000,
       nativeCallSucceeded,

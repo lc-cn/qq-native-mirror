@@ -1,4 +1,7 @@
-import { captureDeleteGroupFolder } from '../features/groups/group-file-input.ts';
+import {
+  captureDeleteGroupFolder,
+  captureGroupFileCount,
+} from '../features/groups/group-file-input.ts';
 import { ClientLifecycle } from '../runtime/client-lifecycle.ts';
 import type { ServiceOperation } from '../runtime/operations.ts';
 import { friendCategoryName } from '../features/contacts/friend-categories.ts';
@@ -263,6 +266,10 @@ export class QQClient extends EventEmitter<ClientEvents> {
   ): Promise<void> {
     return this.#operation('handleGroupRequest', { request, accept, reason });
   }
+  async getGroupFileCount(groupId: string): Promise<number> {
+    return this.#operation('getGroupFileCount', captureGroupFileCount(groupId));
+  }
+
   async deleteGroupFolder(groupId: string, folderId: string): Promise<void> {
     const captured = captureDeleteGroupFolder(groupId, folderId);
     return this.#operation('deleteGroupFolder', captured);

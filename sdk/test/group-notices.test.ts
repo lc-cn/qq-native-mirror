@@ -5,6 +5,46 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createGroupNotices } from '../src/features/groups/group-notices.ts';
 import { createNativeServices } from '../src/native-services.ts';
+
+test('worker notice input rejects unknown group identifiers before acquiring a ticket', async () => {
+  let acquisitions = 0;
+  let coercions = 0;
+  const services = createNativeServices({
+    session: {
+      getGroupService: () => ({ addKernelGroupListener() {} }),
+      getBuddyService: () => ({ addKernelBuddyListener() {} }),
+      getMsgService: () => ({ addKernelMsgListener() {} }),
+      getTipOffService() {
+        acquisitions++;
+        throw new Error('unexpected ticket acquisition');
+      },
+    },
+    identity: { userId: '123', uid: 'u_fixture' },
+    version: 'fixture',
+    events: { emit() {} },
+  });
+  try {
+    for (const groupId of [
+      123,
+      undefined,
+      null,
+      {
+        toString() {
+          coercions++;
+          return '123';
+        },
+      },
+    ])
+      await assert.rejects(
+        services.invokeOperation('listGroupNotices', { groupId }),
+        /numeric strings/,
+      );
+    assert.equal(acquisitions, 0);
+    assert.equal(coercions, 0);
+  } finally {
+    services.close();
+  }
+});
 function fixture() {
   const calls: any[][] = [];
   const group = {

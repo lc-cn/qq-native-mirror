@@ -492,6 +492,10 @@ function subscribe(client: QQClient) {
  client.on('group-info-updated', update => [update.groupId,update.ownerUid,update.ownerUserId,update.description]);
  const createdCategory: Promise<CreatedFriendCategory> = client.addFriendCategory('分组');
  const categories: Promise<FriendCategory[]> = client.listFriendCategories();
+ const fileCount: Promise<number> = client.getGroupFileCount('123');
+ void fileCount;
+ // @ts-expect-error Count queries require string group IDs.
+ client.getGroupFileCount(123);
  const folderDelete: Promise<void> = client.deleteGroupFolder('18446744073709551615','opaque-folder');
  void folderDelete;
  // @ts-expect-error Folder identity must be a string.

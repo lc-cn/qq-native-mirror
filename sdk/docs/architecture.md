@@ -221,7 +221,10 @@ order. Queried history does not share live-delivery deduplication state.
 terminal receipt selection behind `send`, `sendPrepared` and `close`. Normal text,
 media and merged-forward cards use the same receipt path. It receives the Session's
 callback channel rather than registering another listener, preserving send/recall
-subscription order. Construction performs no native work. A callback success still
+subscription order. Its narrow ports expose only message preparation/query/send and server time; it
+cannot request arbitrary native services. Native responses stay `unknown` until
+the receiving validator checks them. Media configuration depends on codec ports,
+not the account composition context. Construction performs no native work. A callback success still
 waits for native completion, failed IDs remain reserved until teardown, and an
 operation is never replayed. The Session aborts pending work before closing the
 sender; deferred preparation cannot dispatch after shutdown.
@@ -267,7 +270,9 @@ write or emit an output after shutdown.
 The proprietary `.node` surface has no stable complete TypeScript declaration.
 Its type erasure is centralized in `src/native/native-object.ts`. This internal
 escape hatch is not proof of an ABI. Native results must pass adapter validation
-before becoming public DTOs; public/IPC inputs start as `unknown`. The existing
+before becoming public DTOs; public/IPC inputs start as `unknown`. Business dispatch receives a
+`Record<string, unknown>` rather than inheriting the proprietary object escape
+hatch; field validation belongs to the receiving operation. The existing
 low-level `QQClient.request` default result type is retained for compatibility;
 RPC storage and settlement use `unknown` internally.
 
@@ -342,7 +347,11 @@ in the formatting gate. Binary-directory ignores are anchored to the package roo
 so `src/native/` remains checked. They also reject runtime dependency cycles, missing internal
 modules, implementation imports from public contracts, and transitive native/IO
 dependencies in pure input modules. They protect these boundaries during later
-feature work; renaming directories alone does not establish them.
+feature work; renaming directories alone does not establish them. Computed
+imports and CommonJS loading are checked syntactically and denied by default;
+only the exact local codec loaders and installed-manifest resolver have reviewed
+exceptions. Renamed simple loaders remain checked. This gate protects source
+organization, not arbitrary JavaScript evaluation.
 
 The dependency policy in `test/helpers/dependency-policy.ts` checks type imports
 as well as runtime imports. Storage depends on storage and public primitives;

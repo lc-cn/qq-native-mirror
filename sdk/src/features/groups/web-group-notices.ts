@@ -10,11 +10,11 @@ import { requestQunPage } from './qun-web-read.ts';
 export async function listWebGroupNotices(
   session: Native,
   accountId: string,
-  groupId: string,
+  groupId: unknown,
   fetchImpl: typeof fetch = fetch,
   signal?: AbortSignal,
 ): Promise<WebGroupNoticeResult> {
-  if (!/^\d+$/.test(accountId) || !/^\d+$/.test(groupId))
+  if (typeof groupId !== 'string' || !/^\d+$/.test(accountId) || !/^\d+$/.test(groupId))
     throw new Error('accountId and groupId must be numeric strings');
   const query = new URLSearchParams({
     qid: groupId,

@@ -52,7 +52,6 @@ const nativeContracts = new Set([
 const featurePorts = new Set([
   'src/runtime/media-contracts.ts',
   'src/runtime/native-event-channel.ts',
-  'src/runtime/native-service-context.ts',
 ]);
 const facadeInputs = new Set([
   'src/features/contacts/friend-categories.ts',

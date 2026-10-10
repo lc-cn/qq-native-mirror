@@ -7,7 +7,7 @@ These are working-source additions for the next candidate, not published `0.0.1`
 | Friends           | Lists/profiles, remarks/deletion, request listing/handling, `request.friend`, `friend-list-updated`, `friend-added`                                                        | Sending applications; independent deleted/profile/remark notices                                                                                      |
 | Friend categories | `listFriendCategories`, `addFriendCategory`; categorized `friend-list-updated` metadata                                                                                    | Delete/rename/reorder categories and move friends; parameters and completion responses need verification                                              |
 | Group queries     | Lists/members/`getGroupInfo`/`listGroupMutedMembers`, `group-list-updated`, `group-members-updated`, `group-info-updated`, `group-membership`, `group-admin`, `group-mute` | Complete join classification and real event/query acceptance                                                                                          |
-| Group actions     | Name/remark, all/member mute, member card/admin/kick, leave, notices, requests, essence add/remove and folder deletion acknowledgement                                     | Create/search/join/invite, member titles, live essence pagination and add/remove events, remaining group file operations and real mutation acceptance |
+| Group actions     | Name/remark, all/member mute, member card/admin/kick, leave, notices, requests, essence add/remove folder deletion acknowledgement and single-group file count             | Create/search/join/invite, member titles, live essence pagination and add/remove events, remaining group file operations and real mutation acceptance |
 
 ## Categorized friends
 
@@ -283,3 +283,32 @@ A fulfilled `Promise<void>` acknowledges that native return; it does not prove
 the folder disappeared remotely. No account folder was deleted during these
 checks. Listing, creation, uploads, downloads and group file events still require
 their own implementation and acceptance.
+
+## Group file count
+
+```typescript
+const count = await client.getGroupFileCount('123456');
+```
+
+CLI: `qq-native-client group-file-count --config ./qq.json --group-id 123456`.
+
+The input is a positive decimal string fitting uint64. One native request contains
+exactly that string, including leading zeros. A successful response must contain
+zero outer status, exactly one group code and exactly one uint32 count. The echoed
+group is compared in its uint64 namespace because native serialization removes
+leading zeros. Zero is a valid count. Malformed, sparse, accessor-backed or
+mismatched results reject the entire response; native wording is excluded from
+errors. There is no callback fallback, retry, limit estimate or second query.
+
+The composition root gates this operation by the independently measured wrapper
+hash, platform, architecture and version before lazily acquiring RichMedia. The
+[static contract](evidence/group-file-count-contract.json) binds all six default
+binaries to independently inspected normal input and completion paths. This is
+static and controlled-consumer evidence; no real account count was queried. It
+does not enable older versions or prove remote core success semantics.
+
+A reliable file list remains unresolved. The pinned upstream callback contains a
+`reqId` but no group or folder identity, while its request parameters contain no
+`reqId`. The upstream caller accepts any matching callback family. Serializing
+SDK requests alone cannot identify unsolicited notifications. The SDK must first
+verify that correlation rather than returning a potentially unrelated list.

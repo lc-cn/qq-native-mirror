@@ -1,11 +1,12 @@
-import { deleteGroupFolder } from './features/groups/group-file-operations.ts';
+import { captureGroupFileCount } from './features/groups/group-file-input.ts';
+import { deleteGroupFolder, getGroupFileCount } from './features/groups/group-file-operations.ts';
 import { captureMergedForward } from './features/forward/merged-forward-input.ts';
 import { captureDownloadPayload } from './features/media/download-input.ts';
 import { createMessageQueries } from './features/messages/message-queries.ts';
 import { withCleanupFailure } from './runtime/cleanup.ts';
 import { NativeServiceLifetime } from './runtime/native-service-lifetime.ts';
 import type { NativeServiceContext } from './runtime/native-service-context.ts';
-import { supportsCategoryCreation } from './native/native-contracts.ts';
+import { supportsCategoryCreation, supportsGroupFileCount } from './native/native-contracts.ts';
 import { createFriendCategory } from './features/contacts/friend-category-create.ts';
 import { createFriendSystemEvents } from './features/contacts/friend-system-events.ts';
 import { friendCategoryName } from './features/contacts/friend-categories.ts';
@@ -229,7 +230,10 @@ export function createNativeServices(context: NativeServiceContext) {
     const selfProfile = own(createSelfProfile(guardedSession, () => accountUid ?? ''));
     const groupNotices = createGroupNotices(guardedSession);
     const groupOperations = createGroupOperations(guardedSession, uidFor);
-    const resolvePeer = async (peer: Native): Promise<NativePeer> => {
+    const resolvePeer = async (value: unknown): Promise<NativePeer> => {
+      if (!value || typeof value !== 'object' || Array.isArray(value))
+        throw new Error('Unsupported peer type');
+      const peer = value as Record<string, unknown>;
       if (peer?.chatType === 1 || peer?.chatType === 2) {
         if (typeof peer.peerUid !== 'string' || !peer.peerUid) throw new Error('Invalid peer UID');
         return { chatType: peer.chatType, peerUid: peer.peerUid };
@@ -249,8 +253,8 @@ export function createNativeServices(context: NativeServiceContext) {
     const sender = own(
       createNativeMessageSender({
         signal: lifetime.signal,
-        service,
-        call,
+        getMessageService: () => service('Msg'),
+        getServerTimeService: () => service('MSF'),
         awaitAlive,
         uidFor,
         eventCall,
@@ -271,7 +275,7 @@ export function createNativeServices(context: NativeServiceContext) {
     return {
       async invokeOperation(
         method: ServiceOperation,
-        payload: Native = {},
+        payload: Record<string, unknown> = {},
         requestSignal?: AbortSignal,
       ): Promise<unknown> {
         if (lifetime.closed) throw new Error('Native services are closed');
@@ -400,6 +404,28 @@ export function createNativeServices(context: NativeServiceContext) {
           case 'publishGroupNotice':
           case 'deleteGroupNotice':
             return groupNotices.invokeOperation(method, payload);
+          case 'getGroupFileCount': {
+            const captured = captureGroupFileCount(payload.groupId);
+            if (!supportsGroupFileCount(nativeContracts, version))
+              throw Object.assign(
+                new Error('Group file count contract is not verified for this native binary'),
+                { code: 'unsupported-native-contract' },
+              );
+            return getGroupFileCount(
+              {
+                signal: lifetime.signal,
+                awaitAlive,
+                getRichMediaService: () => {
+                  const richMedia = service('RichMedia');
+                  return {
+                    batchGetGroupFileCount: (groups) =>
+                      call(richMedia, 'batchGetGroupFileCount', groups),
+                  };
+                },
+              },
+              captured.groupId,
+            );
+          }
           case 'deleteGroupFolder':
             return deleteGroupFolder(
               {

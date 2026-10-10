@@ -1,0 +1,383 @@
+{
+  "schemaVersion": 1,
+  "method": "RichMedia.batchGetGroupFileCount",
+  "proof": "Independent static normal-path conversion/completion inspection for six exact binaries; controlled SDK behavior is tested separately.",
+  "source": {
+    "repository": "https://github.com/NapNeko/NapCatQQ",
+    "commit": "26d7533e0f5800fdff865ab2f2ad7692917e1076",
+    "files": [
+      {
+        "path": "packages/napcat-core/apis/group.ts",
+        "gitBlobSha": "4949dabe83de37e42570d0c5e63036c0eb1e662a",
+        "lines": [
+          492,
+          493
+        ]
+      },
+      {
+        "path": "packages/napcat-core/services/NodeIKernelRichMediaService.ts",
+        "gitBlobSha": "432f5bb4e89f0acd7aa5ccfcd6edff06355e0dda",
+        "lines": [
+          250,
+          253
+        ]
+      }
+    ]
+  },
+  "profiles": [
+    {
+      "platform": "darwin",
+      "arch": "arm64",
+      "clientVersion": "7.0.2-53644",
+      "wrapperSha256": "fbc8ad9b328d05e16784d76b0181dda894c17001179dbf8c0d5dd00dc6271358",
+      "manifestSha256": "c48a84e3ab8baaaa5de038335e21af716836762a8066ea438f9e1ff6b274f141",
+      "functionRanges": [
+        {
+          "range": [
+            "0xa7f8c0",
+            "0xa7faf0"
+          ],
+          "bytesSha256": "c53a90023c0e227d260b084a3e30a25bb1e636a2e2bd57cb3b5785014fbb9b35"
+        },
+        {
+          "range": [
+            "0xa7faf0",
+            "0xa7fb18"
+          ],
+          "bytesSha256": "a6aac6800b765e5595cf18fa1bfd8091b88264f582df9de3c0adcd3121255aad"
+        },
+        {
+          "range": [
+            "0xa84580",
+            "0xa84610"
+          ],
+          "bytesSha256": "f3b7e5f1cc31e7c02783611f7d7f5ca1176e80d5663b6487fd8f0d509568cbaf"
+        },
+        {
+          "range": [
+            "0x6dbe48",
+            "0x6dbfdc"
+          ],
+          "bytesSha256": "e19413c2fea21e9cca207f79e403fe074ff7e9fb03785768cf88b065821eb9a2"
+        },
+        {
+          "range": [
+            "0x6dc064",
+            "0x6dc0d0"
+          ],
+          "bytesSha256": "69912f32478574e438ad5fef00071196f4a85a9df1e1e9f780cfdc62ad138c7d"
+        },
+        {
+          "range": [
+            "0x6dc100",
+            "0x6dc1bc"
+          ],
+          "bytesSha256": "3b71e5f43dc64a1be7418bc2000f026831a3484b825d881fd9ecb7f7126ad8de"
+        },
+        {
+          "range": [
+            "0x6dc1bc",
+            "0x6dc1d0"
+          ],
+          "bytesSha256": "e8dddb79bdf1c46518cbfa3f96b5ffb956cf841ce4e2d45beb106124a3c0bf44"
+        },
+        {
+          "range": [
+            "0x6dc1d0",
+            "0x6dc49c"
+          ],
+          "bytesSha256": "9d8d4a3dd29c114f1c49c1273f281a3e13909cb5aa188cdfe05c05d702f2ca24"
+        },
+        {
+          "range": [
+            "0x88aac8",
+            "0x88aad4"
+          ],
+          "bytesSha256": "c452299ebfa149327b6c36cb2adf4edd03f7362717d5eef8cb3aba2706f17932"
+        }
+      ]
+    },
+    {
+      "platform": "darwin",
+      "arch": "x64",
+      "clientVersion": "7.0.2-53644",
+      "wrapperSha256": "e91c58872d3d498f2d3ac1c304ab3ae4602d016274cf3e0f0cb651ad765f1f54",
+      "manifestSha256": "50c9ed62df5461220d27da8a589f3635b311ba1233cc499ebf3b80c0db2ae559",
+      "functionRanges": [
+        {
+          "range": [
+            "0xb36204",
+            "0xb364fb"
+          ],
+          "bytesSha256": "a58024f30fd592266d13f51d0118d95024d716afec8f710e38f28a0d30c43f98"
+        },
+        {
+          "range": [
+            "0xb364fb",
+            "0xb3651e"
+          ],
+          "bytesSha256": "6cb8690ae279c21dc830698f9b5b654fa5ea565c67d683ae749ae3e12205bc27"
+        },
+        {
+          "range": [
+            "0xb3b6ed",
+            "0xb3b778"
+          ],
+          "bytesSha256": "eacedc03e61974a36c7b6bc98c0ccb42b120eb23934138d09f7fb3df74896d12"
+        },
+        {
+          "range": [
+            "0x735f2c",
+            "0x7360b2"
+          ],
+          "bytesSha256": "aa0dc3c0f1f7fabb79624f79ea0c74f9c07ae23b7cce8c94d894081782ffba41"
+        },
+        {
+          "range": [
+            "0x736114",
+            "0x73617c"
+          ],
+          "bytesSha256": "cf6b92551cba7e3a8c3cef88c10b56f63b81a2000af693a964df16e4ae6b3ae6"
+        },
+        {
+          "range": [
+            "0x736238",
+            "0x73624a"
+          ],
+          "bytesSha256": "155bcd9b65c3e59cd608b12b9ee8048047f6a0437217266c8a49a13a7fdcab58"
+        },
+        {
+          "range": [
+            "0x73624a",
+            "0x736522"
+          ],
+          "bytesSha256": "a9468f3417b5a9743df5e6c5143d75cc3342dc819546a8598f2dae3497fdb697"
+        }
+      ]
+    },
+    {
+      "platform": "linux",
+      "arch": "arm64",
+      "clientVersion": "3.2.32-52194",
+      "wrapperSha256": "c302361f52494de257044e912e43ed244bb29ee59f59345d25a8959327828337",
+      "manifestSha256": "263fc8fe7416b06e99af43db2418ef28679ae91b88a014990ef2191673e3ee7f",
+      "functionRanges": [
+        {
+          "range": [
+            "0x16a7c20",
+            "0x16a80a0"
+          ],
+          "bytesSha256": "2a9189c54612e6e8f94ed46d6908410a9e4e911785eb05d83b71e7670ab511c7"
+        },
+        {
+          "range": [
+            "0x1862910",
+            "0x1862d50"
+          ],
+          "bytesSha256": "9ad39f175b17ae03fd85cdf0d3af6b4d6a493432f55bef729e56ae2d92c011e4"
+        },
+        {
+          "range": [
+            "0x1862fc8",
+            "0x1862ffc"
+          ],
+          "bytesSha256": "f24379af415064775b56ca470d93943ed2f8d82198e92e437c89e38b39a7684c"
+        },
+        {
+          "range": [
+            "0x1862ffc",
+            "0x186330c"
+          ],
+          "bytesSha256": "9dc1ed3176732c1c2213bf2a9376c85cd7561f90d0c2a7ce9084b5b2305b11b5"
+        }
+      ]
+    },
+    {
+      "platform": "linux",
+      "arch": "x64",
+      "clientVersion": "3.2.32-52194",
+      "wrapperSha256": "7882b8e3055cd38584861042befacd8be9939896f5cbbca6fa4a230926b48526",
+      "manifestSha256": "8a7b8f44327fa8408dfee2885c0e23d94b4152ff1e70ce0ee735669803066a87",
+      "functionRanges": [
+        {
+          "range": [
+            "0x3990970",
+            "0x3990e70"
+          ],
+          "bytesSha256": "48520501f24f42dad7c09a17c5f91ddb001f2bf5da210f9aa3823f24fd279c25"
+        },
+        {
+          "range": [
+            "0x39a7d80",
+            "0x39a8260"
+          ],
+          "bytesSha256": "4144c24b6ee1c512b71edca6b026dd15206ff3107f879b53de5f3bfb6550785f"
+        },
+        {
+          "range": [
+            "0x39a84e0",
+            "0x39a8520"
+          ],
+          "bytesSha256": "83c1eaef5c86dd6390802d45a6b33969e9b78a0691b2f9d789cb88fe01c33236"
+        },
+        {
+          "range": [
+            "0x39a8520",
+            "0x39a8870"
+          ],
+          "bytesSha256": "2fbb1c9fac581ec3868d31b800fde131ea21c84018aa99062f476c818ef703a0"
+        }
+      ]
+    },
+    {
+      "platform": "win32",
+      "arch": "arm64",
+      "clientVersion": "9.9.33-52230",
+      "wrapperSha256": "54e5a6ce127a1f973f28e38ddfbf1338403ea323a141546a6578dd25332c928a",
+      "manifestSha256": "c453d420e486e2683d7f72cb73fc689c24a3d670e02622565568085b604a800c",
+      "functionRanges": [
+        {
+          "range": [
+            "0x180ea40a0",
+            "0x180ea4354"
+          ],
+          "bytesSha256": "8a53dd45a899449e4de636318e4831c4e08f6046b01c11d37e60fdf171019a4c"
+        },
+        {
+          "range": [
+            "0x180ea4408",
+            "0x180ea4450"
+          ],
+          "bytesSha256": "14be50f43965f6b361623037cb699b4226401e8a1b00d16b156790b299d75243"
+        },
+        {
+          "range": [
+            "0x180ea9a04",
+            "0x180ea9a8c"
+          ],
+          "bytesSha256": "473ae9a4817648bc9ddbecf7e6beec89fc4fa517d043b2e3c53893c99f580d5f"
+        },
+        {
+          "range": [
+            "0x1821fddc4",
+            "0x1821fde9c"
+          ],
+          "bytesSha256": "56846a18f68147b038c3aed3a548d6d672ab78225474c60100d210595fb9e5e3"
+        },
+        {
+          "range": [
+            "0x1821fe044",
+            "0x1821fe0ac"
+          ],
+          "bytesSha256": "53a8d6e50125c1a89f5c51a33c9aa91e5cb9c7a71daff8aaed74bc3d10156e75"
+        },
+        {
+          "range": [
+            "0x1821fe174",
+            "0x1821fe184"
+          ],
+          "bytesSha256": "5431e75035c8b912738514dc37a97a91dbea9371c162ae3f38bbbbf68c153af5"
+        },
+        {
+          "range": [
+            "0x1821fe184",
+            "0x1821fe48c"
+          ],
+          "bytesSha256": "89b324733e16a2a1f8fa38ce31ff01d07c8e824d0a9a9878379e925cfcc3a12d"
+        }
+      ]
+    },
+    {
+      "platform": "win32",
+      "arch": "x64",
+      "clientVersion": "9.9.33-52230",
+      "wrapperSha256": "63112ab9161e127f5f7e17998a7196e143808923fb54cbbf7b4e21426187a5f0",
+      "manifestSha256": "7373fca97953a24c550bb73298b5008f4988fad934eaab4c1a21f07dd7dfc9c8",
+      "functionRanges": [
+        {
+          "range": [
+            "0x180ee41a2",
+            "0x180ee444f"
+          ],
+          "bytesSha256": "ab2d4861ca95a8812568d47a0ce9ea0677cf50a0f214a71bf4a4e024cbe90ef5"
+        },
+        {
+          "range": [
+            "0x180ee4560",
+            "0x180ee459d"
+          ],
+          "bytesSha256": "8ff60cf6254711901ee9fbeb3a8f9612e8ce303596ff7c97342a4eeea822b114"
+        },
+        {
+          "range": [
+            "0x180ee9a67",
+            "0x180ee9aec"
+          ],
+          "bytesSha256": "7ac96198871b0ad3c8a64a76e7c1091937da44de286a0c24a7d75d159070253e"
+        },
+        {
+          "range": [
+            "0x1822fde40",
+            "0x1822fdefb"
+          ],
+          "bytesSha256": "e67a2815160d3d9b9c27b863def016518448f0df6c58f4ffa837ab8447c1acd5"
+        },
+        {
+          "range": [
+            "0x1822fe08c",
+            "0x1822fe0f0"
+          ],
+          "bytesSha256": "d54b930adb9b3186dacb9200088cf9a08ba98a0b79ef1e19d04ed4b2f50f8b1e"
+        },
+        {
+          "range": [
+            "0x1822fe19c",
+            "0x1822fe1b1"
+          ],
+          "bytesSha256": "129986a90ecce3954791a64dc9e0f6e9a1d987ec33a275c0fb67f627db6b0e02"
+        },
+        {
+          "range": [
+            "0x1822fe1b1",
+            "0x1822fe4af"
+          ],
+          "bytesSha256": "3b13aec92220220fda21522f1de05748e68f833c6192af336e3577e7f9d842a9"
+        }
+      ]
+    }
+  ],
+  "input": {
+    "arguments": 1,
+    "groupCodes": "Array<string>, each element parsed as base10 uint64",
+    "coreSlot": {
+      "unix": "0x118",
+      "windows": "0x110"
+    }
+  },
+  "normalResult": {
+    "result": "int32",
+    "errMsg": "UTF8 string",
+    "groupCodes": "Array<string>, decimal uint64",
+    "groupFileCounts": "Array<uint32>",
+    "completion": "napi_resolve_deferred"
+  },
+  "sdkProjection": {
+    "method": "getGroupFileCount(groupId: string): Promise<number>",
+    "request": "One group, preserving caller string after positive uint64 validation",
+    "response": "Zero result; exactly one own-data group code and count; positive uint64 echo equals requested numeric namespace; count uint32",
+    "malformed": "Reject complete result with fixed wording; no accessor, coercion, retry, callback fallback or hardcoded limit"
+  },
+  "receiptSha256": {
+    "receipt.json": "c4e8eaf014c52136a304288f732c668595291c6a73e6ff68dda64d9f68600251",
+    "remaining-receipt.json": "3d9f46e7082e894ab72aee1a7e9a495836f00f2e090b279a0cda6f48f4d0ec8e"
+  },
+  "limits": [
+    "No real native or account query executed.",
+    "Only normal conversion/completion paths inspected; core remote success semantics not independently traced.",
+    "Parallel array length, ordering and request completeness are not established; public API deliberately accepts one group and validates its echo.",
+    "No older binary or version inherits capability.",
+    "Group listing still requires verified request/callback correlation; callback has reqId but no group/folder identity and request has no reqId."
+  ],
+  "nativeExecuted": false,
+  "accountUsed": false
+}

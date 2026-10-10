@@ -13,10 +13,12 @@ function fixture() {
   let invoke: () => unknown = () => ({ result: 0 });
   const msg: NativeObject = {
     generateMsgUniqueId() {
+      assert.equal(this, msg);
       calls.push('unique');
       return unique;
     },
     sendMsg(_id: string, destination: NativeObject) {
+      assert.equal(this, msg);
       calls.push('send');
       sendCalls++;
       channel.dispatch('Msg/onMsgInfoListUpdate', [
@@ -47,19 +49,18 @@ function fixture() {
   };
   const sender = createNativeMessageSender({
     signal: controller.signal,
-    service(name) {
-      calls.push(name);
-      return name === 'Msg'
-        ? msg
-        : {
-            getServerTime() {
-              calls.push('time');
-              return '100';
-            },
-          };
+    getMessageService() {
+      calls.push('Msg');
+      return msg;
     },
-    call(object, name, ...args) {
-      return object[name](...args);
+    getServerTimeService() {
+      calls.push('MSF');
+      return {
+        getServerTime() {
+          calls.push('time');
+          return '100';
+        },
+      };
     },
     awaitAlive: async (value) => value,
     uidFor: async () => 'u_fixture',
@@ -121,20 +122,17 @@ test('closing while unique ID generation stalls prevents subsequent send', async
   let sends = 0;
   const sender = createNativeMessageSender({
     signal: controller.signal,
-    service: (name) =>
-      name === 'Msg'
-        ? {
-            generateMsgUniqueId: () =>
-              new Promise<string>((done) => {
-                resolve = done;
-              }),
-            sendMsg() {
-              sends++;
-              return { result: 0 };
-            },
-          }
-        : { getServerTime: () => '100' },
-    call: (object, name, ...args) => object[name](...args),
+    getMessageService: () => ({
+      generateMsgUniqueId: () =>
+        new Promise<string>((done) => {
+          resolve = done;
+        }),
+      sendMsg() {
+        sends++;
+        return { result: 0 };
+      },
+    }),
+    getServerTimeService: () => ({ getServerTime: () => '100' }),
     awaitAlive: async (value) => value,
     uidFor: async () => 'u_fixture',
     eventCall: channel.call,
@@ -155,3 +153,72 @@ test('reentrant close in onDispatch prevents actual send without replay', async 
   assert.equal(f.sendCalls, 0);
   f.channel.close();
 });
+
+for (const stage of [
+  'message-service',
+  'time-service',
+  'time-getter',
+  'time-call',
+  'unique-getter',
+  'send-getter',
+]) {
+  for (const termination of ['close', 'abort']) {
+    test(`reentrant ${termination} during ${stage} prevents subsequent native dispatch`, async () => {
+      const controller = new AbortController();
+      const channel = createNativeEventChannel(controller.signal);
+      let uniqueCalls = 0,
+        sendCalls = 0;
+      const terminate = () => (termination === 'close' ? sender.close() : controller.abort());
+      const messages = {
+        get generateMsgUniqueId() {
+          if (stage === 'unique-getter') terminate();
+          return function (this: unknown) {
+            assert.equal(this, messages);
+            uniqueCalls++;
+            return 'unique';
+          };
+        },
+        get sendMsg() {
+          if (stage === 'send-getter') terminate();
+          return function (this: unknown) {
+            assert.equal(this, messages);
+            sendCalls++;
+            return { result: 0 };
+          };
+        },
+      };
+      const msf = {
+        get getServerTime() {
+          if (stage === 'time-getter') terminate();
+          return function (this: unknown) {
+            assert.equal(this, msf);
+            if (stage === 'time-call') terminate();
+            return '100';
+          };
+        },
+      };
+      const sender = createNativeMessageSender({
+        signal: controller.signal,
+        getMessageService() {
+          if (stage === 'message-service') terminate();
+          return messages;
+        },
+        getServerTimeService() {
+          if (stage === 'time-service') terminate();
+          return msf;
+        },
+        awaitAlive: async (value) => value,
+        uidFor: async () => 'u_fixture',
+        eventCall: channel.call,
+      });
+      try {
+        await assert.rejects(sender.sendPrepared(peer, []));
+        assert.equal(uniqueCalls, stage === 'send-getter' ? 1 : 0);
+        assert.equal(sendCalls, 0);
+      } finally {
+        sender.close();
+        channel.close();
+      }
+    });
+  }
+}
