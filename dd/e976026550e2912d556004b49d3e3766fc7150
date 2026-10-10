@@ -1,0 +1,25 @@
+sdk/docs/architecture.md
+  s_2104cc474f1ce5::t_99ddb53ece21d7 118-125
+sdk/src/features/contacts/contact-directory.ts
+  s_2104cc474f1ce5::t_d47a77cc5fd14e 1-118
+sdk/src/native-services.ts
+  s_2104cc474f1ce5::t_63d2051071cf95 13-14,56,164-167,283,346-349
+sdk/test/contact-directory.test.ts
+  s_2104cc474f1ce5::t_d25c2f99586681 1-131
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "dde976026550e2912d556004b49d3e3766fc7150",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
