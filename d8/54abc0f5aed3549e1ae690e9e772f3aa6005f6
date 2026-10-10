@@ -1,0 +1,60 @@
+version-ci/build-main-contract.test.mjs
+  s_2104cc474f1ce5::t_8ad6745c6eb957 1-27
+  s_2104cc474f1ce5::t_01a3916204e61b 28-72
+sdk/scripts/mirror-consumer-contract.mjs
+  s_2104cc474f1ce5::t_ece079eaee11b5 73-76,89-110,125,127-128,171-175
+  s_2104cc474f1ce5::t_151a797492c10d 1-72,77-88,111-124,126,129-170,176-177
+ci/run-current-source-mirror.mjs
+  s_2104cc474f1ce5::t_ebedb228d1ff52 1-9
+  s_2104cc474f1ce5::t_d8db15dcf468a2 10-12
+version-ci/build-main.mjs
+  s_2104cc474f1ce5::t_151a797492c10d 6-9,11-17,19-20
+  s_2104cc474f1ce5::t_e45a7373528bab 21-69,71
+ci/consumer-module-paths.test.mjs
+  s_2104cc474f1ce5::t_8ad6745c6eb957 46-48
+  s_2104cc474f1ce5::t_07a32934f1e989 49-50,52
+ci/current-source-mirror.mjs
+  s_2104cc474f1ce5::t_8ad6745c6eb957 1-73
+  s_2104cc474f1ce5::t_f44ba83b4920b4 74-132
+version-ci/build-main-contract.mjs
+  s_2104cc474f1ce5::t_151a797492c10d 1-25
+  s_2104cc474f1ce5::t_17b0d3a341a7d8 26-34
+.github/workflows/current-source-consumer.yml
+  s_2104cc474f1ce5::t_8ad6745c6eb957 1-51,53-63
+  s_2104cc474f1ce5::t_ebedb228d1ff52 52
+sdk/test/mirror-consumer-contract.test.ts
+  s_2104cc474f1ce5::t_ebedb228d1ff52 1-6,9-10,15-16,23-25,33-37,43-47,57-61,66,68-70,74-80,98-100,103,116-121,129,132-136,138,141-142
+  s_2104cc474f1ce5::t_ece079eaee11b5 7-8,11-14,17-22,26-32,38-42,48-56,62-65,67,71-73,81-97,101-102,104-115,122-128,130-131,137,139-140
+sdk/docs/current-source-mirror.md
+  s_2104cc474f1ce5::t_be9988dc49b7d1 1-47
+sdk/docs/sdk-acceptance.md
+  s_2104cc474f1ce5::t_be9988dc49b7d1 137-141
+.github/workflows/sdk-quality.yml
+  s_2104cc474f1ce5::t_be9988dc49b7d1 9-10,16-17,59-60
+sdk/docs/development.md
+  s_2104cc474f1ce5::t_08d6c30bdbedd0 157,162
+sdk/eslint.config.mjs
+  s_2104cc474f1ce5::t_e09b6442ced580 54-55,70-71
+sdk/scripts/element-preparation-consumer-contract.mjs
+  s_2104cc474f1ce5::t_0d0882f2039eb6 8-10,12-13,16-18,21,34,73-75,77,125-127,129-130,133-135,138,164,168-170,216,219-225
+sdk/test/consumer-tooling-gates.test.mjs
+  s_2104cc474f1ce5::t_18a005cf4292e3 82-103,112-118
+sdk/tsconfig.scripts.json
+  s_2104cc474f1ce5::t_c814801d5e93c5 15-17
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "d854abc0f5aed3549e1ae690e9e772f3aa6005f6",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
