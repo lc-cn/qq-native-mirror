@@ -1,6 +1,10 @@
 import { nativeResultError } from '../../errors.ts';
-import type { GroupEssenceContent, GroupEssencePage } from '../../contracts/groups.ts';
-import { captureGroupEssencePage } from './group-essence-input.ts';
+import type {
+  GroupEssenceContent,
+  GroupEssencePage,
+  GroupEssenceMessage,
+} from '../../contracts/groups.ts';
+import { captureGroupEssencePage, captureGroupEssenceList } from './group-essence-input.ts';
 import { requestQunPage, type QunWebReadContext } from './qun-web-read.ts';
 
 /** Fixed NapCatQQ26d7533e WebApi74-94 and types/webapi108-130.
@@ -112,4 +116,37 @@ export async function getGroupEssencePage(
   string(field(data, 'config_page_url')); // Credential-bearing URLs stay in the worker.
   context.signal?.throwIfAborted();
   return page;
+}
+
+/** Fixed WebApi63-72 uses page numbers, not cumulative row offsets. Unlike that
+ * source's partial-result behavior, SDK success requires the explicit end marker.
+ * This is a complete traversal, not an atomic server snapshot: overlapping pages
+ * are rejected rather than silently hiding changes during pagination.
+ */
+export async function listGroupEssenceMessages(
+  context: QunWebReadContext,
+  groupId: unknown,
+  options: unknown = undefined,
+): Promise<GroupEssenceMessage[]> {
+  const query = captureGroupEssenceList(groupId, options);
+  const messages: GroupEssenceMessage[] = [];
+  const seen = new Set<string>();
+  for (let pageStart = 0; pageStart < query.maxPages; pageStart++) {
+    context.signal?.throwIfAborted();
+    const page = await getGroupEssencePage(context, query.groupId, { pageStart, pageLimit: 50 });
+    context.signal?.throwIfAborted();
+    for (const message of page.messages) {
+      const key = `${message.sequence}:${message.random}`;
+      if (seen.has(key))
+        throw nativeResultError('Group essence pages overlap', {
+          result: 'inconsistent-pagination',
+        });
+      seen.add(key);
+      messages.push(message);
+    }
+    if (page.isEnd) return messages;
+  }
+  throw nativeResultError('Group essence listing reached maxPages before its end marker', {
+    result: 'pagination-limit',
+  });
 }

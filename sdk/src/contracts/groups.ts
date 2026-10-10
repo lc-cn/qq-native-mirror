@@ -53,6 +53,11 @@ export interface GroupEssencePage {
   groupRole: number;
 }
 
+export interface GroupEssenceListOptions {
+  /** Defaults to 20; accepted range is 1..1000. No end marker within this budget rejects the read. */
+  maxPages?: number;
+}
+
 export interface GroupMuteEvent {
   groupId: string;
   scope: 'member' | 'all';

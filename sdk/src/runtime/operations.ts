@@ -24,6 +24,7 @@ export const SERVICE_OPERATIONS = Object.freeze([
   'setGroupName',
   'setGroupEssenceMessage',
   'getGroupEssencePage',
+  'listGroupEssenceMessages',
   'setGroupRemark',
   'setGroupMute',
   'setGroupMemberMute',

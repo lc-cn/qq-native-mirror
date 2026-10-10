@@ -44,7 +44,10 @@ import { decodeElements } from './features/messages/message-elements.ts';
 import { createNativeMessageSender } from './features/messages/native-message-sender.ts';
 /** Native contracts extracted from local NapCat; this module never sends at startup. */
 import { createGroupOperations } from './features/groups/group-operations.ts';
-import { getGroupEssencePage } from './features/groups/group-essence-list.ts';
+import {
+  getGroupEssencePage,
+  listGroupEssenceMessages,
+} from './features/groups/group-essence-list.ts';
 import { setGroupEssenceMessage } from './features/groups/group-essence.ts';
 import { createGroupEvents } from './features/groups/group-events.ts';
 import { createGroupQueries } from './features/groups/group-queries.ts';
@@ -410,12 +413,14 @@ export function createNativeServices(context: NativeServiceContext) {
           case 'listGroupNotices':
             if (!accountId)
               throw new Error('Group notice listing requires the authenticated account identity');
-            return listWebGroupNotices(
-              guardedSession,
-              accountId,
-              payload.groupId,
-              undefined,
-              lifetime.signal,
+            return awaitAlive(
+              listWebGroupNotices(
+                guardedSession,
+                accountId,
+                payload.groupId,
+                undefined,
+                lifetime.signal,
+              ),
             );
           case 'publishGroupNotice':
           case 'deleteGroupNotice':
@@ -423,12 +428,15 @@ export function createNativeServices(context: NativeServiceContext) {
           case 'setGroupName':
             return groupOperations.invokeOperation(method, payload);
           case 'getGroupEssencePage':
+          case 'listGroupEssenceMessages':
             if (!accountId)
               throw new Error('Group essence listing requires the authenticated account identity');
-            return getGroupEssencePage(
-              { session: guardedSession, accountId, signal: lifetime.signal },
-              payload.groupId,
-              payload.options,
+            return awaitAlive<unknown>(
+              (method === 'getGroupEssencePage' ? getGroupEssencePage : listGroupEssenceMessages)(
+                { session: guardedSession, accountId, signal: lifetime.signal },
+                payload.groupId,
+                payload.options,
+              ),
             );
           case 'setGroupEssenceMessage':
             return setGroupEssenceMessage(

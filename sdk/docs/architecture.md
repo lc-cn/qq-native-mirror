@@ -243,7 +243,7 @@ consumer. The package consumer uses fake services and an isolated replacement
 kernel; this command does not log into an account. Codec dependencies are packed
 from npm's populated cache for the offline consumer installation.
 
-The installed-consumer gate also checks all 60 compatibility type exports and
+The installed-consumer gate also checks the complete compatibility type inventory and
 every relative dependency in the actual packed declaration graph. Positive and
 negative consumers preserve peer/login discrimination, event payload types,
 received versus sendable elements, receipt inheritance and notice aliases.

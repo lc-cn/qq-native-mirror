@@ -21,6 +21,7 @@ registerHooks({load(url,context,next){
   async prepare(){},async close(){},async login(){const account={uin:'123',uid:'u_fixture'};emit('ready',account);emit('friend-added',{uid:'u_fixture_friend',messageId:'9'});return account;},
   async invokeOperation(method,payload){if(method==='addFriendCategory')return {categoryId:8,name:payload.name};if(method==='listGroupMutedMembers')return [];if(method==='getGroupInfo')return {groupId:payload.groupId,name:'fixture',memberCount:0,maxMemberCount:200,ownerUid:'u_fixture',ownerUserId:'123',description:''};if(method==='listFriendCategories')return [{categoryId:1,sortId:0,name:'fixture',memberCount:0,onlineCount:0,friends:[]}];
    if(method==='getGroupEssencePage'){if(payload.groupId!=='123'||payload.options.pageStart!==17||payload.options.pageLimit!==2)throw Error('Invalid essence page IPC');return {...payload.options,groupId:payload.groupId,messages:[],isEnd:false,groupRole:2};}
+   if(method==='listGroupEssenceMessages'){if(payload.groupId!=='123'||payload.options.maxPages!==2)throw Error('Invalid full essence IPC');return [];}
    if(method==='setGroupEssenceMessage'){if(payload.groupId!=='123'||payload.messageId!=='9876543210123456789'||typeof payload.enabled!=='boolean')throw Error('Invalid essence IPC intent');return;}
    if(method==='setGroupRemark')return {method,groupId:payload.groupId,remark:payload.remark};throw Error('Unexpected fixture operation');}
  };}\`};
@@ -80,6 +81,11 @@ registerHooks({load(url,context,next){
       groupRole: 2,
     });
     await assert.rejects(client.getGroupEssencePage('123', { pageLimit: 51 }), /pageLimit/);
+    const listOptions = { maxPages: 2 };
+    const fullList = client.listGroupEssenceMessages('123', listOptions);
+    listOptions.maxPages = 999;
+    assert.deepEqual(await fullList, []);
+    await assert.rejects(client.listGroupEssenceMessages('123', { maxPages: 0 }), /maxPages/);
     for (const enabled of [true, false])
       assert.equal(
         await client.setGroupEssenceMessage('123', '9876543210123456789', enabled),
@@ -98,6 +104,7 @@ registerHooks({load(url,context,next){
   }
   return {
     contactGroupActualWorkerRoutes: true,
+    groupEssenceFullActualWorkerRoute: true,
     kernelReplacedByFixture: true,
     nativeExecuted: false,
     accountUsed: false,

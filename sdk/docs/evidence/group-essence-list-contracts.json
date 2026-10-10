@@ -36,9 +36,23 @@
   "realAccountReadAttempted": false,
   "nativeFetchAttempted": false,
   "remaining": [
-    "Complete pagination and real account acceptance",
+    "Real account/server pagination acceptance",
     "Native fetch runtime vtable identity",
     "Add/remove essence event and operator contract",
     "Signing authenticity"
-  ]
+  ],
+  "fullTraversal": {
+    "publicMethod": "listGroupEssenceMessages",
+    "sourceLines": "webapi.ts63-72",
+    "pageNumbers": "0,1,2,...",
+    "pageLimit": 50,
+    "defaultMaxPages": 20,
+    "sdkMaxPagesLimit": 1000,
+    "successRequiresExplicitEnd": true,
+    "partialSuccessAllowed": false,
+    "emptyNonterminalIsEnd": false,
+    "crossPageOverlap": "reject inconsistent-pagination",
+    "atomicServerSnapshot": false,
+    "realAccountReadAttempted": false
+  }
 }

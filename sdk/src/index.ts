@@ -7,6 +7,7 @@ import { sendGroupId } from './features/messages/send-input.ts';
 import {
   captureGroupEssenceRequest,
   captureGroupEssencePage,
+  captureGroupEssenceList,
 } from './features/groups/group-essence-input.ts';
 import { captureDownloadRequest } from './features/media/download-input.ts';
 import {
@@ -37,6 +38,8 @@ import type {
 import type {
   GroupEssencePage,
   GroupEssencePageOptions,
+  GroupEssenceMessage,
+  GroupEssenceListOptions,
   Group,
   GroupMember,
   GroupInfoUpdate,
@@ -319,6 +322,17 @@ export class QQClient extends EventEmitter<ClientEvents> {
     return this.#operation('getGroupEssencePage', {
       groupId: query.groupId,
       options: { pageStart: query.pageStart, pageLimit: query.pageLimit },
+    });
+  }
+  /** Traverse essence pages until the server's end marker; never return a partial list. */
+  async listGroupEssenceMessages(
+    groupId: string,
+    options: GroupEssenceListOptions = {},
+  ): Promise<GroupEssenceMessage[]> {
+    const query = captureGroupEssenceList(groupId, options);
+    return this.#operation('listGroupEssenceMessages', {
+      groupId: query.groupId,
+      options: { maxPages: query.maxPages },
     });
   }
   listGroupNotices(groupId: string): Promise<GroupNoticePage> {

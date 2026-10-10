@@ -18,6 +18,7 @@ import { verifyKernelSessionConsumer } from './kernel-session-consumer-contract.
 import { verifyReceivedForwardConsumer } from './received-forward-consumer-contract.mjs';
 import { verifyContactGroupConsumer } from './contact-group-consumer-contract.mjs';
 import { verifyPublicContracts } from './public-contract-consumer.mjs';
+import { verifyGroupEssenceConsumer } from './group-essence-consumer-contract.mjs';
 
 // Offline packaging check: controlled services and actual worker routing with a replacement kernel; no QQ native binaries or accounts.
 const root = fileURLToPath(new URL('../', import.meta.url));
@@ -98,6 +99,9 @@ const contactGroupChecks = await verifyContactGroupConsumer(
   join(destination, 'node_modules/qq-native-client'),
 );
 const messageBatchChecks = await verifyMessageBatchConsumer(
+  join(destination, 'node_modules/qq-native-client'),
+);
+const groupEssenceChecks = await verifyGroupEssenceConsumer(
   join(destination, 'node_modules/qq-native-client'),
 );
 const historyLifecycleChecks = await verifyHistoryLifecycleConsumer(
@@ -460,6 +464,12 @@ function subscribe(client: QQClient) {
  const categories: Promise<FriendCategory[]> = client.listFriendCategories();
  const remark: Promise<void> = client.setGroupRemark('123','');
  const essencePage = client.getGroupEssencePage('123', { pageStart: 17, pageLimit: 2 });
+ const fullEssence: Promise<import('qq-native-client').GroupEssenceMessage[]> = client.listGroupEssenceMessages('123', { maxPages: 2 });
+ void fullEssence;
+ // @ts-expect-error Full read budget requires a numeric value.
+ client.listGroupEssenceMessages('123', { maxPages: '2' });
+ // @ts-expect-error Full reads start from page zero with a fixed page size.
+ client.listGroupEssenceMessages('123', { pageStart: 1 });
  void essencePage.then(page => [page.isEnd, page.messages.map(item=>[item.sequence,item.operatorId,item.content])]);
  // @ts-expect-error Essence pagination requires numeric values.
  client.getGroupEssencePage('123', { pageStart: '17' });
@@ -511,6 +521,7 @@ const receipt = {
   integrity: packed.integrity,
   fileCount: files.length,
   checks: {
+    ...groupEssenceChecks,
     ...publicContractChecks,
     privateFilesExcluded: true,
     installedImport: true,

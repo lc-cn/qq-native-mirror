@@ -9,6 +9,7 @@ import { normalizeForwardResourceId } from '../features/forward/forward-resource
 import {
   captureGroupEssenceRequest,
   captureGroupEssencePage,
+  captureGroupEssenceList,
 } from '../features/groups/group-essence-input.ts';
 
 /** Checks command flags before configuration access or native client creation. */
@@ -62,6 +63,7 @@ export function validateCommandFlags(command: string, flags: Record<string, stri
     'member-mute': ['config', 'uin', 'group-id', 'user-id', 'seconds'],
     'member-card': ['config', 'uin', 'group-id', 'user-id', 'card'],
     'group-essence-list': ['config', 'uin', 'group-id', 'page-start', 'page-limit'],
+    'group-essence-all': ['config', 'uin', 'group-id', 'max-pages'],
     'group-notices': ['config', 'uin', 'group-id'],
     'group-notice-publish': [
       'config',
@@ -424,6 +426,17 @@ export async function prepareCommand(
           pageStart: query.pageStart,
           pageLimit: query.pageLimit,
         });
+    }
+    case 'group-essence-all': {
+      const group = numeric(flags, 'group-id');
+      const value = flags['max-pages'];
+      if (value !== undefined && !/^\d+$/.test(value))
+        throw new Error('--max-pages must be a decimal integer');
+      const query = captureGroupEssenceList(group, {
+        maxPages: value === undefined ? undefined : Number(value),
+      });
+      return (client) =>
+        client.listGroupEssenceMessages(query.groupId, { maxPages: query.maxPages });
     }
     case 'group-notices': {
       const group = numeric(flags, 'group-id');
