@@ -1,7 +1,7 @@
 import { captureNativeMessage, messageIdentityUids } from './inbound-messages.ts';
 import { needsMentionLookup } from './inbound-mentions.ts';
 import type { NativeObject } from '../../native/native-object.ts';
-import type { Message } from '../../types.ts';
+import type { Message } from '../../contracts/messages.ts';
 
 export interface IncomingMessageDeliveryContext {
   resolveMessages(

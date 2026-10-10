@@ -1,4 +1,5 @@
-import type { ClientOptions, QQVersion } from '../types.ts';
+import type { ClientOptions } from '../contracts/client.ts';
+import type { QQVersion } from '../contracts/native.ts';
 export const DEFAULT_NATIVE_CATALOG =
   'https://raw.githubusercontent.com/lc-cn/qq-native-mirror/main/catalog.json';
 export interface NativeCatalog {

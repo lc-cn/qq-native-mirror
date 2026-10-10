@@ -8,6 +8,17 @@ export interface SourceDependency {
 }
 
 const primitives = new Set(['src/types.ts', 'src/errors.ts']);
+const isContract = (path: string) => path.startsWith('src/contracts/');
+const contractDependencies: Record<string, readonly string[]> = {
+  'src/contracts/client.ts': ['src/contracts/native.ts'],
+  'src/contracts/events.ts': [
+    'src/contracts/client.ts',
+    'src/contracts/contacts.ts',
+    'src/contracts/groups.ts',
+    'src/contracts/messages.ts',
+  ],
+  'src/contracts/forward.ts': ['src/contracts/messages.ts'],
+};
 const composition = new Set(['src/worker.ts', 'src/kernel.ts', 'src/native-services.ts']);
 const nativeContracts = new Set([
   'src/native/native-object.ts',
@@ -71,10 +82,21 @@ export const crossFeatureDependencies = [
 ] as const;
 
 export function dependencyViolation({ from, to, typeOnly }: SourceDependency): string | undefined {
-  if (primitives.has(from))
-    return from === 'src/errors.ts' && to === 'src/types.ts'
+  if (from === 'src/types.ts')
+    return typeOnly && isContract(to)
       ? undefined
-      : 'Public primitives cannot depend on implementation.';
+      : 'The compatibility barrel only reexports public contract types.';
+  if (isContract(from))
+    return typeOnly && contractDependencies[from]?.includes(to)
+      ? undefined
+      : 'Contracts only depend on explicitly reviewed contract types.';
+  if (to === 'src/types.ts')
+    return from === 'src/index.ts' && typeOnly
+      ? undefined
+      : 'Internal modules import their contract domains instead of the compatibility barrel.';
+  if (isContract(to))
+    return typeOnly ? undefined : 'Public contracts cannot be loaded as runtime implementations.';
+  if (primitives.has(from)) return 'Public primitives cannot depend on implementation.';
   if (primitives.has(to)) return;
   if (composition.has(from))
     return to === 'src/index.ts' || to === 'src/cli.ts' || to.startsWith('src/cli/')

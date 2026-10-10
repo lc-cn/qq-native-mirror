@@ -27,7 +27,8 @@ test('installed platform bundle integrity and explicit source precedence', async
     'native/native-package.ts',
     'native/native-catalog.ts',
     'storage/process-lock.ts',
-    'types.ts',
+    'contracts/client.ts',
+    'contracts/native.ts',
   ]) {
     const target = join(root, name);
     await mkdir(dirname(target), { recursive: true });
@@ -136,7 +137,8 @@ async function objectFixture() {
     'native/native-package.ts',
     'native/native-catalog.ts',
     'storage/process-lock.ts',
-    'types.ts',
+    'contracts/client.ts',
+    'contracts/native.ts',
   ]) {
     const target = join(root, name);
     await mkdir(dirname(target), { recursive: true });

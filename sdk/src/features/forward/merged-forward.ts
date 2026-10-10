@@ -9,7 +9,8 @@ import {
   type createLongMessageResponseTransport,
 } from './long-message-response.ts';
 import { MergedForwardError } from '../../errors.ts';
-import type { SentMessage, SentMergedForward } from '../../types.ts';
+import type { SentMessage } from '../../contracts/messages.ts';
+import type { SentMergedForward } from '../../contracts/forward.ts';
 
 type UploadTransport = ReturnType<typeof createLongMessageResponseTransport>;
 export async function sendCapturedMergedForward(

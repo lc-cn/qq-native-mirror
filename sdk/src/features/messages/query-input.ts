@@ -1,4 +1,4 @@
-import type { Peer } from '../../types.ts';
+import type { Peer } from '../../contracts/messages.ts';
 
 export function normalizeMessageQuery(
   peer: unknown,

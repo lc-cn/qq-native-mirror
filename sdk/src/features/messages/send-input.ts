@@ -1,6 +1,6 @@
 import { isAbsolute } from 'node:path';
 import { validateFaceId } from './face-input.ts';
-import type { SendableMessageElement } from '../../types.ts';
+import type { SendableMessageElement } from '../../contracts/messages.ts';
 
 export function sendUserId(value: unknown, allowAll = false): string {
   if (typeof value !== 'string' || !value || value.trim() !== value || value.includes('*'))

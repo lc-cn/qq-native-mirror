@@ -2,7 +2,7 @@ import { serializeKernelError } from './errors.ts';
 import { withCleanupFailure } from './runtime/cleanup.ts';
 import { createNativeServices, type ServiceOperation } from './native-services.ts';
 import { normalizeLoginRequest } from './native/login-request.ts';
-import type { LoginRequest } from './types.ts';
+import type { LoginRequest } from './contracts/client.ts';
 import { AccountSessionLifecycle } from './runtime/account-session-lifecycle.ts';
 import type {
   AccountIdentity,
@@ -19,7 +19,7 @@ export interface KernelOptions extends AccountSessionOptions {
   loginTimeoutMs?: number;
   rememberPassword?: boolean;
 }
-export type { LoginRequest } from './types.ts';
+export type { LoginRequest } from './contracts/client.ts';
 export type { AccountIdentity } from './runtime/account-session-lifecycle.ts';
 
 function nativeAccountNumber(value: unknown): string | undefined {

@@ -1,6 +1,6 @@
 /** Receive-only friend-add gray tip, pinned to NapCatQQ 26d7533e api/msg.ts. */
 import { createHash } from 'node:crypto';
-import type { FriendAdded } from '../../types.ts';
+import type { FriendAdded } from '../../contracts/contacts.ts';
 
 function own(value: unknown, key: string, strict = false): unknown {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return;

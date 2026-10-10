@@ -56,7 +56,8 @@ async function installedFixture(t: any, value = manifest()) {
     'native/native-package.ts',
     'native/native-catalog.ts',
     'storage/process-lock.ts',
-    'types.ts',
+    'contracts/client.ts',
+    'contracts/native.ts',
   ]) {
     const target = join(root, 'src', name);
     await mkdir(dirname(target), { recursive: true });

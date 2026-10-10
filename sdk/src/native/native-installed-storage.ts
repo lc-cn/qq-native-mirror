@@ -3,7 +3,7 @@ import { gunzipSync } from 'node:zlib';
 import { constants } from 'node:fs';
 import { mkdir, lstat, readFile, writeFile, rename, rm } from 'node:fs/promises';
 import { resolve, join, dirname, parse } from 'node:path';
-import type { NativeManifest } from '../types.ts';
+import type { NativeManifest } from '../contracts/native.ts';
 const sha = (b: Uint8Array) => createHash('sha256').update(b).digest('hex');
 const hash = /^[a-f0-9]{64}$/;
 const limit = 512 * 1024 * 1024,

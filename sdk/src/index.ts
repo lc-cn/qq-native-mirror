@@ -24,40 +24,43 @@ import { fileURLToPath } from 'node:url';
 import { mkdir } from 'node:fs/promises';
 import { prepareNative } from './native/native-package.ts';
 import { normalizeLoginRequest } from './native/login-request.ts';
+import type { Account, ClientOptions, LoginRequest, ClientState } from './contracts/client.ts';
+import type { ClientEvents } from './contracts/events.ts';
 import type {
-  Account,
-  ClientOptions,
-  ClientEvents,
-  LoginRequest,
-  ClientState,
   Friend,
   FriendCategory,
   CreatedFriendCategory,
+  UserProfile,
+  DeleteFriendOptions,
+  FriendRequest,
+} from './contracts/contacts.ts';
+import type {
   GroupEssencePage,
   GroupEssencePageOptions,
   Group,
   GroupMember,
   GroupInfoUpdate,
   GroupMutedMember,
+  KickOptions,
+} from './contracts/groups.ts';
+import type {
   MessageInput,
   SentMessage,
+  Message,
+  Peer,
+  HistoryOptions,
+} from './contracts/messages.ts';
+import type {
   SentMergedForward,
   ForwardTextNode,
   MergedForwardOptions,
   ForwardResource,
-  Message,
-  Peer,
-  HistoryOptions,
-  KickOptions,
-  UserProfile,
-  DeleteFriendOptions,
-  FriendRequest,
-  NativeCallbackAudit,
-} from './types.ts';
+} from './contracts/forward.ts';
+import type { NativeCallbackAudit } from './contracts/native.ts';
 export type * from './types.ts';
 export type { VideoCodec, VideoInfo } from './runtime/media-contracts.ts';
-import type { GroupNoticeOptions, GroupNoticePage } from './types.ts';
-import type { GroupRequest, GroupRequestOptions, GroupRequestPage } from './types.ts';
+import type { GroupNoticeOptions, GroupNoticePage } from './contracts/groups.ts';
+import type { GroupRequest, GroupRequestOptions, GroupRequestPage } from './contracts/groups.ts';
 
 export class QQClient extends EventEmitter<ClientEvents> {
   readonly nativeExports: string[] = [];

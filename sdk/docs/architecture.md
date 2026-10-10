@@ -38,7 +38,8 @@ worker.ts (IPC boundary) -> kernel.ts (authentication composition)
 | `src/features/media/`, `forward/`         | Media codecs and forward-resource transports.                                                            |
 | `src/native/`                             | Bundle resolution, provenance, storage and native contract checks.                                       |
 | `src/storage/`                            | Process/account-directory ownership and locking.                                                         |
-| `src/types.ts`, `src/errors.ts`           | Public data/error contracts. DTOs do not import implementation modules.                                  |
+| `src/contracts/`                          | Public DTOs owned by client, contacts, groups, messages, forward, native and event domains.              |
+| `src/types.ts`, `src/errors.ts`           | Compatibility type exports and public errors. Contracts do not import implementation modules.            |
 | `test/`                                   | Deterministic regression fixtures, including worker substitution.                                        |
 | `scripts/`                                | Build tools, installed-consumer checks and separately authorized acceptance executors.                   |
 
@@ -58,6 +59,19 @@ checking; the worker no longer maintains a second handwritten allowlist.
 Feature modules may depend on public contracts and narrow native/runtime ports.
 They do not import the public Client or compose other account sessions. Relative
 internal paths are private; only the package root and CLI are public entry points.
+
+Each public type has one declaration in `src/contracts/`. Internal modules import
+their needed domains directly; `types.ts` only reexports them for compatibility
+through the package root. The event table composes domain DTOs, and domains never
+depend back on that table. Forward submission receipts depend on message receipts;
+received forward elements belong to the message contract, avoiding a type cycle.
+Only the client contract depends on native bundle version metadata. These exact
+type dependencies are checked rather than opening all contract domains to each other.
+
+Contracts contain only interfaces, type aliases and type-only imports/exports.
+They do not create objects, load native code, execute IO or define concrete classes.
+Internal Session, transport and codec ports stay in their existing ownership layers;
+public native manifest data is distinct from the proprietary native service types.
 
 ## Encapsulation and variation points
 
@@ -229,6 +243,13 @@ consumer. The package consumer uses fake services and an isolated replacement
 kernel; this command does not log into an account. Codec dependencies are packed
 from npm's populated cache for the offline consumer installation.
 
+The installed-consumer gate also checks all 60 compatibility type exports and
+every relative dependency in the actual packed declaration graph. Positive and
+negative consumers preserve peer/login discrimination, event payload types,
+received versus sendable elements, receipt inheritance and notice aliases.
+Updating the public type inventory is an intentional interface change; moving a
+declaration between owned domains must not change its name or shape.
+
 The `SDK quality` GitHub workflow runs these gates independently of platform
 bundle and video-native CI. Runtime output is recreated from a clean `dist`
 directory so obsolete emitted modules cannot make a packaging check pass.
@@ -257,3 +278,5 @@ are not evident from the code. Keep native provenance references next to the
 adapter contract. Avoid restating method names or adding a pattern without a real
 variation point. Add tests for lifetime, correlation and input/projection
 boundaries; do not mirror implementation line by line.
+
+See [Development guide](development.md) for the workflow and module placement rules.

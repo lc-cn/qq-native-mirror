@@ -1,5 +1,5 @@
 import type { QQClient } from '../index.ts';
-import type { ClientOptions, LoginRequest } from '../types.ts';
+import type { ClientOptions, LoginRequest } from '../contracts/client.ts';
 import { cleanupAll } from '../runtime/cleanup.ts';
 
 export function watchReconnectEnabled(value: ClientOptions['autoReconnect']): boolean {

@@ -1,7 +1,7 @@
 /** Fixed NapCatQQ 26d7533e: types/notify.ts ShutUpGroupMember,
  * api/group.ts getGroupShutUpMemberList, Group listener onShutUpMemberListChanged.
  * shutUpTime has no established unit here; never synthesize an expiry/duration. */
-import type { GroupMutedMember } from '../../types.ts';
+import type { GroupMutedMember } from '../../contracts/groups.ts';
 export function projectGroupMuteList(value: unknown): GroupMutedMember[] {
   if (!Array.isArray(value)) throw new Error('Invalid native group mute list');
   return Array.from(value, (raw) => {

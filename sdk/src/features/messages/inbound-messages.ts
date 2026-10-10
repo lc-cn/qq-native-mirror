@@ -1,6 +1,6 @@
 import { captureElementBatches, decodeCapturedElements } from './inbound-mentions.ts';
 import { nativeUid, positiveDecimal, resolveNativeUins } from './native-identities.ts';
-import type { Message, MessageElement } from '../../types.ts';
+import type { Message, MessageElement } from '../../contracts/messages.ts';
 import type { NativeObject as Native } from '../../native/native-object.ts';
 const originalElements = new WeakMap<Native, unknown[]>();
 

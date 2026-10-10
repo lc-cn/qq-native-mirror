@@ -3,7 +3,7 @@ import { WorkerRpcChannel } from './worker-rpc-channel.ts';
 import { terminateWorker } from './worker-termination.ts';
 import { deserializeKernelError, KernelRequestError } from '../errors.ts';
 import { normalizeLoginRequest } from '../native/login-request.ts';
-import type { Account, ClientOptions, ClientState, LoginRequest } from '../types.ts';
+import type { Account, ClientOptions, ClientState, LoginRequest } from '../contracts/client.ts';
 
 export interface ClientLifecycleContext {
   worker: ChildProcess;

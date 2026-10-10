@@ -1,6 +1,6 @@
 import { decodeElements, mentionLookupUid } from './message-elements.ts';
 import { resolveNativeUins } from './native-identities.ts';
-import type { MessageElement } from '../../types.ts';
+import type { MessageElement } from '../../contracts/messages.ts';
 import type { NativeObject as Native } from '../../native/native-object.ts';
 
 export function needsMentionLookup(elements: Native[]): boolean {

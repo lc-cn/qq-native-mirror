@@ -6,7 +6,7 @@ import { pathToFileURL } from 'node:url';
 import { createClient } from './index.ts';
 import { validateDownloadMirrors } from './native/native-package.ts';
 import { KernelRequestError, MergedForwardError } from './errors.ts';
-import type { ClientOptions, LoginRequest } from './types.ts';
+import type { ClientOptions, LoginRequest } from './contracts/client.ts';
 
 import { parse, prepareCommand, required, validateCommandFlags } from './cli/command-plan.ts';
 import { runClientCommand, watchReconnectEnabled, watchEventMode } from './cli/client-command.ts';

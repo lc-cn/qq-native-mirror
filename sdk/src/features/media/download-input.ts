@@ -1,5 +1,5 @@
 import { normalizeHistoryQuery } from '../messages/query-input.ts';
-import type { Peer } from '../../types.ts';
+import type { Peer } from '../../contracts/messages.ts';
 import { isAbsolute } from 'node:path';
 
 export function own(value: unknown, key: string): unknown {

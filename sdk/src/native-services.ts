@@ -56,7 +56,7 @@ import {
   projectNativeMessage,
 } from './features/messages/inbound-messages.ts';
 import { captureSendInput, sendUserId, sendGroupId } from './features/messages/send-input.ts';
-import type { Message } from './types.ts';
+import type { Message } from './contracts/messages.ts';
 
 import type { NativeObject as Native } from './native/native-object.ts';
 import type { NativePeer, NativeMessage } from './native/message-contracts.ts';

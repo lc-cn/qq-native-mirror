@@ -1,7 +1,7 @@
 import { readFile, stat } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import type { QQClient } from '../index.ts';
-import type { Peer, HistoryOptions, MessageInput } from '../types.ts';
+import type { Peer, HistoryOptions, MessageInput } from '../contracts/messages.ts';
 import { validateFaceId } from '../features/messages/face-input.ts';
 import { normalizeMessageBatchQuery } from '../features/messages/query-input.ts';
 import { captureMergedForward } from '../features/forward/merged-forward-input.ts';

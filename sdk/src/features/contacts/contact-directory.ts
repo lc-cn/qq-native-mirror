@@ -1,5 +1,6 @@
 import type { NativeObject as Native } from '../../native/native-object.ts';
-import type { Friend, FriendCategory, GroupMember } from '../../types.ts';
+import type { Friend, FriendCategory } from '../../contracts/contacts.ts';
+import type { GroupMember } from '../../contracts/groups.ts';
 import { captureFriendCategories, projectFriendCategories } from './friend-categories.ts';
 import { nativeResultError } from '../../errors.ts';
 export interface ContactDirectoryContext {

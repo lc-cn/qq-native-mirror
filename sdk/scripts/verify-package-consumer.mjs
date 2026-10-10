@@ -17,6 +17,7 @@ import { verifyDownloadConsumer } from './download-consumer-contract.mjs';
 import { verifyKernelSessionConsumer } from './kernel-session-consumer-contract.mjs';
 import { verifyReceivedForwardConsumer } from './received-forward-consumer-contract.mjs';
 import { verifyContactGroupConsumer } from './contact-group-consumer-contract.mjs';
+import { verifyPublicContracts } from './public-contract-consumer.mjs';
 
 // Offline packaging check: controlled services and actual worker routing with a replacement kernel; no QQ native binaries or accounts.
 const root = fileURLToPath(new URL('../', import.meta.url));
@@ -88,6 +89,11 @@ await writeFile(
   `import {createClient, QQClient} from 'qq-native-client';\nif(typeof createClient !== 'function' || typeof QQClient !== 'function') throw new Error('Invalid exports');\n`,
 );
 run(process.execPath, ['import.mjs']);
+const publicContractChecks = await verifyPublicContracts(
+  join(destination, 'node_modules/qq-native-client'),
+  resolve(root, 'node_modules/typescript'),
+  [resolve(root, 'node_modules/@types')],
+);
 const contactGroupChecks = await verifyContactGroupConsumer(
   join(destination, 'node_modules/qq-native-client'),
 );
@@ -505,6 +511,7 @@ const receipt = {
   integrity: packed.integrity,
   fileCount: files.length,
   checks: {
+    ...publicContractChecks,
     privateFilesExcluded: true,
     installedImport: true,
     cliHelp: true,

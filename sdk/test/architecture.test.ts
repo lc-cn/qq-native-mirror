@@ -124,6 +124,13 @@ test('dependency policy rejects reverse, type-only and new cross-domain coupling
     ['src/storage/new-store.ts', 'src/native/native-package.ts'],
     ['src/index.ts', 'src/features/groups/group-operations.ts'],
     ['src/unowned.ts', 'src/runtime/client-lifecycle.ts'],
+    ['src/contracts/groups.ts', 'src/features/groups/group-queries.ts'],
+    ['src/contracts/groups.ts', 'src/contracts/events.ts'],
+    ['src/contracts/messages.ts', 'src/contracts/forward.ts'],
+    ['src/contracts/new-domain.ts', 'src/contracts/client.ts'],
+    ['src/contracts/client.ts', 'src/index.ts'],
+    ['src/runtime/new-owner.ts', 'src/types.ts'],
+    ['src/features/groups/new-action.ts', 'src/types.ts'],
   ]) {
     for (const typeOnly of [false, true])
       assert.ok(dependencyViolation({ from: from!, to: to!, typeOnly }), `${from} → ${to}`);
@@ -174,17 +181,54 @@ test('all relative source imports and exports resolve, including type-only depen
   }
 });
 
-test('public types and error primitives do not import implementation modules', () => {
-  for (const name of ['types.ts', 'errors.ts']) {
-    const path = join(sourceRoot, name);
-    for (const edge of graph.get(path)!) {
-      if (!edge.target) continue;
+test('public contracts contain declarations only, including newly added domain files', () => {
+  for (const path of files.filter(
+    (path) => label(path).startsWith('src/contracts/') || label(path) === 'src/types.ts',
+  )) {
+    const tree = ts.createSourceFile(
+      path,
+      readFileSync(path, 'utf8'),
+      ts.ScriptTarget.Latest,
+      true,
+    );
+    for (const statement of tree.statements) {
+      const declaration =
+        ts.isInterfaceDeclaration(statement) || ts.isTypeAliasDeclaration(statement);
+      const typeImport = ts.isImportDeclaration(statement) && statement.importClause?.isTypeOnly;
+      const typeExport = ts.isExportDeclaration(statement) && statement.isTypeOnly;
       assert.ok(
-        name === 'errors.ts' && edge.target === join(sourceRoot, 'types.ts'),
-        `${label(path)}:${edge.line} → ${label(edge.target)}: public primitives must not depend on implementation`,
+        declaration || typeImport || typeExport,
+        `${label(path)}: contracts must not execute code or declare concrete classes/enums`,
+      );
+      if (label(path) === 'src/types.ts')
+        assert.ok(typeExport, 'The compatibility barrel must not own declarations or imports');
+    }
+    for (const edge of graph.get(path)!) {
+      assert.ok(
+        edge.typeOnly && edge.target,
+        `${label(path)}: unreviewed external contract import`,
+      );
+      assert.equal(
+        dependencyViolation({ from: label(path), to: label(edge.target!), typeOnly: true }),
+        undefined,
       );
     }
   }
+  assert.deepEqual(graph.get(join(sourceRoot, 'errors.ts')), []);
+});
+
+test('public contract type dependencies have no cycles', () => {
+  const complete = new Set<string>();
+  const active = new Set<string>();
+  function walk(path: string) {
+    assert.ok(!active.has(path), `Contract type cycle at ${label(path)}`);
+    if (complete.has(path)) return;
+    active.add(path);
+    for (const edge of graph.get(path)!) if (edge.target) walk(edge.target);
+    active.delete(path);
+    complete.add(path);
+  }
+  for (const path of files.filter((path) => label(path).startsWith('src/contracts/'))) walk(path);
 });
 
 // This list describes reviewed pure modules, not permitted dependencies of general

@@ -3,7 +3,11 @@
  * No transport, identity lookup or native calls. Unknown length-delimited data stays opaque.
  */
 import { inflateRawSync } from 'node:zlib';
-import type { ForwardResource, ForwardRecord, ForwardResourceElement } from '../../types.ts';
+import type {
+  ForwardResource,
+  ForwardRecord,
+  ForwardResourceElement,
+} from '../../contracts/forward.ts';
 const MAX_RESPONSE = 8 * 1024 * 1024,
   MAX_RAW = 16 * 1024 * 1024;
 const utf8 = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true });

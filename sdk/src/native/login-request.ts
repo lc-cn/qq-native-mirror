@@ -1,4 +1,4 @@
-import type { LoginRequest } from '../types.ts';
+import type { LoginRequest } from '../contracts/client.ts';
 
 /** Validate JS/IPC input and own the authorization target before any await. */
 export function normalizeLoginRequest(value: unknown): LoginRequest {

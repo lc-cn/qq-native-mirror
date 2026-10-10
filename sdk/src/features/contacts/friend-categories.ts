@@ -1,5 +1,5 @@
 import { nativeResultError } from '../../errors.ts';
-import type { Friend, FriendCategory } from '../../types.ts';
+import type { Friend, FriendCategory } from '../../contracts/contacts.ts';
 
 interface CapturedCategory {
   categoryId: number;

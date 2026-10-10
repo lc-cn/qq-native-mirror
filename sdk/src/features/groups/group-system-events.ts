@@ -4,7 +4,11 @@ const CONTROL_CHARACTERS = /[\u0000-\u001f\u007f]/;
 /** Receive-only schema pinned to NapCatQQ 26d7533e message/message.ts and api/msg.ts.
  * No relationship cache refresh, identity query or operator supplementation. */
 import { createHash } from 'node:crypto';
-import type { GroupMembershipEvent, GroupAdminEvent, GroupMuteEvent } from '../../types.ts';
+import type {
+  GroupMembershipEvent,
+  GroupAdminEvent,
+  GroupMuteEvent,
+} from '../../contracts/groups.ts';
 type Field = { number: number; wire: number; value: bigint | Buffer };
 function fields(data: Buffer): Field[] {
   let at = 0;

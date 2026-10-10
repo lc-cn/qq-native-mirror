@@ -3,8 +3,8 @@
  * napcat-common/src/request.ts6-51; types/webapi.ts58-106.
  * This fixed query is not evidence of complete pagination. Tickets stay in worker.
  */
-import type { WebGroupNoticeResult } from '../../types.ts';
-export type { WebGroupNotice, WebGroupNoticeResult } from '../../types.ts';
+import type { WebGroupNoticeResult } from '../../contracts/groups.ts';
+export type { WebGroupNotice, WebGroupNoticeResult } from '../../contracts/groups.ts';
 import type { NativeObject as Native } from '../../native/native-object.ts';
 import { requestQunPage } from './qun-web-read.ts';
 export async function listWebGroupNotices(

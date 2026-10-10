@@ -3,7 +3,11 @@
  * types/user.ts: BuddyCategoryType and User. Other Buddy callbacks are unknown.
  * This notification has no full-list marker or relationship-change cause.
  */
-import type { FriendChange, FriendCategoryChange, FriendListUpdate } from '../../types.ts';
+import type {
+  FriendChange,
+  FriendCategoryChange,
+  FriendListUpdate,
+} from '../../contracts/contacts.ts';
 
 function object(value: unknown): Record<string, unknown> | undefined {
   return value !== null && typeof value === 'object' && !Array.isArray(value)

@@ -16,7 +16,8 @@ import {
 import { dirname, isAbsolute, join, resolve, sep } from 'node:path';
 import { homedir } from 'node:os';
 import { createRequire } from 'node:module';
-import type { ClientOptions, NativeManifest, QQVersion } from '../types.ts';
+import type { ClientOptions } from '../contracts/client.ts';
+import type { NativeManifest, QQVersion } from '../contracts/native.ts';
 import { resolveNativeCatalog } from './native-catalog.ts';
 import {
   publishProcessLock,

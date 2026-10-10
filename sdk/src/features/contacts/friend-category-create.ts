@@ -1,7 +1,7 @@
 import { friendCategoryName } from './friend-categories.ts';
 export { friendCategoryName } from './friend-categories.ts';
 import { nativeResultError } from '../../errors.ts';
-import type { CreatedFriendCategory } from '../../types.ts';
+import type { CreatedFriendCategory } from '../../contracts/contacts.ts';
 
 function field(value: unknown, key: string): unknown {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return;

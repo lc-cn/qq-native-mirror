@@ -1,6 +1,6 @@
 /** Owned receive-only projection of fixed multimsg fields. No XML parsing,
  * content fetch, account access, coercion or invocation of property getters. */
-import type { ReceivedForwardElement } from '../../types.ts';
+import type { ReceivedForwardElement } from '../../contracts/messages.ts';
 const MAX = 1024 * 1024;
 function record(value: unknown): Record<string, unknown> {
   if (

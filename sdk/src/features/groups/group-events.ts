@@ -9,7 +9,7 @@ import type {
   GroupMemberChange,
   GroupMemberUpdate,
   GroupInfoUpdate,
-} from '../../types.ts';
+} from '../../contracts/groups.ts';
 
 function object(value: unknown): Record<string, unknown> | undefined {
   return value !== null && typeof value === 'object' && !Array.isArray(value)

@@ -1,5 +1,5 @@
 import { nativeResultError } from '../../errors.ts';
-import type { GroupEssenceContent, GroupEssencePage } from '../../types.ts';
+import type { GroupEssenceContent, GroupEssencePage } from '../../contracts/groups.ts';
 import { captureGroupEssencePage } from './group-essence-input.ts';
 import { requestQunPage, type QunWebReadContext } from './qun-web-read.ts';
 

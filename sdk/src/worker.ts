@@ -2,7 +2,7 @@ import { serializeKernelError } from './errors.ts';
 import { constants } from 'node:os';
 import { mkdir } from 'node:fs/promises';
 import { createKernel } from './kernel.ts';
-import type { ClientOptions, LoginRequest } from './types.ts';
+import type { ClientOptions, LoginRequest } from './contracts/client.ts';
 import { isServiceOperation } from './runtime/operations.ts';
 import { lockDataDirectory } from './storage/data-directory-lock.ts';
 import { loadRecordCodec } from './features/media/record-codec-loader.ts';

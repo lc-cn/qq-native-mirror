@@ -1,7 +1,8 @@
 import { buildTextForwardRequest } from './long-message-request.ts';
 import { buildMergedForwardCard } from './merged-forward-card.ts';
 import { sendUserId, sendGroupId } from '../messages/send-input.ts';
-import type { ForwardTextNode, MergedForwardOptions, Peer } from '../../types.ts';
+import type { ForwardTextNode, MergedForwardOptions } from '../../contracts/forward.ts';
+import type { Peer } from '../../contracts/messages.ts';
 
 function record(
   value: unknown,

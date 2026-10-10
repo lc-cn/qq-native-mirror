@@ -1,4 +1,4 @@
-import type { MessageRecall } from '../../types.ts';
+import type { MessageRecall } from '../../contracts/messages.ts';
 
 // RawMessage/onMsgInfoListUpdate at NapCatQQ 26d7533e0f5800fdff865ab2f2ad7692917e1076.
 // recallTime is a decimal string; the declaration does not establish its unit

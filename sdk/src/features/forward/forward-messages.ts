@@ -5,7 +5,7 @@ import { nativeResultError } from '../../errors.ts';
  * Native MsgService getMultiMsg/forwardMsg both declare GeneralCallResult.
  * Forwarding here forwards existing message IDs; it does not synthesize identities.
  */
-import type { Message, Peer } from '../../types.ts';
+import type { Message, Peer } from '../../contracts/messages.ts';
 import type { NativeObject as Native } from '../../native/native-object.ts';
 type NativePeer = { chatType: 1 | 2; peerUid: string; guildId?: string };
 export type ForwardOperation = 'getForwardMessages' | 'forwardMessages';

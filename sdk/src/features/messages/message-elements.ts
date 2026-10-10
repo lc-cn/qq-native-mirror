@@ -2,7 +2,7 @@ export { validateFaceId, faceElement } from './face-input.ts';
 import { createHash } from 'node:crypto';
 import { readFile, stat, mkdir, copyFile } from 'node:fs/promises';
 import { basename, dirname, isAbsolute } from 'node:path';
-import type { MessageElement } from '../../types.ts';
+import type { MessageElement } from '../../contracts/messages.ts';
 import { decodeReceivedForward } from '../forward/received-forward.ts';
 import { queryNativeMessage } from './message-query.ts';
 

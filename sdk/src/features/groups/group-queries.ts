@@ -1,5 +1,10 @@
 import type { NativeObject as Native } from '../../native/native-object.ts';
-import type { Group, GroupInfoUpdate, GroupMutedMember, GroupMember } from '../../types.ts';
+import type {
+  Group,
+  GroupInfoUpdate,
+  GroupMutedMember,
+  GroupMember,
+} from '../../contracts/groups.ts';
 import type { NativeEventChannel } from '../../runtime/native-event-channel.ts';
 import { nativeResultError } from '../../errors.ts';
 import { projectGroupInfo } from './group-events.ts';

@@ -3,7 +3,7 @@ import {
   parseForwardResourceResponse,
   normalizeForwardResourceId,
 } from './forward-resource-wire.ts';
-import type { ForwardResource } from '../../types.ts';
+import type { ForwardResource } from '../../contracts/forward.ts';
 
 export type ForwardResourceFailureStage =
   'input' | 'lifecycle' | 'native' | 'response' | 'protobuf';
