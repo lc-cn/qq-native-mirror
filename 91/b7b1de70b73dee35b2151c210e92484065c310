@@ -1,0 +1,39 @@
+.gitignore
+  s_2104cc474f1ce5::t_f7c79f48848832 5
+sdk/test/helpers/dependency-policy.ts
+  s_2104cc474f1ce5::t_f1d79c484a81dd 22-45,109-118,179-198
+sdk/docs/architecture.md
+  s_2104cc474f1ce5::t_0600103bb4f34f 22-23,84-104
+sdk/docs/development.md
+  s_2104cc474f1ce5::t_55121d5b29f5e2 21
+sdk/scripts/kernel-session-consumer-contract.mjs
+  s_2104cc474f1ce5::t_0c5673ba92281b 12,26-29,208-240
+sdk/src/kernel.ts
+  s_2104cc474f1ce5::t_0ee536d0a3b01f 11,320-440
+sdk/src/runtime/kernel-environment.ts
+  s_2104cc474f1ce5::t_a54a2f498e95af 1-129
+sdk/test/architecture.test.ts
+  s_2104cc474f1ce5::t_a8d63ddc29778c 141-152,204-211
+sdk/test/kernel-environment.test.ts
+  s_2104cc474f1ce5::t_b2a2e2c1342046 1-192
+sdk/test/kernel-login-failure.test.ts
+  s_2104cc474f1ce5::t_02dfbbe1adf9ed 1-108
+sdk/test/kernel.test.ts
+  s_2104cc474f1ce5::t_48e345bac676f4 252
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "91b7b1de70b73dee35b2151c210e92484065c310",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
