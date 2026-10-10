@@ -1,0 +1,29 @@
+sdk/docs/contacts-groups.md
+  s_2104cc474f1ce5::t_2a911082661cd2 397-405
+sdk/docs/evidence/group-file-page-contract.json
+  s_2104cc474f1ce5::t_b0fc24c7f58298 9-14,102-103,126,128,131-134
+sdk/docs/evidence/group-file-page-linux-arm64-contract.json
+  s_2104cc474f1ce5::t_9d1ca0752fc69a 1-1110
+sdk/scripts/group-file-pages-consumer-contract.mjs
+  s_2104cc474f1ce5::t_7cdd2b0772d0e3 233-248,250,256,277,283-313,315-318,320
+sdk/src/native/native-contracts.ts
+  s_2104cc474f1ce5::t_3150b0def1ce14 62
+sdk/test/group-file-page-profiles.test.ts
+  s_2104cc474f1ce5::t_1d405d2e3f3b2b 64-71,74-84,87-94,106-126
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "0c00eaf4f032f317df2955622bd5edcb049e6738",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
