@@ -54,20 +54,25 @@ The smaller implemented API surface does not reduce these requirements.
 
 ## Source and package baseline
 
-Architecture revision `917b162` passed 1195 deterministic tests, formatting,
-zero-warning lint, strict source/test typing, a clean build and an actual
-packed/installed consumer. Its [SDK quality CI](https://github.com/lc-cn/qq-native-mirror/actions/runs/38055553665)
-passed. The independent local candidate contained 190 emitted files matching both
-the archive and installed tree. These checks used no QQ account; this working
-`0.0.2` candidate has not been published to npm.
+Revision `e2e6d75bd8e6f21509256224a4651bf6625801b3` passed 1336 deterministic
+tests, formatting, zero-warning lint, strict source/test/governed-script typing,
+a clean build and a newly packed/installed consumer. Its
+[SDK quality CI](https://github.com/lc-cn/qq-native-mirror/actions/runs/38077440237)
+passed. This working `0.0.2` candidate has not been published to npm.
 
-The same `917b162` revision passed [six-platform CI](https://github.com/lc-cn/qq-native-mirror/actions/runs/38055553850).
-A bounded actual-artifact audit matched 190 emitted files to its frozen source,
-bound seven consumer receipts and six video reports with three inputs each, and
-checked six prepare/close receipts without login. It read 669253 range bytes; it
-did not read all six auxiliary tarballs, re-read remote native caches, verify the
-complete ZIP digest or establish account business behavior. Newer revisions
-require their own native artifact audit.
+The same revision passed the
+[six-platform current-source default mirror workflow](https://github.com/lc-cn/qq-native-mirror/actions/runs/38077459948),
+attempt 1. Each actual host installed only its main archive, selected the default
+catalog entry without a wrapper/version/manifest override, prepared and closed
+two empty account clients, downloaded native payload on the first call, made zero
+payload requests on the second, and checked three real video fixtures. Runner
+receipts independently hash checked all declared cache files. Parent and
+independent archive audits verified each actual main's size, SHA-256, npm SHA-512
+and exact source/run identity; all 212 emitted files on each of six hosts matched
+the frozen build byte for byte, including Windows CLI text. These parent audits
+did not download the native cache files again or execute an account operation.
+Initialization, cache and codec success does not prove login, business behavior
+or signing authenticity. Newer revisions require their own runtime evidence.
 
 The published npm `0.0.1`, working `0.0.2` candidate and each native mirror are
 separate artifacts. Push builds do not publish npm releases. See [first publication

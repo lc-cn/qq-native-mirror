@@ -79,6 +79,42 @@ test('group-search consumer compiler rejects missing preparation await and inval
   );
 });
 
+const groupEssenceHelper = resolve(root, 'scripts/group-essence-consumer-contract.mjs');
+const groupEssenceSource = readFileSync(groupEssenceHelper, 'utf8');
+
+test('group-essence compiler rejects unawaited CLI preparation and incomplete public DTOs without running tickets or IPC', () => {
+  assert.deepEqual(diagnostics(groupEssenceSource, groupEssenceHelper), []);
+  assert.ok(
+    diagnostics(
+      replaceOnce(
+        groupEssenceSource,
+        'const action = await prepareCommand(',
+        'const action = prepareCommand(',
+      ),
+      groupEssenceHelper,
+    ).some((item) => item.code === 2349),
+    'Promise CLI action must not become callable',
+  );
+  assert.ok(
+    diagnostics(
+      replaceOnce(groupEssenceSource, "senderNickname: 'fixture',", 'senderNickname: 123,'),
+      groupEssenceHelper,
+    ).some((item) => item.code === 2322),
+    'The installed worker result must preserve a complete public essence DTO',
+  );
+  assert.ok(
+    diagnostics(
+      replaceOnce(
+        groupEssenceSource,
+        '    removable: false,',
+        '    /* Missing required removable property. */',
+      ),
+      groupEssenceHelper,
+    ).some((item) => item.code === 1360),
+    'Missing required DTO fields must not pass a faithful adapter check',
+  );
+});
+
 const elementHelper = resolve(root, 'scripts/element-preparation-consumer-contract.mjs');
 const elementSource = readFileSync(elementHelper, 'utf8');
 test('element preparation compiler rejects unawaited results, wrong variants and unchecked thumbnail paths without running adapters', () => {
@@ -115,6 +151,13 @@ for (const fixture of [
     source: elementSource,
     invocation: 'const prepared = await createImageElement(image, allocator);',
     ignored: 'createImageElement(image, allocator); const prepared = undefined;',
+  },
+  {
+    name: 'group-essence',
+    file: groupEssenceHelper,
+    source: groupEssenceSource,
+    invocation: 'const received = await action(client);',
+    ignored: 'action(client); const received = undefined;',
   },
   {
     name: 'group-search',

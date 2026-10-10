@@ -1,13 +1,29 @@
 import assert from 'node:assert/strict';
+import { fork } from 'node:child_process';
+import { mkdtemp, writeFile, rm, realpath } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-/** Installed JavaScript contracts only: every ticket and HTTP response is synthetic. */
+/** Installed JavaScript contracts only: every ticket and HTTP response is synthetic.
+ * @param {string} packageRoot
+ */
 export async function verifyGroupEssenceConsumer(packageRoot) {
-  const { listGroupEssenceMessages } = await import(
+  /** @type {Promise<typeof import('../src/features/groups/group-essence-list.ts')>} */
+  const essenceModule = import(
     pathToFileURL(join(packageRoot, 'dist/features/groups/group-essence-list.js')).href
   );
-  const { prepareCommand } = await import(pathToFileURL(join(packageRoot, 'dist/cli.js')).href);
+  /** @type {Promise<typeof import('../src/cli.ts')>} */
+  const cliModule = import(pathToFileURL(join(packageRoot, 'dist/cli.js')).href);
+  /** @type {Promise<typeof import('../src/index.ts')>} */
+  const clientModule = import(pathToFileURL(join(packageRoot, 'dist/index.js')).href);
+  /** @type {Promise<typeof import('../src/runtime/worker-termination.ts')>} */
+  const terminationModule = import(
+    pathToFileURL(join(packageRoot, 'dist/runtime/worker-termination.js')).href
+  );
+  const [{ listGroupEssenceMessages }, { prepareCommand }, { QQClient }, { terminateWorker }] =
+    await Promise.all([essenceModule, cliModule, clientModule, terminationModule]);
+  /** @param {number} sequence */
   const row = (sequence) => ({
     group_code: '123',
     msg_seq: sequence,
@@ -21,6 +37,9 @@ export async function verifyGroupEssenceConsumer(packageRoot) {
     msg_content: [{ msg_type: 987654, text: 'fixture', image_url: 'https://example.test/image' }],
     can_be_removed: false,
   });
+  /** @param {number|undefined} sequence
+   * @param {boolean} end
+   */
   const page = (sequence, end) => ({
     retcode: 0,
     data: {
@@ -30,9 +49,12 @@ export async function verifyGroupEssenceConsumer(packageRoot) {
       config_page_url: 'https://example.test/?key=private-fixture-config',
     },
   });
+  /** @param {ReturnType<typeof page>[]} pages */
   function fixture(pages) {
+    /** @type {Record<string,string>[]} */
     const queries = [];
     let ticketCalls = 0;
+    /** @type {import('../src/features/groups/qun-web-read.ts').QunWebReadContext} */
     const context = {
       accountId: '789',
       signal: new AbortController().signal,
@@ -50,7 +72,8 @@ export async function verifyGroupEssenceConsumer(packageRoot) {
         }),
       }),
       fetchImpl: async (url, init) => {
-        assert.equal(init.redirect, 'manual');
+        assert.equal(init?.redirect, 'manual');
+        assert.ok(typeof url === 'string' || url instanceof URL);
         const parsed = new URL(url);
         if (parsed.hostname === 'ssl.ptlogin2.qq.com')
           return new Response(null, { headers: { 'set-cookie': 'skey=abc; Path=/' } });
@@ -65,6 +88,20 @@ export async function verifyGroupEssenceConsumer(packageRoot) {
     };
     return { context, queries, tickets: () => ticketCalls };
   }
+  /** @satisfies {import('../src/contracts/groups.ts').GroupEssenceMessage} */
+  const expected = {
+    groupId: '123',
+    sequence: 9,
+    random: 4294967295,
+    senderId: '18446744073709551615',
+    senderNickname: 'fixture',
+    sentAt: 1,
+    operatorId: '000456',
+    operatorNickname: 'operator',
+    setAt: 2,
+    content: [{ type: 987654, text: 'fixture', imageUrl: 'https://example.test/image' }],
+    removable: false,
+  };
   const success = fixture([page(9, false), page(10, true)]);
   const messages = await listGroupEssenceMessages(success.context, '000123', { maxPages: 2 });
   assert.deepEqual(
@@ -80,6 +117,7 @@ export async function verifyGroupEssenceConsumer(packageRoot) {
   );
   assert.equal(success.tickets(), 2);
   assert.equal(messages.length, 2);
+  assert.deepEqual(messages, [expected, { ...expected, sequence: 10 }]);
   assert.deepEqual(
     messages.map((message) => message.sequence),
     [9, 10],
@@ -105,13 +143,57 @@ export async function verifyGroupEssenceConsumer(packageRoot) {
     code: 'inconsistent-pagination',
   });
   assert.equal(overlap.queries.length, 2);
-  const calls = [];
   const action = await prepareCommand('group-essence-all', {
     'group-id': '000123',
     'max-pages': '2',
   });
-  await action({ listGroupEssenceMessages: async (...args) => calls.push(args) });
-  assert.deepEqual(calls, [['000123', { maxPages: 2 }]]);
+  const directory = await mkdtemp(join(tmpdir(), 'qq-essence-worker-'));
+  /** @type {import('../src/index.ts').QQClient|undefined} */
+  let client;
+  /** @type {import('node:child_process').ChildProcess|undefined} */
+  let child;
+  try {
+    const kernelUrl = pathToFileURL(await realpath(join(packageRoot, 'dist/kernel.js'))).href;
+    const hook = join(directory, 'hook.mjs');
+    await writeFile(
+      hook,
+      `import {registerHooks} from 'node:module';process.dlopen=()=>{};registerHooks({load(url,context,next){if(url!==${JSON.stringify(kernelUrl)})return next(url,context);return {format:'module',shortCircuit:true,source:${JSON.stringify(`export function createKernel(native,options,emit){return {async prepare(){},async close(){},async login(){const account={uin:'123',uid:'u_fixture'};emit('ready',account);return account;},async invokeOperation(method,payload){if(method!=='listGroupEssenceMessages'||payload.groupId!=='000123'||payload.options?.maxPages!==2)throw Error('Unexpected essence RPC');return ${JSON.stringify(messages)};}}}`)}}}});`,
+    );
+    child = fork(join(packageRoot, 'dist/worker.js'), [], {
+      execArgv: ['--import', pathToFileURL(hook).href],
+      serialization: 'advanced',
+      stdio: ['ignore', 'ignore', 'ignore', 'ipc'],
+    });
+    client = new QQClient(child, 5000);
+    await client.request('init', {
+      options: {
+        dataDir: directory,
+        wrapperPath: join(directory, 'fixture.node'),
+        version: '7.0.2-53644',
+        preloadLibraries: [],
+      },
+    });
+    await client.login({ method: 'restore', uin: '123' });
+    // The actual installed facade preserves the full public DTO through worker IPC.
+    const received = await action(client);
+    assert.deepEqual(received, [expected, { ...expected, sequence: 10 }]);
+    const completedClient = client;
+    client = undefined;
+    await completedClient.close();
+    assert.equal(completedClient.state, 'closed');
+  } finally {
+    try {
+      if (client) await client.close();
+    } finally {
+      try {
+        // Reuse the worker owner's bounded termination rather than waiting forever
+        // if setup failed before the facade took ownership of the child.
+        if (child) await terminateWorker(child);
+      } finally {
+        await rm(directory, { recursive: true, force: true });
+      }
+    }
+  }
   await assert.rejects(
     prepareCommand('group-essence-all', { 'group-id': '123', 'max-pages': '0' }),
   );
@@ -122,5 +204,7 @@ export async function verifyGroupEssenceConsumer(packageRoot) {
     groupEssenceCredentialIsolationContract: true,
     groupEssenceInstalledCliContract: true,
     realGroupEssenceHttpAttempted: false,
+    nativeExecuted: false,
+    accountUsed: false,
   };
 }

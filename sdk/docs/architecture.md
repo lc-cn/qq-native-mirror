@@ -602,11 +602,15 @@ bundle and video-native CI. Runtime output is recreated from a clean `dist`
 directory so obsolete emitted modules cannot make a packaging check pass.
 
 `tsconfig.scripts.json` governs all TypeScript scripts, the shared face,
-group-search, element-preparation and mirror consumers, and the module-reference
+group-search, group-essence, element-preparation and mirror consumers, and the module-reference
 collector. Checked consumers bind dynamic installed imports to their source
 contracts. The face consumer returns a valid synthetic send receipt through the
 installed Client and controlled IPC. The group-search CLI action uses the same
-controlled worker and returns a complete `GroupSearchMatch`. Element preparation
+controlled worker and returns a complete `GroupSearchMatch`. Group essence
+traversal keeps its synthetic ticket/HTTP adapter and verifies page completion,
+overlap rejection and credential projection. Its installed CLI action uses the
+actual Client and controlled worker, returning complete `GroupEssenceMessage`
+DTOs rather than the numeric result of a fixture array push. Element preparation
 uses narrow media-staging and message-ID ports; its checked constructors preserve
 receivers, input variants and asynchronous results. The mirror consumer accepts a
 narrow client factory and verifies cold/warm downloads, exact metadata and native
