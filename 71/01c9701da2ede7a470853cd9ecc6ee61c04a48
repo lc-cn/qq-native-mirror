@@ -1,0 +1,51 @@
+sdk/docs/architecture.md
+  s_2104cc474f1ce5::t_5e6de46ff53e5a 103-108
+sdk/docs/contacts-groups.md
+  s_2104cc474f1ce5::t_273ade0186458b 5-10,64,140-180
+sdk/docs/evidence/group-essence-list-contracts.json
+  s_2104cc474f1ce5::t_f96556686a94db 1-44
+sdk/docs/sdk-acceptance.md
+  s_2104cc474f1ce5::t_10baab485d2db5 78-87
+sdk/scripts/contact-group-consumer-contract.mjs
+  s_2104cc474f1ce5::t_3b6bbb88bfc1a2 23,74-82,294-339,381-382
+sdk/scripts/verify-package-consumer.mjs
+  s_2104cc474f1ce5::t_8e3626e94fec0a 456-459
+sdk/src/cli.ts
+  s_2104cc474f1ce5::t_11889a256f5901 49
+sdk/src/cli/command-plan.ts
+  s_2104cc474f1ce5::t_3133f0e8f48a7a 9-12,64,410-427
+sdk/src/features/groups/group-essence-input.ts
+  s_2104cc474f1ce5::t_cd5259ee8a96d5 13-34
+sdk/src/features/groups/group-essence-list.ts
+  s_2104cc474f1ce5::t_72ac2b72c2bef8 1-115
+sdk/src/features/groups/qun-web-read.ts
+  s_2104cc474f1ce5::t_29fbe4ddc266ab 1-134
+sdk/src/features/groups/web-group-notices.ts
+  s_2104cc474f1ce5::t_5a6e6c4c75c117 9,29-34
+sdk/src/index.ts
+  s_2104cc474f1ce5::t_61b2192d27af9d 7-10,36-37,310-320
+sdk/src/native-services.ts
+  s_2104cc474f1ce5::t_5003f5fbad7ab7 47,425-432
+sdk/src/runtime/operations.ts
+  s_2104cc474f1ce5::t_17f3d2c12656fa 26
+sdk/src/types.ts
+  s_2104cc474f1ce5::t_040947d3fd42c9 158-192
+sdk/test/group-essence-list.test.ts
+  s_2104cc474f1ce5::t_3edf3498b867db 1-306
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "7101c9701da2ede7a470853cd9ecc6ee61c04a48",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
