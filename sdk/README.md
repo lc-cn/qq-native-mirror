@@ -275,3 +275,9 @@ Working source adds `friend-added` with `{uid,messageId,userId?}` from the expli
 维护时使用 Node 24 和 npm：`npm ci --ignore-scripts`，修改后执行 `npm run format` 与
 `npm run check`。门禁包含格式、零 warning lint、源码与测试类型检查、确定性回归、
 清理旧产物后的构建，以及新打包安装的消费者验证。账号验收独立进行。
+
+Working source exposes `deleteGroupFolder(groupId, folderId)` and CLI
+`group-folder-delete --config ./qq.json --group-id 123456 --folder-id opaque-folder-id`.
+The method preserves an opaque folder ID and acknowledges only a native response
+with two explicit zero status fields. [Contract and limits](docs/contacts-groups.md#group-file-folder-deletion)
+bind the six inspected default binaries; real remote deletion remains unverified.

@@ -44,6 +44,7 @@ worker.ts (IPC boundary) -> kernel.ts (authentication composition)
 | `src/features/media/`, `forward/`         | Media codecs and forward-resource transports.                                                            |
 | `src/native/`                             | Bundle resolution, provenance, storage and native contract checks.                                       |
 | `src/storage/`                            | Process/account-directory ownership and locking.                                                         |
+| `src/validation/`                         | Shared pure identity rules; native field-width limits remain with the specific operation.                |
 | `src/contracts/`                          | Public DTOs owned by client, contacts, groups, messages, forward, native and event domains.              |
 | `src/types.ts`, `src/errors.ts`           | Compatibility type exports and public errors. Contracts do not import implementation modules.            |
 | `test/`                                   | Deterministic regression fixtures, including worker substitution.                                        |
@@ -61,6 +62,13 @@ public facade constrains its private operation dispatcher to that union, the
 worker derives its classifier from it, and native dispatch handles the same union
 exhaustively. The low-level public `request(string, ...)` remains compatible. Adding a name without a corresponding native branch fails type
 checking; the worker no longer maintains a second handwritten allowlist.
+
+Shared account/group identifier rules belong to `validation/identifiers`, not
+to message sending. Group inputs import that pure owner directly; the original
+message input exports remain compatible. Transport-specific uint64 limits stay
+with the request that requires them, rather than silently narrowing all group
+operations. The dependency gate forbids these group inputs from reaching back
+into message-send validation.
 
 Feature modules may depend on public contracts and narrow native/runtime ports.
 They do not import the public Client or compose other account sessions. Relative
@@ -209,6 +217,12 @@ subscription order. Construction performs no native work. A callback success sti
 waits for native completion, failed IDs remain reserved until teardown, and an
 operation is never replayed. The Session aborts pending work before closing the
 sender; deferred preparation cannot dispatch after shutdown.
+
+`MessageQueries` owns peer capture, exact/batch/history reads, asynchronous record
+projection and batch reordering through injected native-read and resolver ports.
+The composition root binds those ports and selects a method; it does not implement
+query control flow. Whole-batch validation precedes asynchronous projection, and
+the existing Session lifetime observes pending work and blocks dispatch after close.
 
 `GroupQueries` owns full-list selection, per-group query coalescing, failed-channel
 quarantine and complete member-result validation. The four read methods use the

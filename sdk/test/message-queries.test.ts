@@ -1,0 +1,119 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { createMessageQueries } from '../src/features/messages/message-queries.ts';
+import { NativeServiceLifetime } from '../src/runtime/native-service-lifetime.ts';
+
+function fixture() {
+  const lifetime = new NativeServiceLifetime();
+  const order: string[] = [];
+  const row = (id: string) => ({ msgId: id, chatType: 2, peerUid: '123', elements: [] });
+  let response: unknown = { result: 0, msgList: [row('2'), row('1')] };
+  const service = {
+    async getMsgsByMsgId() {
+      order.push('query');
+      return response;
+    },
+    async getMsgsIncludeSelf() {
+      order.push('history');
+      return { result: 0, msgList: [] };
+    },
+  };
+  const context = {
+    signal: lifetime.signal,
+    awaitAlive: lifetime.awaitAlive,
+    getMessageService() {
+      order.push('service');
+      return service;
+    },
+    async resolvePeer() {
+      order.push('peer');
+      return { chatType: 2 as const, peerUid: '123' };
+    },
+    async decode(rows: any[]) {
+      order.push('decode');
+      return rows.map((row) => ({ messageId: row.msgId }) as any);
+    },
+  };
+  return {
+    lifetime,
+    context,
+    order,
+    setResponse(value: unknown) {
+      response = value;
+    },
+    row,
+  };
+}
+
+test('query captures IDs before await, restores requested missing positions and getter order', async () => {
+  const f = fixture();
+  let release!: () => void;
+  f.context.resolvePeer = async () => {
+    f.order.push('peer');
+    await new Promise<void>((r) => {
+      release = r;
+    });
+    return { chatType: 2, peerUid: '123' };
+  };
+  const ids = ['1', '9', '2'];
+  const query = createMessageQueries(f.context);
+  const pending = query.getMessages({ type: 'group', groupId: '123' }, ids);
+  ids[0] = '7';
+  release();
+  assert.deepEqual(
+    (await pending).map((v) => v?.messageId),
+    ['1', undefined, '2'],
+  );
+  assert.deepEqual(f.order, ['service', 'peer', 'query', 'decode']);
+  f.lifetime.close();
+});
+test('whole response validates before decode and preserves native error identity', async () => {
+  const f = fixture();
+  f.setResponse({ result: 0, msgList: [f.row('1'), { ...f.row('2'), peerUid: 'other' }] });
+  await assert.rejects(
+    createMessageQueries(f.context).getMessages({ type: 'group', groupId: '123' }, ['1', '2']),
+  );
+  assert.equal(f.order.includes('decode'), false);
+  const error = Error('synthetic');
+  f.context.getMessageService = () =>
+    ({
+      getMsgsByMsgId: async () => {
+        throw error;
+      },
+    }) as any;
+  await assert.rejects(
+    createMessageQueries(f.context).getMessage({ type: 'group', groupId: '123' }, '1'),
+    (e: unknown) => e === error,
+  );
+  f.lifetime.close();
+});
+test('close interrupts stalled native query without decoding its late response', async () => {
+  const f = fixture();
+  let release!: (v: unknown) => void;
+  f.context.getMessageService = () =>
+    ({
+      getMsgsByMsgId: () =>
+        new Promise((r) => {
+          release = r;
+        }),
+    }) as any;
+  const pending = createMessageQueries(f.context).getMessages({ type: 'group', groupId: '123' }, [
+    '1',
+  ]);
+  await Promise.resolve();
+  f.lifetime.close();
+  await assert.rejects(pending);
+  release({ result: 0, msgList: [f.row('1')] });
+  await Promise.resolve();
+  assert.equal(f.order.includes('decode'), false);
+});
+test('history resolves peer before obtaining Msg while invalid IDs obtain nothing', async () => {
+  const f = fixture();
+  const queries = createMessageQueries(f.context);
+  await queries.getHistory({ type: 'group', groupId: '123' }, {});
+  assert.deepEqual(f.order, ['peer', 'service', 'history', 'decode']);
+  f.order.length = 0;
+  await assert.rejects(queries.getMessages({ type: 'group', groupId: '123' }, ['1', '1']));
+  assert.deepEqual(f.order, []);
+  f.lifetime.close();
+});

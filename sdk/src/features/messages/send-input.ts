@@ -2,22 +2,9 @@ import { isAbsolute } from 'node:path';
 import { validateFaceId } from './face-input.ts';
 import type { SendableMessageElement } from '../../contracts/messages.ts';
 
-export function sendUserId(value: unknown, allowAll = false): string {
-  if (typeof value !== 'string' || !value || value.trim() !== value || value.includes('*'))
-    throw new Error('Invalid send user identifier');
-  if (
-    (allowAll && value === 'all') ||
-    (/^\d+$/.test(value) && /[1-9]/.test(value)) ||
-    /^u_.+/.test(value)
-  )
-    return value;
-  throw new Error('Invalid send user identifier');
-}
-export function sendGroupId(value: unknown): string {
-  if (typeof value !== 'string' || !/^\d+$/.test(value) || !/[1-9]/.test(value))
-    throw new Error('Invalid send group identifier');
-  return value;
-}
+import { sendUserId } from '../../validation/identifiers.ts';
+export { sendUserId, sendGroupId } from '../../validation/identifiers.ts';
+
 /** Validate and capture the whole batch before UID queries, media preparation,
  * reply lookup or native submission. Does not assert local media content validity. */
 export function captureSendInput(input: unknown, group: boolean): SendableMessageElement[] {

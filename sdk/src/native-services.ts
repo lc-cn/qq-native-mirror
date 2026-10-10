@@ -1,10 +1,7 @@
+import { deleteGroupFolder } from './features/groups/group-file-operations.ts';
 import { captureMergedForward } from './features/forward/merged-forward-input.ts';
 import { captureDownloadPayload } from './features/media/download-input.ts';
-import {
-  normalizeMessageQuery,
-  normalizeMessageBatchQuery,
-  normalizeHistoryQuery,
-} from './features/messages/query-input.ts';
+import { createMessageQueries } from './features/messages/message-queries.ts';
 import { withCleanupFailure } from './runtime/cleanup.ts';
 import { NativeServiceLifetime } from './runtime/native-service-lifetime.ts';
 import type { NativeServiceContext } from './runtime/native-service-context.ts';
@@ -27,11 +24,7 @@ import {
   createForwardResourceTransport,
   type ForwardResourceService,
 } from './features/forward/forward-resource-transport.ts';
-import {
-  queryNativeMessage,
-  queryNativeMessages,
-  queryNativeHistory,
-} from './features/messages/message-query.ts';
+import { queryNativeMessage } from './features/messages/message-query.ts';
 import { createSelfProfile } from './features/contacts/self-profile.ts';
 import { listWebGroupNotices } from './features/groups/web-group-notices.ts';
 import { createGroupNotices } from './features/groups/group-notices.ts';
@@ -264,6 +257,13 @@ export function createNativeServices(context: NativeServiceContext) {
         media: context.media,
       }),
     );
+    const messageQueries = createMessageQueries({
+      signal: lifetime.signal,
+      getMessageService: () => service('Msg'),
+      resolvePeer,
+      decode: resolvedMessages,
+      awaitAlive,
+    });
     let longMessageTransport: ReturnType<typeof createLongMessageResponseTransport> | undefined;
     let forwardResourceTransport: ReturnType<typeof createForwardResourceTransport> | undefined;
     lifetime.defer(() => longMessageTransport?.close());
@@ -337,41 +337,12 @@ export function createNativeServices(context: NativeServiceContext) {
               service('Msg') as ForwardResourceService,
             )).read(selfUid, resourceId, { signal: lifetime.signal });
           }
-          case 'getMessage': {
-            const query = normalizeMessageQuery(payload.peer, payload.messageId);
-            const raw = await awaitAlive(
-              queryNativeMessage(service('Msg'), await resolvePeer(query.peer), query.messageId),
-            );
-            lifetime.signal.throwIfAborted();
-            return raw === undefined ? undefined : resolvedMessage(raw);
-          }
-          case 'getMessages': {
-            const query = normalizeMessageBatchQuery(payload.peer, payload.messageIds);
-            const raw = await awaitAlive(
-              queryNativeMessages(service('Msg'), await resolvePeer(query.peer), query.messageIds),
-            );
-            lifetime.signal.throwIfAborted();
-            const present = raw.filter((message): message is Native => message !== undefined);
-            const decoded = await resolvedMessages(present);
-            lifetime.signal.throwIfAborted();
-            const found = new Map<string, Message>();
-            for (let index = 0; index < present.length; index++) {
-              const message = decoded[index];
-              if (!message || message.messageId !== present[index]!.msgId)
-                throw new Error('Invalid decoded message query batch');
-              found.set(message.messageId, message);
-            }
-            return query.messageIds.map((id) => found.get(id));
-          }
-          case 'getHistory': {
-            const query = normalizeHistoryQuery(payload.peer, payload.options);
-            const peer = await resolvePeer(query.peer);
-            const messages = await awaitAlive(
-              queryNativeHistory(service('Msg'), peer, query.before, query.count, query.reverse),
-            );
-            lifetime.signal.throwIfAborted();
-            return (await resolvedMessages(messages)) as Message[];
-          }
+          case 'getMessage':
+            return messageQueries.getMessage(payload.peer, payload.messageId);
+          case 'getMessages':
+            return messageQueries.getMessages(payload.peer, payload.messageIds);
+          case 'getHistory':
+            return messageQueries.getHistory(payload.peer, payload.options);
           case 'downloadAttachment': {
             const captured = captureDownloadPayload(payload);
             const peer = await resolvePeer(captured.peer);
@@ -429,6 +400,22 @@ export function createNativeServices(context: NativeServiceContext) {
           case 'publishGroupNotice':
           case 'deleteGroupNotice':
             return groupNotices.invokeOperation(method, payload);
+          case 'deleteGroupFolder':
+            return deleteGroupFolder(
+              {
+                signal: lifetime.signal,
+                awaitAlive,
+                getRichMediaService: () => {
+                  const richMedia = service('RichMedia');
+                  return {
+                    deleteGroupFolder: (groupId, folderId) =>
+                      call(richMedia, 'deleteGroupFolder', groupId, folderId),
+                  };
+                },
+              },
+              payload.groupId,
+              payload.folderId,
+            );
           case 'setGroupName':
             return groupOperations.invokeOperation(method, payload);
           case 'getGroupEssencePage':

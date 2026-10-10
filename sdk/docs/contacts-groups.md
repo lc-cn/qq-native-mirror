@@ -2,12 +2,12 @@
 
 These are working-source additions for the next candidate, not published `0.0.1` features. Six-platform CI run `38014518589` succeeded for revision `7f24062` (categories/remarks/detail event); Revision `b0dee1c` group detail/membership additions also passed six-platform CI `38015512259`; its [bounded artifact audit](evidence/group-query-system-events-ci-38015512259.json) matched 94 compiled files to 47 source files and six native prepare/close receipts. Revision `9deaa56` administrator/mute events and mute-list additions passed CI `38016572108`; its [independent bounded artifact audit](evidence/group-admin-mute-ci-38016572108.json) matched 96 compiled files to 48 committed source files and six prepare/close receipts using 582496 bytes of actual ranges. Revision `8d2da41` category creation passed six-platform CI `38017928237`; its [independent bounded artifact audit](evidence/friend-category-create-ci-38017928237.json) matched 100 compiled files to 50 committed source files and seven manifest-bound receipts using 590577 bytes of actual ranges. The later friend-added source requires its own CI. The [7f CI audit](evidence/contacts-groups-ci-38014518589.json) independently matched the actual main package's 92 compiled files to 46 committed source files and six platform prepare/close receipts, using 571463 bytes of bounded official ranges. It did not re-read six large auxiliary packages or verify the complete ZIP digest. Controlled service/worker and installed-package checks are separate from real account acceptance.
 
-| Area              | Available methods/events                                                                                                                                                   | Remaining work                                                                                                                    |
-| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| Friends           | Lists/profiles, remarks/deletion, request listing/handling, `request.friend`, `friend-list-updated`, `friend-added`                                                        | Sending applications; independent deleted/profile/remark notices                                                                  |
-| Friend categories | `listFriendCategories`, `addFriendCategory`; categorized `friend-list-updated` metadata                                                                                    | Delete/rename/reorder categories and move friends; parameters and completion responses need verification                          |
-| Group queries     | Lists/members/`getGroupInfo`/`listGroupMutedMembers`, `group-list-updated`, `group-members-updated`, `group-info-updated`, `group-membership`, `group-admin`, `group-mute` | Complete join classification and real event/query acceptance                                                                      |
-| Group actions     | Name/remark, all/member mute, member card/admin/kick, leave, notices, requests and essence add/remove                                                                      | Create/search/join/invite, member titles, live essence pagination and add/remove events, group files and real mutation acceptance |
+| Area              | Available methods/events                                                                                                                                                   | Remaining work                                                                                                                                        |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Friends           | Lists/profiles, remarks/deletion, request listing/handling, `request.friend`, `friend-list-updated`, `friend-added`                                                        | Sending applications; independent deleted/profile/remark notices                                                                                      |
+| Friend categories | `listFriendCategories`, `addFriendCategory`; categorized `friend-list-updated` metadata                                                                                    | Delete/rename/reorder categories and move friends; parameters and completion responses need verification                                              |
+| Group queries     | Lists/members/`getGroupInfo`/`listGroupMutedMembers`, `group-list-updated`, `group-members-updated`, `group-info-updated`, `group-membership`, `group-admin`, `group-mute` | Complete join classification and real event/query acceptance                                                                                          |
+| Group actions     | Name/remark, all/member mute, member card/admin/kick, leave, notices, requests, essence add/remove and folder deletion acknowledgement                                     | Create/search/join/invite, member titles, live essence pagination and add/remove events, remaining group file operations and real mutation acceptance |
 
 ## Categorized friends
 
@@ -258,3 +258,28 @@ Known candidate batches are validated before any notice is emitted; malformed or
 Primary sources at the fixed inspected commit: [friend-add branch](https://github.com/NapNeko/NapCatQQ/blob/26d7533e0f5800fdff865ab2f2ad7692917e1076/packages/napcat-onebot/api/msg.ts#L1037), [gray-tip caller](https://github.com/NapNeko/NapCatQQ/blob/26d7533e0f5800fdff865ab2f2ad7692917e1076/packages/napcat-onebot/index.ts#L654), [adapter startup cutoff](https://github.com/NapNeko/NapCatQQ/blob/26d7533e0f5800fdff865ab2f2ad7692917e1076/packages/napcat-onebot/index.ts#L311).
 
 [Local evidence](evidence/friend-added-local.json): 666 regressions passed; the installed consumer verified compiled callback integration, public declarations, CLI output/cleanup and actual child-worker IPC with a replacement kernel. All 192 installed regular files and 102 compiled files matched the 428587-byte local candidate before this documentation append. No actual native friend-add notification or new account operation was observed. This source requires fresh CI and is not published `0.0.1`.
+
+## Group file folder deletion
+
+```ts
+await client.deleteGroupFolder('123456', 'opaque-folder-id');
+```
+
+Group IDs remain decimal strings and must fit uint64; folder IDs are nonempty
+opaque strings and are preserved exactly. Input is captured before IPC and
+validated again before acquiring the native RichMedia service. One invocation
+uses the existing Session lifetime and never retries or initiates a readback.
+The outer `result` and inner `groupFileCommonResult.retCode` must both be explicit
+int32 zero. Nonzero codes reject with their numeric code; malformed statuses
+reject as `invalid-result`. Native response wording is not exposed.
+
+CLI: `qq-native-client group-folder-delete --config ./qq.json --group-id 123456 --folder-id opaque-folder-id`.
+This is a mutation and uses the same explicit login/restore selection as other
+account commands. Invalid intent rejects before client creation.
+
+The [static contract](evidence/group-folder-contract.json) binds normal-path
+inspection of the six default platform binaries and pinned upstream callers.
+A fulfilled `Promise<void>` acknowledges that native return; it does not prove
+the folder disappeared remotely. No account folder was deleted during these
+checks. Listing, creation, uploads, downloads and group file events still require
+their own implementation and acceptance.

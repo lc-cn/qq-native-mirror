@@ -112,6 +112,10 @@ test('source dependency direction includes type-only imports and exact cross-fea
 
 test('dependency policy rejects reverse, type-only and new cross-domain coupling', () => {
   for (const [from, to] of [
+    ['src/validation/identifiers.ts', 'src/features/messages/send-input.ts'],
+    ['src/validation/identifiers.ts', 'src/runtime/client-lifecycle.ts'],
+    ['src/features/groups/group-file-input.ts', 'src/features/messages/send-input.ts'],
+    ['src/features/groups/group-essence-input.ts', 'src/features/messages/send-input.ts'],
     ['src/features/groups/new-action.ts', 'src/index.ts'],
     ['src/features/groups/new-action.ts', 'src/kernel.ts'],
     ['src/features/groups/new-action.ts', 'src/native/native-package.ts'],
@@ -302,9 +306,11 @@ test('public contract type dependencies have no cycles', () => {
 const pureModules = new Set([
   'src/types.ts',
   'src/errors.ts',
+  'src/validation/identifiers.ts',
   'src/features/contacts/friend-categories.ts',
   'src/features/messages/query-input.ts',
   'src/features/groups/group-essence-input.ts',
+  'src/features/groups/group-file-input.ts',
   'src/features/media/download-input.ts',
   'src/features/forward/merged-forward-input.ts',
   'src/features/messages/send-input.ts',
@@ -316,7 +322,9 @@ const pureModules = new Set([
 const pureRoots = [
   'features/contacts/friend-categories.ts',
   'features/messages/query-input.ts',
+  'validation/identifiers.ts',
   'features/groups/group-essence-input.ts',
+  'features/groups/group-file-input.ts',
   'features/media/download-input.ts',
   'features/forward/merged-forward-input.ts',
   'features/messages/send-input.ts',

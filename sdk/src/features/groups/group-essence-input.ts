@@ -1,4 +1,4 @@
-import { sendGroupId } from '../messages/send-input.ts';
+import { sendGroupId } from '../../validation/identifiers.ts';
 import { normalizeMessageQuery } from '../messages/query-input.ts';
 
 /** Capture only explicit intent; message sequence/random are resolved in the worker. */

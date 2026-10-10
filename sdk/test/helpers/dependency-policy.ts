@@ -7,7 +7,7 @@ export interface SourceDependency {
   typeOnly: boolean;
 }
 
-const primitives = new Set(['src/types.ts', 'src/errors.ts']);
+const primitives = new Set(['src/types.ts', 'src/errors.ts', 'src/validation/identifiers.ts']);
 const isContract = (path: string) => path.startsWith('src/contracts/');
 const contractDependencies: Record<string, readonly string[]> = {
   'src/contracts/client.ts': ['src/contracts/native.ts'],
@@ -62,16 +62,12 @@ const facadeInputs = new Set([
   'src/features/messages/face-input.ts',
   'src/features/media/download-input.ts',
   'src/features/groups/group-essence-input.ts',
+  'src/features/groups/group-file-input.ts',
 ]);
 
 // Cross-domain collaboration is reviewed at exact module pairs. A new feature
 // does not gain permission to import an entire neighboring feature directory.
 export const crossFeatureDependencies = [
-  {
-    from: 'src/features/groups/group-essence-input.ts',
-    to: 'src/features/messages/send-input.ts',
-    reason: 'Essence actions share pure group identifier validation.',
-  },
   {
     from: 'src/features/groups/group-essence-input.ts',
     to: 'src/features/messages/query-input.ts',

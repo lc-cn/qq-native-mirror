@@ -1,3 +1,4 @@
+import { captureDeleteGroupFolder } from '../features/groups/group-file-input.ts';
 import { readFile, stat } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import type { QQClient } from '../index.ts';
@@ -58,6 +59,7 @@ export function validateCommandFlags(command: string, flags: Record<string, stri
     'group-info': ['config', 'uin', 'group-id'],
     'group-name': ['config', 'uin', 'group-id', 'name'],
     'group-essence': ['config', 'uin', 'group-id', 'message-id', 'enabled'],
+    'group-folder-delete': ['config', 'uin', 'group-id', 'folder-id'],
     'group-remark': ['config', 'uin', 'group-id', 'remark'],
     'group-mute': ['config', 'uin', 'group-id', 'enabled'],
     'member-mute': ['config', 'uin', 'group-id', 'user-id', 'seconds'],
@@ -360,6 +362,13 @@ export async function prepareCommand(
       const name = required(flags, 'name');
       if (!name.trim()) throw new Error('--name must not be blank');
       return (client) => client.setGroupName(group, name);
+    }
+    case 'group-folder-delete': {
+      const captured = captureDeleteGroupFolder(
+        required(flags, 'group-id'),
+        required(flags, 'folder-id'),
+      );
+      return (client) => client.deleteGroupFolder(captured.groupId, captured.folderId);
     }
     case 'group-remark': {
       const group = numeric(flags, 'group-id');

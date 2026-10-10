@@ -1,0 +1,89 @@
+{
+  "schemaVersion": 1,
+  "method": "RichMediaService.deleteGroupFolder",
+  "proofLevel": "native-static-normal-path",
+  "sources": [
+    {
+      "url": "https://github.com/NapNeko/NapCatQQ/blob/26d7533e0f5800fdff865ab2f2ad7692917e1076/packages/napcat-core/apis/group.ts#L371-L372",
+      "gitBlob": "4949dabe83de37e42570d0c5e63036c0eb1e662a"
+    },
+    {
+      "url": "https://github.com/NapNeko/NapCatQQ/blob/26d7533e0f5800fdff865ab2f2ad7692917e1076/packages/napcat-core/services/NodeIKernelRichMediaService.ts",
+      "gitBlob": "432f5bb4e89f0acd7aa5ccfcd6edff06355e0dda"
+    }
+  ],
+  "arguments": {
+    "count": 2,
+    "groupCode": "positive decimal string parsed as uint64 in base 10",
+    "folderId": "nonempty opaque string preserved without trimming"
+  },
+  "normalResult": {
+    "result": "int32",
+    "errMsg": "string",
+    "groupFileCommonResult": {
+      "retCode": "int32",
+      "retMsg": "string",
+      "clientWording": "string"
+    }
+  },
+  "sdkAcknowledgement": "Both explicit numeric status fields must be zero; no native wording is exposed.",
+  "profiles": [
+    {
+      "platform": "darwin",
+      "arch": "arm64",
+      "version": "7.0.2-53644",
+      "wrapperSha256": "fbc8ad9b328d05e16784d76b0181dda894c17001179dbf8c0d5dd00dc6271358",
+      "inspectionReceiptSha256": "7c7c4cb623e4fa609c31684c638384ee6e437cc33806684b2abb754e114e6798",
+      "entryAddress": "0xa7cb10"
+    },
+    {
+      "platform": "darwin",
+      "arch": "x64",
+      "version": "7.0.2-53644",
+      "wrapperSha256": "e91c58872d3d498f2d3ac1c304ab3ae4602d016274cf3e0f0cb651ad765f1f54",
+      "inspectionReceiptSha256": "703598189271fe8b921e69e1899bc30c9ae1816f31bd872901a667822589c2b6",
+      "entryAddress": "0xb32868"
+    },
+    {
+      "platform": "linux",
+      "arch": "arm64",
+      "version": "3.2.32-52194",
+      "wrapperSha256": "c302361f52494de257044e912e43ed244bb29ee59f59345d25a8959327828337",
+      "inspectionReceiptSha256": "d731d210e17c91f9af031db4be49545ba6e3fff73d1ebf155a62a16233e5a299",
+      "entryAddress": "0x16a38d4"
+    },
+    {
+      "platform": "linux",
+      "arch": "x64",
+      "version": "3.2.32-52194",
+      "wrapperSha256": "7882b8e3055cd38584861042befacd8be9939896f5cbbca6fa4a230926b48526",
+      "inspectionReceiptSha256": "79875425fa71cf85c093c130167240273cf86fdae53a6cf6111d242f58f496bc",
+      "entryAddress": "0x398c030"
+    },
+    {
+      "platform": "win32",
+      "arch": "arm64",
+      "version": "9.9.33-52230",
+      "wrapperSha256": "54e5a6ce127a1f973f28e38ddfbf1338403ea323a141546a6578dd25332c928a",
+      "inspectionReceiptSha256": "ca8d78f7c1dea9f3fc472cee8eef36c689c60ce9897373e7694df82ba8b662f1",
+      "entryAddress": "0x180e9fb14"
+    },
+    {
+      "platform": "win32",
+      "arch": "x64",
+      "version": "9.9.33-52230",
+      "wrapperSha256": "63112ab9161e127f5f7e17998a7196e143808923fb54cbbf7b4e21426187a5f0",
+      "inspectionReceiptSha256": "ee1834723281cb3b8bd487b39178d65eaf5e7f6e264364bcf9ec86db6885fde0",
+      "entryAddress": "0x180edf79c"
+    }
+  ],
+  "limits": [
+    "Normal-path codecs and pinned callers do not establish runtime interoperability or remote folder disappearance.",
+    "Unknown versions and complete NAPI failure paths require separate evidence.",
+    "Windows ARM64 downstream CRT parsing leaf was not expanded.",
+    "Folder listing, creation, upload, download and file events are separate contracts."
+  ],
+  "nativeExecuted": false,
+  "accountUsed": false,
+  "remoteEffectVerified": false
+}

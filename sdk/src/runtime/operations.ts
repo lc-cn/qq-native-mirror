@@ -21,6 +21,7 @@ export const SERVICE_OPERATIONS = Object.freeze([
   'getForwardMessages',
   'getForwardResource',
   'forwardMessages',
+  'deleteGroupFolder',
   'setGroupName',
   'setGroupEssenceMessage',
   'getGroupEssencePage',

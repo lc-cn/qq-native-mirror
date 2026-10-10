@@ -23,6 +23,7 @@ registerHooks({load(url,context,next){
    if(method==='getGroupEssencePage'){if(payload.groupId!=='123'||payload.options.pageStart!==17||payload.options.pageLimit!==2)throw Error('Invalid essence page IPC');return {...payload.options,groupId:payload.groupId,messages:[],isEnd:false,groupRole:2};}
    if(method==='listGroupEssenceMessages'){if(payload.groupId!=='123'||payload.options.maxPages!==2)throw Error('Invalid full essence IPC');return [];}
    if(method==='setGroupEssenceMessage'){if(payload.groupId!=='123'||payload.messageId!=='9876543210123456789'||typeof payload.enabled!=='boolean')throw Error('Invalid essence IPC intent');return;}
+   if(method==='deleteGroupFolder'){if(payload.groupId!=='18446744073709551615'||payload.folderId!==' opaque/文件夹 ')throw Error('Invalid folder IPC');return;}
    if(method==='setGroupRemark')return {method,groupId:payload.groupId,remark:payload.remark};throw Error('Unexpected fixture operation');}
  };}\`};
 }});
@@ -61,6 +62,12 @@ registerHooks({load(url,context,next){
       categoryId: 8,
       name: ' 新分组 ',
     });
+    assert.equal(
+      await client.deleteGroupFolder('18446744073709551615', ' opaque/文件夹 '),
+      undefined,
+    );
+    await assert.rejects(client.deleteGroupFolder('18446744073709551616', 'folder'), /uint64/);
+    await assert.rejects(client.deleteGroupFolder('123', ''), /nonempty/);
     await assert.rejects(client.addFriendCategory(' '), /nonblank/);
     assert.deepEqual(await client.listGroupMutedMembers('000123'), []);
     assert.equal((await client.getGroupInfo('000123')).groupId, '000123');
@@ -214,7 +221,95 @@ export async function verifyContactGroupConsumer(packageRoot) {
   ]);
   assert.equal(lines.at(-1).event, 'group-mute');
   assert.equal(lines.at(-1).payload.scope, 'all');
+
+  const folderCliCalls = [];
+  await (
+    await prepareCommand('group-folder-delete', {
+      'group-id': '18446744073709551615',
+      'folder-id': ' opaque/文件夹 ',
+    })
+  )({ deleteGroupFolder: async (...args) => folderCliCalls.push(args) });
+  assert.deepEqual(folderCliCalls, [['18446744073709551615', ' opaque/文件夹 ']]);
+  await assert.rejects(
+    prepareCommand('group-folder-delete', {
+      'group-id': '18446744073709551616',
+      'folder-id': 'folder',
+    }),
+    /uint64/,
+  );
+  await assert.rejects(
+    prepareCommand('group-folder-delete', { 'group-id': '123', 'folder-id': '' }),
+    /nonempty|required/,
+  );
+  const { deleteGroupFolder } = await load('features/groups/group-file-operations.js');
+  for (const [response, code] of [
+    [{ result: 0, groupFileCommonResult: { retCode: 0 } }, undefined],
+    [{ result: 23, groupFileCommonResult: { retCode: 0 } }, 23],
+    [{ result: 0, groupFileCommonResult: { retCode: -1 } }, -1],
+    [{ result: 0 }, 'invalid-result'],
+    [{ result: '0', groupFileCommonResult: { retCode: 0 } }, 'invalid-result'],
+  ]) {
+    const controller = new AbortController();
+    let calls = 0;
+    const service = {
+      deleteGroupFolder(group, folder) {
+        assert.equal(this, service);
+        assert.equal(group, '18446744073709551615');
+        assert.equal(folder, ' opaque/文件夹 ');
+        calls++;
+        return Promise.resolve(response);
+      },
+    };
+    const context = {
+      signal: controller.signal,
+      getRichMediaService: () => service,
+      awaitAlive: async (value) => value,
+    };
+    const operation = deleteGroupFolder(context, '18446744073709551615', ' opaque/文件夹 ');
+    if (code === undefined) assert.equal(await operation, undefined);
+    else await assert.rejects(operation, { code });
+    assert.equal(calls, 1);
+    controller.abort();
+    await assert.rejects(deleteGroupFolder(context, '123', 'folder'));
+    assert.equal(calls, 1, 'close gate must prevent a second dispatch');
+  }
   const { createNativeServices } = await load('native-services.js');
+  let folderDispatches = 0;
+  const folderServices = createNativeServices({
+    version: 'fixture',
+    events: { emit() {} },
+    session: {
+      getMsgService: () => ({ addKernelMsgListener() {} }),
+      getGroupService: () => ({ addKernelGroupListener() {} }),
+      getBuddyService: () => ({ addKernelBuddyListener() {}, removeKernelBuddyListener() {} }),
+      getRichMediaService: () => ({
+        deleteGroupFolder() {
+          folderDispatches++;
+          return new Promise(() => {});
+        },
+      }),
+    },
+  });
+  const pendingFolder = assert.rejects(
+    folderServices.invokeOperation('deleteGroupFolder', { groupId: '123', folderId: 'opaque' }),
+  );
+  folderServices.close();
+  let watchdog;
+  try {
+    await Promise.race([
+      pendingFolder,
+      new Promise((_, reject) => {
+        watchdog = setTimeout(() => reject(Error('Folder close did not settle')), 1000);
+      }),
+    ]);
+  } finally {
+    clearTimeout(watchdog);
+  }
+  await assert.rejects(
+    folderServices.invokeOperation('deleteGroupFolder', { groupId: '123', folderId: 'opaque' }),
+  );
+  assert.equal(folderDispatches, 1);
+
   let compiledMsg;
   const groupListeners = [];
   const essenceCalls = [];
@@ -384,6 +479,8 @@ export async function verifyContactGroupConsumer(packageRoot) {
   assert.equal(events.listenerCount('group-mute'), 0);
   assert.equal(events.listenerCount('friend-added'), 0);
   return {
+    groupFolderDeleteControlledContract: true,
+    nativeGroupFolderDeleteAttempted: false,
     groupEssenceControlledContract: true,
     groupEssencePageControlledContract: true,
     realGroupEssenceHttpAttempted: false,
