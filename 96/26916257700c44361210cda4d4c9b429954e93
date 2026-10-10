@@ -1,0 +1,39 @@
+sdk/test/architecture.test.ts
+  s_2104cc474f1ce5::t_84d4b98f41f054 82-83
+ci/verify-consumer.mjs
+  s_2104cc474f1ce5::t_f96f2b125133d0 28,200
+  s_2104cc474f1ce5::t_f437ba50b66d26 312
+sdk/src/native-services.ts
+  s_2104cc474f1ce5::t_84d4b98f41f054 241-248
+sdk/scripts/group-request-consumer-contract.mjs
+  s_2104cc474f1ce5::t_f96f2b125133d0 1-14,28-98,104,107-132,137-146,153-157,168-178,181,183-193,200,208-209,213-228
+  s_2104cc474f1ce5::t_8151d5b3f2ba28 15-27,99-103,105-106,133-136,147-152,158-167,179-180,182,194-199,201-207,210-212
+  s_2104cc474f1ce5::t_a64a69e4a8d634 229-231
+sdk/scripts/verify-package-consumer.mjs
+  s_2104cc474f1ce5::t_f96f2b125133d0 27,189-191,537
+sdk/docs/architecture.md
+  s_2104cc474f1ce5::t_9c1e4427570907 302-318
+sdk/test/fixtures/domain-port-types.ts
+  s_2104cc474f1ce5::t_84d4b98f41f054 8-10,27,89-105
+  s_2104cc474f1ce5::t_afc68699f4e34e 7
+sdk/src/features/groups/group-requests.ts
+  s_2104cc474f1ce5::t_3e72ed8256daf4 39,41-47,49-50,52-53,60-61,65-86,88-121,128,143,155,163,169,172,178-204,206-217,228,242,244-248,253,255-258,289,291,293-294,297-303,306-309,313-314,316,322-323,325-332,334-337,342,344,347-350,352-356
+sdk/test/group-requests.test.ts
+  s_2104cc474f1ce5::t_0a6fae98750619 3-19,28,31,33,37,61-62,236-606
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "9626916257700c44361210cda4d4c9b429954e93",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
