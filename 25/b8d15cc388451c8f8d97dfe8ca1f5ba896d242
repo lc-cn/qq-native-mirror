@@ -1,0 +1,41 @@
+sdk/.prettierignore
+  s_2104cc474f1ce5::t_82e4337a622a0b 1-6
+sdk/docs/architecture.md
+  s_2104cc474f1ce5::t_b833e649b8f036 99-107,161-163
+sdk/src/features/messages/native-message-sender.ts
+  s_2104cc474f1ce5::t_89603ba62e0b16 1-145
+sdk/src/native-services.ts
+  s_2104cc474f1ce5::t_95f5016df473eb 46-47,59,70-71,398-408,602,607,620
+sdk/src/native/login-request.ts
+  s_2104cc474f1ce5::t_da4adb30c17ff7 5-6,8-9,11-14
+sdk/src/native/message-contracts.ts
+  s_2104cc474f1ce5::t_7691599f8ddfdf 1-13
+sdk/src/native/native-catalog.ts
+  s_2104cc474f1ce5::t_3ad8bbef4b0967 1-12,14-19,21-100
+sdk/src/native/native-contracts.ts
+  s_2104cc474f1ce5::t_3add4736138292 14-49,52-67,70-75,78-92
+sdk/src/native/native-installed-storage.ts
+  s_2104cc474f1ce5::t_f6ba6b53197111 1-66,68-208
+sdk/src/native/native-package.ts
+  s_2104cc474f1ce5::t_b352301678a998 1,5-15,21-25,30-34,43-56,61-67,69-75,77-83,85-94,98-99,103-108,110-111,113-117,121-124,129-137,144-147,154,158,161-170,191-194,199-201,205-209,216-220,223-227,230-232,236-238,240-252,257-259,262-268,271-280,288-295,297-302,305-306,308-309,311-317,319-320,323-327,334-338,342-343,346-347,349-354,359-367,372-378,380-390,396-397,410-415,418-420,423-494,496-511,514-522,524-525,527-529,531,533-542
+sdk/test/architecture.test.ts
+  s_2104cc474f1ce5::t_c47c4316f2511c 7,199-213
+sdk/test/native-message-sender.test.ts
+  s_2104cc474f1ce5::t_d24757e0ad9b92 1-157
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "25b8d15cc388451c8f8d97dfe8ca1f5ba896d242",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
