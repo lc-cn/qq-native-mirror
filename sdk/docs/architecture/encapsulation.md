@@ -77,6 +77,17 @@ and message aliases. State transitions still happen before their public events, 
 facade methods return the lifecycle's login/reconnect/close Promises directly so
 coalesced callers retain the same Promise identity.
 
+`runtime/operation-contracts` binds each internal business command to its SDK
+payload and result using domain DTOs. Discriminated call tuples keep the association
+for literal and union callers; payload-free commands cannot receive arbitrary
+objects. Missing or orphan contracts fail compilation against the closed routing
+vocabulary. The facade infers the return type from the command instead of choosing
+an unrelated result generic. The public low-level `request<T>` remains compatible.
+This module contains declarations only: it neither asserts a native ABI nor
+validates received IPC. Domain owners still validate runtime input and native
+results. Compiler fixtures mutate actual facade calls in memory and never execute
+the invalid business bodies.
+
 `createNativeServices` receives one `NativeServiceContext`: session, version,
 event sink, authenticated identity, media implementations and measured binary
 provenance. Optional dependencies are named rather than encoded by argument

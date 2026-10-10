@@ -7,7 +7,7 @@ import {
   captureGroupFileList,
 } from '../features/groups/group-file-input.ts';
 import { ClientLifecycle } from '../runtime/client-lifecycle.ts';
-import type { ServiceOperation } from '../runtime/operations.ts';
+import type { OperationCall, OperationResult } from '../runtime/operation-contracts.ts';
 import {
   friendCategoryName,
   captureRenameFriendCategory,
@@ -162,10 +162,11 @@ export class QQClient extends EventEmitter<ClientEvents> {
   reconnect(login?: LoginRequest): Promise<Account> {
     return this.#lifecycle.reconnect(login);
   }
-  #operation<T>(method: ServiceOperation, payload: object = {}): Promise<T> {
+  #operation<C extends OperationCall>(...command: C): Promise<OperationResult<C[0]>> {
     if (this.state !== 'online')
       return Promise.reject(new Error('QQ client is not online; await login() first'));
-    return this.request<T>(method, payload);
+    const [method, payload] = command;
+    return this.request<OperationResult<C[0]>>(method, payload ?? {});
   }
   async addFriendCategory(name: string): Promise<CreatedFriendCategory> {
     return this.#operation('addFriendCategory', { name: friendCategoryName(name) });

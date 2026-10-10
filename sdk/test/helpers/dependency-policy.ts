@@ -311,7 +311,7 @@ export function dependencyViolation({ from, to, typeOnly }: SourceDependency): s
   if (from === 'src/client/qq-client.ts')
     return facadeInputs.has(to) ||
       to === 'src/runtime/client-lifecycle.ts' ||
-      (typeOnly && to === 'src/runtime/operations.ts')
+      (typeOnly && to === 'src/runtime/operation-contracts.ts')
       ? undefined
       : 'The facade cannot import native execution or feature operation implementations.';
   if (from === 'src/client/create-client.ts')
