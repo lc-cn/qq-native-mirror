@@ -1,0 +1,51 @@
+sdk/README.md
+  s_2104cc474f1ce5::t_10e6156472f547 260-262
+sdk/docs/contacts-groups.md
+  s_2104cc474f1ce5::t_fbdbd932a2dc57 3,9,76-98
+sdk/docs/evidence/contacts-groups-ci-38014518589.json
+  s_2104cc474f1ce5::t_66024fb78e0476 1-91
+sdk/docs/evidence/group-admin-mute-local.json
+  s_2104cc474f1ce5::t_62ff09f8e4eb51 1-150
+sdk/docs/sdk-acceptance.md
+  s_2104cc474f1ce5::t_14c3763a87c8cf 773-777
+sdk/scripts/contact-group-consumer-contract.mjs
+  s_2104cc474f1ce5::t_e430adc392d815 20,32,49,53,64-73,75
+sdk/scripts/verify-package-consumer.mjs
+  s_2104cc474f1ce5::t_17ee8b0eebda9c 260-262
+sdk/src/cli.ts
+  s_2104cc474f1ce5::t_52d8b766fd9153 50,91,238,279
+sdk/src/group-mute-list.ts
+  s_2104cc474f1ce5::t_f70552d412054e 1-21
+sdk/src/group-system-events.ts
+  s_2104cc474f1ce5::t_1ec4f435db30b2 4,39,42,46-55,79,89-150
+sdk/src/index.ts
+  s_2104cc474f1ce5::t_8e517fc1afa6bf 17,254
+sdk/src/native-services.ts
+  s_2104cc474f1ce5::t_6c6922817f9b12 24,29,33,160-161,259-277,357,540
+sdk/src/types.ts
+  s_2104cc474f1ce5::t_6b0b5a39441351 74-75,95-96,227-229
+sdk/src/worker.ts
+  s_2104cc474f1ce5::t_3a104fb397372e 12
+sdk/test/client.test.ts
+  s_2104cc474f1ce5::t_c35f93f47a1829 578-587
+sdk/test/group-mute-list.test.ts
+  s_2104cc474f1ce5::t_c98760030a26dc 1-62
+sdk/test/group-system-events.test.ts
+  s_2104cc474f1ce5::t_e570cbc7432a55 14,34-77
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "9deaa56fb03c5109d9b3f50c1ee823f67d6a7881",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
