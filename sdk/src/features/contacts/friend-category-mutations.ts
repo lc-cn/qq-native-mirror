@@ -1,13 +1,21 @@
-import { captureFriendCategoryId, captureRenameFriendCategory } from './friend-categories.ts';
+import {
+  captureFriendCategoryId,
+  captureRenameFriendCategory,
+  friendCategoryName,
+} from './friend-categories.ts';
+import { createFriendCategory } from './friend-category-create.ts';
+import type { CreatedFriendCategory } from '../../contracts/contacts.ts';
 import { nativeResultError } from '../../errors.ts';
 
 export interface FriendCategoryMutationsPort {
+  addCategoryV2?(name: string, members: undefined): unknown;
   renameCategory?(categoryId: number, name: string): unknown;
   delCategory?(categoryId: number): unknown;
 }
 export interface FriendCategoryMutationsContext {
   getBuddyService(): FriendCategoryMutationsPort | null | undefined;
   signal: AbortSignal;
+  canCreate(): boolean;
   canRename(): boolean;
   canDelete(): boolean;
 }
@@ -98,6 +106,24 @@ export function createFriendCategoryMutations(context: FriendCategoryMutationsCo
     }
   }
   return {
+    async create(name: unknown): Promise<CreatedFriendCategory> {
+      const captured = friendCategoryName(name);
+      alive();
+      const supported = context.canCreate();
+      alive();
+      if (!supported)
+        throw new Error('Friend category creation contract is not verified for this native binary');
+      const service = context.getBuddyService();
+      alive();
+      const method = service?.addCategoryV2;
+      alive();
+      if (typeof method !== 'function') throw new Error('Native service is missing addCategoryV2');
+      return createFriendCategory(
+        captured,
+        (value, members) => Reflect.apply(method, service, [value, members]) as unknown,
+        signal,
+      );
+    },
     async rename(categoryId: unknown, name: unknown): Promise<void> {
       const captured = captureRenameFriendCategory(categoryId, name);
       return mutate({ action: 'rename', args: [captured.categoryId, captured.name] });

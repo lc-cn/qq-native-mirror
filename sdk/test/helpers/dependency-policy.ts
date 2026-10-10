@@ -238,6 +238,14 @@ export function dependencyViolation({ from, to, typeOnly }: SourceDependency): s
     ].includes(to)
   )
     return 'Message projection and identity orchestration belong to the message-resolution owner.';
+  if (
+    from === 'src/native-services.ts' &&
+    [
+      'src/features/contacts/friend-categories.ts',
+      'src/features/contacts/friend-category-create.ts',
+    ].includes(to)
+  )
+    return 'Category validation and write completion belong to the contact mutation owner.';
   if (from === 'src/native-services.ts')
     return to.startsWith('src/features/') ||
       serviceRuntimeDependencies.has(to) ||

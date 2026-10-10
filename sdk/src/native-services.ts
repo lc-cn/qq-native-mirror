@@ -17,9 +17,7 @@ import {
   supportsGroupFolderCreation,
   supportsGroupSearch,
 } from './native/native-contracts.ts';
-import { createFriendCategory } from './features/contacts/friend-category-create.ts';
 import { createFriendSystemEvents } from './features/contacts/friend-system-events.ts';
-import { friendCategoryName } from './features/contacts/friend-categories.ts';
 import { createContactDirectory } from './features/contacts/contact-directory.ts';
 import { createNativeEventChannel } from './runtime/native-event-channel.ts';
 import { createForwardResourceOwner } from './features/forward/forward-resource-owner.ts';
@@ -96,6 +94,7 @@ export function createNativeServices(context: NativeServiceContext) {
       createFriendCategoryMutations({
         signal: lifetime.signal,
         getBuddyService: () => service('Buddy'),
+        canCreate: () => supportsCategoryCreation(nativeContracts, version),
         canRename: () => supportsCategoryRenaming(nativeContracts, version),
         canDelete: () => supportsCategoryDeletion(nativeContracts, version),
       }),
@@ -352,18 +351,8 @@ export function createNativeServices(context: NativeServiceContext) {
           }
           case 'deleteFriendCategory':
             return categoryMutations.delete(payload.categoryId);
-          case 'addFriendCategory': {
-            const name = friendCategoryName(payload.name);
-            if (!supportsCategoryCreation(nativeContracts, version))
-              throw new Error(
-                'Friend category creation contract is not verified for this native binary',
-              );
-            return createFriendCategory(
-              name,
-              (value, members) => call(service('Buddy'), 'addCategoryV2', value, members),
-              lifetime.signal,
-            );
-          }
+          case 'addFriendCategory':
+            return categoryMutations.create(payload.name);
           case 'listGroupMutedMembers':
             return groupQueries.listGroupMutedMembers(sendGroupId(payload.groupId));
           case 'getGroupInfo':

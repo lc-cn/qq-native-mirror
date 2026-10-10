@@ -158,6 +158,13 @@ function verifyDomainPorts(
   // @ts-expect-error Delete uses a numeric native selector, not a category name.
   categoryMutations.getBuddyService()?.delCategory?.('name');
   const deleteAck = categoryMutations.getBuddyService()?.delCategory?.(123);
+  // @ts-expect-error Creation always passes an explicit second undefined argument.
+  categoryMutations.getBuddyService()?.addCategoryV2?.('name');
+  // @ts-expect-error UID-array encoding is not established by the creation contract.
+  categoryMutations.getBuddyService()?.addCategoryV2?.('name', ['u_fixture']);
+  const creationAck = categoryMutations.getBuddyService()?.addCategoryV2?.('name', undefined);
+  // @ts-expect-error Native creation results require dedicated receipt projection.
+  void creationAck.categoryId;
   // @ts-expect-error Deletion acknowledgement requires result validation.
   void deleteAck.result;
   // @ts-expect-error A native ACK remains unknown until the domain adapter validates it.

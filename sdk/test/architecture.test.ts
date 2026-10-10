@@ -249,6 +249,24 @@ test('group-file composition cannot regain operation policy through input or ada
   }
 });
 
+test('category composition cannot regain input or creation completion policy', () => {
+  for (const typeOnly of [false, true]) {
+    for (const to of [
+      'src/features/contacts/friend-categories.ts',
+      'src/features/contacts/friend-category-create.ts',
+    ])
+      assert.ok(dependencyViolation({ from: 'src/native-services.ts', to, typeOnly }));
+    assert.equal(
+      dependencyViolation({
+        from: 'src/native-services.ts',
+        to: 'src/features/contacts/friend-category-mutations.ts',
+        typeOnly,
+      }),
+      undefined,
+    );
+  }
+});
+
 test('dynamic native object permissions apply only to actual reviewed adapters and projectors', () => {
   const to = 'src/native/native-object.ts';
   for (const from of [

@@ -13,6 +13,7 @@ test('delete sends one uint32 argument with original receiver and zero/max ACK o
   };
   const owner = createFriendCategoryMutations({
     signal: new AbortController().signal,
+    canCreate: () => false,
     canRename: () => true,
     canDelete: () => true,
     getBuddyService: () => service,
@@ -27,6 +28,7 @@ test('invalid input and unsupported capability reject before acquisition', async
   let acquisitions = 0;
   const owner = createFriendCategoryMutations({
     signal: new AbortController().signal,
+    canCreate: () => false,
     canRename: () => false,
     canDelete: () => false,
     getBuddyService: () => {
@@ -50,6 +52,7 @@ test('delete getter closes before dispatch and missing method has fixed wording'
   let calls = 0;
   const owner = createFriendCategoryMutations({
     signal: new AbortController().signal,
+    canCreate: () => false,
     canRename: () => true,
     canDelete: () => true,
     getBuddyService: () => ({
@@ -65,6 +68,7 @@ test('delete getter closes before dispatch and missing method has fixed wording'
   assert.equal(calls, 0);
   const missing = createFriendCategoryMutations({
     signal: new AbortController().signal,
+    canCreate: () => false,
     canRename: () => true,
     canDelete: () => true,
     getBuddyService: () => null,
@@ -83,6 +87,7 @@ test('delete requires int32 zero status; native rejection identity and no retry'
     let calls = 0;
     const owner = createFriendCategoryMutations({
       signal: new AbortController().signal,
+      canCreate: () => false,
       canRename: () => true,
       canDelete: () => true,
       getBuddyService: () => ({
@@ -102,6 +107,7 @@ test('delete requires int32 zero status; native rejection identity and no retry'
   const original = new Error('original');
   const owner = createFriendCategoryMutations({
     signal: new AbortController().signal,
+    canCreate: () => false,
     canRename: () => true,
     canDelete: () => true,
     getBuddyService: () => ({ delCategory: () => Promise.reject(original) }),
@@ -114,6 +120,7 @@ test('delete close observes late failure and cannot publish resolved ACK after d
   let reject!: (error: unknown) => void;
   const owner = createFriendCategoryMutations({
     signal: new AbortController().signal,
+    canCreate: () => false,
     canRename: () => true,
     canDelete: () => true,
     getBuddyService: () => ({
@@ -130,6 +137,7 @@ test('delete close observes late failure and cannot publish resolved ACK after d
   await new Promise((resolve) => setImmediate(resolve));
   const reentrant = createFriendCategoryMutations({
     signal: new AbortController().signal,
+    canCreate: () => false,
     canRename: () => true,
     canDelete: () => true,
     getBuddyService: () => ({
@@ -148,6 +156,7 @@ test('delete deadline observes late rejection and never retries', async (t) => {
   let reject!: (error: unknown) => void;
   const owner = createFriendCategoryMutations({
     signal: new AbortController().signal,
+    canCreate: () => false,
     canRename: () => true,
     canDelete: () => true,
     getBuddyService: () => ({
@@ -180,6 +189,7 @@ test('delete result descriptor retirement prevents success', async () => {
   );
   const owner = createFriendCategoryMutations({
     signal: new AbortController().signal,
+    canCreate: () => false,
     canRename: () => true,
     canDelete: () => true,
     getBuddyService: () => ({ delCategory: () => result }),

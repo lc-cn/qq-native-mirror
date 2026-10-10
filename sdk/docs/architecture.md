@@ -369,7 +369,7 @@ require only category memberships. UID conversion requires a native Map entry fo
 the requested identifier; a map-shaped object cannot supply a recipient identity.
 These owners have no permission to import the dynamic native-object escape hatch.
 
-`createFriendCategoryMutations` owns category rename and deletion through a narrow
+`createFriendCategoryMutations` owns category creation, rename and deletion through a narrow
 Buddy port. Its discriminated request union binds each operation to its native
 argument tuple. Input capture and independent binary capability checks precede
 acquisition; each selected method keeps its receiver and dispatches once. Both
@@ -377,6 +377,12 @@ writes require an explicit int32 zero ACK, share the account signal and a local
 five-second deadline, and observe late rejections. Closing after dispatch leaves
 the remote effect unknown. This shared lifecycle does not grant deletion to a
 binary whose rename contract alone is verified.
+Creation has its own capability decision and receipt projector: it returns the
+native category identity/name rather than a void ACK. Its native method is
+captured once and invoked with the original receiver and an explicit second
+`undefined` argument. Close during acquisition prevents dispatch; close during
+receipt projection prevents a successful DTO from escaping. Composition only
+injects the port and capability decisions, then routes these three actions.
 
 `createContactOperations` and `createGroupOperations` receive separate mutation
 ports, not a Session or arbitrary service locator. The contact module owns profile

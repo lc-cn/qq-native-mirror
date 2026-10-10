@@ -707,17 +707,25 @@ export async function verifyContactGroupConsumer(packageRoot) {
     wrapperSha256: 'fbc8ad9b328d05e16784d76b0181dda894c17001179dbf8c0d5dd00dc6271358',
   };
   const categoryCalls = [];
+  let categoryMethodReads = 0;
+  let closeDuringCategoryAcquisition = false;
+  const categoryBuddy = {
+    addKernelBuddyListener() {},
+    get addCategoryV2() {
+      categoryMethodReads++;
+      if (closeDuringCategoryAcquisition) categoryServices.close();
+      return function (...args) {
+        assert.equal(this, categoryBuddy);
+        categoryCalls.push(args);
+        return { result: 0, groupId: 8, name: 'native' };
+      };
+    },
+  };
   const categoryServices = createNativeServices({
     session: {
       getMsgService: () => ({ addKernelMsgListener() {} }),
       getGroupService: () => ({ addKernelGroupListener() {} }),
-      getBuddyService: () => ({
-        addKernelBuddyListener() {},
-        addCategoryV2(...args) {
-          categoryCalls.push(args);
-          return { result: 0, groupId: 8, name: 'native' };
-        },
-      }),
+      getBuddyService: () => categoryBuddy,
     },
     version: '7.0.2-53644',
     events: { emit: () => {} },
@@ -729,6 +737,14 @@ export async function verifyContactGroupConsumer(packageRoot) {
       { categoryId: 8, name: 'native' },
     );
     assert.deepEqual(categoryCalls, [[' 新分组 ', undefined]]);
+    assert.equal(categoryMethodReads, 1);
+    closeDuringCategoryAcquisition = true;
+    await assert.rejects(
+      categoryServices.invokeOperation('addFriendCategory', { name: 'closed' }),
+      { name: 'AbortError' },
+    );
+    assert.equal(categoryMethodReads, 2);
+    assert.equal(categoryCalls.length, 1);
   } finally {
     categoryServices.close();
   }
@@ -844,6 +860,8 @@ export async function verifyContactGroupConsumer(packageRoot) {
     friendAddedEventContract: true,
     nativeFriendAddedObserved: false,
     friendCategoryCreationContract: true,
+    friendCategoryCreationMethodCaptureContract: true,
+    friendCategoryCreationAcquireCloseContract: true,
     nativeFriendCategoryCreationAttempted: false,
     ...(await verifyContactGroupWorkerRoutes({
       QQClient,

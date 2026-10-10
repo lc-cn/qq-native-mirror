@@ -12,6 +12,7 @@ test('exact two arguments and receiver; uint32 zero accepted without assuming bu
     },
   };
   const api = createFriendCategoryMutations({
+    canCreate: () => false,
     canRename: () => true,
     canDelete: () => true,
     signal: new AbortController().signal,
@@ -30,6 +31,7 @@ test('invalid input and service getter retirement prevent native dispatch', asyn
   let calls = 0,
     getters = 0;
   const api = createFriendCategoryMutations({
+    canCreate: () => false,
     canRename: () => true,
     canDelete: () => true,
     signal: new AbortController().signal,
@@ -63,6 +65,7 @@ test('method getter abort prevents dispatch and original native rejection is pre
     },
   };
   const api = createFriendCategoryMutations({
+    canCreate: () => false,
     canRename: () => true,
     canDelete: () => true,
     signal: controller.signal,
@@ -72,6 +75,7 @@ test('method getter abort prevents dispatch and original native rejection is pre
   assert.equal(calls, 0);
   const original = new Error('native rejected');
   const failing = createFriendCategoryMutations({
+    canCreate: () => false,
     canRename: () => true,
     canDelete: () => true,
     signal: new AbortController().signal,
@@ -91,6 +95,7 @@ test('close settles pending write unknown and observes late rejection without re
   let reject!: (error: unknown) => void,
     calls = 0;
   const api = createFriendCategoryMutations({
+    canCreate: () => false,
     canRename: () => true,
     canDelete: () => true,
     signal: new AbortController().signal,
@@ -125,6 +130,7 @@ test('malformed and nonzero ACK never disclose native wording', async () => {
     },
   ]) {
     const api = createFriendCategoryMutations({
+      canCreate: () => false,
       canRename: () => true,
       canDelete: () => true,
       signal: new AbortController().signal,
@@ -141,6 +147,7 @@ test('malformed and nonzero ACK never disclose native wording', async () => {
 test('synchronous close during dispatch with resolved ACK retains unknown effect', async () => {
   let calls = 0;
   const api = createFriendCategoryMutations({
+    canCreate: () => false,
     canRename: () => true,
     canDelete: () => true,
     signal: new AbortController().signal,
@@ -168,6 +175,7 @@ test('close during result descriptor projection retains unknown effect', async (
     },
   );
   const api = createFriendCategoryMutations({
+    canCreate: () => false,
     canRename: () => true,
     canDelete: () => true,
     signal: new AbortController().signal,
@@ -187,6 +195,7 @@ test('five second deadline settles once without replay and observes late rejecti
   let calls = 0,
     reject!: (error: unknown) => void;
   const api = createFriendCategoryMutations({
+    canCreate: () => false,
     canRename: () => true,
     canDelete: () => true,
     signal: new AbortController().signal,

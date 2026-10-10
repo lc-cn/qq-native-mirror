@@ -64,12 +64,17 @@ Keep their shared profile projection in the contact domain; flat friend queries
 must not acquire the complete category metadata contract. Commit identity caches
 only after the complete batch validates and the account is still alive.
 
-`features/contacts/friend-category-mutations.ts` owns category rename and deletion.
+`features/contacts/friend-category-mutations.ts` owns category creation, rename and deletion.
 Keep their argument tuples paired with their operation through a discriminated
 union. Inject independently measured capability decisions and a lazy Buddy port;
 validate input and reject unsupported binaries before acquiring it. This owner
 shares ACK validation, timeout and cancellation because those invariants are the
 same for both writes. Native ACK does not establish the remote category state.
+Creation retains its separate `CreatedFriendCategory` receipt and explicit
+`addCategoryV2(name, undefined)` argument pair. Capture each method once with its
+receiver and check the lifetime after acquisition and receipt projection; even
+a native property trap can retire the account. The composition root cannot import
+category input validation or creation completion directly.
 
 `features/messages/message-resolution.ts` owns peer conversion and the identity
 lookup needed by live delivery, queries and forwarding. Supply only user-ID

@@ -54,7 +54,21 @@ export async function createFriendCategory(
     const pending = Promise.resolve(dispatch(name, undefined));
     const result = await Promise.race([pending, stopped]);
     signal.throwIfAborted();
-    return projectCreatedFriendCategory(result);
+    const completionAlive = () => {
+      if (signal.aborted)
+        throw new Error(
+          'Native services closed during friend category creation; remote effect unknown',
+        );
+    };
+    let projected: CreatedFriendCategory;
+    try {
+      projected = projectCreatedFriendCategory(result);
+    } catch (error) {
+      completionAlive();
+      throw error;
+    }
+    completionAlive();
+    return projected;
   } finally {
     clearTimeout(timer!);
     signal.removeEventListener('abort', abort!);
