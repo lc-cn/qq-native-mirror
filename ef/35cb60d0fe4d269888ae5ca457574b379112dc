@@ -1,0 +1,32 @@
+sdk/scripts/friend-category-rename-consumer-contract.mjs
+  s_2104cc474f1ce5::t_edb1daa3d22f0d 29,87,90-96,98,119,125-128
+  s_2104cc474f1ce5::t_9431fc0005f536 30-34,97,203
+sdk/README.md
+  s_2104cc474f1ce5::t_fe632e330f15b3 65-72
+sdk/docs/contacts-groups.md
+  s_2104cc474f1ce5::t_b59009271dc2ba 5-10,87
+sdk/docs/evidence/friend-category-delete-contract.json
+  s_2104cc474f1ce5::t_0161a7a63f5f7e 10-21,49-51,54,58-101
+sdk/docs/sdk-acceptance.md
+  s_2104cc474f1ce5::t_bf82177196b351 89
+sdk/src/native/native-contracts.ts
+  s_2104cc474f1ce5::t_eaf66325165dca 44,59
+sdk/test/friend-category-rename-profiles.test.ts
+  s_2104cc474f1ce5::t_d8173da3d8e777 104-111,115,117,130-163
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ef35cb60d0fe4d269888ae5ca457574b379112dc",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
