@@ -59,8 +59,10 @@ test('codec measures video and preserves JPG thumbnail format, source and native
     assert.equal(result.videoElement.fileTime, 0.4);
     assert.equal(result.videoElement.thumbWidth, 64);
     assert.ok(result.videoElement.thumbPath instanceof Map);
-    assert.match(result.videoElement.thumbPath.get(0), /\.jpg$/);
-    assert.deepEqual(await readFile(result.videoElement.thumbPath.get(0)), jpeg());
+    const thumbnailPath = result.videoElement.thumbPath.get(0);
+    assert.ok(thumbnailPath);
+    assert.match(thumbnailPath, /\.jpg$/);
+    assert.deepEqual(await readFile(thumbnailPath), jpeg());
     assert.deepEqual(await readFile(file), bytes);
     assert.deepEqual(await readFile(destination), bytes);
   }));
@@ -171,7 +173,9 @@ test('thumbnail bytes are copied before an asynchronous native staging request',
       undefined,
       { getVideoInfo: async () => value },
     );
-    assert.deepEqual(await readFile(result.videoElement.thumbPath.get(0)), expected);
+    const thumbnailPath = result.videoElement.thumbPath.get(0);
+    assert.ok(thumbnailPath);
+    assert.deepEqual(await readFile(thumbnailPath), expected);
     assert.equal(result.videoElement.thumbWidth, 64);
   }));
 test('abort during a pending codec settles without staging even after late resolution', () =>
@@ -302,6 +306,8 @@ test('downsampled thumbnail is accepted while native dimensions retain measured 
     );
     assert.equal(result.videoElement.thumbWidth, 1280);
     assert.equal(result.videoElement.thumbHeight, 720);
-    assert.deepEqual(await readFile(result.videoElement.thumbPath.get(0)), png());
+    const thumbnailPath = result.videoElement.thumbPath.get(0);
+    assert.ok(thumbnailPath);
+    assert.deepEqual(await readFile(thumbnailPath), png());
     assert.equal('videoWidth' in result.videoElement, false);
   }));

@@ -6,7 +6,7 @@ import { basename, dirname, isAbsolute, join, sep } from 'node:path';
 
 import type { RecordCodec, MediaStagingPort } from '../../runtime/media-contracts.ts';
 export type { RecordCodec } from '../../runtime/media-contracts.ts';
-import type { NativeObject as Native } from '../../native/native-object.ts';
+import type { PreparedRecordElement } from '../../native/prepared-message-contracts.ts';
 async function isSilk(file: string): Promise<boolean> {
   const handle = await open(file, 'r');
   try {
@@ -30,7 +30,7 @@ export async function createRecordElement(
   file: string,
   msgService: MediaStagingPort,
   codec?: RecordCodec,
-): Promise<Native> {
+): Promise<PreparedRecordElement> {
   if (!codec || typeof codec.getDuration !== 'function')
     throw new Error('Record requires a configured SILK-capable duration codec');
   if (typeof file !== 'string' || !isAbsolute(file))

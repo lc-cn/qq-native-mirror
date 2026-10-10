@@ -99,6 +99,7 @@ const nativeContracts = new Set([
   'src/native/native-object.ts',
   'src/native/native-contracts.ts',
   'src/native/message-contracts.ts',
+  'src/native/prepared-message-contracts.ts',
 ]);
 const featurePorts = new Set([
   'src/runtime/media-contracts.ts',
@@ -153,6 +154,10 @@ export const crossFeatureDependencies = [
 ] as const;
 
 export function dependencyViolation({ from, to, typeOnly }: SourceDependency): string | undefined {
+  if (from === 'src/native/prepared-message-contracts.ts')
+    return typeOnly && to === 'src/native/message-contracts.ts'
+      ? undefined
+      : 'Prepared outbound contracts only reference their reviewed native peer data type.';
   if (!to.startsWith('src/')) return externalDependencyViolation(from, to, typeOnly);
   if (from === 'src/native/native-bundle-installer.ts')
     return to === 'src/storage/native-package-lock.ts' ||
@@ -234,6 +239,10 @@ export function dependencyViolation({ from, to, typeOnly }: SourceDependency): s
         'src/features/messages/message-query.ts',
         'src/features/messages/message-queries.ts',
         'src/features/media/media-operations.ts',
+        'src/features/messages/face-input.ts',
+        'src/features/messages/outbound-elements.ts',
+        'src/features/media/media-record.ts',
+        'src/features/media/media-send.ts',
       ].includes(from) &&
       to === 'src/native/native-object.ts'
     )

@@ -41,7 +41,9 @@ test('video uses measured metadata and generated thumbnail with native cache con
     assert.equal(result.videoElement.thumbHeight, 360);
     assert.equal(result.videoElement.fileSize, '11');
     assert.ok(result.videoElement.thumbPath instanceof Map);
-    assert.match(result.videoElement.thumbPath.get(0), /Thumb/);
+    const thumbnailPath = result.videoElement.thumbPath.get(0);
+    assert.ok(thumbnailPath);
+    assert.match(thumbnailPath, /Thumb/);
     assert.equal(await readFile(file, 'utf8'), 'fixture-mp4');
     assert.equal(await readFile(destination, 'utf8'), 'fixture-mp4');
     assert.equal('fileFormat' in result.videoElement, false);

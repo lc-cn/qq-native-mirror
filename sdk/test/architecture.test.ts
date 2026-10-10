@@ -499,11 +499,51 @@ test('module loading extraction rejects computed imports and CommonJS aliases ou
   );
 });
 
-test('message query and attachment download owners cannot regain the native object escape hatch', () => {
+test('typed query, download and prepared element owners cannot regain the native object escape hatch', () => {
   for (const from of [
     'src/features/messages/message-query.ts',
     'src/features/messages/message-queries.ts',
     'src/features/media/media-operations.ts',
+    'src/features/messages/face-input.ts',
+    'src/features/messages/outbound-elements.ts',
+    'src/features/media/media-record.ts',
+    'src/features/media/media-send.ts',
   ])
     assert.ok(dependencyViolation({ from, to: 'src/native/native-object.ts', typeOnly: true }));
+});
+
+test('prepared outbound contracts own only data declarations and their reviewed peer type', () => {
+  const from = 'src/native/prepared-message-contracts.ts';
+  for (const to of [
+    'src/native/native-object.ts',
+    'src/native/native-contracts.ts',
+    'src/runtime/media-contracts.ts',
+  ])
+    for (const typeOnly of [true, false]) assert.ok(dependencyViolation({ from, to, typeOnly }));
+  assert.equal(
+    dependencyViolation({ from, to: 'src/native/message-contracts.ts', typeOnly: true }),
+    undefined,
+  );
+  assert.ok(dependencyViolation({ from, to: 'src/native/message-contracts.ts', typeOnly: false }));
+  const tree = ts.createSourceFile(
+    from,
+    readFileSync(join(projectRoot, from), 'utf8'),
+    ts.ScriptTarget.Latest,
+    true,
+  );
+  for (const statement of tree.statements) {
+    if (ts.isImportDeclaration(statement)) {
+      assert.equal(statement.importClause?.isTypeOnly, true);
+      continue;
+    }
+    assert.ok(ts.isInterfaceDeclaration(statement) || ts.isTypeAliasDeclaration(statement));
+    if (ts.isInterfaceDeclaration(statement)) {
+      assert.equal(
+        statement.heritageClauses,
+        undefined,
+        'Constructed DTOs do not inherit dynamic native objects',
+      );
+      assert.equal(statement.members.some(ts.isIndexSignatureDeclaration), false);
+    }
+  }
 });

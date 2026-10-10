@@ -381,3 +381,47 @@ function verifyAttachmentDownloadPort(port: Parameters<typeof downloadAttachment
   port.downloadRichMedia?.({ ...request, downloadType: '1' });
 }
 void verifyAttachmentDownloadPort;
+
+import type { faceElement } from '../../src/features/messages/face-input.ts';
+import type {
+  createImageElement,
+  createFileElement,
+  createReplyElement,
+} from '../../src/features/messages/outbound-elements.ts';
+import type { PreparedMessageElement } from '../../src/native/prepared-message-contracts.ts';
+function verifyPreparedElementResults(
+  face: ReturnType<typeof faceElement>,
+  image: Awaited<ReturnType<typeof createImageElement>>,
+  file: Awaited<ReturnType<typeof createFileElement>>,
+  reply: Awaited<ReturnType<typeof createReplyElement>>,
+  record: Awaited<ReturnType<typeof createRecordElement>>,
+  video: Awaited<ReturnType<typeof createVideoElement>>,
+) {
+  // @ts-expect-error Locally constructed elements cannot expose native services.
+  face.getBuddyService();
+  // @ts-expect-error A prepared face index is a number, not an unchecked native value.
+  face.faceElement.faceIndex = '14';
+  // @ts-expect-error Prepared image paths retain their verified string type.
+  image.picElement.sourcePath = 42;
+  // @ts-expect-error Ordinary file builders do not select an arbitrary folder.
+  file.fileElement.folderId = 'folder';
+  // @ts-expect-error Reply receipt fields have been validated as strings.
+  reply.replyElement.senderUin = 42;
+  // @ts-expect-error Record builders return measured numeric durations.
+  record.pttElement.duration = '1';
+  // @ts-expect-error Video thumbnails remain a Map, not an untyped path dictionary.
+  video.videoElement.thumbPath[0] = '/tmp/thumbnail';
+  const elements: PreparedMessageElement[] = [face, image, file, reply, record, video];
+  for (const element of elements) {
+    if (element.elementType === 6) {
+      const id: number = element.faceElement.faceIndex;
+      void id;
+    }
+    // @ts-expect-error Variant fields require discriminant narrowing.
+    void element.faceElement.faceIndex;
+  }
+  // @ts-expect-error A face envelope cannot masquerade as an image variant.
+  const mismatched: PreparedMessageElement = { ...face, elementType: 2 };
+  void mismatched;
+}
+void verifyPreparedElementResults;

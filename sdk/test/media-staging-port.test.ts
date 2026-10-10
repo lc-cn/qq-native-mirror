@@ -81,10 +81,16 @@ for (const kind of ['record', 'video'] as const) {
         assert.deepEqual(await readFile(source), bytes);
         assert.deepEqual(await readFile(destination), bytes);
         if (kind === 'video') {
+          assert.ok(result.elementType === 5);
           assert.equal(result.videoElement.filePath, destination);
           assert.equal(result.videoElement.thumbWidth, 1280);
-          assert.deepEqual(await readFile(result.videoElement.thumbPath.get(0)), thumbnail);
-        } else assert.equal(result.pttElement.filePath, destination);
+          const thumbnailPath = result.videoElement.thumbPath.get(0);
+          assert.ok(thumbnailPath);
+          assert.deepEqual(await readFile(thumbnailPath), thumbnail);
+        } else {
+          assert.ok(result.elementType === 4);
+          assert.equal(result.pttElement.filePath, destination);
+        }
         // A typed port does not replace runtime validation of its returned path.
         const malformed = { getRichMediaFilePathForGuild: () => ({ path: destination }) };
         if (kind === 'record')

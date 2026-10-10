@@ -484,6 +484,17 @@ native invocation completion; rejection or close prevents destination publicatio
 and late native failure remains observed. A narrow type does not freeze a dynamic
 getter or replace runtime completion/file validation.
 
+`native/prepared-message-contracts` owns the exact text, image, file, record,
+video, face and reply envelopes constructed by the SDK. Builders return their
+specific variant, and ordinary sender preparation uses their discriminated union.
+These data declarations have no dynamic native-object inheritance or index signature;
+compile-only negative gates use the actual builder return types so widening them
+back to `any` cannot silently pass. Reply fields still use their existing nonempty
+string checks before construction. Video thumbnail lookup remains a typed Map
+lookup, including the possibility that a requested key is absent. This internal
+model does not assert a complete callback ABI: raw received elements and the
+separately prepared forward-card submission path retain their existing boundaries.
+
 The native contract registry stores each measured binary identity once, with an
 explicit list of independently inspected capabilities. Matching requires OS,
 architecture, client version and SHA-256 together; capability predicates never

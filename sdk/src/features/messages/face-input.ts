@@ -1,5 +1,5 @@
 import { qqFaceRows } from './qq-faces.ts';
-import type { NativeObject as Native } from '../../native/native-object.ts';
+import type { PreparedFaceElement } from '../../native/prepared-message-contracts.ts';
 
 const faces = new Map(
   qqFaceRows.map(([id, text, stickerType, packId, stickerId]) => [
@@ -16,7 +16,7 @@ export function validateFaceId(id: unknown): asserts id is number {
  * Animation metadata overrides the classic/extended type only when stickerType
  * is truthy. Zero remains meaningful metadata and must not be dropped.
  */
-export function faceElement(id: unknown): Native {
+export function faceElement(id: unknown): PreparedFaceElement {
   validateFaceId(id);
   const face = faces.get(id)!;
   return {

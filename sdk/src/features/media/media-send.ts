@@ -10,7 +10,7 @@ import { videoThumbnail } from './video-thumbnail.ts';
 
 import type { MediaTools } from '../../runtime/media-contracts.ts';
 export type { MediaTools } from '../../runtime/media-contracts.ts';
-import type { NativeObject as Native } from '../../native/native-object.ts';
+import type { PreparedVideoElement } from '../../native/prepared-message-contracts.ts';
 const execute = promisify(execFile);
 async function md5(file: string): Promise<string> {
   const hash = createHash('md5');
@@ -69,7 +69,7 @@ export async function createVideoElement(
   tools?: MediaTools,
   codec?: VideoCodec,
   signal?: AbortSignal,
-): Promise<Native> {
+): Promise<PreparedVideoElement> {
   alive(signal);
   if (!codec && !tools)
     throw new Error('Video requires configured videoCodecPath or ffmpeg and ffprobe tools');

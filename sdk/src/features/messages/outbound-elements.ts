@@ -5,7 +5,11 @@ import { queryNativeMessage } from './message-query.ts';
 import type { MessageIdQueryPort } from './message-query.ts';
 import type { MediaStagingPort } from '../../runtime/media-contracts.ts';
 import type { NativePeer } from '../../native/message-contracts.ts';
-import type { NativeObject as Native } from '../../native/native-object.ts';
+import type {
+  PreparedImageElement,
+  PreparedFileElement,
+  PreparedReplyElement,
+} from '../../native/prepared-message-contracts.ts';
 
 /** Contract: NapCatQQ native MsgService + OneBot file converter, fixed commit:
  * https://github.com/NapNeko/NapCatQQ/blob/26d7533e0f5800fdff865ab2f2ad7692917e1076/packages/napcat-onebot/api/file.ts#L62-L87
@@ -49,7 +53,7 @@ function dimensions(data: Buffer): { width: number; height: number; gif: boolean
 export async function createImageElement(
   file: string,
   msgService: MediaStagingPort,
-): Promise<Native> {
+): Promise<PreparedImageElement> {
   if (typeof file !== 'string' || !isAbsolute(file))
     throw new Error('Image requires an absolute local file path');
   const info = await stat(file);
@@ -101,7 +105,7 @@ export async function createImageElement(
  * https://github.com/NapNeko/NapCatQQ/blob/26d7533e0f5800fdff865ab2f2ad7692917e1076/packages/napcat-onebot/api/file.ts#L38-L60
  * Passing the local path lets the native send pipeline upload the attachment.
  */
-export async function createFileElement(file: string, name?: string): Promise<Native> {
+export async function createFileElement(file: string, name?: string): Promise<PreparedFileElement> {
   if (typeof file !== 'string' || !isAbsolute(file))
     throw new Error('File requires an absolute local path');
   const info = await stat(file);
@@ -127,7 +131,7 @@ export async function createReplyElement(
   messageId: string,
   peer: NativePeer,
   msgService: MessageIdQueryPort,
-): Promise<Native> {
+): Promise<PreparedReplyElement> {
   const original = await queryNativeMessage(msgService, peer, messageId);
   if (!original) throw new Error('Referenced message was not found in the target conversation');
   for (const field of ['msgSeq', 'msgId', 'senderUin', 'clientSeq']) {
@@ -138,11 +142,11 @@ export async function createReplyElement(
     elementType: 7,
     elementId: '',
     replyElement: {
-      replayMsgSeq: original.msgSeq,
+      replayMsgSeq: original.msgSeq as string,
       replayMsgId: original.msgId,
-      senderUin: original.senderUin,
-      senderUinStr: original.senderUin,
-      replyMsgClientSeq: original.clientSeq,
+      senderUin: original.senderUin as string,
+      senderUinStr: original.senderUin as string,
+      replyMsgClientSeq: original.clientSeq as string,
       _replyMsgPeer: { ...peer },
     },
   };

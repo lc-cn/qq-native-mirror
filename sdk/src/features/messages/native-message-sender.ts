@@ -1,5 +1,6 @@
 import type { NativeObject as Native } from '../../native/native-object.ts';
 import type { NativePeer, NativeMessage } from '../../native/message-contracts.ts';
+import type { PreparedMessageElement } from '../../native/prepared-message-contracts.ts';
 import type {
   MediaTools,
   RecordCodec,
@@ -59,13 +60,16 @@ export function createNativeMessageSender(context: NativeMessageSenderContext) {
     if (!service) throw new Error(`Native service is missing ${method}`);
     return service;
   };
-  const elementsFor = async (input: unknown, peer: NativePeer): Promise<Native[]> => {
+  const elementsFor = async (
+    input: unknown,
+    peer: NativePeer,
+  ): Promise<PreparedMessageElement[]> => {
     alive();
     const elements = typeof input === 'string' ? [{ type: 'text', text: input }] : input;
     if (!Array.isArray(elements) || !elements.length)
       throw new Error('Message must contain elements');
     return Promise.all(
-      elements.map(async (element: Native) => {
+      elements.map(async (element: Native): Promise<PreparedMessageElement> => {
         alive();
         if (element.type === 'text') {
           if (typeof element.text !== 'string') throw new Error('Invalid text element');
