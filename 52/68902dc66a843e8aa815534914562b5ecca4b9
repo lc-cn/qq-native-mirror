@@ -1,0 +1,40 @@
+sdk/src/runtime/account-session-lifecycle.ts
+  s_2104cc474f1ce5::t_2e2ae549afa840 5,129
+sdk/test/source-promise-gates.test.mjs
+  s_2104cc474f1ce5::t_aee73c90478afd 1-30
+  s_2104cc474f1ce5::t_c129d7bb36f06b 31-34
+sdk/docs/architecture/lifecycle.md
+  s_2104cc474f1ce5::t_aee73c90478afd 27-38
+sdk/docs/architecture/quality-gates.md
+  s_2104cc474f1ce5::t_aee73c90478afd 48-54
+sdk/test/helpers/dependency-policy.ts
+  s_2104cc474f1ce5::t_2e2ae549afa840 85
+sdk/src/runtime/worker-task.ts
+  s_2104cc474f1ce5::t_2e2ae549afa840 1-16
+sdk/eslint.config.mjs
+  s_2104cc474f1ce5::t_2e2ae549afa840 40
+sdk/src/kernel.ts
+  s_2104cc474f1ce5::t_2e2ae549afa840 13,273
+sdk/test/worker-background-failure.test.mjs
+  s_2104cc474f1ce5::t_aee73c90478afd 11-12,31-36,76
+  s_2104cc474f1ce5::t_1df35319cb2a30 1-10,13-30,37-75,77-115
+  s_2104cc474f1ce5::t_d1110914eef9c6 116-122
+sdk/src/runtime/authentication-attempt.ts
+  s_2104cc474f1ce5::t_2e2ae549afa840 2,89
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "5268902dc66a843e8aa815534914562b5ecca4b9",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
