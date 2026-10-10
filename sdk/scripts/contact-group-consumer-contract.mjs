@@ -20,6 +20,7 @@ registerHooks({load(url,context,next){
  return {format:'module',shortCircuit:true,source:\`export function createKernel(_native,_options,emit){if(_options.nativeContracts!==undefined)throw Error('Caller-provided native contract reached kernel');return {
   async prepare(){},async close(){},async login(){const account={uin:'123',uid:'u_fixture'};emit('ready',account);emit('friend-added',{uid:'u_fixture_friend',messageId:'9'});return account;},
   async invokeOperation(method,payload){if(method==='addFriendCategory')return {categoryId:8,name:payload.name};if(method==='listGroupMutedMembers')return [];if(method==='getGroupInfo')return {groupId:payload.groupId,name:'fixture',memberCount:0,maxMemberCount:200,ownerUid:'u_fixture',ownerUserId:'123',description:''};if(method==='listFriendCategories')return [{categoryId:1,sortId:0,name:'fixture',memberCount:0,onlineCount:0,friends:[]}];
+   if(method==='getGroupEssencePage'){if(payload.groupId!=='123'||payload.options.pageStart!==17||payload.options.pageLimit!==2)throw Error('Invalid essence page IPC');return {...payload.options,groupId:payload.groupId,messages:[],isEnd:false,groupRole:2};}
    if(method==='setGroupEssenceMessage'){if(payload.groupId!=='123'||payload.messageId!=='9876543210123456789'||typeof payload.enabled!=='boolean')throw Error('Invalid essence IPC intent');return;}
    if(method==='setGroupRemark')return {method,groupId:payload.groupId,remark:payload.remark};throw Error('Unexpected fixture operation');}
  };}\`};
@@ -70,6 +71,15 @@ registerHooks({load(url,context,next){
       groupId: '000123',
       remark: '',
     });
+    assert.deepEqual(await client.getGroupEssencePage('123', { pageStart: 17, pageLimit: 2 }), {
+      groupId: '123',
+      pageStart: 17,
+      pageLimit: 2,
+      messages: [],
+      isEnd: false,
+      groupRole: 2,
+    });
+    await assert.rejects(client.getGroupEssencePage('123', { pageLimit: 51 }), /pageLimit/);
     for (const enabled of [true, false])
       assert.equal(
         await client.setGroupEssenceMessage('123', '9876543210123456789', enabled),
@@ -281,6 +291,52 @@ export async function verifyContactGroupConsumer(packageRoot) {
   } finally {
     compiledServices.close();
   }
+  const { getGroupEssencePage } = await load('features/groups/group-essence-list.js');
+  const pageRequests = [];
+  const page = await getGroupEssencePage(
+    {
+      session: {
+        getTicketService: () => ({
+          forceFetchClientKey: async () => ({ result: 0, clientKey: 'synthetic-installed-ticket' }),
+        }),
+      },
+      accountId: '123',
+      fetchImpl: async (url) => {
+        pageRequests.push(new URL(url));
+        if (pageRequests.length === 1) {
+          const headers = new Headers();
+          headers.append('set-cookie', 'skey=abc; Path=/');
+          headers.append('set-cookie', 'p_skey=synthetic-installed-domain; Path=/');
+          return new Response(null, { headers });
+        }
+        return Response.json({
+          retcode: 0,
+          data: {
+            msg_list: [],
+            is_end: false,
+            group_role: 2,
+            config_page_url: 'synthetic-private',
+          },
+        });
+      },
+    },
+    '123',
+    { pageStart: 17, pageLimit: 2 },
+  );
+  assert.equal(page.isEnd, false);
+  assert.equal(pageRequests.length, 2);
+  assert.equal(pageRequests[1].pathname, '/cgi-bin/group_digest/digest_list');
+  assert.equal(pageRequests[1].searchParams.get('page_start'), '17');
+  assert.equal(JSON.stringify(page).includes('synthetic-'), false);
+  const listCalls = [];
+  await (
+    await prepareCommand('group-essence-list', {
+      'group-id': '123',
+      'page-start': '17',
+      'page-limit': '2',
+    })
+  )({ getGroupEssencePage: async (...args) => listCalls.push(args) });
+  assert.deepEqual(listCalls, [['123', { pageStart: 17, pageLimit: 2 }]]);
   const categoryProfile = {
     platform: 'darwin',
     arch: 'arm64',
@@ -322,6 +378,8 @@ export async function verifyContactGroupConsumer(packageRoot) {
   assert.equal(events.listenerCount('friend-added'), 0);
   return {
     groupEssenceControlledContract: true,
+    groupEssencePageControlledContract: true,
+    realGroupEssenceHttpAttempted: false,
     nativeGroupEssenceMutationAttempted: false,
     friendAddedEventContract: true,
     nativeFriendAddedObserved: false,

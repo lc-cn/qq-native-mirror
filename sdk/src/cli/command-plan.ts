@@ -6,7 +6,10 @@ import { validateFaceId } from '../features/messages/face-input.ts';
 import { normalizeMessageBatchQuery } from '../features/messages/query-input.ts';
 import { captureMergedForward } from '../features/forward/merged-forward-input.ts';
 import { normalizeForwardResourceId } from '../features/forward/forward-resource-wire.ts';
-import { captureGroupEssenceRequest } from '../features/groups/group-essence-input.ts';
+import {
+  captureGroupEssenceRequest,
+  captureGroupEssencePage,
+} from '../features/groups/group-essence-input.ts';
 
 /** Checks command flags before configuration access or native client creation. */
 export function validateCommandFlags(command: string, flags: Record<string, string>): void {
@@ -58,6 +61,7 @@ export function validateCommandFlags(command: string, flags: Record<string, stri
     'group-mute': ['config', 'uin', 'group-id', 'enabled'],
     'member-mute': ['config', 'uin', 'group-id', 'user-id', 'seconds'],
     'member-card': ['config', 'uin', 'group-id', 'user-id', 'card'],
+    'group-essence-list': ['config', 'uin', 'group-id', 'page-start', 'page-limit'],
     'group-notices': ['config', 'uin', 'group-id'],
     'group-notice-publish': [
       'config',
@@ -402,6 +406,24 @@ export async function prepareCommand(
         reason: flags.reason ?? '',
       };
       return (client) => client.kickGroupMember(group, user, options);
+    }
+    case 'group-essence-list': {
+      const group = numeric(flags, 'group-id');
+      const page = (name: string) => {
+        const value = flags[name];
+        if (value === undefined) return undefined;
+        if (!/^\d+$/.test(value)) throw new Error(`--${name} must be a decimal integer`);
+        return Number(value);
+      };
+      const query = captureGroupEssencePage(group, {
+        pageStart: page('page-start'),
+        pageLimit: page('page-limit'),
+      });
+      return (client) =>
+        client.getGroupEssencePage(query.groupId, {
+          pageStart: query.pageStart,
+          pageLimit: query.pageLimit,
+        });
     }
     case 'group-notices': {
       const group = numeric(flags, 'group-id');

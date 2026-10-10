@@ -23,6 +23,7 @@ export const SERVICE_OPERATIONS = Object.freeze([
   'forwardMessages',
   'setGroupName',
   'setGroupEssenceMessage',
+  'getGroupEssencePage',
   'setGroupRemark',
   'setGroupMute',
   'setGroupMemberMute',

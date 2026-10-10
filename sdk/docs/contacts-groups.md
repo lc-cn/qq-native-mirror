@@ -2,12 +2,12 @@
 
 These are working-source additions for the next candidate, not published `0.0.1` features. Six-platform CI run `38014518589` succeeded for revision `7f24062` (categories/remarks/detail event); Revision `b0dee1c` group detail/membership additions also passed six-platform CI `38015512259`; its [bounded artifact audit](evidence/group-query-system-events-ci-38015512259.json) matched 94 compiled files to 47 source files and six native prepare/close receipts. Revision `9deaa56` administrator/mute events and mute-list additions passed CI `38016572108`; its [independent bounded artifact audit](evidence/group-admin-mute-ci-38016572108.json) matched 96 compiled files to 48 committed source files and six prepare/close receipts using 582496 bytes of actual ranges. Revision `8d2da41` category creation passed six-platform CI `38017928237`; its [independent bounded artifact audit](evidence/friend-category-create-ci-38017928237.json) matched 100 compiled files to 50 committed source files and seven manifest-bound receipts using 590577 bytes of actual ranges. The later friend-added source requires its own CI. The [7f CI audit](evidence/contacts-groups-ci-38014518589.json) independently matched the actual main package's 92 compiled files to 46 committed source files and six platform prepare/close receipts, using 571463 bytes of bounded official ranges. It did not re-read six large auxiliary packages or verify the complete ZIP digest. Controlled service/worker and installed-package checks are separate from real account acceptance.
 
-| Area              | Available methods/events                                                                                                                                                   | Remaining work                                                                                             |
-| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| Friends           | Lists/profiles, remarks/deletion, request listing/handling, `request.friend`, `friend-list-updated`, `friend-added`                                                        | Sending applications; independent deleted/profile/remark notices                                           |
-| Friend categories | `listFriendCategories`, `addFriendCategory`; categorized `friend-list-updated` metadata                                                                                    | Delete/rename/reorder categories and move friends; parameters and completion responses need verification   |
-| Group queries     | Lists/members/`getGroupInfo`/`listGroupMutedMembers`, `group-list-updated`, `group-members-updated`, `group-info-updated`, `group-membership`, `group-admin`, `group-mute` | Complete join classification and real event/query acceptance                                               |
-| Group actions     | Name/remark, all/member mute, member card/admin/kick, leave, notices, requests and essence add/remove                                                                      | Create/search/join/invite, member titles, essence listing/events, group files and real mutation acceptance |
+| Area              | Available methods/events                                                                                                                                                   | Remaining work                                                                                                         |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Friends           | Lists/profiles, remarks/deletion, request listing/handling, `request.friend`, `friend-list-updated`, `friend-added`                                                        | Sending applications; independent deleted/profile/remark notices                                                       |
+| Friend categories | `listFriendCategories`, `addFriendCategory`; categorized `friend-list-updated` metadata                                                                                    | Delete/rename/reorder categories and move friends; parameters and completion responses need verification               |
+| Group queries     | Lists/members/`getGroupInfo`/`listGroupMutedMembers`, `group-list-updated`, `group-members-updated`, `group-info-updated`, `group-membership`, `group-admin`, `group-mute` | Complete join classification and real event/query acceptance                                                           |
+| Group actions     | Name/remark, all/member mute, member card/admin/kick, leave, notices, requests and essence add/remove                                                                      | Create/search/join/invite, member titles, complete essence pagination/events, group files and real mutation acceptance |
 
 ## Categorized friends
 
@@ -61,7 +61,7 @@ Fixed upstream OneBot callers treat any fulfilled Promise as success and do not
 validate these layers. Actual Linux ARM64 core inspection also shows a special
 status (`2001002`) normalized to a double-zero response; its business meaning is
 unverified. The SDK does not accept additional nonzero inner statuses or infer
-their meanings. Real permission/effect acceptance, listing and essence events
+their meanings. Real permission/effect acceptance, complete pagination and essence events
 remain required. No group mutation was performed during these controlled checks.
 
 CLI: `qq-native-client group-essence --config ./qq.json --group-id 123456 --message-id 9876543210123456789 --enabled true`.
@@ -136,6 +136,47 @@ The normal message path only enables mute parsing for known mute candidates. Can
 Primary sources: [administrator schema](https://github.com/NapNeko/NapCatQQ/blob/26d7533e0f5800fdff865ab2f2ad7692917e1076/packages/napcat-core/packet/transformer/proto/message/groupAdmin.ts), [gray-tip ban path](https://github.com/NapNeko/NapCatQQ/blob/26d7533e0f5800fdff865ab2f2ad7692917e1076/packages/napcat-onebot/api/group.ts#L39), [seconds field](https://github.com/NapNeko/NapCatQQ/blob/26d7533e0f5800fdff865ab2f2ad7692917e1076/packages/napcat-core/types/msg.ts#L469), [native list DTO](https://github.com/NapNeko/NapCatQQ/blob/26d7533e0f5800fdff865ab2f2ad7692917e1076/packages/napcat-core/types/notify.ts#L50), [list callback pairing](https://github.com/NapNeko/NapCatQQ/blob/26d7533e0f5800fdff865ab2f2ad7692917e1076/packages/napcat-core/apis/group.ts#L108).
 
 [Local evidence](evidence/group-admin-mute-local.json): 641 regressions passed, installed consumer and actual child-worker routes verified with a replacement kernel; 181 regular package files and all 96 compiled files matched before the later docs/evidence append. These are controlled-service/wire checks, with no real account operation or live delivery claim.
+
+## Reading a group essence page
+
+```ts
+const page = await client.getGroupEssencePage('123456', {
+  pageStart: 0,
+  pageLimit: 50,
+});
+console.log(page.isEnd, page.messages);
+```
+
+`pageStart` is a uint32 passed unchanged as HTTP `page_start`; `pageLimit` is
+1..50, default 50. Exactly one page is returned with `isEnd` and `groupRole`.
+The SDK does not infer a next cursor or treat an empty page as a complete list.
+Sequence/random are distinct from kernel message IDs. Sender and operator IDs
+remain decimal strings; operators come only from explicit `add_digest_uin`,
+without lookup or fallback. Content preserves numeric discriminators and the
+source's optional text/image fields; discriminator meanings are not invented.
+
+The worker gets the login ticket through `.node`, exchanges cookies and reads
+QQ's `group_digest/digest_list` endpoint. It shares credential transport with group
+notices. Tickets, cookies, response wording and configuration URLs stay in the
+worker. Nonzero numeric `retcode` is preserved as the error code. Invalid,
+conflicting or duplicate rows reject the whole page. A failed dispatched request
+is neither retried nor switched to another native signature or protocol.
+
+The measured Linux ARM64 native list serializer is complete, but the primary
+`KernelGroupService` vtable entry contains a single return instruction. The actual
+runtime Session vtable has not been observed. Serializer existence cannot prove
+an operational native list path, so this interface uses the fixed HTTP contract.
+Controlled HTTP/worker tests do not establish real account acceptance. Complete
+pagination and add/remove essence events still require evidence; the inspected
+gray-tip event defaults to add without proving removal or operator semantics.
+
+CLI: `qq-native-client group-essence-list --config ./qq.json --group-id 123456 --page-start 0 --page-limit 50`.
+Pagination is validated before configuration access, native initialization or login.
+
+[Fixed HTTP implementation](https://github.com/NapNeko/NapCatQQ/blob/26d7533e0f5800fdff865ab2f2ad7692917e1076/packages/napcat-core/apis/webapi.ts#L74-L94),
+[response declarations](https://github.com/NapNeko/NapCatQQ/blob/26d7533e0f5800fdff865ab2f2ad7692917e1076/packages/napcat-core/types/webapi.ts#L108-L130),
+and [contract evidence](evidence/group-essence-list-contracts.json) bind this reader
+to the inspected sources and binary evidence.
 
 ## Creating an empty friend category
 

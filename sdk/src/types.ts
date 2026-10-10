@@ -155,6 +155,41 @@ export interface GroupAdminEvent {
   memberUid: string;
   enabled: boolean;
 }
+/** Content discriminator values are preserved without assigning unverified meanings. */
+export interface GroupEssenceContent {
+  type: number;
+  text?: string;
+  imageUrl?: string;
+}
+export interface GroupEssenceMessage {
+  groupId: string;
+  /** Sequence/random are not kernel messageId values. */
+  sequence: number;
+  random: number;
+  senderId: string;
+  senderNickname: string;
+  sentAt: number;
+  operatorId: string;
+  operatorNickname: string;
+  setAt: number;
+  content: GroupEssenceContent[];
+  removable: boolean;
+}
+export interface GroupEssencePageOptions {
+  /** Passed unchanged as page_start; a next cursor is not inferred. */
+  pageStart?: number;
+  /** Defaults to 50; accepted range is 1..50. */
+  pageLimit?: number;
+}
+export interface GroupEssencePage {
+  groupId: string;
+  pageStart: number;
+  pageLimit: number;
+  messages: GroupEssenceMessage[];
+  /** Server flag for this page; the API does not claim an atomic full snapshot. */
+  isEnd: boolean;
+  groupRole: number;
+}
 export interface GroupMuteEvent {
   groupId: string;
   scope: 'member' | 'all';

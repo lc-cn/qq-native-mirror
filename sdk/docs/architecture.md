@@ -100,6 +100,12 @@ including its cleanup error, rather than retained as an online Session. Reentran
 readiness during construction cannot allocate a second adapter. Native singleton
 threads still require worker exit: this module does not invent a Session destructor.
 
+`qun-web-read` owns the QQ group HTTP read transport shared by notices and essence
+pages: native ticket acquisition, cookie exchange, redirect validation, timeout,
+abort and cookie hashing. Its named worker context and two fixed read endpoints
+keep transport ownership independent of feature DTO validation. Credentials stay
+local to each request. A feature does not retry or switch protocols after dispatch.
+
 `NativeServiceLifetime` owns the Session's dispatch guard, abort signal, native
 waits and resource ledger. Composition acquires modules in order and registers
 their cleanup with this owner. Close marks the Session inert, aborts waits and

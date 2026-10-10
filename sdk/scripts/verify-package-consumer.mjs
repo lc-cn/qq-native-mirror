@@ -453,6 +453,10 @@ function subscribe(client: QQClient) {
  const createdCategory: Promise<CreatedFriendCategory> = client.addFriendCategory('分组');
  const categories: Promise<FriendCategory[]> = client.listFriendCategories();
  const remark: Promise<void> = client.setGroupRemark('123','');
+ const essencePage = client.getGroupEssencePage('123', { pageStart: 17, pageLimit: 2 });
+ void essencePage.then(page => [page.isEnd, page.messages.map(item=>[item.sequence,item.operatorId,item.content])]);
+ // @ts-expect-error Essence pagination requires numeric values.
+ client.getGroupEssencePage('123', { pageStart: '17' });
  const essence: Promise<void> = client.setGroupEssenceMessage('123','9876543210123456789',true);
  // @ts-expect-error Essence enablement is an explicit boolean.
  client.setGroupEssenceMessage('123','9','true');

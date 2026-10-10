@@ -4,7 +4,10 @@ import { friendCategoryName } from './features/contacts/friend-categories.ts';
 import { captureMergedForward } from './features/forward/merged-forward-input.ts';
 import { normalizeForwardResourceId } from './features/forward/forward-resource-wire.ts';
 import { sendGroupId } from './features/messages/send-input.ts';
-import { captureGroupEssenceRequest } from './features/groups/group-essence-input.ts';
+import {
+  captureGroupEssenceRequest,
+  captureGroupEssencePage,
+} from './features/groups/group-essence-input.ts';
 import { captureDownloadRequest } from './features/media/download-input.ts';
 import {
   normalizeMessageQuery,
@@ -30,6 +33,8 @@ import type {
   Friend,
   FriendCategory,
   CreatedFriendCategory,
+  GroupEssencePage,
+  GroupEssencePageOptions,
   Group,
   GroupMember,
   GroupInfoUpdate,
@@ -301,6 +306,17 @@ export class QQClient extends EventEmitter<ClientEvents> {
   async setSignature(text: string): Promise<void> {
     if (typeof text !== 'string') throw new TypeError('signature text must be a string');
     await this.#operation('setSignature', { text });
+  }
+  /** Read one essence page through QQ HTTP with worker-owned native tickets. */
+  async getGroupEssencePage(
+    groupId: string,
+    options: GroupEssencePageOptions = {},
+  ): Promise<GroupEssencePage> {
+    const query = captureGroupEssencePage(groupId, options);
+    return this.#operation('getGroupEssencePage', {
+      groupId: query.groupId,
+      options: { pageStart: query.pageStart, pageLimit: query.pageLimit },
+    });
   }
   listGroupNotices(groupId: string): Promise<GroupNoticePage> {
     return this.#operation('listGroupNotices', { groupId });

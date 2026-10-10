@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "pinnedSourceCommit": "26d7533e0f5800fdff865ab2f2ad7692917e1076",
+  "source": [
+    {
+      "path": "packages/napcat-core/apis/webapi.ts",
+      "gitBlobSha": "154049699bfd2518ee604c51fbd353f3b0b46534",
+      "sha256": "70e90e48790b86a591784f0e8a685f20404a711f7182677b2cb632171d390298"
+    },
+    {
+      "path": "packages/napcat-core/types/webapi.ts",
+      "gitBlobSha": "4424ce9ec9ce799bdd37fa11836831b6d0c446af",
+      "sha256": "e3e10d76ac2beb0ac1b6915e95b7814dbfe5137c86b1bc2a6963024e79430fa0"
+    }
+  ],
+  "staticProof": [
+    {
+      "platform": "linux-arm64",
+      "proof": "list-contract.json",
+      "sha256": "d782e6ac61d80d7587bce39b7868245fca9ff246f6eacc323ccc5de046399db4"
+    },
+    {
+      "platform": "linux-arm64",
+      "proof": "fetch-core-boundary.json",
+      "sha256": "06c55c478935d8d970c7588460398488f3a0f17232b2f4aac2f3e2f5ef9379c7"
+    },
+    {
+      "platform": "darwin-arm64",
+      "proof": "list-contract.json",
+      "sha256": "5ba55c000a98627e95dd747097c9bd1c7ef1ebfa31b1cd482355a6c7ae005166"
+    }
+  ],
+  "publicReadPath": "QQ group HTTP digest_list with worker-owned native tickets",
+  "readExactlyOnePage": true,
+  "nextCursorArithmeticInferred": false,
+  "realAccountReadAttempted": false,
+  "nativeFetchAttempted": false,
+  "remaining": [
+    "Complete pagination and real account acceptance",
+    "Native fetch runtime vtable identity",
+    "Add/remove essence event and operator contract",
+    "Signing authenticity"
+  ]
+}
