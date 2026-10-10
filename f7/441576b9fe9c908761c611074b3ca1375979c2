@@ -1,0 +1,23 @@
+sdk/docs/architecture/encapsulation.md
+  s_2104cc474f1ce5::t_44b03ba2cc872d 467-469
+sdk/src/features/groups/group-file-pages.ts
+  s_2104cc474f1ce5::t_b041153cdaa08e 189-199,209
+sdk/test/group-file-pages.test.ts
+  s_2104cc474f1ce5::t_b9a41afde2bb9a 288-324
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "f7441576b9fe9c908761c611074b3ca1375979c2",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
