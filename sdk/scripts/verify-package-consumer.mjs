@@ -253,6 +253,7 @@ function subscribe(client: QQClient) {
  client.on('message.recalled', (recall: MessageRecall) => { const fields: string[] = [recall.messageId,recall.sequence,recall.recallTime]; return [recall.peer,fields]; });
  client.on('native-callback', diagnostic => diagnostic.argumentTypes.join(','));
  client.on('kicked', info => info.args.length);
+ client.on('friend-added', notice => [notice.uid,notice.messageId,notice.userId]);
  client.on('friend-list-updated', update => update.categories.map(category => category.friends.map(friend => friend.userId)));
  client.on('request.group', request => request.sequence);
  client.on('group-list-updated', update => update.groups.map(group=>group.groupId));

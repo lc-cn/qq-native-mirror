@@ -67,6 +67,7 @@ export interface ClientEvents {
   'request.friend': [FriendRequest];
   'request.group': [GroupRequest];
   'friend-list-updated': [FriendListUpdate];
+  'friend-added': [FriendAdded];
   'group-list-updated': [GroupListUpdate];
   'group-members-updated': [GroupMemberUpdate];
   'group-info-updated': [GroupInfoUpdate];
@@ -90,6 +91,8 @@ export interface ClientEvents {
 
 export type ClientState = 'idle' | 'connecting' | 'online' | 'disconnected' | 'closing' | 'closed' | 'failed';
 export interface Friend { userId: string; uid: string; nickname: string; remark: string }
+/** Explicit private gray-tip notice; userId is present only when native peerUin supplies it. */
+export interface FriendAdded { uid: string; messageId: string; userId?: string }
 /** System-message metadata; unknown codes stay unknown and operator may be absent. */
 export interface GroupMembershipEvent { groupId: string; direction: 'increase' | 'decrease'; code: number; kind: 'invite' | 'leave' | 'kick' | 'kick-me' | 'disband' | 'unknown'; memberUid?: string; operatorUid?: string }
 export interface GroupAdminEvent { groupId: string; memberUid: string; enabled: boolean }

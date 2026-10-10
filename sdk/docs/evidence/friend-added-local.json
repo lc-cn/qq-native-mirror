@@ -1,0 +1,80 @@
+{
+  "checkedAt": "2026-10-10T03:08:09.490656+00:00",
+  "feature": "friend-added",
+  "regressions": {
+    "passed": 666,
+    "failed": 0,
+    "skipped": 0
+  },
+  "localCandidate": {
+    "packageSha256": "fe17739f5aaa697cba6e1b72496625173f595f170542bb5f0fc4714c7fa51f03",
+    "packageBytes": 428587,
+    "regularFiles": 192,
+    "compiledFiles": 102,
+    "allInstalledRegularFilesMatch": true,
+    "allCompiledMatch": true,
+    "createdBeforeUpdatedPublicDocs": true,
+    "nativeExecuted": false,
+    "accountUsed": false
+  },
+  "installedChecks": [
+    "compiled native-service callback and event projection",
+    "public declaration",
+    "CLI normalized/all output and cleanup",
+    "actual child-worker IPC with replacement kernel"
+  ],
+  "primarySourceCommit": "26d7533e0f5800fdff865ab2f2ad7692917e1076",
+  "primarySourceBlobs": [
+    {
+      "path": "packages/napcat-onebot/api/msg.ts",
+      "gitBlob": "055227c97203b6ccb496dc1de0e6d12ea33acf75",
+      "sha256": "18f2ec2c7d40d028ea7d74cdce62e5f8c0fd0acf074874ea45a6b59c3a7fb9a8"
+    },
+    {
+      "path": "packages/napcat-onebot/index.ts",
+      "gitBlob": "838af29b6b4690bf43d2f5d3e9e0f13fecfe4007",
+      "sha256": "e76d07630379b14ab821657cb21db2f75964e12971eb3c6e60e96a4d5d87d11a"
+    },
+    {
+      "path": "packages/napcat-core/listeners/NodeIKernelMsgListener.ts",
+      "gitBlob": "21c79a211f41f3187608042ad98d72441e995ff1",
+      "sha256": "b775a29002ffa32a55dbb6a13ab1d4c0de14cad8be06ac207e6d2cacf126c149"
+    },
+    {
+      "path": "packages/napcat-core/types/msg.ts",
+      "gitBlob": "8b1278e679f520a5e8a9916adc9fb473dca70c7d",
+      "sha256": "92b05a40339733a22ca0662232041e4c2d0b323d88b47d11b466daf82a2ccf9c"
+    },
+    {
+      "path": "packages/napcat-core/types/element.ts",
+      "gitBlob": "167bd9d2db43a90b542fdc0d77da0cee3bdfbc04",
+      "sha256": "15a45d87963e50458853e417493b90d857660b7471064e6f431dd4b38a9a8281"
+    }
+  ],
+  "independentReviewSha256": "6e9dd2cace027e3b50bb0ec5fee8b0c6c3a289fbe2724b6d510a62762bfe9b0a",
+  "projectionPolicy": {
+    "supportedChatType": 1,
+    "messageType": 5,
+    "firstGrayTipSubtype": 17,
+    "businessIdString": "19324",
+    "exactNumericScalarTolerated": 19324,
+    "publicFields": [
+      "uid",
+      "messageId",
+      "optional native userId"
+    ],
+    "identityLookup": false,
+    "startupTimeFilter": false,
+    "cachedOfflineNoticesAllowed": true,
+    "dedupKey": [
+      "uid",
+      "messageId"
+    ],
+    "dedupBound": 2048,
+    "candidateBatchBound": 4096
+  },
+  "realNativeFriendAddedObserved": false,
+  "accountUsed": false,
+  "newSourceCiVerified": false,
+  "npmPublished": false
+}

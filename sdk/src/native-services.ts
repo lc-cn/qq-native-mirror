@@ -1,5 +1,6 @@
 import { supportsCategoryCreation, type NativeContractProfile } from './native-contracts.ts';
 import { createFriendCategory, friendCategoryName } from './friend-category-create.ts';
+import { createFriendSystemEvents } from './friend-system-events.ts';
 import { captureFriendCategories, projectFriendCategories } from './friend-categories.ts';
 import { nativeResultError } from './errors.ts';
 import {captureMergedForward,sendCapturedMergedForward} from './merged-forward.ts';
@@ -155,11 +156,14 @@ export function createNativeServices(session: Native, version: string, emit: (ev
     listeners.push(target);
   };
   const groupSystemEvents = createGroupSystemEvents(emit);
+  const friendSystemEvents = createFriendSystemEvents(emit);
   listener('Msg', { onRecvSysMsg: groupSystemEvents.onRecvSysMsg,
     onRecvMsg: (messages: NativeMessage[]) => {
       if (closed) return;
       if (!Array.isArray(messages)) { emit('diagnostic', { stage: 'invalid-native-message-batch' }); return; }
       if (groupSystemEvents.hasMuteCandidate(messages)) groupSystemEvents.onRecvMsg(messages);
+      if (closed) return;
+      if (friendSystemEvents.hasAddedCandidate(messages)) friendSystemEvents.onRecvMsg(messages);
       if (closed) return;
       const validMessages: Received[] = [];
       for (const message of Array.from(messages)) {
@@ -550,6 +554,7 @@ export function createNativeServices(session: Native, version: string, emit: (ev
       usedSendIds.clear();
       recallEvents.close();
       groupSystemEvents.close();
+      friendSystemEvents.close();
       selfProfile.close();
       friendRequests.close();
       groupRequests.close();

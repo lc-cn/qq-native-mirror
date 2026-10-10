@@ -47,7 +47,7 @@ function watchEventMode(mode: unknown): 'message' | 'all' | 'normalized' {
 /** Attach business deliveries before login; return exact listener cleanup. */
 export function observeWatchEvents(client: QQClient, mode: unknown = undefined, write: (line: string) => void = console.log): () => void {
   const selected = watchEventMode(mode);
-  const events = selected === 'message' ? ['message'] as const : ['message', selected === 'normalized' ? 'message.recalled' : 'message-recalled', 'request.friend', 'request.group', 'friend-list-updated', 'group-list-updated', 'group-members-updated', 'group-info-updated', 'group-membership', 'group-admin', 'group-mute'] as const;
+  const events = selected === 'message' ? ['message'] as const : ['message', selected === 'normalized' ? 'message.recalled' : 'message-recalled', 'request.friend', 'request.group', 'friend-list-updated', 'friend-added', 'group-list-updated', 'group-members-updated', 'group-info-updated', 'group-membership', 'group-admin', 'group-mute'] as const;
   const listeners = events.map(event => {
     const listener = (payload: unknown) => write(JSON.stringify(selected === 'message' ? payload : { event, payload }));
     client.on(event, listener);

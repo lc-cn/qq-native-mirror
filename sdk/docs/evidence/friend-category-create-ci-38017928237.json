@@ -1,0 +1,92 @@
+{
+  "runId": "38017928237",
+  "sourceCommit": "8d2da4104427ac861e4d2b15edad10a6056a84b2",
+  "attempt": 1,
+  "officialConclusion": "success",
+  "officialArtifactId": 11656839582,
+  "zipDeclaredBytes": 388177714,
+  "actualRangeBytes": 590577,
+  "selectedSmallMemberCount": 11,
+  "main": {
+    "bytes": 500530,
+    "sha256": "7bb634a3055c31e8cdbd930b404b6cec91cd9cd136e0ebd86e16695f07b8090a"
+  },
+  "actualCompiledFilesMatched": 100,
+  "committedFrozenSourceFilesMatched": 50,
+  "sixConsumerReceipts": [
+    {
+      "platform": "linux",
+      "arch": "x64",
+      "node": "v24.20.0",
+      "exports": 98,
+      "prepared": true,
+      "closed": true,
+      "loginAttempted": false,
+      "accountUsed": false,
+      "receiptSha256": "587c95f7eea709932c96c8154465054b730f5a935b4f7c4549ab2589e6e308c5"
+    },
+    {
+      "platform": "linux",
+      "arch": "arm64",
+      "node": "v24.20.0",
+      "exports": 98,
+      "prepared": true,
+      "closed": true,
+      "loginAttempted": false,
+      "accountUsed": false,
+      "receiptSha256": "5a6d56e7dff3719f88dc155d8f0950b1f0c2b0e0d55120efd28f4e8fb96807b3"
+    },
+    {
+      "platform": "darwin",
+      "arch": "x64",
+      "node": "v24.20.0",
+      "exports": 104,
+      "prepared": true,
+      "closed": true,
+      "loginAttempted": false,
+      "accountUsed": false,
+      "receiptSha256": "6b2013a3a98c764a735b0beaad771799c6eaae6491b0c2e22c29bedcf619ed3a"
+    },
+    {
+      "platform": "darwin",
+      "arch": "arm64",
+      "node": "v24.20.0",
+      "exports": 104,
+      "prepared": true,
+      "closed": true,
+      "loginAttempted": false,
+      "accountUsed": false,
+      "receiptSha256": "1dd7d544787f3a1d564be925c53a9d115ac4b7cbbb4d8c476316d0dc3a673c08"
+    },
+    {
+      "platform": "win32",
+      "arch": "x64",
+      "node": "v24.20.0",
+      "exports": 98,
+      "prepared": true,
+      "closed": true,
+      "loginAttempted": false,
+      "accountUsed": false,
+      "receiptSha256": "5c01279fa810f20eb40401be8425639893e7599baf2dec1e342d620a93247d81"
+    },
+    {
+      "platform": "win32",
+      "arch": "arm64",
+      "node": "v24.20.0",
+      "exports": 98,
+      "prepared": true,
+      "closed": true,
+      "loginAttempted": false,
+      "accountUsed": false,
+      "receiptSha256": "feb66b255ed883354214455f9abc36f39303afd09ecbbc01d6c996e74598a7e6"
+    }
+  ],
+  "fullZipDigestVerified": false,
+  "sixAuxiliaryActualBytesVerified": false,
+  "fullSevenPackageGateExecuted": false,
+  "remoteMaterialsArchivesDownloaded": false,
+  "accountUsed": false,
+  "npmPublished": false,
+  "proofTier": "Actual bounded official member bytes, 100 compiled files vs frozen source, manifest-bound seven receipts; six auxiliary hashes remain declared only",
+  "zipCentralDirectoryClosure": 17
+}
