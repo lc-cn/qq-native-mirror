@@ -5,6 +5,19 @@ import test from 'node:test';
 
 const consumer = new URL('./verify-consumer.mjs', import.meta.url);
 const sdk = new URL('../sdk/', import.meta.url);
+const scripts = new URL('../sdk/scripts/', import.meta.url);
+
+function consumerSources(entry, visited = new Set()) {
+  if (visited.has(entry.href)) return [];
+  visited.add(entry.href);
+  const source = readFileSync(entry, 'utf8');
+  const nested = [...source.matchAll(/\bfrom\s+['"]([^'"]+\.mjs)['"]/g)].flatMap(([, path]) => {
+    if (!path.startsWith('.')) return [];
+    const target = new URL(path, entry);
+    return target.href.startsWith(scripts.href) ? consumerSources(target, visited) : [];
+  });
+  return [source, ...nested];
+}
 
 // CI embeds installed-module URLs and rewrites verifier imports. Check those
 // references without loading the addon or acquiring an account directory.
@@ -14,12 +27,12 @@ function missingModules(source) {
   return [...paths].filter((path) => !existsSync(new URL(path, sdk)));
 }
 
-test('native CI consumer references only modules in the clean SDK build', () => {
-  assert.deepEqual(missingModules(readFileSync(consumer, 'utf8')), []);
+test('native CI and its shared consumers reference only modules in the clean SDK build', () => {
+  assert.deepEqual(missingModules(consumerSources(consumer).join('\n')), []);
 });
 
 test('removed installed module fails before native initialization', () => {
-  const source = readFileSync(consumer, 'utf8').replaceAll(
+  const source = consumerSources(consumer).join('\n').replaceAll(
     'dist/features/messages/face-input.js',
     'dist/features/messages/message-elements.js',
   );

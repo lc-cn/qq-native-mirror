@@ -14,6 +14,8 @@ import {verifyMessageBatchConsumer} from '../sdk/scripts/message-batch-consumer-
 import {verifyRecallConsumer} from '../sdk/scripts/recall-consumer-contract.mjs';
 import {verifyMentionConsumer} from '../sdk/scripts/mention-consumer-contract.mjs';
 import {verifySendConsumer} from '../sdk/scripts/send-consumer-contract.mjs';
+import {verifyFaceConsumer} from '../sdk/scripts/face-consumer-contract.mjs';
+import {verifyElementPreparationConsumer} from '../sdk/scripts/element-preparation-consumer-contract.mjs';
 import {verifyReceivedConsumer} from '../sdk/scripts/received-consumer-contract.mjs';
 import {verifyReceivedForwardConsumer} from '../sdk/scripts/received-forward-consumer-contract.mjs';
 import {verifyForwardResourceConsumer} from '../sdk/scripts/forward-resource-consumer-contract.mjs';
@@ -74,6 +76,8 @@ try {
  Object.assign(forwardResourceChecks,{forwardResourceDeclarationsContract:forwardResourceTypeChecks.success,forwardResourceTypeChecks});
  const historyLifecycleChecks=await verifyHistoryLifecycleConsumer(join(temp,'node_modules/qq-native-client'));
  const installedRoot=join(temp,'node_modules/qq-native-client');
+ const faceChecks=await verifyFaceConsumer(installedRoot);
+ const elementPreparationChecks=await verifyElementPreparationConsumer(installedRoot);
  const workerBootstrapChecks=await verifyWorkerBootstrapConsumer(installedRoot);
  const {prepareNative}=await import(pathToFileURL(join(installedRoot,'dist/native/native-package.js')).href);
  const nativeCache=join(temp,'native-cache');
@@ -163,14 +167,6 @@ try {
   return{mergedForwardClientContract:true,mergedForwardServiceContract:true,nativeMergedForwardAttempted:false};
  })();
  const cli=await import(pathToFileURL(join(temp,'node_modules/qq-native-client/dist/cli.js')).href);
- const elements=await import(pathToFileURL(join(temp,'node_modules/qq-native-client/dist/features/messages/face-input.js')).href);
- const mixed=[{type:'text',text:'fixture'},{type:'face',id:14},{type:'face',id:428}];
- assert.deepEqual(cli.normalizeMessage(mixed),mixed);
- assert.deepEqual(elements.faceElement(428),{elementType:6,elementId:'',faceElement:{faceIndex:428,faceType:2,faceText:'/收到',sourceType:1,stickerType:0,packId:'0',stickerId:'0'}});
- assert.throws(()=>cli.normalizeMessage([{type:'face',id:99999}]),/Unsupported QQ face/);
- await writeFile(join(temp,'faces.json'),JSON.stringify(mixed));
- const faceAction=await cli.prepareCommand('send',{kind:'group',target:'123','message-file':join(temp,'faces.json')});
- let faceArgs;await faceAction({sendGroupMessage:async(...args)=>{faceArgs=args;}});assert.deepEqual(faceArgs,['123',mixed]);
  const query=await import(pathToFileURL(join(temp,'node_modules/qq-native-client/dist/features/messages/message-query.js')).href);
  const queryId='900719925474099312345',queryPeer={chatType:1,peerUid:'u_fixture'};
  assert.equal(typeof sdk.QQClient.prototype.getMessage,'function');
@@ -317,5 +313,5 @@ try{assert.deepEqual(await success.invokeOperation('listFriends'),[]);assert.equ
  globalThis.fetch=()=>{throw new Error('Unexpected mirror request with installed platform package');};
  client=await sdk.createClient({dataDir:join(temp,'unused-account'),cacheDir:nativeCache,autoReconnect:false,timeoutMs:30000});
  const exports=client.nativeExports.length;if(exports<80)throw new Error('Unexpected native export inventory');await client.close();if(client.state!=='closed')throw new Error('Client did not close');
- await writeFile('out/consumer.json',JSON.stringify({platform:process.platform,arch:process.arch,node:process.version,exports,installedNativeStorage,workerBootstrapChecks,contactGroupChecks,actionPortChecks,profileRequestChecks,groupRequestChecks,groupNoticeChecks,groupWebChecks,groupSearchChecks,...messageBatchChecks,...forwardChecks,...recallChecks,...mentionChecks,...sendChecks,...receivedChecks,...receivedForwardChecks,...forwardResourceChecks,...historyLifecycleChecks,...videoChecks,...mergedForwardChecks,automaticVideoCodec:installedVideo!==undefined,installedVideoDecoder:installedVideo?.passed===true,installedVideoFakeCache:installedVideo?.sdkFakeCache===true,installedVideo,installedMainOnly:true,automaticPlatformSelection:true,tarballRequests,faceContract:true,faceDeliveryAttempted:false,messageQueryContract:true,historyQueryContract:true,nativeHistoryQueryAttempted:false,nativeMessageQueryAttempted:false,selfProfileContract:true,profileMutationAttempted:false,groupOperationContract:true,groupMutationAttempted:false,groupMemberQueryContract:true,groupMemberIdentityContract:true,nativeGroupMemberQueryAttempted:false,groupMetadataEventContract:true,businessWatchContract:true,nativeGroupMetadataObserved:false,friendMetadataEventContract:true,nativeFriendMetadataObserved:false,friendListQueryContract:true,friendListBatchContract:true,friendProfileQueryContract:true,groupListQueryContract:true,nativeGroupListQueryAttempted:false,nativeFriendListQueryAttempted:false,prepared:true,closed:true,loginAttempted:false,registry:'isolated local fixture serving actual CI tarballs'},null,2));console.log(await readFile('out/consumer.json','utf8'));
+ await writeFile('out/consumer.json',JSON.stringify({platform:process.platform,arch:process.arch,node:process.version,exports,installedNativeStorage,workerBootstrapChecks,contactGroupChecks,actionPortChecks,profileRequestChecks,groupRequestChecks,groupNoticeChecks,groupWebChecks,groupSearchChecks,...messageBatchChecks,...forwardChecks,...recallChecks,...mentionChecks,...sendChecks,...receivedChecks,...receivedForwardChecks,...forwardResourceChecks,...historyLifecycleChecks,...videoChecks,...mergedForwardChecks,automaticVideoCodec:installedVideo!==undefined,installedVideoDecoder:installedVideo?.passed===true,installedVideoFakeCache:installedVideo?.sdkFakeCache===true,installedVideo,installedMainOnly:true,automaticPlatformSelection:true,tarballRequests,...faceChecks,...elementPreparationChecks,messageQueryContract:true,historyQueryContract:true,nativeHistoryQueryAttempted:false,nativeMessageQueryAttempted:false,selfProfileContract:true,profileMutationAttempted:false,groupOperationContract:true,groupMutationAttempted:false,groupMemberQueryContract:true,groupMemberIdentityContract:true,nativeGroupMemberQueryAttempted:false,groupMetadataEventContract:true,businessWatchContract:true,nativeGroupMetadataObserved:false,friendMetadataEventContract:true,nativeFriendMetadataObserved:false,friendListQueryContract:true,friendListBatchContract:true,friendProfileQueryContract:true,groupListQueryContract:true,nativeGroupListQueryAttempted:false,nativeFriendListQueryAttempted:false,prepared:true,closed:true,loginAttempted:false,registry:'isolated local fixture serving actual CI tarballs'},null,2));console.log(await readFile('out/consumer.json','utf8'));
 }finally{await client?.close();server.closeAllConnections();await new Promise(done=>server.close(done));await rm(temp,{recursive:true,force:true});}

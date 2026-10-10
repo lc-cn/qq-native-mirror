@@ -7,6 +7,7 @@ import { verifyForwardConsumer } from './forward-consumer-contract.mjs';
 import { verifyRecallConsumer } from './recall-consumer-contract.mjs';
 import { verifyMentionConsumer } from './mention-consumer-contract.mjs';
 import { verifySendConsumer } from './send-consumer-contract.mjs';
+import { verifyFaceConsumer } from './face-consumer-contract.mjs';
 import { verifyElementPreparationConsumer } from './element-preparation-consumer-contract.mjs';
 import { verifyReceivedConsumer } from './received-consumer-contract.mjs';
 import { verifyVideoConsumerContract } from './video-consumer-contract.mjs';
@@ -168,29 +169,7 @@ const forwardResourceTypeChecks = await verifyForwardResourceTypes(
 const receivedForwardChecks = await verifyReceivedForwardConsumer(
   join(destination, 'node_modules/qq-native-client'),
 );
-await writeFile(
-  join(destination, 'faces.mjs'),
-  `import assert from 'node:assert/strict';
-import {normalizeMessage, prepareCommand} from './node_modules/qq-native-client/dist/cli.js';
-import {faceElement} from './node_modules/qq-native-client/dist/features/messages/face-input.js';
-const mixed=[{type:'text',text:'hello'},{type:'face',id:14},{type:'face',id:333}];
-assert.deepEqual(normalizeMessage(mixed),mixed);
-assert.deepEqual(faceElement(428),{elementType:6,elementId:'',faceElement:{faceIndex:428,faceType:2,faceText:'/收到',sourceType:1,stickerType:0,packId:'0',stickerId:'0'}});
-assert.throws(()=>normalizeMessage([{type:'face',id:99999}]),/Unsupported QQ face/);
-const action=await prepareCommand('send',{kind:'group',target:'123','message-file':'faces.json'});
-let received; await action({sendGroupMessage:async(...args)=>{received=args;}});
-assert.deepEqual(received,['123',mixed]);
-`,
-);
-await writeFile(
-  join(destination, 'faces.json'),
-  JSON.stringify([
-    { type: 'text', text: 'hello' },
-    { type: 'face', id: 14 },
-    { type: 'face', id: 333 },
-  ]),
-);
-run(process.execPath, ['faces.mjs']);
+const faceChecks = await verifyFaceConsumer(join(destination, 'node_modules/qq-native-client'));
 const profileRequestChecks = await verifyProfileRequestConsumer(
   join(destination, 'node_modules/qq-native-client'),
 );
@@ -575,7 +554,7 @@ const receipt = {
     installedImport: true,
     cliHelp: true,
     cliDefaultConfig: true,
-    faceContract: true,
+    ...faceChecks,
     messageQueryContract: true,
     historyQueryContract: true,
     nativeHistoryQueryAttempted: false,
