@@ -461,6 +461,27 @@ retained. Staging cleanup is attempted once. When both the operation and cleanup
 fail, an `AggregateError` preserves both original values through the shared pure
 cleanup helper. This exact dependency permits no account/runtime composition.
 
+`features/messages/recall-operation` owns recall intent through
+`createMessageRecalls`. The public facade and worker owner use the same pure
+`recall-input` capture: peer fields are own data properties and message IDs remain
+exact numeric strings. Invalid input rejects before IPC or native acquisition;
+getters and string coercion cannot replace a validated target during UID resolution.
+Composition delegates raw operation payloads to this owner.
+
+The recall owner combines local and account cancellation. UID waits use the
+injected cancellable wait; closing this owner leaves the shared callback channel
+and sibling operations alive. Native service/method acquisition is lazy, captured
+once and preserves the receiver. A native recall is dispatched at most once.
+Completion requires both an explicit numeric-zero native ACK and a callback for
+the exact native conversation/message with a positive decimal recall timestamp.
+The correlation target is captured separately from the mutable native argument;
+vendor argument mutation cannot acknowledge another conversation.
+An early callback does not replace the native ACK, and malformed/accessor fields
+cannot acknowledge success. Closing after dispatch ends observation while the
+remote effect remains unknown; it cannot cancel a vendor recall or authorize retry.
+Controlled source and installed-package checks establish these SDK boundaries,
+not a new real-account recall or signing-authenticity result.
+
 `native/prepared-message-contracts` owns the exact text, image, file, record,
 video, face and reply envelopes constructed by the SDK. Builders return their
 specific variant, and ordinary sender preparation uses their discriminated union.

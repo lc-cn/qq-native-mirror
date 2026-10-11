@@ -1713,14 +1713,12 @@ test('friend categories close cancels either native query phase before settlemen
   }
 });
 
-test('recall reads the legacy payload message ID only after peer resolution', async () => {
-  const { services, msg, listener } = fixture();
-  let reads = 0;
-  (msg as any).recallMsg = (peer: any, ids: string[]) => {
-    assert.deepEqual(ids, ['42']);
-    listener().onMsgInfoListUpdate([
-      { msgId: '42', chatType: peer.chatType, peerUid: peer.peerUid, recallTime: '101' },
-    ]);
+test('recall rejects accessor payload IDs before resolving or dispatching a mutation', async () => {
+  const { services, msg } = fixture();
+  let reads = 0,
+    calls = 0;
+  (msg as any).recallMsg = () => {
+    calls++;
     return { result: 0 };
   };
   const payload = {
@@ -1731,11 +1729,9 @@ test('recall reads the legacy payload message ID only after peer resolution', as
     },
   };
   try {
-    const pending = services.invokeOperation('recallMessage', payload);
-    void pending.catch(() => {});
-    assert.equal(reads, 0, 'Peer resolution retains the original asynchronous input-read order');
-    await pending;
-    assert.equal(reads, 1);
+    await assert.rejects(services.invokeOperation('recallMessage', payload), /own data/);
+    assert.equal(reads, 0);
+    assert.equal(calls, 0);
   } finally {
     services.close();
   }

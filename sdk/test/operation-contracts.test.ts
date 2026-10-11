@@ -42,10 +42,7 @@ test('actual internal dispatch links every command to its payload and result wit
       "this.#operation('setGroupMute', { groupId, enabled })",
       "this.#operation('setGroupMute', { groupId, enabled: 'yes' })",
     ],
-    [
-      "this.#operation('recallMessage', { peer, messageId })",
-      "this.#operation('recallMessage', { peer })",
-    ],
+    ['captureRecallRequest(peer, messageId)', '{ peer }'],
     ["this.#operation('listFriends')", "this.#operation('listFriends', { groupId: '123' })"],
     [
       "this.#operation('setGroupMute', { groupId, enabled })",

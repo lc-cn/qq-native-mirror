@@ -1,85 +1,154 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { recallMessage } from '../src/features/messages/recall-operation.ts';
-import { createNativeEventChannel } from '../src/runtime/native-event-channel.ts';
+import {
+  createMessageRecalls,
+  type RecallMessagePort,
+} from '../src/features/messages/recall-operation.ts';
 import type { NativePeer } from '../src/native/message-contracts.ts';
-
-const peer: NativePeer = { chatType: 2, peerUid: '123' };
-const update = { chatType: 2, peerUid: '123', msgId: '42', recallTime: '101' };
+import { createNativeEventChannel } from '../src/runtime/native-event-channel.ts';
+import { NativeServiceLifetime } from '../src/runtime/native-service-lifetime.ts';
 const tick = () => new Promise<void>((resolve) => setImmediate(resolve));
-
-test('recall keeps peer resolution before ID coercion and acquires only its message port', async () => {
-  const events = createNativeEventChannel(new AbortController().signal);
-  const order: string[] = [];
-  const service = {
-    recallMsg(selected: NativePeer, ids: string[]) {
-      assert.equal(this, service);
-      assert.equal(selected, peer);
-      assert.deepEqual(ids, ['42']);
-      order.push('recall');
-      events.dispatch('Msg/onMsgInfoListUpdate', [[update]]);
-      return { result: 0 };
+const peer = { chatType: 2 as const, peerUid: '123' };
+const update = { ...peer, msgId: '42', recallTime: '101' };
+function fixture(service: RecallMessagePort, resolvePeer = async () => peer) {
+  const lifetime = new NativeServiceLifetime();
+  const channel = createNativeEventChannel(lifetime.signal);
+  let acquisitions = 0;
+  const owner = createMessageRecalls({
+    signal: lifetime.signal,
+    awaitAlive: lifetime.awaitAlive,
+    resolvePeer,
+    getMessageService() {
+      acquisitions++;
+      return service;
+    },
+    eventCall: channel.call,
+  });
+  return {
+    owner,
+    channel,
+    lifetime,
+    get acquisitions() {
+      return acquisitions;
+    },
+    close() {
+      owner.close();
+      channel.close();
+      lifetime.close();
     },
   };
+}
+test('whole input snapshot precedes pending UID, single method capture preserves receiver', async () => {
+  let finish!: (value: typeof peer) => void;
+  let reads = 0;
+  let calls = 0;
+  const service: RecallMessagePort = {
+    get recallMsg() {
+      reads++;
+      return function (this: RecallMessagePort, selected: NativePeer, ids: string[]) {
+        assert.equal(this, service);
+        assert.deepEqual(selected, peer);
+        assert.deepEqual(ids, ['42']);
+        calls++;
+        f.channel.dispatch('Msg/onMsgInfoListUpdate', [[update]]);
+        return { result: 0 };
+      };
+    },
+  };
+  const f = fixture(
+    service,
+    () =>
+      new Promise((resolve) => {
+        finish = resolve;
+      }),
+  );
   try {
-    const result = await recallMessage(
-      {
-        async resolvePeer(input) {
-          assert.equal(input, 'legacy peer');
-          order.push('resolve');
-          await tick();
-          order.push('resolved');
-          return peer;
-        },
-        getMessageService() {
-          order.push('acquire');
-          return service;
-        },
-        eventCall: events.call,
-      },
-      'legacy peer',
-      () => {
-        order.push('read');
-        return {
-          toString() {
-            order.push('coerce');
-            return '42';
-          },
-        };
-      },
-    );
-    assert.equal(result, undefined);
-    assert.deepEqual(order, ['resolve', 'resolved', 'read', 'coerce', 'acquire', 'recall']);
+    const payload = { peer: { type: 'group', groupId: '123' }, messageId: '42' };
+    const p = f.owner.recall(payload);
+    payload.messageId = '99';
+    finish(peer);
+    await p;
+    assert.equal(reads, 1);
+    assert.equal(calls, 1);
   } finally {
-    events.close();
+    f.close();
   }
 });
-
-test('an early matching callback waits for native completion and native rejection wins', async () => {
-  const events = createNativeEventChannel(new AbortController().signal);
-  let reject!: (error: Error) => void;
-  let calls = 0;
-  let settled = false;
-  const failure = new Error('controlled invocation failure');
+test('invalid input preflight and closed owner never acquire', async () => {
+  const f = fixture({});
   try {
-    const pending = recallMessage(
-      {
-        resolvePeer: async () => peer,
-        getMessageService: () => ({
-          recallMsg() {
-            calls++;
-            events.dispatch('Msg/onMsgInfoListUpdate', [[update]]);
-            return new Promise((_resolve, fail) => {
-              reject = fail;
-            });
-          },
-        }),
-        eventCall: events.call,
-      },
-      peer,
-      () => '42',
+    await assert.rejects(
+      f.owner.recall({ peer: { type: 'group', groupId: '123' }, messageId: 42 }),
     );
-    void pending.then(
+    f.owner.close();
+    await assert.rejects(
+      f.owner.recall({ peer: { type: 'group', groupId: '123' }, messageId: '42' }),
+      /closed/,
+    );
+    assert.equal(f.acquisitions, 0);
+  } finally {
+    f.close();
+  }
+});
+test('local close immediately cancels pending UID and observes late rejection', async () => {
+  let reject!: (value: unknown) => void;
+  const f = fixture(
+    {},
+    () =>
+      new Promise((_r, j) => {
+        reject = j;
+      }),
+  );
+  try {
+    const p = f.owner.recall({ peer: { type: 'group', groupId: '123' }, messageId: '42' });
+    const check = assert.rejects(p, /closed/);
+    f.owner.close();
+    await check;
+    reject(Error('late UID'));
+    await tick();
+    assert.equal(f.acquisitions, 0);
+  } finally {
+    f.close();
+  }
+});
+test('getter closing owner prevents dispatch', async () => {
+  let reads = 0,
+    calls = 0;
+  const f = fixture({
+    get recallMsg() {
+      reads++;
+      f.owner.close();
+      return () => {
+        calls++;
+      };
+    },
+  });
+  try {
+    await assert.rejects(
+      f.owner.recall({ peer: { type: 'group', groupId: '123' }, messageId: '42' }),
+      /closed/,
+    );
+    assert.equal(reads, 1);
+    assert.equal(calls, 0);
+  } finally {
+    f.close();
+  }
+});
+test('early callback waits ACK; native failure identity wins', async () => {
+  let reject!: (value: unknown) => void;
+  let settled = false;
+  const failure = Error('native');
+  const f = fixture({
+    recallMsg() {
+      f.channel.dispatch('Msg/onMsgInfoListUpdate', [[update]]);
+      return new Promise((_r, j) => {
+        reject = j;
+      });
+    },
+  });
+  try {
+    const p = f.owner.recall({ peer: { type: 'group', groupId: '123' }, messageId: '42' });
+    p.then(
       () => {
         settled = true;
       },
@@ -87,72 +156,221 @@ test('an early matching callback waits for native completion and native rejectio
     );
     await tick();
     assert.equal(settled, false);
-    const assertion = assert.rejects(pending, (error) => error === failure);
+    const check = assert.rejects(p, (e) => e === failure);
     reject(failure);
-    await assertion;
+    await check;
+  } finally {
+    f.close();
+  }
+});
+test('malformed recall times/accessors cannot complete; valid callback does', async () => {
+  let reads = 0;
+  const f = fixture({
+    recallMsg() {
+      return { result: 0 };
+    },
+  });
+  try {
+    const p = f.owner.recall({ peer: { type: 'group', groupId: '123' }, messageId: '42' });
+    await tick();
+    for (const time of ['00', false, 101])
+      f.channel.dispatch('Msg/onMsgInfoListUpdate', [[{ ...update, recallTime: time }]]);
+    f.channel.dispatch('Msg/onMsgInfoListUpdate', [
+      [
+        {
+          ...update,
+          get recallTime() {
+            reads++;
+            return '101';
+          },
+        },
+      ],
+    ]);
+    f.channel.dispatch('Msg/onMsgInfoListUpdate', [[update]]);
+    await p;
+    assert.equal(reads, 0);
+  } finally {
+    f.close();
+  }
+});
+test('ACK accessor is not executed and nonzero code remains safe', async () => {
+  for (const result of [
+    Object.defineProperty({}, 'result', {
+      get() {
+        throw Error('sensitive');
+      },
+    }),
+    { result: 7 },
+  ]) {
+    const f = fixture({
+      recallMsg() {
+        return result;
+      },
+    });
+    try {
+      await assert.rejects(
+        f.owner.recall({ peer: { type: 'group', groupId: '123' }, messageId: '42' }),
+        (e) =>
+          e instanceof Error &&
+          'code' in e &&
+          e.code ===
+            (Object.hasOwn(result, 'result') &&
+            Object.getOwnPropertyDescriptor(result, 'result')?.value === 7
+              ? 7
+              : 'invalid-result'),
+      );
+    } finally {
+      f.close();
+    }
+  }
+});
+test('account cancellation and local cancellation preserve sibling channel waits', async () => {
+  let reject!: (value: unknown) => void;
+  const f = fixture(
+    {},
+    () =>
+      new Promise((_resolve, fail) => {
+        reject = fail;
+      }),
+  );
+  try {
+    const pending = f.owner.recall({ peer: { type: 'group', groupId: '123' }, messageId: '42' });
+    const check = assert.rejects(pending);
+    const sibling = f.channel.call(
+      'Other',
+      (value: number) => value === 1 || undefined,
+      () => ({ result: 0 }),
+    );
+    f.owner.close();
+    await check;
+    f.channel.dispatch('Other', [1]);
+    await sibling;
+    reject(Error('late'));
+    await tick();
+    assert.equal(f.acquisitions, 0);
+  } finally {
+    f.close();
+  }
+  const account = fixture({}, () => new Promise(() => {}));
+  const pending = account.owner.recall({
+    peer: { type: 'group', groupId: '123' },
+    messageId: '42',
+  });
+  const check = assert.rejects(pending);
+  account.lifetime.close();
+  await check;
+  assert.equal(account.acquisitions, 0);
+  account.close();
+});
+test('native peer and ACK malformed structures cannot acquire or succeed', async () => {
+  for (const resolved of [
+    { chatType: 1, peerUid: '123' },
+    { chatType: 2, peerUid: ' ' },
+    {
+      get chatType() {
+        throw Error('getter');
+      },
+      peerUid: '123',
+    },
+  ]) {
+    const f = fixture({}, async () => resolved as typeof peer);
+    try {
+      await assert.rejects(
+        f.owner.recall({ peer: { type: 'group', groupId: '123' }, messageId: '42' }),
+      );
+      assert.equal(f.acquisitions, 0);
+    } finally {
+      f.close();
+    }
+  }
+  const f = fixture({
+    recallMsg() {
+      return Object.assign([], { result: 0 });
+    },
+  });
+  try {
+    await assert.rejects(
+      f.owner.recall({ peer: { type: 'group', groupId: '123' }, messageId: '42' }),
+      /Native operation rejected/,
+    );
+  } finally {
+    f.close();
+  }
+});
+test('closing pending native recall observes late failure without retry', async () => {
+  let reject!: (value: unknown) => void;
+  let calls = 0;
+  const f = fixture({
+    recallMsg() {
+      calls++;
+      return new Promise((_resolve, fail) => {
+        reject = fail;
+      });
+    },
+  });
+  try {
+    const pending = f.owner.recall({ peer: { type: 'group', groupId: '123' }, messageId: '42' });
+    const check = assert.rejects(pending, /closed/);
+    await tick();
+    f.owner.close();
+    await check;
+    reject(Error('late native failure'));
+    f.channel.dispatch('Msg/onMsgInfoListUpdate', [[update]]);
+    await tick();
     assert.equal(calls, 1);
   } finally {
-    events.close();
+    f.close();
   }
 });
-
-test('abort during peer resolution prevents acquiring or dispatching a recall', async () => {
-  const controller = new AbortController();
-  const events = createNativeEventChannel(controller.signal);
-  let finish!: (value: NativePeer) => void;
-  let acquired = 0;
-  try {
-    const pending = recallMessage(
-      {
-        resolvePeer: () =>
-          new Promise<NativePeer>((resolve) => {
-            finish = resolve;
-          }),
-        getMessageService: () => {
-          acquired++;
-          throw new Error('unexpected acquisition');
-        },
-        eventCall: events.call,
-      },
-      peer,
-      () => '42',
-    );
-    const assertion = assert.rejects(pending, (error) => error === controller.signal.reason);
-    controller.abort();
-    finish(peer);
-    await assertion;
-    assert.equal(acquired, 0);
-  } finally {
-    events.close();
-  }
-});
-
-test('closing a recall observes late rejection without replaying its native invocation', async () => {
-  const events = createNativeEventChannel(new AbortController().signal);
-  let reject!: (error: Error) => void;
-  let calls = 0;
-  const pending = recallMessage(
-    {
-      resolvePeer: async () => peer,
-      getMessageService: () => ({
-        recallMsg() {
-          calls++;
-          return new Promise((_resolve, fail) => {
-            reject = fail;
-          });
-        },
-      }),
-      eventCall: events.call,
+test('callback array length is captured without property getter execution', async () => {
+  let reads = 0;
+  const rows = new Proxy([update], {
+    get(target, key, receiver) {
+      if (key === 'length') {
+        reads++;
+        throw Error('must not read');
+      }
+      return Reflect.get(target, key, receiver);
     },
-    peer,
-    () => '42',
-  );
-  const assertion = assert.rejects(pending, /Client closed during native operation/);
-  await tick();
-  events.close();
-  await assertion;
-  reject(new Error('late controlled rejection'));
-  events.dispatch('Msg/onMsgInfoListUpdate', [[update]]);
-  await tick();
-  assert.equal(calls, 1);
+  });
+  const f = fixture({
+    recallMsg() {
+      return { result: 0 };
+    },
+  });
+  try {
+    const p = f.owner.recall({ peer: { type: 'group', groupId: '123' }, messageId: '42' });
+    await tick();
+    f.channel.dispatch('Msg/onMsgInfoListUpdate', [rows]);
+    await p;
+    assert.equal(reads, 0);
+  } finally {
+    f.close();
+  }
+});
+test('native peer mutation cannot change the captured conversation correlation', async () => {
+  let settled = false;
+  const f = fixture({
+    recallMsg(selected) {
+      selected.peerUid = '999';
+      f.channel.dispatch('Msg/onMsgInfoListUpdate', [[{ ...update, peerUid: '999' }]]);
+      return { result: 0 };
+    },
+  });
+  try {
+    const pending = f.owner.recall({ peer: { type: 'group', groupId: '123' }, messageId: '42' });
+    pending.then(
+      () => {
+        settled = true;
+      },
+      () => {},
+    );
+    await tick();
+    assert.equal(settled, false);
+    f.channel.dispatch('Msg/onMsgInfoListUpdate', [[update]]);
+    await pending;
+    assert.equal(settled, true);
+  } finally {
+    f.close();
+  }
 });

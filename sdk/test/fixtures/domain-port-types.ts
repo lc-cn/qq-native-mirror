@@ -272,11 +272,14 @@ function verifyRecallPort(context: RecallContext) {
   // @ts-expect-error Recall cannot acquire arbitrary native services.
   context.service('Buddy');
   const service = context.getMessageService();
+  if (!service) throw new Error('Compile-only recall port fixture');
   // @ts-expect-error Recall does not own message submission or a second listener.
   service.sendMsg({}, [], '');
   // @ts-expect-error Recall cannot register an independent Session listener.
   service.addKernelMsgListener({});
-  const returned = service.recallMsg({ chatType: 2, peerUid: '123' }, ['42']);
+  const returned = service?.recallMsg?.({ chatType: 2, peerUid: '123' }, ['42']);
+  // @ts-expect-error Recipient waits must carry this recall owner's lifetime.
+  context.awaitAlive(Promise.resolve({ chatType: 2, peerUid: '123' }));
   // @ts-expect-error Native acknowledgement is unknown before validation.
   void returned.result;
 }

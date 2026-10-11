@@ -43,7 +43,7 @@ import { createGroupEvents } from './features/groups/group-events.ts';
 import { createGroupQueries } from './features/groups/group-queries.ts';
 import { createGroupSystemEvents } from './features/groups/group-system-events.ts';
 import { createMessageUpdateEvents } from './features/messages/recall-events.ts';
-import { recallMessage } from './features/messages/recall-operation.ts';
+import { createMessageRecalls } from './features/messages/recall-operation.ts';
 import { createIncomingMessageDelivery } from './features/messages/incoming-message-delivery.ts';
 import { sendGroupId } from './validation/identifiers.ts';
 
@@ -140,6 +140,15 @@ export function createNativeServices(context: NativeServiceContext) {
       resolveMessages: resolvedMessages,
       resolveMessage: resolvedMessage,
     } = messageResolution;
+    const messageRecalls = own(
+      createMessageRecalls({
+        signal: lifetime.signal,
+        resolvePeer,
+        awaitAlive,
+        getMessageService: () => service('Msg'),
+        eventCall,
+      }),
+    );
     const attachmentDownloads = own(
       createAttachmentDownloads({
         signal: lifetime.signal,
@@ -414,20 +423,7 @@ export function createNativeServices(context: NativeServiceContext) {
           case 'downloadAttachment':
             return attachmentDownloads.download(payload, requestSignal);
           case 'recallMessage':
-            return recallMessage(
-              {
-                resolvePeer,
-                eventCall,
-                getMessageService: () => {
-                  const messageService = service('Msg');
-                  return {
-                    recallMsg: (peer, ids) => call(messageService, 'recallMsg', peer, ids),
-                  };
-                },
-              },
-              payload.peer,
-              () => payload.messageId,
-            );
+            return messageRecalls.recall(payload);
           case 'getForwardMessages':
           case 'forwardMessages':
             return forwardMessages.invokeOperation(method, payload);

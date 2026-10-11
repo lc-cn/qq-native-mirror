@@ -120,6 +120,7 @@ const facadeInputs = new Set([
   'src/features/forward/forward-resource-wire.ts',
   'src/features/messages/send-input.ts',
   'src/features/messages/query-input.ts',
+  'src/features/messages/recall-input.ts',
   'src/features/messages/face-input.ts',
   'src/features/media/download-input.ts',
   'src/features/groups/group-essence-input.ts',
@@ -242,6 +243,8 @@ export function dependencyViolation({ from, to, typeOnly }: SourceDependency): s
     return kernelDependencies.has(to) || (typeOnly && to === 'src/native/native-object.ts')
       ? undefined
       : 'Authentication composes its environment and account lifetime, not feature implementations.';
+  if (from === 'src/native-services.ts' && to === 'src/features/messages/recall-input.ts')
+    return 'Recall intent capture and recipient orchestration belong to the recall owner.';
   if (from === 'src/native-services.ts' && to === 'src/features/media/download-input.ts')
     return 'Download input, peer conversion and cancellation belong to the attachment-download owner.';
   if (from === 'src/native-services.ts' && to === 'src/features/messages/send-input.ts')

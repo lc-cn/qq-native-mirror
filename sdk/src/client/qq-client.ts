@@ -28,6 +28,7 @@ import {
   captureGroupEssenceList,
 } from '../features/groups/group-essence-input.ts';
 import { captureDownloadRequest } from '../features/media/download-input.ts';
+import { captureRecallRequest } from '../features/messages/recall-input.ts';
 import {
   normalizeMessageQuery,
   normalizeMessageBatchQuery,
@@ -271,8 +272,8 @@ export class QQClient extends EventEmitter<ClientEvents> {
   ): Promise<SentMergedForward> {
     return this.#operation('sendMergedForward', captureMergedForward(peer, nodes, options));
   }
-  recallMessage(peer: Peer, messageId: string): Promise<void> {
-    return this.#operation('recallMessage', { peer, messageId });
+  async recallMessage(peer: Peer, messageId: string): Promise<void> {
+    return this.#operation('recallMessage', captureRecallRequest(peer, messageId));
   }
   async downloadAttachment(
     peer: Peer,

@@ -852,3 +852,30 @@ test('attachment staging can preserve cleanup failures without acquiring runtime
     undefined,
   );
 });
+
+test('recall composition delegates input capture and recipient orchestration to its domain owner', () => {
+  for (const typeOnly of [false, true]) {
+    assert.ok(
+      dependencyViolation({
+        from: 'src/native-services.ts',
+        to: 'src/features/messages/recall-input.ts',
+        typeOnly,
+      }),
+    );
+    assert.equal(
+      dependencyViolation({
+        from: 'src/native-services.ts',
+        to: 'src/features/messages/recall-operation.ts',
+        typeOnly,
+      }),
+      undefined,
+    );
+    assert.ok(
+      dependencyViolation({
+        from: 'src/features/messages/recall-operation.ts',
+        to: 'src/runtime/native-service-context.ts',
+        typeOnly,
+      }),
+    );
+  }
+});

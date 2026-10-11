@@ -1089,3 +1089,53 @@ for (const method of ['sendPrivateMessage', 'sendGroupMessage'] as const) {
     }
   });
 }
+
+test('public recall captures the exact peer and ID before IPC and rejects malformed input without dispatch', async () => {
+  const worker = new Worker(),
+    client = new QQClient(worker as unknown as ChildProcess, 500);
+  worker.emit('message', { event: 'ready', payload: { uin: '456', uid: 'u_self' } });
+  let getters = 0,
+    coercions = 0;
+  const accessor = {
+    get type() {
+      getters++;
+      return 'group';
+    },
+    groupId: '123',
+  };
+  const coercible = {
+    toString() {
+      coercions++;
+      return '42';
+    },
+  };
+  try {
+    for (const id of [42, undefined, '', '1.5', coercible])
+      await assert.rejects(
+        client.recallMessage({ type: 'group', groupId: '123' }, id as unknown as string),
+      );
+    await assert.rejects(
+      client.recallMessage(accessor as unknown as Parameters<QQClient['recallMessage']>[0], '42'),
+    );
+    assert.equal(getters, 0);
+    assert.equal(coercions, 0);
+    assert.equal(worker.requests.length, 0);
+    const peer = { type: 'group' as const, groupId: '00123' };
+    const pending = client.recallMessage(peer, '00042');
+    peer.groupId = '999';
+    const request = worker.requests.at(-1);
+    assert.deepEqual(
+      { method: request.method, peer: request.peer, messageId: request.messageId },
+      {
+        method: 'recallMessage',
+        peer: { type: 'group', groupId: '00123' },
+        messageId: '00042',
+      },
+    );
+    worker.emit('message', { id: request.id, result: undefined });
+    assert.equal(await pending, undefined);
+    assert.equal(worker.requests.length, 1);
+  } finally {
+    await client.close();
+  }
+});

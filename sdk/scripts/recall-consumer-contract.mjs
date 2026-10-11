@@ -160,9 +160,217 @@ export async function verifyRecallConsumer(packagePath) {
   assert.deepEqual(plain, [{ fixture: true }]);
   unwatch();
   return {
+    ...(await verifyRecallOperationOwner(load)),
     normalizedRecallContract: true,
     messageUpdateIngressInstalledContract: true,
     nativeRecallObserved: false,
     accountUsed: false,
   };
+}
+
+/** Installed request owner and public facade; native callbacks and IPC are fixtures. */
+async function verifyRecallOperationOwner(load) {
+  const { createMessageRecalls } = await load('features/messages/recall-operation.js');
+  const { createNativeEventChannel } = await load('runtime/native-event-channel.js');
+  const { createNativeServices } = await load('native-services.js');
+  const { QQClient } = await load('index.js');
+  const account = new AbortController(),
+    channel = createNativeEventChannel(account.signal);
+  const tick = () => new Promise((resolve) => setImmediate(resolve));
+  const awaitAlive = (value, signal) =>
+    new Promise((resolve, reject) => {
+      const abort = () => reject(signal.reason);
+      Promise.resolve(value).then(
+        (v) => {
+          signal.removeEventListener('abort', abort);
+          resolve(v);
+        },
+        (e) => {
+          signal.removeEventListener('abort', abort);
+          reject(e);
+        },
+      );
+      if (signal.aborted) abort();
+      else signal.addEventListener('abort', abort, { once: true });
+    });
+  let release,
+    uidCalls = 0,
+    acquisitions = 0,
+    dispatches = 0,
+    getters = 0;
+  const owner = createMessageRecalls({
+    signal: account.signal,
+    resolvePeer(peer) {
+      uidCalls++;
+      assert.deepEqual(peer, { type: 'private', userId: '456' });
+      return new Promise((resolve) => {
+        release = resolve;
+      });
+    },
+    awaitAlive,
+    getMessageService() {
+      acquisitions++;
+      return {
+        recallMsg() {
+          dispatches++;
+        },
+      };
+    },
+    eventCall: channel.call,
+  });
+  try {
+    await assert.rejects(
+      owner.recall({
+        peer: { type: 'private', userId: '456' },
+        get messageId() {
+          getters++;
+          return '42';
+        },
+      }),
+    );
+    assert.equal(getters, 0);
+    assert.equal(uidCalls, 0);
+    const other = channel.call(
+      'fixture/other',
+      (value) => value,
+      () => ({ result: 0 }),
+      1000,
+    );
+    const payload = { peer: { type: 'private', userId: '456' }, messageId: '42' },
+      pending = owner.recall(payload),
+      rejected = assert.rejects(pending, /closed|abort/i);
+    owner.close();
+    let timer;
+    try {
+      await Promise.race([
+        rejected,
+        new Promise((_, reject) => {
+          timer = setTimeout(() => reject(Error('Recall owner close stalled')), 1000);
+        }),
+      ]);
+    } finally {
+      clearTimeout(timer);
+    }
+    release({ chatType: 1, peerUid: 'u_456' });
+    await tick();
+    assert.equal(acquisitions, 0);
+    assert.equal(dispatches, 0);
+    assert.equal(account.signal.aborted, false);
+    channel.dispatch('fixture/other', ['available']);
+    assert.equal(await other, 'available');
+  } finally {
+    owner.close();
+    channel.close();
+  }
+  for (const result of [0, 8]) {
+    let listener,
+      finish,
+      calls = 0,
+      lookups = 0;
+    const buddy = { addKernelBuddyListener() {} };
+    const msg = {
+      addKernelMsgListener(value) {
+        listener = value;
+      },
+      recallMsg(peer, ids) {
+        assert.equal(this, msg);
+        calls++;
+        assert.deepEqual(peer, { chatType: 1, peerUid: 'u_456' });
+        assert.deepEqual(ids, ['42']);
+        listener.onMsgInfoListUpdate([
+          { chatType: 1, peerUid: 'u_456', msgId: '42', recallTime: '101' },
+        ]);
+        return { result, credential: 'private fixture' };
+      },
+    };
+    const services = createNativeServices({
+      session: {
+        getMsgService: () => msg,
+        getBuddyService: () => buddy,
+        getGroupService: () => ({ addKernelGroupListener() {} }),
+        getUixConvertService: () => ({
+          getUid(ids) {
+            lookups++;
+            assert.deepEqual(ids, ['456']);
+            return new Promise((resolve) => {
+              finish = resolve;
+            });
+          },
+        }),
+      },
+      version: '7.0.2-53644',
+      events: { emit() {} },
+    });
+    try {
+      const payload = { peer: { type: 'private', userId: '456' }, messageId: '42' };
+      const pending = services.invokeOperation('recallMessage', payload);
+      const checked =
+        result === 0
+          ? pending
+          : assert.rejects(
+              pending,
+              (error) => error.code === 8 && !error.message.includes('private fixture'),
+            );
+      payload.peer.userId = '999';
+      payload.messageId = '99';
+      await tick();
+      finish({ uidInfo: new Map([['456', 'u_456']]) });
+      await checked;
+      assert.equal(calls, 1);
+      assert.equal(lookups, 1);
+    } finally {
+      services.close();
+    }
+  }
+  const worker = new EventEmitter(),
+    requests = [];
+  Object.assign(worker, {
+    connected: true,
+    exitCode: null,
+    send(value, callback) {
+      requests.push(value);
+      callback(null);
+      queueMicrotask(() => worker.emit('message', { id: value.id, result: undefined }));
+    },
+  });
+  const client = new QQClient(worker, 500);
+  try {
+    worker.emit('message', { event: 'ready', payload: { uin: '123', uid: 'fixture' } });
+    for (const action of [
+      () => client.recallMessage({ type: 'group', groupId: '123' }, 'bad'),
+      () =>
+        client.recallMessage(
+          {
+            get type() {
+              getters++;
+              return 'group';
+            },
+            groupId: '123',
+          },
+          '42',
+        ),
+    ])
+      await assert.rejects(Promise.resolve().then(action));
+    assert.equal(requests.length, 0);
+    assert.equal(getters, 0);
+    const peer = { type: 'private', userId: '456' };
+    const pending = client.recallMessage(peer, '42');
+    peer.userId = '999';
+    await pending;
+    assert.deepEqual(requests[0].peer, { type: 'private', userId: '456' });
+    assert.equal(requests[0].messageId, '42');
+    assert.equal(requests[0].method, 'recallMessage');
+    return {
+      recallIntentCaptureContract: true,
+      recallOwnerCloseContract: true,
+      recallOwnerSiblingContract: true,
+      recallCompositionAckContract: true,
+      recallPublicPreflightContract: true,
+      nativeRecallAttempted: false,
+    };
+  } finally {
+    Object.assign(worker, { connected: false, exitCode: 0 });
+    worker.emit('exit', 0, null);
+    await client.close();
+  }
 }
