@@ -1,11 +1,12 @@
 import { nativeResultError } from '../../errors.ts';
 import { createFriendEvents } from './friend-events.ts';
+import { captureFriendRequest, type FriendRequestOperation } from './friend-request-input.ts';
+export type { FriendRequestOperation } from './friend-request-input.ts';
 /** Pinned NapCatQQ 26d7533e0f5800fdff865ab2f2ad7692917e1076:
  * https://github.com/NapNeko/NapCatQQ/blob/26d7533e0f5800fdff865ab2f2ad7692917e1076/packages/napcat-core/types/notify.ts#L136-L160
  * https://github.com/NapNeko/NapCatQQ/blob/26d7533e0f5800fdff865ab2f2ad7692917e1076/packages/napcat-core/apis/friend.ts#L87-L103
  * Buddy service declares getBuddyReq Promise<GeneralCallResult>, approvalFriendRequest Promise<void>.
  */
-export type FriendRequestOperation = 'listFriendRequests' | 'handleFriendRequest';
 export interface NativeFriendRequestDTO {
   uid: string;
   time: string;
@@ -248,20 +249,12 @@ export function createFriendRequests(context: FriendRequestsContext) {
     }
     if (method !== 'handleFriendRequest')
       throw new Error(`Unsupported friend request operation: ${method}`);
-    const capturedRequest = payload.request;
-    if (!capturedRequest || typeof capturedRequest !== 'object' || Array.isArray(capturedRequest))
-      throw new Error('request must be an object');
-    const request = record(capturedRequest)!;
-    const uid = nonempty(request.uid, 'request.uid');
-    const time = nonempty(request.time, 'request.time');
-    if (!/^\d+$/.test(time)) throw new Error('request.time must be a numeric string');
-    const accept = payload.accept;
-    if (typeof accept !== 'boolean') throw new Error('accept must be a boolean');
+    const { request, accept } = captureFriendRequest(payload);
     alive();
     const result = await awaitValue(
       callApproval({
-        friendUid: uid,
-        reqTime: time,
+        friendUid: request.uid,
+        reqTime: request.time,
         accept,
       }),
     );

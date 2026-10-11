@@ -1,3 +1,4 @@
+import { captureFriendRequest } from '../../features/contacts/friend-request-input.ts';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { captureContactOperation } from '../../features/contacts/contact-operation-input.ts';
@@ -53,7 +54,8 @@ export const contactsCommands = {
     prepare(flags) {
       const request = { uid: required(flags, 'uid'), time: numeric(flags, 'time') };
       const accept = bool(flags, 'accept');
-      return (client) => client.handleFriendRequest(request, accept);
+      const input = captureFriendRequest({ request, accept });
+      return (client) => client.handleFriendRequest(input.request, input.accept);
     },
   },
   'friend-remark': {

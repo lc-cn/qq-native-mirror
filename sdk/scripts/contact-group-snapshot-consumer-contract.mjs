@@ -281,6 +281,13 @@ async function verifyPublicOperationInputs(packageRoot) {
       () => Reflect.apply(client.setGroupAdmin, client, ['123', '456', 'invalid']),
       () => Reflect.apply(client.kickGroupMember, client, ['123', '456', { reason: 42 }]),
       () => client.leaveGroup('invalid'),
+      () => client.handleFriendRequest({ uid: 'u_fixture', time: 'invalid' }, true),
+      () => client.listGroupRequests({ before: '' }),
+      () =>
+        Reflect.apply(client.handleGroupRequest, client, [
+          { groupId: '123', sequence: '456', type: 8, doubt: false },
+          true,
+        ]),
     ];
     for (const attempt of invalid) await assert.rejects(async () => attempt());
     assert.equal(worker.requests.length, 0);
@@ -315,6 +322,47 @@ async function verifyPublicOperationInputs(packageRoot) {
     assert.equal(kicked?.groupId, '000123');
     assert.equal(kicked?.userId, '000456');
     assert.deepEqual(kicked?.options, { rejectRejoin: true, reason: ' exact ' });
+    let requestReads = 0;
+    const request = {
+      get uid() {
+        assert.equal(++requestReads, 1);
+        return ' exact ';
+      },
+      time: '0000',
+      get raw() {
+        throw new Error('An approval must not read its event carrier');
+      },
+    };
+    const handling = client.handleFriendRequest(request, false);
+    request.time = 'changed';
+    await handling;
+    const handled = worker.requests.at(-1);
+    assert.equal(handled?.method, 'handleFriendRequest');
+    assert.notEqual(handled?.request, request);
+    assert.deepEqual(handled?.request, { uid: ' exact ', time: '0000' });
+    assert.equal(requestReads, 1);
+    await client.listGroupRequests();
+    assert.deepEqual(worker.requests.at(-1)?.options, { doubt: false, limit: 20 });
+    const approvalFlags = {
+      'group-id': '0000',
+      sequence: '0001',
+      type: '7',
+      accept: 'false',
+      reason: ' exact ',
+    };
+    const handlingPlan = await prepareCommand('group-request', approvalFlags);
+    approvalFlags.reason = 'changed';
+    await handlingPlan(client);
+    const approval = worker.requests.at(-1);
+    assert.equal(approval?.method, 'handleGroupRequest');
+    assert.deepEqual(approval?.request, {
+      groupId: '0000',
+      sequence: '0001',
+      type: 7,
+      doubt: false,
+    });
+    assert.equal(approval?.accept, false);
+    assert.equal(approval?.reason, ' exact ');
   } finally {
     await client.close();
   }
@@ -325,5 +373,9 @@ async function verifyPublicOperationInputs(packageRoot) {
     contactGroupFacadeDetachedOptionsContract: true,
     contactGroupCliCapturedPlanContract: true,
     contactGroupControlledIpcRetired: true,
+    friendGroupRequestFacadePreflightContract: true,
+    friendRequestDetachedIdentityContract: true,
+    groupRequestDefaultCursorContract: true,
+    groupRequestCliCapturedPlanContract: true,
   };
 }

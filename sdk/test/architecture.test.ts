@@ -629,6 +629,8 @@ test('public contract type dependencies have no cycles', () => {
 // This list describes reviewed pure modules, not permitted dependencies of general
 // composition modules. Adding an input helper requires reviewing its runtime closure.
 const pureModules = new Set([
+  'src/features/contacts/friend-request-input.ts',
+  'src/features/groups/group-request-input.ts',
   'src/features/contacts/contact-operation-input.ts',
   'src/features/groups/group-operation-input.ts',
   'src/native/native-manifest.ts',
@@ -653,6 +655,8 @@ const pureModules = new Set([
   'src/features/forward/merged-forward-card.ts',
 ]);
 const pureRoots = [
+  'features/contacts/friend-request-input.ts',
+  'features/groups/group-request-input.ts',
   'features/contacts/contact-operation-input.ts',
   'features/groups/group-operation-input.ts',
   'native/native-manifest.ts',
@@ -901,7 +905,7 @@ test('attachment staging can preserve cleanup failures without acquiring runtime
   );
 });
 
-test('management input owners stay pure while facade and CLI share their captures', () => {
+test('management and request input owners stay pure while facade and CLI share their captures', () => {
   for (const [input, contract, command, operation] of [
     [
       'contacts/contact-operation-input.ts',
@@ -910,6 +914,13 @@ test('management input owners stay pure while facade and CLI share their capture
       'contacts/contact-operations.ts',
     ],
     ['groups/group-operation-input.ts', 'groups.ts', 'groups.ts', 'groups/group-operations.ts'],
+    [
+      'contacts/friend-request-input.ts',
+      'contacts.ts',
+      'contacts.ts',
+      'contacts/friend-requests.ts',
+    ],
+    ['groups/group-request-input.ts', 'groups.ts', 'groups.ts', 'groups/group-requests.ts'],
   ]) {
     const to = `src/features/${input}`;
     assert.equal(

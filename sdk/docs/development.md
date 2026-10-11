@@ -191,6 +191,16 @@ capture and still owns native completion and UID validation. Composition forward
 requests; it cannot import these input modules. Keep their imports limited to
 their own domain data contracts, including type dependencies.
 
+Friend and group request preflight belongs to `friend-request-input.ts` and
+`group-request-input.ts`, shared by the facade, CLI and request execution owners.
+Copy only actionable identity fields rather than the notification's raw carrier.
+A missing list cursor stays absent through IPC, then native execution maps it to
+an empty cursor; an explicitly empty input cursor remains invalid. This makes
+capture idempotent across boundaries. Preserve the existing nullish limit default,
+read order and omitted versus empty approval reason. Capture CLI reasons during
+plan preparation. Listener registration, page serialization, deduplication,
+failed-query quarantine and void acknowledgement semantics stay with execution.
+
 Group query envelopes and rows follow the same capture-before-validation rule.
 Use intrinsic Map operations for native membership maps, and commit the complete
 validated member batch only after checking Session retirement. Keep this policy

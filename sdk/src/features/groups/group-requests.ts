@@ -1,4 +1,6 @@
 import { nativeResultError } from '../../errors.ts';
+import { captureGroupRequestOperation, type GroupRequestOperation } from './group-request-input.ts';
+export type { GroupRequestOperation } from './group-request-input.ts';
 /** Fixed upstream NapCatQQ 26d7533e0f5800fdff865ab2f2ad7692917e1076:
  * https://github.com/NapNeko/NapCatQQ/blob/26d7533e0f5800fdff865ab2f2ad7692917e1076/packages/napcat-core/apis/group.ts#L447-L459
  * https://github.com/NapNeko/NapCatQQ/blob/26d7533e0f5800fdff865ab2f2ad7692917e1076/packages/napcat-core/apis/group.ts#L524-L538
@@ -6,7 +8,6 @@ import { nativeResultError } from '../../errors.ts';
  * 7 join application; status 1 unhandled; operation 1 agree / 2 refuse.
  * Locally retained native service/listener contracts: .local/research/NodeIKernelGroup{Service,Listener}.ts.
  */
-export type GroupRequestOperation = 'listGroupRequests' | 'handleGroupRequest';
 export interface NativeGroupRequest {
   groupId: string;
   sequence: string;
@@ -287,42 +288,16 @@ export function createGroupRequests(context: GroupRequestsContext) {
     payload: Record<string, unknown> = {},
   ): Promise<NativeGroupRequestPage | void> {
     alive();
-    if (method === 'listGroupRequests') {
-      const capturedOptions = payload.options;
-      if (
-        capturedOptions !== undefined &&
-        (!capturedOptions || typeof capturedOptions !== 'object' || Array.isArray(capturedOptions))
-      )
-        throw new Error('options must be an object');
-      const options = (capturedOptions ?? {}) as Record<string, unknown>;
-      const capturedDoubt = options.doubt,
-        capturedBefore = options.before,
-        capturedLimit = options.limit;
-      const doubt = capturedDoubt === undefined ? false : bool(capturedDoubt, 'doubt');
-      const before = capturedBefore === undefined ? '' : numeric(capturedBefore, 'before');
-      const limit = capturedLimit ?? 20;
-      if (typeof limit !== 'number' || !Number.isSafeInteger(limit) || limit < 1 || limit > 100)
-        throw new Error('limit must be an integer between 1 and 100');
-      alive();
-      const page = await list(doubt, before, limit);
+    const captured = captureGroupRequestOperation(method, payload);
+    alive();
+    if (captured.method === 'listGroupRequests') {
+      const { doubt, before, limit } = captured.payload.options;
+      const page = await list(doubt, before ?? '', limit);
       alive();
       return page;
     }
-    if (method !== 'handleGroupRequest')
-      throw new Error(`Unsupported group request operation: ${method}`);
-    const capturedRequest = payload.request;
-    if (!capturedRequest || typeof capturedRequest !== 'object' || Array.isArray(capturedRequest))
-      throw new Error('request must be an object');
-    const request = capturedRequest as Record<string, unknown>;
-    const groupId = numeric(request.groupId, 'request.groupId');
-    const sequence = numeric(request.sequence, 'request.sequence');
-    const type = requestType(request.type);
-    const doubt = bool(request.doubt, 'request.doubt');
-    const accept = bool(payload.accept, 'accept');
-    const reason = payload.reason;
-    if (reason !== undefined && typeof reason !== 'string')
-      throw new Error('reason must be a string');
-    alive();
+    const { request, accept, reason } = captured.payload;
+    const { groupId, sequence, type, doubt } = request;
     const result = await awaitValue(
       callOperation(doubt, {
         operateType: accept ? 1 : 2,

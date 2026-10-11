@@ -77,7 +77,8 @@ The diagrams are navigation aids; the exact permissions live in
 
 The parent facade and CLI import pure input modules (`query-input`,
 `download-input`, `merged-forward-input`, `send-input`, `face-input`, and
-contact-category projection/validation).
+contact-category projection/validation, `friend-request-input` and
+`group-request-input`).
 Native operation modules reuse that implementation and retain internal reexports
 for existing contract consumers. Input capture therefore does not require the
 parent to depend on native querying, media-file writes or forward submission.

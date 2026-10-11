@@ -1,3 +1,4 @@
+import { captureGroupRequestOperation } from '../../features/groups/group-request-input.ts';
 import { resolve } from 'node:path';
 import { captureGroupOperation } from '../../features/groups/group-operation-input.ts';
 import { captureGroupSearch } from '../../features/groups/group-search-input.ts';
@@ -46,7 +47,8 @@ export const groupsCommands = {
         doubt: bool(flags, 'doubt', false),
         ...(flags.before !== undefined ? { before: numeric(flags, 'before') } : {}),
       };
-      return (client) => client.listGroupRequests(options);
+      const input = captureGroupRequestOperation('listGroupRequests', { options }).payload;
+      return (client) => client.listGroupRequests(input.options);
     },
   },
   'group-request': {
@@ -61,7 +63,12 @@ export const groupsCommands = {
         doubt: bool(flags, 'doubt', false),
       };
       const accept = bool(flags, 'accept');
-      return (client) => client.handleGroupRequest(request, accept, flags.reason);
+      const input = captureGroupRequestOperation('handleGroupRequest', {
+        request,
+        accept,
+        reason: flags.reason,
+      }).payload;
+      return (client) => client.handleGroupRequest(input.request, input.accept, input.reason);
     },
   },
   'group-muted': {

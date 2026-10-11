@@ -54,6 +54,7 @@ test('actual internal dispatch links every command to its payload and result wit
       'options: { pageStart: query.pageStart, pageLimit: query.pageLimit },',
       'options: { pageStart: query.pageStart },',
     ],
+    ["captureGroupRequestOperation('listGroupRequests', { options }).payload", '{ options: {} }'],
     [
       "captureContactOperation('deleteFriend', { userId, options }).payload",
       '{ userId, options: {} }',

@@ -1,3 +1,5 @@
+import { captureFriendRequest } from '../features/contacts/friend-request-input.ts';
+import { captureGroupRequestOperation } from '../features/groups/group-request-input.ts';
 import { captureGroupSearch } from '../features/groups/group-search-input.ts';
 import { captureGroupOperation } from '../features/groups/group-operation-input.ts';
 import { captureContactOperation } from '../features/contacts/contact-operation-input.ts';
@@ -307,21 +309,27 @@ export class QQClient extends EventEmitter<ClientEvents> {
   listFriendRequests(): Promise<FriendRequest[]> {
     return this.#operation('listFriendRequests');
   }
-  handleFriendRequest(
+  async handleFriendRequest(
     request: Pick<FriendRequest, 'uid' | 'time'>,
     accept: boolean,
   ): Promise<void> {
-    return this.#operation('handleFriendRequest', { request, accept });
+    return this.#operation('handleFriendRequest', captureFriendRequest({ request, accept }));
   }
-  listGroupRequests(options: GroupRequestOptions = {}): Promise<GroupRequestPage> {
-    return this.#operation('listGroupRequests', { options });
+  async listGroupRequests(options: GroupRequestOptions = {}): Promise<GroupRequestPage> {
+    return this.#operation(
+      'listGroupRequests',
+      captureGroupRequestOperation('listGroupRequests', { options }).payload,
+    );
   }
-  handleGroupRequest(
+  async handleGroupRequest(
     request: Pick<GroupRequest, 'groupId' | 'sequence' | 'type' | 'doubt'>,
     accept: boolean,
     reason?: string,
   ): Promise<void> {
-    return this.#operation('handleGroupRequest', { request, accept, reason });
+    return this.#operation(
+      'handleGroupRequest',
+      captureGroupRequestOperation('handleGroupRequest', { request, accept, reason }).payload,
+    );
   }
   async searchGroup(groupId: string): Promise<GroupSearchMatch | undefined> {
     return this.#operation('searchGroup', { groupId: captureGroupSearch(groupId) });

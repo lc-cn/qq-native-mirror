@@ -176,3 +176,11 @@ orchestrator. No native addon or account is used by these checks.
 See [Development guide](../development.md) for the workflow and module placement rules.
 
 [Architecture overview](../architecture.md) · [Development guide](../development.md)
+
+Friend/group request input gates cover the public facade before controlled IPC,
+nested identity/options snapshots, selected getter reads, throw/close retirement,
+and prepared CLI reason capture. Pure contract tests additionally prove capture
+is idempotent at both boundaries without admitting an explicitly empty cursor.
+The installed consumer repeats request preflight, detached friend identity,
+default cursor options and CLI approval intent checks using installed code and a
+controlled worker; these checks do not perform native approval or account login.

@@ -116,6 +116,8 @@ export const dynamicNativeOwners: Readonly<Record<string, string>> = {
   'src/features/messages/inbound-elements.ts': 'Project opaque received element variants.',
 };
 const facadeInputs = new Set([
+  'src/features/contacts/friend-request-input.ts',
+  'src/features/groups/group-request-input.ts',
   'src/features/contacts/contact-operation-input.ts',
   'src/features/groups/group-operation-input.ts',
   'src/features/contacts/friend-categories.ts',
@@ -167,22 +169,18 @@ export const crossFeatureDependencies = [
 ] as const;
 
 export function dependencyViolation({ from, to, typeOnly }: SourceDependency): string | undefined {
-  const managementInputContract = {
+  const domainInputContracts = {
+    'src/features/contacts/friend-request-input.ts': 'src/contracts/contacts.ts',
+    'src/features/groups/group-request-input.ts': 'src/contracts/groups.ts',
     'src/features/contacts/contact-operation-input.ts': 'src/contracts/contacts.ts',
     'src/features/groups/group-operation-input.ts': 'src/contracts/groups.ts',
   };
-  if (Object.hasOwn(managementInputContract, from))
-    return typeOnly && to === managementInputContract[from as keyof typeof managementInputContract]
+  if (Object.hasOwn(domainInputContracts, from))
+    return typeOnly && to === domainInputContracts[from as keyof typeof domainInputContracts]
       ? undefined
-      : 'Management input modules only reference their domain data contracts; execution and resource dependencies are forbidden.';
-  if (
-    from === 'src/native-services.ts' &&
-    [
-      'src/features/contacts/contact-operation-input.ts',
-      'src/features/groups/group-operation-input.ts',
-    ].includes(to)
-  )
-    return 'Management input capture belongs to its domain owner; composition only routes payloads.';
+      : 'Domain input modules only reference their domain data contracts; execution and resource dependencies are forbidden.';
+  if (from === 'src/native-services.ts' && Object.hasOwn(domainInputContracts, to))
+    return 'Domain input capture belongs to its domain owner; composition only routes payloads.';
   if (from === 'src/native-services.ts' && to === 'src/validation/identifiers.ts')
     return 'Group query input rules belong to the query owner; composition only routes payloads.';
   if (from === 'src/runtime/kernel-method.ts')

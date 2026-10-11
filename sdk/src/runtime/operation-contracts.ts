@@ -104,7 +104,12 @@ export interface ServiceOperationContracts {
     void
   >;
   leaveGroup: Operation<{ groupId: string }, void>;
-  listGroupRequests: Operation<{ options: GroupRequestOptions }, GroupRequestPage>;
+  listGroupRequests: Operation<
+    {
+      options: Required<Omit<GroupRequestOptions, 'before'>> & Pick<GroupRequestOptions, 'before'>;
+    },
+    GroupRequestPage
+  >;
   handleGroupRequest: Operation<
     {
       request: Pick<GroupRequest, 'groupId' | 'sequence' | 'type' | 'doubt'>;
