@@ -1,0 +1,61 @@
+sdk/docs/architecture/encapsulation.md
+  s_2104cc474f1ce5::t_dc8284d12182c8 607-628
+sdk/docs/contacts-groups.md
+  s_2104cc474f1ce5::t_caf23baabfda3a 5-10,83,481-504
+sdk/docs/evidence/friend-category-assignment-contract.json
+  s_2104cc474f1ce5::t_d1b253cfe2436b 1-223
+sdk/scripts/friend-category-mutations-consumer-contract.mjs
+  s_2104cc474f1ce5::t_be1274e1b33905 2,5,14-19,290,310-537
+sdk/src/cli.ts
+  s_2104cc474f1ce5::t_80a221fc853a43 33
+sdk/src/cli/commands/contacts.ts
+  s_2104cc474f1ce5::t_0f7797b779a43e 4,90-98
+sdk/src/client/qq-client.ts
+  s_2104cc474f1ce5::t_ae214542fdc700 13,193-199
+sdk/src/features/contacts/friend-categories.ts
+  s_2104cc474f1ce5::t_14c06d081dfee9 1,155-159
+sdk/src/features/contacts/friend-category-assignment.ts
+  s_2104cc474f1ce5::t_43234c23002610 1-50
+sdk/src/features/contacts/friend-category-completion.ts
+  s_2104cc474f1ce5::t_007687f44b0465 1-64
+sdk/src/features/contacts/friend-category-mutations.ts
+  s_2104cc474f1ce5::t_d881a40cf0b590 9,65-69
+sdk/src/native-services.ts
+  s_2104cc474f1ce5::t_0a235c402e95cc 1,13,122-130,366-367
+sdk/src/native/native-contracts.ts
+  s_2104cc474f1ce5::t_24e227bf324a5f 17,38-39,52,207-213
+sdk/src/runtime/operation-contracts.ts
+  s_2104cc474f1ce5::t_ea3ccba192fac9 68
+sdk/src/runtime/operations.ts
+  s_2104cc474f1ce5::t_bfe35f5d0f0768 11
+sdk/test/architecture.test.ts
+  s_2104cc474f1ce5::t_5c8d70929e03ee 369,774-800
+sdk/test/cli-command-plan.test.ts
+  s_2104cc474f1ce5::t_5628238ed6b2dc 184-209
+sdk/test/fixtures/domain-port-types.ts
+  s_2104cc474f1ce5::t_7f873738de51e6 1,467-479
+sdk/test/friend-category-assignment-profiles.test.ts
+  s_2104cc474f1ce5::t_7f15682a29c7fd 1-48
+sdk/test/friend-category-assignment.test.ts
+  s_2104cc474f1ce5::t_03ffbb2e3671ca 1-246
+sdk/test/helpers/dependency-policy.ts
+  s_2104cc474f1ce5::t_5531f9192a6f9d 171-181,275
+sdk/test/operation-contracts.test.ts
+  s_2104cc474f1ce5::t_857896063bbf7d 39
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e792643b2a96be9438e97b3d542b045918bc1b0b",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
