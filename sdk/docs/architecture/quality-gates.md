@@ -17,15 +17,18 @@ consumer. The package consumer uses fake services and an isolated replacement
 kernel; this command does not log into an account. Codec dependencies are packed
 from npm's populated cache for the offline consumer installation.
 
-`npm run check:native-storage` checks the repository's native storage producer with
+`npm run check:native-storage` checks the repository's native storage producer and consumer verifier with
 the same pinned Prettier and zero-warning ESLint dependencies, then runs its closed
-inventory, platform metadata and asynchronous input ownership regressions. It is
+inventory, platform metadata, asynchronous input ownership and packed SDK identity regressions. It is
 part of `check` and the SDK quality workflow. `tools/check-native-storage.mjs` lists
-the covered producer, planner, tests and gate/configuration files explicitly;
+the covered producer, planner, consumer verifier, tests and gate/configuration files explicitly;
 unrelated historical research tools are not included. These JavaScript build tools
 have formatting and lint coverage, without a claim of TypeScript type checking.
 The platform candidate workflow also runs the same producer regressions before
-building. None of these deterministic tests loads QQ or uses an account.
+building. The consumer verifier shares one packed-module inspection between SDK
+binding and receipt verification; its portable tar fixtures reject obsolete-only
+loader paths and unrelated package identities. None of these deterministic tests
+loads QQ or uses an account.
 
 The npm `pretest` and `preverify:package` hooks first run
 `check:consumer-modules`. This static preflight shares

@@ -1,0 +1,121 @@
+{
+  "schemaVersion": 1,
+  "sourceRelease": {
+    "commit": "85ef15aede7457b8c9f8410557c023e61ad108a8",
+    "runId": "38133938435",
+    "runAttempt": 1,
+    "version": "0.0.2",
+    "releaseManifestSha256": "c8bcb55782299e7113f0f59d229dad25febd5b39e5c4fd62f2ea765b269ef11d"
+  },
+  "originalArchive": {
+    "sha256": "edb6b5a3bf147fb7cffc508372a6511647056b10615aab44d798f9c0d8adf420",
+    "bytes": 388393330,
+    "regularMembers": 17
+  },
+  "mirrorStage": {
+    "tag": "native-npm-v0.0.2-ci-38133938435-attempt-1",
+    "planSha256": "a90851d6ab87d6e179cc3f280b5131bc049e4b8f020fb0f8c37959fc0b49d410",
+    "originalPaths": 2434,
+    "perDeviceObjectCountSum": 738,
+    "globalUniqueAssets": 414,
+    "assetBytes": 377482631,
+    "devices": [
+      {
+        "device": "linux-x64",
+        "paths": 19,
+        "perDeviceObjects": 19,
+        "manifestSha256": "79a2f415dc52caa61ff2b0c496ff5f0ddf6a7ac1c0d3a367ffe3bf2fca9e9d8e",
+        "sameNativeContentExpected": true,
+        "originalBytesCompared": true
+      },
+      {
+        "device": "linux-arm64",
+        "paths": 20,
+        "perDeviceObjects": 20,
+        "manifestSha256": "60594bd8a1f16cd6e612683355965b2a4cae8958b5f2ce108fdab8b7ed5f864d",
+        "sameNativeContentExpected": true,
+        "originalBytesCompared": true
+      },
+      {
+        "device": "darwin-x64",
+        "paths": 1168,
+        "perDeviceObjects": 321,
+        "manifestSha256": "4c10334891bb46029b08f7ba6e43a359e24c30046883288b8a3ca4abc26c28f9",
+        "sameNativeContentExpected": true,
+        "originalBytesCompared": true
+      },
+      {
+        "device": "darwin-arm64",
+        "paths": 1168,
+        "perDeviceObjects": 321,
+        "manifestSha256": "470eb2f247ed14c1ecfe40be4fba01b8a40125cb410ed2080270af594fa8b438",
+        "sameNativeContentExpected": true,
+        "originalBytesCompared": true
+      },
+      {
+        "device": "win32-x64",
+        "paths": 32,
+        "perDeviceObjects": 31,
+        "manifestSha256": "3e16b74bfe57433926ec690a882d6a14485cd22db9bdacefe6671cc5aeb2845b",
+        "sameNativeContentExpected": true,
+        "originalBytesCompared": true
+      },
+      {
+        "device": "win32-arm64",
+        "paths": 27,
+        "perDeviceObjects": 26,
+        "manifestSha256": "f0500db53ef27be79317760bf0ac36a23add65e9213744795ddc528ee2f918b3",
+        "sameNativeContentExpected": true,
+        "originalBytesCompared": true
+      }
+    ]
+  },
+  "verification": {
+    "prepareActualExit": 0,
+    "verifyActualExit": 0,
+    "permanentVideoMaterialsCheckedOnline": true,
+    "everyCompressedAndRestoredAssetHashVerified": true,
+    "everyOriginalPathComparedWithSameCohortNpmCandidate": true,
+    "sdkContentComparisonFieldsEqual": true,
+    "platformRuntimeExecuted": false
+  },
+  "consumerBindingRepair": {
+    "canonicalPath": "package/dist/native/native-installed-storage.js",
+    "sdkSourceHead": "14919dfdfde901216f837857da022b22a0fd808f",
+    "mainArchive": {
+      "sha256": "f3f6f1e0383a86a070e00fb26bbda1abf130abbd3fe06d0ec36c6a29211f1e8c",
+      "bytes": 635684,
+      "compiledMembers": 272
+    },
+    "storageLoaderSha256": "0c3988464f82ef3908ca790c41e92b4fb60bf62b6594ed9cf56025817a726a8a",
+    "compiledMembersEqualEarlier2433928RuntimeArchive": true,
+    "actualBindExit": 0,
+    "nativeSourceRunId": "37962268125",
+    "nativeSourceCommit": "6cae1ec0a5e1bfb03cb7871083915b3d03272347",
+    "syntheticRegressionTests": 5,
+    "oldBehaviorFailed": 2,
+    "newBehaviorPassed": 5,
+    "nativeStorageGateTests": 15,
+    "installedConsumerExecuted": false
+  },
+  "receiptBindings": {
+    "source-recovery-receipt.json": "2b4b284dc1491ff404bcc48bc9b364519ee9c3ce4882ca89b2a8cbadf50bd66b",
+    "stage-independent-review.json": "076caae8fae30451448d9a445915bdd891d560c4a456703ccaa4d230c99bb20a",
+    "actual-binding-review.json": "b5ec38da4df2a539cffede894f0010dae6e1ee091a76871feacd4de2bdc6e9da",
+    "prepare-online.log": "f12445d52b330add87a39053631cb4c4a2bf9e1fdeadd0da04888dc495cd48aa",
+    "verify-online.log": "994aa7c6da04f8edda0d412863f05e8e9c39025d7e2c5ecd37a45f4f34958f88"
+  },
+  "verifierScripts": {
+    "tools/verify-dedup-consumer.mjs": "fe6f9af6eed6283c4a372ff8ac8348017f9354f0ca22f8759798c9a730e60dbb",
+    "sdk/scripts/verify-npm-native-mirror-stage.mjs": "a39de44f13e46c6a23db2c1f5370c3f324345aa56e114a63fe5339b149777d2a"
+  },
+  "limits": {
+    "uploaded": false,
+    "published": false,
+    "catalogChanged": false,
+    "nativeExecuted": false,
+    "accountUsed": false,
+    "signingAuthenticityEstablished": false,
+    "newCohortDefaultInstalledRuntimeTested": false
+  }
+}

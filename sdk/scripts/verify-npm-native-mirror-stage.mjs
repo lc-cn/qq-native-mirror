@@ -3,10 +3,10 @@ import { readFile, readdir, lstat, realpath } from 'node:fs/promises';
 import { resolve, join, sep } from 'node:path';
 import { createHash } from 'node:crypto';
 import { gunzipSync } from 'node:zlib';
-import { execFileSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 import { validateRelease } from './local-first-publish.mjs';
 import { verifyVideoMaterialsOnline, videoTargets } from './video-materials.mjs';
+import { readNativeTarFiles } from './native-tar-files.mjs';
 const sha = (bytes) => createHash('sha256').update(bytes).digest('hex');
 const check = (value, message) => {
   if (!value) throw Error(message);
@@ -193,11 +193,9 @@ export async function verifyNpmNativeMirrorStage(
         digest(row.manifestSha256),
       'Stage package source hash mismatch',
     );
-    const originalBytes = execFileSync(
-      'tar',
-      ['-xOf', sourcePackage.path, 'package/manifest.json'],
-      { maxBuffer: 32 * 1024 * 1024 },
-    );
+    const sourceFiles = await readNativeTarFiles(sourcePackage.path);
+    const originalBytes = sourceFiles.get('package/manifest.json');
+    check(Buffer.isBuffer(originalBytes), 'Original native manifest missing');
     check(sha(originalBytes) === row.sourceManifestSha256, 'Original native manifest SHA mismatch');
     const body = await regular(stageRoot, row.manifestPath);
     check(sha(body) === row.manifestSha256, 'Staged manifest SHA mismatch');

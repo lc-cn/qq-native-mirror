@@ -10,6 +10,8 @@ const sources = [
   'dedup-native-npm.test.mjs',
   'native-storage-plan.mjs',
   'native-storage-plan.test.mjs',
+  'verify-dedup-consumer.mjs',
+  'verify-dedup-consumer.test.mjs',
   'check-native-storage.mjs',
   'eslint.config.mjs',
 ];
@@ -32,4 +34,9 @@ run([
   '--max-warnings=0',
   ...sources,
 ]);
-run(['--test', 'dedup-native-npm.test.mjs', 'native-storage-plan.test.mjs']);
+run([
+  '--test',
+  'dedup-native-npm.test.mjs',
+  'native-storage-plan.test.mjs',
+  'verify-dedup-consumer.test.mjs',
+]);
