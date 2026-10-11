@@ -24,17 +24,17 @@ source revision rather than treating an unobserved process as successful.
 
 ## Static coverage
 
-| Scope                                               | Coverage                                                                                             | Limit                                                                             |
-| --------------------------------------------------- | ---------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| `src/**/*.ts`                                       | Prettier, strict TypeScript, zero-warning ESLint, typed Promise lint and architecture/resource rules | Native result validation and binary interoperability need their own checks.       |
-| TypeScript tests                                    | Prettier, ESLint and strict test project                                                             | Controlled fixtures establish SDK behavior only.                                  |
-| JavaScript test entry points                        | Prettier, strict checked JavaScript and typed Promise lint                                           | Generated worker hooks remain string data; their execution is checked separately. |
-| TypeScript scripts and `scripts/consumers/**/*.mjs` | Prettier, strict types and typed Promise lint                                                        | Type information for installed dynamic imports must be supplied faithfully.       |
-| Packed-consumer orchestration                       | Strict checked JavaScript and typed Promise lint, in addition to syntax/reference checks             | Passing static checks does not prove the archive was installed and exercised.     |
-| Other SDK JavaScript scripts                        | Prettier and basic ESLint                                                                            | They do not all belong to the strict tooling project.                             |
-| Exact native-storage producer/consumer tooling      | Repository formatting, zero-warning lint and offline regressions through `check:native-storage`      | This gate does not claim TypeScript coverage for those JavaScript build tools.    |
-| CI consumer entry points                            | Consumer-role graph and compiled-module reference checks                                             | Not every CI tool has SDK lint/type coverage.                                     |
-| Account/publication executors                       | Separate explicit execution entry points and their documented checks                                 | Static approval flags and test passes are not authorization.                      |
+| Scope                                               | Coverage                                                                                                  | Limit                                                                                                                |
+| --------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `src/**/*.ts`                                       | Prettier, strict TypeScript, zero-warning ESLint, typed Promise lint and architecture/resource rules      | Native result validation and binary interoperability need their own checks.                                          |
+| TypeScript tests                                    | Prettier, ESLint and strict test project                                                                  | Controlled fixtures establish SDK behavior only.                                                                     |
+| JavaScript test entry points                        | Prettier, strict checked JavaScript and typed Promise lint                                                | Generated worker hooks remain string data; their execution is checked separately.                                    |
+| TypeScript scripts and `scripts/consumers/**/*.mjs` | Prettier, strict types and typed Promise lint                                                             | Type information for installed dynamic imports must be supplied faithfully.                                          |
+| Packed-consumer orchestration                       | Strict checked JavaScript and typed Promise lint, in addition to syntax/reference checks                  | Passing static checks does not prove the archive was installed and exercised.                                        |
+| Other SDK JavaScript scripts                        | Prettier and basic ESLint                                                                                 | They do not all belong to the strict tooling project.                                                                |
+| Exact native-storage producer/consumer tooling      | Repository formatting, zero-warning lint and offline regressions through `check:native-storage`           | This gate does not claim TypeScript coverage for those JavaScript build tools.                                       |
+| Exact CI consumer entry points                      | Prettier, strict checked JavaScript, typed Promise/spread lint, role graph and compiled-module references | Other CI tools retain their separately declared coverage; static checks do not execute platform-native entry points. |
+| Account/publication executors                       | Separate explicit execution entry points and their documented checks                                      | Static approval flags and test passes are not authorization.                                                         |
 
 Source and governed tooling reject floating Promises, including `void` prefixes,
 non-thenable awaits and discarded asynchronous callbacks. Compiler and lint
@@ -47,6 +47,12 @@ inference so changed contents are reparsed.
 and Node-license helper entries; TypeScript tests retain `tsconfig.test.json`.
 New JavaScript tests inherit the strict project and typed Promise lint. The packed
 orchestrator additionally rejects spreading a Promise into a verification receipt.
+
+`tools/tsconfig.consumer-ci.json` strictly checks the exact platform and current-source
+consumer entries, their imported source/manifest declarations and the consumer cleanup
+owner. `check:native-storage` runs this project and its negative compiler/lint
+regressions without executing those entries. Receipt variables use completed-result
+types, so a Promise assigned to a named JSON field cannot masquerade as a finished check.
 
 The strict consumer directory glob automatically covers new helpers. Do not
 weaken verification with a whole-module `any`, unchecked fixture assertion or
@@ -104,7 +110,9 @@ Installed worker checks exercise the actual compiled IPC entry with substituted
 bootstrap/kernel/native loading: request/reply routing, factory initialization,
 close acknowledgment, fatal delivery failures, cancellation, generation filtering,
 lock ownership and process retirement. Installed domain/CLI consumers exercise the
-same exported methods and plans with controlled services. Generated hook strings
+same exported methods and plans with controlled services. Friend/list and history query
+contracts have one checked helper each, shared by local packing and platform CI;
+their former generated-string copies no longer maintain separate assertions. Generated hook strings
 have runtime coverage here rather than a claim of strict static type coverage.
 
 `consumer-module-policy.ts` separates reusable helpers, exact orchestration glue,

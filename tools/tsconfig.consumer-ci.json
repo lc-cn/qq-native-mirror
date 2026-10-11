@@ -1,0 +1,13 @@
+{
+  "extends": "../sdk/tsconfig.scripts.json",
+  "compilerOptions": {
+    "rootDir": "..",
+    "typeRoots": ["../sdk/node_modules/@types"]
+  },
+  "include": [
+    "../ci/verify-consumer.mjs",
+    "../ci/current-source-mirror.mjs",
+    "../ci/consumer-resources.mjs",
+    "../ci/consumer-resources.test.mjs"
+  ]
+}

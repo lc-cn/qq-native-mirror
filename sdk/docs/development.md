@@ -126,7 +126,16 @@ files, build/release tools and account executors. `pretest` and `preverify:packa
 run the syntax/role preflight before consumer execution. Use npm entry points;
 direct `node` invocation and `--ignore-scripts` skip these hooks. The post-build CI
 module-path gate additionally requires referenced compiled modules. Passing a
-syntax/reference check does not establish type or runtime correctness.
+syntax/reference check does not establish type or runtime correctness. The two
+exact CI consumer entries also belong to `tools/tsconfig.consumer-ci.json` and the
+native-storage gate. Give receipt variables the helper's completed-result type,
+and await the shared cleanup owner so failures cannot skip resource retirement.
+
+Move reusable generated fixture logic into an existing checked consumer module
+when local and platform verifiers exercise the same contract. Keep all assertions,
+installed-root paths and proof limits, and derive receipt flags from its result.
+The friend/list and history query helpers are examples. Remaining generated hooks
+retain runtime tests; their string bodies are not covered by strict static checking.
 
 ## Keep account acceptance separate
 

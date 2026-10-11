@@ -17,6 +17,8 @@ const sources = [
   'verify-dedup-consumer.test.mjs',
   'check-native-storage.mjs',
   'eslint.config.mjs',
+  'tsconfig.consumer-ci.json',
+  'consumer-ci-gates.test.mjs',
 ]
   .map((path) => 'tools/' + path)
   .concat([
@@ -24,6 +26,15 @@ const sources = [
     'ci/aggregate-release.mjs',
     'ci/native-package-distribution.mjs',
     'ci/native-package-distribution.test.mjs',
+    'ci/verify-consumer.mjs',
+    'ci/current-source-mirror.mjs',
+    'ci/consumer-resources.mjs',
+    'ci/consumer-resources.test.mjs',
+    'ci/npm.mjs',
+    'version-ci/main-artifact.mjs',
+    'version-ci/build-main-contract.mjs',
+    'version-ci/main-artifact.test.mjs',
+    'version-ci/build-main-contract.test.mjs',
   ]);
 
 function run(arguments_) {
@@ -38,11 +49,17 @@ run([
   ...sources,
 ]);
 run([
+  join(dirname(require.resolve('typescript/package.json')), 'bin/tsc'),
+  '--noEmit',
+  '-p',
+  'tools/tsconfig.consumer-ci.json',
+]);
+run([
   join(dirname(require.resolve('eslint/package.json')), 'bin/eslint.js'),
   '--config',
   'tools/eslint.config.mjs',
   '--max-warnings=0',
-  ...sources,
+  ...sources.filter((path) => path.endsWith('.mjs')),
 ]);
 run([
   '--test',
@@ -51,4 +68,8 @@ run([
   'tools/native-source-identity.test.mjs',
   'tools/verify-dedup-consumer.test.mjs',
   'ci/native-package-distribution.test.mjs',
+  'ci/consumer-resources.test.mjs',
+  'tools/consumer-ci-gates.test.mjs',
+  'version-ci/main-artifact.test.mjs',
+  'version-ci/build-main-contract.test.mjs',
 ]);

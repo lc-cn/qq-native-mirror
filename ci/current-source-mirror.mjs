@@ -51,15 +51,24 @@ try {
     }
   }
   stage = 'installed-contracts';
-  const { createClient } = await import(pathToFileURL(join(installedRoot, 'dist/index.js')).href);
-  const { selectNativePackage } = await import(
-    pathToFileURL(join(installedRoot, 'dist/native/native-catalog.js')).href
+  const { createClient } = await /** @type {Promise<typeof import('../sdk/src/index.ts')>} */ (
+    import(pathToFileURL(join(installedRoot, 'dist/index.js')).href)
   );
-  const { prepareNative } = await import(
-    pathToFileURL(join(installedRoot, 'dist/native/native-package.js')).href
-  );
+  const { selectNativePackage } =
+    await /** @type {Promise<typeof import('../sdk/src/native/native-catalog.ts')>} */ (
+      import(pathToFileURL(join(installedRoot, 'dist/native/native-catalog.js')).href)
+    );
+  const { prepareNative } =
+    await /** @type {Promise<typeof import('../sdk/src/native/native-package.ts')>} */ (
+      import(pathToFileURL(join(installedRoot, 'dist/native/native-package.js')).href)
+    );
   const catalogBytes = readSourceCatalog(artifact.source.commit);
-  const selected = selectNativePackage(JSON.parse(catalogBytes), process.platform, process.arch);
+  const selected = selectNativePackage(
+    JSON.parse(catalogBytes.toString('utf8')),
+    process.platform,
+    process.arch,
+  );
+  /** @param {import("node:crypto").BinaryLike} bytes */
   const sha = (bytes) => createHash('sha256').update(bytes).digest('hex');
   // Same no-symlink policy reaches the actual worker and the codec child.
   stage = 'symlink-policy';
@@ -70,6 +79,7 @@ try {
   const verifierPath = join(directory, 'verify-video.mjs');
   await writeFile(verifierPath, verifier);
   stage = 'default-cold-warm-runtime';
+  /** @type {Awaited<ReturnType<typeof verifyMirrorConsumer>>} */
   const receipt = await verifyMirrorConsumer({
     createClient,
     selected,
@@ -110,6 +120,7 @@ try {
   await writeFile(output, JSON.stringify(receipt, null, 2) + '\n');
 } catch (error) {
   // Safe diagnostic data only: never copy native payloads, wording or URLs.
+  /** @type {{errorName?:string,errorCode?:string,expectedSha256?:string,actualSha256?:string}} */
   const failure = {};
   try {
     failure.errorName = error instanceof assert.AssertionError ? 'AssertionError' : 'Error';

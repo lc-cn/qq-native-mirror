@@ -40,6 +40,8 @@ import { verifyGroupFileActionLifetimeConsumer } from './consumers/group-file-ac
 import { verifyGroupFilePagesConsumer } from './consumers/group-file-pages-consumer-contract.mjs';
 import { verifyQunWebConsumer } from './consumers/qun-web-consumer-contract.mjs';
 import { verifyFriendCategoryMutationsConsumer } from './consumers/friend-category-mutations-consumer-contract.mjs';
+import { verifyFriendQueryConsumer } from './consumers/friend-query-consumer-contract.mjs';
+import { verifyHistoryQueryConsumer } from './consumers/history-query-consumer-contract.mjs';
 
 // Offline packaging check: controlled services and actual worker routing with a replacement kernel; no QQ native binaries or accounts.
 const root = fileURLToPath(new URL('../', import.meta.url));
@@ -315,80 +317,10 @@ const plain=[];const cleanDefault=observeWatchEvents(client,undefined,line=>plai
 `,
 );
 run(process.execPath, ['friend-events.mjs']);
-await writeFile(
-  join(destination, 'friend-query.mjs'),
-  `import assert from 'node:assert/strict';
-import {createNativeServices} from './node_modules/qq-native-client/dist/native-services.js';
-for(const [result,code] of [[-1,-1],[73,73],['denied','denied'],[undefined,'invalid-result'],[NaN,'invalid-result']])for(const data of [[],[{buddyUids:['u_fixture']}]] ){
- let buddyCalls=0,profileCalls=0;
- const query=createNativeServices({
-  session: {getMsgService:()=>({addKernelMsgListener(){}}),getGroupService:()=>({addKernelGroupListener(){}}),getBuddyService:()=>({addKernelBuddyListener(){},getBuddyListV2(){buddyCalls++;return{result,data};}}),getProfileService:()=>({getCoreAndBaseInfo(){profileCalls++;throw Error('Unexpected profile query');}})},
-  version: '7.0.2-53644',
-  events: { emit: ()=>{} }
-});
- try{await assert.rejects(query.invokeOperation('listFriends'),{code});assert.equal(buddyCalls,1);assert.equal(profileCalls,0);}finally{query.close();}
-}
-// Sparse native arrays must not become a valid empty list.
-for(const data of [Array(1),[{buddyUids:Array(1)}]]){
- let profileCalls=0;
- const query=createNativeServices({
-  session: {getMsgService:()=>({addKernelMsgListener(){}}),getGroupService:()=>({addKernelGroupListener(){}}),getBuddyService:()=>({addKernelBuddyListener(){},getBuddyListV2(){return{result:0,data};}}),getProfileService:()=>({getCoreAndBaseInfo(){profileCalls++;return new Map();}})},
-  version: '7.0.2-53644',
-  events: { emit: ()=>{} }
-});
- try{await assert.rejects(query.invokeOperation('listFriends'),/Invalid native buddy/);assert.equal(profileCalls,0);}finally{query.close();}
-}
-// A failed row must leave no usable UID cache entry from preceding rows.
-let conversions=0;
-const atomic=createNativeServices({
-  session: {getMsgService:()=>({addKernelMsgListener(){}}),getGroupService:()=>({addKernelGroupListener(){}}),getBuddyService:()=>({addKernelBuddyListener(){},getBuddyListV2(){return{result:0,data:[{buddyUids:['u_partial','u_bad']}]};}}),getProfileService:()=>({getCoreAndBaseInfo(){return new Map([['u_partial',{coreInfo:{uid:'u_partial',uin:'456',nick:'fixture',remark:''}}],['u_bad',{}]]);}}),getUixConvertService:()=>({getUid(ids){assert.deepEqual(ids,['456']);conversions++;return{uidInfo:new Map()};}})},
-  version: '7.0.2-53644',
-  events: { emit: ()=>{} }
-});
-try{await assert.rejects(atomic.invokeOperation('listFriends'),/Invalid native buddy profile/);await assert.rejects(atomic.invokeOperation('sendPrivateMessage',{userId:'456',message:'fixture'}),/Could not resolve user identifier/);assert.equal(conversions,1);}finally{atomic.close();}
-// Preserve deduplication, category order and lossless long decimal IDs.
-const complete=createNativeServices({
-  session: {getMsgService:()=>({addKernelMsgListener(){}}),getGroupService:()=>({addKernelGroupListener(){}}),getBuddyService:()=>({addKernelBuddyListener(){},getBuddyListV2(){return{result:0,data:[{buddyUids:['u_first','u_second']},{buddyUids:['u_first']}]};}}),getProfileService:()=>({getCoreAndBaseInfo(store,uids){assert.deepEqual([store,uids],['nodeStore',['u_first','u_second']]);return new Map([['u_first',{coreInfo:{uid:'u_first',uin:'900719925474099312345',nick:'first',remark:''}}],['u_second',{coreInfo:{uid:'u_second',uin:'456',nick:'second',remark:'remark'}}]]);}})},
-  version: '7.0.2-53644',
-  events: { emit: ()=>{} }
-});
-try{assert.deepEqual(await complete.invokeOperation('listFriends'),[{userId:'900719925474099312345',uid:'u_first',nickname:'first',remark:''},{userId:'456',uid:'u_second',nickname:'second',remark:'remark'}]);}finally{complete.close();}
-// Friend profile identity/display fields must already have their declared types.
-const validCore={uid:'u_friend',uin:'900719925474099312345',nick:'friend',remark:''};
-for(const change of [{uin:456},{uin:{toString(){throw Error('Coercion must not run');}}},{nick:{}},{nick:null},{remark:12},{uid:'u_other'},{uid:undefined},{remark:undefined}]){
- const query=createNativeServices({
-  session: {getMsgService:()=>({addKernelMsgListener(){}}),getGroupService:()=>({addKernelGroupListener(){}}),getBuddyService:()=>({addKernelBuddyListener(){},getBuddyListV2(){return{result:0,data:[{buddyUids:['u_friend']}]};}}),getProfileService:()=>({getCoreAndBaseInfo(){return new Map([['u_friend',{coreInfo:{...validCore,...change}}]]);}})},
-  version: '7.0.2-53644',
-  events: { emit: ()=>{} }
-});
- try{await assert.rejects(query.invokeOperation('listFriends'),/Invalid native buddy profile/);}finally{query.close();}
-}
-const omittedNick=createNativeServices({
-  session: {getMsgService:()=>({addKernelMsgListener(){}}),getGroupService:()=>({addKernelGroupListener(){}}),getBuddyService:()=>({addKernelBuddyListener(){},getBuddyListV2(){return{result:0,data:[{buddyUids:['u_friend']}]};}}),getProfileService:()=>({getCoreAndBaseInfo(){return new Map([['u_friend',{coreInfo:{...validCore,nick:undefined}}]]);}})},
-  version: '7.0.2-53644',
-  events: { emit: ()=>{} }
-});
-try{assert.deepEqual(await omittedNick.invokeOperation('listFriends'),[{userId:validCore.uin,uid:'u_friend',nickname:'',remark:''}]);}finally{omittedNick.close();}
-// Full group callbacks reject malformed batches and retire their uncorrelated query.
-const group={groupCode:'900719925474099312345',groupName:'group',memberCount:2,maxMember:100};
-function groupFixture(groups){const listeners=[];let calls=0;const query=createNativeServices({
-  session: {getMsgService:()=>({addKernelMsgListener(){}}),getBuddyService:()=>({addKernelBuddyListener(){}}),getGroupService:()=>({addKernelGroupListener(value){listeners.push(value);},getGroupList(){calls++;for(const listener of listeners)listener.onGroupListUpdate?.(1,groups);return{result:0};}})},
-  version: '7.0.2-53644',
-  events: { emit: ()=>{} }
-});return{query,calls:()=>calls};}
-for(const groups of [Array(1),[{...group,groupCode:undefined}],[{...group,groupCode:123}],[{...group,groupName:{secret:true}}],[{...group,memberCount:-1}],[{...group,memberCount:1.5}],[{...group,memberCount:Number.MAX_SAFE_INTEGER+1}],[{...group,maxMember:'100'}],[{...group,maxMember:Infinity}]]){
- const{query,calls}=groupFixture(groups);try{await assert.rejects(query.invokeOperation('listGroups'),/Invalid native group list/);await assert.rejects(query.invokeOperation('listGroups'),/channel invalidated/);assert.equal(calls(),1);}finally{query.close();}
-}
-for(const groups of [[],[group]]){const{query,calls}=groupFixture(groups);try{assert.deepEqual(await query.invokeOperation('listGroups'),groups.map(g=>({groupId:g.groupCode,name:g.groupName,memberCount:g.memberCount,maxMemberCount:g.maxMember})));assert.equal(calls(),1);}finally{query.close();}}
-let successCalls=0;const success=createNativeServices({
-  session: {getMsgService:()=>({addKernelMsgListener(){}}),getGroupService:()=>({addKernelGroupListener(){}}),getBuddyService:()=>({addKernelBuddyListener(){},getBuddyListV2(){successCalls++;return{result:0,data:[]};}}),getProfileService:()=>({getCoreAndBaseInfo(){return new Map();}})},
-  version: '7.0.2-53644',
-  events: { emit: ()=>{} }
-});
-try{assert.deepEqual(await success.invokeOperation('listFriends'),[]);assert.equal(successCalls,1);}finally{success.close();}
-`,
+/** @type {Awaited<ReturnType<typeof verifyFriendQueryConsumer>>} */
+const friendQueryChecks = await verifyFriendQueryConsumer(
+  join(destination, 'node_modules/qq-native-client'),
 );
-run(process.execPath, ['friend-query.mjs']);
 const help = run(process.execPath, ['node_modules/qq-native-client/dist/cli.js', '--help']);
 if (!help.includes('group-kick') || !help.includes('--message-file'))
   throw new Error('Installed CLI lacks commands');
@@ -439,40 +371,10 @@ await assert.rejects(queryNativeMessage({getMsgsByMsgId:()=>({result:23,msgList:
 `,
 );
 run(process.execPath, ['message-query.mjs']);
-await writeFile(
-  join(destination, 'history-query.mjs'),
-  `import assert from 'node:assert/strict';
-import {createNativeServices} from './node_modules/qq-native-client/dist/native-services.js';
-import {prepareCommand} from './node_modules/qq-native-client/dist/cli.js';
-import {queryNativeMessage} from './node_modules/qq-native-client/dist/features/messages/message-query.js';
-const peer={chatType:2,peerUid:'123'},id='900719925474099312345';
-const raw={msgId:id,msgSeq:'9',msgTime:'100',chatType:2,peerUid:'123',peerUin:'123',senderUin:'456',senderUid:'u_friend',sendNickName:'fixture',elements:[{elementType:1,textElement:{content:'fixture',atType:0}}]};
-function fixture(response){let calls=0;const services=createNativeServices({
-  session: {getMsgService:()=>({addKernelMsgListener(){},getMsgsIncludeSelf(...args){calls++;assert.deepEqual(args,[peer,'42',2,false]);return response;}}),getBuddyService:()=>({addKernelBuddyListener(){}}),getGroupService:()=>({addKernelGroupListener(){}})},
-  version: '7.0.2-53644',
-  events: { emit: ()=>{} }
-});return{services,calls:()=>calls};}
-const payload={peer:{type:'group',groupId:'123'},options:{before:'42',limit:2}};
-for(const [result,code] of [[-1,-1],[73,73],['denied','denied'],[undefined,'invalid-result'],[NaN,'invalid-result']])for(const msgList of [[],[raw]]){
- const{services,calls}=fixture({result,msgList,errMsg:'must-not-leak'});try{await assert.rejects(services.invokeOperation('getHistory',payload),error=>{assert.equal(error.code,code);assert.ok(!error.message.includes('must-not-leak'));return true;});assert.equal(calls(),1);}finally{services.close();}
-}
-for(const msgList of [Array(1),[{...raw,chatType:1}],[{...raw,chatType:99}],[{...raw,peerUid:'999'}],[{...raw,msgId:123}],[{...raw,elements:Array(1)}]]){
- const{services,calls}=fixture({result:0,msgList});try{await assert.rejects(services.invokeOperation('getHistory',payload),/invalid|mismatched/i);assert.equal(calls(),1);}finally{services.close();}
-}
-for(const msgList of [[],[{...raw,msgId:'3'},raw]]){
- const{services,calls}=fixture({result:0,msgList});try{const action=await prepareCommand('history',{kind:'group',target:'123',before:'42',limit:'2'});const records=await action({getHistory:(p,options)=>services.invokeOperation('getHistory',{peer:p,options})});assert.deepEqual(records.map(r=>r.messageId),msgList.map(r=>r.msgId));for(const record of records)assert.deepEqual(record.elements,[{type:'text',text:'fixture'}]);assert.equal(calls(),1);}finally{services.close();}
-}
-await assert.rejects(queryNativeMessage({getMsgsByMsgId:()=>({result:0,msgList:[{...raw,elements:Array(1)}]})},peer,id),/elements/i);
-let finish,begin,calls=0;const began=new Promise(resolve=>{begin=resolve;});const delayed=new Promise(resolve=>{finish=resolve;});
-const closing=createNativeServices({
-  session: {getMsgService:()=>({addKernelMsgListener(){},getMsgsIncludeSelf(){calls++;begin();return delayed;}}),getBuddyService:()=>({addKernelBuddyListener(){}}),getGroupService:()=>({addKernelGroupListener(){}})},
-  version: '7.0.2-53644',
-  events: { emit: ()=>{} }
-});
-const pending=closing.invokeOperation('getHistory',payload);await began;closing.close();finish({result:0,msgList:[]});await assert.rejects(pending,/abort|closed/i);assert.equal(calls,1);
-`,
+/** @type {Awaited<ReturnType<typeof verifyHistoryQueryConsumer>>} */
+const historyQueryChecks = await verifyHistoryQueryConsumer(
+  join(destination, 'node_modules/qq-native-client'),
 );
-run(process.execPath, ['history-query.mjs']);
 const forwardChecks = await verifyForwardConsumer(
   join(destination, 'node_modules/qq-native-client'),
 );
@@ -648,8 +550,6 @@ const receipt = {
     cliDefaultConfig: true,
     ...faceChecks,
     messageQueryContract: true,
-    historyQueryContract: true,
-    nativeHistoryQueryAttempted: false,
     selfProfileContract: true,
     groupOperationContract: true,
     groupMemberQueryContract: true,
@@ -658,12 +558,8 @@ const receipt = {
     businessWatchContract: true,
     friendMetadataEventContract: true,
     nativeFriendMetadataObserved: false,
-    friendListQueryContract: true,
-    friendListBatchContract: true,
-    friendProfileQueryContract: true,
-    groupListQueryContract: true,
-    nativeGroupListQueryAttempted: false,
-    nativeFriendListQueryAttempted: false,
+    ...friendQueryChecks,
+    ...historyQueryChecks,
     declarations: true,
   },
   ...contactGroupChecks,

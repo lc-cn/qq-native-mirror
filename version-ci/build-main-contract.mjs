@@ -4,6 +4,7 @@ import { execFileSync } from 'node:child_process';
 /** Windows checkout filters may rewrite line endings. Expected public bytes
  * come from the exact source Git object; network/native bytes stay unchanged.
  */
+/** @param {string} sourceCommit */
 export function readSourceCatalog(sourceCommit) {
   assert.match(sourceCommit, /^[a-f0-9]{40}$/);
   assert.equal(
@@ -13,6 +14,7 @@ export function readSourceCatalog(sourceCommit) {
   return execFileSync('git', ['show', `${sourceCommit}:catalog.json`], { maxBuffer: 1024 * 1024 });
 }
 
+/** @param {{platform:string,arch:string,sourceCommit:string,environment:NodeJS.ProcessEnv}} identity */
 export function validateCurrentBuildIdentity({ platform, arch, sourceCommit, environment }) {
   assert.ok(['darwin', 'linux', 'win32'].includes(platform));
   assert.ok(['x64', 'arm64'].includes(arch));
@@ -24,6 +26,7 @@ export function validateCurrentBuildIdentity({ platform, arch, sourceCommit, env
   assert.match(environment.GITHUB_RUN_ATTEMPT ?? '', /^[1-9]\d*$/);
 }
 
+/** @param {{name:string,version:string,filename:string,files:{path:string}[]}} packed @param {{name:string,version:string}} sdk @param {string} platform @param {string} arch */
 export function validatePackedMainInventory(packed, sdk, platform, arch) {
   assert.equal(packed.name, 'qq-native-client');
   assert.equal(packed.name, sdk.name);

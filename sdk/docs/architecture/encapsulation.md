@@ -1,6 +1,6 @@
 # Encapsulation and variation points
 
-[Composition, client and account ownership](#composition-client-and-account-ownership) · [Worker initialization and retirement](#worker-initialization-and-retirement) · [Shared lifetimes and native callback ownership](#shared-lifetimes-and-native-callback-ownership) · [Message delivery, queries and sending](#message-delivery-queries-and-sending) · [Forward resources and media preparation](#forward-resources-and-media-preparation) · [Contact and group domain operations](#contact-and-group-domain-operations) · [Group announcements and HTTP reads](#group-announcements-and-http-reads) · [Native bundle selection and capability evidence](#native-bundle-selection-and-capability-evidence) · [CLI execution](#cli-execution)
+[Composition, client and account ownership](#composition-client-and-account-ownership) · [Worker initialization and retirement](#worker-initialization-and-retirement) · [Shared lifetimes and native callback ownership](#shared-lifetimes-and-native-callback-ownership) · [Message delivery, queries and sending](#message-delivery-queries-and-sending) · [Forward resources and media preparation](#forward-resources-and-media-preparation) · [Contact and group domain operations](#contact-and-group-domain-operations) · [Group announcements and HTTP reads](#group-announcements-and-http-reads) · [Native bundle selection and capability evidence](#native-bundle-selection-and-capability-evidence) · [CLI execution](#cli-execution) · [Verification orchestration](#verification-orchestration)
 
 ## Composition, client and account ownership
 
@@ -161,6 +161,23 @@ replacement. A business adapter returned after reentrant close is released once,
 including its cleanup error, rather than retained as an online Session. Reentrant
 readiness during construction cannot allocate a second adapter. Native singleton
 threads still require worker exit: this module does not invent a Session destructor.
+
+## Verification orchestration
+
+The local packed verifier and platform consumer share the checked friend/list and
+history query helpers in `scripts/consumers/`. Each helper imports the actual
+installed composition and CLI through a package-root argument, owns its controlled
+fixtures and returns a completed receipt. It never authenticates or loads QQ.
+The helper retains native result validation, atomic cache assertions and shutdown
+checks; the orchestrators retain archive installation and platform-native preparation.
+Generated fixture strings elsewhere keep their separate runtime coverage.
+
+`ci/consumer-resources` owns retirement of the platform consumer's client, local
+registry and temporary directory. Every stage runs even if an earlier stage fails.
+It preserves a sole failure, aggregates execution/cleanup failures and bounds the
+registry-close wait while ending retained connections. A wrapped primary failure
+preserves `throw undefined`. The owner acquires no resources and does not interpret
+SDK account state. This cleanup does not turn a failed consumer run into success.
 
 ## Worker initialization and retirement
 
