@@ -80,7 +80,7 @@ still requires its own evidence. The pinned source call path is
 
 Relationship events require native notifications/system messages with target, subject, operator, cause, correlation and deduplication rules. Generic metadata changes cannot establish whether someone left voluntarily or was kicked. Unknown callback arguments remain unprojected.
 
-Independent inspection of all six default binaries shows category delete takes one uint32 argument and rename takes uint32 plus a string, despite older source declarations accepting category strings. The normal rename callback carries result/errMsg. The two Linux 3.2.32-52194 binaries, macOS ARM64 7.0.2-53644 and Windows x64 9.9.33-52230 additionally connect SDK V2 list categoryId to the core rename selector, including refresh-success and the SDK source=0 path. `renameFriendCategory(categoryId, name): Promise<void>` is enabled only for those four exact measured hashes. macOS x64, Windows ARM64 and unrecognized binaries reject with `unsupported-native-contract` before native rename acquisition. Reordering has a separately verified Linux x64 contract below; single-user assignment has a separately verified Linux x64 UID contract below; the other five platforms remain unverified.
+Independent inspection of all six default binaries shows category delete takes one uint32 argument and rename takes uint32 plus a string, despite older source declarations accepting category strings. The normal rename callback carries result/errMsg. The two Linux 3.2.32-52194 binaries, macOS ARM64 7.0.2-53644 and Windows x64 9.9.33-52230 additionally connect SDK V2 list categoryId to the core rename selector, including refresh-success and the SDK source=0 path. `renameFriendCategory(categoryId, name): Promise<void>` is enabled only for those four exact measured hashes. macOS x64, Windows ARM64 and unrecognized binaries reject with `unsupported-native-contract` before native rename acquisition. Reordering has a separately verified Linux x64 contract below; single-user assignment has separate Linux x64 and macOS ARM64 identity contracts below; its other four platforms remain unverified.
 
 The adapter dispatches `renameCategory` once with exactly two arguments and preserves the native receiver. A finite int32 result of zero completes the Promise; this is native ACK, not a server-confirmed name or a read-after-write receipt. The name spelling is preserved; selectors must be numeric uint32 values. Accepting selector zero does not claim the default category is mutable. Five-second timeout or shutdown after dispatch leaves the remote effect unknown; writes are never retried. Static binary evidence and controlled package tests do not establish real account effect. CLI: `friend-category-rename --config ./qq.json --category-id 123 --name TEXT`.
 
@@ -516,14 +516,21 @@ contract evidence, not a real native search receipt.
 `setFriendCategory(userId, categoryId): Promise<void>` resolves the public account ID
 to a native UID, then calls `Buddy.setBuddyCategory(uid, categoryId)` once with
 exactly two arguments. The category selector is a numeric uint32 in the V2 list
-`categoryId` namespace. Only Linux x64 3.2.32-52194 with the exact measured wrapper
-hash is enabled; the remaining five platforms and unrecognized binaries reject
+`categoryId` namespace. Linux x64 3.2.32-52194 and macOS ARM64 7.0.2-53644
+are enabled only with their exact measured wrapper hashes; the remaining four
+platforms and unrecognized binaries reject
 with `unsupported-native-contract` before Buddy acquisition. No batch move is enabled.
 
 The [assignment evidence](evidence/friend-category-assignment-contract.json) binds
-the actual Node carrier, selector1000 string dataflow and same-instance request
-vector to the concrete `BuddyExtSpecifyUidCodec`, plus category selector61af to
-the V2 category ID. Normal completion carries int32 `result` and string `errMsg`.
+the actual Node carriers and category selector61af to the V2 category ID. Linux
+binds selector1000 and the same-instance request vector to `BuddyExtSpecifyUidCodec`.
+macOS binds the original request through its concrete Buddy receiver and worker:
+selector1000 becomes field1 string, selector61af becomes field2 numeric, and the
+same encoded body reaches transport with command `0x10eb`, subcommand `1`. UID
+meaning is inferred from this exact command/body matching the pinned independent
+protocol implementation linked in the evidence; it is not an official QQ schema
+or a connection to the differently routed native UID vector codec.
+Normal completion carries int32 `result` and string `errMsg`.
 Strict numeric zero is the SDK's native ACK acceptance policy; it does not prove
 a server-side membership change, protected-category admissibility or atomicity.
 Five-second timeout or close after dispatch leaves the remote effect unknown.
@@ -532,13 +539,15 @@ There is no retry or automatic readback.
 The public method, IPC route and CLI action are covered by controlled fixtures;
 no real account assignment has run. CLI: `friend-category-set --config FILE --target UIN_OR_UID --category-id UINT32 [--uin UIN]`.
 `--target` identifies the friend to move; optional `--uin` selects the login account.
-The other five platform identity chains and real mutation acceptance remain
+The other four platform identity chains and real mutation acceptance remain
 separate verification tasks.
 
 The [macOS ARM64 completion analysis](evidence/friend-category-assignment-darwin-analysis.json)
 checks the actual 7.0.2-53644 wrapper's completion closure independently. Its
 `closure+8` object is `KernelTrace`: the result slot records status and message
 in trace fields 1/2. The original category request is a separate pair passed
-to a receiver's virtual slot `0x58`; that concrete UID consumer remains
-unresolved. The trace chain therefore cannot substitute for the UID/category
-contract, and macOS assignment remains unsupported. No account was used.
+to a receiver's virtual slot `0x58`. The assignment evidence now binds that
+separate original request through the concrete receiver, worker and encoded
+transport body. The trace chain remains separate and supplies no UID semantics.
+No account was used; signing authenticity and remote mutation acceptance remain
+unverified.

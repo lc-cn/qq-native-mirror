@@ -9,7 +9,10 @@
       "manifestSha256": "8a7b8f44327fa8408dfee2885c0e23d94b4152ff1e70ce0ee735669803066a87",
       "method": "setBuddyCategory",
       "argumentCount": 2,
-      "arguments": ["UID string", "categoryId:uint32"],
+      "arguments": [
+        "UID string",
+        "categoryId:uint32"
+      ],
       "binding": "0x36b1910",
       "core": "0x29b0ab0",
       "receiver": "unwrap firstqword at36b1abe; virtual+c0 at36b1aef; KernelBuddy AP8b8aeb8+c0 ->29b0ab0",
@@ -105,6 +108,131 @@
           "disassemblySha256": "1f32602715ae0f3025030b284efd2fe3f59ad8b243c4052b17d0d19813b57982"
         }
       ]
+    },
+    {
+      "platform": "darwin",
+      "arch": "arm64",
+      "wrapperSha256": "fbc8ad9b328d05e16784d76b0181dda894c17001179dbf8c0d5dd00dc6271358",
+      "clientVersion": "7.0.2-53644",
+      "method": "setBuddyCategory",
+      "argumentCount": 2,
+      "arguments": [
+        "UID string",
+        "categoryId:uint32"
+      ],
+      "binding": "0x8a3174",
+      "core": "0x922a0",
+      "receiver": "descriptor511bad8 method+10 ->8a3174; unwrapped firstqword virtualc0 ->922a0. Session virtual160 ->34a9c ->host+528 cached secondary alias; Buddy+60 locks same receiver; AP51b1d40+58 ->11b2dcc adjusts -30 ->11b2c98.",
+      "normalResult": "Callback AP514f0d0+10 ->b22fc4 ->b2349c ->b23290; signed int32 result and string errMsg serialized by bound imported NAPI functions, then resolve_deferred.",
+      "identityDataflow": "Node string885920 ->core selector1000/b8a00; original request pair ->11b2c98 ->closure+18 ->11b8dd4 ->11dfb38/4eb84c ->cached Worker AP51b7ae8 virtual10/18645ac ->1864314 ->same Worker virtual30/11e865c; selector1000 ->field1 strings via c38d90, unchanged bytes.",
+      "categoryDataflow": "Node uint32/8a978c ->selector61af/b8f34; same original PB reaches11e865c; selector61af ->field2 numeric via c6648c. V2 cached row0/list/refresh shares categoryId namespace61af.",
+      "listCategoryIdNamespaceVerified": true,
+      "wireDataflow": "Worker ctor11e85e8 passes command10eb/sub1 ->186408c stores+30/+34;1864314 serializes same request into sp18, copies cmd/sub to sp4/sp0;18663c4 ->1865328/1866368 preserve command, subcommand and original encoded body ->16d0a3c ->transport virtualb8 with x1=10eb,x2=1,x3=body.",
+      "uidInterpretation": "Inference from exact command0x10eb/subcommand1 and field1 string/field2 uint32 body matched to the pinned independent protocol implementation; not a native named UID codec connection or an official QQ schema.",
+      "primaryProtocolSources": [
+        {
+          "repository": "LLOneBot/LuckyLilliaBot",
+          "commit": "4c9670c548c84461b8105054bd1ff0c1dddbb8b9",
+          "path": "src/ntqqapi/proto/oidb.ts",
+          "lines": [
+            621,
+            625
+          ],
+          "gitBlobSha": "d774d495603a5629c7db32898dd267316cb27657",
+          "sha256": "91f8b0f153ab68e2fa93a423d6a56f38e928670d67f432bd9365c8da49312ca9",
+          "url": "https://github.com/LLOneBot/LuckyLilliaBot/blob/4c9670c548c84461b8105054bd1ff0c1dddbb8b9/src/ntqqapi/proto/oidb.ts#L621-L625"
+        },
+        {
+          "repository": "LLOneBot/LuckyLilliaBot",
+          "commit": "4c9670c548c84461b8105054bd1ff0c1dddbb8b9",
+          "path": "src/main/qqProtocol/mixins/friend.ts",
+          "lines": [
+            126,
+            132
+          ],
+          "gitBlobSha": "5efab014c8a6a00247eee6590ea6841fd8cfee8a",
+          "sha256": "de374ad2a3c336e157832133f3c56d77dff34aa57924e8f8fc123c01af9b2c81",
+          "url": "https://github.com/LLOneBot/LuckyLilliaBot/blob/4c9670c548c84461b8105054bd1ff0c1dddbb8b9/src/main/qqProtocol/mixins/friend.ts#L126-L132"
+        }
+      ],
+      "functions": [
+        {
+          "start": "0x11b2c98",
+          "end": "0x11b2dcc",
+          "rawSha256": "918472774cac0e0442090ba324056c428eb07c7ec9a5a79eb92d02feb9a2dd81"
+        },
+        {
+          "start": "0x11b8dd4",
+          "end": "0x11b8e70",
+          "rawSha256": "f510b1c6283cea1a0bf85cab818eaeb4c38098b3e186204d13958589b32c8554"
+        },
+        {
+          "start": "0x11dfb38",
+          "end": "0x11dfc88",
+          "rawSha256": "aa19a34ecfe0d5deacb79b66c4a8a5953fc9e708a546d5aa92596699fdc2984e"
+        },
+        {
+          "start": "0x4eb84c",
+          "end": "0x4eb85c",
+          "rawSha256": "932ef82cdb20cd54a31ded83a482e0daf73241823378cf0e3ab9c1a31f0017e5"
+        },
+        {
+          "start": "0x11e7ec4",
+          "end": "0x11e7ed4",
+          "rawSha256": "24429fd5b2e2ada650ebc44357fdb434d80de402abdd30b89872c13a51ad3c17"
+        },
+        {
+          "start": "0x11e85e8",
+          "end": "0x11e8658",
+          "rawSha256": "980962a2a97d2ce3e63c5f891c941bd602a0d73b4f16691dc90a11cc24849922"
+        },
+        {
+          "start": "0x11e865c",
+          "end": "0x11e871c",
+          "rawSha256": "8f4a06a2e572464ed0a2aecb1f7d91ee5814f533bd318dad8bd2cc97efa1b247"
+        },
+        {
+          "start": "0xc38d90",
+          "end": "0xc38e48",
+          "rawSha256": "d8183620f0eeb63e4137f2a03e311c566136362fa71afc32c33e1af1c9d3fc95"
+        },
+        {
+          "start": "0xc6648c",
+          "end": "0xc6651c",
+          "rawSha256": "5dacac772b04ec2edb761950b684d38285abd8592553940832fbd32d7a07720b"
+        },
+        {
+          "start": "0x1864314",
+          "end": "0x18645ac",
+          "rawSha256": "a6e3ad8882e7fe1ec02fca86958adb3836f93947ae73ab15607e9a78fc53db6d"
+        },
+        {
+          "start": "0x1866400",
+          "end": "0x1866410",
+          "rawSha256": "e099d05dac5f8fafba3f21f609598607d3781c538be91640b973e8f52a256dc4"
+        },
+        {
+          "start": "0x18663c4",
+          "end": "0x18663d8",
+          "rawSha256": "805a7a6abaa7376d2023fecb3f8db30a743f077b5393c8d196b04783a37db558"
+        },
+        {
+          "start": "0x1865328",
+          "end": "0x186547c",
+          "rawSha256": "8cd4a49137bc3e1357787811c7ee535fa2373dbea31d4c8b2bcf54948885d226"
+        },
+        {
+          "start": "0x1866368",
+          "end": "0x186637c",
+          "rawSha256": "8bf1f9bf4dccd09a490d5047751dc2249f3b0585df4a3c4d238a0215d8b500aa"
+        },
+        {
+          "start": "0x16d0a3c",
+          "end": "0x16d0a54",
+          "rawSha256": "1688163efd5db332b964cf218c9a2e67f8af985f44f2ca39e99618ffb1f21aec"
+        }
+      ],
+      "traceDistinction": "Completion closure50a1000+8 contains KernelTrace, not the original request. The separate original PB request route above supplies identity evidence. BuddyExtSpecifyUidCodec11d7150 belongs to another vector route and is not used as proof here."
     }
   ],
   "relocations": {
@@ -197,6 +325,34 @@
     {
       "path": "architecture-refactor/category-delete-next/linux-delete-core-recheck/instance-followup/session-target-slice.json",
       "sha256": "a99319e5655644d1ff4b1225180c80678b55a6d52a3de08b73503dc67b9079a3"
+    },
+    {
+      "path": "architecture-refactor/category-assignment-darwin-protocol-next/root/request-protocol-receipt.json",
+      "sha256": "121c9fa5f86c450aabb189acdf54258c44feabb8a32bc4e8490535d670fae8da"
+    },
+    {
+      "path": "architecture-refactor/category-assignment-darwin-protocol-next/root/factory-chain-replay.json",
+      "sha256": "8011a5a21093a0b513f8cd29d615f80ad9cdf557f1440a7a552b10e8a66b7ace"
+    },
+    {
+      "path": "architecture-refactor/category-assignment-darwin-protocol-next/worker-request/login-contract-receipt.json",
+      "sha256": "e272f40cb20e10f528a38ca4d7df066c1b64207d34d786b90f73824fe31082ba"
+    },
+    {
+      "path": "architecture-refactor/category-assignment-darwin-protocol-next/abi-review/receipt.json",
+      "sha256": "99476483c5bf1d4c3fc7c434406480d335bcc82a6fc4eac345aeb609523b6b81"
+    },
+    {
+      "path": "architecture-refactor/category-assignment-darwin-protocol-next/final-review/receipt.json",
+      "sha256": "9fb613766643ae53d931ca0cfe01fe494394c86f2692147ac5df131a50af0f78"
+    },
+    {
+      "path": "architecture-refactor/category-assignment-darwin-next/login-factory-final.json",
+      "sha256": "5b0278ae182773caff13060916226a4e0ba0def83a296bb69d36bed69caddd53"
+    },
+    {
+      "path": "architecture-refactor/category-assignment-darwin-consumer-next/login-contract-receipt.json",
+      "sha256": "ef87ad87e73a12406f58b514f9787f21816607d8377cbf60e69f3571047378f4"
     }
   ],
   "acceptancePolicy": "Only own-data finite int32 result strictly numeric0 yields void native ACK; nonzero safe numeric code rejects without errMsg disclosure. This is SDK acceptance, not remote effect evidence.",
@@ -204,7 +360,7 @@
   "invariants": [
     "Validate and capture public userId/categoryId primitives before acquiring services; reuse existing ID resolution policy rather than invent UID/UIN parsing.",
     "Resolve public userId to captured native UID once; do not pass original UIN to native string slot.",
-    "Capability match must precede first native acquisition/dispatch and be exact profile/version/wrapper hash; only this Linux x64 scope presently proved.",
+    "Capability match must precede first native acquisition/dispatch and be exact profile/version/wrapper hash; only the listed Linux x64 and macOS ARM64 exact binary scopes are enabled.",
     "Acquire nullable service and capture method once, check alive after each fallible/reentrant getter, Reflect.apply with original receiver and exactly2 arguments.",
     "No mutation before validation/UID resolution completion; close or abort before dispatch preserves original cancellation and issues no write.",
     "One native dispatch, no retry/replay/readback; deadline5000 and postdispatch cancellation report remote effect unknown.",
@@ -213,10 +369,11 @@
   ],
   "limits": [
     "No real account/server mutation outcome; native ACK does not establish membership effect.",
-    "Other5 platform identity dataflows not independently bound here; do not extend gate.",
+    "Other4 platform identity dataflows not independently bound here; do not extend gate.",
     "No proof of protected/default-category admissibility or category existence; uint32 including0 alone cannot establish those policies.",
     "Batch setBatchBuddyCategory identity/semantics remain a separate unproved capability.",
-    "Protocol field numbers and concrete codec identity establish static routing only, not server acceptance or membership change."
+    "Protocol field numbers and concrete codec identity establish static routing only, not server acceptance or membership change.",
+    "macOS UID semantics are inferred from exact native command/body matching to a pinned independent protocol implementation; this does not establish signing authenticity or server acceptance."
   ],
   "nativeExecuted": false,
   "accountUsed": false

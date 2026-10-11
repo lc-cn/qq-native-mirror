@@ -36,8 +36,9 @@ type BinaryContract = readonly [
 // group-folder contract records under docs/evidence/. Category renaming has its
 // own platform-specific namespace evidence in friend-category-rename-contract.json;
 // deletion uses its separate friend-category-delete-contract.json evidence.
-// Assignment binds the same-instance UID codec and V2 category namespace in
-// friend-category-assignment-contract.json.
+// Assignment binds same-instance identity routing and the V2 category namespace
+// in friend-category-assignment-contract.json. Mac UID interpretation uses the
+// exact encoded command/body matched to a pinned independent protocol source.
 // Reordering binds explicit rows and ordinals in friend-category-reorder-contract.json.
 const binaryProfiles: readonly BinaryContract[] = [
   [
@@ -85,6 +86,7 @@ const binaryProfiles: readonly BinaryContract[] = [
       'categoryCreation',
       'categoryRenaming',
       'categoryDeletion',
+      'categoryAssignment',
       'groupFileCount',
       'groupFileDeletion',
       'groupFilePages',

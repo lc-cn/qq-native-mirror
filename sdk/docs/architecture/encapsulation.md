@@ -760,7 +760,7 @@ mutation owners to import this completion module, and prevents it from acquiring
 native services or identity modules. Public facade and CLI reuse pure category
 capture; adding a feature does not grant them native execution dependencies.
 
-Assignment is enabled only for the measured Linux x64 profile recorded in
+Assignment is enabled only for the measured Linux x64 and macOS ARM64 profiles recorded in
 `evidence/friend-category-assignment-contract.json`. Controlled installed-consumer
 checks exercise the public method, worker routing, CLI planning and native adapter
 with substituted services. These checks do not establish remote category changes
@@ -771,8 +771,12 @@ mutation adapter's reusable ports. A matching method name, parameter count or
 completion status does not grant the identity contract. The macOS ARM64
 assignment analysis demonstrates this boundary: its completion closure contains
 a `KernelTrace` object, while the original request reaches a different consumer.
-Only a proven same-instance UID and category path can extend the registry;
-shared completion handling cannot do so.
+The separate macOS original request path is now bound through the concrete
+receiver, cached worker and encoded transport body. UID semantics use an explicit
+inference from exact command/body matching to a pinned independent protocol
+implementation. Only this per-binary evidence extends the registry; shared
+completion handling cannot do so. The reusable adapter and composition ports
+remain unchanged when a verified profile is added.
 
 `features/groups/group-files` owns file-count, folder and listing dispatch policy.
 Composition injects lazy method-specific ports and measured-profile decisions,

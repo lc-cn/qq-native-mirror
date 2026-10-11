@@ -358,18 +358,37 @@ export async function verifyFriendCategoryMutationsConsumer(packageRoot) {
  * @param {typeof import('../../src/native-services.ts').createNativeServices} createNativeServices
  * @param {typeof import('../../src/index.ts').QQClient} QQClient */
 async function verifyAssignment(packageRoot, createNativeServices, QQClient) {
-  const { supportsCategoryAssignment } =
-    await /** @type {Promise<typeof import('../../src/native/native-contracts.ts')>} */ (
-      import(pathToFileURL(join(packageRoot, 'dist/native/native-contracts.js')).href)
-    );
   const { prepareCommand } = await /** @type {Promise<typeof import('../../src/cli.ts')>} */ (
     import(pathToFileURL(join(packageRoot, 'dist/cli.js')).href)
   );
   const profiles = await readProfiles(packageRoot, 'friend-category-assignment-contract.json');
-  assert.equal(profiles.length, 1);
-  const profile = profiles[0];
-  assert.equal(profile.platform, 'linux');
-  assert.equal(profile.arch, 'x64');
+  /** @param {import('../../src/native/native-contracts.ts').NativeContractProfile} expected
+   * @param {import('../../src/native/native-contracts.ts').NativeContractProfile|undefined} value */
+  const matches = (expected, value) =>
+    !!value &&
+    expected.platform === value.platform &&
+    expected.arch === value.arch &&
+    expected.clientVersion === value.clientVersion &&
+    expected.wrapperSha256 === value.wrapperSha256;
+  // Independent expected identities; capability implementation is never the oracle.
+  const expectedProfiles = [
+    {
+      platform: 'linux',
+      arch: 'x64',
+      clientVersion: '3.2.32-52194',
+      wrapperSha256: '7882b8e3055cd38584861042befacd8be9939896f5cbbca6fa4a230926b48526',
+    },
+    {
+      platform: 'darwin',
+      arch: 'arm64',
+      clientVersion: '7.0.2-53644',
+      wrapperSha256: 'fbc8ad9b328d05e16784d76b0181dda894c17001179dbf8c0d5dd00dc6271358',
+    },
+  ];
+  assert.equal(profiles.length, expectedProfiles.length);
+  for (const expected of expectedProfiles)
+    assert.equal(profiles.filter((value) => matches(expected, value)).length, 1);
+  const profile = expectedProfiles[0]; // Shared worker/CLI/close fixture remains Linux x64.
   const allProfiles = await readProfiles(packageRoot, 'group-search-contract.json');
   assert.equal(allProfiles.length, 6);
   /** @type {[import('../../src/native/native-contracts.ts').NativeContractProfile|undefined,string][]} */
@@ -377,16 +396,18 @@ async function verifyAssignment(packageRoot, createNativeServices, QQClient) {
     ...allProfiles.map(
       (value) => /** @type {[typeof value,string]} */ ([value, value.clientVersion]),
     ),
-    [profile, profile.clientVersion],
-    [undefined, profile.clientVersion],
-    [profile, 'wrong-version'],
-    ...['platform', 'arch', 'clientVersion', 'wrapperSha256'].map(
-      (key) =>
-        /** @type {[typeof profile,string]} */ ([
-          { ...profile, [key]: 'wrong' },
-          profile.clientVersion,
-        ]),
-    ),
+    ...expectedProfiles.flatMap((expected) => [
+      /** @type {[typeof expected|undefined,string]} */ ([expected, expected.clientVersion]),
+      /** @type {[typeof expected|undefined,string]} */ ([undefined, expected.clientVersion]),
+      /** @type {[typeof expected|undefined,string]} */ ([expected, 'wrong-version']),
+      ...['platform', 'arch', 'clientVersion', 'wrapperSha256'].map(
+        (key) =>
+          /** @type {[typeof expected|undefined,string]} */ ([
+            { ...expected, [key]: 'wrong' },
+            expected.clientVersion,
+          ]),
+      ),
+    ]),
   ];
   for (const [binaryProfile, version] of cases) {
     let buddyAcquisitions = 0,
@@ -426,7 +447,10 @@ async function verifyAssignment(packageRoot, createNativeServices, QQClient) {
     });
     buddyAcquisitions = uidAcquisitions = 0;
     try {
-      if (supportsCategoryAssignment(binaryProfile, version)) {
+      if (
+        binaryProfile?.clientVersion === version &&
+        expectedProfiles.some((expected) => matches(expected, binaryProfile))
+      ) {
         await services.invokeOperation('setFriendCategory', {
           userId: '000123',
           categoryId: 0xffff_ffff,
@@ -594,6 +618,8 @@ export function createKernel(_n,_o,emit){let calls=0;const buddy={addKernelBuddy
     await client.close();
     return {
       friendCategoryAssignmentBinaryGateContract: true,
+      friendCategoryAssignmentLinuxMacCompositionContract: true,
+      friendCategoryAssignmentSharedWorkerFixturePlatform: 'linux/x64',
       friendCategoryAssignmentCompositionContract: true,
       friendCategoryAssignmentFacadeContract: true,
       friendCategoryAssignmentCliContract: true,
