@@ -95,6 +95,15 @@ awaits the complete operation. Inject ticket/domain-key methods and the account
 wait port there; keep endpoint exchange, pagination and DTO validation in their
 existing group modules. The composition root only supplies ports and routes.
 
+`features/contacts/contact-operations.ts` captures public input and resolves the
+UID before delegating to `user-profile-query.ts`. The query owns only lazy Profile
+method acquisition, requested Map lookup and projection to the canonical public
+`UserProfile`. Its port cannot resolve identifiers, mutate friends or retire the
+account. Preserve valid native getters and Map overrides: capture each read once,
+keep its receiver, and check retirement even when the read throws. A retired read
+cannot validate or inspect another native field. `ContactProfile` and its old port
+export remain compatibility aliases, rather than duplicate DTO definitions.
+
 `features/groups/group-files.ts` owns file-count and folder dispatch policy. Supply
 lazy, operation-specific native ports and decisions bound to the measured
 binary profile. Input capture and rejection of unsupported operations happen there

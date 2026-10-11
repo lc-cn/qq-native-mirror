@@ -123,3 +123,37 @@ test('prepared outbound contracts own only data declarations and their reviewed 
     }
   }
 });
+
+test('contact profile compatibility names reuse the canonical public DTO and query port', () => {
+  const path = join(sourceRoot, 'features/contacts/contact-operations.ts');
+  const tree = ts.createSourceFile(path, readFileSync(path, 'utf8'), ts.ScriptTarget.Latest, true);
+  assert.ok(
+    !tree.statements.some(
+      (statement) =>
+        (ts.isInterfaceDeclaration(statement) || ts.isTypeAliasDeclaration(statement)) &&
+        ['ContactProfile', 'ContactProfilePort'].includes(statement.name.text),
+    ),
+  );
+  const exports = tree.statements.filter(ts.isExportDeclaration);
+  for (const [name, original, module] of [
+    ['ContactProfile', 'UserProfile', '../../contracts/contacts.ts'],
+    ['ContactProfilePort', 'ContactProfilePort', './user-profile-query.ts'],
+  ]) {
+    assert.ok(
+      exports.some(
+        (statement) =>
+          statement.isTypeOnly &&
+          statement.moduleSpecifier &&
+          ts.isStringLiteral(statement.moduleSpecifier) &&
+          statement.moduleSpecifier.text === module &&
+          statement.exportClause &&
+          ts.isNamedExports(statement.exportClause) &&
+          statement.exportClause.elements.some(
+            (element) =>
+              element.name.text === name &&
+              (element.propertyName?.text ?? element.name.text) === original,
+          ),
+      ),
+    );
+  }
+});

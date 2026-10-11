@@ -326,3 +326,35 @@ test('management and request input owners stay pure while facade and CLI share t
     assert.ok(dependencyViolation({ from: to, to: `src/contracts/${contract}`, typeOnly: false }));
   }
 });
+
+test('resolved profile query has a single dispatcher and only its public DTO dependency', () => {
+  const query = 'src/features/contacts/user-profile-query.ts';
+  const edges = graph.get(join(projectRoot, query))!;
+  assert.equal(edges.length, 1);
+  assert.equal(edges[0]!.typeOnly, true);
+  assert.equal(edges[0]!.target, join(projectRoot, 'src/contracts/contacts.ts'));
+  for (const typeOnly of [false, true]) {
+    assert.equal(
+      dependencyViolation({
+        from: 'src/features/contacts/contact-operations.ts',
+        to: query,
+        typeOnly,
+      }),
+      undefined,
+    );
+    for (const from of [
+      'src/native-services.ts',
+      'src/features/contacts/new-action.ts',
+      'src/client/qq-client.ts',
+    ])
+      assert.ok(dependencyViolation({ from, to: query, typeOnly }));
+    for (const to of [
+      'node:fs',
+      'src/runtime/feature-lifetime.ts',
+      'src/features/contacts/contact-directory.ts',
+      'src/features/contacts/contact-operations.ts',
+    ])
+      assert.ok(dependencyViolation({ from: query, to, typeOnly }));
+  }
+  assert.ok(dependencyViolation({ from: query, to: 'src/contracts/contacts.ts', typeOnly: false }));
+});

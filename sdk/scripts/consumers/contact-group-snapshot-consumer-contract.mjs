@@ -19,6 +19,127 @@ export async function verifyContactGroupSnapshots(packageRoot) {
     contacts,
     groups,
   ]);
+  const { queryUserProfile } =
+    await /** @type {Promise<typeof import('../../src/features/contacts/user-profile-query.ts')>} */ (
+      import(pathToFileURL(join(packageRoot, 'dist/features/contacts/user-profile-query.js')).href)
+    );
+  for (const stage of [
+    'service',
+    'method',
+    'lookup-method',
+    'lookup',
+    'core',
+    'uid',
+    'uin',
+    'nick',
+    'remark',
+  ]) {
+    for (const effect of ['valid', 'throw', 'close', 'close-throw']) {
+      const controller = new AbortController();
+      const closed = new Error('controlled profile account closed');
+      const original = new Error('controlled profile getter failure');
+      let retired = false;
+      let laterReads = 0;
+      let selectedReads = 0;
+      let nativeCalls = 0;
+      let mapCalls = 0;
+      /** @param {string} current */
+      function read(current) {
+        if (retired) laterReads++;
+        if (current !== stage) return;
+        selectedReads++;
+        if (effect.startsWith('close')) {
+          retired = true;
+          controller.abort(closed);
+        }
+        if (effect.includes('throw')) throw original;
+      }
+      const core = {
+        get uid() {
+          read('uid');
+          return 'u_fixture';
+        },
+        get uin() {
+          read('uin');
+          return '000123';
+        },
+        get nick() {
+          read('nick');
+          return 'captured';
+        },
+        get remark() {
+          read('remark');
+          return '';
+        },
+      };
+      const carrier = {
+        get coreInfo() {
+          read('core');
+          return core;
+        },
+      };
+      const map = new Map([['u_fixture', carrier]]);
+      Object.defineProperty(map, 'get', {
+        get() {
+          read('lookup-method');
+          /** @this {Map<string, typeof carrier>} @param {string} key */
+          return function (key) {
+            assert.equal(this, map);
+            mapCalls++;
+            read('lookup');
+            return Map.prototype.get.call(map, key);
+          };
+        },
+      });
+      const service = {
+        get getCoreAndBaseInfo() {
+          read('method');
+          /** @this {import('../../src/features/contacts/user-profile-query.ts').ContactProfilePort} @param {string} store @param {string[]} ids */
+          return function (store, ids) {
+            assert.equal(this, service);
+            assert.deepEqual([store, ids], ['nodeStore', ['u_fixture']]);
+            nativeCalls++;
+            return map;
+          };
+        },
+      };
+      const pending = queryUserProfile(
+        {
+          signal: controller.signal,
+          /** @template T @param {T | PromiseLike<T>} value */
+          awaitAlive: async (value) => value,
+          getProfileService() {
+            read('service');
+            return service;
+          },
+        },
+        '000123',
+        'u_fixture',
+      );
+      if (effect === 'valid') {
+        const result = await pending;
+        assert.deepEqual(result, {
+          userId: '000123',
+          uid: 'u_fixture',
+          nickname: 'captured',
+          remark: '',
+          raw: carrier,
+        });
+        assert.equal(result.raw, carrier);
+        assert.deepEqual([nativeCalls, mapCalls], [1, 1]);
+      } else {
+        await assert.rejects(
+          pending,
+          (error) => error === (effect.startsWith('close') ? closed : original),
+        );
+        if (stage === 'service' || stage === 'method') assert.equal(nativeCalls, 0);
+        if (stage === 'service' || stage === 'method' || stage === 'lookup-method')
+          assert.equal(mapCalls, 0);
+      }
+      assert.equal(selectedReads, 1, `${stage}/${effect}`);
+      assert.equal(laterReads, 0, `${stage}/${effect}`);
+    }
+  }
   const account = new AbortController();
   const common = {
     signal: account.signal,
@@ -215,6 +336,9 @@ export async function verifyContactGroupSnapshots(packageRoot) {
     contactMutationSnapshotContract: true,
     groupMutationSnapshotContract: true,
     contactProfileSnapshotContract: true,
+    installedUserProfileQueryReadBoundaryContract: true,
+    installedUserProfileQueryGetterPriorityContract: true,
+    installedUserProfileQueryReceiverAndRawIdentity: true,
     contactGroupReceiptSnapshotContract: true,
     contactGroupProjectionRetirementContract: true,
     contactProfileLookupRetirementContract: true,

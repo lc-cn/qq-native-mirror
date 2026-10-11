@@ -196,6 +196,14 @@ export function dependencyViolation({ from, to, typeOnly }: SourceDependency): s
     return 'Domain input capture belongs to its domain owner; composition only routes payloads.';
   if (from === 'src/native-services.ts' && to === 'src/validation/identifiers.ts')
     return 'Group query input rules belong to the query owner; composition only routes payloads.';
+  if (from === 'src/features/contacts/user-profile-query.ts')
+    return typeOnly && to === 'src/contracts/contacts.ts'
+      ? undefined
+      : 'Profile query owns lookup and projection through injected ports, without acquisition or mutation dependencies.';
+  if (to === 'src/features/contacts/user-profile-query.ts')
+    return from === 'src/features/contacts/contact-operations.ts'
+      ? undefined
+      : 'Contact operation dispatch is the sole source caller of the resolved profile query.';
   if (to === 'src/features/groups/group-file-operations.ts')
     return 'The compatibility barrel preserves old consumers; source owners import their protocol directly.';
   if (from === 'src/features/groups/group-file-result.ts')

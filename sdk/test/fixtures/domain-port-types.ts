@@ -493,3 +493,38 @@ function verifyAttachmentDownloadsContext(context: AttachmentDownloadsContext) {
   context.awaitAlive(Promise.resolve('fixture'));
 }
 void verifyAttachmentDownloadsContext;
+
+import type {
+  UserProfileQueryContext,
+  ContactProfilePort,
+} from '../../src/features/contacts/user-profile-query.ts';
+import type {
+  ContactProfile,
+  ContactProfilePort as LegacyProfilePort,
+} from '../../src/features/contacts/contact-operations.ts';
+import type { UserProfile } from '../../src/contracts/contacts.ts';
+function verifyResolvedProfileQuery(
+  context: UserProfileQueryContext,
+  profile: UserProfile,
+  legacy: ContactProfile,
+  port: ContactProfilePort,
+  legacyPort: LegacyProfilePort,
+) {
+  // @ts-expect-error UID resolution belongs to the contact dispatcher.
+  context.resolveUid('123');
+  // @ts-expect-error Profile queries cannot acquire contact mutation services.
+  context.getBuddyService();
+  // @ts-expect-error A stateless query cannot retire its account.
+  context.close();
+  // @ts-expect-error The profile port cannot mutate user details.
+  context.getProfileService()?.modifyProfile({});
+  const result = context.getProfileService()?.getCoreAndBaseInfo?.('nodeStore', ['uid']);
+  // @ts-expect-error A native profile completion remains unknown until projection.
+  void result.coreInfo;
+  const canonical: UserProfile = legacy;
+  const compatible: ContactProfile = profile;
+  const canonicalPort: ContactProfilePort = legacyPort;
+  const compatiblePort: LegacyProfilePort = port;
+  void [canonical, compatible, canonicalPort, compatiblePort];
+}
+void verifyResolvedProfileQuery;

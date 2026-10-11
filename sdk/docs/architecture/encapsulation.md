@@ -444,8 +444,8 @@ resources, resolve UIDs or import execution owners. Domain entry checks lifetime
 both before and after capture; even a validated accessor can retire the account.
 
 `createContactOperations` and `createGroupOperations` receive separate mutation
-ports, not a Session or arbitrary service locator. The contact module owns profile
-lookup, remark and deletion validation; the group module owns its eight management
+ports, not a Session or arbitrary service locator. The contact dispatcher owns
+input capture, UID resolution, remark and deletion validation; the group module owns its eight management
 actions. Each group method is paired with its native argument tuple by a type
 union, so adding a branch cannot silently mix another method's parameters.
 Both modules validate and capture input before UID lookup, retain the selected
@@ -459,11 +459,15 @@ code. These internal ports do not add types to the public package interface.
 Deletion and kick options are captured once, including their individual flags and
 texts, before UID lookup. Validation and dispatch use those same scalars, so
 changing accessors or mutation during the lookup cannot replace validated input.
-Contact profile projection captures the requested Map entry and its core fields
-once; the original `raw` carrier retains identity. Map lookup overrides retain
-their existing receiver and behavior. Retirement is checked after lookup method
-acquisition, lookup and
-projection, before returning the DTO. Both domains capture the completion status
+`user-profile-query` owns resolved contact lookup and projection, with only an
+injected Profile port and the account wait/signal. It returns the canonical public
+`UserProfile`; the old `ContactProfile` name is a type reexport. It cannot resolve
+UIDs, mutate contacts or acquire another lifetime. Projection captures the requested
+Map entry and each core field once; the original `raw` carrier retains identity. Map lookup overrides retain
+their existing receiver and behavior. Retirement is checked before and after each
+read, including a thrown getter or Map lookup; the exact close reason wins and no
+subsequent native field is inspected. While active, thrown reads retain their
+original error identity. Both domains capture the completion status
 once and recheck retirement before accepting it. Rejection codes come from that
 captured status, rather than a second read of the opaque native response.
 
