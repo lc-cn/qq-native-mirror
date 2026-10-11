@@ -1,0 +1,79 @@
+sdk/src/features/contacts/friend-category-mutations.ts
+  s_2104cc474f1ce5::t_5de8807c0be1dd 3,15,23,35-38,42
+  s_2104cc474f1ce5::t_8688ba5c160a3b 43-47,56-62,64,148-155
+sdk/src/cli.ts
+  s_2104cc474f1ce5::t_5de8807c0be1dd 26
+sdk/scripts/contact-group-consumer-contract.mjs
+  s_2104cc474f1ce5::t_357d50930e41c0 26,68
+  s_2104cc474f1ce5::t_2fbc32f23dbba8 69-74
+sdk/src/features/contacts/friend-categories.ts
+  s_2104cc474f1ce5::t_d404169aaa5085 138-144,150-151
+  s_2104cc474f1ce5::t_5de8807c0be1dd 2,132-137,145-149,152
+  s_2104cc474f1ce5::t_6e51a6f506587f 153
+sdk/src/native-services.ts
+  s_2104cc474f1ce5::t_5de8807c0be1dd 16,107,360-361
+sdk/src/cli/command-plan.ts
+  s_2104cc474f1ce5::t_5de8807c0be1dd 3,54,405-407
+  s_2104cc474f1ce5::t_2a385ede2b4a02 408-410
+sdk/src/client/qq-client.ts
+  s_2104cc474f1ce5::t_5de8807c0be1dd 15,38,186-187
+  s_2104cc474f1ce5::t_01cb808a80929e 188-191
+sdk/scripts/friend-category-mutations-consumer-contract.mjs
+  s_2104cc474f1ce5::t_f581e624f3237b 1-264
+  s_2104cc474f1ce5::t_616e4b32eeb496 265-275,280,294-298
+sdk/scripts/verify-package-consumer.mjs
+  s_2104cc474f1ce5::t_f581e624f3237b 36,203,489-494,576
+sdk/test/operation-contracts.test.ts
+  s_2104cc474f1ce5::t_357d50930e41c0 54
+sdk/src/native/native-contracts.ts
+  s_2104cc474f1ce5::t_5de8807c0be1dd 16,37,48,196-200
+  s_2104cc474f1ce5::t_46d9602c0ba7d2 201-202
+sdk/test/friend-category-reorder.test.ts
+  s_2104cc474f1ce5::t_d404169aaa5085 6-21,27-38,53-58,67-74,80-89,91-114,125-134,142-160,162-173,183-197,208-221,224-225
+  s_2104cc474f1ce5::t_9aa0b561e03525 22-26
+  s_2104cc474f1ce5::t_af9a0b7817422e 1-5,39-52,59-66,75-79,90,115-124,135-141,161,174-182,198-207,222-223,226-232
+sdk/src/contracts/contacts.ts
+  s_2104cc474f1ce5::t_5de8807c0be1dd 30-32
+sdk/src/runtime/operations.ts
+  s_2104cc474f1ce5::t_5de8807c0be1dd 10
+sdk/src/runtime/operation-contracts.ts
+  s_2104cc474f1ce5::t_5de8807c0be1dd 6,67
+ci/verify-consumer.mjs
+  s_2104cc474f1ce5::t_ae1abdf3964071 19,82,319
+sdk/README.md
+  s_2104cc474f1ce5::t_c7df4cf1af0173 68-75
+sdk/docs/architecture/encapsulation.md
+  s_2104cc474f1ce5::t_8b0bda19bd9079 595-603
+sdk/docs/contacts-groups.md
+  s_2104cc474f1ce5::t_d3d1dbee66bfc0 83,223-254
+sdk/docs/evidence/default-latest-six-ci-38098519850.json
+  s_2104cc474f1ce5::t_8119350283794f 1-136
+sdk/docs/evidence/friend-category-reorder-contract.json
+  s_2104cc474f1ce5::t_f1d1e0591980b2 1-238
+sdk/docs/sdk-acceptance.md
+  s_2104cc474f1ce5::t_a6a22ef8e7131f 77-90,97-106
+sdk/test/fixtures/public-type-names.json
+  s_2104cc474f1ce5::t_3b214651285d4c 18
+sdk/test/friend-category-delete.test.ts
+  s_2104cc474f1ce5::t_db1d44deafd35c 19,35,60,77,97,118,132,150,170,204
+sdk/test/friend-category-mutations-create.test.ts
+  s_2104cc474f1ce5::t_f8bd4a89cd62da 23,39,59,83,118
+sdk/test/friend-category-rename.test.ts
+  s_2104cc474f1ce5::t_456e81f5ed451c 18,38,73,84,105,141,159,188,209
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ade32ed28860f1d7da4bb80f3dc76533248372ad",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
