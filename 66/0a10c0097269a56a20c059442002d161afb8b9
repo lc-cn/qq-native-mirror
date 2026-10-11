@@ -1,0 +1,58 @@
+sdk/test/test-discovery.test.ts
+  s_2104cc474f1ce5::t_edc528a1896847 43-45,48,55-59,66-68
+  s_2104cc474f1ce5::t_fbbd8c0f906ad6 1-42,46-47,49-54,60-65,69-72
+sdk/docs/development.md
+  s_2104cc474f1ce5::t_fbbd8c0f906ad6 46-57
+sdk/docs/architecture/quality-gates.md
+  s_2104cc474f1ce5::t_fbbd8c0f906ad6 98-105
+sdk/package.json
+  s_2104cc474f1ce5::t_54988f55d23fc2 20
+sdk/test/features/contacts/contact-directory.test.ts
+  s_2104cc474f1ce5::t_92d879fd43b709 3-4
+sdk/test/features/contacts/contact-operations.test.ts
+  s_2104cc474f1ce5::t_739ff4246157f9 2,8
+sdk/test/features/contacts/contact-profile-retirement.test.ts
+  s_2104cc474f1ce5::t_81bcf8bc367497 3-4
+sdk/test/features/contacts/friend-categories.test.ts
+  s_2104cc474f1ce5::t_261ebea2d39798 7
+sdk/test/features/contacts/friend-category-assignment-profiles.test.ts
+  s_2104cc474f1ce5::t_1458dd2452ab76 7,11
+sdk/test/features/contacts/friend-category-assignment.test.ts
+  s_2104cc474f1ce5::t_8770c293c5cb9e 7
+sdk/test/features/contacts/friend-category-create.test.ts
+  s_2104cc474f1ce5::t_1ec17951c8db49 11,15-17
+sdk/test/features/contacts/friend-category-delete.test.ts
+  s_2104cc474f1ce5::t_2697967d81535b 3
+sdk/test/features/contacts/friend-category-mutations-create.test.ts
+  s_2104cc474f1ce5::t_9dafcae3ba7373 3
+sdk/test/features/contacts/friend-category-rename-profiles.test.ts
+  s_2104cc474f1ce5::t_4b4c3c8087f438 6-8,13,17-20,27
+sdk/test/features/contacts/friend-category-rename.test.ts
+  s_2104cc474f1ce5::t_34dc134c515c39 3
+sdk/test/features/contacts/friend-category-reorder.test.ts
+  s_2104cc474f1ce5::t_3e0c10bb630bdb 3-4
+sdk/test/features/contacts/friend-events.test.ts
+  s_2104cc474f1ce5::t_3b3af36890905a 3
+sdk/test/features/contacts/friend-requests.test.ts
+  s_2104cc474f1ce5::t_24ae4a7216b590 7
+sdk/test/features/contacts/friend-system-events.test.ts
+  s_2104cc474f1ce5::t_553a0cdd8dc87e 4-6
+sdk/test/features/contacts/self-profile.test.ts
+  s_2104cc474f1ce5::t_4829f3d74c813c 7
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "660a10c0097269a56a20c059442002d161afb8b9",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
