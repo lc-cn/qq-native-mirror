@@ -99,6 +99,16 @@ video inputs per host agree. Category reorder is covered by controlled and
 installed-consumer contracts only; these native initialization checks do not
 execute it or establish account, remote ordering or signing behavior.
 
+A later [local default-installed-storage proof](evidence/default-installed-gzip-2433928-macos-arm64.json)
+binds SDK main `2433928` to the older complete arm64 gzip-object auxiliary whose
+content matches the current public catalog. Actual public HTTPS metadata, default
+factory options, main-only installation from an isolated local npm registry, both
+cold/warm empty clients, 1,168 file hashes, unchanged warm modification times and
+three actual video inputs passed on macOS arm64 / Node 24.19.0. Neither phase
+requested native payloads. This does not establish a public npm release, current
+SDK default-installed execution on the other five hosts, newer `85ef15a` auxiliary
+acceptance, account operations or signing authenticity.
+
 The published npm `0.0.1`, working `0.0.2` candidate and each native mirror are
 separate artifacts. Push builds do not publish npm releases. See [first publication
 and trusted publishing](npm-first-publish.md).

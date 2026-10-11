@@ -21,18 +21,27 @@ const catalogUrl = 'https://raw.githubusercontent.com/lc-cn/qq-native-mirror/mai
  * catalogSha256:string,
  * downloadMirrors?:string[],
  * fetchImpl?:typeof fetch,
- * verifyCodec?:(options:ClientOptions)=>Promise<void>
+ * verifyCodec?:(options:ClientOptions)=>Promise<void>,
+ * installedStorage?:{manifestSha256:string,objects:number}
  * }} context
  */
 export async function verifyMirrorConsumer(context) {
+  const { createClient, verifyCodec, fetchImpl: suppliedFetch } = context;
   const selected = structuredClone(context.selected);
+  const catalogSha256 = context.catalogSha256;
+  const downloadMirrors = [...(context.downloadMirrors ?? ['https://gh-proxy.com/'])];
+  const installedStorage = context.installedStorage ? { ...context.installedStorage } : undefined;
+  if (installedStorage) {
+    assert.match(installedStorage.manifestSha256, /^[a-f0-9]{64}$/);
+    assert.ok(Number.isSafeInteger(installedStorage.objects) && installedStorage.objects > 0);
+  }
   assert.equal(selected.platform, process.platform);
   assert.equal(selected.arch, process.arch);
   assert.match(selected.manifestSha256, /^[a-f0-9]{64}$/);
-  assert.match(context.catalogSha256, /^[a-f0-9]{64}$/);
+  assert.match(catalogSha256, /^[a-f0-9]{64}$/);
   const originalFetch = globalThis.fetch;
-  const fetchImpl = context.fetchImpl ?? originalFetch;
-  const root = await mkdtemp(join(tmpdir(), 'qq-current-mirror-'));
+  const fetchImpl = suppliedFetch ?? originalFetch;
+  const root = await realpath(await mkdtemp(join(tmpdir(), 'qq-current-mirror-')));
   const cacheDir = join(root, 'cache');
   /** @type {import('../../src/contracts/native.ts').NativeManifest|undefined} */
   let manifest;
@@ -46,6 +55,13 @@ export async function verifyMirrorConsumer(context) {
   ];
   let nativeExports = 0;
   let codecVerified = false;
+  const metadataReads = [
+    { catalog: 0, manifest: 0 },
+    { catalog: 0, manifest: 0 },
+  ];
+  /** @type {Map<string,number>} */
+  const coldMtimes = new Map();
+  let verifiedFiles = 0;
   try {
     globalThis.fetch = async (input, init) => {
       const url = String(input);
@@ -56,11 +72,16 @@ export async function verifyMirrorConsumer(context) {
       stats.requests++;
       if (!metadata) {
         stats.payloadRequests++;
+        assert.ok(!installedStorage, 'Installed storage attempted native payload download');
         assert.equal(phase, 0, 'Warm cache attempted native payload download');
       }
       const response = await fetchImpl(input, init);
       if (!response.body) return response;
       if (metadata && response.ok) {
+        const reads = metadataReads[phase];
+        assert.ok(reads);
+        if (url === catalogUrl) reads.catalog++;
+        else reads.manifest++;
         const chunks = [];
         let size = 0;
         for await (const chunk of response.body) {
@@ -70,10 +91,7 @@ export async function verifyMirrorConsumer(context) {
         }
         const bytes = Buffer.concat(chunks);
         stats.bytes += bytes.length;
-        assert.equal(
-          hash(bytes),
-          url === catalogUrl ? context.catalogSha256 : selected.manifestSha256,
-        );
+        assert.equal(hash(bytes), url === catalogUrl ? catalogSha256 : selected.manifestSha256);
         if (url === selected.manifestUrl) {
           const value = /** @type {import('../../src/contracts/native.ts').NativeManifest} */ (
             JSON.parse(bytes.toString('utf8'))
@@ -114,11 +132,11 @@ export async function verifyMirrorConsumer(context) {
       const options = {
         cacheDir,
         dataDir: join(root, `empty-account-${phase}`),
-        downloadMirrors: context.downloadMirrors ?? ['https://gh-proxy.com/'],
+        downloadMirrors: [...downloadMirrors],
         autoReconnect: false,
         timeoutMs: 120000,
       };
-      client = await context.createClient(options);
+      client = await createClient(options);
       assert.equal(client.account, undefined, 'Preparation unexpectedly authenticated an account');
       assert.ok(client.nativeExports.length >= 80, 'Native exports are incomplete');
       nativeExports = client.nativeExports.length;
@@ -126,38 +144,60 @@ export async function verifyMirrorConsumer(context) {
       client = undefined;
       await retiring.close();
       assert.equal(retiring.state, 'closed');
+      assert.ok(
+        metadataReads[phase]?.catalog && metadataReads[phase]?.manifest,
+        'Each phase must read catalog and manifest metadata',
+      );
+      assert.ok(manifest, 'Default selection did not fetch its manifest');
+      const target = await realpath(
+        join(
+          cacheDir,
+          installedStorage ? `npm-${installedStorage.manifestSha256}` : selected.manifestSha256,
+        ),
+      );
+      assert.ok(Array.isArray(manifest.files) && manifest.files.length > 0);
+      for (const file of manifest.files) {
+        assert.ok(typeof file.path === 'string' && !file.path.split(/[\\/]/).includes('..'));
+        const path = join(target, file.path);
+        assert.ok((await realpath(path)).startsWith(target + sep));
+        const stat = await lstat(path);
+        assert.ok(stat.isFile(), 'Native cache entry must be a regular file');
+        assert.equal(hash(await readFile(path)), file.sha256.toLowerCase());
+        if (phase === 0) coldMtimes.set(file.path, stat.mtimeMs);
+        else
+          assert.equal(stat.mtimeMs, coldMtimes.get(file.path), 'Warm cache rewrote native file');
+      }
+      verifiedFiles = manifest.files.length;
       // The factory already exercised the empty cache. Codec discovery follows
       // its worker retirement and shares that cache; it cannot stand in for login.
-      if (phase === 0 && context.verifyCodec) {
-        await context.verifyCodec(options);
+      if (phase === 0 && verifyCodec) {
+        await verifyCodec(options);
         codecVerified = true;
       }
     }
     assert.ok(manifest, 'Default selection did not fetch its manifest');
-    assert.ok(counts[0].payloadRequests > 0 && counts[0].payloadBytes > 0);
+    if (installedStorage) {
+      assert.equal(counts[0].payloadRequests, 0);
+      assert.equal(counts[0].payloadBytes, 0);
+    } else assert.ok(counts[0].payloadRequests > 0 && counts[0].payloadBytes > 0);
     assert.equal(counts[1].payloadRequests, 0);
     assert.equal(counts[1].payloadBytes, 0);
-    const target = await realpath(join(cacheDir, selected.manifestSha256));
-    assert.ok(Array.isArray(manifest.files) && manifest.files.length > 0);
-    for (const file of manifest.files) {
-      assert.ok(typeof file.path === 'string' && !file.path.split(/[\\/]/).includes('..'));
-      const path = join(target, file.path);
-      assert.ok((await realpath(path)).startsWith(target + sep));
-      assert.ok((await lstat(path)).isFile(), 'Native cache entry must be a regular file');
-      assert.equal(hash(await readFile(path)), file.sha256.toLowerCase());
-    }
     return {
       completed: true,
+      storageVariant: installedStorage ? 'installed-gzip-objects' : 'remote',
+      installedStorage,
+      warmFileMtimesUnchanged: true,
       device: `${process.platform}-${process.arch}`,
       node: process.version,
       automaticLatest: true,
-      catalogSha256: context.catalogSha256,
+      metadataFetchSource: suppliedFetch ? 'caller-supplied' : 'global-fetch',
+      catalogSha256,
       manifestSha256: selected.manifestSha256,
       version: selected.version,
       first: counts[0],
       second: counts[1],
       nativeExports,
-      verifiedFiles: manifest.files.length,
+      verifiedFiles,
       codecVerified,
       prepared: true,
       closed: true,

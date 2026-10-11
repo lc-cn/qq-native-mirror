@@ -10,7 +10,17 @@ import type { ClientOptions } from '../src/contracts/client.ts';
 const sha = (bytes: Uint8Array) => createHash('sha256').update(bytes).digest('hex');
 function fixture(
   mode:
-    'good' | 'warm-download' | 'account' | 'close-failure' | 'bad-cache' | 'bad-catalog' = 'good',
+    | 'good'
+    | 'warm-download'
+    | 'account'
+    | 'close-failure'
+    | 'bad-cache'
+    | 'bad-catalog'
+    | 'installed'
+    | 'installed-payload'
+    | 'installed-corrupt'
+    | 'installed-wrong-hash'
+    | 'installed-rewrite' = 'good',
 ) {
   const payload = Buffer.from('controlled native payload; not executable');
   const manifest: NativeManifest = {
@@ -31,6 +41,7 @@ function fixture(
     manifestUrl: 'https://example.test/manifest.json',
   };
   const catalogBytes = Buffer.from(JSON.stringify({ schemaVersion: 1, packages: [selected] }));
+  const installedHash = 'a'.repeat(64);
   const network: string[] = [];
   const options: ClientOptions[] = [];
   const closed: number[] = [];
@@ -55,7 +66,20 @@ function fixture(
       await fetch('https://raw.githubusercontent.com/lc-cn/qq-native-mirror/main/catalog.json')
     ).arrayBuffer();
     await (await fetch(selected.manifestUrl)).arrayBuffer();
-    if (phase === 0 || mode === 'warm-download') {
+    if (mode.startsWith('installed')) {
+      if (mode === 'installed-payload') await (await fetch(manifest.files[0]!.url)).arrayBuffer();
+      if (phase === 0 || mode === 'installed-rewrite') {
+        const target = join(
+          value.cacheDir!,
+          `npm-${mode === 'installed-wrong-hash' ? 'b'.repeat(64) : installedHash}`,
+        );
+        await mkdir(target, { recursive: true });
+        await writeFile(
+          join(target, 'wrapper.node'),
+          mode === 'installed-corrupt' ? Buffer.from('corrupt') : payload,
+        );
+      }
+    } else if (phase === 0 || mode === 'warm-download') {
       const bytes = Buffer.from(await (await fetch(manifest.files[0]!.url)).arrayBuffer());
       const target = join(value.cacheDir!, selected.manifestSha256);
       await mkdir(target, { recursive: true });
@@ -81,6 +105,9 @@ function fixture(
   return {
     context: {
       createClient,
+      ...(mode.startsWith('installed')
+        ? { installedStorage: { manifestSha256: installedHash, objects: 1 } }
+        : {}),
       fetchImpl,
       selected,
       catalogSha256: sha(catalogBytes),
@@ -162,3 +189,50 @@ for (const mode of [
       assert.equal(f.network.filter((url) => url.endsWith('/payload')).length, 1);
   });
 }
+
+test('installed storage hydrates cold and reuses warm with metadata each phase and no payload', async () => {
+  const f = fixture('installed');
+  const receipt = await verifyMirrorConsumer(f.context);
+  assert.equal(receipt.completed, true);
+  assert.equal(receipt.storageVariant, 'installed-gzip-objects');
+  assert.equal(receipt.metadataFetchSource, 'caller-supplied');
+  assert.equal(receipt.warmFileMtimesUnchanged, true);
+  assert.equal(receipt.first.payloadRequests, 0);
+  assert.equal(receipt.second.payloadRequests, 0);
+  assert.equal(receipt.first.payloadBytes, 0);
+  assert.equal(receipt.second.payloadBytes, 0);
+  assert.equal(f.network.filter((url) => url.endsWith('/catalog.json')).length, 2);
+  assert.equal(f.network.filter((url) => url.endsWith('/manifest.json')).length, 2);
+  assert.deepEqual(f.closed, [0, 1]);
+  await assert.rejects(access(f.options[0]!.cacheDir!), { code: 'ENOENT' });
+});
+for (const mode of [
+  'installed-payload',
+  'installed-corrupt',
+  'installed-wrong-hash',
+  'installed-rewrite',
+] as const) {
+  test(`installed storage rejects ${mode} and cleans up`, async () => {
+    const f = fixture(mode),
+      original = globalThis.fetch;
+    await assert.rejects(verifyMirrorConsumer(f.context));
+    assert.equal(globalThis.fetch, original);
+    await assert.rejects(access(f.options[0]!.cacheDir!), { code: 'ENOENT' });
+    if (mode === 'installed-corrupt')
+      assert.equal(f.options.length, 1, 'Cold corruption must be checked before warm repair');
+  });
+}
+
+test('installed context is captured before temporary directory creation yields', async () => {
+  const f = fixture('installed');
+  const expected = structuredClone(f.context.selected);
+  const pending = verifyMirrorConsumer(f.context);
+  f.context.catalogSha256 = 'b'.repeat(64);
+  f.context.installedStorage = { manifestSha256: 'b'.repeat(64), objects: 99 };
+  f.context.createClient = async () => {
+    throw new Error('replacement factory must not run');
+  };
+  const receipt = await pending;
+  assert.deepEqual(receipt.version, expected.version);
+  assert.deepEqual(receipt.installedStorage, { manifestSha256: 'a'.repeat(64), objects: 1 });
+});

@@ -190,3 +190,30 @@ operation occurred. Native version was explicitly pinned; this result does not
 prove default-latest mirror consumption. The other five new candidates have
 static byte evidence only. No npm publication, catalog replacement, account
 compatibility or signing authenticity claim follows from these checks.
+
+## Default latest with an installed complete object auxiliary (2026-10-11)
+
+[Bound local default-install evidence](evidence/default-installed-gzip-2433928-macos-arm64.json)
+uses the SDK main archive from `24339280702bdfae314652d353e20de7fc5aee3d` and the
+older complete macOS arm64 object auxiliary from native run `37962268125`.
+Its complete content matches the actual public default catalog and remote manifest.
+A localhost npm registry served the actual verified archives: installing only the
+main selected the matching auxiliary and `silk-wasm`. Native metadata was fetched
+from the real public HTTPS catalog and manifest, without a replacement fetch adapter.
+The factory received no wrapper, native version, manifest or catalog override.
+
+On macOS arm64 / Node 24.19.0, both cold and warm clients prepared and closed with
+104 native exports. All 1,168 restored files were hash checked after each close;
+warm file modification times remained unchanged. Neither phase downloaded a native
+payload. The first phase read catalog/manifest twice because codec discovery followed
+the first close; the second read each once. Three real video inputs were checked.
+No login, account restore or QQ business operation occurred.
+
+The six older complete object candidates independently match their corresponding
+current public inventories. The newer `85ef15a` candidates have the same QQ versions
+but different content hashes, including build/provenance metadata and, on Windows,
+DLL/codec files. They cannot reuse the current public selection merely by matching
+a version string. The resolver retains its complete-content equality rule.
+This local runtime result covers only the matching older arm64 auxiliary; it does
+not establish default runtime acceptance of the other five devices, the newer
+candidates, public npm publication, account compatibility or signing authenticity.
