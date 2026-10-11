@@ -29,6 +29,13 @@
   Close and explicit reconnect join that worker's reserved termination Promise,
   including a terminal failure, without repeating signals or cleanup deadlines.
   A replacement starts only after the previous worker has exited successfully.
+- An ordinary login failure releases its own attempt before notifying `idle`.
+  If the notification throws, the caller receives the original operation and
+  notification values in an `AggregateError`, in that order. A successful
+  notification preserves the operation error's identity. The old attempt cannot
+  clear a login, close or reconnect started by the observer, and does not replay
+  authorization automatically. A failed `connecting` notification follows this
+  rule without submitting login IPC.
 - Replacement initialization and login failures use the same retirement
   transaction as a login deadline. They reject sibling requests before notifying
   `failed`, then wait for the captured replacement's exit. An ordinary operation

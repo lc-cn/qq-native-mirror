@@ -230,12 +230,16 @@ export class ClientLifecycle {
     this.#state = state;
     this.#context.emit('state', state);
   }
-  /** Commit failure before presentation, retaining both original values if an
-   * observer throws. The caller still owns cleanup, shutdown and retry policy.
+  /** Commit the selected state before presentation; retain both original values
+   * if an observer throws. The caller owns cleanup, shutdown and retry policy.
    */
-  #withFailedState(error: unknown, operation: 'close' | 'reconnect'): unknown {
+  #withStateNotificationFailure(
+    error: unknown,
+    state: 'idle' | 'failed',
+    operation: 'login' | 'close' | 'reconnect',
+  ): unknown {
     try {
-      this.#setState('failed');
+      this.#setState(state);
     } catch (notificationError) {
       return new AggregateError(
         [error, notificationError],
@@ -415,7 +419,7 @@ export class ClientLifecycle {
         if (this.#login === loginPromise) {
           this.#login = undefined;
           if (!this.#closed && !this.#closing && this.#state === 'connecting')
-            this.#setState('idle');
+            throw this.#withStateNotificationFailure(error, 'idle', 'login');
         }
         throw error;
       })
@@ -488,7 +492,7 @@ export class ClientLifecycle {
         .catch((error) => {
           if (!this.#closing) {
             this.#closed = true;
-            throw this.#withFailedState(error, 'reconnect');
+            throw this.#withStateNotificationFailure(error, 'failed', 'reconnect');
           }
           throw error;
         });
@@ -602,7 +606,7 @@ export class ClientLifecycle {
         await this.#stopWorker();
         this.#setState('closed');
       } catch (error) {
-        const failure = this.#withFailedState(error, 'close');
+        const failure = this.#withStateNotificationFailure(error, 'failed', 'close');
         if (notificationFailure) throw withCleanupFailure(notificationFailure.error, failure);
         throw failure;
       }
@@ -645,7 +649,7 @@ export class ClientLifecycle {
         this.#setState('closed');
       } catch (error) {
         // eslint-disable-next-line no-unsafe-finally -- Preserve the existing close cleanup failure precedence.
-        throw this.#withFailedState(error, 'close');
+        throw this.#withStateNotificationFailure(error, 'failed', 'close');
       }
     }
   }

@@ -26,6 +26,7 @@ export async function verifyWorkerErrorRoutes({
   await verifyClientReconnectEntry(QQClient);
   await verifyClientReconnectSpawnFailure(QQClient);
   await verifyClientCloseFailureNotification(QQClient);
+  await verifyClientLoginFailureNotification(QQClient);
   const directory = await realpath(await mkdtemp(join(tmpdir(), 'qq-worker-error-')));
   /** @type {import("../../src/client/qq-client.ts").QQClient | undefined} */
   let client;
@@ -162,6 +163,7 @@ export function createKernel(_native,_options,emit){return {
       clientReconnectEntryReservationContract: true,
       clientReconnectSpawnFailureContract: true,
       clientCloseFailureNotificationContract: true,
+      clientLoginFailureNotificationContract: true,
       clientEventPresentationInstalledContract: true,
       workerOpaqueErrorContract: true,
       workerErrorRecoveryContract: true,
@@ -186,6 +188,125 @@ export function createKernel(_native,_options,emit){return {
       }
       await rm(directory, { recursive: true, force: true });
     }
+  }
+}
+
+/** @param {typeof import('../../src/client/qq-client.ts').QQClient} QQClient */
+async function verifyClientLoginFailureNotification(QQClient) {
+  for (const mode of ['reply', 'nested', 'connecting']) {
+    const child = new ChildProcess();
+    Object.defineProperty(child, 'connected', { value: true, configurable: true });
+    const primary = Object.freeze({ connectingObserver: true }),
+      notification = Object.freeze({ idleObserver: true });
+    /** @type {{id:number,method:string}[]} */
+    const sent = [];
+    Object.defineProperty(child, 'send', {
+      value(
+        /** @type {{id:number,method?:string}} */ message,
+        /** @type {(error:Error|null)=>void} */ callback,
+      ) {
+        callback(null);
+        if (message.method) sent.push({ id: message.id, method: message.method });
+        return true;
+      },
+    });
+    const client = new QQClient(child, 1000);
+    /** @type {{nested?:Promise<{error:unknown}|{value:unknown}>}} */
+    const observed = {};
+    let idleCalls = 0;
+    const notify = (/** @type {string} */ state) => {
+      if (state === 'connecting' && mode === 'connecting') throw primary;
+      if (state === 'idle') {
+        idleCalls++;
+        if (mode === 'nested')
+          observed.nested = client.login({ method: 'qr' }).then(
+            (value) => ({ value }),
+            (/** @type {unknown} */ error) => ({ error }),
+          );
+        throw notification;
+      }
+    };
+    client.on('state', notify);
+    const login = client.login({ method: 'qr' });
+    const outcome = login.then(
+      (value) => ({ value }),
+      (/** @type {unknown} */ error) => ({ error }),
+    );
+    const joined = client.login({ method: 'qr' });
+    const wait = client.waitForLogin();
+    const joinedOutcome = joined.then(
+      (value) => ({ value }),
+      (/** @type {unknown} */ error) => ({ error }),
+    );
+    const waitOutcome = wait.then(
+      (value) => ({ value }),
+      (/** @type {unknown} */ error) => ({ error }),
+    );
+    assert.strictEqual(joined, login);
+    assert.strictEqual(wait, login);
+    if (mode !== 'connecting') {
+      const request = sent[0];
+      assert.ok(request);
+      child.emit('message', {
+        id: request.id,
+        error: { message: 'controlled login failure', code: 7 },
+      });
+    }
+    /** @type {{error:unknown}|undefined} */
+    let failure;
+    try {
+      const result = await outcome;
+      assert.ok('error' in result && result.error instanceof AggregateError);
+      assert.equal(result.error.errors.length, 2);
+      assert.strictEqual(result.error.errors[1], notification);
+      if (mode === 'connecting') assert.strictEqual(result.error.errors[0], primary);
+      else {
+        assert.ok(result.error.errors[0] instanceof Error);
+        assert.equal(result.error.errors[0].message, 'controlled login failure');
+        assert.equal(Reflect.get(result.error.errors[0], 'code'), 7);
+      }
+      for (const value of await Promise.all([joinedOutcome, waitOutcome])) {
+        assert.ok('error' in value);
+        assert.strictEqual(value.error, result.error);
+      }
+      assert.equal(idleCalls, 1);
+      assert.equal(sent.length, mode === 'connecting' ? 0 : mode === 'nested' ? 2 : 1);
+      client.off('state', notify);
+      const recovering =
+        mode === 'nested'
+          ? observed.nested
+          : client.login({ method: 'qr' }).then(
+              (value) => ({ value }),
+              (/** @type {unknown} */ error) => ({ error }),
+            );
+      assert.ok(recovering);
+      const request = sent.at(-1);
+      assert.ok(request);
+      child.emit('message', { event: 'ready', payload: { uin: '42', uid: 'recovered' } });
+      child.emit('message', { id: request.id, result: { uin: '42', uid: 'recovered' } });
+      assert.deepEqual(await recovering, { value: { uin: '42', uid: 'recovered' } });
+      assert.equal(client.state, 'online');
+      assert.equal(idleCalls, 1);
+      assert.equal(sent.length, mode === 'connecting' ? 1 : 2);
+    } catch (error) {
+      failure = { error };
+    }
+    try {
+      client.off('state', notify);
+      Object.defineProperty(child, 'exitCode', { value: 0, configurable: true });
+      child.emit('exit', 0, null);
+      await Promise.all([outcome, joinedOutcome, waitOutcome, observed.nested]);
+      await client.close();
+    } catch (error) {
+      if (failure)
+        throw new AggregateError([failure.error, error], 'Login verification and cleanup failed', {
+          cause: error,
+        });
+      throw error;
+    } finally {
+      client.removeAllListeners();
+    }
+    if (failure) throw failure.error;
   }
 }
 

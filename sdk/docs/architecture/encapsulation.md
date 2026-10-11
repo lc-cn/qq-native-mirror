@@ -50,8 +50,8 @@ the closing notification; it does not suppress arbitrary application observers.
 
 Normal shutdown and shutdown during worker retirement retain cleanup failure even
 when a synchronous `failed` observer throws. A private lifecycle helper commits
-the failed state and returns the original operation failure or both original
-values in an aggregate. The reconnect failure handler uses the same rule, while
+the caller-selected state and returns the original operation failure or both
+original values in an aggregate. The reconnect failure handler uses the same rule, while
 each caller keeps its own termination and closing policy. If the earlier
 `closing` notification also failed, close preserves the chronological order:
 closing notification, cleanup, failed notification. This does not retry a failed
@@ -68,6 +68,13 @@ If a connecting observer throws, the reserved login Promise rejects with that
 value and the attempt is released; joined callers cannot remain pending. This
 failure is now a Promise rejection rather than a synchronous exception from
 `login`. Closing from the observer prevents login dispatch.
+
+A failed login releases only its own reserved attempt before returning to `idle`.
+If that notification also throws, the same private helper retains the login
+failure and notification value in that order. With successful notification, the
+original failure retains its identity. The old catch does not clear or roll back
+work started inside the notification: a new login, close or reconnect keeps its
+own result and state. Notification failure never schedules another login.
 
 A login deadline retires the account and pending requests before notifying
 `failed`. The same owner cancels automatic restore and reserves termination for

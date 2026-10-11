@@ -1917,3 +1917,192 @@ for (const cleanup of [{ opaqueCleanup: true }, undefined]) {
     assert.equal(lifecycle.state, 'failed');
   });
 }
+
+for (const row of [
+  { phase: 'ipc', observer: 'error' },
+  { phase: 'ipc', observer: 'opaque' },
+  { phase: 'ipc', observer: 'undefined' },
+  { phase: 'connecting', observer: 'error' },
+  { phase: 'opaque', observer: 'none' },
+  { phase: 'undefined', observer: 'none' },
+] as const) {
+  test(`login ${row.phase} failure retains primary and ${row.observer} idle observer on shared promise`, async () => {
+    const f = workerFixture();
+    const primary: unknown =
+      row.phase === 'opaque'
+        ? { connecting: true }
+        : row.phase === 'undefined'
+          ? undefined
+          : new Error('login primary fixture');
+    const notification: unknown =
+      row.observer === 'error'
+        ? new Error('idle observer fixture')
+        : row.observer === 'opaque'
+          ? { idle: true }
+          : undefined;
+    const callbacks: ((error: Error | null) => void)[] = [];
+    const send = f.worker.send.bind(f.worker);
+    f.worker.send = ((
+      message: { id: number; method: string },
+      callback: (error: Error | null) => void,
+    ) => {
+      if (message.method === 'login') {
+        f.sent.push(message);
+        callbacks.push(callback);
+        return true;
+      }
+      return send(message, callback);
+    }) as typeof f.worker.send;
+    let failing = true;
+    const lifecycle = new ClientLifecycle({
+      worker: f.worker,
+      timeout: 1000,
+      emit(event, state) {
+        if (event !== 'state' || !failing) return;
+        if (state === 'connecting' && row.phase !== 'ipc') throw primary;
+        if (state === 'idle' && row.observer !== 'none') throw notification;
+      },
+      forward() {},
+      exportsUpdated() {},
+    });
+    const first = lifecycle.login({ method: 'quick', uin: '123' });
+    assert.equal(lifecycle.login({ method: 'quick', uin: '123' }), first);
+    const observed = first.then(
+      (value) => ({ value }),
+      (error: unknown) => ({ error }),
+    );
+    if (row.phase === 'ipc') {
+      assert.ok(primary instanceof Error);
+      callbacks[0](primary);
+    }
+    try {
+      const result = await observed;
+      assert.ok('error' in result);
+      if (row.observer === 'none') assert.equal(result.error, primary);
+      else {
+        assert.ok(result.error instanceof AggregateError);
+        assert.deepEqual(result.error.errors, [primary, notification]);
+      }
+      assert.equal(
+        f.sent.filter((sent) => sent.method === 'login').length,
+        row.phase === 'ipc' ? 1 : 0,
+      );
+      assert.equal(lifecycle.state, 'idle');
+      if (row.phase === 'ipc' && row.observer === 'error') {
+        failing = false;
+        const retry = lifecycle.login({ method: 'quick', uin: '123' });
+        assert.notEqual(retry, first);
+        const sent = f.sent.at(-1);
+        assert.ok(sent && sent.method === 'login');
+        const account = { uin: '123', uid: 'u_recovery' };
+        callbacks.at(-1)?.(null);
+        f.events.emit('message', { event: 'ready', payload: account });
+        f.events.emit('message', { id: sent.id, result: account });
+        assert.deepEqual(await retry, account);
+        assert.equal(callbacks.length, 2);
+      }
+    } finally {
+      failing = false;
+      await lifecycle.close();
+    }
+  });
+}
+
+for (const action of ['login', 'close', 'reconnect'] as const) {
+  test(`idle observer ${action} ownership survives original login rejection and notification failure`, async () => {
+    const f = workerFixture(),
+      next = workerFixture();
+    const primary = new Error('login IPC fixture'),
+      notification = new Error('idle notification fixture');
+    const callbacks: ((error: Error | null) => void)[] = [];
+    const send = f.worker.send.bind(f.worker);
+    f.worker.send = ((
+      message: { id: number; method: string },
+      callback: (error: Error | null) => void,
+    ) => {
+      if (message.method === 'login') {
+        f.sent.push(message);
+        callbacks.push(callback);
+        return true;
+      }
+      return send(message, callback);
+    }) as typeof f.worker.send;
+    const nextSend = next.worker.send.bind(next.worker);
+    next.worker.send = ((
+      message: { id: number; method: string },
+      callback: (error: Error | null) => void,
+    ) => {
+      const result = nextSend(message, callback);
+      if (message.method === 'login')
+        queueMicrotask(() => {
+          const account = { uin: '456', uid: 'u_next' };
+          next.events.emit('message', { event: 'ready', payload: account });
+          next.events.emit('message', { id: message.id, result: account });
+        });
+      return result;
+    }) as typeof next.worker.send;
+    let armed = true,
+      spawns = 0;
+    let nested: Promise<unknown> | undefined;
+    let nestedObserved: Promise<unknown> | undefined;
+    const lifecycle = new ClientLifecycle({
+      worker: f.worker,
+      timeout: 1000,
+      restart: {
+        spawn() {
+          spawns++;
+          return next.worker;
+        },
+        payload: {},
+      },
+      emit(event, state) {
+        if (!armed || event !== 'state' || state !== 'idle') return;
+        armed = false;
+        nested =
+          action === 'login'
+            ? lifecycle.login({ method: 'quick', uin: '456' })
+            : action === 'close'
+              ? lifecycle.close()
+              : lifecycle.reconnect({ method: 'quick', uin: '456' });
+        nestedObserved = nested.then(
+          (value) => ({ value }),
+          (error: unknown) => ({ error }),
+        );
+        throw notification;
+      },
+      forward() {},
+      exportsUpdated() {},
+    });
+    const login = lifecycle.login({ method: 'quick', uin: '123' });
+    const observed = login.then(
+      (value) => ({ value }),
+      (error: unknown) => ({ error }),
+    );
+    callbacks[0](primary);
+    try {
+      const result = await observed;
+      assert.ok('error' in result && result.error instanceof AggregateError);
+      assert.deepEqual(result.error.errors, [primary, notification]);
+      assert.ok(nested);
+      assert.equal(lifecycle.state, action === 'close' ? 'closing' : 'connecting');
+      if (action === 'login') {
+        assert.equal(lifecycle.login({ method: 'quick', uin: '456' }), nested);
+        const sent = f.sent.at(-1);
+        assert.ok(sent && sent.method === 'login');
+        callbacks[1](null);
+        const account = { uin: '456', uid: 'u_next' };
+        f.events.emit('message', { event: 'ready', payload: account });
+        f.events.emit('message', { id: sent.id, result: account });
+        assert.deepEqual(await nested, account);
+        assert.equal(spawns, 0);
+      } else {
+        await nested;
+        assert.equal(lifecycle.state, action === 'close' ? 'closed' : 'online');
+        assert.equal(spawns, action === 'close' ? 0 : 1);
+      }
+    } finally {
+      await lifecycle.close();
+      await nestedObserved;
+    }
+  });
+}
