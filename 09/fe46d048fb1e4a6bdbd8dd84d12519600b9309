@@ -1,0 +1,48 @@
+sdk/scripts/local-first-publish.mjs
+  s_2104cc474f1ce5::t_23d6ce577f3a0b 55-58,60-77,86-88,328-329,335
+  s_2104cc474f1ce5::t_1ce668f459e6ac 59,78-85,179-181,330-334
+  s_2104cc474f1ce5::t_29cd4d997f416f 89,182,336-338
+ci/verify-consumer.mjs
+  s_2104cc474f1ce5::t_1ce668f459e6ac 109-110,124-127
+sdk/docs/architecture/quality-gates.md
+  s_2104cc474f1ce5::t_ee70d8cab1ab86 41-48
+sdk/docs/architecture.md
+  s_2104cc474f1ce5::t_ee70d8cab1ab86 156-170
+sdk/test/release-native-storage.test.ts
+  s_2104cc474f1ce5::t_23d6ce577f3a0b 1-2,10-21,25,31-32,34-40,44-45,48-54,56-59,61,66-71,76-81,84-85,261
+  s_2104cc474f1ce5::t_c6c5f9d49f9d0c 3-9,46,62-65,72-75,82-83,86-89,98-100,102-110,112-156,173-177,185-195,201-208,216-231,236-238,243-244,251-253,258-260
+  s_2104cc474f1ce5::t_21e7e022ac3119 22-24,26-30,33,41-43,47,55,60,90-97,101,111,157-172,178-184,196-200,209-215,232-235,239-242,245-250,254-257
+  s_2104cc474f1ce5::t_52b5e3852c835b 262-277
+sdk/scripts/native-object-members.mjs
+  s_2104cc474f1ce5::t_41771ebfff5648 1-47,55-154
+  s_2104cc474f1ce5::t_efad8c48b21fe1 48-54
+sdk/docs/native-size-reduction.md
+  s_2104cc474f1ce5::t_ee70d8cab1ab86 254-273
+  s_2104cc474f1ce5::t_cccad96ec1757c 274-285
+sdk/scripts/native-package-members.mjs
+  s_2104cc474f1ce5::t_41771ebfff5648 2,14-15,27-32
+  s_2104cc474f1ce5::t_1cb9997b70de40 33
+sdk/test/native-package-members.test.ts
+  s_2104cc474f1ce5::t_6ac0f4cc8ee39d 7,70-138
+  s_2104cc474f1ce5::t_1218f493f8456e 139-141
+sdk/docs/evidence/object-release-inspection-6fa0fc8-local.json
+  s_2104cc474f1ce5::t_0cb293d92ea082 1-159
+sdk/test/native-object-members.test.ts
+  s_2104cc474f1ce5::t_3be3b18cb0ed16 1-139
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "09fe46d048fb1e4a6bdbd8dd84d12519600b9309",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
