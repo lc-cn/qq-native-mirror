@@ -251,3 +251,35 @@ and produced exactly the same archives as the earlier independently inspected
 cohort. Missing or incorrect source digests failed before creating output directories.
 This is local archive evidence; this workflow revision has not run on GitHub, and
 these checks do not execute QQ or establish account, business or signing acceptance.
+
+## Complete object archives in release inspection (2026-10-11)
+
+The shared release archive reader now supports `gzip-objects-v1`. It verifies
+every compressed object and restored digest/size, checks the closed member and
+original-path inventory, then retains only package/manifest metadata, codec and
+source provenance. The existing per-validation snapshot cache remains in use.
+The release validator requires object-specific complete-file, warm-cache and
+no-network-fallback evidence. Auxiliary and manifest digests must match the
+actual candidate; aggregate evidence also binds the final main archive.
+
+Six actual candidate archives from source `85ef15a` / run `38133938435` passed
+this reader, covering 2,434 original paths and 738 objects. Their extracted codec
+and provenance bytes match the retained complete source packages. The original
+seven-package release still passes validation, and permanent codec materials
+validate offline against the object archives. Each old plain-storage receipt is
+rejected for its transformed object candidate. This inspection does not execute
+QQ or establish six new installed consumers; the ordinary publication workflow
+continues to produce complete plain auxiliaries. Object release assembly and
+promotion still require independently bound, successful candidate consumers.
+
+[Bound archive and local installed evidence](evidence/object-release-inspection-6fa0fc8-local.json)
+also records the modified CI consumer running locally on macOS arm64 / Node
+24.19.0. Installing only the actual main archive selected the matching object
+auxiliary and codec dependency. All 1,168 original files were restored and hash
+checked, warm storage was reused, three actual local video inputs decoded, and
+the empty account client prepared with 104 native exports and closed. Its newly
+emitted auxiliary, manifest and main hashes match the actual artifacts; altering
+any one causes release receipt rejection. Native version was explicitly pinned.
+This is local preparation/storage/codec proof for one device, with no login,
+account restore or QQ business action. It does not establish default-latest
+selection, execution on the other five devices, signing authenticity or npm publication.

@@ -153,6 +153,21 @@ The runtime consumer remains owned by `src/native/native-installed-storage.ts`;
 producer tooling never becomes part of client startup. Compression changes delivery
 storage, while every original runtime path and byte remains in the restored inventory.
 
+Release-time archive inspection belongs to `scripts/native-package-members.mjs`.
+Its per-validation cache reads a tarball once and retains only package/manifest
+metadata, the codec and source provenance. `native-object-members.mjs` is the pure
+packed-object inspector: it validates the closed archive, all compressed and
+original digests/sizes, path references and resource bounds before returning owned
+requested members. It performs no installation, native loading or cache hydration.
+Plain archives retain their existing inspection path. These release tools are
+separate from the installed runtime's filesystem and locking implementation.
+
+`local-first-publish.mjs` owns release receipt policy. An object auxiliary requires
+its own complete restoration and warm-cache evidence, exact auxiliary/manifest
+digests and a recorded tested main digest. The aggregate receipt additionally binds
+the final main archive. Permanent codec-material validation remains separate;
+matching codec bytes cannot substitute for installed-storage acceptance.
+
 ## Encapsulation and variation points
 
 [Module ownership and interfaces](architecture/encapsulation.md) describes the

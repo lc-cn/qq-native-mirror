@@ -52,6 +52,41 @@ async function tarJson(path, member, cache) {
   );
   return { bytes, json: JSON.parse(bytes) };
 }
+/** A storage transformation requires its own installed-consumer evidence.
+ * Historical plain archives retain their existing receipt contract. Object
+ * archives cannot borrow those receipts merely because decoded bytes agree.
+ */
+export function validateNativeStorageReceipt(native, receipt, packageIdentity) {
+  if (native.npmStorage === undefined) {
+    requireThat(
+      receipt.installedNativeStorage?.format !== 'gzip-objects-v1',
+      'Object storage receipt cannot describe a plain native package',
+    );
+    return;
+  }
+  const storage = native.npmStorage;
+  const proof = receipt.installedNativeStorage;
+  requireThat(
+    storage?.format === 'gzip-objects-v1' &&
+      Array.isArray(native.files) &&
+      Array.isArray(storage.objects) &&
+      proof?.format === storage.format &&
+      proof.nativePaths === native.files.length &&
+      proof.objects === storage.objects.length &&
+      proof.allOriginalFilesVerified === true &&
+      proof.warmCacheReused === true &&
+      proof.networkFallbackAttempted === false &&
+      /^[a-f0-9]{64}$/.test(packageIdentity?.auxiliarySha256 ?? '') &&
+      /^[a-f0-9]{64}$/.test(packageIdentity?.manifestSha256 ?? '') &&
+      proof.packageSha256 === packageIdentity.auxiliarySha256 &&
+      proof.nativeManifestSha256 === packageIdentity.manifestSha256 &&
+      typeof proof.mainPackageSha256 === 'string' &&
+      /^[a-f0-9]{64}$/.test(proof.mainPackageSha256) &&
+      (packageIdentity.mainSha256 === undefined ||
+        proof.mainPackageSha256 === packageIdentity.mainSha256),
+    'Complete object storage consumer receipt mismatch',
+  );
+}
 export async function validateRelease(directory) {
   const tarMembersCache = new Map();
   const root = await realpath(resolve(directory));
@@ -141,6 +176,10 @@ export async function validateRelease(directory) {
           /^v24\./.test(receipt.node),
         `Unsuccessful consumer: ${target}`,
       );
+      validateNativeStorageReceipt(native.json, receipt, {
+        auxiliarySha256: row.sha256,
+        manifestSha256: row.manifestSha256,
+      });
     } else {
       requireThat(
         names
@@ -285,6 +324,17 @@ export async function validateRelease(directory) {
       mainReceipt.exports >= 80 &&
       /^v24\./.test(mainReceipt.node),
     'Aggregate main consumer failed',
+  );
+  validateNativeStorageReceipt(
+    nativePackages.find(({ target }) => target === 'linux-x64').native,
+    mainReceipt,
+    {
+      auxiliarySha256: manifest.packages.find(({ name }) => name === 'qq-native-client-linux-x64')
+        .sha256,
+      manifestSha256: manifest.packages.find(({ name }) => name === 'qq-native-client-linux-x64')
+        .manifestSha256,
+      mainSha256: manifest.packages.find(({ name }) => name === 'qq-native-client').sha256,
+    },
   );
   const videoMaterials = await validateVideoMaterials(root, manifest, nativePackages, {
     tarMembersCache,

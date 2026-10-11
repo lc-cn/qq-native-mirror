@@ -106,7 +106,8 @@ try {
   errorsPath: join(installedRoot, 'dist/errors.js'),
  });
  const {prepareNative}=await import(pathToFileURL(join(installedRoot,'dist/native/native-package.js')).href);
- const installedManifest=JSON.parse(await readFile(join(temp,'node_modules',platformName,'manifest.json')));
+ const installedManifestBytes=await readFile(join(temp,'node_modules',platformName,'manifest.json'));
+ const installedManifest=JSON.parse(installedManifestBytes);
  // Pin the actual auxiliary version; default latest mirror consumption has its own consumer.
  const nativeCache=join(temp,'native-cache');
  globalThis.fetch=()=>{throw new Error('Unexpected mirror request with installed platform package');};
@@ -120,7 +121,10 @@ try {
   const before=await stat(autoNative.wrapperPath);
   const warm=await prepareNative({dataDir:join(temp,'unused-video-account'),cacheDir:nativeCache,version:installedManifest.version});
   assert.equal(warm.wrapperPath,autoNative.wrapperPath);assert.equal((await stat(warm.wrapperPath)).mtimeMs,before.mtimeMs);
-  installedNativeStorage={format:'gzip-objects-v1',nativePaths:installedManifest.files.length,objects:installedManifest.npmStorage.objects.length,allOriginalFilesVerified:true,warmCacheReused:true,networkFallbackAttempted:false};
+  installedNativeStorage={format:'gzip-objects-v1',nativePaths:installedManifest.files.length,objects:installedManifest.npmStorage.objects.length,allOriginalFilesVerified:true,warmCacheReused:true,networkFallbackAttempted:false,
+   nativeManifestSha256:createHash('sha256').update(installedManifestBytes).digest('hex'),
+   packageSha256:createHash('sha256').update(binaries.get(platformName).body).digest('hex'),
+   mainPackageSha256:createHash('sha256').update(binaries.get('qq-native-client').body).digest('hex')};
  }
  if(installedManifest.npmStorage===undefined){
   const nativeRoot=dirname(autoNative.wrapperPath);

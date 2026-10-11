@@ -1,0 +1,159 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "repository": "lc-cn/qq-native-mirror",
+    "commit": "85ef15aede7457b8c9f8410557c023e61ad108a8",
+    "runId": "38133938435",
+    "releaseManifestSha256": "c8bcb55782299e7113f0f59d229dad25febd5b39e5c4fd62f2ea765b269ef11d"
+  },
+  "implementation": {
+    "sdk/scripts/native-object-members.mjs": "15b8f0b46f251f8a09d51fa96eb840577b988b1377b10f596fd68d08e6c5f03f",
+    "sdk/scripts/native-package-members.mjs": "7d5f6fe462bb2d3bc1c4bb545a16852700a30bb8965028effa05d93f359ed074",
+    "sdk/scripts/local-first-publish.mjs": "bea638ab935990f298d13370fa6a33fc182805d0a19e85af11443588cf048a69",
+    "ci/verify-consumer.mjs": "9a365bcd9e765378d97644437e908706d9e6d669c78efbbf786be48c1f7641ed"
+  },
+  "archiveInspection": {
+    "actualExit": 0,
+    "receiptSha256": "8a8403bc97e44af4485565f936bfeda437f9094e79032812bd51a686307e7f53",
+    "originalCompleteReleaseValidated": true,
+    "devices": [
+      {
+        "device": "linux-x64",
+        "tarballSha256": "e9a548e23f4b17b71c891a9d488d6e2f769d457c852e9d6f9c4e8e2b6cdbb980",
+        "manifestSha256": "d3d2f0a306a8903429e92aa6a46b23d4ad81bb48539c74dbef70593fef938a13",
+        "originalPaths": 19,
+        "objects": 19,
+        "retainedSnapshotMembers": 4,
+        "codecSha256": "195312a9613fd716e2df52a11d409571bdb5959e1537e12f475c2048c6c9f88d",
+        "provenanceSha256": "f14c3bab25161b586961d20c2e622dbe845ba626fbcad99ec68e4535cf3bbb60",
+        "sameCodecAndProvenanceAsCompleteSource": true,
+        "cacheSnapshotReused": true,
+        "originalPlainStorageReceiptRejected": true
+      },
+      {
+        "device": "linux-arm64",
+        "tarballSha256": "b9337bdd4a864bfec6f58153c7020661944b216cba08fe29c70d878d89940c3e",
+        "manifestSha256": "04376a511d81e578a7257f6b9fc2eb3e97a98fa738db5ce3df3d91ef73d3e579",
+        "originalPaths": 20,
+        "objects": 20,
+        "retainedSnapshotMembers": 4,
+        "codecSha256": "8eff4ebdf6b704b1a3aa4a25a328c0949ce81b1b8db220ef5bf3f310fe3ac741",
+        "provenanceSha256": "bcb4e22955e4321b08b6e7365a135f1817b436314a061595360c350e4ffd182d",
+        "sameCodecAndProvenanceAsCompleteSource": true,
+        "cacheSnapshotReused": true,
+        "originalPlainStorageReceiptRejected": true
+      },
+      {
+        "device": "darwin-x64",
+        "tarballSha256": "7cdd2e3e41a043a3103fe3e617ebef0a16a72cb80f98cc18dacfbaa521d2f2cd",
+        "manifestSha256": "f42c2a0992d1bbae6de18ee9685413bdd8bdebbdffeac8b28079fa26d00c69f3",
+        "originalPaths": 1168,
+        "objects": 321,
+        "retainedSnapshotMembers": 4,
+        "codecSha256": "29147dd3c7a10b6b2f16e1b5df3f5e75b10b5d09f8ebc2a3bf2202e23c09799e",
+        "provenanceSha256": "1628b3e6237059a4945789dbc7839158fe0434526e7dda2c223e737aff8c38f5",
+        "sameCodecAndProvenanceAsCompleteSource": true,
+        "cacheSnapshotReused": true,
+        "originalPlainStorageReceiptRejected": true
+      },
+      {
+        "device": "darwin-arm64",
+        "tarballSha256": "01903e7d0489cde5301aca00a6d7175d29fd2463ba3ca1378d0a7d5edf0af5e7",
+        "manifestSha256": "ae0fa9a7fd8a95a8703cde52a6f41e88df9dc2f6268319712449f2f823525b16",
+        "originalPaths": 1168,
+        "objects": 321,
+        "retainedSnapshotMembers": 4,
+        "codecSha256": "101a8eb635806b8c06fd55e3353a5a129d643c42198a3eb0dcaca7eefeab74c4",
+        "provenanceSha256": "9c4a6421c3153dd3bdc2622a2606b62916d62b41d5625f6e7d21a760158ac3d9",
+        "sameCodecAndProvenanceAsCompleteSource": true,
+        "cacheSnapshotReused": true,
+        "originalPlainStorageReceiptRejected": true
+      },
+      {
+        "device": "win32-x64",
+        "tarballSha256": "2bc96977f88ab381bd6580c0eb40e750c6b3e4b45fcc577576f4ec54e4bda56e",
+        "manifestSha256": "02fa79e6f2eca6e721b955df8b3163ea3dfc5834335805a0118006f53592102e",
+        "originalPaths": 32,
+        "objects": 31,
+        "retainedSnapshotMembers": 4,
+        "codecSha256": "ab30c8c4e54134b685076cfa83bd2b1e7cc71eda54c0432008867fea8960efa1",
+        "provenanceSha256": "4c51d904a4d08c928eba444621c446524d4b990a64bbbf623ffe1e75b12b9f36",
+        "sameCodecAndProvenanceAsCompleteSource": true,
+        "cacheSnapshotReused": true,
+        "originalPlainStorageReceiptRejected": true
+      },
+      {
+        "device": "win32-arm64",
+        "tarballSha256": "476f26dfd7dcb9aa8bb6b5f87ae0271a8e9fceb97b9354656e45804c9db089b0",
+        "manifestSha256": "e77860c02613c31a0391f93309ac833dd97988f2a4164c8f30bc8b9ff4b1f818",
+        "originalPaths": 27,
+        "objects": 26,
+        "retainedSnapshotMembers": 4,
+        "codecSha256": "fff232bbb6b4a696ebeba659910073ff1a0b963be2503da1ada41c50b437a991",
+        "provenanceSha256": "9e9d11f7b827e8d3b6e16632fa68b2dbf7c62a3a54d962a08e0707486b8178ce",
+        "sameCodecAndProvenanceAsCompleteSource": true,
+        "cacheSnapshotReused": true,
+        "originalPlainStorageReceiptRejected": true
+      }
+    ],
+    "totalOriginalPaths": 2434,
+    "totalStoredObjects": 738,
+    "permanentVideoMaterialsValidatedOffline": true,
+    "sourceReceiptsUsedOnlyForCodecAndMaterialsIdentity": true
+  },
+  "localInstalledConsumer": {
+    "platform": "darwin",
+    "arch": "arm64",
+    "node": "v24.19.0",
+    "actualExit": 0,
+    "proofSha256": "7381ed6356c903fbb31d1d494e4af295e7ebb1de5c5286c911d80a499e4b873c",
+    "consumerSha256": "cc03812a1fa3fe57d57e468ca06c7afd314d613f27a825f2bdebe861908cb5f5",
+    "main": {
+      "sha256": "de7d418095d346a3a8de63ef3ae320b71485e2d619dc0cad0c34455ae1fd677c",
+      "bytes": 644283,
+      "compiledMembers": 272
+    },
+    "auxiliary": {
+      "sha256": "01903e7d0489cde5301aca00a6d7175d29fd2463ba3ca1378d0a7d5edf0af5e7",
+      "bytes": 54924233,
+      "manifestSha256": "ae0fa9a7fd8a95a8703cde52a6f41e88df9dc2f6268319712449f2f823525b16"
+    },
+    "installedNativeStorage": {
+      "format": "gzip-objects-v1",
+      "nativePaths": 1168,
+      "objects": 321,
+      "allOriginalFilesVerified": true,
+      "warmCacheReused": true,
+      "networkFallbackAttempted": false,
+      "nativeManifestSha256": "ae0fa9a7fd8a95a8703cde52a6f41e88df9dc2f6268319712449f2f823525b16",
+      "packageSha256": "01903e7d0489cde5301aca00a6d7175d29fd2463ba3ca1378d0a7d5edf0af5e7",
+      "mainPackageSha256": "de7d418095d346a3a8de63ef3ae320b71485e2d619dc0cad0c34455ae1fd677c"
+    },
+    "nativeExports": 104,
+    "installedMainOnly": true,
+    "automaticPlatformSelection": true,
+    "prepared": true,
+    "closed": true,
+    "localVideoInputs": 3,
+    "localVideoPassed": true,
+    "alteredPackageManifestMainReceiptRejected": true
+  },
+  "quality": {
+    "sdkCheckActualExit": 0,
+    "sdkTests": 2005,
+    "toolTests": 24,
+    "failed": 0,
+    "skipped": 0
+  },
+  "limits": {
+    "otherFivePlatformsExecuted": false,
+    "objectReleaseAssembled": false,
+    "workflowDispatched": false,
+    "published": false,
+    "defaultsChanged": false,
+    "loginAttempted": false,
+    "accountRestoreAttempted": false,
+    "qqBusinessAttempted": false,
+    "signingAuthenticityEstablished": false
+  }
+}

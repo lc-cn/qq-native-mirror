@@ -38,6 +38,14 @@ capture the source digest once and reject explicit `null`; omission alone select
 the frozen historical source. Future package versions retain their original version
 metadata without weakening the measured native export or Windows ABI requirements.
 
+Packed-object release tests validate every object even when only codec/provenance
+members are retained. They reject extra or missing archive members, corrupted
+compressed/original bytes, invalid path/reference closures and delivery fields.
+Seven-package fixture releases check each auxiliary and the separately bound
+aggregate receipt. Rehashing a receipt cannot compensate for missing storage
+evidence or mismatched auxiliary, manifest or final-main identity. These fixtures
+never execute their synthetic wrapper/codec bytes or establish native acceptance.
+
 The npm `pretest` and `preverify:package` hooks first run
 `check:consumer-modules`. This static preflight shares
 `consumer-module-policy.ts` with the CI module-path gate. It permits the
