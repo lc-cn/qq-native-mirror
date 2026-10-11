@@ -1,0 +1,60 @@
+sdk/src/features/groups/group-operation-input.ts
+  s_2104cc474f1ce5::t_180a2c496c0aff 1-91
+sdk/docs/architecture/quality-gates.md
+  s_2104cc474f1ce5::t_d291f7ff3d771e 59-66
+sdk/test/helpers/dependency-policy.ts
+  s_2104cc474f1ce5::t_294807321648fe 119-120,178-185
+  s_2104cc474f1ce5::t_c1ca2f19439a0c 170-177
+sdk/src/features/contacts/contact-operations.ts
+  s_2104cc474f1ce5::t_bfe9e1304104af 8-9,115,117,122,135-139
+sdk/test/operation-contracts.test.ts
+  s_2104cc474f1ce5::t_706ba9e2da0f92 42-43,48,57-64
+sdk/test/contact-group-operation-input.test.ts
+  s_2104cc474f1ce5::t_c1ca2f19439a0c 1-56,58-59,61-76,86-87
+  s_2104cc474f1ce5::t_e07c328e5d34aa 57,60
+  s_2104cc474f1ce5::t_0431131d8533f9 77-85
+sdk/docs/architecture/encapsulation.md
+  s_2104cc474f1ce5::t_d291f7ff3d771e 343-356,382-386
+sdk/test/architecture.test.ts
+  s_2104cc474f1ce5::t_e07c328e5d34aa 904-921
+  s_2104cc474f1ce5::t_294807321648fe 632-633,656-657
+  s_2104cc474f1ce5::t_9541a2231f0a01 922-937
+sdk/src/client/qq-client.ts
+  s_2104cc474f1ce5::t_24899b272381e1 2-3,289-293,295-299,301-305,369-372,374-378,393,400,411,422
+  s_2104cc474f1ce5::t_0fcaf7ea491afb 391-392,394-395,397-399,401,404-408,412-415,418-421,463-464
+sdk/src/features/groups/group-operations.ts
+  s_2104cc474f1ce5::t_bfe9e1304104af 7-8,58-60,62,64,69,73,76,84,89,97,100
+  s_2104cc474f1ce5::t_24899b272381e1 111,113,115
+sdk/src/cli/commands/groups.ts
+  s_2104cc474f1ce5::t_294807321648fe 2,87-88,158-159,179-180,191-196,205-210,219-224,236-241,312-313
+sdk/src/cli/commands/contacts.ts
+  s_2104cc474f1ce5::t_294807321648fe 3,39-42,62-66,122-126
+sdk/docs/development.md
+  s_2104cc474f1ce5::t_d291f7ff3d771e 184-193
+sdk/scripts/contact-group-snapshot-consumer-contract.mjs
+  s_2104cc474f1ce5::t_cd4ef7d56fd146 2,214,226-327
+  s_2104cc474f1ce5::t_744b2528ec2a6a 328-329
+sdk/src/features/contacts/contact-operation-input.ts
+  s_2104cc474f1ce5::t_180a2c496c0aff 1-65
+sdk/src/runtime/operation-contracts.ts
+  s_2104cc474f1ce5::t_706ba9e2da0f92 73,102
+  s_2104cc474f1ce5::t_0ffcbb2992ee74 103-105
+sdk/test/client-operation-input.test.ts
+  s_2104cc474f1ce5::t_51569e7cd34994 1-146
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "3a5d2e5418418810c5cca2621f7ce29bd66f58f9",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
