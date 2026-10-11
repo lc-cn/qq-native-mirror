@@ -4,7 +4,7 @@ import type { HistoryOptions, MessageInput } from '../../contracts/messages.ts';
 import { validateFaceId } from '../../features/messages/face-input.ts';
 import { normalizeMessageBatchQuery } from '../../features/messages/query-input.ts';
 import { captureMergedForward } from '../../features/forward/merged-forward-input.ts';
-import { normalizeForwardResourceId } from '../../features/forward/forward-resource-wire.ts';
+import { normalizeForwardResourceId } from '../../features/forward/forward-resource-input.ts';
 import { required, numeric, peer } from '../command-input.ts';
 import type { ClientCommandDefinition } from '../command-contracts.ts';
 

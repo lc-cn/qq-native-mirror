@@ -105,6 +105,15 @@ delivery. Normalized replay suppression does not suppress legacy notifications;
 close retires the account's replay window. The existing single-record projector
 remains available to internal consumers without an optional batch configuration.
 
+`kernel.ts` owns one account-retirement transaction. It advances the generation,
+detaches the Session, clears the identity and invalidates/detaches the pending
+attempt before fallible cleanup. Login failure, offline and logout publish their
+own events after that transaction. Explicit close rejects the pending login before
+cleanup and propagates its original cleanup error without publishing diagnostics;
+native notifications combine primary and cleanup failures before settlement and
+diagnostics. The ordering relies on `AuthenticationAttempt.invalidate/reject`
+remaining internal timer/Promise operations without synchronous external callbacks.
+
 `AccountSessionLifecycle` owns startup for one authenticated account, retained
 Session callbacks, the native-readiness/start-completion gates and the acquired
 business adapter. Its interface is `begin`, `invokeOperation` and `close`; it does

@@ -122,7 +122,7 @@ const facadeInputs = new Set([
   'src/features/groups/group-operation-input.ts',
   'src/features/contacts/friend-categories.ts',
   'src/features/forward/merged-forward-input.ts',
-  'src/features/forward/forward-resource-wire.ts',
+  'src/features/forward/forward-resource-input.ts',
   'src/features/messages/send-input.ts',
   'src/features/messages/query-input.ts',
   'src/features/messages/recall-input.ts',
@@ -169,6 +169,8 @@ export const crossFeatureDependencies = [
 ] as const;
 
 export function dependencyViolation({ from, to, typeOnly }: SourceDependency): string | undefined {
+  if (from === 'src/features/forward/forward-resource-input.ts')
+    return 'Forward-resource input has no dependencies; protocol decoding and resource acquisition belong to their owners.';
   const domainInputContracts = {
     'src/features/contacts/friend-request-input.ts': 'src/contracts/contacts.ts',
     'src/features/groups/group-request-input.ts': 'src/contracts/groups.ts',

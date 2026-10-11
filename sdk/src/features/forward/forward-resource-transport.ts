@@ -1,8 +1,8 @@
 import {
   buildForwardResourceRequest,
   parseForwardResourceResponse,
-  normalizeForwardResourceId,
 } from './forward-resource-wire.ts';
+import { normalizeForwardResourceId } from './forward-resource-input.ts';
 import type { ForwardResource } from '../../contracts/forward.ts';
 
 export type ForwardResourceFailureStage =

@@ -150,6 +150,13 @@ and prepared card ports; keep wire schemas inside the forward domain. Register
 upload and read cleanup independently in the account ledger. The dependency gate
 prevents composition from importing their transport or wire implementations.
 
+Use `features/forward/forward-resource-input.ts` for resource-ID validation in
+the facade, CLI and worker. Its strings are never coerced or trimmed; the limit
+is 4096 UTF-8 bytes with valid surrogate pairs. Keep request encoding, response
+decoding and decompression in `forward-resource-wire.ts`. Public input consumers
+cannot import that wire implementation, even through type-only dependencies.
+The old internal wire reexport remains compatible; new callers use the input owner.
+
 Native callback wrappers belong to `runtime/native-listener-owner`; business
 callback definitions and registration order belong to composition. Supply a
 captured registration function instead of a Session or service locator. Keep

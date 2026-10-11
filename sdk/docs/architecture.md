@@ -78,10 +78,13 @@ The diagrams are navigation aids; the exact permissions live in
 The parent facade and CLI import pure input modules (`query-input`,
 `download-input`, `merged-forward-input`, `send-input`, `face-input`, and
 contact-category projection/validation, `friend-request-input` and
-`group-request-input`).
+`group-request-input`, and `forward-resource-input`).
 Native operation modules reuse that implementation and retain internal reexports
 for existing contract consumers. Input capture therefore does not require the
-parent to depend on native querying, media-file writes or forward submission.
+parent to depend on native querying, media-file writes, forward submission or
+forward-resource protocol decoding. Resource-ID validation owns the exact UTF-8
+byte and surrogate rules; the wire module imports those rules and keeps its
+compression and schema implementation inside the worker domain.
 
 `src/runtime/operations.ts` owns the closed business-operation vocabulary. The
 public facade constrains its private operation dispatcher to that union, the

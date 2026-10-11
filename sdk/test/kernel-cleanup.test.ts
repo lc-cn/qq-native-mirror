@@ -76,7 +76,13 @@ async function fixture() {
 test('kernel close converges before cleanup failure and never retries native removal', async () => {
   const f = await fixture();
   try {
+    const eventsBeforeClose = f.events.length;
     await assert.rejects(f.kernel.close(), (error) => error === f.failure);
+    assert.equal(
+      f.events.length,
+      eventsBeforeClose,
+      'explicit close does not publish cleanup diagnostics',
+    );
     await f.kernel.close();
     assert.deepEqual(f.removed, ['buddy', 'group']);
     await assert.rejects(f.kernel.invokeOperation('listFriends'), /closed/);
@@ -88,8 +94,23 @@ for (const callback of ['onLoginDisConnected', 'onLogoutSucceed', 'onLoginFailed
   test(`${callback} retains notification/error despite cleanup failure`, async () => {
     const f = await fixture();
     try {
+      const eventsBeforeBoundary = f.events.length;
       assert.doesNotThrow(() => f.listener[callback]('fixture failure'));
       assert.deepEqual(f.removed, ['buddy', 'group']);
+      const boundaryEvents = f.events
+        .slice(eventsBeforeBoundary)
+        .map((value) => value.event)
+        .filter((event) =>
+          ['diagnostic', 'login-error', 'offline', 'disconnected', 'logout'].includes(event),
+        );
+      assert.deepEqual(
+        boundaryEvents,
+        callback === 'onLoginFailed'
+          ? ['diagnostic', 'login-error']
+          : callback === 'onLogoutSucceed'
+            ? ['diagnostic', 'logout']
+            : ['diagnostic', 'offline', 'disconnected'],
+      );
       await assert.rejects(f.kernel.invokeOperation('listFriends'), /not online/);
       if (callback === 'onLoginFailed') {
         const failure = f.events.find((value) => value.event === 'login-error')?.payload;

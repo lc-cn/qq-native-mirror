@@ -6,10 +6,8 @@ import {
   type LongMessageResponseService,
 } from './long-message-response.ts';
 import { createForwardResourceTransport } from './forward-resource-transport.ts';
-import {
-  buildForwardResourceRequest,
-  normalizeForwardResourceId,
-} from './forward-resource-wire.ts';
+import { buildForwardResourceRequest } from './forward-resource-wire.ts';
+import { normalizeForwardResourceId } from './forward-resource-input.ts';
 import type { Peer, SentMessage } from '../../contracts/messages.ts';
 import type { NativePeer } from '../../native/message-contracts.ts';
 

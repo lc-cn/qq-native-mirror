@@ -359,6 +359,45 @@ test('dependency policy rejects reverse, type-only and new cross-domain coupling
   );
 });
 
+test('public forward-resource validation cannot acquire its protocol implementation', () => {
+  const input = 'src/features/forward/forward-resource-input.ts';
+  assert.deepEqual(graph.get(join(projectRoot, input)), []);
+  for (const typeOnly of [false, true]) {
+    for (const from of ['src/client/qq-client.ts', 'src/cli/commands/messages.ts']) {
+      assert.equal(dependencyViolation({ from, to: input, typeOnly }), undefined);
+      for (const to of [
+        'src/features/forward/forward-resource-wire.ts',
+        'src/features/forward/forward-resource-transport.ts',
+      ])
+        assert.ok(dependencyViolation({ from, to, typeOnly }));
+    }
+    for (const to of [
+      'node:zlib',
+      'src/features/forward/forward-resource-wire.ts',
+      'src/native/native-object.ts',
+    ])
+      assert.ok(dependencyViolation({ from: input, to, typeOnly }));
+  }
+});
+
+test('public input runtime closures cannot load forward-resource response decoding or transport', () => {
+  const privateImplementations = new Set([
+    'src/features/forward/forward-resource-wire.ts',
+    'src/features/forward/forward-resource-transport.ts',
+  ]);
+  for (const root of ['src/client/qq-client.ts', 'src/cli/commands/messages.ts']) {
+    const visited = new Set<string>();
+    function walk(path: string, trail: string[]): void {
+      if (visited.has(path)) return;
+      visited.add(path);
+      assert.ok(!privateImplementations.has(label(path)), trail.join(' → '));
+      for (const edge of runtimeEdges(path))
+        if (edge.target) walk(edge.target, [...trail, label(edge.target)]);
+    }
+    walk(join(projectRoot, root), [root]);
+  }
+});
+
 test('native composition delegates forward resource orchestration to its domain owner', () => {
   const from = 'src/native-services.ts';
   for (const to of [
@@ -651,6 +690,7 @@ const pureModules = new Set([
   'src/features/forward/received-forward.ts',
   'src/features/messages/qq-faces.ts',
   'src/features/forward/long-message-request.ts',
+  'src/features/forward/forward-resource-input.ts',
   'src/features/forward/forward-resource-wire.ts',
   'src/features/forward/merged-forward-card.ts',
 ]);
@@ -667,6 +707,7 @@ const pureRoots = [
   'features/groups/group-essence-input.ts',
   'features/groups/group-file-input.ts',
   'features/groups/group-search-input.ts',
+  'features/forward/forward-resource-input.ts',
   'features/forward/forward-resource-wire.ts',
   'features/media/download-input.ts',
   'features/forward/merged-forward-input.ts',

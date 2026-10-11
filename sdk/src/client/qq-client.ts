@@ -20,7 +20,7 @@ import {
   captureFriendCategoryOrder,
 } from '../features/contacts/friend-categories.ts';
 import { captureMergedForward } from '../features/forward/merged-forward-input.ts';
-import { normalizeForwardResourceId } from '../features/forward/forward-resource-wire.ts';
+import { normalizeForwardResourceId } from '../features/forward/forward-resource-input.ts';
 import {
   sendGroupId,
   capturePrivateMessage,

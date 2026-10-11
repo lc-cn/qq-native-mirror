@@ -76,30 +76,35 @@ export function createKernel(
       }),
     });
   };
-  const fail = (error: Error) => {
+  /** Converge trusted state before fallible teardown or boundary notifications.
+   * AuthenticationAttempt.invalidate only clears owned timers; reject settles its
+   * native Promise asynchronously. Neither invokes a synchronous observer here.
+   * Close rejects before cleanup; native notifications include cleanup failures.
+   */
+  const retireAccount = (mode: 'notification' | 'close', original: Error): Error => {
     generation++;
+    const services = detachSession();
     identity = undefined;
-    invalidateAttempt();
     const current = pending;
+    current?.invalidate();
     pending = undefined;
-    const failure = cleanupFailure(detachSession());
-    const result = failure ? withCleanupFailure(error, failure.error) : error;
+    if (mode === 'close') {
+      current?.reject(original);
+      services?.close();
+      return original;
+    }
+    const failure = cleanupFailure(services);
+    const result = failure ? withCleanupFailure(original, failure.error) : original;
     current?.reject(result);
-    if (failure) reportCleanupFailure(failure.error, error);
-    notify('login-error', result);
+    if (failure) reportCleanupFailure(failure.error, original);
+    return result;
+  };
+  const fail = (error: Error) => {
+    notify('login-error', retireAccount('notification', error));
   };
   const transitionOffline = (details: Record<string, unknown>) => {
     if (closed) return;
-    generation++;
-    identity = undefined;
-    const services = detachSession();
-    invalidateAttempt();
-    const current = pending;
-    pending = undefined;
-    const original = new Error('Native account became offline');
-    const failure = cleanupFailure(services);
-    current?.reject(failure ? withCleanupFailure(original, failure.error) : original);
-    if (failure) reportCleanupFailure(failure.error, original);
+    retireAccount('notification', new Error('Native account became offline'));
     const info = { ...details, retryable: false };
     notify('offline', info);
     notify('disconnected', info);
@@ -310,16 +315,7 @@ export function createKernel(
         onUserLoggedIn: (uin: unknown) =>
           fail(new Error(`Account already logged in: ${String(uin)}`)),
         onLogoutSucceed: () => {
-          generation++;
-          invalidateAttempt();
-          identity = undefined;
-          const current = pending;
-          pending = undefined;
-          const services = detachSession();
-          const original = new Error('Native account logged out during login');
-          const failure = cleanupFailure(services);
-          current?.reject(failure ? withCleanupFailure(original, failure.error) : original);
-          if (failure) reportCleanupFailure(failure.error, original);
+          retireAccount('notification', new Error('Native account logged out during login'));
           notify('logout', undefined);
         },
       });
@@ -377,13 +373,7 @@ export function createKernel(
     async close(): Promise<void> {
       if (closed) return;
       closed = true;
-      generation++;
-      const services = detachSession();
-      identity = undefined;
-      invalidateAttempt();
-      pending?.reject(new Error('Client closed during login'));
-      pending = undefined;
-      services?.close();
+      retireAccount('close', new Error('Client closed during login'));
       // No native teardown contract has been verified. Owning Node worker exit
       // is required to release native singleton state and its threads.
     },

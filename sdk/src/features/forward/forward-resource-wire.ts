@@ -3,6 +3,12 @@
  * No transport, identity lookup or native calls. Unknown length-delimited data stays opaque.
  */
 import { inflateRawSync } from 'node:zlib';
+import {
+  boundedForwardString as validString,
+  normalizeForwardResourceId,
+} from './forward-resource-input.ts';
+// Preserve the existing internal import path while callers migrate to the input owner.
+export { normalizeForwardResourceId } from './forward-resource-input.ts';
 import type {
   ForwardResource,
   ForwardRecord,
@@ -13,21 +19,6 @@ const MAX_RESPONSE = 8 * 1024 * 1024,
 const utf8 = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true });
 function fail(message: string): never {
   throw new Error(`Invalid forward resource: ${message}`);
-}
-function validString(value: unknown, max: number, nonempty = false): string {
-  if (typeof value !== 'string' || (nonempty && !value.length) || Buffer.byteLength(value) > max)
-    fail('invalid bounded UTF-8 string');
-  for (let i = 0; i < value.length; i++) {
-    const c = value.charCodeAt(i);
-    if (c >= 0xd800 && c <= 0xdbff) {
-      const n = value.charCodeAt(++i);
-      if (!(n >= 0xdc00 && n <= 0xdfff)) fail('unpaired surrogate');
-    } else if (c >= 0xdc00 && c <= 0xdfff) fail('unpaired surrogate');
-  }
-  return value;
-}
-export function normalizeForwardResourceId(value: unknown): string {
-  return validString(value, 4096, true);
 }
 function vi(value: number): Buffer {
   const a: number[] = [];
