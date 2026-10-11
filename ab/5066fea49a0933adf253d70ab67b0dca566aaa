@@ -1,0 +1,61 @@
+sdk/docs/architecture/lifecycle.md
+  s_2104cc474f1ce5::t_c197fef3904fa5 14-20
+sdk/docs/architecture/quality-gates.md
+  s_2104cc474f1ce5::t_c1ef565939757b 137-143
+sdk/scripts/consumers/kernel-session-consumer-contract.mjs
+  s_2104cc474f1ce5::t_64e96767691f2a 277-282,306-313,323,337
+sdk/src/runtime/authentication-attempt.ts
+  s_2104cc474f1ce5::t_00478a0501f6a1 65,67-73
+sdk/scripts/consumers/worker-error-consumer-contract.mjs
+  s_2104cc474f1ce5::t_f5623df5ac66b6 22,150,178-189,194-216,221-231,240-253
+  s_2104cc474f1ce5::t_fe332a63674175 190-193,217-220,232-239
+  s_2104cc474f1ce5::t_a87c69f20c9b3d 254-256
+  s_8a568f567980f9::t_d7d4ab77dcfbfc 257
+sdk/test/worker-error-routes.test.ts
+  s_2104cc474f1ce5::t_d8e3c968c62576 18
+sdk/docs/architecture/encapsulation.md
+  s_2104cc474f1ce5::t_063b588e52795d 40-46
+  s_2104cc474f1ce5::t_242893438cda98 149-155
+  s_2104cc474f1ce5::t_534d105f240536 156
+sdk/test/authentication-attempt.test.ts
+  s_2104cc474f1ce5::t_b327f466fb17a8 3-6,10-14,22,44-159
+  s_2104cc474f1ce5::t_4a7264ba0979b4 160
+ci/bundle-video-codec.mjs
+  s_2104cc474f1ce5::t_8d749c05771146 1-40,42-215
+ci/verified-download.mjs
+  s_2104cc474f1ce5::t_2ed46995db457d 1-3,5-21,23-74
+ci/verified-download.test.mjs
+  s_2104cc474f1ce5::t_34c7770de13a06 1-13,15-28,30-127
+sdk/src/runtime/client-lifecycle.ts
+  s_2104cc474f1ce5::t_4be59b6cf6470d 4,450-455,461,464,474-489
+sdk/test/client-lifecycle-module.test.ts
+  s_2104cc474f1ce5::t_2b7c69b20c2026 398-484
+tools/check-native-storage.mjs
+  s_2104cc474f1ce5::t_037cdf14304e1c 9,11-42,68
+tools/native-storage-inventory.test.mjs
+  s_2104cc474f1ce5::t_c56915b2bd127b 1-109
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ab5066fea49a0933adf253d70ab67b0dca566aaa",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    },
+    "s_8a568f567980f9": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f064-6e01-7400-820b-276cb7656061",
+        "model": "unknown"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
