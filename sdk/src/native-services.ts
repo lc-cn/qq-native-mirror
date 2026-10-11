@@ -46,7 +46,7 @@ import { createGroupSystemEvents } from './features/groups/group-system-events.t
 import { createMessageUpdateEvents } from './features/messages/recall-events.ts';
 import { recallMessage } from './features/messages/recall-operation.ts';
 import { createIncomingMessageDelivery } from './features/messages/incoming-message-delivery.ts';
-import { captureSendInput, sendUserId, sendGroupId } from './features/messages/send-input.ts';
+import { sendGroupId } from './validation/identifiers.ts';
 
 import type { NativeObject as Native } from './native/native-object.ts';
 import type { NativeMessage } from './native/message-contracts.ts';
@@ -389,16 +389,10 @@ export function createNativeServices(context: NativeServiceContext) {
               sendGroupId(payload.groupId),
               payload.refresh ?? false,
             );
-          case 'sendPrivateMessage': {
-            const userId = sendUserId(payload.userId);
-            const input = captureSendInput(payload.message, false);
-            return sender.send({ chatType: 1, peerUid: await uidFor(userId) }, input);
-          }
-          case 'sendGroupMessage': {
-            const groupId = sendGroupId(payload.groupId);
-            const input = captureSendInput(payload.message, true);
-            return sender.send({ chatType: 2, peerUid: groupId }, input);
-          }
+          case 'sendPrivateMessage':
+            return sender.sendPrivateMessage(payload.userId, payload.message);
+          case 'sendGroupMessage':
+            return sender.sendGroupMessage(payload.groupId, payload.message);
           case 'sendMergedForward':
             return forwardResources.sendMerged(payload.peer, payload.nodes, payload.options);
           case 'getForwardResource':

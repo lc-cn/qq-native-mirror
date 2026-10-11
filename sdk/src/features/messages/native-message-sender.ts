@@ -11,7 +11,12 @@ import type {
 } from '../../runtime/media-contracts.ts';
 import type { MessageIdQueryPort } from './message-query.ts';
 import type { NativeEventChannel } from '../../runtime/native-event-channel.ts';
-import { captureSendInput, sentReceipt } from './send-input.ts';
+import {
+  captureSendInput,
+  capturePrivateMessage,
+  captureGroupMessage,
+  sentReceipt,
+} from './send-input.ts';
 import { createImageElement, createFileElement, createReplyElement } from './outbound-elements.ts';
 import { faceElement } from './face-input.ts';
 import { createVideoElement } from '../media/media-send.ts';
@@ -34,33 +39,71 @@ export interface NativeMessageSenderContext {
   signal: AbortSignal;
   getMessageService(): MessageSendPort | null | undefined;
   getServerTimeService(): ServerTimePort | null | undefined;
-  awaitAlive<T>(value: T | PromiseLike<T>): Promise<T>;
+  awaitAlive<T>(value: T | PromiseLike<T>, signal: AbortSignal): Promise<T>;
   uidFor(id: string): Promise<string>;
   eventCall: NativeEventChannel['call'];
   media?: { tools?: MediaTools; recordCodec?: RecordCodec; videoCodec?: VideoCodec };
 }
 /** Owns element preparation and send correlation, never account state or retries.
  * Uses the Session's shared callback channel so send/recall subscription order is stable.
- * Construction performs no native work. The Session aborts the shared channel
- * before cleanup; sender close then invalidates future use and clears reserved IDs.
+ * Construction performs no native work. Its local abort cancels only its waits;
+ * the Session retains ownership of the shared channel. Close clears reserved IDs.
  */
 export function createNativeMessageSender(context: NativeMessageSenderContext) {
-  const { signal, getMessageService, getServerTimeService, awaitAlive, uidFor, eventCall } =
-    context;
+  const { getMessageService, getServerTimeService, awaitAlive, uidFor, eventCall } = context;
+  const local = new AbortController();
+  const signal = AbortSignal.any([context.signal, local.signal]);
   const { tools: mediaTools, recordCodec, videoCodec } = context.media ?? {};
-  let closed = false;
   const usedSendIds = new Set<string>();
   const alive = () => {
     signal.throwIfAborted();
-    if (closed) throw new Error('Native message sender is closed');
+  };
+  const isChannelClosedError = (error: unknown): boolean => {
+    try {
+      if (!error || typeof error !== 'object') return false;
+      const descriptor = Object.getOwnPropertyDescriptor(error, 'message');
+      return (
+        !!descriptor &&
+        'value' in descriptor &&
+        descriptor.value === 'Client closed during native operation'
+      );
+    } catch {
+      // Opaque native failures, including revoked proxies, retain their identity.
+      return false;
+    }
   };
   const nativeCallSucceeded = (value: unknown) =>
     (value as { result?: unknown } | null | undefined)?.result === 0;
-  const elementMessageService = (method: string): MessageSendPort => {
+  const elementMessageService = (method: string): MessageIdQueryPort & MediaStagingPort => {
     const service = getMessageService();
     alive();
     if (!service) throw new Error(`Native service is missing ${method}`);
-    return service;
+    // These two ports preserve each constructor's property-access order. A late
+    // FS/codec completion may continue, but cannot enter native staging after close.
+    return {
+      get getRichMediaFilePathForGuild() {
+        alive();
+        const member = service.getRichMediaFilePathForGuild;
+        alive();
+        if (typeof member !== 'function') return member;
+        return (
+          request: Parameters<NonNullable<MediaStagingPort['getRichMediaFilePathForGuild']>>[0],
+        ) => {
+          alive();
+          return Reflect.apply(member, service, [request]) as unknown;
+        };
+      },
+      get getMsgsByMsgId() {
+        alive();
+        const member = service.getMsgsByMsgId;
+        alive();
+        if (typeof member !== 'function') return member;
+        return (peer: NativePeer, ids: string[]) => {
+          alive();
+          return Reflect.apply(member, service, [peer, ids]) as unknown;
+        };
+      },
+    };
   };
   const elementsFor = async (
     input: unknown,
@@ -70,67 +113,70 @@ export function createNativeMessageSender(context: NativeMessageSenderContext) {
     // Capture the complete caller batch before any asynchronous preparation.
     // Constructors then consume the same discriminated contract as the facade.
     const elements = captureSendInput(input, peer.chatType === 2);
-    return Promise.all(
-      elements.map(async (element): Promise<PreparedMessageElement> => {
-        alive();
-        if (element.type === 'text') {
-          return {
-            elementType: 1,
-            elementId: '',
-            textElement: {
-              content: element.text,
-              atType: 0,
-              atUid: '',
-              atTinyId: '',
-              atNtUid: '',
-            },
-          };
-        }
-        if (element.type === 'at') {
-          const id = element.userId;
-          const all = id === 'all';
-          return {
-            elementType: 1,
-            elementId: '',
-            textElement: {
-              content: `@${element.text ?? (all ? '全体成员' : id)}`,
-              atType: all ? 1 : 2,
-              atUid: id,
-              atTinyId: '',
-              atNtUid: all ? 'all' : await uidFor(id),
-            },
-          };
-        }
-        if (element.type === 'face') return faceElement(element.id);
-        if (element.type === 'image')
-          return createImageElement(
-            element.file,
-            elementMessageService('getRichMediaFilePathForGuild'),
-          );
-        if (element.type === 'video')
-          return createVideoElement(
-            element.file,
-            elementMessageService('getRichMediaFilePathForGuild'),
-            mediaTools,
-            videoCodec,
-            signal,
-          );
-        if (element.type === 'record')
-          return createRecordElement(
-            element.file,
-            elementMessageService('getRichMediaFilePathForGuild'),
-            recordCodec,
-          );
-        if (element.type === 'file') return createFileElement(element.file, element.name);
-        if (element.type === 'reply')
-          return createReplyElement(
-            element.messageId,
-            peer,
-            elementMessageService('getMsgsByMsgId'),
-          );
-        const unsupported: never = element;
-        throw new Error(`Unsupported message element: ${String(unsupported)}`);
-      }),
+    return awaitAlive(
+      Promise.all(
+        elements.map(async (element): Promise<PreparedMessageElement> => {
+          alive();
+          if (element.type === 'text') {
+            return {
+              elementType: 1,
+              elementId: '',
+              textElement: {
+                content: element.text,
+                atType: 0,
+                atUid: '',
+                atTinyId: '',
+                atNtUid: '',
+              },
+            };
+          }
+          if (element.type === 'at') {
+            const id = element.userId;
+            const all = id === 'all';
+            return {
+              elementType: 1,
+              elementId: '',
+              textElement: {
+                content: `@${element.text ?? (all ? '全体成员' : id)}`,
+                atType: all ? 1 : 2,
+                atUid: id,
+                atTinyId: '',
+                atNtUid: all ? 'all' : await awaitAlive(uidFor(id), signal),
+              },
+            };
+          }
+          if (element.type === 'face') return faceElement(element.id);
+          if (element.type === 'image')
+            return createImageElement(
+              element.file,
+              elementMessageService('getRichMediaFilePathForGuild'),
+            );
+          if (element.type === 'video')
+            return createVideoElement(
+              element.file,
+              elementMessageService('getRichMediaFilePathForGuild'),
+              mediaTools,
+              videoCodec,
+              signal,
+            );
+          if (element.type === 'record')
+            return createRecordElement(
+              element.file,
+              elementMessageService('getRichMediaFilePathForGuild'),
+              recordCodec,
+            );
+          if (element.type === 'file') return createFileElement(element.file, element.name);
+          if (element.type === 'reply')
+            return createReplyElement(
+              element.messageId,
+              peer,
+              elementMessageService('getMsgsByMsgId'),
+            );
+          const unsupported: never = element;
+          throw new Error(`Unsupported message element: ${String(unsupported)}`);
+        }),
+      ),
+      signal,
     );
   };
   const sendPreparedElements = async (
@@ -157,50 +203,85 @@ export function createNativeMessageSender(context: NativeMessageSenderContext) {
       peer.chatType,
       serverTime,
     ]);
-    const uniqueId = await awaitAlive(generated);
+    const uniqueId = await awaitAlive(generated, signal);
     alive();
     if (typeof uniqueId !== 'string' || !uniqueId.trim())
       throw new Error('Invalid native send correlation identifier');
     if (usedSendIds.has(uniqueId)) throw new Error('Duplicate native send correlation identifier');
     usedSendIds.add(uniqueId);
     const destination = { ...peer, guildId: uniqueId };
-    const sent = await eventCall(
-      'Msg/onMsgInfoListUpdate',
-      (updates: NativeMessage[]) => {
-        const matching = updates.filter(
-          (message) =>
-            message.guildId === uniqueId &&
-            (message.chatType === undefined || message.chatType === peer.chatType) &&
-            (message.peerUid === undefined || message.peerUid === peer.peerUid),
-        );
-        const message = matching.find((message) => message.sendStatus === 2);
-        if (message) return sentReceipt(message);
-        if (matching.some((message) => message.sendStatus === 0))
-          throw new Error('Native message send failed');
-        return undefined;
-      },
-      () => {
-        alive();
-        onDispatch?.();
-        alive();
-        const sendMsg = messages?.sendMsg;
-        alive();
-        if (typeof sendMsg !== 'function') throw new Error('Native service is missing sendMsg');
-        return Reflect.apply(sendMsg, messages, ['0', destination, elements, new Map()]) as unknown;
-      },
-      10_000,
-      nativeCallSucceeded,
-    );
-    alive();
-    return sent;
+    let dispatched = false;
+    try {
+      const sent = await eventCall(
+        'Msg/onMsgInfoListUpdate',
+        (updates: NativeMessage[]) => {
+          const matching = updates.filter(
+            (message) =>
+              message.guildId === uniqueId &&
+              (message.chatType === undefined || message.chatType === peer.chatType) &&
+              (message.peerUid === undefined || message.peerUid === peer.peerUid),
+          );
+          const message = matching.find((message) => message.sendStatus === 2);
+          if (message) return sentReceipt(message);
+          if (matching.some((message) => message.sendStatus === 0))
+            throw new Error('Native message send failed');
+          return undefined;
+        },
+        () => {
+          alive();
+          onDispatch?.();
+          alive();
+          const sendMsg = messages?.sendMsg;
+          alive();
+          if (typeof sendMsg !== 'function') throw new Error('Native service is missing sendMsg');
+          dispatched = true;
+          return Reflect.apply(sendMsg, messages, [
+            '0',
+            destination,
+            elements,
+            new Map(),
+          ]) as unknown;
+        },
+        10_000,
+        nativeCallSucceeded,
+        signal,
+      );
+      alive();
+      return sent;
+    } catch (error) {
+      // Preserve native failures and validation errors. Only cancellation after
+      // the actual write invocation changes to the unknown-effect completion.
+      if (
+        dispatched &&
+        signal.aborted &&
+        (error === signal.reason || (context.signal.aborted && isChannelClosedError(error)))
+      )
+        throw new Error('Native message sender is closed after dispatch; remote effect unknown', {
+          cause: error,
+        });
+      throw error;
+    }
   };
   const send = async (peer: NativePeer, input: unknown) =>
     sendPreparedElements(peer, await elementsFor(input, peer));
   return {
     send,
+    async sendPrivateMessage(userId: unknown, message: unknown) {
+      const captured = capturePrivateMessage(userId, message);
+      alive();
+      const uid = await awaitAlive(uidFor(captured.userId), signal);
+      alive();
+      if (typeof uid !== 'string' || !uid.trim()) throw new Error('Invalid native peer UID');
+      return send({ chatType: 1, peerUid: uid }, captured.message);
+    },
+    async sendGroupMessage(groupId: unknown, message: unknown) {
+      const captured = captureGroupMessage(groupId, message);
+      alive();
+      return send({ chatType: 2, peerUid: captured.groupId }, captured.message);
+    },
     sendPrepared: sendPreparedElements,
     close() {
-      closed = true;
+      if (!local.signal.aborted) local.abort(new Error('Native message sender is closed'));
       usedSendIds.clear();
     },
   };

@@ -17,7 +17,11 @@ import {
 } from '../features/contacts/friend-categories.ts';
 import { captureMergedForward } from '../features/forward/merged-forward-input.ts';
 import { normalizeForwardResourceId } from '../features/forward/forward-resource-wire.ts';
-import { sendGroupId } from '../features/messages/send-input.ts';
+import {
+  sendGroupId,
+  capturePrivateMessage,
+  captureGroupMessage,
+} from '../features/messages/send-input.ts';
 import {
   captureGroupEssenceRequest,
   captureGroupEssencePage,
@@ -215,11 +219,11 @@ export class QQClient extends EventEmitter<ClientEvents> {
   async getGroupMembers(groupId: string): Promise<GroupMember[]> {
     return this.#operation('getGroupMembers', { groupId: sendGroupId(groupId) });
   }
-  sendPrivateMessage(userId: string, message: MessageInput): Promise<SentMessage> {
-    return this.#operation('sendPrivateMessage', { userId, message });
+  async sendPrivateMessage(userId: string, message: MessageInput): Promise<SentMessage> {
+    return this.#operation('sendPrivateMessage', capturePrivateMessage(userId, message));
   }
-  sendGroupMessage(groupId: string, message: MessageInput): Promise<SentMessage> {
-    return this.#operation('sendGroupMessage', { groupId, message });
+  async sendGroupMessage(groupId: string, message: MessageInput): Promise<SentMessage> {
+    return this.#operation('sendGroupMessage', captureGroupMessage(groupId, message));
   }
   async getHistory(peer: Peer, options: HistoryOptions = {}): Promise<Message[]> {
     const query = normalizeHistoryQuery(peer, options);

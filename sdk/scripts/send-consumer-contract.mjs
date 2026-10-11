@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { EventEmitter } from 'node:events';
 
 // Synthetic services exercise installed compiled code, never a native client/account.
 export async function verifySendConsumer(packagePath) {
@@ -109,15 +110,18 @@ export async function verifySendConsumer(packagePath) {
   try {
     const element = { type: 'text', text: 'original' },
       input = [element];
-    const pending = snapshot.services.invokeOperation('sendPrivateMessage', {
-      userId: '456',
-      message: input,
-    });
+    const payload = { userId: '456', message: input };
+    const pending = snapshot.services.invokeOperation('sendPrivateMessage', payload);
     await tick();
+    payload.userId = '999';
+    payload.message = 'replaced';
     element.text = 'mutated';
     input.push({ type: 'text', text: 'injected' });
     resolveUid({ uidInfo: new Map([['456', 'u_456']]) });
     await pending;
+    assert.deepEqual(snapshot.conversions, [['456']]);
+    assert.equal(snapshot.calls[0][1].chatType, 1);
+    assert.equal(snapshot.calls[0][1].peerUid, 'u_456');
     assert.equal(snapshot.calls[0][2].length, 1);
     assert.equal(snapshot.calls[0][2][0].textElement.content, 'original');
   } finally {
@@ -300,5 +304,73 @@ export async function verifySendConsumer(packagePath) {
       assert.equal(f.generated(), 0);
     } else assert.equal(f.calls.length, 1);
   }
-  return { sendMessageContract: true, nativeSendAttempted: false };
+  const publicChecks = await verifyPublicSendCapture(packagePath);
+  return { ...publicChecks, sendMessageContract: true, nativeSendAttempted: false };
+}
+
+/** Public installed facade input capture before any controlled IPC is dispatched. */
+async function verifyPublicSendCapture(packagePath) {
+  const { QQClient } = await import(pathToFileURL(join(packagePath, 'dist/index.js')).href);
+  const worker = new EventEmitter();
+  const calls = [];
+  Object.assign(worker, {
+    connected: true,
+    exitCode: null,
+    send(value, callback) {
+      calls.push(value);
+      callback(null);
+      queueMicrotask(() =>
+        worker.emit('message', {
+          id: value.id,
+          result: { messageId: '00042', sequence: '0009', time: 100 },
+        }),
+      );
+    },
+  });
+  const client = new QQClient(worker, 500);
+  try {
+    worker.emit('message', { event: 'ready', payload: { uin: '123', uid: 'fixture' } });
+    for (const action of [
+      () => client.sendPrivateMessage('0', 'text'),
+      () => client.sendGroupMessage('123', Array(1)),
+      () =>
+        client.sendPrivateMessage('456', [
+          { type: 'text', text: 'valid' },
+          { type: 'text', text: {} },
+        ]),
+      () =>
+        client.sendGroupMessage('123', [
+          { type: 'at', userId: '456' },
+          { type: 'text', text: {} },
+        ]),
+    ])
+      await assert.rejects(Promise.resolve().then(action));
+    assert.deepEqual(calls, []);
+    for (const [method, id] of [
+      ['sendPrivateMessage', '000456'],
+      ['sendGroupMessage', '000123'],
+    ]) {
+      const element = { type: 'text', text: 'captured' },
+        input = [element];
+      const before = calls.length;
+      const pending = client[method](id, input);
+      element.text = 'changed';
+      input.push({ type: 'text', text: 'injected' });
+      assert.deepEqual(await pending, { messageId: '00042', sequence: '0009', time: 100 });
+      assert.equal(calls.length, before + 1);
+      assert.equal(calls[before].method, method);
+      assert.equal(calls[before][method === 'sendPrivateMessage' ? 'userId' : 'groupId'], id);
+      assert.deepEqual(calls[before].message, [{ type: 'text', text: 'captured' }]);
+    }
+    return {
+      publicSendPreflightContract: true,
+      publicSendSnapshotContract: true,
+      privateUidSenderRouteContract: true,
+      sendUidCloseNoLateWriteContract: true,
+    };
+  } finally {
+    Object.assign(worker, { connected: false, exitCode: 0 });
+    worker.emit('exit', 0, null);
+    await client.close();
+  }
 }

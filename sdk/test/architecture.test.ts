@@ -798,3 +798,23 @@ test('category completion has exact callers and cannot regain native or identity
       assert.ok(dependencyViolation({ from: completion, to, typeOnly }));
   }
 });
+
+test('ordinary send composition binds its owner without capturing input or resolving recipients', () => {
+  for (const typeOnly of [false, true]) {
+    assert.ok(
+      dependencyViolation({
+        from: 'src/native-services.ts',
+        to: 'src/features/messages/send-input.ts',
+        typeOnly,
+      }),
+    );
+    assert.equal(
+      dependencyViolation({
+        from: 'src/native-services.ts',
+        to: 'src/features/messages/native-message-sender.ts',
+        typeOnly,
+      }),
+      undefined,
+    );
+  }
+});

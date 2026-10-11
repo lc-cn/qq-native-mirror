@@ -626,3 +626,19 @@ Assignment is enabled only for the measured Linux x64 profile recorded in
 checks exercise the public method, worker routing, CLI planning and native adapter
 with substituted services. These checks do not establish remote category changes
 or support for other binaries.
+
+Ordinary private/group sends enter the existing message sender through captured
+public intent. The facade and sender reuse `capturePrivateMessage` and
+`captureGroupMessage`, so the complete element batch is copied before IPC,
+recipient UID lookup or media preparation. `native-services` routes raw payloads
+to this owner; the dependency gate forbids it from importing send-input policy.
+Private recipient conversion, mention resolution, element preparation, unique-ID
+reservation and callback correlation therefore have one implementation owner.
+
+The sender combines its local lifetime with the account signal. UID and
+preparation waits, generated IDs and the callback channel receive this signal;
+closing just this sender cannot close the shared account event channel. Pending
+work is observed and cannot publish a late send result or dispatch a new message.
+Already issued writes are never replayed. Filesystem/codec work already in
+progress may finish; this cancellation contract does not imply arbitrary native
+calls or filesystem work can be undone.

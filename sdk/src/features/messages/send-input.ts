@@ -2,7 +2,7 @@ import { isAbsolute } from 'node:path';
 import { validateFaceId } from './face-input.ts';
 import type { SendableMessageElement } from '../../contracts/messages.ts';
 
-import { sendUserId } from '../../validation/identifiers.ts';
+import { sendUserId, sendGroupId } from '../../validation/identifiers.ts';
 export { sendUserId, sendGroupId } from '../../validation/identifiers.ts';
 
 /** Validate and capture the whole batch before UID queries, media preparation,
@@ -57,6 +57,16 @@ export function captureSendInput(input: unknown, group: boolean): SendableMessag
         throw new Error(`Unsupported message element: ${String(value.type)}`);
     }
   });
+}
+
+/** Capture destination and the complete message before IPC or recipient lookup. */
+export function capturePrivateMessage(userId: unknown, message: unknown) {
+  return { userId: sendUserId(userId), message: captureSendInput(message, false) };
+}
+
+/** Group destinations retain their spelling; mentions are validated by the same batch capture. */
+export function captureGroupMessage(groupId: unknown, message: unknown) {
+  return { groupId: sendGroupId(groupId), message: captureSendInput(message, true) };
 }
 
 export function sentReceipt(message: Record<string, unknown>) {

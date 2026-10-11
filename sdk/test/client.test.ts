@@ -1051,3 +1051,41 @@ test('public folder creation validates before IPC and returns identity usable by
   await deletion;
   await client.close();
 });
+
+for (const method of ['sendPrivateMessage', 'sendGroupMessage'] as const) {
+  test(`${method} captures the full batch before IPC and never dispatches invalid intent`, async () => {
+    const worker = new Worker();
+    const client = new QQClient(worker as unknown as ChildProcess, 500);
+    try {
+      await assert.rejects(client[method]('123', 'fixture'), /not online/);
+      worker.emit('message', { event: 'ready', payload: { uin: '456', uid: 'u_self' } });
+      for (const target of ['', '0', 'all', '*'])
+        await assert.rejects(client[method](target, 'fixture'));
+      for (const value of [
+        [],
+        Array(1),
+        [
+          { type: 'text', text: 'valid' },
+          { type: 'face', id: 'invalid' },
+        ],
+      ])
+        await assert.rejects(
+          client[method]('123', value as unknown as Parameters<QQClient['sendPrivateMessage']>[1]),
+        );
+      assert.equal(worker.requests.length, 0);
+      const input = [{ type: 'text' as const, text: 'captured' }];
+      const pending = client[method]('00123', input);
+      input[0]!.text = 'mutated';
+      input.push({ type: 'text', text: 'injected' });
+      const request = worker.requests.at(-1);
+      assert.equal(request.method, method);
+      assert.equal(method === 'sendPrivateMessage' ? request.userId : request.groupId, '00123');
+      assert.deepEqual(request.message, [{ type: 'text', text: 'captured' }]);
+      worker.emit('message', { id: request.id, error: { message: 'denied', code: 73 } });
+      await assert.rejects(pending, { operation: method, code: 73 });
+      assert.equal(worker.requests.length, 1);
+    } finally {
+      await client.close();
+    }
+  });
+}

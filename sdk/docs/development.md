@@ -167,6 +167,14 @@ diagnostic. Keep the application emit call outside that guard so an application
 listener error is not mislabeled as invalid native data. Use intrinsic Map
 enumeration for member callbacks, matching the query owner's storage policy.
 
+Ordinary private/group sends belong to `features/messages/native-message-sender`.
+Use pure `capturePrivateMessage` / `captureGroupMessage` at the facade and domain
+entry, before IPC and before UID lookup. Service composition only routes the
+operation; it must not regain the input or recipient orchestration policy.
+Sender close has a local signal so one owner can retire without closing the
+shared account callback channel. Verify pending UID/preparation/callback waits
+and late completion, as well as ordinary successful sends.
+
 Element decoding belongs to `features/messages/inbound-elements`; add no file
 preparation or native querying there. Local image/file staging and reply-reference
 construction belong to `outbound-elements`, using the specific staging/query

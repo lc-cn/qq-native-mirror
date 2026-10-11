@@ -242,6 +242,8 @@ export function dependencyViolation({ from, to, typeOnly }: SourceDependency): s
     return kernelDependencies.has(to) || (typeOnly && to === 'src/native/native-object.ts')
       ? undefined
       : 'Authentication composes its environment and account lifetime, not feature implementations.';
+  if (from === 'src/native-services.ts' && to === 'src/features/messages/send-input.ts')
+    return 'Ordinary send input and recipient orchestration belong to the message sender.';
   if (from === 'src/native-services.ts' && to.startsWith('src/features/forward/'))
     return serviceForwardDependencies.has(to) ||
       (typeOnly && to === 'src/features/forward/long-message-response.ts')

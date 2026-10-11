@@ -59,6 +59,8 @@ function verifyDomainPorts(
   contacts.service('Group');
   // @ts-expect-error A group query cannot acquire arbitrary native services.
   groups.service('Profile');
+  // @ts-expect-error Sender waits must always carry the owner's cancellation signal.
+  sender.awaitAlive(Promise.resolve('fixture'));
   // @ts-expect-error A sender cannot acquire arbitrary native services.
   sender.service('Buddy');
   // @ts-expect-error Contacts do not own message submission.
