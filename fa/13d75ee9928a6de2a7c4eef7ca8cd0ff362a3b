@@ -1,0 +1,35 @@
+sdk/docs/architecture/encapsulation.md
+  s_2104cc474f1ce5::t_a84ec7a2651d1f 447-455
+sdk/scripts/consumers/forward-consumer-contract.mjs
+  s_2104cc474f1ce5::t_9c2c6afa2f8cc8 54-69,74-75,413-417,439-491,603-604
+sdk/src/client/qq-client.ts
+  s_2104cc474f1ce5::t_3f6904490e8413 1,270-274
+sdk/src/features/forward/forward-input.ts
+  s_2104cc474f1ce5::t_aaba046dd62ef8 1-45
+sdk/src/features/forward/forward-messages.ts
+  s_2104cc474f1ce5::t_90e4b8e43358ee 1,94-96,153
+sdk/test/architecture/composition.ts
+  s_2104cc474f1ce5::t_3d9e4b635d685c 84,293-316
+sdk/test/architecture/resources.ts
+  s_2104cc474f1ce5::t_e6917d9b856987 43,72
+sdk/test/forward-input-boundary.test.ts
+  s_2104cc474f1ce5::t_c59af72d8bcd86 1-200
+sdk/test/helpers/dependency-policy.ts
+  s_2104cc474f1ce5::t_84e6c2bb087c43 119,178-181
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "fa13d75ee9928a6de2a7c4eef7ca8cd0ff362a3b",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
