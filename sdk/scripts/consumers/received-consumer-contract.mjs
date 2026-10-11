@@ -547,11 +547,66 @@ export async function verifyReceivedConsumer(packagePath) {
   } finally {
     retiredIngress.services.close();
   }
+  for (const route of /** @type {const} */ (['query', 'live'])) {
+    let evaluated = 0;
+    const accessor = Object.defineProperty({ elementType: 1 }, 'textElement', {
+      get() {
+        evaluated++;
+        throw Error('Native element getter must not execute');
+      },
+    });
+    const coercion = {
+      toString() {
+        evaluated++;
+        throw Error('Native element coercion must not execute');
+      },
+    };
+    const elements = [
+      accessor,
+      { elementType: 3, fileElement: { filePath: '/file', fileName: 42 } },
+      { elementType: 7, replyElement: { replayMsgId: coercion } },
+      { elementType: 4, elementId: coercion, pttElement: { filePath: '/record' } },
+      { elementType: 3, fileElement: { filePath: '/bare' } },
+    ];
+    const source = raw({ peerUin: '123', senderUin: '456', elements });
+    const f = fixture([source]);
+    try {
+      /** @type {unknown} */
+      let message;
+      if (route === 'query') message = await f.services.invokeOperation('getMessage', payload);
+      else {
+        f.listener().onRecvMsg([source]);
+        await flush();
+        message = f.events.find(([name]) => name === 'message')?.[1];
+      }
+      assertMessage(message);
+      assert.equal(message.raw, source);
+      assert.equal(message.elements.length, elements.length);
+      for (let i = 0; i < 4; i++) {
+        /** @type {import('../../src/types.ts').MessageElement} */
+        const element = message.elements[i];
+        assert.equal(element.type, 'unknown');
+        if (element.type === 'unknown') assert.equal(element.data, elements[i]);
+      }
+      assert.deepEqual(message.elements[4], {
+        type: 'file',
+        file: '/bare',
+        elementId: '',
+        name: undefined,
+        size: undefined,
+      });
+      assert.equal(evaluated, 0);
+      assert.equal(f.calls.length, 0);
+    } finally {
+      f.services.close();
+    }
+  }
   return {
     receivedMessageContract: true,
     receivedMessageSnapshotContract: true,
     receivedConversationCaptureContract: true,
     receivedSystemIngressContract: true,
+    receivedElementDataBoundaryContract: true,
     nativeReceivedIdentityLookupAttempted: false,
   };
 }

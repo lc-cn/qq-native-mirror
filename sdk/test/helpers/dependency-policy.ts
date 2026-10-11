@@ -109,12 +109,6 @@ const featurePorts = new Set([
   'src/runtime/native-event-channel.ts',
 ]);
 
-// Existing native projections and legacy service adapters still consume the
-// proprietary dynamic object. New features use unknown results and narrow ports;
-// importing this type must require an explicit review, not a directory permission.
-export const dynamicNativeOwners: Readonly<Record<string, string>> = {
-  'src/features/messages/inbound-elements.ts': 'Project opaque received element variants.',
-};
 const facadeInputs = new Set([
   'src/features/contacts/friend-request-input.ts',
   'src/features/groups/group-request-input.ts',
@@ -391,9 +385,7 @@ export function dependencyViolation({ from, to, typeOnly }: SourceDependency): s
       : 'Runtime cannot depend on feature implementations or entry points.';
   if (from.startsWith('src/features/')) {
     if (to === 'src/native/native-object.ts')
-      return typeOnly && Object.hasOwn(dynamicNativeOwners, from)
-        ? undefined
-        : 'Features use unknown results and narrow ports; dynamic native objects require exact ownership.';
+      return 'Features use unknown results and narrow ports, not proprietary dynamic objects.';
     if (typeOnly && (nativeContracts.has(to) || featurePorts.has(to))) return;
     // These owners preserve primary and cleanup failures for temporary listeners
     // or staging directories. The pure helper grants no runtime composition.

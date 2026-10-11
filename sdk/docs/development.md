@@ -139,10 +139,18 @@ Keep the captured envelope's metadata closed and its element bodies `unknown`;
 only the element projector interprets native variant fields. Do not widen a queue
 or resolution port to accommodate an undocumented element.
 
+Receive-only element projection reads own data properties without evaluating
+accessors or coercing objects to strings. An accessor is not a missing optional
+field. Validate every projected public scalar, including optional file name and
+size, and preserve malformed or unsupported variants as unknown with their original
+native objects. Do not discard invalid metadata to manufacture a typed element.
+Envelope capture and UID resolution retain that distinction across awaits. No
+feature module may import the proprietary dynamic native object.
+
 New feature modules cannot import the dynamic `NativeObject` escape hatch. Use
 `unknown` for untrusted results and narrow typed ports for callable methods.
-Existing legacy adapters and native projectors have exact ownership entries with
-reasons in the dependency policy; remove an entry when its import disappears.
+The dynamic escape hatch remains only in reviewed native/runtime bindings;
+domain projection does not gain an exception for undocumented fields.
 Contact directory reads validate unknown Buddy, Profile and UID conversion results.
 Keep their shared profile projection in the contact domain; flat friend queries
 must not acquire the complete category metadata contract. Commit identity caches

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { join } from 'node:path';
 import test from 'node:test';
-import { dynamicNativeOwners, dependencyViolation } from '../helpers/dependency-policy.ts';
+import { dependencyViolation } from '../helpers/dependency-policy.ts';
 import { projectRoot, graph } from '../helpers/source-graph.ts';
 
 test('group-file field capture stays private to count and folder protocols', () => {
@@ -213,7 +213,7 @@ test('public forward-resource validation cannot acquire its protocol implementat
   }
 });
 
-test('dynamic native object permissions apply only to actual reviewed adapters and projectors', () => {
+test('domain modules cannot acquire the proprietary dynamic native object', () => {
   const to = 'src/native/native-object.ts';
   for (const from of [
     'src/features/groups/new-input.ts',
@@ -225,6 +225,7 @@ test('dynamic native object permissions apply only to actual reviewed adapters a
     'src/features/messages/incoming-message-delivery.ts',
     'src/features/messages/inbound-messages.ts',
     'src/features/messages/inbound-mentions.ts',
+    'src/features/messages/inbound-elements.ts',
     'src/features/contacts/contact-directory.ts',
     'src/features/contacts/friend-categories.ts',
     'src/features/contacts/friend-category-mutations.ts',
@@ -234,15 +235,6 @@ test('dynamic native object permissions apply only to actual reviewed adapters a
   ])
     for (const typeOnly of [false, true])
       assert.ok(dependencyViolation({ from, to, typeOnly }), `${from} inherited ${to}`);
-  for (const [from, reason] of Object.entries(dynamicNativeOwners)) {
-    assert.ok(reason.length > 0, `Missing dynamic object ownership reason: ${from}`);
-    assert.ok(
-      graph.get(join(projectRoot, from))?.some((edge) => edge.target === join(projectRoot, to)),
-      `Remove obsolete dynamic object permission: ${from}`,
-    );
-    assert.equal(dependencyViolation({ from, to, typeOnly: true }), undefined);
-    assert.ok(dependencyViolation({ from, to, typeOnly: false }));
-  }
 });
 
 test('typed query, download and prepared element owners cannot regain the native object escape hatch', () => {

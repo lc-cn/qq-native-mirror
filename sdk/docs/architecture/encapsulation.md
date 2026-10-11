@@ -370,7 +370,14 @@ callback ABI: raw received elements retain their existing projection contracts.
 `features/messages/inbound-elements` owns receive-only element projection and
 mention interpretation. It has no filesystem or native-operation dependency;
 its complete runtime closure is checked by the pure-module gate. Unknown native
-elements retain their original objects. `outbound-elements` owns local image and
+elements retain their original objects. Variant fields are captured as unknown
+own data properties; accessors are distinct from absent optional fields and are
+never invoked. Text, paths, file name/size and reply/media identifiers must satisfy
+the public scalar types before a typed element is returned. Invalid variants stay
+unknown without `String` coercion, including after envelope capture in live and
+query paths. The projector no longer imports the proprietary dynamic object;
+all feature modules are prohibited from that escape hatch. The opaque binary
+Session remains with the runtime binding. `outbound-elements` owns local image and
 attachment preparation and validated reply references. It accepts only the shared media
 staging and message-ID query ports, preserving their receivers and native request
 shapes. `native-message-sender` composes these constructors and keeps concurrent
