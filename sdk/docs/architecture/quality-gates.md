@@ -184,3 +184,11 @@ is idempotent at both boundaries without admitting an explicitly empty cursor.
 The installed consumer repeats request preflight, detached friend identity,
 default cursor options and CLI approval intent checks using installed code and a
 controlled worker; these checks do not perform native approval or account login.
+
+The installed request-result consumer checks single-read native status, matching
+failure codes, retirement before result decisions, early notification failure,
+query quarantine and listener removal with controlled ports. Source regressions
+also cover getter throws, malformed codes and void list versus approval results.
+Login-retirement fixtures prepare their local environment before starting the
+login budget, so cold filesystem work cannot replace the targeted close failure.
+Production login deadlines and exact retirement assertions are unchanged.

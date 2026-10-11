@@ -33,6 +33,7 @@ import { verifyGroupNoticeConsumer } from './group-notice-consumer-contract.mjs'
 import { verifyGroupSearchConsumer } from './group-search-consumer-contract.mjs';
 import { verifyGroupQueryOwnerConsumer } from './group-query-owner-consumer-contract.mjs';
 import { verifyContactGroupSnapshots } from './contact-group-snapshot-consumer-contract.mjs';
+import { verifyRequestResultConsumer } from './request-result-consumer-contract.mjs';
 import { verifyGroupFilePagesConsumer } from './group-file-pages-consumer-contract.mjs';
 import { verifyQunWebConsumer } from './qun-web-consumer-contract.mjs';
 import { verifyFriendCategoryMutationsConsumer } from './friend-category-mutations-consumer-contract.mjs';
@@ -205,6 +206,9 @@ const groupQueryOwnerChecks = await verifyGroupQueryOwnerConsumer(
   join(destination, 'node_modules/qq-native-client'),
 );
 const contactGroupSnapshotChecks = await verifyContactGroupSnapshots(
+  join(destination, 'node_modules/qq-native-client'),
+);
+const requestResultChecks = await verifyRequestResultConsumer(
   join(destination, 'node_modules/qq-native-client'),
 );
 const groupFilePagesChecks = await verifyGroupFilePagesConsumer(
@@ -614,6 +618,7 @@ const receipt = {
     groupSearchChecks,
     groupQueryOwnerChecks,
     contactGroupSnapshotChecks,
+    requestResultChecks,
     groupFilePagesChecks,
     ...publicContractChecks,
     privateFilesExcluded: true,

@@ -254,6 +254,11 @@ export async function verifyKernelSessionConsumer(packageRoot) {
         return 0;
       };
     try {
+      // Isolate reentrant retirement from cold directory/environment preparation.
+      // The login deadline intentionally includes prepare in production; this
+      // fixture asserts dispatch ordering once its local environment is ready.
+      await f.kernel.prepare();
+      assert.deepEqual(f.dispatches, []);
       await assert.rejects(f.kernel.login({ method: 'qr' }), /Client closed during login/);
       assert.deepEqual(
         f.dispatches,

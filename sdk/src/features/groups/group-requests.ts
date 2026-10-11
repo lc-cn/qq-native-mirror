@@ -91,6 +91,15 @@ export function createGroupRequests(context: GroupRequestsContext) {
     signal.throwIfAborted();
     if (closed) throw new Error('Group request service is closed');
   };
+  const checkResult = (result: unknown, message: string, allowVoid = false) => {
+    alive();
+    // Approval may acknowledge dispatch with void. Lists always require result zero.
+    if (allowVoid && result === undefined) return;
+    const code =
+      result && typeof result === 'object' ? (result as { result?: unknown }).result : undefined;
+    alive();
+    if (code !== 0) throw nativeResultError(message, { result: code });
+  };
   const awaitValue = async <T>(value: T | PromiseLike<T>): Promise<T> => {
     const pending = Promise.resolve(value);
     if (controller.signal.aborted) {
@@ -242,16 +251,10 @@ export function createGroupRequests(context: GroupRequestsContext) {
               Promise.resolve()
                 .then(() => awaitValue(callList(doubt, before, limit)))
                 .then((result) => {
-                  if (
-                    !result ||
-                    typeof result !== 'object' ||
-                    (result as { result?: unknown }).result !== 0
-                  )
-                    throw nativeResultError(
-                      'Native getSingleScreenNotifies failed or returned an invalid result',
-                      result,
-                    );
-                  alive();
+                  checkResult(
+                    result,
+                    'Native getSingleScreenNotifies failed or returned an invalid result',
+                  );
                 }),
             ]).then(([page]) => {
               alive();
@@ -306,15 +309,7 @@ export function createGroupRequests(context: GroupRequestsContext) {
     );
     alive();
     // Pinned native declaration is Promise<void>: dispatch is not server approval.
-    if (
-      result !== undefined &&
-      (!result || typeof result !== 'object' || (result as { result?: unknown }).result !== 0)
-    )
-      throw nativeResultError(
-        'Native operateSysNotify failed or returned an invalid result',
-        result,
-      );
-    alive();
+    checkResult(result, 'Native operateSysNotify failed or returned an invalid result', true);
   }
   function retire() {
     if (closed) return;

@@ -200,6 +200,10 @@ capture idempotent across boundaries. Preserve the existing nullish limit defaul
 read order and omitted versus empty approval reason. Capture CLI reasons during
 plan preparation. Listener registration, page serialization, deduplication,
 failed-query quarantine and void acknowledgement semantics stay with execution.
+Capture native request result codes once, then check owner lifetime before deciding
+success or constructing an error. Error serialization must use that same captured
+code. Lists require numeric zero; only approval dispatch accepts a void result.
+Getter failures retain identity, and failed uncorrelated queries stay quarantined.
 
 Group query envelopes and rows follow the same capture-before-validation rule.
 Use intrinsic Map operations for native membership maps, and commit the complete

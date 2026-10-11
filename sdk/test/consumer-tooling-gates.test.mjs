@@ -43,6 +43,41 @@ function replaceOnce(value, before, after) {
   return value.replace(before, after);
 }
 
+test('request-result consumer retains typed ports and awaited assertions without execution', async () => {
+  const file = resolve(root, 'scripts/request-result-consumer-contract.mjs');
+  const actual = readFileSync(file, 'utf8');
+  assert.deepEqual(diagnostics(actual, file), []);
+  assert.ok(
+    diagnostics(
+      replaceOnce(
+        actual,
+        '          approvalFriendRequest() {\n            calls++;\n            return result;\n          },',
+        '          approvalFriendRequest: 42,',
+      ),
+      file,
+    ).length > 0,
+  );
+  const eslint = new ESLint({
+    cwd: root,
+    overrideConfig: {
+      languageOptions: { parserOptions: { disallowAutomaticSingleRunInference: true } },
+    },
+  });
+  const good = await eslint.lintText(actual, { filePath: file });
+  assert.equal(good[0].errorCount, 0);
+  const floating = replaceOnce(
+    actual,
+    '        await assert.rejects(\n          operations.invokeOperation(method, {\n            request: { uid:',
+    '        assert.rejects(\n          operations.invokeOperation(method, {\n            request: { uid:',
+  );
+  const reports = await eslint.lintText(floating, { filePath: file });
+  assert.ok(
+    reports
+      .flatMap((report) => report.messages)
+      .some((message) => message.ruleId === '@typescript-eslint/no-floating-promises'),
+  );
+});
+
 test('contact/group snapshot consumer rejects an invalid native port and unobserved mutation without execution', async () => {
   const file = resolve(root, 'scripts/contact-group-snapshot-consumer-contract.mjs');
   const actual = readFileSync(file, 'utf8');

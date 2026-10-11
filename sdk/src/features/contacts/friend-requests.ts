@@ -100,6 +100,15 @@ export function createFriendRequests(context: FriendRequestsContext) {
     signal.throwIfAborted();
     if (closed) throw new Error('Friend request service is closed');
   };
+  const checkResult = (result: unknown, message: string, allowVoid = false) => {
+    alive();
+    // Approval may acknowledge dispatch with void. Lists always require result zero.
+    if (allowVoid && result === undefined) return;
+    const code =
+      result && typeof result === 'object' ? (result as { result?: unknown }).result : undefined;
+    alive();
+    if (code !== 0) throw nativeResultError(message, { result: code });
+  };
   alive();
   const service = context.getBuddyService();
   alive();
@@ -206,12 +215,7 @@ export function createFriendRequests(context: FriendRequestsContext) {
         Promise.resolve()
           .then(() => awaitValue(callList()))
           .then((result) => {
-            if (!result || typeof result !== 'object' || record(result)?.result !== 0)
-              throw nativeResultError(
-                'Native getBuddyReq failed or returned an invalid result',
-                result,
-              );
-            alive();
+            checkResult(result, 'Native getBuddyReq failed or returned an invalid result');
           }),
       ]).then(([requests]) => {
         alive();
@@ -259,16 +263,8 @@ export function createFriendRequests(context: FriendRequestsContext) {
       }),
     );
     alive();
-    // Upstream void confirms dispatch only. Explicit native errors still reject.
-    if (
-      result !== undefined &&
-      (!result || typeof result !== 'object' || record(result)?.result !== 0)
-    )
-      throw nativeResultError(
-        'Native approvalFriendRequest failed or returned an invalid result',
-        result,
-      );
-    alive();
+    // Upstream void confirms dispatch only, never server acceptance.
+    checkResult(result, 'Native approvalFriendRequest failed or returned an invalid result', true);
   }
   function retire() {
     if (closed) return;
