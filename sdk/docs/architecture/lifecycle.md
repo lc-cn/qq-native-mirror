@@ -97,8 +97,20 @@
   fallible teardown. Offline/logout events still report the original transition.
   Cleanup diagnostics expose typed message/name/code records rather than native
   Error instances or arbitrary error properties.
+- Configured login and automatic restore consume their notification continuations
+  through the same internal `runtime/background-task` used by the worker. The
+  primary operation still settles its existing Promise and emits its original
+  failure once. An exception escaping the failure observer is raised on the next
+  immediate turn, after current Promise settlements. Ordinary Error identity is
+  preserved; opaque throws use the existing safe error projection, without
+  coercion or accessor reads. It is not sent to the observer again, retried or
+  converted into another operation error. Node's default uncaught-exception
+  behavior exits the parent process, including in unhandled-rejection `warn`
+  mode. The SDK installs no process exception handler. Applications must keep
+  event handlers from throwing or own their process exception policy. Cancelled
+  or superseded configured tasks still produce no obsolete notification.
 - IPC messages, native connection callbacks, authentication polling and account startup dispatch
-  their background Promises through `runtime/worker-task`. Expected failures stay
+  their background Promises through `runtime/background-task`. Expected failures stay
   with the authentication/account owner. An escaping rejection, such as a failure
   observer throwing, schedules a fatal exception after current Promise settlements;
   it does not notify that observer again or replay native work. Node's default

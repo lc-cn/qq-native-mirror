@@ -3,7 +3,7 @@ import { EventEmitter } from 'node:events';
 import { ChildProcess, fork } from 'node:child_process';
 import { mkdtemp, writeFile, rm, realpath } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 /** Actual worker RPC and client error projection; bootstrap and operations are synthetic.
@@ -34,6 +34,7 @@ export async function verifyWorkerErrorRoutes({
   /** @type {import("node:child_process").ChildProcess | undefined} */
   let worker;
   try {
+    await verifyParentBackgroundNotification(workerPath, directory);
     const fixture = join(directory, 'kernel.mjs');
     const hook = join(directory, 'hook.mjs');
     await writeFile(
@@ -166,6 +167,7 @@ export function createKernel(_native,_options,emit){return {
       clientCloseFailureNotificationContract: true,
       clientLoginFailureNotificationContract: true,
       clientNativeExportsSnapshotContract: true,
+      clientBackgroundNotificationFailureContract: true,
       clientEventPresentationInstalledContract: true,
       workerOpaqueErrorContract: true,
       workerErrorRecoveryContract: true,
@@ -191,6 +193,67 @@ export function createKernel(_native,_options,emit){return {
       await rm(directory, { recursive: true, force: true });
     }
   }
+}
+
+/** @param {string} workerPath @param {string} directory */
+async function verifyParentBackgroundNotification(workerPath, directory) {
+  const extension = workerPath.endsWith('.ts') ? 'ts' : 'js';
+  const clientUrl = pathToFileURL(
+    join(dirname(workerPath), 'client', `qq-client.${extension}`),
+  ).href;
+  const file = join(directory, 'parent-background-notification.mjs');
+  await writeFile(
+    file,
+    `
+import{ChildProcess}from'node:child_process';
+import{QQClient,completeClientInitialization}from ${JSON.stringify(clientUrl)};
+const worker=new ChildProcess();Object.defineProperty(worker,'connected',{value:true});
+let client,settled=false,logins=0;
+const observer=new Error('CONTROLLED_PARENT_NOTIFICATION');
+Object.defineProperty(worker,'send',{value(message,callback){callback(null);if(message.method==='login'){
+logins++;client.waitForLogin().then(()=>{},()=>{settled=true;});
+queueMicrotask(()=>worker.emit('message',{id:message.id,error:{message:'CONTROLLED_LOGIN_FAILURE',code:7}}));
+}return true;}});
+process.on('uncaughtExceptionMonitor',(error,origin)=>{process.stdout.write(JSON.stringify({sameObserver:error===observer,settled,logins,origin})+'\\n');});
+client=new QQClient(worker,1000,{method:'qr'});
+client.on('loginError',()=>{throw observer;});
+completeClientInitialization(client,{exports:['fixture']},true);
+setTimeout(()=>process.exit(77),500);
+`,
+  );
+  const child = fork(file, [], {
+    execArgv: ['--unhandled-rejections=warn'],
+    stdio: ['ignore', 'pipe', 'pipe', 'ipc'],
+  });
+  assert.ok(child.stdout && child.stderr);
+  let stdout = '',
+    stderr = '';
+  child.stdout.on('data', (chunk) => {
+    stdout += String(chunk);
+  });
+  child.stderr.on('data', (chunk) => {
+    stderr += String(chunk);
+  });
+  /** @type {NodeJS.Timeout|undefined} */
+  let deadline;
+  const result = await new Promise((resolve, reject) => {
+    deadline = setTimeout(() => {
+      child.kill('SIGKILL');
+      reject(new Error('Controlled parent task process did not exit'));
+    }, 3000);
+    child.once('error', reject);
+    child.once('exit', (code, signal) => resolve({ code, signal }));
+  }).finally(() => clearTimeout(deadline));
+  assert.deepEqual(result, { code: 1, signal: null });
+  const monitor = JSON.parse(stdout.trim());
+  assert.deepEqual(monitor, {
+    sameObserver: true,
+    settled: true,
+    logins: 1,
+    origin: 'uncaughtException',
+  });
+  assert.match(stderr, /CONTROLLED_PARENT_NOTIFICATION/);
+  assert.doesNotMatch(stderr, /UnhandledPromiseRejectionWarning/);
 }
 
 /** @param {typeof import('../../src/client/qq-client.ts').QQClient} QQClient */

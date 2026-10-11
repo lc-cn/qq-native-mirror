@@ -68,6 +68,27 @@ as `loginError`. Explicit login owns its returned Promise after taking over; inv
 login input and rejected reconnect admission do not consume the configured task.
 No scheduler, initialization hook or task token enters the package-root interface.
 
+`runtime/background-task` consumes a background continuation's escaping rejection
+and defers a safely projected exception until current settlements run. The parent
+configured-login and automatic-restore owners share this terminal rule with worker
+IPC, native connection, authentication polling and account startup. Expected
+operation failures remain with their existing owners; the helper neither receives
+an account nor schedules a retry or shutdown. Its only source dependency is the
+error projection primitive, and the dependency gate admits only these five reviewed
+source callers. No package-root export is added. Error identity survives; opaque
+throws are projected without executing accessors. A failing observer is not called
+again, and Node's default uncaught-exception handling remains active in `warn`
+rejection mode. Parent notification failures therefore do not become abandoned
+Promise rejections. The worker retains its existing fatal-exit behavior.
+
+The source ownership gate checks the two parent notification chains and their
+actual named task consumer. Controlled mutants that discard either chain, use
+`void`, redirect or shadow the consumer fail without running those bodies. This is
+an architecture check: ESLint's floating-Promise rule by itself considers a chain
+with a rejection handler handled, even if that handler can throw. Subprocess tests
+and the installed consumer separately verify settlement-before-exception, default
+fatal exit and absence of notification replay.
+
 A synchronous `closing` observer failure is retained while the same owner still
 submits shutdown and retires the worker. A successful shutdown reaches `closed`
 before rejecting close with that original value. If worker cleanup also fails,

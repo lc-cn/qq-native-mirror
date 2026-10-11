@@ -2,7 +2,7 @@ import { mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { hostname, platform, release, type } from 'node:os';
 import { normalizeKernelError } from '../errors.ts';
-import { observeWorkerTask } from './worker-task.ts';
+import { observeBackgroundTask } from './background-task.ts';
 import { invokeKernelMethod } from './kernel-method.ts';
 import type { NativeObject } from '../native/native-object.ts';
 import type { NativeContractProfile } from '../native/native-contracts.ts';
@@ -120,7 +120,7 @@ export class AccountSessionLifecycle {
   begin(): void {
     if (this.#begun || !this.#pending()) return;
     this.#begun = true;
-    observeWorkerTask(this.#start());
+    observeBackgroundTask(this.#start());
   }
 
   #complete(): void {

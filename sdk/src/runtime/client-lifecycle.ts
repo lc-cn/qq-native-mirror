@@ -1,5 +1,6 @@
 import type { ChildProcess } from 'node:child_process';
 import { WorkerRpcChannel } from './worker-rpc-channel.ts';
+import { observeBackgroundTask } from './background-task.ts';
 import { terminateWorker, type WorkerTerminationOptions } from './worker-termination.ts';
 import { withCleanupFailure } from './cleanup.ts';
 import { deserializeKernelError, KernelRequestError, normalizeKernelError } from '../errors.ts';
@@ -318,13 +319,15 @@ export class ClientLifecycle {
     this.#autoTimer = setTimeout(() => {
       this.#autoTimer = undefined;
       this.#autoAttempts++;
-      void this.reconnect().catch((error) => {
-        // Promise rejection can carry arbitrary thrown values; preserve their identity.
-        this.#context.forward('reconnect-error', error);
-        // Login/initialization failures do not establish a transport-only cause.
-        // Require explicit evidence before another automatic restore attempt.
-        if (error?.retryable === true) this.#scheduleReconnect();
-      });
+      observeBackgroundTask(
+        this.reconnect().catch((error) => {
+          // Promise rejection can carry arbitrary thrown values; preserve their identity.
+          this.#context.forward('reconnect-error', error);
+          // Login/initialization failures do not establish a transport-only cause.
+          // Require explicit evidence before another automatic restore attempt.
+          if (error?.retryable === true) this.#scheduleReconnect();
+        }),
+      );
     }, this.#auto.delayMs);
   }
   async request<T = unknown>(
@@ -416,17 +419,19 @@ export class ClientLifecycle {
         if (this.#configuredLogin === task) this.#configuredLogin = undefined;
         return;
       }
-      this.#startLogin(this.#defaultLogin).then(
-        () => {
-          if (this.#configuredLogin === task) this.#configuredLogin = undefined;
-        },
-        (error: unknown) => {
-          const report = ownsTask();
-          if (this.#configuredLogin === task) this.#configuredLogin = undefined;
-          // An active timeout/crash may have committed failed/closed ownership.
-          // Preserve its error; only explicit supersession silences the task.
-          if (report) this.#context.forward('loginError', error);
-        },
+      observeBackgroundTask(
+        this.#startLogin(this.#defaultLogin).then(
+          () => {
+            if (this.#configuredLogin === task) this.#configuredLogin = undefined;
+          },
+          (error: unknown) => {
+            const report = ownsTask();
+            if (this.#configuredLogin === task) this.#configuredLogin = undefined;
+            // An active timeout/crash may have committed failed/closed ownership.
+            // Preserve its error; only explicit supersession silences the task.
+            if (report) this.#context.forward('loginError', error);
+          },
+        ),
       );
     });
   }

@@ -52,7 +52,11 @@ Omitting `login` prepares the kernel without authentication. When supplied,
 `login` schedules authentication after initialization; listen for `loginError` to
 observe a failure. Closing or reconnecting cancels that pending task. An explicit
 `client.login()` takes over and reports through its returned Promise. Cancellation
-cannot undo authentication already submitted to the worker. To reuse authorization
+cannot undo authentication already submitted to the worker. Error event handlers
+must handle their own failures: an exception escaping automatic login or restore
+notification is raised after current Promise settlements. Node's default
+uncaught-exception behavior exits the process, even in rejection `warn` mode.
+To reuse authorization
 in the same data directory, call `login({method:'restore',uin:'123456'})`.
 Omit `uin` only with exactly one eligible record. Explicit quick login uses
 `{method:'quick',uin:'123456'}`. Password login is not implemented.

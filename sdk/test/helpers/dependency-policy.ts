@@ -58,7 +58,7 @@ const workerDependencies = new Set([
   'src/worker/bootstrap.ts',
   'src/runtime/operations.ts',
   'src/runtime/worker-read-requests.ts',
-  'src/runtime/worker-task.ts',
+  'src/runtime/background-task.ts',
 ]);
 const bootstrapDependencies = new Set([
   'src/kernel.ts',
@@ -84,7 +84,7 @@ const kernelDependencies = new Set([
   'src/runtime/authentication-attempt.ts',
   'src/runtime/kernel-environment.ts',
   'src/runtime/cleanup.ts',
-  'src/runtime/worker-task.ts',
+  'src/runtime/background-task.ts',
 ]);
 const serviceRuntimeDependencies = new Set([
   'src/runtime/cleanup.ts',
@@ -213,6 +213,22 @@ export const crossFeatureDependencies = [
 ] as const;
 
 export function dependencyViolation({ from, to, typeOnly }: SourceDependency): string | undefined {
+  if (from === 'src/runtime/worker-task.ts' || to === 'src/runtime/worker-task.ts')
+    return 'The retired worker-only task helper has no source permission.';
+  if (from === 'src/runtime/background-task.ts')
+    return !typeOnly && to === 'src/errors.ts'
+      ? undefined
+      : 'Background task observation only normalizes escaping failures through the error primitive.';
+  if (to === 'src/runtime/background-task.ts')
+    return [
+      'src/worker.ts',
+      'src/kernel.ts',
+      'src/runtime/authentication-attempt.ts',
+      'src/runtime/account-session-lifecycle.ts',
+      'src/runtime/client-lifecycle.ts',
+    ].includes(from)
+      ? undefined
+      : 'Fatal background task observation belongs only to the five reviewed execution owners.';
   if (from === 'src/runtime/feature-lifetime.ts')
     return 'Feature lifetime owns only local cancellation and an injected account wait port.';
   if (to === 'src/runtime/feature-lifetime.ts')

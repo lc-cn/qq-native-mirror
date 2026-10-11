@@ -3,7 +3,7 @@ import { createWorkerBootstrap } from './worker/bootstrap.ts';
 import type { ClientOptions, LoginRequest } from './contracts/client.ts';
 import { isServiceOperation, isCancellableRead } from './runtime/operations.ts';
 import { WorkerReadRequests } from './runtime/worker-read-requests.ts';
-import { observeWorkerTask } from './runtime/worker-task.ts';
+import { observeBackgroundTask } from './runtime/background-task.ts';
 
 const send = (value: unknown) => {
   if (process.connected) process.send?.(value);
@@ -71,7 +71,7 @@ async function onMessage(message: unknown): Promise<void> {
 }
 process.on('message', (message: unknown) => {
   // Call immediately: cancellation must not wait behind a dispatch microtask.
-  observeWorkerTask(onMessage(message));
+  observeBackgroundTask(onMessage(message));
 });
 process.on('disconnect', () => {
   reads.close();

@@ -59,6 +59,8 @@ const packed = JSON.parse(
 )[0];
 /** @type {string[]} */
 const files = packed.files.map((/** @type {{path:string}} */ file) => file.path);
+if (files.some((path) => /^dist\/runtime\/worker-task\.(?:js|d\.ts)$/.test(path)))
+  throw new Error('Obsolete worker-only task observer remains in package');
 if (files.some((path) => /^dist\/features\/media\/media-operations\.(?:js|d\.ts)$/.test(path)))
   throw new Error('Obsolete generic media-operation module remains in package');
 if (files.some((path) => /^dist\/features\/messages\/message-elements\.(?:js|d\.ts)$/.test(path)))

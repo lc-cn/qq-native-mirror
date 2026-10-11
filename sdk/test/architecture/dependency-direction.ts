@@ -308,3 +308,39 @@ test('module loading extraction rejects computed imports and CommonJS aliases ou
     ).violations.length > 0,
   );
 });
+
+test('background task fatal observation has exact caller and primitive permissions', () => {
+  const helper = 'src/runtime/background-task.ts';
+  for (const from of [
+    'src/worker.ts',
+    'src/kernel.ts',
+    'src/runtime/authentication-attempt.ts',
+    'src/runtime/account-session-lifecycle.ts',
+    'src/runtime/client-lifecycle.ts',
+  ])
+    assert.equal(dependencyViolation({ from, to: helper, typeOnly: false }), undefined);
+  for (const from of [
+    'src/native-services.ts',
+    'src/client/qq-client.ts',
+    'src/runtime/new-owner.ts',
+    'src/features/groups/group-queries.ts',
+    'src/errors.ts',
+  ])
+    for (const typeOnly of [false, true])
+      assert.ok(dependencyViolation({ from, to: helper, typeOnly }));
+  assert.equal(
+    dependencyViolation({ from: helper, to: 'src/errors.ts', typeOnly: false }),
+    undefined,
+  );
+  for (const to of ['node:fs', 'src/runtime/cleanup.ts', 'src/client/qq-client.ts'])
+    for (const typeOnly of [false, true])
+      assert.ok(dependencyViolation({ from: helper, to, typeOnly }));
+  assert.ok(dependencyViolation({ from: helper, to: 'src/errors.ts', typeOnly: true }));
+  assert.ok(
+    dependencyViolation({
+      from: 'src/kernel.ts',
+      to: 'src/runtime/worker-task.ts',
+      typeOnly: false,
+    }),
+  );
+});

@@ -10,7 +10,7 @@ import type {
 } from './runtime/account-session-lifecycle.ts';
 import { createKernelEnvironment } from './runtime/kernel-environment.ts';
 import { AuthenticationAttempt } from './runtime/authentication-attempt.ts';
-import { observeWorkerTask } from './runtime/worker-task.ts';
+import { observeBackgroundTask } from './runtime/background-task.ts';
 import { invokeKernelMethod } from './runtime/kernel-method.ts';
 
 // QQ exports are proprietary and versioned; this boundary intentionally validates
@@ -275,7 +275,7 @@ export function createKernel(
       );
       Object.assign(listener, {
         onLoginConnected: () => {
-          if (pending) observeWorkerTask(pending.onConnected());
+          if (pending) observeBackgroundTask(pending.onConnected());
         },
         onLoginDisConnected: (...args: unknown[]) => {
           transitionOffline({
