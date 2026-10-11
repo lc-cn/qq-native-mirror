@@ -1,0 +1,45 @@
+sdk/test/helpers/dependency-policy.ts
+  s_2104cc474f1ce5::t_ebeed8f9deee65 199-209,323-325
+sdk/test/architecture/module-ownership.ts
+  s_2104cc474f1ce5::t_5248a7e691d02e 7-39
+sdk/test/architecture/contracts.ts
+  s_2104cc474f1ce5::t_bfe8252362ccb7 9-24
+sdk/test/architecture/composition.ts
+  s_2104cc474f1ce5::t_b6e5fbede2ae84 88-90
+sdk/docs/architecture/encapsulation.md
+  s_2104cc474f1ce5::t_260d309277a5bd 632-647
+sdk/docs/architecture/quality-gates.md
+  s_2104cc474f1ce5::t_6ad2896fd85834 224-231
+sdk/docs/development.md
+  s_2104cc474f1ce5::t_0826e8ca8dc75a 102-109
+sdk/scripts/consumers/group-file-action-consumer-contract.mjs
+  s_2104cc474f1ce5::t_4926a836c5d241 17-147,200-202
+sdk/src/features/groups/group-file-count.ts
+  s_2104cc474f1ce5::t_58dba41238f487 1-105
+sdk/src/features/groups/group-file-operations.ts
+  s_2104cc474f1ce5::t_412c5c638f0adb 1-10
+sdk/src/features/groups/group-file-result.ts
+  s_2104cc474f1ce5::t_88c92995cd0688 1-18
+sdk/src/features/groups/group-files.ts
+  s_2104cc474f1ce5::t_db958ac4ea71db 11-13,15,17,23
+sdk/src/features/groups/group-folder-operations.ts
+  s_2104cc474f1ce5::t_7bade1853b0f21 1-124
+sdk/test/group-file-result-lifetime.test.ts
+  s_2104cc474f1ce5::t_8f2ee4f596a96d 1-189
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a92710d607b914d0b79ead430d0b9b2ee47cf53b",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
