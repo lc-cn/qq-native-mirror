@@ -1,0 +1,46 @@
+sdk/test/helpers/dependency-policy.ts
+  s_2104cc474f1ce5::t_4255375e840166 166,249-261
+sdk/docs/architecture.md
+  s_2104cc474f1ce5::t_4255375e840166 105,115-120
+  s_2104cc474f1ce5::t_87a198d09e93c5 121
+sdk/test/architecture/module-ownership.ts
+  s_2104cc474f1ce5::t_4255375e840166 7-49
+sdk/docs/development.md
+  s_2104cc474f1ce5::t_4255375e840166 29-34
+sdk/src/cli/commands/contacts.ts
+  s_2104cc474f1ce5::t_fbb140ba365143 10
+sdk/src/client/qq-client.ts
+  s_2104cc474f1ce5::t_72ff5808f11264 24
+sdk/src/features/contacts/friend-categories.ts
+  s_2104cc474f1ce5::t_50638ebc3cc56d 2
+sdk/src/features/contacts/friend-category-assignment.ts
+  s_2104cc474f1ce5::t_7de6a12a2337e0 1
+sdk/src/features/contacts/friend-category-create.ts
+  s_2104cc474f1ce5::t_121c070b9fabaa 1-2
+sdk/src/features/contacts/friend-category-input.ts
+  s_2104cc474f1ce5::t_e6cb393e136ec6 1-59
+sdk/src/features/contacts/friend-category-mutations.ts
+  s_2104cc474f1ce5::t_12acaecf1bacd9 6
+sdk/test/architecture/composition.ts
+  s_2104cc474f1ce5::t_c3452ae195b705 167
+sdk/test/architecture/resources.ts
+  s_2104cc474f1ce5::t_19c2ef74ff19c6 36,63
+sdk/test/friend-category-reorder.test.ts
+  s_2104cc474f1ce5::t_ea1ec676d2abf4 4
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "7f0b36fc7bf891b05a78888bd6ee46bdb8207171",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
