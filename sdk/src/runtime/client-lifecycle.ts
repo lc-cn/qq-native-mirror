@@ -230,6 +230,20 @@ export class ClientLifecycle {
     this.#state = state;
     this.#context.emit('state', state);
   }
+  /** Commit failure before presentation, retaining both original values if an
+   * observer throws. The caller still owns cleanup, shutdown and retry policy.
+   */
+  #withFailedState(error: unknown, operation: 'close' | 'reconnect'): unknown {
+    try {
+      this.#setState('failed');
+    } catch (notificationError) {
+      return new AggregateError(
+        [error, notificationError],
+        `QQ ${operation} and state notification failed`,
+      );
+    }
+    return error;
+  }
   /** Commit retirement before synchronous observers can throw, reply or log in.
    * The revision prevents a nested offline notification from reviving an older
    * event's automatic restore decision. It does not retire the worker generation.
@@ -474,15 +488,7 @@ export class ClientLifecycle {
         .catch((error) => {
           if (!this.#closing) {
             this.#closed = true;
-            try {
-              this.#setState('failed');
-            } catch (notificationError) {
-              // eslint-disable-next-line preserve-caught-error -- Retain the operation and notification failures by identity.
-              throw new AggregateError(
-                [error, notificationError],
-                'QQ reconnect and state notification failed',
-              );
-            }
+            throw this.#withFailedState(error, 'reconnect');
           }
           throw error;
         });
@@ -596,9 +602,9 @@ export class ClientLifecycle {
         await this.#stopWorker();
         this.#setState('closed');
       } catch (error) {
-        this.#setState('failed');
-        if (notificationFailure) throw withCleanupFailure(notificationFailure.error, error);
-        throw error;
+        const failure = this.#withFailedState(error, 'close');
+        if (notificationFailure) throw withCleanupFailure(notificationFailure.error, failure);
+        throw failure;
       }
       if (notificationFailure) throw notificationFailure.error;
       return;
@@ -638,9 +644,8 @@ export class ClientLifecycle {
         await this.#stopWorker(acknowledged);
         this.#setState('closed');
       } catch (error) {
-        this.#setState('failed');
         // eslint-disable-next-line no-unsafe-finally -- Preserve the existing close cleanup failure precedence.
-        throw error;
+        throw this.#withFailedState(error, 'close');
       }
     }
   }

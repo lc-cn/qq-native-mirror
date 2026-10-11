@@ -1754,3 +1754,166 @@ test('spawn failure observer close preserves both failures and never repeats com
   assert.equal(spawns, 1);
   assert.equal(old.sent.length, 0);
 });
+
+for (const kind of ['error', 'opaque', 'undefined'] as const) {
+  test(`close cleanup failure retains ${kind} failed observer alongside original cleanup`, async (context) => {
+    context.mock.timers.enable({ apis: ['setTimeout'] });
+    const f = workerFixture();
+    const ipc = new Error('close IPC fixture'),
+      cleanup = new Error('kill fixture');
+    const notification: unknown =
+      kind === 'error'
+        ? new Error('failed notification fixture')
+        : kind === 'opaque'
+          ? { failed: true }
+          : undefined;
+    let kills = 0,
+      sends = 0;
+    f.worker.send = ((message: { method: string }, callback: (error: Error | null) => void) => {
+      assert.equal(message.method, 'close');
+      sends++;
+      callback(ipc);
+      return true;
+    }) as typeof f.worker.send;
+    f.worker.kill = () => {
+      kills++;
+      throw cleanup;
+    };
+    const lifecycle = new ClientLifecycle({
+      worker: f.worker,
+      timeout: 1000,
+      emit(event, state) {
+        if (event === 'state' && state === 'failed') throw notification;
+      },
+      forward() {},
+      exportsUpdated() {},
+    });
+    const closing = lifecycle.close();
+    const outcome = await closing.then(
+      (value) => ({ value }),
+      (error: unknown) => ({ error }),
+    );
+    assert.equal(lifecycle.close(), closing);
+    context.mock.timers.tick(5000);
+    assert.equal(kills, 1);
+    assert.equal(sends, 1);
+    assert.equal(f.worker.exitCode, null);
+    assert.equal(lifecycle.state, 'failed');
+    assert.ok('error' in outcome && outcome.error instanceof AggregateError);
+    assert.deepEqual(outcome.error.errors, [cleanup, notification]);
+    assert.equal(outcome.error.errors.includes(ipc), false);
+  });
+}
+
+test('closing observer and cleanup plus failed observer retain established flattened order', async () => {
+  const f = workerFixture();
+  const closingFailure = new Error('closing notification fixture');
+  const cleanup = new Error('kill fixture'),
+    failedFailure = { failed: true };
+  let kills = 0;
+  f.worker.send = ((_message: unknown, callback: (error: Error | null) => void) => {
+    callback(new Error('close IPC fixture'));
+    return true;
+  }) as typeof f.worker.send;
+  f.worker.kill = () => {
+    kills++;
+    throw cleanup;
+  };
+  const lifecycle = new ClientLifecycle({
+    worker: f.worker,
+    timeout: 1000,
+    emit(event, state) {
+      if (event === 'state' && state === 'closing') throw closingFailure;
+      if (event === 'state' && state === 'failed') throw failedFailure;
+    },
+    forward() {},
+    exportsUpdated() {},
+  });
+  const closing = lifecycle.close();
+  await assert.rejects(closing, (error: unknown) => {
+    assert.ok(error instanceof AggregateError);
+    assert.deepEqual(error.errors, [closingFailure, cleanup, failedFailure]);
+    return true;
+  });
+  assert.equal(lifecycle.close(), closing);
+  assert.equal(kills, 1);
+});
+
+test('retiring worker concurrent close shares kill failure and retains failed notification', async () => {
+  const old = workerFixture();
+  const cleanup = new Error('retiring kill fixture'),
+    notification = { failed: true };
+  let kills = 0,
+    spawns = 0;
+  let closing: Promise<void> | undefined;
+  let closeOutcome: Promise<{ value: void } | { error: unknown }> | undefined;
+  old.worker.kill = () => {
+    kills++;
+    closing = lifecycle.close();
+    closeOutcome = closing.then(
+      (value) => ({ value }),
+      (error: unknown) => ({ error }),
+    );
+    throw cleanup;
+  };
+  const lifecycle = new ClientLifecycle({
+    worker: old.worker,
+    timeout: 1000,
+    restart: {
+      spawn() {
+        spawns++;
+        return workerFixture().worker;
+      },
+      payload: {},
+    },
+    emit(event, state) {
+      if (event === 'state' && state === 'failed') throw notification;
+    },
+    forward() {},
+    exportsUpdated() {},
+  });
+  const reconnect = lifecycle.reconnect({ method: 'quick', uin: '123' }).then(
+    (value) => ({ value }),
+    (error: unknown) => ({ error }),
+  );
+  const reconnectOutcome = await reconnect;
+  const result = await closeOutcome;
+  assert.ok('error' in reconnectOutcome && reconnectOutcome.error === cleanup);
+  assert.ok(result && 'error' in result && result.error instanceof AggregateError);
+  assert.deepEqual(result.error.errors, [cleanup, notification]);
+  assert.equal(lifecycle.close(), closing);
+  assert.equal(kills, 1);
+  assert.equal(spawns, 0);
+  assert.equal(old.worker.exitCode, null);
+});
+
+for (const cleanup of [{ opaqueCleanup: true }, undefined]) {
+  test(`close without failed notification error retains ${cleanup === undefined ? 'undefined' : 'opaque'} cleanup identity`, async () => {
+    const f = workerFixture();
+    let kills = 0;
+    f.worker.send = ((_message: unknown, callback: (error: Error | null) => void) => {
+      callback(new Error('close IPC fixture'));
+      return true;
+    }) as typeof f.worker.send;
+    f.worker.kill = () => {
+      kills++;
+      throw cleanup;
+    };
+    const lifecycle = new ClientLifecycle({
+      worker: f.worker,
+      timeout: 1000,
+      emit() {},
+      forward() {},
+      exportsUpdated() {},
+    });
+    const closing = lifecycle.close();
+    const outcome = await closing.then(
+      (value) => ({ value }),
+      (error: unknown) => ({ error }),
+    );
+    assert.deepEqual(outcome, { error: cleanup });
+    assert.equal(lifecycle.close(), closing);
+    assert.equal(kills, 1);
+    assert.equal(lifecycle.state, 'failed');
+  });
+}

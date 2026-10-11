@@ -48,6 +48,17 @@ close retains both failures. Source and installed public-client fixtures check
 the shared Promise, event-before-IPC order and actual exit gate. This rule covers
 the closing notification; it does not suppress arbitrary application observers.
 
+Normal shutdown and shutdown during worker retirement retain cleanup failure even
+when a synchronous `failed` observer throws. A private lifecycle helper commits
+the failed state and returns the original operation failure or both original
+values in an aggregate. The reconnect failure handler uses the same rule, while
+each caller keeps its own termination and closing policy. If the earlier
+`closing` notification also failed, close preserves the chronological order:
+closing notification, cleanup, failed notification. This does not retry a failed
+stop or change cleanup precedence over the close request's IPC error. Controlled
+public-client fixtures check these identities, shared close results and one stop
+attempt without asserting that a worker whose kill threw actually exited.
+
 Login also reserves its shared Promise and captured request before the synchronous
 `connecting` event. An observer calling the same login or `waitForLogin` joins
 that transaction; a different request rejects instead of dispatching another

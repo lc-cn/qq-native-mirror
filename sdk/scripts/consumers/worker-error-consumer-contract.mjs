@@ -25,6 +25,7 @@ export async function verifyWorkerErrorRoutes({
   await verifyClientReconnectFailure(QQClient);
   await verifyClientReconnectEntry(QQClient);
   await verifyClientReconnectSpawnFailure(QQClient);
+  await verifyClientCloseFailureNotification(QQClient);
   const directory = await realpath(await mkdtemp(join(tmpdir(), 'qq-worker-error-')));
   /** @type {import("../../src/client/qq-client.ts").QQClient | undefined} */
   let client;
@@ -160,6 +161,7 @@ export function createKernel(_native,_options,emit){return {
       clientReconnectFailureRetirementContract: true,
       clientReconnectEntryReservationContract: true,
       clientReconnectSpawnFailureContract: true,
+      clientCloseFailureNotificationContract: true,
       clientEventPresentationInstalledContract: true,
       workerOpaqueErrorContract: true,
       workerErrorRecoveryContract: true,
@@ -184,6 +186,136 @@ export function createKernel(_native,_options,emit){return {
       }
       await rm(directory, { recursive: true, force: true });
     }
+  }
+}
+
+/** @param {typeof import('../../src/client/qq-client.ts').QQClient} QQClient */
+async function verifyClientCloseFailureNotification(QQClient) {
+  for (const retiring of [false, true]) {
+    const child = new ChildProcess();
+    Object.defineProperty(child, 'connected', { value: true, configurable: true });
+    const closingError = Object.freeze({ closingObserver: true });
+    const cleanupError = Object.freeze({ workerCleanup: true });
+    const failedError = Object.freeze({ failedObserver: true });
+    let kills = 0,
+      spawns = 0;
+    /** @type {string[]} */
+    const sent = [];
+    /** @type {{close?:Promise<void>,outcome?:Promise<{error:unknown}|{closed:true}>}} */
+    const observed = {};
+    Object.defineProperty(child, 'kill', {
+      value() {
+        kills++;
+        if (retiring) {
+          observed.close = client.close();
+          observed.outcome = observed.close.then(
+            () => ({ closed: true }),
+            (/** @type {unknown} */ error) => ({ error }),
+          );
+        }
+        throw cleanupError;
+      },
+    });
+    Object.defineProperty(child, 'send', {
+      value(
+        /** @type {{id:number,method?:string}} */ message,
+        /** @type {(error:Error|null)=>void} */ callback,
+      ) {
+        callback(null);
+        if (message.method) sent.push(message.method);
+        if (message.method === 'close')
+          queueMicrotask(() =>
+            child.emit('message', {
+              id: message.id,
+              error: { message: 'close IPC failure', code: 7 },
+            }),
+          );
+        return true;
+      },
+    });
+    const client = new QQClient(
+      child,
+      1000,
+      { method: 'qr' },
+      {
+        spawn() {
+          spawns++;
+          throw new Error('Must not replace failed shutdown');
+        },
+        payload: {},
+      },
+    );
+    child.emit('message', { event: 'ready', payload: { uin: '123', uid: 'fixture' } });
+    client.on('state', (state) => {
+      if (state === 'closing') throw closingError;
+      if (state === 'failed') throw failedError;
+    });
+    const sibling = client.request('listFriends').then(
+      (/** @type {unknown} */ value) => ({ value }),
+      (/** @type {unknown} */ error) => ({ error }),
+    );
+    /** @type {Promise<{error:unknown}|{value:unknown}>|undefined} */
+    let restart;
+    if (retiring)
+      restart = client.reconnect({ method: 'qr' }).then(
+        (value) => ({ value }),
+        (/** @type {unknown} */ error) => ({ error }),
+      );
+    else {
+      observed.close = client.close();
+      observed.outcome = observed.close.then(
+        () => ({ closed: true }),
+        (/** @type {unknown} */ error) => ({ error }),
+      );
+    }
+    /** @type {{error:unknown}|undefined} */
+    let primary;
+    try {
+      if (retiring) {
+        assert.ok(restart);
+        await restart;
+      }
+      assert.ok(observed.close && observed.outcome);
+      assert.strictEqual(client.close(), observed.close);
+      const result = await observed.outcome;
+      assert.ok('error' in result);
+      /** @param {unknown} value @returns {unknown[]} */
+      const leaves = (value) =>
+        value instanceof AggregateError ? value.errors.flatMap(leaves) : [value];
+      const failures = leaves(result.error);
+      assert.equal(failures.length, 3);
+      assert.strictEqual(failures[0], closingError);
+      assert.strictEqual(failures[1], cleanupError);
+      assert.strictEqual(failures[2], failedError);
+      assert.equal(kills, 1);
+      assert.equal(spawns, 0);
+      assert.equal(client.account, undefined);
+      assert.equal(client.state, 'failed');
+      assert.deepEqual(sent, retiring ? ['listFriends'] : ['listFriends', 'close']);
+      const pending = await sibling;
+      assert.ok('error' in pending && pending.error instanceof Error);
+      const again = client.close();
+      assert.strictEqual(again, observed.close);
+      await assert.rejects(again, (error) => error === result.error);
+      assert.equal(kills, 1);
+    } catch (error) {
+      primary = { error };
+    }
+    try {
+      // kill threw: production did not observe an exit. Only fixture teardown emits it.
+      Object.defineProperty(child, 'exitCode', { value: 0, configurable: true });
+      child.emit('exit', 0, null);
+      await Promise.all([sibling, restart, observed.outcome]);
+    } catch (error) {
+      if (primary)
+        throw new AggregateError([primary.error, error], 'Close fixture and teardown failed', {
+          cause: error,
+        });
+      throw error;
+    } finally {
+      client.removeAllListeners();
+    }
+    if (primary) throw primary.error;
   }
 }
 

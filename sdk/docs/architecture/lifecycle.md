@@ -52,6 +52,12 @@
   An observer failure cannot skip shutdown or the worker-exit gate. Successful
   cleanup reaches `closed` before close rejects with the original observer value;
   simultaneous cleanup failure retains both values in an `AggregateError`.
+  If notifying `failed` also throws, the cleanup and notification failures retain
+  their original identities. A preceding `closing` observer failure remains first,
+  followed by cleanup and failed-state notification. Normal close and close during
+  worker retirement share this rule without repeating termination. Failed
+  termination does not prove process exit; cleanup retains its existing precedence
+  over an unacknowledged shutdown request's error.
 - Authentication captures each selected service and native callable once,
   preserving its receiver. Reentrant retirement during acquisition stops dispatch;
   active acquisition errors retain their identity without a fallback or retry.
