@@ -49,7 +49,8 @@ test('reads native merged-forward contents with exact root and parent IDs', asyn
     },
     resolvePeer,
     (value) => {
-      assert.equal(value, raw);
+      assert.notEqual(value, raw);
+      assert.deepEqual(value, raw);
       return decoded;
     },
   );

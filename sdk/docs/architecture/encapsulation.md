@@ -458,7 +458,15 @@ Its narrow message port exposes only `getMultiMsg` and `forwardMsg`; peer resolu
 and single/batch decoding are injected separately. It captures validated inputs
 before asynchronous resolution, resolves source then destination, and preserves
 the original native argument order and receiver. A merged read validates its
-entire raw batch before decoding, allowing mixed source conversations. Local close
+entire raw batch before decoding, allowing mixed source conversations. Read status,
+the list, envelope fields and dense element slots are captured from own data
+descriptors; accessors and custom iterators cannot replace the validated batch.
+Decoders receive a separate projection snapshot and the original vendor object,
+so validated IDs, conversation types and element membership remain stable while
+public `Message.raw` keeps its original identity. Other metadata and element
+bodies remain opaque until their dedicated projectors validate them. This read
+boundary does not assert that forwarded records belong to the root conversation.
+Local close
 and Session abort stop pending resolution, native completion and decoding without
 replaying an operation. Closing during a getter prevents the next dispatch or a
 successful return; single decoding stops before another record is started. Late

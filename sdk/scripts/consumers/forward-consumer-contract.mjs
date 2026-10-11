@@ -83,6 +83,91 @@ export async function verifyForwardConsumer(packageRoot) {
       senderUin: '456',
       elements: [],
     };
+    for (const key of ['result', 'msgList', 'msgId', 'chatType', 'elements']) {
+      let reads = 0,
+        decodes = 0;
+      const record = { ...raw },
+        response = { result: 0, msgList: [record] };
+      Object.defineProperty(key === 'result' || key === 'msgList' ? response : record, key, {
+        get() {
+          reads++;
+          throw Error('Unexpected selected getter');
+        },
+      });
+      const operation = createForwardMessages({
+        getMessageService: () => ({ getMultiMsg: () => response }),
+        resolvePeer,
+        decodeMessage() {
+          decodes++;
+          return undefined;
+        },
+        signal: new AbortController().signal,
+        awaitAlive: async (value) => value,
+      });
+      await assert.rejects(operation.invokeOperation('getForwardMessages', payload));
+      assert.equal(reads, 0);
+      assert.equal(decodes, 0);
+    }
+    const forwardedRaw = { ...raw, msgId: '00042', elements: [{}] },
+      mixedRaw = { ...raw, chatType: 1, peerUid: 'u_other', peerUin: '789' };
+    const snapshots = createForwardMessages({
+      getMessageService: () => ({
+        getMultiMsg: () => ({ result: 0, msgList: [forwardedRaw, mixedRaw] }),
+      }),
+      resolvePeer,
+      decodeMessage: () => undefined,
+      decodeMessages: async (messages, originals) => {
+        assert.equal(originals[0], forwardedRaw);
+        assert.equal(originals[1], mixedRaw);
+        assert.notEqual(messages[0], forwardedRaw);
+        forwardedRaw.msgId = '99';
+        forwardedRaw.elements.length = 0;
+        assert.equal(messages[0].msgId, '00042');
+        assert.deepEqual(messages[0].elements, [{}]);
+        return messages.map((message, index) => ({
+          ...decodedMessage(message),
+          raw: originals[index],
+        }));
+      },
+      signal: new AbortController().signal,
+      awaitAlive: async (value) => value,
+    });
+    const decodedSnapshots = await snapshots.invokeOperation('getForwardMessages', payload);
+    assert.ok(Array.isArray(decodedSnapshots));
+    assert.deepEqual(
+      decodedSnapshots.map((value) => value.messageId),
+      ['00042', longId],
+    );
+    assert.equal(decodedSnapshots[0].raw, forwardedRaw);
+    // Exercise actual compiled composition/projector wiring, not a decoder fixture.
+    const composed = createNativeServices({
+      session: {
+        getMsgService: () => ({
+          addKernelMsgListener() {},
+          getMultiMsg: () => ({ result: 0, msgList: [raw, mixedRaw] }),
+        }),
+        getBuddyService: () => ({ addKernelBuddyListener() {} }),
+        getGroupService: () => ({ addKernelGroupListener() {} }),
+      },
+      version: '7.0.2-53644',
+      events: { emit: () => {} },
+    });
+    try {
+      const messages = await composed.invokeOperation('getForwardMessages', payload);
+      assert.ok(Array.isArray(messages));
+      assert.deepEqual(
+        messages.map((value) => value.messageId),
+        [longId, longId],
+      );
+      assert.deepEqual(
+        messages.map((value) => value.peer.type),
+        ['group', 'private'],
+      );
+      assert.equal(messages[0].raw, raw);
+      assert.equal(messages[1].raw, mixedRaw);
+    } finally {
+      composed.close();
+    }
     for (const msgList of [
       Array(1),
       [raw, { ...raw, msgId: 1 }],
@@ -292,6 +377,18 @@ export async function verifyForwardConsumer(packageRoot) {
             return /** @this {object} */ function () {
               assert.equal(this, service);
               nativeCalls++;
+              if (method === 'getForwardMessages')
+                return new Proxy(
+                  { result: 0, msgList: [] },
+                  {
+                    getOwnPropertyDescriptor(target, key) {
+                      // Reads now capture own data descriptors. Retirement at
+                      // that boundary must still prevent decoding and success.
+                      if (stage === 'ack' && key === 'result') owner.close();
+                      return Reflect.getOwnPropertyDescriptor(target, key);
+                    },
+                  },
+                );
               return {
                 get result() {
                   if (stage === 'ack') owner.close();

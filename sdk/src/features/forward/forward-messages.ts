@@ -18,6 +18,65 @@ function check(result: unknown, method: string): asserts result is Record<string
     throw nativeResultError(`Native ${method} failed (code=${code})`, result);
   }
 }
+
+/** Capture only the read envelope; proprietary metadata and element bodies
+ * remain opaque until their projectors inspect them. Descriptor traps on a
+ * Proxy can still execute code, but selected accessors and iterators never run.
+ */
+function field(value: object, key: string): unknown {
+  const descriptor = Object.getOwnPropertyDescriptor(value, key);
+  if (descriptor && !('value' in descriptor))
+    throw new Error('Native getMultiMsg requires own data properties');
+  return descriptor?.value;
+}
+function dense(value: unknown): unknown[] {
+  if (!Array.isArray(value)) throw new Error('Native getMultiMsg returned an invalid message list');
+  const length = field(value, 'length');
+  if (typeof length !== 'number' || !Number.isSafeInteger(length) || length < 0)
+    throw new Error('Native getMultiMsg returned an invalid message list');
+  const captured: unknown[] = [];
+  for (let index = 0; index < length; index++) {
+    const descriptor = Object.getOwnPropertyDescriptor(value, String(index));
+    if (!descriptor || !('value' in descriptor))
+      throw new Error('Native getMultiMsg returned invalid dense message data');
+    captured.push(descriptor.value);
+  }
+  return captured;
+}
+function record(value: unknown): object {
+  if (!value || typeof value !== 'object' || Array.isArray(value))
+    throw new Error('Native getMultiMsg returned an invalid message');
+  return value;
+}
+function capturedMessages(result: unknown) {
+  if (!result || typeof result !== 'object' || Array.isArray(result))
+    throw nativeResultError('Native getMultiMsg failed (code=invalid-result)', undefined);
+  const status = field(result, 'result');
+  if (status !== 0)
+    throw nativeResultError('Native getMultiMsg failed (invalid or rejected result)', {
+      result: status,
+    });
+  // Forward contents may originate from different conversations. Capture the
+  // whole batch before decoding, without imposing the root peer or a count cap.
+  return dense(field(result, 'msgList')).map((value) => {
+    const raw = record(value);
+    const msgId = field(raw, 'msgId'),
+      chatType = field(raw, 'chatType'),
+      elements = field(raw, 'elements');
+    if (typeof msgId !== 'string' || !/^\d+$/.test(msgId))
+      throw new Error('Native getMultiMsg returned an invalid message ID');
+    if (chatType !== 1 && chatType !== 2)
+      throw new Error('Native forwarded message has an unsupported conversation type');
+    const capturedElements = dense(elements).map(record);
+    const descriptors = Object.getOwnPropertyDescriptors(raw);
+    for (const [key, value] of Object.entries({ msgId, chatType, elements: capturedElements }))
+      descriptors[key] = { value, enumerable: true };
+    // This projection view copies descriptors, not metadata values. Only the
+    // three envelope fields above have been validated; raw retains vendor identity.
+    const message: Record<string, unknown> = Object.create(Object.getPrototypeOf(raw), descriptors);
+    return { message, raw };
+  });
+}
 export interface ForwardMessagePort {
   getMultiMsg?: (peer: NativeForwardPeer, root: string, parent: string) => unknown;
   forwardMsg?: (
@@ -32,8 +91,12 @@ export interface ForwardMessagesContext {
   resolvePeer(peer: Peer): Promise<NativeForwardPeer>;
   decodeMessage(
     message: Record<string, unknown>,
+    raw: object,
   ): Message | undefined | Promise<Message | undefined>;
-  decodeMessages?(messages: Record<string, unknown>[]): Promise<(Message | undefined)[]>;
+  decodeMessages?(
+    messages: Record<string, unknown>[],
+    rawMessages: object[],
+  ): Promise<(Message | undefined)[]>;
   signal: AbortSignal;
   awaitAlive<T>(value: T | PromiseLike<T>): Promise<T>;
 }
@@ -97,40 +160,18 @@ export function createForwardMessages(context: ForwardMessagesContext) {
       const resolved = await alive(() => resolvePeer(source));
       const result = await alive(() => call('getMultiMsg', [resolved, root, parent]));
       checkAlive();
-      check(result, 'getMultiMsg');
+      const messages = capturedMessages(result);
       checkAlive();
-      const rawList = result.msgList;
-      if (!Array.isArray(rawList))
-        throw new Error('Native getMultiMsg returned an invalid message list');
-      // Merged contents may originate from different conversations. Validate the
-      // complete batch without asserting that every record belongs to the root peer.
-      const messages = Array.from(rawList, (raw: unknown) => {
-        if (!raw || typeof raw !== 'object' || Array.isArray(raw))
-          throw new Error('Native getMultiMsg returned an invalid message');
-        const record = raw as Record<string, unknown>;
-        const messageId = record.msgId,
-          chatType = record.chatType,
-          elements = record.elements;
-        if (typeof messageId !== 'string' || !/^\d+$/.test(messageId))
-          throw new Error('Native getMultiMsg returned an invalid message ID');
-        if (chatType !== 1 && chatType !== 2)
-          throw new Error('Native forwarded message has an unsupported conversation type');
-        if (
-          !Array.isArray(elements) ||
-          Array.from(elements).some(
-            (element) => !element || typeof element !== 'object' || Array.isArray(element),
-          )
-        )
-          throw new Error('Native getMultiMsg returned invalid message elements');
-        return record;
-      });
       const decodedMessages = await alive(() =>
         decodeMessages
-          ? decodeMessages(messages)
+          ? decodeMessages(
+              messages.map((value) => value.message),
+              messages.map((value) => value.raw),
+            )
           : Promise.all(
               messages.map((message) => {
                 checkAlive();
-                const pending = Promise.resolve(decodeMessage(message));
+                const pending = Promise.resolve(decodeMessage(message.message, message.raw));
                 // A later synchronous decoder may retire or throw before Promise.all
                 // is created; already-started decodes must still be observed.
                 void pending.catch(() => {});

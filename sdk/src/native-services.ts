@@ -247,11 +247,7 @@ export function createNativeServices(context: NativeServiceContext) {
         if (!lifetime.closed) emit('diagnostic', { stage });
       },
     });
-    const {
-      resolvePeer,
-      resolveMessages: resolvedMessages,
-      resolveMessage: resolvedMessage,
-    } = messageResolution;
+    const { resolvePeer, resolveMessages: resolvedMessages } = messageResolution;
     const messageRecalls = own(
       createMessageRecalls({
         signal: lifetime.signal,
@@ -413,7 +409,7 @@ export function createNativeServices(context: NativeServiceContext) {
       createForwardMessages({
         getMessageService: () => service('Msg'),
         resolvePeer,
-        decodeMessage: resolvedMessage,
+        decodeMessage: async (message, raw) => (await resolvedMessages([message], [raw]))[0],
         signal: lifetime.signal,
         awaitAlive,
         decodeMessages: resolvedMessages,
