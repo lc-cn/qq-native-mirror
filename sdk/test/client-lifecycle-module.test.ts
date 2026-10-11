@@ -2106,3 +2106,413 @@ for (const action of ['login', 'close', 'reconnect'] as const) {
     }
   });
 }
+
+function scheduleDefaultLogin(lifecycle: ClientLifecycle) {
+  lifecycle.scheduleDefaultLogin();
+}
+
+test('scheduled default login begins at next immediate once and preserves active failure identity', async () => {
+  const f = workerFixture();
+  const original = new Error('default login fixture');
+  const errors: unknown[] = [];
+  const send = f.worker.send.bind(f.worker);
+  f.worker.send = ((
+    message: { id: number; method: string },
+    callback: (error: Error | null) => void,
+  ) => {
+    if (message.method === 'login') {
+      f.sent.push(message);
+      callback(original);
+      return true;
+    }
+    return send(message, callback);
+  }) as typeof f.worker.send;
+  const lifecycle = new ClientLifecycle({
+    worker: f.worker,
+    timeout: 1000,
+    defaultLogin: { method: 'quick', uin: '123' },
+    emit() {},
+    forward(event, error) {
+      if (event === 'loginError') errors.push(error);
+    },
+    exportsUpdated() {},
+  });
+  try {
+    scheduleDefaultLogin(lifecycle);
+    scheduleDefaultLogin(lifecycle);
+    assert.equal(f.sent.length, 0);
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    assert.equal(f.sent.filter((sent) => sent.method === 'login').length, 1);
+    assert.deepEqual(errors, [original]);
+  } finally {
+    await lifecycle.close();
+  }
+});
+
+test('close cancels a scheduled default login before dispatch', async () => {
+  const f = workerFixture();
+  const errors: unknown[] = [];
+  const lifecycle = new ClientLifecycle({
+    worker: f.worker,
+    timeout: 1000,
+    emit() {},
+    forward(event, error) {
+      if (event === 'loginError') errors.push(error);
+    },
+    exportsUpdated() {},
+  });
+  try {
+    scheduleDefaultLogin(lifecycle);
+    await lifecycle.close();
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    assert.equal(f.sent.filter((sent) => sent.method === 'login').length, 0);
+    assert.deepEqual(errors, []);
+  } finally {
+    await lifecycle.close();
+  }
+});
+
+test('explicit login takes over a scheduled default login without duplicate IPC', async () => {
+  const f = workerFixture();
+  const lifecycle = new ClientLifecycle({
+    worker: f.worker,
+    timeout: 1000,
+    defaultLogin: { method: 'quick', uin: '123' },
+    emit() {},
+    forward() {},
+    exportsUpdated() {},
+  });
+  try {
+    scheduleDefaultLogin(lifecycle);
+    const login = lifecycle.login({ method: 'quick', uin: '456' });
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    assert.equal(f.sent.filter((sent) => sent.method === 'login').length, 1);
+    const sent = f.sent[0];
+    const account = { uin: '456', uid: 'u_explicit' };
+    f.events.emit('message', { event: 'ready', payload: account });
+    f.events.emit('message', { id: sent.id, result: account });
+    assert.deepEqual(await login, account);
+  } finally {
+    await lifecycle.close();
+  }
+});
+
+for (const started of [false, true]) {
+  test(`reconnect retires ${started ? 'in-flight' : 'scheduled'} default login and its failure notification`, async () => {
+    const old = workerFixture(),
+      next = workerFixture();
+    const errors: unknown[] = [];
+    let lateFailure: ((error: Error | null) => void) | undefined;
+    const send = old.worker.send.bind(old.worker);
+    old.worker.send = ((
+      message: { id: number; method: string },
+      callback: (error: Error | null) => void,
+    ) => {
+      if (message.method === 'login') {
+        old.sent.push(message);
+        lateFailure = callback;
+        return true;
+      }
+      return send(message, callback);
+    }) as typeof old.worker.send;
+    const lifecycle = new ClientLifecycle({
+      worker: old.worker,
+      timeout: 1000,
+      defaultLogin: { method: 'quick', uin: '123' },
+      restart: { spawn: () => next.worker, payload: {} },
+      emit() {},
+      forward(event, error) {
+        if (event === 'loginError') errors.push(error);
+      },
+      exportsUpdated() {},
+    });
+    let observed: Promise<unknown> | undefined;
+    try {
+      scheduleDefaultLogin(lifecycle);
+      if (started) await new Promise<void>((resolve) => setImmediate(resolve));
+      const reconnect = lifecycle.reconnect({ method: 'quick', uin: '456' });
+      observed = reconnect.then(
+        (value) => ({ value }),
+        (error: unknown) => ({ error }),
+      );
+      await new Promise<void>((resolve) => setImmediate(resolve));
+      assert.equal(old.sent.filter((sent) => sent.method === 'login').length, started ? 1 : 0);
+      const sent = next.sent.find((sent) => sent.method === 'login');
+      assert.ok(sent);
+      lateFailure?.(new Error('retired default failure'));
+      const account = { uin: '456', uid: 'u_new' };
+      next.events.emit('message', { event: 'ready', payload: account });
+      next.events.emit('message', { id: sent.id, result: account });
+      assert.deepEqual(await reconnect, account);
+      await new Promise<void>((resolve) => setImmediate(resolve));
+      assert.deepEqual(errors, []);
+      assert.equal(next.sent.filter((sent) => sent.method === 'login').length, 1);
+    } finally {
+      await lifecycle.close();
+      await observed;
+    }
+  });
+}
+
+test('close retires an in-flight default login before a late native failure', async () => {
+  const f = workerFixture();
+  const errors: unknown[] = [];
+  let lateFailure: ((error: Error | null) => void) | undefined;
+  const send = f.worker.send.bind(f.worker);
+  f.worker.send = ((
+    message: { id: number; method: string },
+    callback: (error: Error | null) => void,
+  ) => {
+    if (message.method === 'login') {
+      f.sent.push(message);
+      lateFailure = callback;
+      return true;
+    }
+    return send(message, callback);
+  }) as typeof f.worker.send;
+  const lifecycle = new ClientLifecycle({
+    worker: f.worker,
+    timeout: 1000,
+    emit() {},
+    forward(event, error) {
+      if (event === 'loginError') errors.push(error);
+    },
+    exportsUpdated() {},
+  });
+  try {
+    scheduleDefaultLogin(lifecycle);
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    assert.ok(lateFailure);
+    await lifecycle.close();
+    lateFailure(new Error('retired native failure'));
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    assert.deepEqual(errors, []);
+    assert.equal(f.sent.filter((sent) => sent.method === 'login').length, 1);
+  } finally {
+    await lifecycle.close();
+  }
+});
+
+for (const event of ['disconnected', 'kicked'] as const) {
+  for (const started of [false, true]) {
+    test(`${event} retires ${started ? 'in-flight' : 'scheduled'} default login without stale failure notification`, async () => {
+      const f = workerFixture();
+      const errors: unknown[] = [];
+      const lifecycle = new ClientLifecycle({
+        worker: f.worker,
+        timeout: 1000,
+        emit() {},
+        forward(event, error) {
+          if (event === 'loginError') errors.push(error);
+        },
+        exportsUpdated() {},
+      });
+      try {
+        scheduleDefaultLogin(lifecycle);
+        if (started) await new Promise<void>((resolve) => setImmediate(resolve));
+        f.events.emit('message', { event, payload: { retryable: false } });
+        await new Promise<void>((resolve) => setImmediate(resolve));
+        assert.equal(f.sent.filter((sent) => sent.method === 'login').length, started ? 1 : 0);
+        assert.deepEqual(errors, []);
+        assert.equal(lifecycle.state, 'disconnected');
+      } finally {
+        await lifecycle.close();
+      }
+    });
+  }
+}
+
+test('active default login timeout still reports its failure after retiring the worker', async (context) => {
+  context.mock.timers.enable({ apis: ['setTimeout'] });
+  const f = workerFixture();
+  const errors: unknown[] = [];
+  const lifecycle = new ClientLifecycle({
+    worker: f.worker,
+    timeout: 10,
+    emit() {},
+    forward(event, error) {
+      if (event === 'loginError') errors.push(error);
+    },
+    exportsUpdated() {},
+  });
+  try {
+    scheduleDefaultLogin(lifecycle);
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    context.mock.timers.tick(10);
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    assert.equal(errors.length, 1);
+    assert.ok(errors[0] instanceof Error);
+    assert.match(errors[0].message, /login timed out/);
+    assert.equal(lifecycle.state, 'failed');
+    assert.equal(f.worker.exitCode, 0);
+  } finally {
+    await lifecycle.close();
+  }
+});
+
+test('invalid explicit login does not take over the scheduled validated default login', async () => {
+  const f = workerFixture();
+  const lifecycle = new ClientLifecycle({
+    worker: f.worker,
+    timeout: 1000,
+    defaultLogin: { method: 'quick', uin: '123' },
+    emit() {},
+    forward() {},
+    exportsUpdated() {},
+  });
+  try {
+    scheduleDefaultLogin(lifecycle);
+    await assert.rejects(lifecycle.login({ method: 'quick', uin: 'invalid' }));
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    assert.equal(f.sent.filter((sent) => sent.method === 'login').length, 1);
+    const account = { uin: '123', uid: 'u_default' },
+      sent = f.sent[0];
+    f.events.emit('message', { event: 'ready', payload: account });
+    f.events.emit('message', { id: sent.id, result: account });
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    assert.deepEqual(lifecycle.account, account);
+  } finally {
+    await lifecycle.close();
+  }
+});
+
+test('unavailable reconnect admission preserves the queued default login', async () => {
+  const f = workerFixture();
+  const lifecycle = new ClientLifecycle({
+    worker: f.worker,
+    timeout: 1000,
+    defaultLogin: { method: 'quick', uin: '123' },
+    emit() {},
+    forward() {},
+    exportsUpdated() {},
+  });
+  try {
+    scheduleDefaultLogin(lifecycle);
+    await assert.rejects(lifecycle.reconnect({ method: 'quick', uin: '456' }), /unavailable/);
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    assert.equal(f.sent.filter((sent) => sent.method === 'login').length, 1);
+    const account = { uin: '123', uid: 'u_default' },
+      sent = f.sent[0];
+    f.events.emit('message', { event: 'ready', payload: account });
+    f.events.emit('message', { id: sent.id, result: account });
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    assert.deepEqual(lifecycle.account, account);
+  } finally {
+    await lifecycle.close();
+  }
+});
+
+test('connecting observer manual join owns opaque failure and suppresses automatic loginError', async () => {
+  const f = workerFixture();
+  const original = { opaqueConnectingFailure: true };
+  const errors: unknown[] = [];
+  let manual: Promise<unknown> | undefined;
+  let observed: Promise<unknown> | undefined;
+  const lifecycle = new ClientLifecycle({
+    worker: f.worker,
+    timeout: 1000,
+    defaultLogin: { method: 'quick', uin: '123' },
+    emit(event, state) {
+      if (event === 'state' && state === 'connecting') {
+        manual = lifecycle.login({ method: 'quick', uin: '123' });
+        assert.equal(lifecycle.waitForLogin(), manual);
+        observed = manual.then(
+          (value) => ({ value }),
+          (error: unknown) => ({ error }),
+        );
+        throw original;
+      }
+    },
+    forward(event, error) {
+      if (event === 'loginError') errors.push(error);
+    },
+    exportsUpdated() {},
+  });
+  try {
+    scheduleDefaultLogin(lifecycle);
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    assert.ok(manual);
+    assert.deepEqual(await observed, { error: original });
+    assert.deepEqual(errors, []);
+    assert.equal(f.sent.filter((sent) => sent.method === 'login').length, 0);
+  } finally {
+    await lifecycle.close();
+    await observed;
+  }
+});
+
+test('worker crash during active default login forwards the same terminated Error once', async () => {
+  const f = workerFixture();
+  const original = new Error('worker crash fixture');
+  const errors: unknown[] = [],
+    terminated: unknown[] = [];
+  const lifecycle = new ClientLifecycle({
+    worker: f.worker,
+    timeout: 1000,
+    emit(event, error) {
+      if (event === 'terminated') terminated.push(error);
+    },
+    forward(event, error) {
+      if (event === 'loginError') errors.push(error);
+    },
+    exportsUpdated() {},
+  });
+  try {
+    scheduleDefaultLogin(lifecycle);
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    f.events.emit('error', original);
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    assert.deepEqual(terminated, [original]);
+    assert.deepEqual(errors, [original]);
+    assert.equal(lifecycle.state, 'failed');
+  } finally {
+    await lifecycle.close();
+  }
+});
+
+test('waitForLogin joining active configured login preserves automatic failure notification', async () => {
+  const f = workerFixture();
+  const original = new Error('configured login fixture');
+  const errors: unknown[] = [];
+  let fail: ((error: Error | null) => void) | undefined;
+  const send = f.worker.send.bind(f.worker);
+  f.worker.send = ((
+    message: { id: number; method: string },
+    callback: (error: Error | null) => void,
+  ) => {
+    if (message.method === 'login') {
+      f.sent.push(message);
+      fail = callback;
+      return true;
+    }
+    return send(message, callback);
+  }) as typeof f.worker.send;
+  const lifecycle = new ClientLifecycle({
+    worker: f.worker,
+    timeout: 1000,
+    defaultLogin: { method: 'quick', uin: '123' },
+    emit() {},
+    forward(event, error) {
+      if (event === 'loginError') errors.push(error);
+    },
+    exportsUpdated() {},
+  });
+  try {
+    scheduleDefaultLogin(lifecycle);
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    const waiter = lifecycle.waitForLogin();
+    assert.equal(lifecycle.waitForLogin(), waiter);
+    const observed = waiter.then(
+      (value) => ({ value }),
+      (error: unknown) => ({ error }),
+    );
+    assert.ok(fail);
+    fail(original);
+    assert.deepEqual(await observed, { error: original });
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    assert.deepEqual(errors, [original]);
+    assert.equal(f.sent.filter((sent) => sent.method === 'login').length, 1);
+  } finally {
+    await lifecycle.close();
+  }
+});

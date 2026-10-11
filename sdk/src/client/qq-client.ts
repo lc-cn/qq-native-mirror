@@ -91,16 +91,23 @@ import type {
 } from '../contracts/forward.ts';
 import type { NativeCallbackAudit } from '../contracts/native.ts';
 
-// The creation root can publish once without exposing a setter on the client.
+// The creation root completes initialization once without a public lifecycle hook.
 // Weak keys do not keep manually constructed or failed clients alive.
-const initialExportPublishers = new WeakMap<QQClient, (exports: string[]) => void>();
+const initializationCompleters = new WeakMap<
+  QQClient,
+  (exports: string[], autoLogin: boolean) => void
+>();
 
 /** Internal creation seam; deliberately absent from the package entry. */
-export function initializeClientNativeExports(client: QQClient, reply: unknown): void {
-  const publish = initialExportPublishers.get(client);
-  if (!publish) throw new Error('QQ client export initialization is unavailable');
-  publish(captureWorkerExports(reply));
-  initialExportPublishers.delete(client);
+export function completeClientInitialization(
+  client: QQClient,
+  reply: unknown,
+  autoLogin = false,
+): void {
+  const complete = initializationCompleters.get(client);
+  if (!complete) throw new Error('QQ client initialization is unavailable');
+  complete(captureWorkerExports(reply), autoLogin);
+  initializationCompleters.delete(client);
 }
 
 export class QQClient extends EventEmitter<ClientEvents> {
@@ -144,7 +151,10 @@ export class QQClient extends EventEmitter<ClientEvents> {
       forward: this.#events.forward,
       exportsUpdated: (exports) => this.#replaceNativeExports(exports),
     });
-    initialExportPublishers.set(this, (exports) => this.#replaceNativeExports(exports));
+    initializationCompleters.set(this, (exports, autoLogin) => {
+      this.#replaceNativeExports(exports);
+      if (autoLogin) this.#lifecycle.scheduleDefaultLogin();
+    });
   }
   #replaceNativeExports(exports: string[]): void {
     if (['closing', 'closed', 'failed'].includes(this.#lifecycle.state))

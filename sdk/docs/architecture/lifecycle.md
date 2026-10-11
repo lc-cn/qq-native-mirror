@@ -10,6 +10,15 @@
   Replacement and shutdown checks precede publication to a retired client.
   Batch retirement detaches all selected entries before calling cancellation
   transports, so a reentrant sibling reply cannot turn retirement into success.
+- Configured `createClient({login})` authentication starts on the next immediate
+  turn, after initialization. Lifecycle owns the captured request, cancellation
+  handle and worker generation. Close, admitted reconnect, normalized explicit
+  login and offline transitions cancel pending dispatch and obsolete failure
+  notifications. In-flight native work is not undone or replayed. Explicit login
+  reports through its returned Promise; malformed login and rejected reconnect
+  admission leave the configured task available. Active timeout/crash failures
+  still emit `loginError` with the original rejection value. Omitting `login`
+  schedules no authentication.
 - Offline notifications retire the old account, restore policy and pending RPCs
   before synchronous state observers run. Close RPCs retain their acknowledgement
   path. Observer throws and injected late replies cannot undo that retirement;

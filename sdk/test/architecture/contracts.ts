@@ -187,7 +187,7 @@ test('validated message query envelope does not inherit an unbounded native obje
 // The creation root may initialize the private inventory, but consumers must not
 // acquire that publisher through a namespace or a public reexport.
 function nativeExportPublisherViolations(path: string, source: string): string[] {
-  const publisher = 'initializeClientNativeExports';
+  const publisher = 'completeClientInitialization';
   const creator = join(sourceRoot, 'client/create-client.ts');
   const client = join(sourceRoot, 'client/qq-client.ts');
   const tree = ts.createSourceFile(path, source, ts.ScriptTarget.Latest, true);
@@ -276,7 +276,7 @@ test('native export publisher gate rejects namespace and public reexport bypasse
   assert.deepEqual(
     nativeExportPublisherViolations(
       creator,
-      "import { initializeClientNativeExports as publish, QQClient } from './qq-client.ts';",
+      "import { completeClientInitialization as publish, QQClient } from './qq-client.ts';",
     ),
     [],
   );
@@ -285,9 +285,9 @@ test('native export publisher gate rejects namespace and public reexport bypasse
     [],
   );
   for (const source of [
-    "import { initializeClientNativeExports as publish } from './client/qq-client.ts';",
+    "import { completeClientInitialization as publish } from './client/qq-client.ts';",
     "import * as client from './client/qq-client.js';",
-    "export { initializeClientNativeExports as publish } from './client/qq-client.ts';",
+    "export { completeClientInitialization as publish } from './client/qq-client.ts';",
     "export * from './client/qq-client.ts';",
     "export * as client from './client/qq-client.ts';",
     "const client = import('./client/qq-client.ts');",
@@ -296,7 +296,7 @@ test('native export publisher gate rejects namespace and public reexport bypasse
   assert.ok(
     nativeExportPublisherViolations(
       creator,
-      "import { initializeClientNativeExports as publish } from './qq-client.ts'; export { publish as initialize }; ",
+      "import { completeClientInitialization as publish } from './qq-client.ts'; export { publish as initialize }; ",
     ).length > 0,
   );
 });

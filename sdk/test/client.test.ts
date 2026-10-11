@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { EventEmitter } from 'node:events';
 import type { ChildProcess } from 'node:child_process';
 import { QQClient } from '../src/index.ts';
-import { initializeClientNativeExports } from '../src/client/qq-client.ts';
+import { completeClientInitialization } from '../src/client/qq-client.ts';
 
 class Worker extends EventEmitter {
   connected = true;
@@ -1304,12 +1304,12 @@ test('internal initial export publication is atomic, detached and one-shot; low-
   try {
     const invalid = ['valid', 42];
     assert.throws(
-      () => initializeClientNativeExports(client, { exports: invalid }),
+      () => completeClientInitialization(client, { exports: invalid }),
       /Invalid worker initialization exports/,
     );
     assert.throws(
       () =>
-        initializeClientNativeExports(
+        completeClientInitialization(
           client,
           Object.defineProperty({}, 'exports', {
             get() {
@@ -1329,14 +1329,14 @@ test('internal initial export publication is atomic, detached and one-shot; low-
         throw new Error('caller iterator must not execute');
       },
     });
-    initializeClientNativeExports(client, { exports: names });
+    completeClientInitialization(client, { exports: names });
     assert.equal(iterations, 0);
     names[0] = 'changed';
     const view: string[] = client.nativeExports;
     view.splice(0, view.length, 'caller-only');
     assert.deepEqual(client.nativeExports, ['one', '', 'one']);
     assert.throws(
-      () => initializeClientNativeExports(client, { exports: ['second'] }),
+      () => completeClientInitialization(client, { exports: ['second'] }),
       /initialization is unavailable/,
     );
     const request = client.request('init', {});

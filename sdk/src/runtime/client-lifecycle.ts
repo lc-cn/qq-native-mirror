@@ -120,6 +120,7 @@ export class ClientLifecycle {
   #auto?: { maxAttempts: number; delayMs: number };
   #autoTimer?: NodeJS.Timeout;
   #autoAttempts = 0;
+  #configuredLogin?: { generation: number; handle?: NodeJS.Immediate };
   readonly #context: ClientLifecycleContext;
   constructor(context: ClientLifecycleContext) {
     this.#context = context;
@@ -284,6 +285,7 @@ export class ClientLifecycle {
    * event's automatic restore decision. It does not retire the worker generation.
    */
   #retireAccount(event: 'disconnected' | 'logout' | 'kicked', retryable: boolean): number {
+    this.#cancelConfiguredLogin();
     const revision = ++this.#offlineRevision;
     const stateChanged = this.#state !== 'disconnected';
     this.#login = undefined;
@@ -396,6 +398,43 @@ export class ClientLifecycle {
         `QQ ${operation} and state notification failed`,
       );
   }
+  /** Initialization schedules one captured default request. Explicit account work
+   * takes ownership before observers run; an obsolete task never reports errors
+   * against a newer worker or a closed client. No authorization is replayed.
+   */
+  scheduleDefaultLogin(): void {
+    if (this.#configuredLogin || this.#closing || this.#closed || this.#reconnecting) return;
+    const task: { generation: number; handle?: NodeJS.Immediate } = {
+      generation: this.#generation,
+    };
+    this.#configuredLogin = task;
+    const ownsTask = () =>
+      this.#configuredLogin === task && task.generation === this.#generation && !this.#closing;
+    task.handle = setImmediate(() => {
+      task.handle = undefined;
+      if (!ownsTask() || this.#closed || this.#reconnecting) {
+        if (this.#configuredLogin === task) this.#configuredLogin = undefined;
+        return;
+      }
+      this.#startLogin(this.#defaultLogin).then(
+        () => {
+          if (this.#configuredLogin === task) this.#configuredLogin = undefined;
+        },
+        (error: unknown) => {
+          const report = ownsTask();
+          if (this.#configuredLogin === task) this.#configuredLogin = undefined;
+          // An active timeout/crash may have committed failed/closed ownership.
+          // Preserve its error; only explicit supersession silences the task.
+          if (report) this.#context.forward('loginError', error);
+        },
+      );
+    });
+  }
+  #cancelConfiguredLogin(): void {
+    const task = this.#configuredLogin;
+    this.#configuredLogin = undefined;
+    if (task?.handle) clearImmediate(task.handle);
+  }
   login(request: LoginRequest = this.#defaultLogin): Promise<Account> {
     if (this.#closing || this.#closed) return Promise.reject(new Error('QQ client is closed'));
     try {
@@ -403,6 +442,11 @@ export class ClientLifecycle {
     } catch (error) {
       return Promise.reject(error);
     }
+    this.#cancelConfiguredLogin();
+    return this.#startLogin(request);
+  }
+  #startLogin(request: LoginRequest): Promise<Account> {
+    if (this.#closing || this.#closed) return Promise.reject(new Error('QQ client is closed'));
     if (this.#account) {
       if ('uin' in request && request.uin !== undefined && request.uin !== this.#account.uin)
         return Promise.reject(
@@ -493,6 +537,7 @@ export class ClientLifecycle {
       }
       return this.#reconnecting;
     }
+    this.#cancelConfiguredLogin();
     clearTimeout(this.#autoTimer);
     this.#autoTimer = undefined;
     const before = {
@@ -596,6 +641,7 @@ export class ClientLifecycle {
     }
   }
   close(): Promise<void> {
+    this.#cancelConfiguredLogin();
     if (this.#closePromise) return this.#closePromise;
     let resolve!: () => void;
     let reject!: (reason: unknown) => void;

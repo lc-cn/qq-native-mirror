@@ -415,8 +415,8 @@ await writeFile(
   join(destination, 'consumer.ts'),
   `import {createClient, type ClientOptions, type QQClient, type MessageRecall, type VideoCodec, type VideoInfo, type Message, type FriendCategory, type CreatedFriendCategory} from 'qq-native-client';
 // @ts-expect-error Initialization publication belongs to the internal creation root.
-import {initializeClientNativeExports} from 'qq-native-client';
-void initializeClientNativeExports;
+import {completeClientInitialization} from 'qq-native-client';
+void completeClientInitialization;
 const options: ClientOptions = {dataDir:'/account',videoCodecPath:'/codec.node',downloadMirrors:['https://gh-proxy.com/'],autoReconnect:false};
 const videoInfo: VideoInfo = {width:1280,height:720,duration:2.75,format:'png',image:Buffer.alloc(0)};
 const videoCodec: VideoCodec = {getVideoInfo:async (_filePath:string):Promise<VideoInfo>=>videoInfo};

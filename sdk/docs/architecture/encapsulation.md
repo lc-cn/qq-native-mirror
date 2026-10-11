@@ -31,7 +31,7 @@ any read-cancellation controls. A synchronous transport response therefore canno
 successfully settle a sibling being retired. Retained close RPCs keep their
 acknowledgement path, and cancellation remains bound to the original transport.
 `ClientLifecycle` owns account state, login/restore coalescing, worker generations,
-automatic restore policy and shutdown. Its interface exposes state/account snapshots
+configured login scheduling, automatic restore policy and shutdown. Its interface exposes state/account snapshots
 and request/login/reconnect/close; no pending maps or worker handles escape. Its named
 context supplies the worker factory, event sink and native-export update hook.
 `QQClient` keeps the existing `EventEmitter` API and composes event presentation.
@@ -46,13 +46,27 @@ returns a detached `string[]` snapshot; freezing or editing that array cannot
 alter the inventory or stop a later reconnect. Older arrays do not update in
 place, so callers reread the property after replacement. The public constructor
 and array type remain compatible; the former live-reference behavior changes.
-The creation root publishes once through an internal named function backed by
-weakly held client publishers. It is absent from the package entry and cannot be
+The creation root completes initialization once through `completeClientInitialization`,
+backed by weakly held client completion functions. It publishes the inventory and,
+when login was configured, schedules the already captured default request with
+`ClientLifecycle`. It is absent from the package entry and cannot be
 imported by other source owners. Reconnect publishes directly through the same
 private replacement method. Low-level `request('init')` has no new publication
 side effect. Both paths first capture the complete initialization reply through
 own-data descriptors, without calling getters or array iterators. Malformed data
 cannot partially replace the last inventory, and retirement prevents publication.
+
+The configured login task belongs to the lifecycle, together with its immediate
+handle and worker generation. The creation root owns no deferred callback and
+passes no mutable options into later authentication. Closing, an admitted reconnect,
+a normalized explicit login or an offline account transition cancels its pending
+handle and removes its notification ownership. An in-flight request still settles
+through the existing RPC/login owner; cancellation does not undo submitted native
+work. An obsolete rejection cannot notify a replacement or closed client. An active
+failure, including a timeout or worker crash, still forwards its original rejection
+as `loginError`. Explicit login owns its returned Promise after taking over; invalid
+login input and rejected reconnect admission do not consume the configured task.
+No scheduler, initialization hook or task token enters the package-root interface.
 
 A synchronous `closing` observer failure is retained while the same owner still
 submits shutdown and retires the worker. A successful shutdown reaches `closed`

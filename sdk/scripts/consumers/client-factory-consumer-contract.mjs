@@ -192,6 +192,7 @@ export async function verifyClientFactoryConsumer(installedRoot, { source = fals
         syncBuiltinESMExports();
       }
     }
+    await verifyConfiguredLoginLifecycle(createClient, directory, explicit);
     const sourceSelectionChecks = await verifyNativeSourceSelection(
       createClient,
       directory,
@@ -200,6 +201,7 @@ export async function verifyClientFactoryConsumer(installedRoot, { source = fals
     return {
       ...sourceSelectionChecks,
       clientFactoryInstalledContract: true,
+      clientFactoryConfiguredLoginLifecycleContract: true,
       clientFactoryNativeExportsSnapshotContract: true,
       workerUrlExecuted: true,
       bridgePrecedenceContract: true,
@@ -215,6 +217,149 @@ export async function verifyClientFactoryConsumer(installedRoot, { source = fals
     if (oldElectron === undefined) delete process.env.ELECTRON_RUN_AS_NODE;
     else process.env.ELECTRON_RUN_AS_NODE = oldElectron;
     await rm(directory, { recursive: true, force: true });
+  }
+}
+
+/** @param {typeof import('../../src/index.ts').createClient} createClient
+ * @param {string} directory @param {string} bridgePath */
+async function verifyConfiguredLoginLifecycle(createClient, directory, bridgePath) {
+  const originalFork = childProcess.fork;
+  try {
+    for (const mode of ['close', 'manual', 'reconnect', 'active', 'failure', 'pending-close']) {
+      /** @type {{worker:import('node:child_process').ChildProcess,id:number,method:string}[]} */
+      const sent = [];
+      /** @type {import('node:child_process').ChildProcess[]} */
+      const workers = [];
+      /** @type {unknown[]} */
+      const failures = [];
+      /** @type {unknown[]} */
+      const loginFailures = [];
+      /** @type {Promise<void>[]} */
+      const observations = [];
+      childProcess.fork = () => {
+        const worker = new childProcess.ChildProcess();
+        workers.push(worker);
+        Object.defineProperty(worker, 'connected', { value: true, configurable: true });
+        Object.defineProperty(worker, 'kill', {
+          value() {
+            Object.defineProperty(worker, 'exitCode', { value: 0, configurable: true });
+            queueMicrotask(() => worker.emit('exit', 0, null));
+            return true;
+          },
+        });
+        Object.defineProperty(worker, 'send', {
+          value(
+            /** @type {{id:number,method:string}} */ message,
+            /** @type {(error:Error|null)=>void} */ callback,
+          ) {
+            callback(null);
+            sent.push({ worker, id: message.id, method: message.method });
+            if (message.method === 'login' && mode === 'failure')
+              observations.push(
+                client.waitForLogin().then(
+                  () => {},
+                  (/** @type {unknown} */ error) => {
+                    loginFailures.push(error);
+                  },
+                ),
+              );
+            if (message.method === 'login' && mode === 'pending-close') return true;
+            queueMicrotask(() => {
+              if (message.method === 'close')
+                Object.defineProperty(worker, 'exitCode', { value: 0, configurable: true });
+              if (message.method === 'login' && mode === 'failure')
+                worker.emit('message', {
+                  id: message.id,
+                  error: { message: 'controlled automatic login failure', code: 7 },
+                });
+              else
+                worker.emit('message', {
+                  id: message.id,
+                  result:
+                    message.method === 'init'
+                      ? { exports: ['fixture'] }
+                      : message.method === 'login'
+                        ? { uin: '42', uid: 'fixture' }
+                        : null,
+                });
+              if (message.method === 'close') worker.emit('exit', 0, null);
+            });
+            return true;
+          },
+        });
+        return worker;
+      };
+      syncBuiltinESMExports();
+      const client = await createClient({
+        wrapperPath: join(directory, 'bundle/wrapper.node'),
+        version: { clientVersion: 'fixture', appId: '1', qua: 'fixture' },
+        bridgePath,
+        preloadLibraries: [],
+        dataDir: join(directory, 'configured-' + mode),
+        timeoutMs: 1000,
+        autoReconnect: false,
+        login: { method: 'qr' },
+      });
+      client.on('loginError', (error) => failures.push(error));
+      /** @type {{error:unknown}|undefined} */
+      let primary;
+      try {
+        if (mode === 'close') await client.close();
+        if (mode === 'manual')
+          assert.deepEqual(await client.login({ method: 'qr' }), { uin: '42', uid: 'fixture' });
+        if (mode === 'reconnect')
+          assert.deepEqual(await client.reconnect({ method: 'qr' }), { uin: '42', uid: 'fixture' });
+        await new Promise((resolve) => setImmediate(resolve));
+        await new Promise((resolve) => setImmediate(resolve));
+        if (mode === 'pending-close') {
+          const pending = sent.find((value) => value.method === 'login');
+          assert.ok(pending);
+          await client.close();
+          pending.worker.emit('message', {
+            id: pending.id,
+            error: { message: 'late rejected login', code: 7 },
+          });
+          await new Promise((resolve) => setImmediate(resolve));
+        }
+        const logins = sent.filter((value) => value.method === 'login');
+        assert.equal(logins.length, mode === 'close' ? 0 : 1);
+        if (mode === 'reconnect') {
+          assert.equal(workers.length, 2);
+          assert.strictEqual(logins[0]?.worker, workers[1]);
+        }
+        assert.equal(failures.length, mode === 'failure' ? 1 : 0);
+        if (mode === 'failure') {
+          await Promise.all(observations);
+          assert.strictEqual(failures[0], loginFailures[0]);
+          assert.ok(failures[0] instanceof Error);
+          assert.equal(failures[0].message, 'controlled automatic login failure');
+          assert.equal(Reflect.get(failures[0], 'code'), 7);
+        }
+      } catch (error) {
+        primary = { error };
+      }
+      try {
+        for (const worker of workers) {
+          Object.defineProperty(worker, 'exitCode', { value: 0, configurable: true });
+          worker.emit('exit', 0, null);
+        }
+        await client.close();
+      } catch (error) {
+        if (primary)
+          throw new AggregateError(
+            [primary.error, error],
+            'Configured login verification and cleanup failed',
+            { cause: error },
+          );
+        throw error;
+      } finally {
+        client.removeAllListeners();
+      }
+      if (primary) throw primary.error;
+    }
+  } finally {
+    childProcess.fork = originalFork;
+    syncBuiltinESMExports();
   }
 }
 
