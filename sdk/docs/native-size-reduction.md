@@ -107,6 +107,16 @@ The full codec-bearing default mirror passed all six actual cold consumers in [C
 
 A new macOS arm64 profile is bound to source `6cae1ec0a5e1bfb03cb7871083915b3d03272347` / successful run `37962268125`. Every one of the old 47 retained vendor/bridge paths matches this source by SHA256 and actual size. Keeping those exact files plus all eleven `video/` files yields 58 native paths and 61 npm package files. Only the old profile's 1,110 resource paths are omitted; no new vendor/security file is selected for removal, and no binary bytes or signatures are rewritten. Source/relink/provenance/license closure is retained and verified before packing.
 
+A later audit of the same vendor binaries in source `85ef15a` / run `38133938435`
+found that the 58-path selection omits 227 of 228 sealed paths in
+`JTRecordSDK.framework` and 143 of 144 in `LongCaptureFramework.framework` on
+both macOS architectures. The original `files` SHA1 and `files2` SHA256 entries
+match the complete source files. Preserving binary and `CodeResources` bytes does
+not preserve their sealed resource closure when referenced files are removed.
+The earlier preparation/codec results remain valid for their stated scope; they
+do not verify system signatures or QQ signing authenticity. The new complete
+object-storage candidate below retains every original path and byte.
+
 The separate local candidate was actually packed and independently re-read: all 58 original file bytes and the original main tarball match their approved hashes, with eleven video files retained. Tarball size is 59,326,804 bytes versus 59,911,840 for the full source, saving 585,036 bytes; file-count reduction is substantial but byte saving is small. SHA256 is `3128a4741044520f7c99a89673db0d04f3183312d7ff0191d580ddb2ca816da8`. The new helper has two refusal/receipt contracts and the manual-only `pruned-codec-native-candidate.yml` requires actual installed main-only preparation/close and three native codec decodes on the original runtime source. [CI 37971314866](https://github.com/lc-cn/qq-native-mirror/actions/runs/37971314866), builder `47667990e7c237f7d628338f96c1f531fc47df64`, passed the actual macOS arm64 installed consumer on Node 24.20.0: main-only installation, automatic codec selection and three real clip decodes, 104 QQ native exports, preparation and close. Independent downloaded-artifact and full-log verification confirmed all 58 retained original file bytes, the unchanged original main tarball and matching consumer receipts. The CI auxiliary tarball was byte-identical to the separately packed local candidate in this specific comparison; this does not establish universal build reproducibility. See [bound evidence](evidence/pruned-codec-ci-37971314866.json). No account operation, publication or default replacement for this new candidate has occurred. Prior 47-path account evidence is not treated as evidence for this new packaged candidate or signing authenticity.
 
 ## Experimental macOS x64 codec resource pruning (2026-10-10)
@@ -146,3 +156,37 @@ Independent inspection checked all six GitHub API ZIP digests, every artifact me
 The earlier expanded run `37981454664` failed both Windows jobs during original-source acquisition/validation, before native loading, while Linux/macOS consumers passed. Its failed API/log identity is retained. The portable correction replaces external system-tar reads with the already verified Node archive parser, captures only required metadata/codec/provenance bytes per archive, and passes both actual Windows jobs. The underlying Windows tar error was not logged, so drive-colon handling remains a suspected cause rather than a proven diagnosis.
 
 This establishes installed storage, initialization and local media processing. It does not establish new account business operations, native batch lookup, merged-forward upload or signing authenticity. The candidates remain unpublished and the default catalog remains unchanged.
+
+## Current SDK with complete object-storage candidates (2026-10-11)
+
+[Bound local evidence](evidence/complete-storage-85ef-local-2664016.json) records
+six new candidate archives built from the actual full auxiliary packages in
+`85ef15aede7457b8c9f8410557c023e61ad108a8` / successful run `38133938435`, attempt 1.
+An independent readback compared all 2,434 original runtime path bytes after gzip
+restoration. No resource path was removed. The existing generic storage stage
+was reused; historical fixed-source pins and the complete fallback remain intact.
+
+| Device       | Full auxiliary bytes | Candidate bytes | Original paths | Stored objects |
+| ------------ | -------------------: | --------------: | -------------: | -------------: |
+| linux-x64    |           70,030,140 |      69,959,609 |             19 |             19 |
+| linux-arm64  |           72,005,567 |      71,896,459 |             20 |             20 |
+| darwin-x64   |           65,852,245 |      59,968,021 |          1,168 |            321 |
+| darwin-arm64 |           59,911,859 |      54,924,233 |          1,168 |            321 |
+| win32-x64    |           66,610,812 |      66,616,109 |             32 |             31 |
+| win32-arm64  |           54,121,947 |      54,104,810 |             27 |             26 |
+
+Windows x64 grows by 5,297 bytes; this format does not improve every platform's
+wire size. Each macOS auxiliary distributes 324 regular files, including three
+metadata files, and restores all 1,168 runtime paths.
+
+The separately bound SDK archive from local source
+`2664016991776203ccd6db3adb1616a2ceaf276d` contains 272 compiled files verified
+against its build. On actual macOS arm64 and Node 24.19.0, an isolated local
+registry installed only this main archive, automatically selected the matching
+object auxiliary and `silk-wasm`, restored and verified every original file,
+reused warm cache and decoded three real video inputs. The empty account client
+initialized 104 native exports and closed. No login, restore or QQ business
+operation occurred. Native version was explicitly pinned; this result does not
+prove default-latest mirror consumption. The other five new candidates have
+static byte evidence only. No npm publication, catalog replacement, account
+compatibility or signing authenticity claim follows from these checks.
