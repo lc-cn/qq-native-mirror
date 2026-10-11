@@ -62,12 +62,20 @@ export async function verifyGroupSearchConsumer(packageRoot) {
   /**
    * @param {unknown} response
    * @param {import('../../src/native/native-contracts.ts').NativeContractProfile} nativeContracts
+   * @param {'normal'|'fail'|'close'} registration
    */
-  function fixture(response = result, nativeContracts = profile, pending = false) {
+  function fixture(
+    response = result,
+    nativeContracts = profile,
+    pending = false,
+    registration = 'normal',
+  ) {
     /** @type {{onSearchGroupResult(value:unknown):void}|undefined} */
     let listener;
     let calls = 0,
-      registrations = 0;
+      registrations = 0,
+      acquisitions = 0;
+    const registrationError = Error('Controlled Search registration failure');
     /** @type {import('../../src/features/groups/group-search.ts').GroupSearchPort & {
      * addKernelSearchListener(value:{onSearchGroupResult(response:unknown):void}):void
      * }} */
@@ -75,6 +83,8 @@ export async function verifyGroupSearchConsumer(packageRoot) {
       addKernelSearchListener(value) {
         listener = value;
         registrations++;
+        if (registration === 'close') services.close();
+        if (registration !== 'normal') throw registrationError;
       },
       searchGroup(parameters) {
         assert.equal(this, search);
@@ -96,13 +106,22 @@ export async function verifyGroupSearchConsumer(packageRoot) {
         getMsgService: () => ({ addKernelMsgListener() {} }),
         getBuddyService: () => ({ addKernelBuddyListener() {} }),
         getGroupService: () => ({ addKernelGroupListener() {} }),
-        getSearchService: () => search,
+        getSearchService() {
+          acquisitions++;
+          return search;
+        },
       },
       version,
       binaryProfile: nativeContracts,
       events: { emit() {} },
     });
-    return { services, calls: () => calls, registrations: () => registrations };
+    return {
+      services,
+      registrationError,
+      calls: () => calls,
+      registrations: () => registrations,
+      acquisitions: () => acquisitions,
+    };
   }
   const good = fixture();
   try {
@@ -115,8 +134,30 @@ export async function verifyGroupSearchConsumer(packageRoot) {
     assert.notEqual(a, b);
     assert.equal(good.calls(), 1);
     assert.equal(good.registrations(), 1);
+    await good.services.invokeOperation('searchGroup', { groupId: target });
+    assert.equal(good.calls(), 2);
+    assert.equal(good.registrations(), 1);
+    assert.equal(good.acquisitions(), 1);
   } finally {
     good.services.close();
+  }
+  for (const registration of /** @type {const} */ (['fail', 'close'])) {
+    const stopped = fixture(result, profile, false, registration);
+    try {
+      await assert.rejects(
+        stopped.services.invokeOperation('searchGroup', { groupId: target }),
+        (error) =>
+          registration === 'fail'
+            ? error === stopped.registrationError
+            : error instanceof Error && /closed|abort/i.test(error.message),
+      );
+      await assert.rejects(stopped.services.invokeOperation('searchGroup', { groupId: target }));
+      assert.equal(stopped.calls(), 0);
+      assert.equal(stopped.acquisitions(), 1);
+      assert.equal(stopped.registrations(), 1);
+    } finally {
+      stopped.services.close();
+    }
   }
   for (const response of [
     { ...result, errorode: 73 },
@@ -139,6 +180,7 @@ export async function verifyGroupSearchConsumer(packageRoot) {
     await assert.rejects(denied.services.invokeOperation('searchGroup', { groupId: target }));
     assert.equal(denied.calls(), 0);
     assert.equal(denied.registrations(), 0);
+    assert.equal(denied.acquisitions(), 0);
   } finally {
     denied.services.close();
   }
@@ -208,6 +250,7 @@ export async function verifyGroupSearchConsumer(packageRoot) {
   }
   return {
     groupSearchCompositionContract: true,
+    groupSearchPreparationOwnershipContract: true,
     groupSearchGateContract: true,
     groupSearchDtoContract: true,
     groupSearchCloseContract: true,

@@ -100,6 +100,13 @@ awaits the complete operation. Inject ticket/domain-key methods and the account
 wait port there; keep endpoint exchange, pagination and DTO validation in their
 existing group modules. The composition root only supplies ports and routes.
 
+`features/groups/group-search.ts` owns Search acquisition, first-use registration
+and service reuse within its existing queue and lifetime. Inject acquisition and
+registration separately; composition must not cache Search or track whether it
+was registered. Registration delegates callback retention to the existing
+`NativeListenerOwner`. A failed preparation invalidates the search lane rather
+than reacquiring or registering again; close detaches the cached service.
+
 `features/contacts/contact-operations.ts` captures public input and resolves the
 UID before delegating to `user-profile-query.ts`. The query owns only lazy Profile
 method acquisition, requested Map lookup and projection to the canonical public

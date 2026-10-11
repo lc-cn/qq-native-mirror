@@ -43,6 +43,7 @@ function fixture() {
     signal: life.signal,
     awaitAlive: life.awaitAlive,
     eventCall: channel.call,
+    registerSearchListener() {},
     getSearchService: () => service,
   });
   return {
@@ -180,6 +181,7 @@ test('service or method acquisition close prevents native dispatch', async () =>
       signal: life.signal,
       awaitAlive: life.awaitAlive,
       eventCall: channel.call,
+      registerSearchListener() {},
       getSearchService() {
         if (phase === 'service') api.close();
         return service;
@@ -215,6 +217,7 @@ test('different targets serialize and an incomplete empty callback is not absenc
     signal: life.signal,
     awaitAlive: life.awaitAlive,
     eventCall: channel.call,
+    registerSearchListener() {},
     getSearchService: () => ({
       searchGroup(p) {
         calls.push(p.keyWords);
@@ -266,6 +269,7 @@ test('capability refusal precedes service acquisition without poisoning subseque
     signal: life.signal,
     awaitAlive: life.awaitAlive,
     eventCall: channel.call,
+    registerSearchListener() {},
     supportsSearch() {
       checks++;
       return supported;
@@ -308,6 +312,7 @@ test('capability predicate reentrant retirement prevents acquisition even when r
       signal: life.signal,
       awaitAlive: life.awaitAlive,
       eventCall: channel.call,
+      registerSearchListener() {},
       supportsSearch() {
         if (closeOwner) api.close();
         else life.close();

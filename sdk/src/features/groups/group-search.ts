@@ -15,6 +15,7 @@ export interface GroupSearchContext {
   signal: AbortSignal;
   supportsSearch(): boolean;
   getSearchService(): GroupSearchPort | null | undefined;
+  registerSearchListener(service: GroupSearchPort): void;
   eventCall: NativeEventChannel['call'];
   awaitAlive<T>(value: T | PromiseLike<T>): Promise<T>;
 }
@@ -44,15 +45,20 @@ function count(value: unknown): number {
 /** Independently inspected serializers write `errorode`, not the upstream
  * listener declaration's errorCode. Numeric zero is an SDK acceptance policy;
  * native core enum semantics and real search behavior have not been observed.
- * Composition retains one lazy listener until worker exit and forwards its raw callback.
+ * This owner acquires and registers the Search service on first use. The injected
+ * registration port retains callbacks with the worker's existing listener owner.
  */
 export function createGroupSearch(context: GroupSearchContext) {
   const controller = new AbortController();
   let closed = false,
     quarantined = false;
   const pending = new Map<string, Promise<GroupSearchMatch | undefined>>();
+  let searchService: GroupSearchPort | undefined;
   let queue: Promise<unknown> = Promise.resolve();
-  const retire = () => controller.abort(context.signal.reason ?? Error('Group search is closed'));
+  const retire = () => {
+    searchService = undefined;
+    controller.abort(context.signal.reason ?? Error('Group search is closed'));
+  };
   context.signal.addEventListener('abort', retire, { once: true });
   if (context.signal.aborted) retire();
   const alive = () => {
@@ -60,6 +66,27 @@ export function createGroupSearch(context: GroupSearchContext) {
     controller.signal.throwIfAborted();
     if (closed) throw Error('Group search is closed');
   };
+  function acquireSearch(): GroupSearchPort {
+    alive();
+    if (searchService) return searchService;
+    // Native acquisition and registration can synchronously close this owner.
+    // Retirement wins even when either port also throws; active errors retain
+    // their identity. A failed preparation quarantines the existing search lane.
+    let acquired: GroupSearchPort | null | undefined;
+    try {
+      acquired = context.getSearchService();
+    } finally {
+      alive();
+    }
+    if (!acquired) throw Error('Native service is missing searchGroup');
+    try {
+      context.registerSearchListener(acquired);
+    } finally {
+      alive();
+    }
+    searchService = acquired;
+    return acquired;
+  }
   async function wait<T>(value: Promise<T>): Promise<T> {
     void value.catch(() => {});
     alive();
@@ -131,10 +158,13 @@ export function createGroupSearch(context: GroupSearchContext) {
     alive();
     if (quarantined) throw Error('Group search channel is invalidated');
     try {
-      const service = context.getSearchService();
-      alive();
-      const method = service?.searchGroup;
-      alive();
+      const service = acquireSearch();
+      let method: GroupSearchPort['searchGroup'];
+      try {
+        method = service.searchGroup;
+      } finally {
+        alive();
+      }
       if (typeof method !== 'function') throw Error('Native service is missing searchGroup');
       const result = await wait(
         context.eventCall<[unknown], { match: GroupSearchMatch | undefined }>(
@@ -192,6 +222,7 @@ export function createGroupSearch(context: GroupSearchContext) {
     close() {
       if (closed) return;
       closed = true;
+      searchService = undefined;
       controller.abort(Error('Group search is closed'));
       pending.clear();
       context.signal.removeEventListener('abort', retire);

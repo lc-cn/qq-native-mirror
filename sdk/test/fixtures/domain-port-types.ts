@@ -241,6 +241,10 @@ function verifyGroupSearchPort(context: GroupSearchContext) {
   const service = context.getSearchService();
   // @ts-expect-error Search cannot mutate membership through its port.
   service?.addGroup('123');
+  // @ts-expect-error Native callback retention belongs to the registration port.
+  service?.addKernelSearchListener({});
+  // @ts-expect-error Registration accepts the Search port, not a service name.
+  context.registerSearchListener('Search');
   // @ts-expect-error Search has no arbitrary service acquisition.
   context.service('Group');
   const result = service?.searchGroup?.({

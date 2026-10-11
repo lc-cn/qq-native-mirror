@@ -236,25 +236,14 @@ export function createNativeServices(context: NativeServiceContext) {
         commitMembers: directory.rememberMembers,
       }),
     );
-    let searchRegistrationAttempted = false;
-    let searchHandle: Native | undefined;
     const groupSearch = own(
       createGroupSearch({
         supportsSearch: () => supportsGroupSearch(nativeContracts, version),
         signal: lifetime.signal,
         awaitAlive,
         eventCall,
-        getSearchService: () => {
-          if (!searchRegistrationAttempted) {
-            const search = service('Search');
-            lifetime.signal.throwIfAborted();
-            searchHandle = search;
-            searchRegistrationAttempted = true;
-            listener('Search', {}, search, true);
-            lifetime.signal.throwIfAborted();
-          }
-          return searchHandle;
-        },
+        getSearchService: () => service('Search'),
+        registerSearchListener: (search) => listener('Search', {}, search, true),
       }),
     );
     const friendRequests = own(

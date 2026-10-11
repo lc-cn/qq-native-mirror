@@ -590,13 +590,17 @@ projection and full-list query validation are separate contracts; neither implie
 a verified join/kick action or successful native query.
 
 `createGroupSearch` owns the group-number search queue, same-keyword coalescing,
-whole-batch projection and failed-channel quarantine. Its narrow lazy port exposes
+whole-batch projection, lazy Search preparation and failed-channel quarantine. Its narrow lazy port exposes
 only `searchGroup`, returning unknown data. It captures the target and checks the
 injected exact-binary capability before entering its queue or acquiring Search.
 The facade and CLI share its pure uint64 input capture module. Composition binds
-the capability predicate and registers one retained listener; input validation and
-unsupported-contract policy stay with the search owner. Native callback objects
-remain retained until worker exit. The shared callback channel accepts a local
+the capability predicate, acquisition and listener registration ports without
+holding a Search cache or registration state. The search owner registers once
+before its first dispatch and reuses that exact service; any preparation failure
+quarantines the existing lane without replay. Acquisition and registration check
+retirement even when their ports throw, and close detaches the cached handle.
+The registration port delegates callback retention to `NativeListenerOwner`;
+native callback objects remain retained until worker exit. The shared callback channel accepts a local
 abort signal, so feature close retires its waiter without closing sibling reads.
 The callback has no nonce: a matching unsolicited snapshot may satisfy a read;
 failure prevents another dispatch in that Session. Successful callers receive
