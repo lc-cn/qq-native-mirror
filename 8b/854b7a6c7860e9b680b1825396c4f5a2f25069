@@ -1,0 +1,51 @@
+sdk/test/native-contract-inspection.test.ts
+  s_2104cc474f1ce5::t_606c71c2412a0e 1-67
+  s_2104cc474f1ce5::t_f8397a92058fca 68-74
+sdk/test/architecture.test.ts
+  s_2104cc474f1ce5::t_606c71c2412a0e 176-207
+  s_2104cc474f1ce5::t_f9540bd83c99f0 708,736
+ci/verify-consumer.mjs
+  s_2104cc474f1ce5::t_7263ad6edcb6c9 102
+sdk/docs/architecture.md
+  s_2104cc474f1ce5::t_26dd1501026023 69-70
+sdk/docs/architecture/encapsulation.md
+  s_2104cc474f1ce5::t_636a673cf45e53 558-564
+sdk/docs/architecture/quality-gates.md
+  s_2104cc474f1ce5::t_038d3a6e86b75f 167-173
+sdk/scripts/consumers/client-factory-consumer-contract.mjs
+  s_2104cc474f1ce5::t_17525d5945f119 91
+sdk/scripts/consumers/worker-bootstrap-consumer-contract.mjs
+  s_2104cc474f1ce5::t_a496db06e9defe 21
+sdk/scripts/verify-package-consumer.mjs
+  s_2104cc474f1ce5::t_ff0ae1cbcf9625 166
+sdk/src/native/native-contract-inspection.ts
+  s_2104cc474f1ce5::t_556f984cc7acbc 1-28
+sdk/src/native/native-contracts.ts
+  s_2104cc474f1ce5::t_3a87b62743c890 131-141
+sdk/src/worker/bootstrap.ts
+  s_2104cc474f1ce5::t_75511a5926b5a8 8
+sdk/test/friend-category-create.test.ts
+  s_2104cc474f1ce5::t_854a43ceb1fca5 16
+sdk/test/helpers/dependency-policy.ts
+  s_2104cc474f1ce5::t_2ef5d14487d94b 69,214-221
+sdk/test/helpers/external-dependencies.ts
+  s_2104cc474f1ce5::t_977e4607646ab2 59
+sdk/test/worker-error-routes.test.ts
+  s_2104cc474f1ce5::t_308f89b54b5e61 13
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "8b854b7a6c7860e9b680b1825396c4f5a2f25069",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
