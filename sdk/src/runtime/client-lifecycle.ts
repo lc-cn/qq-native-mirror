@@ -446,22 +446,70 @@ export class ClientLifecycle {
     }
     clearTimeout(this.#autoTimer);
     this.#autoTimer = undefined;
+    const before = {
+      state: this.#state,
+      account: this.#account,
+      login: this.#login,
+      closed: this.#closed,
+      generation: this.#generation,
+      offlineRevision: this.#offlineRevision,
+    };
+    let resolve!: (account: Account) => void;
+    let reject!: (error: unknown) => void;
+    const reconnectPromise = new Promise<Account>((fulfilled, rejected) => {
+      resolve = fulfilled;
+      reject = rejected;
+    });
+    // Reserve for synchronous joins before notification, but do not schedule
+    // worker replacement until presentation succeeds.
     this.#reconnectRequest = login;
-    this.#reconnecting = Promise.resolve()
-      .then(() => this.#restartAndLogin(login))
-      .catch((error) => {
-        if (!this.#closing) {
-          this.#closed = true;
-          this.#setState('failed');
-        }
-        throw error;
-      })
-      .finally(() => {
+    this.#reconnecting = reconnectPromise;
+    let submitted: Promise<Account>;
+    try {
+      this.#setState('connecting');
+      if (this.#closing || this.state === 'closed')
+        throw new Error('QQ client closed during reconnect');
+      submitted = Promise.resolve()
+        .then(() => this.#restartAndLogin(login))
+        .catch((error) => {
+          if (!this.#closing) {
+            this.#closed = true;
+            this.#setState('failed');
+          }
+          throw error;
+        });
+    } catch (error) {
+      // A presentation failure has not retired the old worker or its requests.
+      // Roll back only our own transition; nested account/shutdown work wins.
+      if (
+        !this.#closing &&
+        this.#state === 'connecting' &&
+        this.#closed === before.closed &&
+        this.#generation === before.generation &&
+        this.#offlineRevision === before.offlineRevision &&
+        this.#account === before.account &&
+        this.#login === before.login
+      )
+        this.#state = before.state;
+      submitted = Promise.reject(error);
+    }
+    const release = () => {
+      if (this.#reconnecting === reconnectPromise) {
         this.#reconnecting = undefined;
         this.#reconnectRequest = undefined;
-      });
-    this.#setState('connecting');
-    return this.#reconnecting;
+      }
+    };
+    submitted.then(
+      (account) => {
+        release();
+        resolve(account);
+      },
+      (error: unknown) => {
+        release();
+        reject(error);
+      },
+    );
+    return reconnectPromise;
   }
   async #restartAndLogin(login: LoginRequest): Promise<Account> {
     if (this.#closing || this.#state === 'closed') throw new Error('QQ client is closed');

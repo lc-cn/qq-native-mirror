@@ -23,6 +23,7 @@ export async function verifyWorkerErrorRoutes({
   await verifyClientOffline(QQClient);
   await verifyClientLoginTimeout(QQClient);
   await verifyClientReconnectFailure(QQClient);
+  await verifyClientReconnectEntry(QQClient);
   const directory = await realpath(await mkdtemp(join(tmpdir(), 'qq-worker-error-')));
   /** @type {import("../../src/client/qq-client.ts").QQClient | undefined} */
   let client;
@@ -156,6 +157,7 @@ export function createKernel(_native,_options,emit){return {
       clientNestedOfflineRestoreContract: true,
       clientLoginTimeoutObserverRetirementContract: true,
       clientReconnectFailureRetirementContract: true,
+      clientReconnectEntryReservationContract: true,
       clientEventPresentationInstalledContract: true,
       workerOpaqueErrorContract: true,
       workerErrorRecoveryContract: true,
@@ -180,6 +182,163 @@ export function createKernel(_native,_options,emit){return {
       }
       await rm(directory, { recursive: true, force: true });
     }
+  }
+}
+
+/** @param {typeof import('../../src/client/qq-client.ts').QQClient} QQClient */
+async function verifyClientReconnectEntry(QQClient) {
+  for (const closeReentry of [false, true]) {
+    const previous = new ChildProcess(),
+      replacement = new ChildProcess();
+    const original = Object.freeze({ reconnectEntryObserver: true });
+    let kills = 0,
+      spawns = 0;
+    /** @type {{id:number,method:string}[]} */
+    const oldSent = [];
+    /** @type {{id:number,method:string}[]} */
+    const newSent = [];
+    for (const child of [previous, replacement]) {
+      Object.defineProperty(child, 'connected', { value: true, configurable: true });
+      Object.defineProperty(child, 'kill', {
+        value() {
+          kills++;
+          Object.defineProperty(child, 'exitCode', { value: 0, configurable: true });
+          queueMicrotask(() => child.emit('exit', 0, null));
+          return true;
+        },
+      });
+      Object.defineProperty(child, 'send', {
+        value(
+          /** @type {{id:number,method?:string}} */ message,
+          /** @type {(error:Error|null)=>void} */ callback,
+        ) {
+          callback(null);
+          if (message.method)
+            (child === previous ? oldSent : newSent).push({
+              id: message.id,
+              method: message.method,
+            });
+          if (child === replacement || message.method === 'close')
+            queueMicrotask(() => {
+              if (message.method === 'login')
+                child.emit('message', { event: 'ready', payload: { uin: '42', uid: 'recovered' } });
+              child.emit('message', {
+                id: message.id,
+                result:
+                  message.method === 'init'
+                    ? { exports: [] }
+                    : message.method === 'login'
+                      ? { uin: '42', uid: 'recovered' }
+                      : null,
+              });
+            });
+          return true;
+        },
+      });
+    }
+    const client = new QQClient(
+      previous,
+      1000,
+      { method: 'qr' },
+      {
+        spawn() {
+          spawns++;
+          return replacement;
+        },
+        payload: {},
+      },
+    );
+    previous.emit('message', { event: 'ready', payload: { uin: '123', uid: 'original' } });
+    const pending = client.request('listFriends').then(
+      (/** @type {unknown} */ value) => ({ value }),
+      (/** @type {unknown} */ error) => ({ error }),
+    );
+    /** @type {{joined?:ReturnType<typeof client.reconnect>,joinedObserved?:Promise<{error:unknown}|{value:unknown}>,different?:Promise<{error:unknown}|{value:unknown}>,closing?:Promise<{closed:true}|{error:unknown}>}} */
+    const observed = {};
+    const notify = (/** @type {string} */ state) => {
+      if (state !== 'connecting') return;
+      observed.joined = client.reconnect({ method: 'qr' });
+      observed.joinedObserved = observed.joined.then(
+        (value) => ({ value }),
+        (/** @type {unknown} */ error) => ({ error }),
+      );
+      observed.different = client.reconnect({ method: 'restore', uin: '456' }).then(
+        (value) => ({ value }),
+        (/** @type {unknown} */ error) => ({ error }),
+      );
+      if (closeReentry) {
+        observed.closing = client.close().then(
+          () => ({ closed: true }),
+          (/** @type {unknown} */ error) => ({ error }),
+        );
+      }
+      throw original;
+    };
+    client.on('state', notify);
+    /** @type {ReturnType<typeof client.reconnect>|undefined} */
+    let outer;
+    /** @type {{error:unknown}|undefined} */
+    let primary;
+    try {
+      assert.doesNotThrow(() => {
+        outer = client.reconnect({ method: 'qr' });
+      });
+      assert.ok(outer && observed.joinedObserved && observed.different);
+      assert.strictEqual(outer, observed.joined);
+      await assert.rejects(outer, (error) => error === original);
+      assert.deepEqual(await observed.joinedObserved, { error: original });
+      const mismatch = await observed.different;
+      assert.ok('error' in mismatch && mismatch.error instanceof Error);
+      assert.match(mismatch.error.message, /different reconnect/i);
+      assert.equal(spawns, 0);
+      assert.equal(newSent.length, 0);
+      if (closeReentry) {
+        assert.ok(observed.closing);
+        assert.deepEqual(await observed.closing, { closed: true });
+        assert.equal(client.state, 'closed');
+        assert.equal(client.account, undefined);
+        const retired = await pending;
+        assert.ok('error' in retired);
+      } else {
+        assert.equal(kills, 0);
+        assert.equal(client.state, 'online');
+        assert.deepEqual(client.account, { uin: '123', uid: 'original' });
+        const request = oldSent.find((value) => value.method === 'listFriends');
+        assert.ok(request);
+        previous.emit('message', { id: request.id, result: 'old request still alive' });
+        assert.deepEqual(await pending, { value: 'old request still alive' });
+        client.off('state', notify);
+        assert.deepEqual(await client.reconnect({ method: 'qr' }), { uin: '42', uid: 'recovered' });
+        assert.equal(spawns, 1);
+        assert.deepEqual(
+          newSent.map((value) => value.method),
+          ['init', 'login'],
+        );
+      }
+    } catch (error) {
+      primary = { error };
+    }
+    try {
+      client.off('state', notify);
+      for (const child of [previous, replacement]) {
+        Object.defineProperty(child, 'exitCode', { value: 0, configurable: true });
+        child.emit('exit', 0, null);
+      }
+      await Promise.all([pending, observed.joinedObserved, observed.different]);
+      await observed.closing;
+      await client.close();
+    } catch (cleanupError) {
+      if (primary)
+        throw new AggregateError(
+          [primary.error, cleanupError],
+          'Reconnect entry verification and cleanup failed',
+          { cause: cleanupError },
+        );
+      throw cleanupError;
+    } finally {
+      client.removeAllListeners();
+    }
+    if (primary) throw primary.error;
   }
 }
 

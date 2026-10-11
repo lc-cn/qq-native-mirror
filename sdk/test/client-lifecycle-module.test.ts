@@ -1337,3 +1337,235 @@ test('replacement failure observer close joins one stop and waits for actual rep
   assert.equal(lifecycle.state, 'closed');
   assert.equal(kills, 1);
 });
+
+for (const prior of ['idle', 'online', 'failed'] as const) {
+  for (const kind of ['error', 'opaque', 'undefined'] as const) {
+    test(`reconnect entry ${kind} observer failure returns shared rejection and preserves ${prior} ownership`, async () => {
+      const old = workerFixture(),
+        next = workerFixture();
+      const original: unknown =
+        kind === 'error'
+          ? new Error('entry observer fixture')
+          : kind === 'opaque'
+            ? { opaque: true }
+            : undefined;
+      let notified = false,
+        spawns = 0;
+      let joined: Promise<unknown> | undefined;
+      let joinedOutcome: Promise<{ value: unknown } | { error: unknown }> | undefined;
+      let different: Promise<unknown> | undefined;
+      const send = next.worker.send.bind(next.worker);
+      next.worker.send = ((
+        message: { id: number; method: string },
+        callback: (error: Error | null) => void,
+      ) => {
+        const returned = send(message, callback);
+        if (message.method === 'login')
+          queueMicrotask(() => {
+            const account = { uin: '456', uid: 'u_new' };
+            next.events.emit('message', { event: 'ready', payload: account });
+            next.events.emit('message', { id: message.id, result: account });
+          });
+        return returned;
+      }) as typeof next.worker.send;
+      const lifecycle = new ClientLifecycle({
+        worker: old.worker,
+        timeout: 1000,
+        restart: {
+          spawn() {
+            spawns++;
+            return next.worker;
+          },
+          payload: {},
+        },
+        emit(event, state) {
+          if (event !== 'state' || state !== 'connecting' || notified || !armed) return;
+          notified = true;
+          joined = lifecycle.reconnect({ method: 'quick', uin: '456' });
+          joinedOutcome = joined.then(
+            (value) => ({ value }),
+            (error: unknown) => ({ error }),
+          );
+          different = lifecycle.reconnect({ method: 'quick', uin: '789' }).then(
+            (value) => ({ value }),
+            (error: unknown) => ({ error }),
+          );
+          throw original;
+        },
+        forward() {},
+        exportsUpdated() {},
+      });
+      let armed = false;
+      const account = { uin: '123', uid: 'u_old' };
+      if (prior === 'online') {
+        const login = lifecycle.login({ method: 'quick', uin: '123' });
+        old.events.emit('message', { event: 'ready', payload: account });
+        old.events.emit('message', { id: old.sent[0].id, result: account });
+        await login;
+      } else if (prior === 'failed') old.events.emit('error', new Error('old worker fixture'));
+      const read =
+        prior === 'failed'
+          ? undefined
+          : lifecycle.request('listFriends').then(
+              (value) => ({ value }),
+              (error: unknown) => ({ error }),
+            );
+      armed = true;
+      let escaped = false;
+      let returned: Promise<unknown> | undefined;
+      try {
+        returned = lifecycle.reconnect({ method: 'quick', uin: '456' });
+      } catch {
+        escaped = true;
+      }
+      try {
+        await new Promise<void>((resolve) => setImmediate(resolve));
+        assert.equal(escaped, false);
+        assert.equal(returned, joined);
+        assert.deepEqual(await joinedOutcome, { error: original });
+        const differentResult = await different;
+        assert.ok(
+          differentResult && typeof differentResult === 'object' && 'error' in differentResult,
+        );
+        assert.match(String(differentResult.error), /different reconnect/);
+        assert.equal(spawns, 0);
+        assert.equal(next.sent.length, 0);
+        assert.equal(lifecycle.state, prior);
+        assert.deepEqual(lifecycle.account, prior === 'online' ? account : undefined);
+        if (read) {
+          const sent = old.sent.find((sent) => sent.method === 'listFriends');
+          assert.ok(sent);
+          old.events.emit('message', { id: sent.id, result: ['retained'] });
+          assert.deepEqual(await read, { value: ['retained'] });
+        }
+        if (prior === 'idle' && kind === 'error') {
+          const retry = lifecycle.reconnect({ method: 'quick', uin: '456' });
+          assert.notEqual(retry, returned);
+          assert.deepEqual(await retry, { uin: '456', uid: 'u_new' });
+          assert.equal(spawns, 1);
+          assert.deepEqual(
+            next.sent.map((sent) => sent.method),
+            ['init', 'login'],
+          );
+        }
+      } finally {
+        await lifecycle.close();
+        await read;
+        await joinedOutcome;
+        await different;
+      }
+    });
+  }
+}
+
+for (const action of ['close', 'disconnect'] as const) {
+  test(`reconnect entry failure does not roll back observer ${action}`, async () => {
+    const f = workerFixture();
+    const original = { presentation: action };
+    let armed = false,
+      spawns = 0;
+    let closing: Promise<void> | undefined;
+    let joined: Promise<unknown> | undefined;
+    let observed: Promise<{ value: unknown } | { error: unknown }> | undefined;
+    const lifecycle = new ClientLifecycle({
+      worker: f.worker,
+      timeout: 1000,
+      restart: {
+        spawn() {
+          spawns++;
+          return workerFixture().worker;
+        },
+        payload: {},
+      },
+      emit(event, state) {
+        if (!armed || event !== 'state' || state !== 'connecting') return;
+        armed = false;
+        joined = lifecycle.reconnect({ method: 'quick', uin: '456' });
+        observed = joined.then(
+          (value) => ({ value }),
+          (error: unknown) => ({ error }),
+        );
+        if (action === 'close') closing = lifecycle.close();
+        else f.events.emit('message', { event: 'disconnected', payload: { retryable: false } });
+        throw original;
+      },
+      forward() {},
+      exportsUpdated() {},
+    });
+    const account = { uin: '123', uid: 'u_old' };
+    const login = lifecycle.login({ method: 'quick', uin: '123' });
+    f.events.emit('message', { event: 'ready', payload: account });
+    f.events.emit('message', { id: f.sent[0].id, result: account });
+    await login;
+    armed = true;
+    let returned: Promise<unknown> | undefined;
+    let escaped = false;
+    try {
+      returned = lifecycle.reconnect({ method: 'quick', uin: '456' });
+    } catch {
+      escaped = true;
+    }
+    try {
+      assert.equal(escaped, false);
+      assert.equal(returned, joined);
+      assert.deepEqual(await observed, { error: original });
+      await closing;
+      assert.equal(lifecycle.state, action === 'close' ? 'closed' : 'disconnected');
+      assert.equal(lifecycle.account, undefined);
+      assert.equal(spawns, 0);
+    } finally {
+      await lifecycle.close();
+      await observed;
+    }
+  });
+}
+
+for (const action of ['login', 'ready'] as const) {
+  test(`reconnect entry failure preserves observer ${action} state instead of restoring idle`, async () => {
+    const f = workerFixture();
+    const original = { presentation: action };
+    const account = { uin: '123', uid: 'u_nested' };
+    let armed = true,
+      spawns = 0;
+    let nestedLogin: Promise<unknown> | undefined;
+    const lifecycle = new ClientLifecycle({
+      worker: f.worker,
+      timeout: 1000,
+      restart: {
+        spawn() {
+          spawns++;
+          return workerFixture().worker;
+        },
+        payload: {},
+      },
+      emit(event, state) {
+        if (!armed || event !== 'state' || state !== 'connecting') return;
+        armed = false;
+        if (action === 'login') nestedLogin = lifecycle.login({ method: 'quick', uin: '123' });
+        else f.events.emit('message', { event: 'ready', payload: account });
+        throw original;
+      },
+      forward() {},
+      exportsUpdated() {},
+    });
+    try {
+      await assert.rejects(
+        lifecycle.reconnect({ method: 'quick', uin: '456' }),
+        (error: unknown) => error === original,
+      );
+      assert.equal(spawns, 0);
+      assert.equal(lifecycle.state, action === 'login' ? 'connecting' : 'online');
+      if (action === 'login') {
+        const sent = f.sent.find((sent) => sent.method === 'login');
+        assert.ok(sent);
+        f.events.emit('message', { event: 'ready', payload: account });
+        f.events.emit('message', { id: sent.id, result: account });
+        assert.deepEqual(await nestedLogin, account);
+      }
+      assert.deepEqual(lifecycle.account, account);
+    } finally {
+      await lifecycle.close();
+      await nestedLogin;
+    }
+  });
+}

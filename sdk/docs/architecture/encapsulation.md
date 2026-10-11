@@ -76,6 +76,16 @@ catch, which joins the same result instead of notifying or wrapping failures twi
 The replacement reference is captured for cleanup; ordinary success, initial
 worker retirement and spawn failures retain their separate lifecycle ordering.
 
+Reconnect entry reserves its shared Promise and request before synchronous
+`connecting` notification, just as login entry does. Worker replacement is queued
+only after that notification succeeds. An observer throw rejects the reserved
+Promise with its original value without dispatching replacement, initialization
+or login. It does not retire the old account or pending requests. The owner rolls
+back only its unchanged transition using existing generation, offline, account,
+login and closing tokens; nested account or shutdown work remains authoritative.
+Rollback does not reenter presentation with a compensating event. Joined callers
+receive the same result, and releasing the attempt permits explicit recovery.
+
 Before changing account state, `ClientLifecycle` captures own-data `uin` and `uid`
 from worker readiness. It stores only those two fields, preserving decimal strings
 (including zero, leading zeros and values beyond JavaScript's safe integer range)

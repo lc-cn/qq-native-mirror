@@ -35,6 +35,14 @@
   failure retains its identity; notification and cleanup failures are retained
   alongside it. A replacement login timeout joins its existing retirement result
   when it reaches reconnect's catch, without another notification or aggregation.
+- Reconnect reserves its shared Promise before the synchronous `connecting`
+  notification, and schedules replacement only after notification succeeds.
+  A notification failure rejects that Promise with the original value and leaves
+  the old worker, account and pending requests intact. It restores the previous
+  internal state only while the same transition still owns it; nested close,
+  offline, readiness or login work takes precedence. Reentrant same-request calls
+  join the reserved result; another request rejects, and explicit recovery is
+  available after the failed attempt is released.
 - Parent close reserves its shared Promise before synchronous `closing` events.
   An observer failure cannot skip shutdown or the worker-exit gate. Successful
   cleanup reaches `closed` before close rejects with the original observer value;
