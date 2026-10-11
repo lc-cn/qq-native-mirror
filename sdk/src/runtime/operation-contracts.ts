@@ -93,6 +93,7 @@ export interface ServiceOperationContracts {
   >;
   createGroupFolder: Operation<{ groupId: string; name: string }, GroupFolder>;
   deleteGroupFolder: Operation<{ groupId: string; folderId: string }, void>;
+  deleteGroupFile: Operation<{ groupId: string; fileId: string }, void>;
   setGroupName: Operation<{ groupId: string; name: string }, void>;
   setGroupRemark: Operation<{ groupId: string; remark: string }, void>;
   setGroupMute: Operation<{ groupId: string; enabled: boolean }, void>;

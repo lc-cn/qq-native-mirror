@@ -32,6 +32,66 @@ export async function verifyGroupFileActionLifetimeConsumer(packageRoot) {
   assert.equal(compatibility.createGroupFolder, folderProtocol.createGroupFolder);
   assert.equal(compatibility.deleteGroupFolder, folderProtocol.deleteGroupFolder);
 
+  const deletionLife = new NativeServiceLifetime();
+  let fileDispatches = 0;
+  /** @type {unknown} */
+  let deletionReceipt = {
+    result: 0,
+    transGroupFileResult: {
+      result: { retCode: 0 },
+      successFileIdList: ['opaque/file'],
+      failFileIdList: [],
+    },
+  };
+  const deletion = createGroupFiles({
+    signal: deletionLife.signal,
+    awaitAlive: deletionLife.awaitAlive,
+    supportsFileCount: () => false,
+    supportsFolderCreation: () => false,
+    supportsFolderDeletion: () => false,
+    supportsFileDeletion: () => true,
+    getFileCountService() {
+      throw new Error('File deletion acquired count service');
+    },
+    getFolderCreationService() {
+      throw new Error('File deletion acquired folder creation');
+    },
+    getFolderDeletionService() {
+      throw new Error('File deletion acquired folder deletion');
+    },
+    getFileDeletionService() {
+      return {
+        deleteGroupFile(groupId, params, files) {
+          assert.deepEqual([groupId, params, files], ['00123', [102], ['opaque/file']]);
+          fileDispatches++;
+          return deletionReceipt;
+        },
+      };
+    },
+  });
+  try {
+    await assert.rejects(deletion.deleteGroupFile('123', ''), /fileId/);
+    assert.equal(fileDispatches, 0);
+    await deletion.deleteGroupFile('00123', 'opaque/file');
+    deletionReceipt = {
+      result: 0,
+      transGroupFileResult: {
+        result: { retCode: 0 },
+        successFileIdList: ['different-file'],
+        failFileIdList: [],
+      },
+    };
+    await assert.rejects(deletion.deleteGroupFile('00123', 'opaque/file'));
+    assert.equal(fileDispatches, 2);
+    deletion.close();
+    await assert.rejects(deletion.deleteGroupFile('00123', 'opaque/file'), /closed/);
+    assert.equal(fileDispatches, 2);
+    assert.equal(await deletionLife.awaitAlive(Promise.resolve('sibling')), 'sibling');
+  } finally {
+    deletion.close();
+    deletionLife.close();
+  }
+
   // A descriptor trap can retire the local owner even though no accessor runs.
   // Use the actual account lifetime to distinguish local retirement from Session close.
   for (const stage of [
@@ -204,6 +264,8 @@ export async function verifyGroupFileActionLifetimeConsumer(packageRoot) {
       groupFileActionLocalWaitSignalContract: true,
       groupFileActionLateFailureObserved: true,
       groupFileActionSiblingPreserved: true,
+      groupFileDeletionExactReceiptContract: true,
+      groupFileDeletionOwnerIsolationContract: true,
       nativeGroupFileActionAttempted: false,
       accountUsed: false,
     };

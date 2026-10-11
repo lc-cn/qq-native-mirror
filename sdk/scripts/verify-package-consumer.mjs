@@ -551,6 +551,9 @@ function subscribe(client: QQClient) {
  // @ts-expect-error Count queries require string group IDs.
  client.getGroupFileCount(123);
  const folderDelete: Promise<void> = client.deleteGroupFolder('18446744073709551615','opaque-folder');
+ const fileDelete: Promise<void> = client.deleteGroupFile('18446744073709551615','opaque-file');
+ // @ts-expect-error group file IDs remain opaque strings
+ client.deleteGroupFile('123',123);
  void folderDelete;
  // @ts-expect-error Folder identity must be a string.
  client.deleteGroupFolder('123',123);

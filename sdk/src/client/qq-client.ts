@@ -6,6 +6,7 @@ import { captureContactOperation } from '../features/contacts/contact-operation-
 import {
   captureCreateGroupFolder,
   captureDeleteGroupFolder,
+  captureDeleteGroupFile,
   captureGroupFileCount,
   captureGroupFilePage,
   captureGroupFileList,
@@ -336,6 +337,11 @@ export class QQClient extends EventEmitter<ClientEvents> {
   }
   async getGroupFileCount(groupId: string): Promise<number> {
     return this.#operation('getGroupFileCount', captureGroupFileCount(groupId));
+  }
+
+  /** A native per-file acknowledgement; remote disappearance needs readback. */
+  async deleteGroupFile(groupId: string, fileId: string): Promise<void> {
+    return this.#operation('deleteGroupFile', captureDeleteGroupFile(groupId, fileId));
   }
 
   /** Read the first validated, correlated native page within a five-second deadline. */

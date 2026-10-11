@@ -14,6 +14,7 @@ type NativeCapability =
   | 'categoryAssignment'
   | 'groupFileCount'
   | 'groupFilePages'
+  | 'groupFileDeletion'
   | 'groupSearch'
   | 'groupFolderDeletion'
   | 'groupFolderCreation';
@@ -25,6 +26,9 @@ type BinaryContract = readonly [
   capabilities: readonly NativeCapability[],
 ];
 
+// Group-file deletion binds normal argument/result codecs and concrete factory/
+// wrapped receiver identity in docs/evidence/group-file-delete-contract.json.
+// Per-file zero-status acknowledgement remains SDK policy, not remote readback.
 // Each row binds measured binary provenance to independently inspected contracts.
 // Adding a new binary requires its own capability list; a known version or
 // another feature's evidence never grants an unlisted native operation.
@@ -48,6 +52,7 @@ const binaryProfiles: readonly BinaryContract[] = [
       'categoryReordering',
       'categoryAssignment',
       'groupFileCount',
+      'groupFileDeletion',
       'groupFilePages',
       'groupSearch',
       'groupFolderDeletion',
@@ -64,6 +69,7 @@ const binaryProfiles: readonly BinaryContract[] = [
       'categoryRenaming',
       'categoryDeletion',
       'groupFileCount',
+      'groupFileDeletion',
       'groupFilePages',
       'groupSearch',
       'groupFolderDeletion',
@@ -80,6 +86,7 @@ const binaryProfiles: readonly BinaryContract[] = [
       'categoryRenaming',
       'categoryDeletion',
       'groupFileCount',
+      'groupFileDeletion',
       'groupFilePages',
       'groupSearch',
       'groupFolderDeletion',
@@ -94,6 +101,7 @@ const binaryProfiles: readonly BinaryContract[] = [
     [
       'categoryCreation',
       'groupFileCount',
+      'groupFileDeletion',
       'groupSearch',
       'groupFolderDeletion',
       'groupFolderCreation',
@@ -108,6 +116,7 @@ const binaryProfiles: readonly BinaryContract[] = [
       'categoryCreation',
       'categoryRenaming',
       'groupFileCount',
+      'groupFileDeletion',
       'groupSearch',
       'groupFolderDeletion',
       'groupFolderCreation',
@@ -121,6 +130,7 @@ const binaryProfiles: readonly BinaryContract[] = [
     [
       'categoryCreation',
       'groupFileCount',
+      'groupFileDeletion',
       'groupSearch',
       'groupFolderDeletion',
       'groupFolderCreation',
@@ -207,6 +217,13 @@ export function supportsGroupFilePages(
   version: string,
 ): boolean {
   return matchesContract(profile, version, 'groupFilePages');
+}
+
+export function supportsGroupFileDeletion(
+  profile: NativeContractProfile | undefined,
+  version: string,
+): boolean {
+  return matchesContract(profile, version, 'groupFileDeletion');
 }
 
 export function supportsGroupSearch(

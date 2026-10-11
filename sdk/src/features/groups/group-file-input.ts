@@ -34,6 +34,14 @@ export function captureDeleteGroupFolder(groupId: unknown, folderId: unknown) {
   return { groupId: group, folderId };
 }
 
+/** File IDs are opaque native identities, never names, paths or numeric IDs. */
+export function captureDeleteGroupFile(groupId: unknown, fileId: unknown) {
+  const group = groupCode(groupId);
+  if (typeof fileId !== 'string' || fileId.length === 0)
+    throw new Error('fileId must be a nonempty string');
+  return { groupId: group, fileId };
+}
+
 /** The native group selector is uint64; retain the caller's decimal spelling. */
 export function captureGroupFileCount(groupId: unknown) {
   return { groupId: groupCode(groupId) };

@@ -322,6 +322,38 @@ the folder disappeared remotely. No account folder was deleted during these
 checks. Listing, uploads, downloads and group file events still require their own
 implementation and acceptance. Creation has its separate contract below.
 
+## Group file deletion
+
+```ts
+await client.deleteGroupFile('123456', 'opaque-file-id');
+```
+
+CLI: `qq-native-client group-file-delete --config ./qq.json --group-id 123456 --file-id opaque-file-id`.
+
+Use a file's native `fileId`, rather than its name or local path. The SDK preserves
+the nonempty opaque string and requires a positive decimal group ID fitting
+uint64. Input is captured before IPC and checked again by the group-file owner.
+The worker checks the actual OS, architecture, version and wrapper hash before
+acquiring RichMedia. Unknown or changed binaries reject as
+`unsupported-native-contract` without submitting the mutation.
+
+One invocation sends one ID with the pinned caller's `[102]` parameter. That
+constant has no inferred enum meaning and is not exposed as configuration.
+The SDK requires explicit int32 zero in outer `result` and nested
+`transGroupFileResult.result.retCode`, exactly the requested ID in
+`successFileIdList`, and an empty `failFileIdList`. Missing, duplicate, mismatched
+or contradictory receipts reject. These are conservative SDK acknowledgement
+rules; native serializer inspection alone does not establish remote success
+semantics. Nonzero statuses retain numeric error codes; native wording is omitted.
+
+The [six-platform static contract](evidence/group-file-delete-contract.json)
+binds each fixed binary's arguments, normal Promise completion, result codecs,
+concrete factory and wrapped receiver identity. It does not prove account
+permissions or remote file disappearance. No account file was deleted during
+implementation or these controlled checks. The operation never retries or
+initiates a readback. Closing its owner rejects pending completion, observes late
+failures and leaves sibling account operations alive.
+
 ## Group file folder creation
 
 ```ts

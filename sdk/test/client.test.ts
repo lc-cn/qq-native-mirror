@@ -1022,6 +1022,26 @@ test('public group search validates before IPC and preserves its complete DTO', 
   await client.close();
 });
 
+test('public file deletion captures opaque identity before IPC', async () => {
+  const worker = new Worker();
+  const client = new QQClient(worker as unknown as ChildProcess, 500);
+  worker.emit('message', { event: 'ready', payload: { uin: '456', uid: 'u_self' } });
+  try {
+    await assert.rejects(client.deleteGroupFile('18446744073709551616', 'file'), /uint64/);
+    await assert.rejects(client.deleteGroupFile('123', ''), /fileId/);
+    assert.equal(worker.requests.length, 0);
+    const pending = client.deleteGroupFile('00123', ' opaque/file ');
+    const request = worker.requests.at(-1)!;
+    assert.equal(request.method, 'deleteGroupFile');
+    assert.equal(request.groupId, '00123');
+    assert.equal(request.fileId, ' opaque/file ');
+    worker.emit('message', { id: request.id, result: undefined });
+    await pending;
+  } finally {
+    await client.close();
+  }
+});
+
 test('public folder creation validates before IPC and returns identity usable by deletion', async () => {
   const worker = new Worker(),
     client = new QQClient(worker as unknown as ChildProcess, 500);

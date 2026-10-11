@@ -4,12 +4,14 @@ import type { GroupFolder } from '../../contracts/groups.ts';
 import {
   captureCreateGroupFolder,
   captureDeleteGroupFolder,
+  captureDeleteGroupFile,
   captureGroupFileCount,
   captureGroupFilePage,
   captureGroupFileList,
 } from './group-file-input.ts';
 import { createGroupFolder, deleteGroupFolder } from './group-folder-operations.ts';
 import { getGroupFileCount } from './group-file-count.ts';
+import { deleteGroupFile, type GroupFileDeletionContext } from './group-file-deletion.ts';
 import type { GroupFileCountContext } from './group-file-count.ts';
 import type {
   GroupFolderDeletionContext,
@@ -29,6 +31,8 @@ export interface GroupFilesContext {
   readonly supportsFileCount: () => boolean;
   readonly supportsFolderCreation: () => boolean;
   readonly supportsFolderDeletion: () => boolean;
+  readonly getFileDeletionService?: GroupFileDeletionContext['getRichMediaService'];
+  readonly supportsFileDeletion?: () => boolean;
 }
 
 function requireContract(supported: boolean, operation: string): void {
@@ -139,6 +143,25 @@ export function createGroupFiles(context: GroupFilesContext) {
         },
         captured.groupId,
         captured.folderId,
+      );
+    },
+    async deleteGroupFile(groupId: unknown, fileId: unknown): Promise<void> {
+      const captured = captureDeleteGroupFile(groupId, fileId);
+      requireActionContract(context.supportsFileDeletion ?? (() => false), 'Group file deletion');
+      return deleteGroupFile(
+        {
+          signal: actionSignal,
+          awaitAlive: waitForAction,
+          getRichMediaService: () => {
+            const acquire = context.getFileDeletionService;
+            actionSignal.throwIfAborted();
+            if (typeof acquire !== 'function')
+              throw new Error('Group file deletion service unavailable');
+            return acquire.call(context);
+          },
+        },
+        captured.groupId,
+        captured.fileId,
       );
     },
   };

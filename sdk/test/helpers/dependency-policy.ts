@@ -217,6 +217,7 @@ export function dependencyViolation({ from, to, typeOnly }: SourceDependency): s
     return [
       'src/features/groups/group-file-count.ts',
       'src/features/groups/group-folder-operations.ts',
+      'src/features/groups/group-file-deletion.ts',
     ].includes(from)
       ? undefined
       : 'Group-file field capture belongs only to the reviewed count and folder protocols.';
@@ -337,6 +338,7 @@ export function dependencyViolation({ from, to, typeOnly }: SourceDependency): s
       'src/features/groups/group-file-operations.ts',
       'src/features/groups/group-file-count.ts',
       'src/features/groups/group-folder-operations.ts',
+      'src/features/groups/group-file-deletion.ts',
       'src/features/groups/group-file-result.ts',
       'src/features/groups/group-file-page-codec.ts',
     ].includes(to)

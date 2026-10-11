@@ -30,6 +30,7 @@ export const SERVICE_OPERATIONS = Object.freeze([
   'listGroupFiles',
   'searchGroup',
   'deleteGroupFolder',
+  'deleteGroupFile',
   'createGroupFolder',
   'setGroupName',
   'setGroupEssenceMessage',

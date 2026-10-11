@@ -413,6 +413,14 @@ cleanup helper. This exact dependency permits no account/runtime composition.
 
 ## Contact and group domain operations
 
+Group-file deletion belongs to `group-file-deletion`, with a lazy single-method
+port and the existing action lifetime supplied by `group-files`. It captures one
+opaque ID, submits once and owns the two-status/per-file receipt policy. Public
+input, IPC, CLI and native composition route the intent without inspecting the
+receipt. Array fields use bounded own descriptors, never iterators or accessors;
+retirement takes precedence over a throwing descriptor or method acquisition.
+No additional account listener, controller or retry mechanism is created.
+
 `createGroupEssenceMutations` owns the exact native group-message lookup and
 delegates validated sequence/random mutation to the existing essence protocol.
 It accepts a lazy message-query port and a guarded mutation callback; construction

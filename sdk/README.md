@@ -71,7 +71,7 @@ are private implementation, not extension interfaces.
 | Messages           | Private/group sends, exact/batch/history queries, recall; `message`, `message.private`, `message.group`, `message.recalled`                                                                                                                         | [Queries](docs/contact-group-query.md), [Acceptance](docs/sdk-acceptance.md)                  |
 | Media/forwarding   | Image, voice, video, file, reply, face inputs; attachment download, forwarding and merged-forward resources                                                                                                                                         | [Acceptance](docs/sdk-acceptance.md), [File recall limits](docs/file-recall-investigation.md) |
 | Friends/categories | Lists/profiles/categories, remarks, deletion, request handling, category creation, exact-binary category rename on four profiles, deletion on three measured macOS ARM64/Linux profiles, explicit-snapshot reorder on Linux x64 and metadata events | [Contacts/groups](docs/contacts-groups.md)                                                    |
-| Groups             | Lists/members/mutes, metadata/member management, notices, requests, essence, folder actions/file counts, exact-binary group-file pages and folder traversal; group metadata/membership/admin/mute events                                            | [Contacts/groups](docs/contacts-groups.md)                                                    |
+| Groups             | Lists/members/mutes, metadata/member management, notices, requests, essence, folder actions/file deletion/file counts, exact-binary group-file pages and folder traversal; group metadata/membership/admin/mute events                              | [Contacts/groups](docs/contacts-groups.md)                                                    |
 | Diagnostics        | `state`, `account`, `diagnostic`, `KernelRequestError`                                                                                                                                                                                              | [Architecture](docs/architecture.md)                                                          |
 
 Queries validate complete native responses; errors do not become empty results.
@@ -79,7 +79,9 @@ Identifiers stay strings, including values beyond JavaScript's safe integer rang
 Metadata synchronization does not by itself establish an operation's cause or success.
 Management methods have separate completion contracts: some mean submission only,
 some require zero status fields. `deleteGroupFolder` requires two zero statuses
-and still does not independently confirm remote disappearance.
+and still does not independently confirm remote disappearance. `deleteGroupFile`
+additionally requires an exact per-file acknowledgement, with the same remote
+effect limitation.
 
 ## CLI
 

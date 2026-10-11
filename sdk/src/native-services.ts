@@ -17,6 +17,7 @@ import {
   supportsGroupFileCount,
   supportsGroupFilePages,
   supportsGroupFolderDeletion,
+  supportsGroupFileDeletion,
   supportsGroupFolderCreation,
   supportsGroupSearch,
 } from './native/native-contracts.ts';
@@ -353,6 +354,14 @@ export function createNativeServices(context: NativeServiceContext) {
         getFilePageService: () => service('RichMedia'),
         supportsFolderCreation: () => supportsGroupFolderCreation(nativeContracts, version),
         supportsFolderDeletion: () => supportsGroupFolderDeletion(nativeContracts, version),
+        supportsFileDeletion: () => supportsGroupFileDeletion(nativeContracts, version),
+        getFileDeletionService: () => {
+          const richMedia = service('RichMedia');
+          return {
+            deleteGroupFile: (groupId, params, files) =>
+              call(richMedia, 'deleteGroupFile', groupId, params, files),
+          };
+        },
         getFileCountService: () => {
           const richMedia = service('RichMedia');
           return {
@@ -464,6 +473,8 @@ export function createNativeServices(context: NativeServiceContext) {
             return groupFiles.createGroupFolder(payload.groupId, payload.name);
           case 'deleteGroupFolder':
             return groupFiles.deleteGroupFolder(payload.groupId, payload.folderId);
+          case 'deleteGroupFile':
+            return groupFiles.deleteGroupFile(payload.groupId, payload.fileId);
           case 'setGroupName':
             return groupOperations.invokeOperation(method, payload);
           case 'getGroupEssencePage':

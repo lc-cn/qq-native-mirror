@@ -5,6 +5,7 @@ import { captureGroupSearch } from '../../features/groups/group-search-input.ts'
 import {
   captureCreateGroupFolder,
   captureDeleteGroupFolder,
+  captureDeleteGroupFile,
   captureGroupFileCount,
   captureGroupFilePage,
   captureGroupFileList,
@@ -155,6 +156,16 @@ export const groupsCommands = {
         required(flags, 'folder-id'),
       );
       return (client) => client.deleteGroupFolder(captured.groupId, captured.folderId);
+    },
+  },
+  'group-file-delete': {
+    flags: ['config', 'uin', 'group-id', 'file-id'],
+    prepare(flags) {
+      const captured = captureDeleteGroupFile(
+        required(flags, 'group-id'),
+        required(flags, 'file-id'),
+      );
+      return (client) => client.deleteGroupFile(captured.groupId, captured.fileId);
     },
   },
   'group-remark': {

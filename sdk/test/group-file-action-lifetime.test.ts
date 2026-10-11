@@ -8,6 +8,7 @@ const actions = {
   count: (files: Files) => files.getGroupFileCount('00123'),
   create: (files: Files) => files.createGroupFolder('00123', 'folder'),
   delete: (files: Files) => files.deleteGroupFolder('00123', 'folder-id'),
+  deleteFile: (files: Files) => files.deleteGroupFile('00123', 'file-id'),
 };
 const responses = {
   count: { result: 0, groupCodes: ['123'], groupFileCounts: [0] },
@@ -22,11 +23,20 @@ const responses = {
     },
   },
   delete: { result: 0, groupFileCommonResult: { retCode: 0 } },
+  deleteFile: {
+    result: 0,
+    transGroupFileResult: {
+      result: { retCode: 0 },
+      successFileIdList: ['file-id'],
+      failFileIdList: [],
+    },
+  },
 };
 const argumentsByAction = {
   count: [['00123']],
   create: ['00123', 'folder'],
   delete: ['00123', 'folder-id'],
+  deleteFile: ['00123', [102], ['file-id']],
 };
 function fixture(action: keyof typeof actions, returned: unknown = responses[action]) {
   const life = new NativeServiceLifetime();
@@ -57,6 +67,17 @@ function fixture(action: keyof typeof actions, returned: unknown = responses[act
     supportsFileCount: support,
     supportsFolderCreation: support,
     supportsFolderDeletion: support,
+    supportsFileDeletion: support,
+    getFileDeletionService() {
+      acquire();
+      const service = {
+        get deleteGroupFile() {
+          onMethod();
+          return invoke(service);
+        },
+      };
+      return service;
+    },
     getFileCountService() {
       acquire();
       const service = {

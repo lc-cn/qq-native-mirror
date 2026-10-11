@@ -48,6 +48,10 @@ script or weaken a historical plan to make it pass against newer artifacts.
 | CLI command flags and action planning                                              | `src/cli/commands/` by domain; `command-plan.ts` composes definitions and captures flags  |
 | CLI argument parsing and client execution                                          | `src/cli/command-input.ts` and `client-command.ts`; executable entry remains `cli.ts`     |
 
+Group-file deletion and its per-file acknowledgement belong to
+`src/features/groups/group-file-deletion.ts`; `group-files.ts` owns capability
+selection and the shared action lifetime.
+
 Follow the change through its owners:
 
 Native source options use `undefined` to mean omitted. Explicit `null`, boolean,
