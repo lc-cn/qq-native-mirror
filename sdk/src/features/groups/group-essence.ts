@@ -53,8 +53,8 @@ export function createGroupEssenceMutations(context: GroupEssenceMutationContext
  * native wording, message data or opaque response objects through error IPC.
  * The acknowledgement does not replace separately authorized server readback.
  */
-function acknowledge(value: unknown): void {
-  const outer = field(value, 'errCode');
+function acknowledge(value: unknown, signal: AbortSignal): void {
+  const outer = field(value, 'errCode', signal);
   if (
     typeof outer !== 'number' ||
     !Number.isInteger(outer) ||
@@ -64,17 +64,22 @@ function acknowledge(value: unknown): void {
     throw nativeResultError('Invalid native group essence result', undefined);
   if (outer !== 0)
     throw nativeResultError('Native group essence invocation failed', { result: outer });
-  const inner = field(field(value, 'result'), 'errorCode');
+  const inner = field(field(value, 'result', signal), 'errorCode', signal);
   if (typeof inner !== 'number' || !Number.isInteger(inner) || inner < 0 || inner > 0xffff_ffff)
     throw nativeResultError('Invalid native group essence response', undefined);
   if (inner !== 0)
     throw nativeResultError('Native group essence response failed', { result: inner });
 }
 
-function field(value: unknown, key: string): unknown {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return;
-  const descriptor = Object.getOwnPropertyDescriptor(value, key);
-  return descriptor && 'value' in descriptor ? descriptor.value : undefined;
+function field(value: unknown, key: string, signal: AbortSignal): unknown {
+  signal.throwIfAborted();
+  try {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return;
+    const descriptor = Object.getOwnPropertyDescriptor(value, key);
+    return descriptor && 'value' in descriptor ? descriptor.value : undefined;
+  } finally {
+    signal.throwIfAborted();
+  }
 }
 
 function sequence(value: unknown, name: string): number {
@@ -104,21 +109,21 @@ export async function setGroupEssenceMessage(
   const message = await context.awaitAlive(context.query(captured.groupId, captured.messageId));
   context.signal.throwIfAborted();
   if (
-    field(message, 'msgId') !== captured.messageId ||
-    field(message, 'chatType') !== 2 ||
-    field(message, 'peerUid') !== captured.groupId
+    field(message, 'msgId', context.signal) !== captured.messageId ||
+    field(message, 'chatType', context.signal) !== 2 ||
+    field(message, 'peerUid', context.signal) !== captured.groupId
   )
     throw new Error('Native essence lookup did not return the requested group message');
   const request = {
     groupCode: captured.groupId,
-    msgRandom: sequence(field(message, 'msgRandom'), 'random'),
-    msgSeq: sequence(field(message, 'msgSeq'), 'sequence'),
+    msgRandom: sequence(field(message, 'msgRandom', context.signal), 'random'),
+    msgSeq: sequence(field(message, 'msgSeq', context.signal), 'sequence'),
   };
   context.signal.throwIfAborted();
   const result = await context.awaitAlive(
     context.invoke(captured.enabled ? 'addGroupEssence' : 'removeGroupEssence', request),
   );
   context.signal.throwIfAborted();
-  acknowledge(result);
+  acknowledge(result, context.signal);
   context.signal.throwIfAborted();
 }

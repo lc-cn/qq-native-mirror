@@ -2,10 +2,12 @@
 import { createHash } from 'node:crypto';
 // Official Git blobs: v24.19.0 2842efa1288eef1de3a6778b5dd3519bc903308d;
 // v24.20.0 9cc3315dd388a004c225620b30c5806bba3151d5.
+/** @type {Readonly<Record<string,string>>} */
 const LICENSE_SHA256 = Object.freeze({
   'v24.19.0': '148eacf7863ef4329224a29398623077200a27194aa075569faf4a0a85566ca5',
   'v24.20.0': '5888dbb9a1d2b18f2c3e6c5f6af1b39de658372b402a0577b002777f14c62ace',
 });
+/** @param {{cancel():unknown}|null|undefined} body */
 function cancel(body) {
   try {
     Promise.resolve(body?.cancel()).catch(() => {});
@@ -15,14 +17,19 @@ function cancel(body) {
 }
 const MAX_BYTES = 2 * 1024 * 1024;
 class InvalidLicense extends Error {}
+/** @param {string} message @returns {never} */
 function fail(message) {
   throw new InvalidLicense(message);
 }
-function transport(error) {
+/** @param {unknown} value */
+function transport(value) {
+  const error = /** @type {{name?:unknown,code?:unknown,cause?:{code?:unknown}}|null|undefined} */ (
+    value
+  );
   return (
-    error instanceof TypeError ||
-    ['AbortError', 'TimeoutError'].includes(error?.name) ||
-    [
+    value instanceof TypeError ||
+    /** @type {unknown[]} */ (['AbortError', 'TimeoutError']).includes(error?.name) ||
+    /** @type {unknown[]} */ ([
       'ECONNRESET',
       'ECONNREFUSED',
       'ETIMEDOUT',
@@ -30,9 +37,10 @@ function transport(error) {
       'ENETUNREACH',
       'UND_ERR_CONNECT_TIMEOUT',
       'UND_ERR_SOCKET',
-    ].includes(error?.code ?? error?.cause?.code)
+    ]).includes(error?.code ?? error?.cause?.code)
   );
 }
+/** @param {Buffer} bytes */
 function validate(bytes) {
   let text;
   try {
@@ -52,6 +60,15 @@ function validate(bytes) {
     fail('Invalid Node license document');
   return bytes;
 }
+/**
+ * @typedef {object} NodeLicenseOptions
+ * @property {(url:string, options:{redirect:'error',signal:AbortSignal})=>Promise<Response>} [fetch]
+ * @property {(ms:number)=>unknown} [wait]
+ * @property {number} [maxBytes]
+ * @property {number} [timeoutMs]
+ * @property {string} [expectedSha256]
+ */
+/** @param {unknown} nodeVersion @param {NodeLicenseOptions} [options] */
 export async function downloadNodeLicense(
   nodeVersion,
   {
@@ -59,7 +76,7 @@ export async function downloadNodeLicense(
     wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
     maxBytes = MAX_BYTES,
     timeoutMs = 30_000,
-    expectedSha256 = LICENSE_SHA256[nodeVersion],
+    expectedSha256 = typeof nodeVersion === 'string' ? LICENSE_SHA256[nodeVersion] : undefined,
   } = {},
 ) {
   if (typeof nodeVersion !== 'string' || !/^v\d+\.\d+\.\d+$/.test(nodeVersion))
@@ -100,8 +117,9 @@ export async function downloadNodeLicense(
         }
         if (response.status === 429 || (response.status >= 500 && response.status <= 599)) {
           cancel(response.body);
-          const error = new Error('Retryable Node license HTTP status');
-          error.retryableHttp = true;
+          const error = Object.assign(new Error('Retryable Node license HTTP status'), {
+            retryableHttp: true,
+          });
           throw error;
         }
         if (response.status !== 200) {
@@ -141,7 +159,13 @@ export async function downloadNodeLicense(
     } catch (error) {
       if (
         error instanceof InvalidLicense ||
-        !(error?.retryableHttp || transport(error)) ||
+        !(
+          (typeof error === 'object' &&
+            error !== null &&
+            'retryableHttp' in error &&
+            error.retryableHttp) ||
+          transport(error)
+        ) ||
         attempt === 2
       )
         // eslint-disable-next-line preserve-caught-error -- Keep a bounded diagnostic without arbitrary transport causes.

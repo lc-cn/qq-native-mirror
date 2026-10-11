@@ -13,7 +13,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const helper = resolve(root, 'scripts/consumers/face-consumer-contract.mjs');
 const source = readFileSync(helper, 'utf8');
 
-test('group-query owner consumer rejects an invalid port and an unobserved assertion without execution', async () => {
+await test('group-query owner consumer rejects an invalid port and an unobserved assertion without execution', async () => {
   const queryHelper = resolve(root, 'scripts/consumers/group-query-owner-consumer-contract.mjs');
   const querySource = readFileSync(queryHelper, 'utf8');
   assert.deepEqual(diagnostics(querySource, queryHelper), []);
@@ -38,12 +38,13 @@ test('group-query owner consumer rejects an invalid port and an unobserved asser
       .some((message) => message.ruleId === '@typescript-eslint/no-floating-promises'),
   );
 });
+/** @param {string} value @param {string} before @param {string} after */
 function replaceOnce(value, before, after) {
   assert.equal(value.split(before).length - 1, 1, `Fixture anchor must occur once: ${before}`);
   return value.replace(before, after);
 }
 
-test('request-result consumer retains typed ports and awaited assertions without execution', async () => {
+await test('request-result consumer retains typed ports and awaited assertions without execution', async () => {
   const file = resolve(root, 'scripts/consumers/request-result-consumer-contract.mjs');
   const actual = readFileSync(file, 'utf8');
   assert.deepEqual(diagnostics(actual, file), []);
@@ -78,7 +79,7 @@ test('request-result consumer retains typed ports and awaited assertions without
   );
 });
 
-test('contact/group snapshot consumer rejects an invalid native port and unobserved mutation without execution', async () => {
+await test('contact/group snapshot consumer rejects an invalid native port and unobserved mutation without execution', async () => {
   const file = resolve(root, 'scripts/consumers/contact-group-snapshot-consumer-contract.mjs');
   const actual = readFileSync(file, 'utf8');
   assert.deepEqual(diagnostics(actual, file), []);
@@ -108,6 +109,7 @@ test('contact/group snapshot consumer rejects an invalid native port and unobser
       .some((message) => message.ruleId === '@typescript-eslint/no-floating-promises'),
   );
 });
+/** @param {string} replacement @param {string} [checkedFile] */
 function diagnostics(replacement, checkedFile = helper) {
   const configPath = resolve(root, 'tsconfig.scripts.json');
   const config = ts.readConfigFile(configPath, ts.sys.readFile);
@@ -147,7 +149,7 @@ for (const fixture of [
     ignored: 'delayed.verifyExit();',
   },
 ]) {
-  test(`${fixture.name} retains compiler/process types and observes asynchronous completion`, async () => {
+  await test(`${fixture.name} retains compiler/process types and observes asynchronous completion`, async () => {
     const file = resolve(root, `scripts/consumers/${fixture.name}.mjs`);
     const actual = readFileSync(file, 'utf8');
     assert.deepEqual(diagnostics(actual, file), []);
@@ -198,7 +200,7 @@ for (const fixture of [
     ignored: 'f.kernel.prepare();',
   },
 ]) {
-  test(`${fixture.name} consumer rejects invalid calls and unobserved lifecycle work without execution`, async () => {
+  await test(`${fixture.name} consumer rejects invalid calls and unobserved lifecycle work without execution`, async () => {
     const file = resolve(root, `scripts/consumers/${fixture.name}-consumer-contract.mjs`);
     const actual = readFileSync(file, 'utf8');
     assert.deepEqual(diagnostics(actual, file), []);
@@ -223,7 +225,7 @@ for (const fixture of [
   });
 }
 
-test('consumer compiler gate rejects missing preparation await and fabricated send receipts without running the helper', () => {
+await test('consumer compiler gate rejects missing preparation await and fabricated send receipts without running the helper', () => {
   assert.deepEqual(diagnostics(source), [], 'Actual checked helper must be type-correct first');
   const missingAwait = replaceOnce(
     source,
@@ -248,16 +250,16 @@ test('consumer compiler gate rejects missing preparation await and fabricated se
 
 const factoryHelper = resolve(root, 'scripts/consumers/client-factory-consumer-contract.mjs');
 const factorySource = readFileSync(factoryHelper, 'utf8');
-test('client factory compiler rejects unawaited construction and invalid options without running its worker', () => {
+await test('client factory compiler rejects unawaited construction and invalid options without running its worker', () => {
   assert.deepEqual(diagnostics(factorySource, factoryHelper), []);
-  for (const [before, after, code] of [
+  for (const [before, after, code] of /** @type {[string,string,number][]} */ ([
     [
       'client = await createClient({\n          wrapperPath: wrapper,',
       'client = createClient({\n          wrapperPath: wrapper,',
       2740,
     ],
     ['bridgePath: fixture.explicit ? explicit : undefined,', 'bridgePath: 123,', 2322],
-  ]) {
+  ])) {
     assert.ok(
       diagnostics(replaceOnce(factorySource, before, after), factoryHelper).some(
         (item) => item.code === code,
@@ -270,7 +272,7 @@ test('client factory compiler rejects unawaited construction and invalid options
 const groupSearchHelper = resolve(root, 'scripts/consumers/group-search-consumer-contract.mjs');
 const groupSearchSource = readFileSync(groupSearchHelper, 'utf8');
 
-test('group-search consumer compiler rejects missing preparation await and invalid match DTO without running its worker', () => {
+await test('group-search consumer compiler rejects missing preparation await and invalid match DTO without running its worker', () => {
   assert.deepEqual(diagnostics(groupSearchSource, groupSearchHelper), []);
   assert.ok(
     diagnostics(
@@ -295,7 +297,7 @@ test('group-search consumer compiler rejects missing preparation await and inval
 const groupEssenceHelper = resolve(root, 'scripts/consumers/group-essence-consumer-contract.mjs');
 const groupEssenceSource = readFileSync(groupEssenceHelper, 'utf8');
 
-test('group-essence compiler rejects unawaited CLI preparation and incomplete public DTOs without running tickets or IPC', () => {
+await test('group-essence compiler rejects unawaited CLI preparation and incomplete public DTOs without running tickets or IPC', () => {
   assert.deepEqual(diagnostics(groupEssenceSource, groupEssenceHelper), []);
   assert.ok(
     diagnostics(
@@ -330,13 +332,13 @@ test('group-essence compiler rejects unawaited CLI preparation and incomplete pu
 
 const filePagesHelper = resolve(root, 'scripts/consumers/group-file-pages-consumer-contract.mjs');
 const filePagesSource = readFileSync(filePagesHelper, 'utf8');
-test('group file consumer rejects missing metadata, rounded uint64 and unawaited CLI preparation without executing native code', () => {
+await test('group file consumer rejects missing metadata, rounded uint64 and unawaited CLI preparation without executing native code', () => {
   assert.deepEqual(diagnostics(filePagesSource, filePagesHelper), []);
-  for (const [before, after, code] of [
+  for (const [before, after, code] of /** @type {[string,string,number][]} */ ([
     ["fileSize: '18446744073709551615',", 'fileSize: 18446744073709551615,', 2322],
     ['    totalFileCount: 1,', '    /* Missing required folder count. */', 1360],
     ['const plan = await prepareCommand(', 'const plan = prepareCommand(', 2349],
-  ]) {
+  ])) {
     assert.ok(
       diagnostics(replaceOnce(filePagesSource, before, after), filePagesHelper).some(
         (item) => item.code === code,
@@ -348,9 +350,9 @@ test('group file consumer rejects missing metadata, rounded uint64 and unawaited
 
 const elementHelper = resolve(root, 'scripts/consumers/element-preparation-consumer-contract.mjs');
 const elementSource = readFileSync(elementHelper, 'utf8');
-test('element preparation compiler rejects unawaited results, wrong variants and unchecked thumbnail paths without running adapters', () => {
+await test('element preparation compiler rejects unawaited results, wrong variants and unchecked thumbnail paths without running adapters', () => {
   assert.deepEqual(diagnostics(elementSource, elementHelper), []);
-  for (const [before, after, code] of [
+  for (const [before, after, code] of /** @type {[string,string,number][]} */ ([
     ['const prepared = await createImageElement(', 'const prepared = createImageElement(', 2339],
     [
       'assert.equal(prepared.picElement.sourcePath, staged);',
@@ -358,7 +360,7 @@ test('element preparation compiler rejects unawaited results, wrong variants and
       2339,
     ],
     ['assert.ok(thumbnailPath);', '/* Missing thumbnail path narrowing. */', 2345],
-  ]) {
+  ])) {
     assert.ok(
       diagnostics(replaceOnce(elementSource, before, after), elementHelper).some(
         (item) => item.code === code,
@@ -412,7 +414,7 @@ for (const fixture of [
     ignored: 'plan(client);',
   },
 ]) {
-  test(`${fixture.name} typed consumer lint rejects unobserved action Promise without running the helper`, async () => {
+  await test(`${fixture.name} typed consumer lint rejects unobserved action Promise without running the helper`, async () => {
     const eslint = new ESLint({
       cwd: root,
       // These lintText calls repeatedly change one in-memory file. CI single-run
@@ -438,7 +440,7 @@ for (const fixture of [
   });
 }
 
-test('collector never executes consumers or scans excluded account executors, and rejects root escape/computed import', async () => {
+await test('collector never executes consumers or scans excluded account executors, and rejects root escape/computed import', async () => {
   const directory = await realpath(await mkdtemp(join(tmpdir(), 'consumer-static-gate-')));
   try {
     const helpers = join(directory, 'helpers'),
@@ -472,4 +474,50 @@ test('collector never executes consumers or scans excluded account executors, an
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
+});
+
+await test('installed package orchestrator and worker test entry observe their actual consumer promises', async () => {
+  const eslint = new ESLint({
+    cwd: root,
+    overrideConfig: {
+      languageOptions: { parserOptions: { disallowAutomaticSingleRunInference: true } },
+    },
+  });
+  for (const [relative, awaited] of [
+    ['scripts/verify-package-consumer.mjs', 'await verifyWorkerDelivery('],
+    ['test/worker-delivery.test.mjs', 'await verifyWorkerDelivery('],
+  ]) {
+    const file = resolve(root, relative);
+    const actual = readFileSync(file, 'utf8');
+    assert.deepEqual(diagnostics(actual, file), []);
+    const good = await eslint.lintText(actual, { filePath: file });
+    assert.equal(good[0].errorCount, 0);
+    for (const replacement of [awaited.replace('await ', ''), awaited.replace('await ', 'void ')]) {
+      const reports = await eslint.lintText(replaceOnce(actual, awaited, replacement), {
+        filePath: file,
+      });
+      assert.ok(
+        reports
+          .flatMap((report) => report.messages)
+          .some((message) =>
+            [
+              '@typescript-eslint/no-floating-promises',
+              '@typescript-eslint/no-misused-spread',
+            ].includes(message.ruleId ?? ''),
+          ) || diagnostics(replaceOnce(actual, awaited, replacement), file).length > 0,
+      );
+    }
+  }
+  const file = resolve(root, 'scripts/verify-package-consumer.mjs');
+  const actual = readFileSync(file, 'utf8');
+  assert.ok(
+    diagnostics(
+      replaceOnce(
+        actual,
+        "run('npm', ['run', 'build'], root);",
+        "run(42, ['run', 'build'], root);",
+      ),
+      file,
+    ).length > 0,
+  );
 });

@@ -33,7 +33,9 @@ context supplies the worker factory, event sink and native-export update hook.
 `QQClient` keeps the existing `EventEmitter` API and composes event presentation.
 State transitions still happen before their public events, and
 facade methods return the lifecycle's login/reconnect/close Promises directly so
-coalesced callers retain the same Promise identity.
+coalesced callers retain the same Promise identity. Close reserves its shared
+Promise before notifying synchronous state observers; a reentrant close therefore
+joins the same transaction and cannot finish before worker retirement.
 
 Before changing account state, `ClientLifecycle` captures own-data `uin` and `uid`
 from worker readiness. It stores only those two fields, preserving decimal strings

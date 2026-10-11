@@ -44,6 +44,7 @@ import { verifyFriendCategoryMutationsConsumer } from './consumers/friend-catego
 // Offline packaging check: controlled services and actual worker routing with a replacement kernel; no QQ native binaries or accounts.
 const root = fileURLToPath(new URL('../', import.meta.url));
 const destination = await mkdtemp(join(tmpdir(), 'qq-package-consumer-'));
+/** @param {string} command @param {string[]} args @param {string} [cwd] */
 const run = (command, args, cwd = destination) =>
   execFileSync(command, args, {
     cwd,
@@ -54,7 +55,8 @@ run('npm', ['run', 'build'], root);
 const packed = JSON.parse(
   run('npm', ['pack', '--ignore-scripts', '--json', '--pack-destination', destination], root),
 )[0];
-const files = packed.files.map((file) => file.path);
+/** @type {string[]} */
+const files = packed.files.map((/** @type {{path:string}} */ file) => file.path);
 if (files.some((path) => /^dist\/features\/media\/media-operations\.(?:js|d\.ts)$/.test(path)))
   throw new Error('Obsolete generic media-operation module remains in package');
 if (files.some((path) => /^dist\/features\/messages\/message-elements\.(?:js|d\.ts)$/.test(path)))

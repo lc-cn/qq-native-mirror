@@ -341,3 +341,67 @@ test('CLI captures the complete essence intent before login and rejects malforme
     /Unknown option/,
   );
 });
+
+for (const selected of ['errCode', 'result', 'errorCode'] as const) {
+  for (const outcome of ['zero', 'nonzero', 'throw'] as const) {
+    test(`essence ${selected} descriptor retirement wins over ${outcome} projection`, async () => {
+      const controller = new AbortController();
+      const reason = new Error('Account retired during essence projection');
+      const thrown = new Error('Descriptor failure');
+      let subsequentReads = 0;
+      const intercept = (value: object) =>
+        new Proxy(value, {
+          getOwnPropertyDescriptor(target, key) {
+            if (controller.signal.aborted) subsequentReads++;
+            if (key === selected) {
+              controller.abort(reason);
+              if (outcome === 'throw') throw thrown;
+              if (selected !== 'result')
+                return { configurable: true, value: outcome === 'zero' ? 0 : 7 };
+            }
+            return Reflect.getOwnPropertyDescriptor(target, key);
+          },
+        });
+      const response = intercept({ errCode: 0, result: intercept({ errorCode: 0 }) });
+      let dispatches = 0;
+      await assert.rejects(
+        setGroupEssenceMessage(
+          {
+            signal: controller.signal,
+            awaitAlive: async (value) => value,
+            query: async () => message(),
+            invoke() {
+              dispatches++;
+              return response;
+            },
+          },
+          '123',
+          messageId,
+          true,
+        ),
+        (error: unknown) => error === reason,
+      );
+      assert.equal(dispatches, 1);
+      assert.equal(subsequentReads, 0);
+    });
+  }
+}
+
+for (const selected of ['errCode', 'result', 'errorCode'] as const) {
+  test(`active essence ${selected} descriptor failure retains identity`, async () => {
+    const failure = new Error('Active descriptor failure');
+    const intercept = (value: object) =>
+      new Proxy(value, {
+        getOwnPropertyDescriptor(target, key) {
+          if (key === selected) throw failure;
+          return Reflect.getOwnPropertyDescriptor(target, key);
+        },
+      });
+    const f = fixture(message(), intercept({ errCode: 0, result: intercept({ errorCode: 0 }) }));
+    await assert.rejects(
+      setGroupEssenceMessage(f.context, '123', messageId, true),
+      (error: unknown) => error === failure,
+    );
+    assert.equal(f.mutations.length, 1);
+  });
+}

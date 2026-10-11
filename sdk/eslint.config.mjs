@@ -48,7 +48,27 @@ export default defineConfig([
     rules: { '@typescript-eslint/no-explicit-any': 'off' },
   },
   {
-    files: ['scripts/**/*.ts', 'scripts/consumers/**/*.mjs'],
+    files: [
+      'scripts/**/*.ts',
+      'scripts/consumers/**/*.mjs',
+      'scripts/verify-package-consumer.mjs',
+      'scripts/node-license-download.mjs',
+    ],
+    languageOptions: {
+      parserOptions: { project: './tsconfig.scripts.json', tsconfigRootDir: import.meta.dirname },
+    },
+    rules: {
+      '@typescript-eslint/no-floating-promises': ['error', { ignoreVoid: false }],
+      '@typescript-eslint/await-thenable': 'error',
+      '@typescript-eslint/no-misused-promises': 'error',
+    },
+  },
+  {
+    files: ['scripts/verify-package-consumer.mjs'],
+    rules: { '@typescript-eslint/no-misused-spread': 'error' },
+  },
+  {
+    files: ['test/**/*.mjs'],
     languageOptions: {
       parserOptions: { project: './tsconfig.scripts.json', tsconfigRootDir: import.meta.dirname },
     },

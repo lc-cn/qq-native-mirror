@@ -8,6 +8,7 @@ import test from 'node:test';
 const kernelUrl = new URL('../src/kernel.ts', import.meta.url).href;
 const authenticationUrl = new URL('../src/runtime/authentication-attempt.ts', import.meta.url).href;
 
+/** @param {string} source @param {string} [rejectionMode] */
 function runChild(source, rejectionMode = 'throw') {
   const result = spawnSync(
     process.execPath,
@@ -37,7 +38,7 @@ for (const [phase, rejectionMode] of [
   ['session-start', 'throw'],
   ['connected', 'warn'],
 ]) {
-  test(`${phase} observer failure is fatal with rejection mode ${rejectionMode} after primary settlement`, async () => {
+  await test(`${phase} observer failure is fatal with rejection mode ${rejectionMode} after primary settlement`, async () => {
     const dataDir = await mkdtemp(join(tmpdir(), 'qq-background-failure-'));
     try {
       const child = runChild(
@@ -94,7 +95,7 @@ for (const [phase, rejectionMode] of [
   });
 }
 
-test('authentication poll owns a secondary rejection without replaying the native call', () => {
+await test('authentication poll owns a secondary rejection without replaying the native call', () => {
   const child = runChild(`
     import { AuthenticationAttempt } from ${JSON.stringify(authenticationUrl)};
     ${monitor}

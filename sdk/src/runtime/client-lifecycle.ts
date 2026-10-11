@@ -403,7 +403,17 @@ export class ClientLifecycle {
     }
   }
   close(): Promise<void> {
-    return (this.#closePromise ??= this.#finishClose());
+    if (this.#closePromise) return this.#closePromise;
+    let resolve!: () => void;
+    let reject!: (reason: unknown) => void;
+    const promise = new Promise<void>((fulfilled, rejected) => {
+      resolve = fulfilled;
+      reject = rejected;
+    });
+    // State observers run synchronously and may close again before shutdown awaits.
+    this.#closePromise = promise;
+    this.#finishClose().then(resolve, reject);
+    return promise;
   }
   async #stopWorker(waitForExit = false): Promise<void> {
     const worker = this.#worker;

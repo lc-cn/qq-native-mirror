@@ -8,5 +8,12 @@
     "allowJs": true,
     "checkJs": true
   },
-  "include": ["src/**/*.ts", "scripts/**/*.ts", "scripts/consumers/**/*.mjs"]
+  "include": [
+    "src/**/*.ts",
+    "scripts/**/*.ts",
+    "scripts/consumers/**/*.mjs",
+    "scripts/verify-package-consumer.mjs",
+    "scripts/node-license-download.mjs",
+    "test/**/*.mjs"
+  ]
 }

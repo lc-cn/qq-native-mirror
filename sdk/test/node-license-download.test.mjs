@@ -6,10 +6,11 @@ const document =
   'Node.js is licensed for use as follows:\n"""\nCopyright Node.js contributors. All rights reserved.\nPermission is hereby granted, free of charge\nTHE SOFTWARE IS PROVIDED "AS IS"\n"""\nThis license applies to parts of Node.js originating from the\n"""\nThird-party owned fixture\n"""\n';
 // Owned synthetic license and explicit test digest; never a claim of official content.
 const fixtureSha = createHash('sha256').update(document).digest('hex');
+/** @param {unknown} version @param {import("../scripts/node-license-download.mjs").NodeLicenseOptions} [options] */
 const downloadNodeLicense = (version, options = {}) =>
   actualDownload(version, { expectedSha256: fixtureSha, ...options });
 const response = () => new Response(document);
-test('official fixed URL, no redirects, returns captured bytes', async () => {
+await test('official fixed URL, no redirects, returns captured bytes', async () => {
   const bytes = await downloadNodeLicense('v24.20.0', {
     fetch: async (url, options) => {
       assert.equal(url, 'https://raw.githubusercontent.com/nodejs/node/v24.20.0/LICENSE');
@@ -20,18 +21,23 @@ test('official fixed URL, no redirects, returns captured bytes', async () => {
   });
   assert.equal(bytes.toString(), document);
 });
-test('transport, 429 and 5xx get at most three attempts', async () => {
+await test('transport, 429 and 5xx get at most three attempts', async () => {
   for (const kind of ['transport', 429, 503]) {
     let calls = 0;
+    /** @type {number[]} */
     const waits = [];
     await assert.rejects(
       downloadNodeLicense('v24.20.0', {
         fetch: async () => {
           calls++;
           if (kind === 'transport') throw new TypeError('fetch failed');
+          assert.equal(typeof kind, 'number');
+          if (typeof kind !== 'number') throw new Error('Unreachable transport fixture');
           return new Response('', { status: kind });
         },
-        wait: async (ms) => waits.push(ms),
+        wait: async (ms) => {
+          waits.push(ms);
+        },
       }),
       /download failed/,
     );
@@ -50,7 +56,7 @@ test('transport, 429 and 5xx get at most three attempts', async () => {
   );
   assert.equal(calls, 2);
 });
-test('permanent HTTP, bad/oversized/truncated license fail once', async () => {
+await test('permanent HTTP, bad/oversized/truncated license fail once', async () => {
   for (const make of [
     () => new Response('', { status: 404 }),
     () => new Response('<html>no</html>'),
@@ -73,7 +79,7 @@ test('permanent HTTP, bad/oversized/truncated license fail once', async () => {
     assert.equal(calls, 1);
   }
 });
-test('invalid version/options reject before fetch and arbitrary failure does not retry', async () => {
+await test('invalid version/options reject before fetch and arbitrary failure does not retry', async () => {
   for (const version of ['24.20.0', 'v24.20.0/../main', 'v24.20.0-beta', null])
     await assert.rejects(
       downloadNodeLicense(version, { fetch: () => assert.fail('dispatch') }),
@@ -95,7 +101,7 @@ test('invalid version/options reject before fetch and arbitrary failure does not
   );
   assert.equal(calls, 1);
 });
-test('deadline bounds pending fetch and observes late rejection', async () => {
+await test('deadline bounds pending fetch and observes late rejection', async () => {
   let calls = 0;
   await assert.rejects(
     downloadNodeLicense('v24.20.0', {
@@ -114,7 +120,7 @@ test('deadline bounds pending fetch and observes late rejection', async () => {
   await new Promise((resolve) => setTimeout(resolve, 25));
 });
 
-test('official default pins reject synthetic content; unknown versions need trusted pin', async () => {
+await test('official default pins reject synthetic content; unknown versions need trusted pin', async () => {
   let calls = 0;
   await assert.rejects(
     actualDownload('v24.20.0', {
@@ -139,7 +145,7 @@ test('official default pins reject synthetic content; unknown versions need trus
     /Trusted Node license SHA/,
   );
 });
-test('deadline does not await a stalled body cancellation', async () => {
+await test('deadline does not await a stalled body cancellation', async () => {
   let calls = 0;
   await assert.rejects(
     downloadNodeLicense('v24.20.0', {
@@ -164,7 +170,7 @@ test('deadline does not await a stalled body cancellation', async () => {
   assert.equal(calls, 3);
 });
 
-test('decoded compressed HTTP body is checked by decoded bound and SHA, not encoded length', async () => {
+await test('decoded compressed HTTP body is checked by decoded bound and SHA, not encoded length', async () => {
   for (const encoding of ['gzip', 'br']) {
     let calls = 0;
     const bytes = await downloadNodeLicense('v24.20.0', {

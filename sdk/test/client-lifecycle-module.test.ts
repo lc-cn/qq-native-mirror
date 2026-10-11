@@ -196,3 +196,78 @@ test('automatic reconnect preserves an opaque rejection on the unknown outlet', 
     await lifecycle.close();
   }
 });
+
+test('synchronous closing observer receives the same promise until actual worker exit', async () => {
+  const f = workerFixture();
+  f.worker.send = ((
+    message: { id: number; method: string },
+    callback: (error: Error | null) => void,
+  ) => {
+    f.sent.push(message);
+    callback(null);
+    return true;
+  }) as typeof f.worker.send;
+  let nested: Promise<void> | undefined;
+  const states: unknown[] = [];
+  const lifecycle = new ClientLifecycle({
+    worker: f.worker,
+    timeout: 1000,
+    emit(event, value) {
+      if (event === 'state') {
+        states.push(value);
+        if (value === 'closing') nested = lifecycle.close();
+      }
+    },
+    forward() {},
+    exportsUpdated() {},
+  });
+  const closing = lifecycle.close();
+  assert.equal(nested, closing);
+  let settled = false;
+  closing.then(
+    () => {
+      settled = true;
+    },
+    () => {
+      settled = true;
+    },
+  );
+  f.events.emit('message', { id: f.sent[0].id, result: null });
+  await new Promise<void>((resolve) => setImmediate(resolve));
+  assert.equal(settled, false);
+  assert.deepEqual(states, ['closing']);
+  assert.equal(f.sent.length, 1);
+  Object.assign(f.worker, { exitCode: 0 });
+  f.events.emit('exit', 0, null);
+  await closing;
+  assert.deepEqual(states, ['closing', 'closed']);
+  assert.equal(lifecycle.close(), closing);
+});
+test('reentrant close shares the original cleanup rejection without another attempt', async () => {
+  const f = workerFixture();
+  const failure = new Error('Controlled cleanup failure');
+  let kills = 0;
+  f.worker.send = ((_message: unknown, callback: (error: Error | null) => void) => {
+    callback(new Error('Controlled close send failure'));
+    return true;
+  }) as typeof f.worker.send;
+  f.worker.kill = () => {
+    kills++;
+    throw failure;
+  };
+  let nested: Promise<void> | undefined;
+  const lifecycle = new ClientLifecycle({
+    worker: f.worker,
+    timeout: 1000,
+    emit(event, value) {
+      if (event === 'state' && value === 'closing') nested = lifecycle.close();
+    },
+    forward() {},
+    exportsUpdated() {},
+  });
+  const closing = lifecycle.close();
+  assert.equal(nested, closing);
+  await assert.rejects(closing, (error: unknown) => error === failure);
+  assert.equal(lifecycle.close(), closing);
+  assert.equal(kills, 1);
+});
