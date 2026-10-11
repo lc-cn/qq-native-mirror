@@ -65,6 +65,7 @@ export interface ServiceOperationContracts {
   renameFriendCategory: Operation<{ categoryId: number; name: string }, void>;
   deleteFriendCategory: Operation<{ categoryId: number }, void>;
   reorderFriendCategories: Operation<{ categories: readonly FriendCategoryOrderEntry[] }, void>;
+  setFriendCategory: Operation<{ userId: string; categoryId: number }, void>;
   listFriends: Operation<undefined, Friend[]>;
   listFriendCategories: Operation<undefined, FriendCategory[]>;
   getUserProfile: Operation<{ userId: string }, UserProfile>;

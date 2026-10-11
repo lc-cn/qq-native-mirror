@@ -366,6 +366,7 @@ test('category composition cannot regain input or creation completion policy', (
     for (const to of [
       'src/features/contacts/friend-categories.ts',
       'src/features/contacts/friend-category-create.ts',
+      'src/features/contacts/friend-category-completion.ts',
     ])
       assert.ok(dependencyViolation({ from: 'src/native-services.ts', to, typeOnly }));
     assert.equal(
@@ -768,5 +769,32 @@ test('prepared outbound contracts own only data declarations and their reviewed 
       );
       assert.equal(statement.members.some(ts.isIndexSignatureDeclaration), false);
     }
+  }
+});
+
+test('category completion has exact callers and cannot regain native or identity ownership', () => {
+  const completion = 'src/features/contacts/friend-category-completion.ts';
+  for (const typeOnly of [false, true]) {
+    for (const from of [
+      'src/features/contacts/friend-categories.ts',
+      'src/features/contacts/contact-directory.ts',
+      'src/features/contacts/new-operation.ts',
+      'src/client/qq-client.ts',
+      'src/cli/commands/contacts.ts',
+      'src/native-services.ts',
+    ])
+      assert.ok(dependencyViolation({ from, to: completion, typeOnly }));
+    for (const from of [
+      'src/features/contacts/friend-category-mutations.ts',
+      'src/features/contacts/friend-category-assignment.ts',
+    ])
+      assert.equal(dependencyViolation({ from, to: completion, typeOnly }), undefined);
+    for (const to of [
+      'src/features/contacts/contact-directory.ts',
+      'src/native/native-object.ts',
+      'src/native/native-contracts.ts',
+      'src/runtime/native-service-lifetime.ts',
+    ])
+      assert.ok(dependencyViolation({ from: completion, to, typeOnly }));
   }
 });

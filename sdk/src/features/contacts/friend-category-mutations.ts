@@ -6,7 +6,7 @@ import {
 } from './friend-categories.ts';
 import { createFriendCategory } from './friend-category-create.ts';
 import type { CreatedFriendCategory } from '../../contracts/contacts.ts';
-import { nativeResultError } from '../../errors.ts';
+import { completeFriendCategoryMutation } from './friend-category-completion.ts';
 
 export interface FriendCategoryMutationsPort {
   addCategoryV2?(name: string, members: undefined): unknown;
@@ -62,62 +62,11 @@ export function createFriendCategoryMutations(context: FriendCategoryMutationsCo
     const method = service?.[methodName];
     alive();
     if (typeof method !== 'function') throw new Error(`Missing native method ${methodName}`);
-    let dispatched = false;
-    const completionAlive = () => {
-      if (signal.aborted)
-        throw new Error(
-          `Native services closed during friend category ${action}; remote effect unknown`,
-        );
-    };
-    let abort!: () => void;
-    let timer!: ReturnType<typeof setTimeout>;
-    const stopped = new Promise<never>((_, reject) => {
-      abort = () =>
-        reject(
-          dispatched
-            ? new Error(
-                `Native services closed during friend category ${action}; remote effect unknown`,
-              )
-            : signal.reason,
-        );
-      signal.addEventListener('abort', abort, { once: true });
-      timer = setTimeout(
-        () =>
-          reject(new Error(`Native friend category ${action} timed out; remote effect unknown`)),
-        5000,
-      );
-    });
-    void stopped.catch(() => {});
-    try {
-      alive();
-      dispatched = true;
-      const pending = Promise.resolve(Reflect.apply(method, service, args) as unknown);
-      const result = await Promise.race([pending, stopped]);
-      completionAlive();
-      let code: unknown;
-      try {
-        if (result && typeof result === 'object' && !Array.isArray(result)) {
-          const descriptor = Object.getOwnPropertyDescriptor(result, 'result');
-          if (descriptor && 'value' in descriptor) code = descriptor.value;
-        }
-      } catch {
-        completionAlive();
-        throw nativeResultError(`Invalid native friend category ${action} result`, {});
-      }
-      completionAlive();
-      if (
-        typeof code !== 'number' ||
-        !Number.isInteger(code) ||
-        code < -0x8000_0000 ||
-        code > 0x7fff_ffff
-      )
-        throw nativeResultError(`Invalid native friend category ${action} result`, {});
-      if (code !== 0)
-        throw nativeResultError(`Native friend category ${action} failed`, { result: code });
-    } finally {
-      clearTimeout(timer);
-      signal.removeEventListener('abort', abort);
-    }
+    return completeFriendCategoryMutation(
+      action,
+      () => Reflect.apply(method, service, args) as unknown,
+      signal,
+    );
   }
   return {
     async create(name: unknown): Promise<CreatedFriendCategory> {

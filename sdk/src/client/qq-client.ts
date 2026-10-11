@@ -10,6 +10,7 @@ import { ClientLifecycle } from '../runtime/client-lifecycle.ts';
 import type { OperationCall, OperationResult } from '../runtime/operation-contracts.ts';
 import {
   friendCategoryName,
+  captureFriendCategoryAssignment,
   captureRenameFriendCategory,
   captureFriendCategoryId,
   captureFriendCategoryOrder,
@@ -188,6 +189,13 @@ export class QQClient extends EventEmitter<ClientEvents> {
     return this.#operation('reorderFriendCategories', {
       categories: captureFriendCategoryOrder(categories),
     });
+  }
+  /** Assign once. Native ACK does not certify remote state; a timeout leaves the effect unknown. */
+  async setFriendCategory(userId: string, categoryId: number): Promise<void> {
+    return this.#operation(
+      'setFriendCategory',
+      captureFriendCategoryAssignment(userId, categoryId),
+    );
   }
   listFriendCategories(): Promise<FriendCategory[]> {
     return this.#operation('listFriendCategories');

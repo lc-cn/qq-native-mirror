@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import {
+  captureFriendCategoryAssignment,
   captureFriendCategoryId,
   captureFriendCategoryOrder,
   captureRenameFriendCategory,
@@ -84,6 +85,15 @@ export const contactsCommands = {
       if (!/^\d+$/.test(rawId)) throw new Error('--category-id must be a uint32 decimal integer');
       const categoryId = captureFriendCategoryId(Number(rawId));
       return (client) => client.deleteFriendCategory(categoryId);
+    },
+  },
+  'friend-category-set': {
+    flags: ['config', 'uin', 'target', 'category-id'],
+    prepare(flags) {
+      const rawId = required(flags, 'category-id');
+      if (!/^\d+$/.test(rawId)) throw new Error('--category-id must be a uint32 decimal integer');
+      const captured = captureFriendCategoryAssignment(required(flags, 'target'), Number(rawId));
+      return (client) => client.setFriendCategory(captured.userId, captured.categoryId);
     },
   },
   'friend-category-reorder': {

@@ -8,6 +8,7 @@ export const SERVICE_OPERATIONS = Object.freeze([
   'renameFriendCategory',
   'deleteFriendCategory',
   'reorderFriendCategories',
+  'setFriendCategory',
   'listFriends',
   'listFriendCategories',
   'listGroups',

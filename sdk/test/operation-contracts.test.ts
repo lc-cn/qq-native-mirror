@@ -36,6 +36,7 @@ function diagnostics(path?: string, replacement?: string): ts.Diagnostic[] {
 test('actual internal dispatch links every command to its payload and result without widening', () => {
   assert.deepEqual(diagnostics(), [], 'The actual source must compile before negative fixtures.');
   const cases = [
+    ['captureFriendCategoryAssignment(userId, categoryId)', "{ userId, categoryId: '7' }"],
     ["this.#operation('listFriends')", "this.#operation('listGroups')"],
     [
       "this.#operation('setGroupMute', { groupId, enabled })",

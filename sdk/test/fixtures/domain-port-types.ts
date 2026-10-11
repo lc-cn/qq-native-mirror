@@ -1,3 +1,4 @@
+import type { FriendCategoryAssignmentContext } from '../../src/features/contacts/friend-category-assignment.ts';
 import type { FriendCategoryMutationsContext } from '../../src/features/contacts/friend-category-mutations.ts';
 import type { NativeServiceLifetime } from '../../src/runtime/native-service-lifetime.ts';
 import type { ContactDirectoryContext } from '../../src/features/contacts/contact-directory.ts';
@@ -463,3 +464,16 @@ function verifyPreparedSubmission(
   void ordinaryCard;
 }
 void verifyPreparedSubmission;
+
+function verifyCategoryAssignmentPort(context: FriendCategoryAssignmentContext) {
+  // @ts-expect-error Assignment cannot acquire unrelated native services.
+  context.getGroupService();
+  // @ts-expect-error The assignment port cannot create categories.
+  context.getBuddyService()?.addCategory('name');
+  // @ts-expect-error Native UID is a string, not a numeric UIN.
+  context.getBuddyService()?.setBuddyCategory?.(123, 7);
+  const receipt = context.getBuddyService()?.setBuddyCategory?.('u_fixture', 7);
+  // @ts-expect-error Opaque native completion must be validated by its owner.
+  void receipt.result;
+}
+void verifyCategoryAssignmentPort;

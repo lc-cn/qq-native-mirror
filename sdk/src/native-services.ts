@@ -1,3 +1,4 @@
+import { createFriendCategoryAssignment } from './features/contacts/friend-category-assignment.ts';
 import { createFriendCategoryMutations } from './features/contacts/friend-category-mutations.ts';
 import { createGroupSearch } from './features/groups/group-search.ts';
 import { createGroupFiles } from './features/groups/group-files.ts';
@@ -9,6 +10,7 @@ import { NativeServiceLifetime } from './runtime/native-service-lifetime.ts';
 import { NativeListenerOwner } from './runtime/native-listener-owner.ts';
 import type { NativeServiceContext } from './runtime/native-service-context.ts';
 import {
+  supportsCategoryAssignment,
   supportsCategoryCreation,
   supportsCategoryRenaming,
   supportsCategoryDeletion,
@@ -117,6 +119,15 @@ export function createNativeServices(context: NativeServiceContext) {
       }),
     );
     const { uidFor } = directory;
+    const categoryAssignment = own(
+      createFriendCategoryAssignment({
+        signal: lifetime.signal,
+        canAssign: () => supportsCategoryAssignment(nativeContracts, version),
+        resolveUid: uidFor,
+        awaitAlive,
+        getBuddyService: () => service('Buddy'),
+      }),
+    );
     const messageResolution = createMessageResolution({
       signal: lifetime.signal,
       resolveUid: uidFor,
@@ -352,6 +363,8 @@ export function createNativeServices(context: NativeServiceContext) {
       ): Promise<unknown> {
         if (lifetime.closed) throw new Error('Native services are closed');
         switch (method) {
+          case 'setFriendCategory':
+            return categoryAssignment.assign(payload.userId, payload.categoryId);
           case 'renameFriendCategory': {
             return categoryMutations.rename(payload.categoryId, payload.name);
           }

@@ -1,0 +1,223 @@
+{
+  "schemaVersion": 1,
+  "profiles": [
+    {
+      "platform": "linux",
+      "arch": "x64",
+      "wrapperSha256": "7882b8e3055cd38584861042befacd8be9939896f5cbbca6fa4a230926b48526",
+      "clientVersion": "3.2.32-52194",
+      "manifestSha256": "8a7b8f44327fa8408dfee2885c0e23d94b4152ff1e70ce0ee735669803066a87",
+      "method": "setBuddyCategory",
+      "argumentCount": 2,
+      "arguments": ["UID string", "categoryId:uint32"],
+      "binding": "0x36b1910",
+      "core": "0x29b0ab0",
+      "receiver": "unwrap firstqword at36b1abe; virtual+c0 at36b1aef; KernelBuddy AP8b8aeb8+c0 ->29b0ab0",
+      "normalResult": "Promise created36b19c4; AP8bfcf70+10 ->3584d60 ->3585090 ->35852f0 ->3585330;358537b signed int32 load ->3585386 napi_create_int32 ->358539f result;35853f7/3585410 errMsg string;3585442 resolve deferred",
+      "identityDataflow": "29b0ac7 saves RSI/R15;29b0db8/dbd writes string selector1000; same instance request/closure ->47ebe50 ->4812a50 ->48585c0 ->4852040 BuddyExtSpecifyUidCodec ->4851e40 field1 strings",
+      "categoryDataflow": "29b0ac4 EDX/R14D ->29b0dc8 EDX ->29b0dce selector61af ->29b0dd3 setter; same categoryId uint32 row0 / V2 codec61af established by namespace-binder and linked receipts",
+      "listCategoryIdNamespaceVerified": true,
+      "functions": [
+        {
+          "start": "0x48405c0",
+          "end": "0x4840680",
+          "rawSha256": "9866eca97268fec613115dde3dd9b99c60efe5e6af7b593ae99ae811c6b6ed85",
+          "disassembly": "48405c0.txt"
+        },
+        {
+          "start": "0x4840680",
+          "end": "0x4840730",
+          "rawSha256": "5bbfb601223f8a2fb685f92c5fad64b74acbc59699b8a46471390baee809546d",
+          "disassembly": "4840680.txt"
+        },
+        {
+          "start": "0x48584d0",
+          "end": "0x48585c0",
+          "rawSha256": "dbe37b6769bc02bf2ec137021b3d71ac4346ccb8e5ec82c10c1e1c5d152ca65d",
+          "disassembly": "48584d0.txt"
+        },
+        {
+          "start": "0x48585c0",
+          "end": "0x4858dd0",
+          "rawSha256": "10a095b20afb8862ca2995e0603eb86c9c8610ed5d4b94fed2cc11fae86ad258",
+          "disassembly": "48585c0.txt"
+        },
+        {
+          "start": "0x4858dd0",
+          "end": "0x4858f60",
+          "rawSha256": "8accb532f222c85d59dbd06aff71fdda1919cb241c20aaa91b6e533708af3bc9",
+          "disassembly": "4858dd0.txt"
+        },
+        {
+          "start": "0x4852040",
+          "end": "0x48520a0",
+          "rawSha256": "6e52d21117b354b8484b2e933b2fe220c953b3b8f43d53adb4ac6d29d7698113",
+          "disassembly": "4852040.txt"
+        },
+        {
+          "start": "0x4851e20",
+          "end": "0x4851e30",
+          "rawSha256": "d2337bdeb05f36bba20a5a9d03a56d5f156559a2cd9867312e3d0662411a134e",
+          "disassembly": "4851e20.txt"
+        },
+        {
+          "start": "0x4851e30",
+          "end": "0x4851e40",
+          "rawSha256": "35c1d590513fedbbcd51d72c8d62d2a05ad58b8aa3e1e3186dcf7f601b59841a",
+          "disassembly": "4851e30.txt"
+        },
+        {
+          "start": "0x4851e40",
+          "end": "0x4852030",
+          "rawSha256": "747b44cac093ad65f3ea130977e2796a493c390007631b02a98e696c7187d2a7",
+          "disassembly": "4851e40.txt"
+        }
+      ],
+      "abiFunctions": [
+        {
+          "start": "0x36b1910",
+          "end": "0x36b1bf0",
+          "rawSha256": "01d562114260f8454f91749949b1953d025ba8e8b820dbf9393a667edfbe6bcc",
+          "disassemblySha256": "98035ac10ff2ae977df98f12cc1c8cd335d7dd489f945c3318033d47da8124e4"
+        },
+        {
+          "start": "0x6c45d20",
+          "end": "0x6c45e10",
+          "rawSha256": "66fb34a948d98221f6be5cbe151cc95e6d2c0decdc5e0559742705961fa3a58e",
+          "disassemblySha256": "2246396aaf6e703f6c460d40ab1e88b8debad5ce03d12627c9eb6207c14c2223"
+        },
+        {
+          "start": "0x6c45ee0",
+          "end": "0x6c45fb0",
+          "rawSha256": "55c2df40c32082d9e3784ae6556011febbb84d71e3404a8488958b5cc8ae3440",
+          "disassemblySha256": "5e5dad2512d440ed2ba7649dd13fdbbbd09fa659095084e1d1f29b216dc13327"
+        },
+        {
+          "start": "0x3585330",
+          "end": "0x35854a0",
+          "rawSha256": "af00843b0a3c16ceb7a33402397abdb4fb9643c0b4910c3ca6aa67d9754bb89a",
+          "disassemblySha256": "6aa2baba4570e1dbef23d57d182afd2515a6a91b0926ba126c4fa0f57ab3f569"
+        },
+        {
+          "start": "0x29b0ab0",
+          "end": "0x29b10d0",
+          "rawSha256": "80eb4b8f932268306696ade0263e45a8383fcf5e5a45a8a4aeffd7095c0ed46b",
+          "disassemblySha256": "1f32602715ae0f3025030b284efd2fe3f59ad8b243c4052b17d0d19813b57982"
+        }
+      ]
+    }
+  ],
+  "relocations": {
+    "0x8ca2070": {
+      "type": 8,
+      "target": "0x8ca20b8"
+    },
+    "0x8ca20c0": {
+      "type": 8,
+      "target": "0xda6969"
+    },
+    "0x8ca20a0": {
+      "type": 8,
+      "target": "0x4851e40"
+    },
+    "0x8ca2b08": {
+      "type": 8,
+      "target": "0x8ca2b50"
+    },
+    "0x8ca2b58": {
+      "type": 8,
+      "target": "0xda6c2d"
+    },
+    "0x8ca2b40": {
+      "type": 8,
+      "target": "0x48585c0"
+    }
+  },
+  "typeNames": {
+    "0xda6969": "N2nt7im_core23BuddyExtSpecifyUidCodecE",
+    "0xda6c2d": "N2nt7im_core30BuddiesRelationChainPullWorkerE"
+  },
+  "sourceEvidence": [
+    {
+      "path": "architecture-refactor/friend-category-membership-next/linux-x64/facts.json",
+      "sha256": "7c2fa3c94344ecd8ea76600264a848609ede5c5d0c5d700eb4ec2f5f0d4f0c7d"
+    },
+    {
+      "path": "architecture-refactor/friend-category-membership-next/linux-x64/follow.json",
+      "sha256": "34b9c626d5babd51ed2aafd6e699a19a90c32314e20ecc8fda7a7dbad521fc3a"
+    },
+    {
+      "path": "architecture-refactor/friend-category-membership-next/linux-x64/namespace-binder.json",
+      "sha256": "95d5604db31f8003f1b7b15cc836b2f1b5d3fb4234a36e0165673d5c6c23d918"
+    },
+    {
+      "path": "architecture-refactor/category-membership-consumer-next/request-consumer.json",
+      "sha256": "2043d68762eb8797c3e9c7f00f4878e034f7e7cec4bdb0702f24e921cc272d13"
+    },
+    {
+      "path": "architecture-refactor/category-membership-consumer-next/host-consumer-followup.json",
+      "sha256": "1e4b15d2b471f89b42b5fb32f509bc57344ddaa092756a0cdc6a340950879b55"
+    },
+    {
+      "path": "architecture-refactor/category-membership-consumer-next/closure-identity-followup.json",
+      "sha256": "3a2c6a93fd67706174a50a97ed932b9425f243d28361d223775bfc4a431cfda8"
+    },
+    {
+      "path": "architecture-refactor/category-membership-consumer-next/list-identity-followup.json",
+      "sha256": "7729106e54405718512acc363e909fbfbb767199187169f8ed20136a8a0c6c74"
+    },
+    {
+      "path": "architecture-refactor/category-membership-consumer-next/force-fetch-identity.json",
+      "sha256": "abbbf0c01d551760d3d31faef537a73ee25173cebcabdbcb5920afebd50b2f13"
+    },
+    {
+      "path": "architecture-refactor/category-membership-consumer-next/force-fetch-raw.json",
+      "sha256": "d25a37a37cbec5c9508ad2b4c4a11f942a775e0234a2e8d273e556446f8687cb"
+    },
+    {
+      "path": "architecture-refactor/category-membership-consumer-next/parent-force-fetch-replay.json",
+      "sha256": "ef81ee0a3be5529087458576ca265d95bd4653fb8dc2ec4302c1d2f3342bf682"
+    },
+    {
+      "path": "category-mutation-rename-delete-x64/v2-field-bridge.json",
+      "sha256": "552adc7af0941b71451a7f28cb0bf8888942dceaad09a42d79436150b6c9ae11"
+    },
+    {
+      "path": "category-mutation-rename-delete-x64/response-bridge.json",
+      "sha256": "d6ce32737513458c3bdddf2d652e4ce7df54003c9aae35da06bd37d7f9844fdd"
+    },
+    {
+      "path": "category-mutation-rename-delete-x64/remote-followup/remote-bridge.json",
+      "sha256": "3437830fb05ed62e0178daf0f0b4e25e29b06464d6d1dc3851001a1163729bf0"
+    },
+    {
+      "path": "architecture-refactor/category-delete-next/linux-delete-core-recheck/instance-followup/node-carrier-slice.json",
+      "sha256": "a10d746f77ba26a83066b2887e13bd1158d4074ca195314ec44554ea4178c002"
+    },
+    {
+      "path": "architecture-refactor/category-delete-next/linux-delete-core-recheck/instance-followup/session-target-slice.json",
+      "sha256": "a99319e5655644d1ff4b1225180c80678b55a6d52a3de08b73503dc67b9079a3"
+    }
+  ],
+  "acceptancePolicy": "Only own-data finite int32 result strictly numeric0 yields void native ACK; nonzero safe numeric code rejects without errMsg disclosure. This is SDK acceptance, not remote effect evidence.",
+  "publicScope": "Single user assignment via setFriendCategory(userId,categoryId); public account ID resolves to native UID before dispatch. No batch grant.",
+  "invariants": [
+    "Validate and capture public userId/categoryId primitives before acquiring services; reuse existing ID resolution policy rather than invent UID/UIN parsing.",
+    "Resolve public userId to captured native UID once; do not pass original UIN to native string slot.",
+    "Capability match must precede first native acquisition/dispatch and be exact profile/version/wrapper hash; only this Linux x64 scope presently proved.",
+    "Acquire nullable service and capture method once, check alive after each fallible/reentrant getter, Reflect.apply with original receiver and exactly2 arguments.",
+    "No mutation before validation/UID resolution completion; close or abort before dispatch preserves original cancellation and issues no write.",
+    "One native dispatch, no retry/replay/readback; deadline5000 and postdispatch cancellation report remote effect unknown.",
+    "Observe late native rejection; per-wait timers/listeners are detached; successful result projection followed by alive guard cannot publish success after reentrant close.",
+    "Return void ACK only; no claimed category name, membership server receipt, atomicity or verified relationship effect."
+  ],
+  "limits": [
+    "No real account/server mutation outcome; native ACK does not establish membership effect.",
+    "Other5 platform identity dataflows not independently bound here; do not extend gate.",
+    "No proof of protected/default-category admissibility or category existence; uint32 including0 alone cannot establish those policies.",
+    "Batch setBatchBuddyCategory identity/semantics remain a separate unproved capability.",
+    "Protocol field numbers and concrete codec identity establish static routing only, not server acceptance or membership change."
+  ],
+  "nativeExecuted": false,
+  "accountUsed": false
+}

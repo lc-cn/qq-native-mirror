@@ -181,3 +181,29 @@ test('folder creation captures its name and rejects invalid intent before client
   } as unknown as QQClient);
   assert.deepEqual(result, expected);
 });
+
+test('category assignment captures target and uint32 before client acquisition', async () => {
+  validateCommandFlags('friend-category-set', {
+    config: 'fixture',
+    uin: '321',
+    target: '00123',
+    'category-id': '7',
+  });
+  for (const target of ['0', 'all', '*', ' 123'])
+    await assert.rejects(prepareCommand('friend-category-set', { target, 'category-id': '7' }));
+  for (const id of ['-1', '1.2', '1e2', '4294967296'])
+    await assert.rejects(
+      prepareCommand('friend-category-set', { target: '123', 'category-id': id }),
+    );
+  const flags = { target: '00123', 'category-id': '7' };
+  const action = await prepareCommand('friend-category-set', flags);
+  flags.target = '999';
+  flags['category-id'] = '8';
+  const calls: unknown[][] = [];
+  await action({
+    setFriendCategory: async (...args: unknown[]) => {
+      calls.push(args);
+    },
+  } as unknown as QQClient);
+  assert.deepEqual(calls, [['00123', 7]]);
+});

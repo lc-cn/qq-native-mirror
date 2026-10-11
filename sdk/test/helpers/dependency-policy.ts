@@ -168,6 +168,17 @@ export function dependencyViolation({ from, to, typeOnly }: SourceDependency): s
       ? undefined
       : 'Prepared outbound contracts only reference their reviewed native peer data type.';
   if (!to.startsWith('src/')) return externalDependencyViolation(from, to, typeOnly);
+  if (to === 'src/features/contacts/friend-category-completion.ts')
+    return [
+      'src/features/contacts/friend-category-mutations.ts',
+      'src/features/contacts/friend-category-assignment.ts',
+    ].includes(from)
+      ? undefined
+      : 'Category ACK completion is private to its mutation owners.';
+  if (from === 'src/features/contacts/friend-category-completion.ts')
+    return to === 'src/errors.ts'
+      ? undefined
+      : 'Category ACK completion interprets receipts without acquiring native services or domain owners.';
   if (from === 'src/native/native-manifest.ts')
     return typeOnly && to === 'src/contracts/native.ts'
       ? undefined
@@ -261,6 +272,7 @@ export function dependencyViolation({ from, to, typeOnly }: SourceDependency): s
     [
       'src/features/contacts/friend-categories.ts',
       'src/features/contacts/friend-category-create.ts',
+      'src/features/contacts/friend-category-completion.ts',
     ].includes(to)
   )
     return 'Category validation and write completion belong to the contact mutation owner.';

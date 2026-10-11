@@ -1,3 +1,4 @@
+import { sendUserId } from '../../validation/identifiers.ts';
 import { nativeResultError } from '../../errors.ts';
 import type { Friend, FriendCategory, FriendCategoryOrderEntry } from '../../contracts/contacts.ts';
 
@@ -150,4 +151,9 @@ export function captureFriendCategoryOrder(value: unknown): readonly FriendCateg
     rows.push(Object.freeze({ categoryId, name }));
   }
   return Object.freeze(rows);
+}
+
+/** Capture public identity and measured category selector before UID lookup. */
+export function captureFriendCategoryAssignment(userId: unknown, categoryId: unknown) {
+  return { userId: sendUserId(userId), categoryId: captureFriendCategoryId(categoryId) };
 }

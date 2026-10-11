@@ -604,3 +604,25 @@ introduced. The installed mutation consumer is named for all category mutations
 and separately tests each measured capability and unsupported profile.
 
 [Architecture overview](../architecture.md) · [Development guide](../development.md)
+
+Single-friend category assignment has a separate domain owner because its native
+call requires UID resolution. It captures the caller's identity/category before
+checking the exact binary capability, resolves UID once through the contact
+directory, and checks its account/local lifetime before acquiring and invoking
+the Buddy method. Closing during UID resolution cannot dispatch a late write.
+The composition root binds these ports; it does not validate input or interpret
+mutation receipts.
+
+Rename, delete, reorder and assignment share the private
+`friend-category-completion` module. It owns the signed-int32 ACK policy, bounded
+wait, abort cleanup and unknown-effect errors after dispatch. Category creation
+keeps its distinct identity receipt. The dependency gate permits only the two
+mutation owners to import this completion module, and prevents it from acquiring
+native services or identity modules. Public facade and CLI reuse pure category
+capture; adding a feature does not grant them native execution dependencies.
+
+Assignment is enabled only for the measured Linux x64 profile recorded in
+`evidence/friend-category-assignment-contract.json`. Controlled installed-consumer
+checks exercise the public method, worker routing, CLI planning and native adapter
+with substituted services. These checks do not establish remote category changes
+or support for other binaries.

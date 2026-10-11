@@ -30,6 +30,7 @@ const usage = `qq-native-client <command> [options]
   friend-category-rename --config FILE --category-id UINT32 --name TEXT [--uin UIN]  Rename a friend category
   friend-category-delete --config FILE --category-id UINT32 [--uin UIN]  Delete a friend category
   friend-category-reorder --config FILE --categories-file JSON [--uin UIN]  Submit explicit category names and order
+  friend-category-set --config FILE --target UIN_OR_UID --category-id UINT32 [--uin UIN]  Assign a friend to a category
   friend-categories --config FILE [--uin UIN]  List categorized friends
   groups --config FILE [--uin UIN]      Restore login and list groups
   members --config FILE --group-id ID [--uin UIN]
