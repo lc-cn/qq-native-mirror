@@ -1,0 +1,40 @@
+sdk/test/native-package-fixture.test.ts
+  s_2104cc474f1ce5::t_569c4bd0bef3c6 1-62
+  s_2104cc474f1ce5::t_3134a3e100be6f 63-84
+sdk/test/worker-error-routes.test.ts
+  s_2104cc474f1ce5::t_2e6e4f91f49d2d 2,8,17
+sdk/test/helpers/native-package-fixture.ts
+  s_2104cc474f1ce5::t_712e08c7e326f6 1-30
+  s_2104cc474f1ce5::t_decd885afd728c 31-32
+sdk/scripts/consumers/worker-error-consumer-contract.mjs
+  s_2104cc474f1ce5::t_2e6e4f91f49d2d 148,351-369,371-374
+sdk/docs/architecture.md
+  s_2104cc474f1ce5::t_569c4bd0bef3c6 154-163
+sdk/docs/architecture/encapsulation.md
+  s_2104cc474f1ce5::t_280167331dea67 45-48
+  s_2104cc474f1ce5::t_2e6e4f91f49d2d 40-44,49
+sdk/test/installed-native.test.ts
+  s_2104cc474f1ce5::t_712e08c7e326f6 14,20,25,133
+sdk/src/runtime/client-lifecycle.ts
+  s_2104cc474f1ce5::t_a02ef169ed9ecc 287-300,302-305,307-323,325
+sdk/test/client-lifecycle-module.test.ts
+  s_2104cc474f1ce5::t_82f99499146109 274-397
+sdk/test/native-video-package.test.ts
+  s_2104cc474f1ce5::t_2a73504f23a2f9 3,9,46
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ee4c6af5dc60fb756a7f48dea672a5beb8e9a8ec",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
