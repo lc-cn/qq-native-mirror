@@ -390,7 +390,12 @@ export async function verifyForwardConsumer(packageRoot) {
               queueMicrotask(() => {
                 this.emit('message', {
                   id: request.id,
-                  result: request.method === 'close' ? null : [],
+                  result:
+                    request.method === 'close'
+                      ? null
+                      : request.method === 'sendMergedForward'
+                        ? { messageId: '42', sequence: '9', time: 100, resourceId: 'r' }
+                        : [],
                 });
                 if (request.method === 'close')
                   setImmediate(() => {
@@ -416,6 +421,81 @@ export async function verifyForwardConsumer(packageRoot) {
       client = new QQClient(worker, 500);
     try {
       worker.emit('message', { event: 'ready', payload: { uin: '456', uid: 'u_self' } });
+      let preparation = 0;
+      const merged = createNativeServices({
+        session: {
+          getMsgService: () => ({
+            addKernelMsgListener() {},
+            sendSsoCmdReqByContend() {
+              preparation++;
+              throw Error('Unexpected upload');
+            },
+          }),
+          getGroupService: () => ({ addKernelGroupListener() {} }),
+          getBuddyService: () => ({ addKernelBuddyListener() {} }),
+          getUixConvertService: () => ({
+            getUid() {
+              preparation++;
+              throw Error('Unexpected UID');
+            },
+          }),
+        },
+        version: '7.0.2-53644',
+        identity: { userId: '456', uid: 'u_self' },
+        events: { emit: () => {} },
+      });
+      try {
+        for (const boundary of mergedInputCases()) {
+          await assert.rejects(
+            Promise.resolve().then(() =>
+              Reflect.apply(client.sendMergedForward, client, [destination, boundary.nodes, {}]),
+            ),
+          );
+          await assert.rejects(
+            merged.invokeOperation('sendMergedForward', {
+              peer: destination,
+              nodes: boundary.nodes,
+            }),
+          );
+          assert.equal(boundary.reads(), 0);
+          assert.equal(worker.requests.length, 0);
+          assert.equal(preparation, 0);
+        }
+      } finally {
+        merged.close();
+      }
+      let ordinaryReads = 0,
+        iterations = 0;
+      const originalNode = { userId: '456', nickname: 'fixture', time: 100, text: 'originalNode' };
+      /** @template {object} T @param {T} value @returns {T} */
+      const descriptorInput = (value) =>
+        new Proxy(value, {
+          get() {
+            ordinaryReads++;
+            throw Error('Do not re-read caller fields');
+          },
+        });
+      const mergedNodes = [descriptorInput(originalNode)];
+      Object.defineProperty(mergedNodes, Symbol.iterator, {
+        value() {
+          iterations++;
+          return [{ ...originalNode, text: 'replacement' }][Symbol.iterator]();
+        },
+      });
+      assert.deepEqual(
+        await client.sendMergedForward(
+          descriptorInput(destination),
+          mergedNodes,
+          descriptorInput({ title: 'title' }),
+        ),
+        { messageId: '42', sequence: '9', time: 100, resourceId: 'r' },
+      );
+      assert.equal(ordinaryReads, 0);
+      assert.equal(iterations, 0);
+      assert.equal(worker.requests.length, 1);
+      assert.deepEqual(worker.requests[0].nodes, [originalNode]);
+      assert.deepEqual(worker.requests[0].options, { title: 'title' });
+      worker.requests.length = 0;
       await assert.rejects(client.getForwardMessages(peer, 'invalid-resource'), /numeric string/);
       assert.equal(worker.requests.length, 0);
       await client.getForwardMessages(peer, longId);
@@ -449,6 +529,7 @@ export async function verifyForwardConsumer(packageRoot) {
     }
     return {
       forwardMessageContract: true,
+      mergedForwardOwnedInputContract: true,
       forwardNamedPortsContract: true,
       forwardReentrantCloseContract: true,
       forwardPendingPeerCloseContract: true,
@@ -504,4 +585,38 @@ function controlledCloseWorker() {
     },
   });
   return worker;
+}
+
+/** Malformed later slots cannot be hidden by a caller iterator.
+ * @returns {{nodes:unknown[],reads:()=>number}[]} */
+function mergedInputCases() {
+  const node = { userId: '456', nickname: 'fixture', time: 100, text: 'text' };
+  let iteratorReads = 0,
+    slotReads = 0,
+    fieldReads = 0;
+  const hidden = [node, { ...node, text: 42 }];
+  Object.defineProperty(hidden, Symbol.iterator, {
+    value() {
+      iteratorReads++;
+      return [node][Symbol.iterator]();
+    },
+  });
+  const slot = Object.defineProperty(new Array(1), '0', {
+    get() {
+      slotReads++;
+      return node;
+    },
+  });
+  const field = Object.defineProperty({ ...node }, 'text', {
+    get() {
+      fieldReads++;
+      return 'text';
+    },
+  });
+  return [
+    { nodes: hidden, reads: () => iteratorReads },
+    { nodes: slot, reads: () => slotReads },
+    { nodes: [field], reads: () => fieldReads },
+    { nodes: Array(1), reads: () => 0 },
+  ];
 }

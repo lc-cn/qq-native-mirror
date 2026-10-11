@@ -146,11 +146,6 @@ export const crossFeatureDependencies = [
     reason: 'Attachment queries share pure peer/history input capture.',
   },
   {
-    from: 'src/features/forward/merged-forward-input.ts',
-    to: 'src/features/messages/send-input.ts',
-    reason: 'Forward nodes share validated message input capture.',
-  },
-  {
     from: 'src/features/messages/inbound-elements.ts',
     to: 'src/features/forward/received-forward.ts',
     reason: 'Received forward cards are projected as message elements.',

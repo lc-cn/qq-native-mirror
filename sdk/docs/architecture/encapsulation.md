@@ -416,6 +416,17 @@ captures input, resolves the destination, checks cancellation, then uploads and
 sends the card. Two deferred cleanup entries retain the original upload/read order
 and account cleanup error semantics. Construction never acquires native services.
 
+`merged-forward-input` owns the complete peer, node and card-option snapshot. It
+validates the captured own data descriptors, preserving strict field/prototype
+rules without re-reading caller properties. Dense node slots and the 1-100 bound
+come from the same array snapshot; caller iterators cannot replace nodes or hide
+a malformed later row. Selected accessors are rejected without execution. Proxy
+descriptor traps may still run; ordinary property reads are not used to construct
+the intent. Common identity rules come directly from `validation/identifiers`,
+so this owner has no dependency on ordinary message-send input. Existing wire
+and card formatters retain bounded UTF-8, uint32 and aggregate-size validation
+on the owned snapshot, before destination resolution or upload.
+
 `createForwardMessages` owns existing-message forwarding and merged-content reads.
 Its narrow message port exposes only `getMultiMsg` and `forwardMsg`; peer resolution
 and single/batch decoding are injected separately. It captures validated inputs
