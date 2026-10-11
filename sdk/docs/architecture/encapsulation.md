@@ -748,6 +748,14 @@ checks exercise the public method, worker routing, CLI planning and native adapt
 with substituted services. These checks do not establish remote category changes
 or support for other binaries.
 
+The capability registry owns binary support decisions independently of the
+mutation adapter's reusable ports. A matching method name, parameter count or
+completion status does not grant the identity contract. The macOS ARM64
+assignment analysis demonstrates this boundary: its completion closure contains
+a `KernelTrace` object, while the original request reaches a different consumer.
+Only a proven same-instance UID and category path can extend the registry;
+shared completion handling cannot do so.
+
 `features/groups/group-files` owns file-count, folder and listing dispatch policy.
 Composition injects lazy method-specific ports and measured-profile decisions,
 then delegates named operations. The domain owner rejects unsupported contracts

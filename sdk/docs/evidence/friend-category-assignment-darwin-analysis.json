@@ -1,0 +1,167 @@
+{
+  "schemaVersion": 1,
+  "scope": "Static completion-trace analysis; no macOS friend-category assignment capability granted",
+  "profile": {
+    "platform": "darwin",
+    "arch": "arm64",
+    "clientVersion": "7.0.2-53644",
+    "wrapperSha256": "fbc8ad9b328d05e16784d76b0181dda894c17001179dbf8c0d5dd00dc6271358"
+  },
+  "verification": {
+    "fullFunctions": 21,
+    "rawBytes": 1876,
+    "independentExitCode": 0,
+    "sourceReceiptSha256": "822beb97ed83ef1d4a33b930187c8e074231154f88e4c7253e9c7869897ac71b",
+    "independentReceiptSha256": "1a1cbbcc9ab0b5131ff8438fe2c7334ec3fb77c08e646c50e7d3b500ecfd20a3"
+  },
+  "closure": {
+    "addressPoint": "0x50a1000",
+    "completionSlot": "0x30",
+    "completionTarget": "0xb1a1c",
+    "callbackField": "0x18",
+    "traceField": "0x8"
+  },
+  "trace": {
+    "addressPoint": "0x538e038",
+    "typeinfo": "0x538e0b8",
+    "nameAddress": "0x4dd23b0",
+    "name": "N2nt7im_core11KernelTraceE",
+    "resultSlot": "0x28",
+    "resultTarget": "0x369f248",
+    "innerPayloadFields": [
+      1,
+      2
+    ]
+  },
+  "request": {
+    "producer": "0xb8c90",
+    "producerBranchTarget": "0x38bc370",
+    "pairLocation": "caller sp+0x20",
+    "dispatch": "0x923ac/0x923b0",
+    "receiverVirtualSlot": "0x58",
+    "concreteTargetProved": false
+  },
+  "facts": [
+    "Closure AP50a1000 slot30 is b1a1c; callback invocation occurs before trace virtual28 dispatch, when callback nonnull.",
+    "closure+8 contains trace pair; concrete trace AP538e038 slot28 resolves369f248 and typeinfo literal KernelTrace.",
+    "369f248 passes literal fields1 and2 to ba6c80 with trace inner payload; these are not original request fields1000/61af.",
+    "Original request producer b8c90 uses indirect result x8=sp20 and branch instruction target38bc370.",
+    "923ac supplies original sp20 pair to receiver virtual58 selected923a8; no claim of concrete UID consumer made."
+  ],
+  "functions": [
+    {
+      "start": "0x922a0",
+      "end": "0x924d4",
+      "rawSha256": "2b4792039bbb15c7adb77385b303dc1563ae91e86f276e2d8e4b5f48f1056dbb"
+    },
+    {
+      "start": "0x87dc4",
+      "end": "0x87ecc",
+      "rawSha256": "c04c570b579b819d4b14cd99bfcaf891fe8f59941ba49bb3bdf9c563d3fef911"
+    },
+    {
+      "start": "0xb8828",
+      "end": "0xb883c",
+      "rawSha256": "41c395d8a98b12e811d5ff449a357e053d4008ae23c248131d6af207f6cdcc50"
+    },
+    {
+      "start": "0xb88fc",
+      "end": "0xb8908",
+      "rawSha256": "5bd51de901913d6d59904c0be903fe86aecc3760cc6e4156e7d0c8de36782a65"
+    },
+    {
+      "start": "0xb88ac",
+      "end": "0xb88b8",
+      "rawSha256": "59cf38ea1e04568cccee813c28b8e65def9383bbf6b4a6cb1a26d4722d3e6dac"
+    },
+    {
+      "start": "0xb1a1c",
+      "end": "0xb1a44",
+      "rawSha256": "9ec4873e5039c72d39d02ed93189f29df6b116b39512c50c19da0043b1935c79"
+    },
+    {
+      "start": "0xb8814",
+      "end": "0xb8828",
+      "rawSha256": "3dec3583e1279e1d615c6faa42ecb3336298b7442a420c7c4d615561ef4f8136"
+    },
+    {
+      "start": "0xb87d4",
+      "end": "0xb87e8",
+      "rawSha256": "76d630024e0c7ec0e0d3afaa4fddabefb1be6cfe0a8de655aacb8d71978dcdc4"
+    },
+    {
+      "start": "0xb87e8",
+      "end": "0xb8800",
+      "rawSha256": "09178ef8a1e739c62741ce09975bf6be3a050388d65226c5597acf2de420240b"
+    },
+    {
+      "start": "0x6a340",
+      "end": "0x6a34c",
+      "rawSha256": "36c5d27ce315f8ebe8fbad9a58fd931872952398deda43f5273ac62fbc5c7762"
+    },
+    {
+      "start": "0xb8a7c",
+      "end": "0xb8a8c",
+      "rawSha256": "249df5ffe4761b0a8dbc07ff0000605670b5535bf0e638f8e180fb1156e37fea"
+    },
+    {
+      "start": "0xb8d78",
+      "end": "0xb8d80",
+      "rawSha256": "eb13527e195c0dde55ddb1c3108e4eb32922052bf939b274831d53eadbc340b7"
+    },
+    {
+      "start": "0xb8dcc",
+      "end": "0xb8dd4",
+      "rawSha256": "cd8afeddf65f3ea2df5b82726ab9908dfb279a563542e4a2450de2d4e6fc4e6a"
+    },
+    {
+      "start": "0xb883c",
+      "end": "0xb8844",
+      "rawSha256": "481440d1a9523064d6f5e984ce796e7ae7a6fc74a21dc476ac37f417946ee633"
+    },
+    {
+      "start": "0x369eea8",
+      "end": "0x369f08c",
+      "rawSha256": "e9efb8b62b4faaa47453e0a157b4f9cf1712ac112fe3c849008b02fbe0fddc07"
+    },
+    {
+      "start": "0x369f414",
+      "end": "0x369f46c",
+      "rawSha256": "52e19d0da15101d71e6b1af8071b6d581869a0c02218b76f76267fd428ba3f40"
+    },
+    {
+      "start": "0x369f78c",
+      "end": "0x369f798",
+      "rawSha256": "4b538ec4a32b73207222e310364f3a736ccc4ee9f2d300e7a096f801ebc7c79b"
+    },
+    {
+      "start": "0x369f7b4",
+      "end": "0x369f7c0",
+      "rawSha256": "6ed383dee2c22ebb81bc4a90c26c93a3cbae0b64a8aa08ded4b0501063947996"
+    },
+    {
+      "start": "0x369f4fc",
+      "end": "0x369f560",
+      "rawSha256": "a6784fdf7f4ac8ef994ead0af08e4328a28b31093dbf9cf4c9f047cda3543541"
+    },
+    {
+      "start": "0x369f248",
+      "end": "0x369f2d8",
+      "rawSha256": "a3fb7d669a2099f7a385799d0fa3e7c2a1e8a2bed91e543e9e08f97344fbdd7a"
+    },
+    {
+      "start": "0xb8c90",
+      "end": "0xb8c98",
+      "rawSha256": "878685ab6654a1ba466e06202edd7f80bf85e9289986a3f033080b6ca86a8a13"
+    }
+  ],
+  "limits": [
+    "Byte/table and local instruction dataflow only; not remote effect or UID namespace proof",
+    "Trace slot is not Buddy UID request consumer",
+    "No capability grant"
+  ],
+  "nativeExecuted": false,
+  "accountUsed": false,
+  "networkUsed": false,
+  "capabilityGranted": false
+}

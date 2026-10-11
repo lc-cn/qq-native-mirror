@@ -534,3 +534,11 @@ no real account assignment has run. CLI: `friend-category-set --config FILE --ta
 `--target` identifies the friend to move; optional `--uin` selects the login account.
 The other five platform identity chains and real mutation acceptance remain
 separate verification tasks.
+
+The [macOS ARM64 completion analysis](evidence/friend-category-assignment-darwin-analysis.json)
+checks the actual 7.0.2-53644 wrapper's completion closure independently. Its
+`closure+8` object is `KernelTrace`: the result slot records status and message
+in trace fields 1/2. The original category request is a separate pair passed
+to a receiver's virtual slot `0x58`; that concrete UID consumer remains
+unresolved. The trace chain therefore cannot substitute for the UID/category
+contract, and macOS assignment remains unsupported. No account was used.
