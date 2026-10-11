@@ -1,5 +1,12 @@
 # Encapsulation and variation points
 
+The group-file owner retires its count, creation and deletion actions separately
+from the account lifetime. Its action signal guards capability checks, service
+acquisition and captured methods; the account wait also receives that local
+signal. Closing the owner ends pending waits and observes late native completion
+without replaying the action or closing sibling account services. Page correlation
+retains its separate owner and history.
+
 `NativeWorkerBootstrap` owns initialization for exactly one Node worker. It
 reserves initialization synchronously before creating the data directory, keeps
 its candidate kernel private and permits login/business dispatch only after

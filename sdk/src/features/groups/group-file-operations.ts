@@ -119,8 +119,11 @@ export async function deleteGroupFolder(
   context.signal.throwIfAborted();
   const service = context.getRichMediaService();
   context.signal.throwIfAborted();
+  const method = service.deleteGroupFolder;
+  context.signal.throwIfAborted();
+  if (typeof method !== 'function') throw new Error('Native service is missing deleteGroupFolder');
   const result = await context.awaitAlive(
-    service.deleteGroupFolder(captured.groupId, captured.folderId),
+    Reflect.apply(method, service, [captured.groupId, captured.folderId]),
   );
   context.signal.throwIfAborted();
   acknowledge(result);
@@ -160,7 +163,11 @@ export async function getGroupFileCount(
   context.signal.throwIfAborted();
   const service = context.getRichMediaService();
   context.signal.throwIfAborted();
-  const returned = service.batchGetGroupFileCount([captured.groupId]);
+  const method = service.batchGetGroupFileCount;
+  context.signal.throwIfAborted();
+  if (typeof method !== 'function')
+    throw new Error('Native service is missing batchGetGroupFileCount');
+  const returned: unknown = Reflect.apply(method, service, [[captured.groupId]]);
   let then: unknown;
   try {
     let object = returned && typeof returned === 'object' ? returned : null;

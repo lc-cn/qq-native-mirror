@@ -23,7 +23,7 @@ export interface GroupFilesContext {
   readonly getFileCountService: GroupFileCountContext['getRichMediaService'];
   readonly getFolderCreationService: GroupFolderCreationContext['getRichMediaService'];
   readonly getFolderDeletionService: GroupFileContext['getRichMediaService'];
-  readonly awaitAlive: GroupFileContext['awaitAlive'];
+  readonly awaitAlive: <T>(value: T | PromiseLike<T>, requestSignal?: AbortSignal) => Promise<T>;
   /** Composition binds these decisions to the worker's measured binary profile. */
   readonly getFilePageService?: GroupFilePagesContext['getFilePageService'];
   readonly supportsFilePage?: GroupFilePagesContext['supportsFilePage'];
@@ -49,6 +49,34 @@ function requireContract(supported: boolean, operation: string): void {
 export function createGroupFiles(context: GroupFilesContext) {
   const { signal, awaitAlive } = context;
   let closed = false;
+  const actionController = new AbortController();
+  const actionSignal = AbortSignal.any([signal, actionController.signal]);
+  // The account wait port owns native completion. This owner separately retires
+  // its actions so closing it does not have to close the whole account Session.
+  const waitForAction = async <T>(value: T | PromiseLike<T>): Promise<T> => {
+    const pending = Promise.resolve(value);
+    void pending.catch(() => {});
+    actionSignal.throwIfAborted();
+    let abort!: () => void;
+    const stopped = new Promise<never>((_, reject) => {
+      abort = () => reject(actionController.signal.reason);
+      actionController.signal.addEventListener('abort', abort, { once: true });
+    });
+    void stopped.catch(() => {});
+    try {
+      const result = await Promise.race([awaitAlive(pending, actionController.signal), stopped]);
+      actionSignal.throwIfAborted();
+      return result;
+    } finally {
+      actionController.signal.removeEventListener('abort', abort);
+    }
+  };
+  const requireActionContract = (support: () => boolean, operation: string) => {
+    actionSignal.throwIfAborted();
+    const supported = support.call(context);
+    actionSignal.throwIfAborted();
+    requireContract(supported, operation);
+  };
   const pageAlive = (requestSignal?: AbortSignal) => {
     signal.throwIfAborted();
     requestSignal?.throwIfAborted();
@@ -88,31 +116,45 @@ export function createGroupFiles(context: GroupFilesContext) {
       pages?.receiveFileInfo(raw);
     },
     close() {
+      if (closed) return;
       closed = true;
+      actionController.abort(new Error('Group file actions are closed'));
       pages?.close();
     },
     async getGroupFileCount(groupId: unknown): Promise<number> {
       const captured = captureGroupFileCount(groupId);
-      requireContract(context.supportsFileCount(), 'Group file count');
+      requireActionContract(context.supportsFileCount, 'Group file count');
       return getGroupFileCount(
-        { signal, awaitAlive, getRichMediaService: context.getFileCountService },
+        {
+          signal: actionSignal,
+          awaitAlive: waitForAction,
+          getRichMediaService: context.getFileCountService,
+        },
         captured.groupId,
       );
     },
     async createGroupFolder(groupId: unknown, name: unknown): Promise<GroupFolder> {
       const captured = captureCreateGroupFolder(groupId, name);
-      requireContract(context.supportsFolderCreation(), 'Group folder creation');
+      requireActionContract(context.supportsFolderCreation, 'Group folder creation');
       return createGroupFolder(
-        { signal, awaitAlive, getRichMediaService: context.getFolderCreationService },
+        {
+          signal: actionSignal,
+          awaitAlive: waitForAction,
+          getRichMediaService: context.getFolderCreationService,
+        },
         captured.groupId,
         captured.name,
       );
     },
     async deleteGroupFolder(groupId: unknown, folderId: unknown): Promise<void> {
       const captured = captureDeleteGroupFolder(groupId, folderId);
-      requireContract(context.supportsFolderDeletion(), 'Group folder deletion');
+      requireActionContract(context.supportsFolderDeletion, 'Group folder deletion');
       return deleteGroupFolder(
-        { signal, awaitAlive, getRichMediaService: context.getFolderDeletionService },
+        {
+          signal: actionSignal,
+          awaitAlive: waitForAction,
+          getRichMediaService: context.getFolderDeletionService,
+        },
         captured.groupId,
         captured.folderId,
       );
