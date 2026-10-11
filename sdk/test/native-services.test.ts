@@ -5,6 +5,35 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createNativeServices } from '../src/native-services.ts';
 
+test('composition captures the native registration method once with its original receiver', () => {
+  let reads = 0;
+  const calls: number[] = [];
+  const msg = {
+    get addKernelMsgListener() {
+      const captured = ++reads;
+      return function (this: unknown) {
+        assert.equal(this, msg);
+        calls.push(captured);
+      };
+    },
+  };
+  const services = createNativeServices({
+    session: {
+      getMsgService: () => msg,
+      getGroupService: () => ({ addKernelGroupListener() {} }),
+      getBuddyService: () => ({ addKernelBuddyListener() {} }),
+    },
+    version: 'controlled',
+    events: { emit() {} },
+  });
+  try {
+    assert.equal(reads, 1);
+    assert.deepEqual(calls, [1]);
+  } finally {
+    services.close();
+  }
+});
+
 function fixture(version = '7.0.2-53644') {
   let msgListener: any;
   const groupListeners: any[] = [];

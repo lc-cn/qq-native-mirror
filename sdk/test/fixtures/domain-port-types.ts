@@ -1,4 +1,5 @@
 import type { FriendCategoryMutationsContext } from '../../src/features/contacts/friend-category-mutations.ts';
+import type { NativeServiceLifetime } from '../../src/runtime/native-service-lifetime.ts';
 import type { ContactDirectoryContext } from '../../src/features/contacts/contact-directory.ts';
 import type { GroupQueriesContext } from '../../src/features/groups/group-queries.ts';
 import type { NativeMessageSenderContext } from '../../src/features/messages/native-message-sender.ts';
@@ -39,7 +40,11 @@ function verifyDomainPorts(
   noticeRead: WebGroupNoticesContext,
   groupReads: GroupWebReadsContext,
   categoryMutations: FriendCategoryMutationsContext,
+  lifetime: NativeServiceLifetime,
 ) {
+  const nativeCompletion = lifetime.call({}, 'method');
+  // @ts-expect-error Dispatch does not validate proprietary native receipts.
+  void nativeCompletion.result;
   // @ts-expect-error Resource orchestration cannot acquire unrelated Session services.
   forwardResources.getBuddyService();
   // @ts-expect-error The SSO transport cannot submit ordinary messages.

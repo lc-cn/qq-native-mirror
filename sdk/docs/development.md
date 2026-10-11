@@ -178,6 +178,11 @@ interface, acquire methods lazily and preserve their native receiver. A getter m
 synchronously close or abort the owner: check lifetime after acquisition and
 before dispatch. Compile-only negative contracts keep these ports narrow.
 
+The composition root binds native methods through `NativeServiceLifetime.call`.
+Do not duplicate check-then-read invocation there: capture once, recheck retirement
+and dispatch the captured method with its receiver. Feature adapters keep their
+narrow domain ports; this dynamic binding is not a general service locator for them.
+
 Use composition for domain operations. Interfaces support polymorphism where an
 implementation actually varies: the worker transport and bundled/custom media
 codecs already have production and controlled-test adapters. Inheritance is

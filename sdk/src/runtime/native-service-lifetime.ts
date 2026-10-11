@@ -34,6 +34,22 @@ export class NativeServiceLifetime {
     if (this.#closed) throw new Error('Native services are closed');
   }
 
+  /** Capture a native method once before dispatch, preserving its receiver.
+   * Property access can synchronously retire the Session. Results stay opaque;
+   * the receiving domain owns validation and native completion semantics.
+   */
+  readonly call = (
+    object: NativeObject | null | undefined,
+    name: string,
+    ...args: unknown[]
+  ): unknown => {
+    this.#assertOpen();
+    const method: unknown = object?.[name];
+    this.#assertOpen();
+    if (typeof method !== 'function') throw new Error(`Native service is missing ${name}`);
+    return Reflect.apply(method, object, args) as unknown;
+  };
+
   /** Keep proprietary receiver identity while protecting retained service handles.
    * Listener removals remain available during teardown; other late calls fail.
    * This guards methods, rather than assuming any particular native service ABI.

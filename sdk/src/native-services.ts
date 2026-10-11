@@ -87,14 +87,8 @@ export function createNativeServices(context: NativeServiceContext) {
         isClosed: () => lifetime.closed,
       }),
     );
-    const call = (object: Native, name: string, ...args: unknown[]) => {
-      if (lifetime.closed) throw new Error('Native services are closed');
-      if (!object || typeof object[name] !== 'function')
-        throw new Error(`Native service is missing ${name}`);
-      return object[name](...args);
-    };
-    const service = (name: string): Native => call(guardedSession, `get${name}Service`);
-    const { awaitAlive } = lifetime;
+    const { call, awaitAlive } = lifetime;
+    const service = (name: string): Native => call(guardedSession, `get${name}Service`) as Native;
     const groupWebReads = createGroupWebReads({
       accountId,
       signal: lifetime.signal,

@@ -148,7 +148,11 @@ local to each request. A feature does not retry or switch protocols after dispat
 
 `NativeServiceLifetime` owns the Session's dispatch guard, abort signal, native
 waits and resource ledger. Composition acquires modules in order and registers
-their cleanup with this owner. Close marks the Session inert, aborts waits and
+their cleanup with this owner. Its bound `call` port captures a native method once,
+checks retirement again after property acquisition and invokes that captured method
+with its original receiver. Composition uses this port rather than checking one
+method and reading another to dispatch. Results remain `unknown`; domain adapters
+own receipt validation and completion policy. Close marks the Session inert, aborts waits and
 detaches the ledger before attempting every cleanup once. Retained service handles
 preserve native receiver identity; listener removal remains available for teardown,
 while other methods cannot dispatch after close. A native Promise that rejects

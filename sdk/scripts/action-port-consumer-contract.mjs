@@ -6,16 +6,84 @@ import { pathToFileURL } from 'node:url';
  * services and the real Session lifetime. This never loads a QQ addon. */
 export async function verifyActionPortConsumer(installedRoot) {
   const load = (path) => import(pathToFileURL(join(installedRoot, 'dist', path)).href);
-  const [contacts, groups, runtime, cli, client] = await Promise.all([
+  const [contacts, groups, runtime, cli, client, composition] = await Promise.all([
     load('features/contacts/contact-operations.js'),
     load('features/groups/group-operations.js'),
     load('runtime/native-service-lifetime.js'),
     load('cli.js'),
     load('index.js'),
+    load('native-services.js'),
   ]);
   const { createContactOperations } = contacts;
   const { createGroupOperations } = groups;
   const { NativeServiceLifetime } = runtime;
+  const { createNativeServices } = composition;
+
+  // Exercise the dispatch owner and actual composition from the archive. A
+  // changing accessor exposes a check-then-read implementation without an addon.
+  {
+    const lifetime = new NativeServiceLifetime();
+    const receipt = Promise.resolve({ opaque: true });
+    let reads = 0;
+    const service = {
+      get nativeMethod() {
+        reads++;
+        return function (...args) {
+          assert.equal(this, service);
+          assert.deepEqual(args, ['captured']);
+          return receipt;
+        };
+      },
+    };
+    const { call } = lifetime;
+    assert.equal(call(service, 'nativeMethod', 'captured'), receipt);
+    assert.equal(reads, 1);
+    await receipt;
+    lifetime.close();
+    assert.throws(() => call(service, 'nativeMethod'), /Native services are closed/);
+    assert.equal(reads, 1);
+  }
+  for (const member of [undefined, () => assert.fail('Retired method dispatched')]) {
+    const lifetime = new NativeServiceLifetime();
+    let reads = 0;
+    const service = {
+      get nativeMethod() {
+        reads++;
+        lifetime.close();
+        return member;
+      },
+    };
+    assert.throws(() => lifetime.call(service, 'nativeMethod'), /Native services are closed/);
+    assert.equal(reads, 1);
+  }
+  {
+    let reads = 0;
+    const capturedCalls = [];
+    const msg = {
+      get addKernelMsgListener() {
+        const captured = ++reads;
+        return function () {
+          assert.equal(this, msg);
+          capturedCalls.push(captured);
+        };
+      },
+    };
+    const services = createNativeServices({
+      session: {
+        getMsgService: () => msg,
+        getGroupService: () => ({ addKernelGroupListener() {} }),
+        getBuddyService: () => ({ addKernelBuddyListener() {} }),
+      },
+      version: 'controlled',
+      events: { emit() {} },
+    });
+    try {
+      assert.equal(reads, 1);
+      assert.deepEqual(capturedCalls, [1]);
+    } finally {
+      services.close();
+    }
+  }
 
   const fixture = (factory, ports, resolveUid = async () => 'u_fixture') => {
     const lifetime = new NativeServiceLifetime();
@@ -250,6 +318,7 @@ export async function verifyActionPortConsumer(installedRoot) {
   }
   return {
     groupOperationContract: true,
+    nativeInvocationCaptureContract: true,
     actionPortRetirementContract: true,
     actionPortPendingCloseContract: true,
     actionPortLateFailureObserved: true,

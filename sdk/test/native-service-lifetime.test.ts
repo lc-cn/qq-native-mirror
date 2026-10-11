@@ -3,6 +3,85 @@ import { getEventListeners } from 'node:events';
 import test from 'node:test';
 import { NativeServiceLifetime } from '../src/runtime/native-service-lifetime.ts';
 
+test('native invocation captures one method and returns its opaque result unchanged', async () => {
+  const lifetime = new NativeServiceLifetime();
+  const result = Promise.resolve({ unverified: true });
+  let reads = 0;
+  const service = {
+    get send() {
+      reads++;
+      return function (this: unknown, ...args: unknown[]) {
+        assert.equal(this, service);
+        assert.deepEqual(args, ['first', { second: 2 }]);
+        return result;
+      };
+    },
+  };
+  const { call } = lifetime;
+  assert.equal(call(service, 'send', 'first', { second: 2 }), result);
+  assert.equal(reads, 1);
+  await result;
+  lifetime.close();
+});
+
+test('native invocation blocks property access after close and dispatch after getter retirement', () => {
+  for (const stage of ['before-acquisition', 'method-acquisition']) {
+    const lifetime = new NativeServiceLifetime();
+    let reads = 0;
+    let dispatches = 0;
+    const service = {
+      get send() {
+        reads++;
+        lifetime.close();
+        return () => dispatches++;
+      },
+    };
+    if (stage === 'before-acquisition') lifetime.close();
+    assert.throws(() => lifetime.call(service, 'send'), /Native services are closed/);
+    assert.equal(reads, stage === 'method-acquisition' ? 1 : 0);
+    assert.equal(dispatches, 0);
+  }
+});
+
+test('native invocation preserves acquisition and dispatch failures without retry', () => {
+  const lifetime = new NativeServiceLifetime();
+  const failure = new Error('controlled native failure');
+  for (const stage of ['acquisition', 'dispatch']) {
+    let reads = 0;
+    let calls = 0;
+    const service = {
+      get send() {
+        reads++;
+        if (stage === 'acquisition') throw failure;
+        return () => {
+          calls++;
+          throw failure;
+        };
+      },
+    };
+    assert.throws(
+      () => lifetime.call(service, 'send'),
+      (error) => error === failure,
+    );
+    assert.equal(reads, 1);
+    assert.equal(calls, stage === 'dispatch' ? 1 : 0);
+  }
+  for (const service of [null, undefined, {}, { send: 7 }])
+    assert.throws(() => lifetime.call(service, 'send'), /Native service is missing send/);
+  lifetime.close();
+});
+
+test('getter retirement takes precedence over a missing-method diagnostic', () => {
+  const lifetime = new NativeServiceLifetime();
+  const service = {
+    get send() {
+      lifetime.close();
+      return undefined;
+    },
+  };
+  assert.throws(() => lifetime.call(service, 'send'), /Native services are closed/);
+});
+
 test('retained service methods preserve native receivers and become inert on close', () => {
   const lifetime = new NativeServiceLifetime();
   let calls = 0;
