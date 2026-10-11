@@ -1,0 +1,34 @@
+sdk/docs/development.md
+  s_2104cc474f1ce5::t_5881df722160b1 9-19
+sdk/docs/sdk-acceptance.md
+  s_2104cc474f1ce5::t_859d76b9b1f5d3 91-101,108-114
+  s_2104cc474f1ce5::t_189b8f914ef1ae 115-117
+sdk/docs/evidence/category-reorder-six-ci-38099684245.json
+  s_2104cc474f1ce5::t_6af6e5e7ca802b 1-136
+sdk/scripts/readonly-sdk-acceptance.ts
+  s_2104cc474f1ce5::t_a6d311f280dcb6 1-449
+sdk/scripts/verify-sdk-002-readonly-v2.ts
+  s_2104cc474f1ce5::t_8957a84c0d77bd 1,3-12,14-15
+sdk/scripts/verify-sdk-002-readonly-v3.ts
+  s_2104cc474f1ce5::t_3fd9ecda2fc0e2 1,3-13,15-16
+sdk/scripts/verify-sdk-002-readonly.ts
+  s_2104cc474f1ce5::t_89f938a6547370 1,3-12,14-15
+sdk/test/readonly-sdk-acceptance.test.ts
+  s_2104cc474f1ce5::t_5de466d55325db 1-456
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "7548f9fad2b6332fcc8ddbaf45c3d7f6243bfc3b",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
