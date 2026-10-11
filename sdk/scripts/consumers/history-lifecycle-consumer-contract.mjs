@@ -92,6 +92,8 @@ export async function checkHistoryLifecycle({
     assert.ok(message !== null && typeof message === 'object');
     assert.ok('messageId' in message && 'peer' in message);
     assert.equal(message.messageId, raw.msgId);
+    assert.ok('raw' in message);
+    assert.equal(message.raw, raw);
     assert.deepEqual(message.peer, { type: 'private', userId: '456' });
     assert.equal(historyCalls, 1);
   } finally {
@@ -288,7 +290,10 @@ export async function checkHistoryLifecycle({
   } finally {
     await cliClient.close();
   }
+  await checkQueryEnvelope(createNativeServices);
   return {
+    queryEnvelopeBoundaryContract: true,
+    queryRawIdentityContract: true,
     pendingReadCloseContract: true,
     reentrantReadCloseContract: true,
     historyInputCaptureContract: true,
@@ -296,6 +301,100 @@ export async function checkHistoryLifecycle({
     watchReconnectPolicyContract: true,
     nativeHistoryQueryAttempted: false,
   };
+}
+
+/** Exercise installed composition with controlled vendor responses only.
+ * @param {typeof import('../../src/native-services.ts').createNativeServices} createNativeServices
+ */
+async function checkQueryEnvelope(createNativeServices) {
+  const peer = { type: 'group', groupId: '123' };
+  const row = () => ({ msgId: '42', chatType: 2, peerUid: '123', elements: [{}] });
+  /** @type {[import('../../src/runtime/operations.ts').ServiceOperation,Record<string,unknown>,string][]} */
+  const queries = [
+    ['getMessage', { peer, messageId: '42' }, 'getMsgsByMsgId'],
+    ['getMessages', { peer, messageIds: ['42'] }, 'getMsgsByMsgId'],
+    ['getHistory', { peer }, 'getMsgsIncludeSelf'],
+  ];
+  for (const [operation, input, nativeMethod] of queries) {
+    for (const scenario of [
+      'result',
+      'msgList',
+      'msgId',
+      'chatType',
+      'peerUid',
+      'elements',
+      'slot',
+      'iterator',
+      'peer-mutation',
+    ]) {
+      let reads = 0,
+        iterations = 0,
+        calls = 0,
+        uidCalls = 0;
+      const raw = row();
+      /** @type {{result:number,msgList:unknown[]}} */
+      const response = { result: 0, msgList: [raw] };
+      if (scenario === 'slot')
+        Object.defineProperty(raw.elements, '0', {
+          get() {
+            reads++;
+            throw Error('opaque getter');
+          },
+        });
+      else if (scenario === 'iterator') {
+        response.msgList.push(null);
+        Object.defineProperty(response.msgList, Symbol.iterator, {
+          value() {
+            iterations++;
+            return [raw][Symbol.iterator]();
+          },
+        });
+      } else if (scenario === 'peer-mutation') raw.peerUid = '999';
+      else
+        Object.defineProperty(
+          scenario === 'result' || scenario === 'msgList' ? response : raw,
+          scenario,
+          {
+            get() {
+              reads++;
+              throw Error('opaque getter');
+            },
+          },
+        );
+      const services = createNativeServices({
+        session: {
+          getMsgService: () => ({
+            addKernelMsgListener() {},
+            [nativeMethod](/** @type {{peerUid:string}} */ destination) {
+              calls++;
+              if (scenario === 'peer-mutation') destination.peerUid = '999';
+              return response;
+            },
+          }),
+          getBuddyService: () => ({ addKernelBuddyListener() {} }),
+          getGroupService: () => ({ addKernelGroupListener() {} }),
+          getUixConvertService: () => ({
+            getUin() {
+              uidCalls++;
+              throw Error('projection began');
+            },
+          }),
+        },
+        version: '7.0.2-53644',
+        events: { emit: () => {} },
+      });
+      try {
+        await assert.rejects(services.invokeOperation(operation, input));
+        assert.equal(calls, 1);
+        assert.equal(reads, 0);
+        assert.equal(iterations, 0);
+        assert.equal(uidCalls, 0);
+        assert.equal(peer.groupId, '123');
+      } finally {
+        services.close();
+      }
+    }
+  }
 }
 
 /** @param {string} packageRoot */

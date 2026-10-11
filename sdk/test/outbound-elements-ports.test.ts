@@ -73,7 +73,8 @@ test('reply uses ID query port receiver and peer, preserving exact reply fields'
       reads++;
       return function (this: unknown, actual: unknown, ids: unknown) {
         assert.equal(this, service);
-        assert.equal(actual, peer);
+        assert.deepEqual(actual, peer);
+        assert.notEqual(actual, peer);
         assert.deepEqual(ids, ['7']);
         calls++;
         return {
@@ -94,7 +95,7 @@ test('reply uses ID query port receiver and peer, preserving exact reply fields'
     },
   };
   const result = await createReplyElement('7', peer, service);
-  assert.equal(reads, 2);
+  assert.equal(reads, 1);
   assert.equal(calls, 1);
   assert.deepEqual(result.replyElement, {
     replayMsgSeq: '8',

@@ -282,7 +282,13 @@ and queued mutation, without claiming such accessors occur in QQ callbacks.
 projection and batch reordering through injected native-read and resolver ports. The query port exposes only
 `getMsgsByMsgId` and `getMsgsIncludeSelf`; returned values remain `unknown` until
 the response validator checks status and the complete message batch, then narrows
-them to validated message records. ID queries retain service-before-peer ordering;
+them to a closed query envelope. Its correlation fields and dense element slots
+are captured from own data properties before projection; selected accessors are
+rejected without execution, and vendor iterators cannot hide later invalid rows.
+The expected conversation is separate from the object submitted to the native
+method. The envelope carries a projection snapshot and the original opaque object
+separately, preserving public `Message.raw` identity. Other metadata and element
+bodies remain the responsibility of their existing projectors. ID queries retain service-before-peer ordering;
 history retains peer-before-service ordering. Method capture preserves the native
 receiver and checks retirement before dispatch. Cancellation interrupts resolver
 and decode waits and prevents a final success; it does not undo an issued query.

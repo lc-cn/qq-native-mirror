@@ -6,11 +6,15 @@ export {
 } from './query-input.ts';
 import { nativeResultError } from '../../errors.ts';
 
-export interface QueriedNativeMessage extends Record<string, unknown> {
-  msgId: string;
-  chatType: 1 | 2;
-  peerUid: string;
-  elements: Record<string, unknown>[];
+/** Validated query envelope, separate from opaque projection data and its
+ * original vendor object. This is not a declaration of the complete native ABI. */
+export interface QueriedNativeMessage {
+  readonly msgId: string;
+  readonly chatType: 1 | 2;
+  readonly peerUid: string;
+  readonly elements: object[];
+  readonly message: object;
+  readonly raw: object;
 }
 type NativePeer = { chatType: 1 | 2; peerUid: string };
 
@@ -31,32 +35,83 @@ export interface MessageHistoryQueryPort {
 }
 export type MessageQueryPort = MessageIdQueryPort & MessageHistoryQueryPort;
 
-/** Reject a malformed queried batch before projecting or dropping any record. */
+function record(value: unknown, label: string): object {
+  if (!value || typeof value !== 'object' || Array.isArray(value))
+    throw new Error(`Native ${label} returned an invalid message result`);
+  return value;
+}
+function field(value: object, key: string, label: string): unknown {
+  const descriptor = Object.getOwnPropertyDescriptor(value, key);
+  if (descriptor && !('value' in descriptor))
+    throw new Error(`Native ${label} requires own data properties`);
+  return descriptor?.value;
+}
+function dense(value: unknown, label: string): unknown[] {
+  if (!Array.isArray(value)) throw new Error(`Native ${label} returned an invalid message list`);
+  const length = field(value, 'length', label);
+  if (typeof length !== 'number' || !Number.isSafeInteger(length) || length < 0)
+    throw new Error(`Native ${label} returned an invalid message list`);
+  const values: unknown[] = [];
+  for (let index = 0; index < length; index++) {
+    const descriptor = Object.getOwnPropertyDescriptor(value, String(index));
+    if (!descriptor || !('value' in descriptor))
+      throw new Error(`Native ${label} returned invalid dense message data`);
+    values.push(descriptor.value);
+  }
+  return values;
+}
+function capturePeer(value: NativePeer, history = false): NativePeer {
+  const label = history ? 'history query peer' : 'message query peer';
+  const peer = record(value, label);
+  if (history && ![Object.prototype, null].includes(Object.getPrototypeOf(peer)))
+    throw new Error('Invalid native history query peer');
+  const chatType = field(peer, 'chatType', label),
+    peerUid = field(peer, 'peerUid', label);
+  if ((chatType !== 1 && chatType !== 2) || typeof peerUid !== 'string' || !peerUid)
+    throw new Error(`Invalid native ${label}`);
+  return { chatType, peerUid };
+}
+function response(value: unknown, method: string): unknown[] {
+  if (!value || typeof value !== 'object' || Array.isArray(value))
+    throw nativeResultError(`Native ${method} failed (invalid or rejected result)`, undefined);
+  const code = field(value, 'result', method);
+  if (code !== 0)
+    throw nativeResultError(`Native ${method} failed (invalid or rejected result)`, {
+      result: code,
+    });
+  return dense(field(value, 'msgList', method), method);
+}
+
+/** Validate the entire batch before projection. Selected fields are captured
+ * once; caller iterators and accessors cannot supply correlation data. Other
+ * native metadata and element bodies remain opaque for their own projectors.
+ * Proxy descriptor traps are not assumed side-effect free. */
 function queriedMessage(
   value: unknown,
   peer: NativePeer,
   method: string,
   expectedId?: string,
 ): QueriedNativeMessage {
-  if (!value || typeof value !== 'object' || Array.isArray(value))
-    throw new Error(`Native ${method} returned an invalid message`);
-  const message = value as QueriedNativeMessage;
-  if (typeof message.msgId !== 'string' || !/^\d+$/.test(message.msgId))
+  const raw = record(value, method);
+  const msgId = field(raw, 'msgId', method),
+    chatType = field(raw, 'chatType', method),
+    peerUid = field(raw, 'peerUid', method);
+  if (typeof msgId !== 'string' || !/^\d+$/.test(msgId))
     throw new Error(`Native ${method} returned an invalid message ID`);
   if (
-    (expectedId !== undefined && message.msgId !== expectedId) ||
-    message.chatType !== peer.chatType ||
-    message.peerUid !== peer.peerUid
+    (expectedId !== undefined && msgId !== expectedId) ||
+    chatType !== peer.chatType ||
+    peerUid !== peer.peerUid
   )
     throw new Error(`Native ${method} returned a mismatched message or conversation`);
-  if (
-    !Array.isArray(message.elements) ||
-    Array.from(message.elements).some(
-      (element: unknown) => !element || typeof element !== 'object' || Array.isArray(element),
-    )
-  )
-    throw new Error(`Native ${method} returned invalid message elements`);
-  return message;
+  const elements = dense(field(raw, 'elements', method), `${method} elements`).map((element) =>
+    record(element, `${method} element`),
+  );
+  const descriptors = Object.getOwnPropertyDescriptors(raw);
+  for (const [key, captured] of Object.entries({ msgId, chatType, peerUid, elements }))
+    descriptors[key] = { value: captured, enumerable: true };
+  const message: object = Object.create(Object.getPrototypeOf(raw), descriptors);
+  return { msgId, chatType: peer.chatType, peerUid: peer.peerUid, elements, message, raw };
 }
 
 /** NapCatQQ 26d7533e0f5800fdff865ab2f2ad7692917e1076:
@@ -71,28 +126,20 @@ export async function queryNativeMessage(
 ): Promise<QueriedNativeMessage | undefined> {
   if (typeof messageId !== 'string' || !/^\d+$/.test(messageId))
     throw new Error('messageId must be a numeric string');
-  if (
-    !peer ||
-    (peer.chatType !== 1 && peer.chatType !== 2) ||
-    typeof peer.peerUid !== 'string' ||
-    !peer.peerUid
-  )
-    throw new Error('Invalid native message query peer');
-  if (typeof msgService?.getMsgsByMsgId !== 'function')
-    throw new Error('Native service is missing getMsgsByMsgId');
-  const value = await msgService.getMsgsByMsgId(peer, [messageId]);
-  const result = value as Record<string, unknown> | null | undefined;
-  if (!result || typeof result !== 'object' || result.result !== 0)
-    throw nativeResultError('Native getMsgsByMsgId failed (invalid or rejected result)', result);
-  if (!Array.isArray(result.msgList))
-    throw new Error('Native getMsgsByMsgId returned an invalid message list');
-  if (result.msgList.length > 1)
+  const expectedPeer = capturePeer(peer);
+  const method = msgService?.getMsgsByMsgId;
+  if (typeof method !== 'function') throw new Error('Native service is missing getMsgsByMsgId');
+  const messages = response(
+    await Reflect.apply(method, msgService, [{ ...expectedPeer }, [messageId]]),
+    'getMsgsByMsgId',
+  );
+  if (messages.length > 1)
     throw new Error(
       'Native getMsgsByMsgId returned an invalid message list: multiple records for one ID',
     );
-  const message = result.msgList[0];
-  if (result.msgList.length === 0) return undefined;
-  return queriedMessage(message, peer, 'getMsgsByMsgId', messageId);
+  return messages.length === 0
+    ? undefined
+    : queriedMessage(messages[0], expectedPeer, 'getMsgsByMsgId', messageId);
 }
 
 /** Same pinned getMsgsByMsgId contract, queried once. Ordering, the 100-ID
@@ -105,25 +152,16 @@ export async function queryNativeMessages(
   ids: unknown,
 ): Promise<(QueriedNativeMessage | undefined)[]> {
   const captured = messageIds(ids);
-  if (
-    !peer ||
-    (peer.chatType !== 1 && peer.chatType !== 2) ||
-    typeof peer.peerUid !== 'string' ||
-    !peer.peerUid
-  )
-    throw new Error('Invalid native message query peer');
-  const expectedPeer = { chatType: peer.chatType, peerUid: peer.peerUid };
-  if (typeof msgService?.getMsgsByMsgId !== 'function')
-    throw new Error('Native service is missing getMsgsByMsgId');
-  const value = await msgService.getMsgsByMsgId({ ...expectedPeer }, [...captured]);
-  const result = value as Record<string, unknown> | null | undefined;
-  if (!result || typeof result !== 'object' || result.result !== 0)
-    throw nativeResultError('Native getMsgsByMsgId failed (invalid or rejected result)', result);
-  if (!Array.isArray(result.msgList))
-    throw new Error('Native getMsgsByMsgId returned an invalid message list');
+  const expectedPeer = capturePeer(peer);
+  const method = msgService?.getMsgsByMsgId;
+  if (typeof method !== 'function') throw new Error('Native service is missing getMsgsByMsgId');
+  const messages = response(
+    await Reflect.apply(method, msgService, [{ ...expectedPeer }, [...captured]]),
+    'getMsgsByMsgId',
+  );
   const requested = new Set(captured),
     found = new Map<string, QueriedNativeMessage>();
-  for (const raw of result.msgList) {
+  for (const raw of messages) {
     const message = queriedMessage(raw, expectedPeer, 'getMsgsByMsgId');
     if (!requested.has(message.msgId) || found.has(message.msgId))
       throw new Error('Native getMsgsByMsgId returned an unexpected or duplicate message ID');
@@ -142,42 +180,17 @@ export async function queryNativeHistory(
   count: number,
   reverse: boolean,
 ): Promise<QueriedNativeMessage[]> {
-  if (
-    !peer ||
-    typeof peer !== 'object' ||
-    ![Object.prototype, null].includes(Object.getPrototypeOf(peer))
-  )
-    throw new Error('Invalid native history query peer');
-  const chatType = Object.getOwnPropertyDescriptor(peer, 'chatType'),
-    peerUid = Object.getOwnPropertyDescriptor(peer, 'peerUid');
-  if (
-    !chatType ||
-    !('value' in chatType) ||
-    (chatType.value !== 1 && chatType.value !== 2) ||
-    !peerUid ||
-    !('value' in peerUid) ||
-    typeof peerUid.value !== 'string' ||
-    !peerUid.value
-  )
-    throw new Error('Invalid native history query peer');
-  const expectedPeer: NativePeer = { chatType: chatType.value, peerUid: peerUid.value };
+  const expectedPeer = capturePeer(peer, true);
   if (typeof before !== 'string' || !/^\d+$/.test(before))
     throw new Error('History before must be a numeric string');
   if (!Number.isInteger(count) || count < 1 || count > 100)
     throw new Error('History count must be an integer between 1 and 100');
   if (typeof reverse !== 'boolean') throw new Error('History reverse must be a boolean');
-  if (typeof msgService?.getMsgsIncludeSelf !== 'function')
-    throw new Error('Native service is missing getMsgsIncludeSelf');
-  const value = await msgService.getMsgsIncludeSelf({ ...expectedPeer }, before, count, reverse);
-  const result = value as Record<string, unknown> | null | undefined;
-  if (result?.result !== 0)
-    throw nativeResultError(
-      'Native getMsgsIncludeSelf failed (invalid or rejected result)',
-      result,
-    );
-  if (!Array.isArray(result.msgList))
-    throw new Error('Native getMsgsIncludeSelf returned an invalid message list');
-  return Array.from(result.msgList, (message) =>
-    queriedMessage(message, expectedPeer, 'getMsgsIncludeSelf'),
+  const method = msgService?.getMsgsIncludeSelf;
+  if (typeof method !== 'function') throw new Error('Native service is missing getMsgsIncludeSelf');
+  const messages = response(
+    await Reflect.apply(method, msgService, [{ ...expectedPeer }, before, count, reverse]),
+    'getMsgsIncludeSelf',
   );
+  return messages.map((message) => queriedMessage(message, expectedPeer, 'getMsgsIncludeSelf'));
 }

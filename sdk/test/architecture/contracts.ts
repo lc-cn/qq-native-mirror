@@ -164,3 +164,15 @@ test('contact profile compatibility names reuse the canonical public DTO and que
     );
   }
 });
+
+test('validated message query envelope does not inherit an unbounded native object', () => {
+  const path = join(sourceRoot, 'features/messages/message-query.ts');
+  const tree = ts.createSourceFile(path, readFileSync(path, 'utf8'), ts.ScriptTarget.Latest, true);
+  const envelope = tree.statements.find(
+    (statement): statement is ts.InterfaceDeclaration =>
+      ts.isInterfaceDeclaration(statement) && statement.name.text === 'QueriedNativeMessage',
+  );
+  assert.ok(envelope);
+  assert.equal(envelope.heritageClauses, undefined);
+  assert.equal(envelope.members.some(ts.isIndexSignatureDeclaration), false);
+});

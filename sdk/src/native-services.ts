@@ -434,7 +434,11 @@ export function createNativeServices(context: NativeServiceContext) {
       signal: lifetime.signal,
       getMessageService: () => service('Msg'),
       resolvePeer,
-      decode: resolvedMessages,
+      decode: (messages) =>
+        resolvedMessages(
+          messages.map((message) => message.message),
+          messages.map((message) => message.raw),
+        ),
       awaitAlive,
     });
     const forwardResources = createForwardResourceOwner({

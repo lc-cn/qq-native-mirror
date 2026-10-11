@@ -36,7 +36,9 @@ export function createGroupEssenceMutations(context: GroupEssenceMutationContext
       context.signal.throwIfAborted();
       const service = context.getMessageService();
       context.signal.throwIfAborted();
-      return queryNativeMessage(service, { chatType: 2, peerUid: groupId }, messageId);
+      return queryNativeMessage(service, { chatType: 2, peerUid: groupId }, messageId).then(
+        (message) => message?.message,
+      );
     },
   };
   return {

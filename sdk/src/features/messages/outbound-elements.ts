@@ -134,19 +134,25 @@ export async function createReplyElement(
 ): Promise<PreparedReplyElement> {
   const original = await queryNativeMessage(msgService, peer, messageId);
   if (!original) throw new Error('Referenced message was not found in the target conversation');
-  for (const field of ['msgSeq', 'msgId', 'senderUin', 'clientSeq']) {
-    if (typeof original[field] !== 'string' || !original[field])
-      throw new Error(`Referenced message requires a nonempty string ${field}`);
-  }
+  const string = (key: string): string => {
+    const descriptor = Object.getOwnPropertyDescriptor(original.message, key);
+    const value: unknown = descriptor && 'value' in descriptor ? descriptor.value : undefined;
+    if (typeof value !== 'string' || !value)
+      throw new Error(`Referenced message requires a nonempty string ${key}`);
+    return value;
+  };
+  const msgSeq = string('msgSeq'),
+    senderUin = string('senderUin'),
+    clientSeq = string('clientSeq');
   return {
     elementType: 7,
     elementId: '',
     replyElement: {
-      replayMsgSeq: original.msgSeq as string,
+      replayMsgSeq: msgSeq,
       replayMsgId: original.msgId,
-      senderUin: original.senderUin as string,
-      senderUinStr: original.senderUin as string,
-      replyMsgClientSeq: original.clientSeq as string,
+      senderUin: senderUin,
+      senderUinStr: senderUin,
+      replyMsgClientSeq: clientSeq,
       _replyMsgPeer: { ...peer },
     },
   };
