@@ -1,0 +1,31 @@
+sdk/src/runtime/native-listener-owner.ts
+  s_2104cc474f1ce5::t_254c28b0f6a098 18
+  s_2104cc474f1ce5::t_561205472d0da2 19-20,37-50
+  s_2104cc474f1ce5::t_4693c9eb2033b0 36,53-61,63-68
+sdk/test/native-listener-owner.test.ts
+  s_2104cc474f1ce5::t_e559dba4bec0c8 62-93
+  s_2104cc474f1ce5::t_f2da79eb69ce96 94-150
+  s_2104cc474f1ce5::t_8d2c0b731f660f 151-196
+sdk/scripts/action-port-consumer-contract.mjs
+  s_2104cc474f1ce5::t_8d2c0b731f660f 65-70
+  s_2104cc474f1ce5::t_f2da79eb69ce96 9,16,22-64,71-75,377
+sdk/docs/development.md
+  s_2104cc474f1ce5::t_561205472d0da2 114-119
+  s_2104cc474f1ce5::t_254c28b0f6a098 113,120-121
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "8c491146acfd8250e6e28f96cc9fcbc5f3584e25",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
