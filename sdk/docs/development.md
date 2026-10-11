@@ -6,6 +6,17 @@ Use `npm run check` before submitting a change. The same checks run in SDK quali
 CI, including installation of a newly packed archive. A passing fixture test does
 not establish interoperability with QQ or prove an account operation succeeded.
 
+Historical read-only account batches use `scripts/readonly-sdk-acceptance.ts`
+for package integrity checks, exclusive execution reservation and the fixed
+restore/read/close sequence. Their versioned entry scripts contain only immutable
+batch facts. Review mode verifies artifacts without importing the installed runtime
+or using an account. Execution requires a separately authorized batch and
+`--execute-approved`; the flag itself is not authorization. Runtime acquisition
+uses a narrow injected port so controlled regressions exercise the same execution
+owner without QQ or credentials. Receipts contain counts and fixed error categories,
+not contact or message contents. Do not copy this executor into another versioned
+script or weaken a historical plan to make it pass against newer artifacts.
+
 ## Choose the owner before writing the code
 
 | Change                                                                             | Owner                                                                                     |
