@@ -58,6 +58,15 @@ value and the attempt is released; joined callers cannot remain pending. This
 failure is now a Promise rejection rather than a synchronous exception from
 `login`. Closing from the observer prevents login dispatch.
 
+A login deadline retires the account and pending requests before notifying
+`failed`. The same owner cancels automatic restore and reserves termination for
+the captured worker. A notification failure cannot skip the worker-exit gate;
+the login rejection retains the timeout and original notification value, plus
+any cleanup failure. Reentrant close and explicit reconnect join that worker's
+termination Promise. Terminal failures remain observable without a second stop
+attempt, and an old deadline cannot terminate a replacement worker. This shared
+Promise is private lifecycle ownership, not a new public module or retry policy.
+
 Before changing account state, `ClientLifecycle` captures own-data `uin` and `uid`
 from worker readiness. It stores only those two fields, preserving decimal strings
 (including zero, leading zeros and values beyond JavaScript's safe integer range)

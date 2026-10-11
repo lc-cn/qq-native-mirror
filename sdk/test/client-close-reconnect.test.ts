@@ -11,14 +11,16 @@ class Worker extends EventEmitter {
   stderr = new EventEmitter();
   requests: any[] = [];
   kills = 0;
+  signals: (NodeJS.Signals | undefined)[] = [];
   send(value: any, cb: (error: Error | null) => void) {
     this.requests.push(value);
     cb(null);
     if (value.method === 'close')
       queueMicrotask(() => this.emit('message', { id: value.id, result: null }));
   }
-  kill() {
+  kill(signal?: NodeJS.Signals) {
     this.kills++;
+    this.signals.push(signal);
     return true;
   }
   exit() {
@@ -100,7 +102,8 @@ test('close while replacement init is pending stops replacement and never starts
     false,
   );
 });
-test('unresponsive retiring worker reports real cleanup failure instead of claiming closure', async () => {
+test('unresponsive retiring worker shares one deadline failure with close without repeating signals', async (context) => {
+  context.mock.timers.enable({ apis: ['setTimeout'] });
   const previous = new Worker();
   let spawns = 0;
   const client = new QQClient(
@@ -115,14 +118,31 @@ test('unresponsive retiring worker reports real cleanup failure instead of claim
       payload: {},
     },
   );
-  const reconnect = assert.rejects(client.reconnect(), /did not exit/);
+  const reconnect = client.reconnect().then(
+    () => assert.fail('An unresponsive worker cannot be replaced'),
+    (error: unknown) => error,
+  );
   await new Promise((resolve) => setImmediate(resolve));
   const close = client.close();
   assert.equal(close, client.close());
-  await assert.rejects(close, /did not exit after shutdown/);
-  await reconnect;
+  const observedClose = close.then(
+    () => assert.fail('An unresponsive worker cannot close successfully'),
+    (error: unknown) => error,
+  );
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.deepEqual(previous.signals, [undefined]);
+  context.mock.timers.tick(2000);
+  assert.deepEqual(previous.signals, [undefined, 'SIGKILL']);
+  context.mock.timers.tick(2000);
+  const failure = await reconnect;
+  assert.ok(failure instanceof Error);
+  assert.equal(failure.message, 'Previous native worker did not exit');
+  assert.equal(await observedClose, failure);
   assert.equal(client.state, 'failed');
   assert.equal(spawns, 0);
   assert.equal(previous.requests.length, 0);
-  assert.ok(previous.kills >= 2);
+  assert.equal(previous.kills, 2);
+  assert.equal(previous.listenerCount('exit'), 1, 'Only the lifecycle listener remains');
+  context.mock.timers.tick(5000);
+  assert.equal(previous.kills, 2);
 });

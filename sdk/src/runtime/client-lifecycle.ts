@@ -1,6 +1,6 @@
 import type { ChildProcess } from 'node:child_process';
 import { WorkerRpcChannel } from './worker-rpc-channel.ts';
-import { terminateWorker } from './worker-termination.ts';
+import { terminateWorker, type WorkerTerminationOptions } from './worker-termination.ts';
 import { withCleanupFailure } from './cleanup.ts';
 import { deserializeKernelError, KernelRequestError } from '../errors.ts';
 import { normalizeLoginRequest } from '../native/login-request.ts';
@@ -71,6 +71,7 @@ export class ClientLifecycle {
   #closing = false;
   #closePromise?: Promise<void>;
   #retiringWorker = false;
+  #termination?: { worker: ChildProcess; promise: Promise<void> };
   #state: ClientState = 'idle';
   #account?: Account;
   #rpc: WorkerRpcChannel;
@@ -286,19 +287,40 @@ export class ClientLifecycle {
   async #requestTimedOut(method: string, error: Error): Promise<Error> {
     if (method === 'login') {
       // A timed-out authorization must not later make this generation online.
+      const worker = this.#worker;
+      const stateChanged = this.#state !== 'failed';
       this.#closed = true;
       this.#account = undefined;
-      this.#setState('failed');
+      this.#state = 'failed';
+      clearTimeout(this.#autoTimer);
+      this.#autoTimer = undefined;
       this.#rpc.rejectPending(error);
+      // Reserve this worker's termination before synchronous presentation can
+      // close or reconnect. Those paths join the same exit gate, never retry it.
+      const stopped = this.#stopWorker(false, worker);
+      let notificationFailure: { error: unknown } | undefined;
       try {
-        await this.#stopWorker();
+        if (stateChanged && !this.#closing && this.#state === 'failed')
+          this.#context.emit('state', 'failed');
+      } catch (error) {
+        notificationFailure = { error };
+      }
+      try {
+        await stopped;
       } catch (cleanupError) {
         // eslint-disable-next-line preserve-caught-error -- AggregateError retains both original and cleanup errors.
         throw new AggregateError(
-          [error, cleanupError],
+          notificationFailure
+            ? [error, notificationFailure.error, cleanupError]
+            : [error, cleanupError],
           'QQ login timeout and worker cleanup failed',
         );
       }
+      if (notificationFailure)
+        throw new AggregateError(
+          [error, notificationFailure.error],
+          'QQ login timeout and state notification failed',
+        );
     }
     return error;
   }
@@ -429,7 +451,7 @@ export class ClientLifecycle {
     this.#retiringWorker = true;
     try {
       if (previous.exitCode == null && previous.signalCode == null) {
-        await terminateWorker(previous, {
+        await this.#terminateWorker(previous, {
           timeoutMessage: 'Previous native worker did not exit',
         });
       }
@@ -471,10 +493,16 @@ export class ClientLifecycle {
     this.#finishClose().then(resolve, reject);
     return promise;
   }
-  async #stopWorker(waitForExit = false): Promise<void> {
-    const worker = this.#worker;
-    if (worker.exitCode != null || worker.signalCode != null) return;
-    await terminateWorker(worker, {
+  #terminateWorker(worker: ChildProcess, options: WorkerTerminationOptions): Promise<void> {
+    if (this.#termination?.worker === worker) return this.#termination.promise;
+    // Promise scheduling reserves ownership before kill/exit hooks can reenter.
+    // A terminal failure remains observable; another owner path cannot retry it.
+    const promise = Promise.resolve().then(() => terminateWorker(worker, options));
+    this.#termination = { worker, promise };
+    return promise;
+  }
+  #stopWorker(waitForExit = false, worker = this.#worker): Promise<void> {
+    return this.#terminateWorker(worker, {
       timeoutMessage: 'Native worker did not exit after shutdown',
       waitForExit,
     });

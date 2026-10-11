@@ -21,6 +21,7 @@ export async function verifyWorkerErrorRoutes({
   await verifyClientPresentation(QQClient);
   await verifyClientClosing(QQClient);
   await verifyClientOffline(QQClient);
+  await verifyClientLoginTimeout(QQClient);
   const directory = await realpath(await mkdtemp(join(tmpdir(), 'qq-worker-error-')));
   /** @type {import("../../src/client/qq-client.ts").QQClient | undefined} */
   let client;
@@ -152,6 +153,7 @@ export function createKernel(_native,_options,emit){return {
       clientOfflineObserverRetirementContract: true,
       clientOfflineBatchCancellationContract: true,
       clientNestedOfflineRestoreContract: true,
+      clientLoginTimeoutObserverRetirementContract: true,
       clientEventPresentationInstalledContract: true,
       workerOpaqueErrorContract: true,
       workerErrorRecoveryContract: true,
@@ -175,6 +177,114 @@ export function createKernel(_native,_options,emit){return {
         await exited;
       }
       await rm(directory, { recursive: true, force: true });
+    }
+  }
+}
+
+/** @param {typeof import('../../src/client/qq-client.ts').QQClient} QQClient */
+async function verifyClientLoginTimeout(QQClient) {
+  for (const [cleanupFails, closeReentry] of [
+    [false, false],
+    [true, false],
+    [false, true],
+  ]) {
+    const child = new ChildProcess();
+    Object.defineProperty(child, 'connected', { value: true, configurable: true });
+    /** @type {{id:number,method:string}[]} */
+    const sent = [];
+    Object.defineProperty(child, 'send', {
+      value(
+        /** @type {{id:number,method?:string}} */ message,
+        /** @type {(error:Error|null)=>void} */ callback,
+      ) {
+        callback(null);
+        if (message.method) sent.push({ id: message.id, method: message.method });
+        return true;
+      },
+    });
+    const observer = Object.freeze({ timeoutObserver: true });
+    const cleanup = Object.freeze({ timeoutCleanup: true });
+    let kills = 0;
+    let exited = false;
+    /** @type {Promise<{closed:true}|{error:unknown}>|undefined} */
+    let reentrantClose;
+    Object.defineProperty(child, 'kill', {
+      value() {
+        kills++;
+        if (cleanupFails) throw cleanup;
+        setTimeout(() => {
+          exited = true;
+          Object.defineProperty(child, 'exitCode', { value: 0, configurable: true });
+          child.emit('exit', 0, null);
+        }, 5);
+        return true;
+      },
+    });
+    const client = new QQClient(child, 20);
+    let failedNotifications = 0;
+    client.on('state', (state) => {
+      if (state !== 'failed' || failedNotifications++) return;
+      for (const message of sent.filter((value) => value.method !== 'login'))
+        child.emit('message', { id: message.id, result: 'late sibling success' });
+      child.emit('message', { event: 'ready', payload: { uin: '123', uid: 'late' } });
+      if (closeReentry) {
+        reentrantClose = client.close().then(
+          () => ({ closed: true }),
+          (/** @type {unknown} */ error) => ({ error }),
+        );
+      }
+      throw observer;
+    });
+    const login = client.login({ method: 'qr' }).then(
+      (value) => ({ value }),
+      (/** @type {unknown} */ error) => ({ error }),
+    );
+    const sibling = client.request('listFriends').then(
+      (/** @type {unknown} */ value) => ({ value }),
+      (/** @type {unknown} */ error) => ({ error }),
+    );
+    const merged = client.request('sendMergedForward').then(
+      (/** @type {unknown} */ value) => ({ value }),
+      (/** @type {unknown} */ error) => ({ error }),
+    );
+    try {
+      const result = await login;
+      assert.ok('error' in result && result.error instanceof AggregateError);
+      const errors = result.error.errors;
+      assert.ok(errors[0] instanceof Error);
+      assert.match(errors[0].message, /timed out|timeout/i);
+      assert.strictEqual(errors[1], observer);
+      assert.equal(errors.length, cleanupFails ? 3 : 2);
+      if (cleanupFails) assert.strictEqual(errors[2], cleanup);
+      assert.equal(kills, 1);
+      assert.equal(client.state, closeReentry ? 'closed' : 'failed');
+      assert.equal(client.account, undefined);
+      const siblingResult = await sibling;
+      assert.ok('error' in siblingResult && siblingResult.error instanceof Error);
+      assert.strictEqual(siblingResult.error, errors[0]);
+      const mergedResult = await merged;
+      assert.ok('error' in mergedResult && mergedResult.error instanceof Error);
+      assert.equal(mergedResult.error.message, errors[0].message);
+      assert.ok('mergedForward' in mergedResult.error);
+      assert.deepEqual(mergedResult.error.mergedForward, {
+        phase: 'operation',
+        uploadCompletion: 'unknown',
+        cardCompletion: 'unknown',
+      });
+      assert.equal(sent.filter((value) => value.method === 'login').length, 1);
+      if (!cleanupFails) {
+        assert.equal(exited, true);
+        assert.equal(child.exitCode, 0);
+      }
+      if (reentrantClose) assert.deepEqual(await reentrantClose, { closed: true });
+    } finally {
+      Object.defineProperty(child, 'exitCode', { value: 0, configurable: true });
+      child.emit('exit', 0, null);
+      await Promise.all([login, sibling, merged]);
+      if (cleanupFails) await assert.rejects(client.close(), (error) => error === cleanup);
+      else await client.close();
+      assert.equal(kills, 1);
+      client.removeAllListeners();
     }
   }
 }

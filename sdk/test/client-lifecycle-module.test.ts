@@ -845,3 +845,259 @@ test('offline policy getter nested nonretryable notification defeats outer retry
     await lifecycle.close();
   }
 });
+
+for (const kind of ['error', 'opaque', 'undefined'] as const) {
+  for (const cleanupFails of [false, true]) {
+    test(`login timeout retires siblings and stops worker despite ${kind} observer (${cleanupFails ? 'failed' : 'successful'} cleanup)`, async (context) => {
+      context.mock.timers.enable({ apis: ['setTimeout'] });
+      const f = workerFixture();
+      const observerFailure: unknown =
+        kind === 'error'
+          ? new Error('observer fixture')
+          : kind === 'opaque'
+            ? { message: 'opaque observer fixture', code: 7 }
+            : undefined;
+      const cleanupFailure = new Error('stop fixture');
+      let kills = 0;
+      let readSettled = false;
+      let mergedSettled = false;
+      f.worker.send = ((
+        message: { id: number; method: string },
+        callback: (error: Error | null) => void,
+      ) => {
+        f.sent.push(message);
+        callback(null);
+        return true;
+      }) as typeof f.worker.send;
+      f.worker.kill = () => {
+        kills++;
+        if (cleanupFails) throw cleanupFailure;
+        Object.assign(f.worker, { exitCode: 0, connected: false });
+        f.events.emit('exit', 0, null);
+        return true;
+      };
+      const lifecycle = new ClientLifecycle({
+        worker: f.worker,
+        timeout: 10,
+        emit(event, state) {
+          if (event !== 'state' || state !== 'failed') return;
+          for (const sent of f.sent)
+            if (sent.method === 'listFriends' || sent.method === 'sendMergedForward')
+              f.events.emit('message', { id: sent.id, result: 'late observer reply' });
+          throw observerFailure;
+        },
+        forward() {},
+        exportsUpdated() {},
+      });
+      const login = lifecycle.login({ method: 'quick', uin: '123' }).then(
+        (value) => ({ value }),
+        (error: unknown) => ({ error }),
+      );
+      const read = lifecycle.request('listFriends', {}, 1000).then(
+        (value) => {
+          readSettled = true;
+          return { value };
+        },
+        (error: unknown) => {
+          readSettled = true;
+          return { error };
+        },
+      );
+      const merged = lifecycle.request('sendMergedForward', {}, 1000).then(
+        (value) => {
+          mergedSettled = true;
+          return { value };
+        },
+        (error: unknown) => {
+          mergedSettled = true;
+          return { error };
+        },
+      );
+      context.mock.timers.tick(10);
+      await new Promise<void>((resolve) => setImmediate(resolve));
+      const immediatelyRetired = { read: readSettled, merged: mergedSettled, kills };
+      f.events.emit('message', { event: 'ready', payload: { uin: '123', uid: 'u_late' } });
+      // Drain old-source retained timers before asserting, keeping red replay bounded.
+      context.mock.timers.tick(1000);
+      const [loginResult, readResult, mergedResult] = await Promise.all([login, read, merged]);
+      assert.deepEqual(immediatelyRetired, { read: true, merged: true, kills: 1 });
+      assert.equal(lifecycle.state, 'failed');
+      assert.equal(lifecycle.account, undefined);
+      assert.ok('error' in readResult);
+      assert.match(String(readResult.error), /login timed out/);
+      assert.ok('error' in mergedResult && mergedResult.error instanceof KernelRequestError);
+      assert.equal(mergedResult.error.mergedForward?.uploadCompletion, 'unknown');
+      assert.equal(mergedResult.error.mergedForward?.cardCompletion, 'unknown');
+      assert.ok('error' in loginResult);
+      assert.ok(loginResult.error instanceof AggregateError);
+      const failures: unknown[] = loginResult.error.errors;
+      assert.equal(failures.length, cleanupFails ? 3 : 2);
+      assert.ok(failures[0] instanceof Error);
+      assert.match(failures[0].message, /login timed out/);
+      assert.equal(failures[1], observerFailure);
+      if (cleanupFails) assert.equal(failures[2], cleanupFailure);
+      assert.equal(kills, 1);
+      assert.equal(f.worker.exitCode, cleanupFails ? null : 0);
+      if (cleanupFails) {
+        const closing = lifecycle.close();
+        await assert.rejects(closing, (error: unknown) => error === cleanupFailure);
+        assert.equal(lifecycle.close(), closing);
+        context.mock.timers.tick(5000);
+        assert.equal(kills, 1);
+      }
+    });
+  }
+}
+
+test('login timeout and reentrant close share one stop and await actual exit', async (context) => {
+  context.mock.timers.enable({ apis: ['setTimeout'] });
+  const f = workerFixture();
+  let kills = 0;
+  let closing: Promise<void> | undefined;
+  let loginSettled = false;
+  let closeSettled = false;
+  const original = new Error('failed observer fixture');
+  f.worker.kill = () => {
+    kills++;
+    return true;
+  };
+  const lifecycle = new ClientLifecycle({
+    worker: f.worker,
+    timeout: 10,
+    emit(event, state) {
+      if (event === 'state' && state === 'failed') {
+        closing = lifecycle.close();
+        closing.then(
+          () => {
+            closeSettled = true;
+          },
+          () => {
+            closeSettled = true;
+          },
+        );
+        throw original;
+      }
+    },
+    forward() {},
+    exportsUpdated() {},
+  });
+  const login = lifecycle.login({ method: 'quick', uin: '123' }).then(
+    (value) => {
+      loginSettled = true;
+      return { value };
+    },
+    (error: unknown) => {
+      loginSettled = true;
+      return { error };
+    },
+  );
+  context.mock.timers.tick(10);
+  await new Promise<void>((resolve) => setImmediate(resolve));
+  const beforeExit = { kills, loginSettled, closeSettled };
+  Object.assign(f.worker, { exitCode: 0, connected: false });
+  f.events.emit('exit', 0, null);
+  const result = await login;
+  await closing;
+  assert.deepEqual(beforeExit, { kills: 1, loginSettled: false, closeSettled: false });
+  assert.ok('error' in result && result.error instanceof AggregateError);
+  assert.equal(result.error.errors[1], original);
+  assert.equal(lifecycle.state, 'closed');
+  assert.equal(lifecycle.close(), closing);
+  assert.equal(kills, 1);
+});
+
+test('failed timeout observer reconnect binds retirement to old worker and never kills replacement', async (context) => {
+  context.mock.timers.enable({ apis: ['setTimeout'] });
+  const old = workerFixture(),
+    next = workerFixture();
+  let oldKills = 0,
+    nextKills = 0;
+  let reconnect: Promise<unknown> | undefined;
+  const original = new Error('reconnecting observer fixture');
+  old.worker.kill = () => {
+    oldKills++;
+    return true;
+  };
+  const nextKill = next.worker.kill.bind(next.worker);
+  next.worker.kill = (...args) => {
+    nextKills++;
+    return nextKill(...args);
+  };
+  const lifecycle = new ClientLifecycle({
+    worker: old.worker,
+    timeout: 10,
+    restart: { spawn: () => next.worker, payload: {} },
+    emit(event, state) {
+      if (event === 'state' && state === 'failed') {
+        reconnect = lifecycle.reconnect({ method: 'quick', uin: '456' });
+        throw original;
+      }
+    },
+    forward() {},
+    exportsUpdated() {},
+  });
+  const login = lifecycle.login({ method: 'quick', uin: '123' }).then(
+    (value) => ({ value }),
+    (error: unknown) => ({ error }),
+  );
+  context.mock.timers.tick(10);
+  await new Promise<void>((resolve) => setImmediate(resolve));
+  const killsBeforeExit = oldKills;
+  assert.ok(reconnect);
+  Object.assign(old.worker, { exitCode: 0, connected: false });
+  old.events.emit('exit', 0, null);
+  await new Promise<void>((resolve) => setImmediate(resolve));
+  const sent = next.sent.find((value) => value.method === 'login');
+  try {
+    assert.ok(sent);
+    const account = { uin: '456', uid: 'u_replacement' };
+    next.events.emit('message', { event: 'ready', payload: account });
+    next.events.emit('message', { id: sent.id, result: account });
+    assert.deepEqual(await reconnect, account);
+    const result = await login;
+    assert.ok('error' in result && result.error instanceof AggregateError);
+    assert.equal(result.error.errors[1], original);
+    assert.equal(killsBeforeExit, 1);
+    assert.equal(nextKills, 0);
+    assert.deepEqual(lifecycle.account, account);
+  } finally {
+    await lifecycle.close();
+  }
+});
+
+test('login timeout clears a previously queued automatic restore without clearing explicit restoration account', async (context) => {
+  context.mock.timers.enable({ apis: ['setTimeout'] });
+  const f = workerFixture();
+  let spawns = 0;
+  const lifecycle = new ClientLifecycle({
+    worker: f.worker,
+    timeout: 10,
+    restart: {
+      spawn() {
+        spawns++;
+        return workerFixture().worker;
+      },
+      payload: {},
+    },
+    autoReconnect: { delayMs: 100, maxAttempts: 1 },
+    emit() {},
+    forward() {},
+    exportsUpdated() {},
+  });
+  const account = { uin: '123', uid: 'u_old' };
+  const initial = lifecycle.login({ method: 'quick', uin: '123' });
+  f.events.emit('message', { event: 'ready', payload: account });
+  f.events.emit('message', { id: f.sent[0].id, result: account });
+  await initial;
+  f.events.emit('message', { event: 'disconnected', payload: { retryable: true } });
+  const failed = lifecycle.login({ method: 'quick', uin: '456' });
+  const observed = assert.rejects(failed, /login timed out/);
+  context.mock.timers.tick(10);
+  await observed;
+  context.mock.timers.tick(100);
+  await new Promise<void>((resolve) => setImmediate(resolve));
+  assert.equal(spawns, 0);
+  assert.equal(lifecycle.state, 'failed');
+  assert.equal(lifecycle.account, undefined);
+  assert.equal(f.worker.exitCode, 0);
+});

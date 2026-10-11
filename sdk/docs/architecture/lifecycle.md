@@ -21,7 +21,14 @@
   signal reaches the Session adapter, HTTP IO and next-page guard. Cancellation
   affects no sibling read, does not close the account, and cannot undo a native
   invocation or remote mutation. Delivery failure preserves the original error.
-- Login timeout retires the worker generation before a replacement is allowed.
+- Login timeout commits failed state, removes the account and retires pending
+  requests before synchronous state notification. It cancels scheduled automatic
+  restore and binds shutdown to the timed-out worker. Notification failure cannot
+  skip shutdown or its exit gate. Timeout and notification errors retain their
+  original values in an `AggregateError`; a shutdown failure is also retained.
+  Close and explicit reconnect join that worker's reserved termination Promise,
+  including a terminal failure, without repeating signals or cleanup deadlines.
+  A replacement starts only after the previous worker has exited successfully.
 - Parent close reserves its shared Promise before synchronous `closing` events.
   An observer failure cannot skip shutdown or the worker-exit gate. Successful
   cleanup reaches `closed` before close rejects with the original observer value;
