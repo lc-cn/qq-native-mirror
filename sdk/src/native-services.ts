@@ -1,9 +1,18 @@
-import { createFriendCategoryAssignment } from './features/contacts/friend-category-assignment.ts';
-import { createFriendCategoryMutations } from './features/contacts/friend-category-mutations.ts';
-import { createGroupSearch } from './features/groups/group-search.ts';
-import { createGroupFiles } from './features/groups/group-files.ts';
+import {
+  createFriendCategoryAssignment,
+  type FriendCategoryAssignmentContext,
+} from './features/contacts/friend-category-assignment.ts';
+import {
+  createFriendCategoryMutations,
+  type FriendCategoryMutationsContext,
+} from './features/contacts/friend-category-mutations.ts';
+import { createGroupSearch, type GroupSearchContext } from './features/groups/group-search.ts';
+import { createGroupFiles, type GroupFilesContext } from './features/groups/group-files.ts';
 import { GroupFilePageHistory } from './features/groups/group-file-pages.ts';
-import { createMessageQueries } from './features/messages/message-queries.ts';
+import {
+  createMessageQueries,
+  type MessageQueriesContext,
+} from './features/messages/message-queries.ts';
 import { withCleanupFailure } from './runtime/cleanup.ts';
 import { NativeServiceLifetime } from './runtime/native-service-lifetime.ts';
 import { NativeListenerOwner } from './runtime/native-listener-owner.ts';
@@ -22,34 +31,125 @@ import {
   supportsGroupSearch,
 } from './native/native-contracts.ts';
 import { createFriendSystemEvents } from './features/contacts/friend-system-events.ts';
-import { createContactDirectory } from './features/contacts/contact-directory.ts';
+import {
+  createContactDirectory,
+  type ContactDirectoryContext,
+} from './features/contacts/contact-directory.ts';
 import { createNativeEventChannel } from './runtime/native-event-channel.ts';
 import { createForwardResourceOwner } from './features/forward/forward-resource-owner.ts';
 import type { LongMessageResponseService } from './features/forward/long-message-response.ts';
-import { createSelfProfile } from './features/contacts/self-profile.ts';
-import { createGroupWebReads } from './features/groups/group-web-reads.ts';
-import { createGroupNotices } from './features/groups/group-notices.ts';
-import { createForwardMessages } from './features/forward/forward-messages.ts';
-import { createGroupRequests } from './features/groups/group-requests.ts';
-import { createFriendRequests } from './features/contacts/friend-requests.ts';
-import { createContactOperations } from './features/contacts/contact-operations.ts';
-import { createAttachmentDownloads } from './features/media/attachment-downloads.ts';
-import { createMessageResolution } from './features/messages/message-resolution.ts';
-import { createNativeMessageSender } from './features/messages/native-message-sender.ts';
+import { createSelfProfile, type SelfProfileContext } from './features/contacts/self-profile.ts';
+import {
+  createGroupWebReads,
+  type GroupWebReadsContext,
+} from './features/groups/group-web-reads.ts';
+import { createGroupNotices, type GroupNoticesContext } from './features/groups/group-notices.ts';
+import {
+  createForwardMessages,
+  type ForwardMessagesContext,
+} from './features/forward/forward-messages.ts';
+import {
+  createGroupRequests,
+  type GroupRequestsContext,
+} from './features/groups/group-requests.ts';
+import {
+  createFriendRequests,
+  type FriendRequestsContext,
+} from './features/contacts/friend-requests.ts';
+import {
+  createContactOperations,
+  type ContactOperationsContext,
+} from './features/contacts/contact-operations.ts';
+import {
+  createAttachmentDownloads,
+  type AttachmentDownloadsContext,
+} from './features/media/attachment-downloads.ts';
+import {
+  createMessageResolution,
+  type MessageResolutionContext,
+} from './features/messages/message-resolution.ts';
+import {
+  createNativeMessageSender,
+  type NativeMessageSenderContext,
+} from './features/messages/native-message-sender.ts';
 /** Native contracts extracted from local NapCat; this module never sends at startup. */
-import { createGroupOperations } from './features/groups/group-operations.ts';
-import { createGroupEssenceMutations } from './features/groups/group-essence.ts';
+import {
+  createGroupOperations,
+  type GroupOperationsContext,
+} from './features/groups/group-operations.ts';
+import {
+  createGroupEssenceMutations,
+  type GroupEssenceMutationContext,
+} from './features/groups/group-essence.ts';
 import { createGroupEvents } from './features/groups/group-events.ts';
-import { createGroupQueries } from './features/groups/group-queries.ts';
+import { createGroupQueries, type GroupQueriesContext } from './features/groups/group-queries.ts';
 import { createGroupSystemEvents } from './features/groups/group-system-events.ts';
 import { createMessageUpdateEvents } from './features/messages/recall-events.ts';
-import { createMessageRecalls } from './features/messages/recall-operation.ts';
+import { createMessageRecalls, type RecallContext } from './features/messages/recall-operation.ts';
 import { createIncomingMessageDelivery } from './features/messages/incoming-message-delivery.ts';
 
 import type { NativeObject as Native } from './native/native-object.ts';
 export type { NativePeer, NativeMessage } from './native/message-contracts.ts';
 import type { ServiceOperation } from './runtime/operations.ts';
 export type { ServiceOperation } from './runtime/operations.ts';
+
+type ServicePort<Factory extends () => unknown> = NonNullable<ReturnType<Factory>>;
+type EssenceMethod = Parameters<GroupEssenceMutationContext['invoke']>[0];
+type EssenceRequest = Parameters<GroupEssenceMutationContext['invoke']>[1];
+
+/** Internal caller contracts for the services this composition actually binds.
+ * Reuse domain ports instead of declaring a second native ABI. Their results
+ * remain unknown and optional methods stay optional. NativeServiceLifetime and
+ * the domain owners still check runtime availability, cancellation and results.
+ */
+export interface NativeServicePorts {
+  Buddy: ServicePort<ContactDirectoryContext['getBuddyService']> &
+    ServicePort<FriendCategoryAssignmentContext['getBuddyService']> &
+    ServicePort<FriendCategoryMutationsContext['getBuddyService']> &
+    ServicePort<FriendRequestsContext['getBuddyService']> &
+    ServicePort<ContactOperationsContext['getBuddyService']>;
+  Profile: ServicePort<ContactDirectoryContext['getProfileService']> &
+    ServicePort<ContactOperationsContext['getProfileService']> &
+    ServicePort<SelfProfileContext['getProfileService']>;
+  UixConvert: ServicePort<ContactDirectoryContext['getUidService']> &
+    ServicePort<MessageResolutionContext['getIdentityService']>;
+  Msg: ServicePort<NativeMessageSenderContext['getMessageService']> &
+    ServicePort<MessageQueriesContext['getMessageService']> &
+    ServicePort<RecallContext['getMessageService']> &
+    ServicePort<AttachmentDownloadsContext['getMessageService']> &
+    ServicePort<ForwardMessagesContext['getMessageService']> &
+    ServicePort<GroupEssenceMutationContext['getMessageService']> &
+    LongMessageResponseService;
+  Group: ServicePort<GroupQueriesContext['getGroupService']> &
+    ServicePort<GroupRequestsContext['getGroupService']> &
+    ServicePort<GroupNoticesContext['getGroupService']> &
+    ServicePort<GroupOperationsContext['getGroupService']> & {
+      [Method in EssenceMethod]: (request: EssenceRequest) => unknown;
+    };
+  MSF: ServicePort<NativeMessageSenderContext['getServerTimeService']>;
+  Search: ServicePort<GroupSearchContext['getSearchService']>;
+  Ticket: ServicePort<GroupWebReadsContext['getTicketService']>;
+  TipOff: ServicePort<GroupWebReadsContext['getTipOffService']> &
+    ServicePort<GroupNoticesContext['getTipOffService']>;
+  RichMedia: ServicePort<NonNullable<GroupFilesContext['getFilePageService']>> &
+    ServicePort<GroupFilesContext['getFileCountService']> &
+    ServicePort<GroupFilesContext['getFolderCreationService']> &
+    ServicePort<GroupFilesContext['getFolderDeletionService']> &
+    ServicePort<NonNullable<GroupFilesContext['getFileDeletionService']>>;
+}
+type ListenerFamily = 'Msg' | 'Group' | 'Search';
+type PortMethod<Port> = string extends keyof Port
+  ? never
+  : Extract<
+      {
+        [Name in keyof Port]-?: NonNullable<Port[Name]> extends (...args: never[]) => unknown
+          ? Name
+          : never;
+      }[keyof Port],
+      string
+    >;
+type PortArguments<Port, Method extends keyof Port> =
+  NonNullable<Port[Method]> extends (...args: infer Arguments) => unknown ? Arguments : never;
 
 // Callback tokens belong to the native worker, including account replacements.
 // Only process recreation releases reservations; feature owners keep request state.
@@ -87,7 +187,19 @@ export function createNativeServices(context: NativeServiceContext) {
       }),
     );
     const { call, awaitAlive } = lifetime;
-    const service = (name: string): Native => call(guardedSession, `get${name}Service`) as Native;
+    // Known business bindings keep method and argument tuples correlated.
+    // The runtime guard still captures once and dispatches with the native receiver.
+    const callPort = <Port extends object, Method extends PortMethod<Port>>(
+      target: Port,
+      name: Method,
+      ...args: PortArguments<Port, Method>
+    ): unknown => call(target, name, ...args);
+    // The only assertion for acquired services: native handles are opaque, while
+    // callers must satisfy the closed family-specific SDK port contract.
+    const service = <Family extends keyof NativeServicePorts>(
+      name: Family,
+    ): NativeServicePorts[Family] =>
+      call(guardedSession, `get${name}Service`) as NativeServicePorts[Family];
     const groupWebReads = createGroupWebReads({
       accountId,
       signal: lifetime.signal,
@@ -128,7 +240,9 @@ export function createNativeServices(context: NativeServiceContext) {
     const messageResolution = createMessageResolution({
       signal: lifetime.signal,
       resolveUid: uidFor,
-      getIdentityService: () => ({ getUin: (uids) => call(service('UixConvert'), 'getUin', uids) }),
+      getIdentityService: () => ({
+        getUin: (uids) => callPort(service('UixConvert'), 'getUin', uids),
+      }),
       diagnostic: (stage) => {
         if (!lifetime.closed) emit('diagnostic', { stage });
       },
@@ -182,7 +296,7 @@ export function createNativeServices(context: NativeServiceContext) {
       dispatch,
     }));
     const listener = (
-      family: string,
+      family: ListenerFamily,
       overrides: Native,
       acquired?: Native,
       retainBeforeAdd = false,
@@ -211,7 +325,7 @@ export function createNativeServices(context: NativeServiceContext) {
     });
     const groupEvents = createGroupEvents(emit);
     listener('Group', {
-      onGroupListUpdate: (kind: unknown, groups: Native[]) => {
+      onGroupListUpdate: (kind: unknown, groups: unknown) => {
         if (process.env.QQ_NATIVE_TRACE_FIELDS === '1')
           emit('diagnostic', {
             stage: `group-list-update:kind-${typeof kind === 'number' || typeof kind === 'boolean' ? String(kind) : typeof kind}:count-${Array.isArray(groups) ? groups.length : 'non-array'}`,
@@ -293,7 +407,7 @@ export function createNativeServices(context: NativeServiceContext) {
       signal: lifetime.signal,
       awaitAlive,
       getMessageService: () => service('Msg'),
-      invoke: (name, request) => call(service('Group'), name, request),
+      invoke: (name, request) => callPort(service('Group'), name, request),
     });
     const forwardMessages = own(
       createForwardMessages({
@@ -327,7 +441,7 @@ export function createNativeServices(context: NativeServiceContext) {
       selfUid: accountUid ?? '',
       signal: lifetime.signal,
       resolvePeer,
-      getMessageService: () => service('Msg') as LongMessageResponseService,
+      getMessageService: () => service('Msg'),
       sendPrepared: (peer, elements, onDispatch) => sender.sendPrepared(peer, elements, onDispatch),
       defer: (cleanup) => lifetime.defer(cleanup),
     });
@@ -346,27 +460,28 @@ export function createNativeServices(context: NativeServiceContext) {
           const richMedia = service('RichMedia');
           return {
             deleteGroupFile: (groupId, params, files) =>
-              call(richMedia, 'deleteGroupFile', groupId, params, files),
+              callPort(richMedia, 'deleteGroupFile', groupId, params, files),
           };
         },
         getFileCountService: () => {
           const richMedia = service('RichMedia');
           return {
-            batchGetGroupFileCount: (groups) => call(richMedia, 'batchGetGroupFileCount', groups),
+            batchGetGroupFileCount: (groups) =>
+              callPort(richMedia, 'batchGetGroupFileCount', groups),
           };
         },
         getFolderCreationService: () => {
           const richMedia = service('RichMedia');
           return {
             createGroupFolder: (groupId, name) =>
-              call(richMedia, 'createGroupFolder', groupId, name),
+              callPort(richMedia, 'createGroupFolder', groupId, name),
           };
         },
         getFolderDeletionService: () => {
           const richMedia = service('RichMedia');
           return {
             deleteGroupFolder: (groupId, folderId) =>
-              call(richMedia, 'deleteGroupFolder', groupId, folderId),
+              callPort(richMedia, 'deleteGroupFolder', groupId, folderId),
           };
         },
       }),

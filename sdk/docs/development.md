@@ -331,6 +331,17 @@ Do not duplicate check-then-read invocation there: capture once, recheck retirem
 and dispatch the captured method with its receiver. Feature adapters keep their
 narrow domain ports; this dynamic binding is not a general service locator for them.
 
+Service composition derives its closed `NativeServicePorts` family map from
+those same domain getter contracts. Extend a domain port before wiring a new
+method; do not duplicate its tuple in an aggregate ABI interface or replace the
+map with `NativeObject`. Use the existing typed `callPort` binding for known
+business methods. Only proprietary Session acquisition and listener registration
+use the dynamic boundary directly. The type map does not validate native results
+or enable a capability: keep runtime guards, unknown receipts and independent
+binary evidence. Compiler regressions mutate the actual composition in memory
+to reject unknown families, wrong methods/arguments and a widened acquisition
+return type without running those bodies.
+
 Use composition for domain operations. Interfaces support polymorphism where an
 implementation actually varies: the worker transport and bundled/custom media
 codecs already have production and controlled-test adapters. Inheritance is

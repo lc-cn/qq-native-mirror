@@ -53,6 +53,18 @@ positions. The record/video codecs and worker transport are actual substitution
 points used by platform implementations and controlled tests. Domain adapters use
 composition; a shared superclass would couple unrelated native contracts.
 
+The composition's private `NativeServicePorts` map combines the existing domain
+getter contracts for each of its ten service families. It is a caller contract,
+not another native ABI declaration. The lazy acquisition binding accepts only
+those family names; named business bindings use `callPort` to correlate the
+selected method with its argument tuple and return `unknown`. A dynamic
+string-indexed native object cannot enter that typed binding. Runtime method
+guards still capture once, preserve the receiver and check retirement; domain
+owners still validate results and exact-binary capability evidence. Optional
+methods remain optional. Session acquisition and retained-listener registration
+keep their reviewed dynamic boundaries. No services are prefetched or cached
+by this type map, and it adds no lifecycle or feature owner.
+
 `KernelEnvironment` owns one cached preparation promise, local directories, device
 configuration, Session factory selection and engine/login initialization. It does
 not connect or authenticate. `AuthenticationAttempt` owns one captured login request, account matching,
