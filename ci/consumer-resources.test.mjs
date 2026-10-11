@@ -5,7 +5,7 @@ import { closeConsumerResources } from './consumer-resources.mjs';
 function fixture() {
   /** @type {string[]} */
   const calls = [];
-  /** @type {import('./consumer-resources.mjs').ConsumerResources} */
+  /** @type {import('./consumer-resources.mjs').ConsumerResources & {server: NonNullable<import('./consumer-resources.mjs').ConsumerResources['server']>}} */
   const resources = {
     client: {
       async close() {
@@ -171,4 +171,21 @@ await test('unacquired client does not prevent registry and directory retirement
   delete f.resources.client;
   await closeConsumerResources(f.resources);
   assert.deepEqual(f.calls, ['server', 'connections', 'directory']);
+});
+
+await test('directory acquisition failure needs no client or registry to retain its primary', async () => {
+  let removed = 0;
+  const primary = new Error('Artifact read failed');
+  await assert.rejects(
+    closeConsumerResources(
+      {
+        async removeDirectory() {
+          removed++;
+        },
+      },
+      { error: primary },
+    ),
+    (error) => error === primary,
+  );
+  assert.equal(removed, 1);
 });

@@ -53,6 +53,9 @@ consumer entries, their imported source/manifest declarations and the consumer c
 owner. `check:native-storage` runs this project and its negative compiler/lint
 regressions without executing those entries. Receipt variables use completed-result
 types, so a Promise assigned to a named JSON field cannot masquerade as a finished check.
+The acquisition regression executes only the parsed artifact-acquisition prefix
+with controlled ports and the actual catch/finally. It checks canonicalization,
+metadata, archive and pack failures without importing either native entry point.
 
 The strict consumer directory glob automatically covers new helpers. Do not
 weaken verification with a whole-module `any`, unchecked fixture assertion or

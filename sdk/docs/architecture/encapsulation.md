@@ -174,6 +174,9 @@ Generated fixture strings elsewhere keep their separate runtime coverage.
 
 `ci/consumer-resources` owns retirement of the platform consumer's client, local
 registry and temporary directory. Every stage runs even if an earlier stage fails.
+The entry starts its cleanup scope immediately after directory creation, before
+canonicalization, artifact reads or packing. Client and registry ports stay absent
+until acquisition; cleanup always removes the original directory path.
 It preserves a sole failure, aggregates execution/cleanup failures and bounds the
 registry-close wait while ending retained connections. A wrapped primary failure
 preserves `throw undefined`. The owner acquires no resources and does not interpret
@@ -194,7 +197,9 @@ acquisition stage checks that initialization is still active. A candidate return
 after reentrant close is retired without preparation, and a late prepare result
 cannot publish readiness. Kernel callbacks after failure or close are suppressed.
 Primary initialization failures retain cleanup failures rather than replacing
-them. Native loading can leave process-owned threads; once loading is attempted,
+them. The pure cleanup helper captures only an inspectable own-data aggregate
+list, preserving opaque throws when brand or descriptor inspection fails and
+avoiding error accessors. Native loading can leave process-owned threads; once loading is attempted,
 the account-directory lock remains owned until the synchronous process-exit hook.
 Directory-only failures release their acquisition once. Close does not invent a
 native addon unload or a QQ Session destructor.

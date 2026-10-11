@@ -438,3 +438,57 @@ for (const method of ['prepare', 'login', 'invokeOperation'] as const) {
     assert.equal(f.state().releases, 1);
   });
 }
+
+for (const shape of ['revoked', 'accessor', 'aggregate'] as const)
+  test(`failed prepare preserves ${shape} cleanup and lock ownership until exit`, async () => {
+    const f = fixture();
+    const primary = new Error('Controlled prepare failure');
+    const first = new Error('First cleanup failure');
+    const second = new Error('Second cleanup failure');
+    const revoked = Proxy.revocable({}, {});
+    revoked.revoke();
+    let reads = 0;
+    const accessor = new AggregateError([]);
+    Object.defineProperty(accessor, 'errors', {
+      get() {
+        reads++;
+        throw new Error('Unknown error accessor');
+      },
+    });
+    const cleanup =
+      shape === 'revoked'
+        ? revoked.proxy
+        : shape === 'accessor'
+          ? accessor
+          : new AggregateError([first, second]);
+    let closes = 0;
+    f.kernel.prepare = async () => {
+      throw primary;
+    };
+    f.kernel.close = async () => {
+      closes++;
+      throw cleanup;
+    };
+    await assert.rejects(f.owner.initialize(options), (error: unknown) => {
+      assert.ok(error instanceof AggregateError);
+      assert.equal(error.errors[0], primary);
+      if (shape === 'aggregate') assert.deepEqual(error.errors.slice(1), [first, second]);
+      else {
+        assert.equal(error.errors.length, 2);
+        assert.equal(error.errors[1], cleanup);
+      }
+      return true;
+    });
+    // assert.rejects inspects a raw rejected value; a revoked Proxy rejects that inspection.
+    await f.owner.close().then(
+      () => assert.fail('Cleanup must reject'),
+      (error: unknown) => assert.equal(error, cleanup),
+    );
+    assert.equal(closes, 1);
+    assert.equal(reads, 0);
+    assert.equal(f.state().releases, 0);
+    f.owner.releaseOnExit();
+    f.owner.releaseOnExit();
+    assert.equal(f.state().releases, 1);
+    assert.equal(closes, 1);
+  });

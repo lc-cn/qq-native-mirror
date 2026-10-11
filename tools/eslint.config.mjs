@@ -36,6 +36,7 @@ export default [
       'ci/current-source-mirror.mjs',
       'ci/consumer-resources.mjs',
       'ci/consumer-resources.test.mjs',
+      'ci/consumer-acquisition.test.mjs',
     ],
     languageOptions: {
       parser: tseslint.parser,

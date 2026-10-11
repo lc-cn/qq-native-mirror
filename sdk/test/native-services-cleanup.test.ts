@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createNativeServices } from '../src/native-services.ts';
-import { cleanupAll } from '../src/runtime/cleanup.ts';
+import { cleanupAll, withCleanupFailure } from '../src/runtime/cleanup.ts';
 
 test('cleanup attempts every step and preserves single native failure identity/code', () => {
   const failure = Object.assign(new Error('remove failed'), { code: 7 });
@@ -203,4 +203,48 @@ test('construction keeps non-Error primary value without coercion alongside clea
       error instanceof AggregateError && error.errors[0] === primary && error.errors[1] === cleanup,
   );
   assert.equal(coerced, 0);
+});
+
+test('operation cleanup keeps normal aggregate errors flat without coercing thrown values', () => {
+  const first = new Error('first cleanup');
+  const second = { code: 7 };
+  const failure = withCleanupFailure(undefined, new AggregateError([first, second]));
+  assert.ok(failure instanceof AggregateError);
+  assert.deepEqual(failure.errors, [undefined, first, second]);
+});
+
+test('opaque cleanup inspection cannot replace the primary or execute error accessors', () => {
+  const primary = new Error('primary');
+  const revoked = Proxy.revocable({}, {});
+  revoked.revoke();
+  let reads = 0;
+  const accessor = new AggregateError([]);
+  Object.defineProperty(accessor, 'errors', {
+    get() {
+      reads++;
+      throw new Error('Do not execute');
+    },
+  });
+  const slots = new AggregateError([]);
+  const values: unknown[] = [undefined];
+  Object.defineProperty(values, '0', {
+    get() {
+      reads++;
+      throw new Error('Do not execute');
+    },
+  });
+  Object.defineProperty(slots, 'errors', { value: values });
+  const descriptor = new Proxy(new AggregateError([]), {
+    getOwnPropertyDescriptor() {
+      throw new Error('Descriptor inspection failed');
+    },
+  });
+  for (const cleanup of [revoked.proxy, accessor, slots, descriptor]) {
+    const failure = withCleanupFailure(primary, cleanup);
+    assert.ok(failure instanceof AggregateError);
+    assert.equal(failure.errors.length, 2);
+    assert.equal(failure.errors[0], primary);
+    assert.equal(failure.errors[1], cleanup);
+  }
+  assert.equal(reads, 0);
 });

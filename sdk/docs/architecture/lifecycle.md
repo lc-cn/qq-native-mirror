@@ -19,7 +19,9 @@
   successfully acquired modules. Normal close is idempotent and attempts every
   cleanup. A single teardown error retains its identity/code; multiple failures
   retain their original values in an `AggregateError`. Cleanup never retries a
-  native operation.
+  native operation. Operation/cleanup aggregation expands ordinary own-data
+  error lists; a throw that cannot be inspected safely stays as its original value.
+  Error accessors cannot replace the primary failure.
 - Account state, generation, timers and pending settlement converge before
   fallible teardown. Offline/logout events still report the original transition.
   Cleanup diagnostics expose typed message/name/code records rather than native

@@ -1,7 +1,7 @@
 /**
  * @typedef {object} ConsumerResources
  * @property {{close(): Promise<void>}} [client]
- * @property {{close(callback:(error?:Error)=>void):unknown, closeAllConnections():void}} server
+ * @property {{close(callback:(error?:Error)=>void):unknown, closeAllConnections():void}} [server]
  * @property {()=>Promise<void>} removeDirectory
  * @property {number} [serverCloseTimeoutMs]
  */
@@ -15,7 +15,7 @@ function finish(errors) {
 }
 
 /** Stop accepting first, then end retained connections, with a bounded wait.
- * @param {ConsumerResources['server']} server
+ * @param {NonNullable<ConsumerResources['server']>} server
  * @param {number} timeoutMs
  */
 async function closeRegistry(server, timeoutMs) {
@@ -90,7 +90,8 @@ export async function closeConsumerResources(resources, primary) {
     errors.push(error);
   }
   try {
-    await closeRegistry(resources.server, resources.serverCloseTimeoutMs ?? 2000);
+    if (resources.server)
+      await closeRegistry(resources.server, resources.serverCloseTimeoutMs ?? 2000);
   } catch (error) {
     errors.push(error);
   }

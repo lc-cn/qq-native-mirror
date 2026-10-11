@@ -44,112 +44,118 @@ import { verifyRequestResultConsumer } from '../sdk/scripts/consumers/request-re
 import { verifyQunWebConsumer } from '../sdk/scripts/consumers/qun-web-consumer-contract.mjs';
 import { verifyWorkerBootstrapConsumer } from '../sdk/scripts/consumers/worker-bootstrap-consumer-contract.mjs';
 import { verifyClientFactoryConsumer } from '../sdk/scripts/consumers/client-factory-consumer-contract.mjs';
-const execute = promisify(execFile),
-  temp = await realpath(await mkdtemp(join(tmpdir(), 'qq-ci-consumer-')));
-const { version } = JSON.parse(await readFile('sdk/package.json', 'utf8'));
-const platformName = `qq-native-client-${process.platform}-${process.arch}`;
-const binaries = new Map();
-/** @param {string} name @param {string} v @param {string} path */
-const add = async (name, v, path) => {
-  const body = await readFile(path);
-  binaries.set(name, {
-    version: v,
-    body,
-    integrity: 'sha512-' + createHash('sha512').update(body).digest('base64'),
-  });
-};
-await add('qq-native-client', version, `out/qq-native-client-${version}.tgz`);
-await add(platformName, version, `out/${platformName}-${version}.tgz`);
-execFileSync(
-  npm[0],
-  [
-    ...npm[1],
-    'pack',
-    '--ignore-scripts',
-    '--offline',
-    '--cache',
-    join(temp, 'npm-pack-cache'),
-    '--pack-destination',
-    resolve('out'),
-    '--json',
-  ],
-  { cwd: resolve('sdk/node_modules/silk-wasm'), stdio: 'pipe' },
-);
-await add('silk-wasm', '3.7.1', 'out/silk-wasm-3.7.1.tgz');
-const deviceNames = [
-  'linux-x64',
-  'linux-arm64',
-  'darwin-x64',
-  'darwin-arm64',
-  'win32-x64',
-  'win32-arm64',
-];
-const manifests = new Map();
-for (const name of ['qq-native-client', platformName, 'silk-wasm']) {
-  const r = JSON.parse(
-    execFileSync(
-      'tar',
-      [
-        '-xOf',
-        name === 'silk-wasm' ? 'out/silk-wasm-3.7.1.tgz' : `out/${name}-${version}.tgz`,
-        'package/package.json',
-      ],
-      { encoding: 'utf8' },
-    ),
-  );
-  manifests.set(name, r);
-}
-// Metadata fixtures for foreign devices exercise npm's os/cpu filter; no foreign binary is created or executed.
-for (const device of deviceNames) {
-  const name = 'qq-native-client-' + device;
-  if (!manifests.has(name)) {
-    const [os, cpu] = device.split('-');
-    manifests.set(name, {
-      name,
-      version,
-      os: [os],
-      cpu: [cpu],
-      ...(os === 'linux' ? { libc: ['glibc'] } : {}),
-      engines: { node: '>=24' },
-    });
-  }
-}
-/** @type {string|undefined} */
-let origin;
-/** @type {import("../sdk/src/index.ts").QQClient|undefined} */
+const temporary = await mkdtemp(join(tmpdir(), 'qq-ci-consumer-'));
+/** @type {import('../sdk/src/index.ts').QQClient|undefined} */
 let client;
-/** @type {string[]} */
-const tarballRequests = [];
-const server = createServer((req, res) => {
-  const name = decodeURIComponent((req.url ?? '').slice(1));
-  if (name.endsWith('.tgz')) {
-    const packageName = name.slice(0, -4);
-    tarballRequests.push(packageName);
-    const found = binaries.get(packageName);
-    if (!found) return void res.writeHead(404).end();
-    return void res.end(found.body);
-  }
-  const manifest = manifests.get(name);
-  if (!manifest) return void res.writeHead(404).end();
-  const bin = binaries.get(name),
-    v = manifest.version;
-  res.setHeader('content-type', 'application/json');
-  res.end(
-    JSON.stringify({
-      name,
-      'dist-tags': { latest: v },
-      versions: {
-        [v]: {
-          ...manifest,
-          dist: { tarball: `${origin}/${name}.tgz`, ...(bin ? { integrity: bin.integrity } : {}) },
-        },
-      },
-    }),
-  );
-});
+/** @type {import('node:http').Server|undefined} */
+let registry;
 /** @type {{error:unknown}|undefined} */
 let primary;
 try {
+  // Ownership starts with mkdtemp; canonicalization and artifact reads can fail.
+  const temp = await realpath(temporary);
+  const execute = promisify(execFile);
+  const { version } = JSON.parse(await readFile('sdk/package.json', 'utf8'));
+  const platformName = `qq-native-client-${process.platform}-${process.arch}`;
+  const binaries = new Map();
+  /** @param {string} name @param {string} v @param {string} path */
+  const add = async (name, v, path) => {
+    const body = await readFile(path);
+    binaries.set(name, {
+      version: v,
+      body,
+      integrity: 'sha512-' + createHash('sha512').update(body).digest('base64'),
+    });
+  };
+  await add('qq-native-client', version, `out/qq-native-client-${version}.tgz`);
+  await add(platformName, version, `out/${platformName}-${version}.tgz`);
+  execFileSync(
+    npm[0],
+    [
+      ...npm[1],
+      'pack',
+      '--ignore-scripts',
+      '--offline',
+      '--cache',
+      join(temp, 'npm-pack-cache'),
+      '--pack-destination',
+      resolve('out'),
+      '--json',
+    ],
+    { cwd: resolve('sdk/node_modules/silk-wasm'), stdio: 'pipe' },
+  );
+  await add('silk-wasm', '3.7.1', 'out/silk-wasm-3.7.1.tgz');
+  const deviceNames = [
+    'linux-x64',
+    'linux-arm64',
+    'darwin-x64',
+    'darwin-arm64',
+    'win32-x64',
+    'win32-arm64',
+  ];
+  const manifests = new Map();
+  for (const name of ['qq-native-client', platformName, 'silk-wasm']) {
+    const r = JSON.parse(
+      execFileSync(
+        'tar',
+        [
+          '-xOf',
+          name === 'silk-wasm' ? 'out/silk-wasm-3.7.1.tgz' : `out/${name}-${version}.tgz`,
+          'package/package.json',
+        ],
+        { encoding: 'utf8' },
+      ),
+    );
+    manifests.set(name, r);
+  }
+  // Metadata fixtures for foreign devices exercise npm's os/cpu filter; no foreign binary is created or executed.
+  for (const device of deviceNames) {
+    const name = 'qq-native-client-' + device;
+    if (!manifests.has(name)) {
+      const [os, cpu] = device.split('-');
+      manifests.set(name, {
+        name,
+        version,
+        os: [os],
+        cpu: [cpu],
+        ...(os === 'linux' ? { libc: ['glibc'] } : {}),
+        engines: { node: '>=24' },
+      });
+    }
+  }
+  /** @type {string[]} */
+  const tarballRequests = [];
+  const server = createServer((req, res) => {
+    const name = decodeURIComponent((req.url ?? '').slice(1));
+    if (name.endsWith('.tgz')) {
+      const packageName = name.slice(0, -4);
+      tarballRequests.push(packageName);
+      const found = binaries.get(packageName);
+      if (!found) return void res.writeHead(404).end();
+      return void res.end(found.body);
+    }
+    const manifest = manifests.get(name);
+    if (!manifest) return void res.writeHead(404).end();
+    const bin = binaries.get(name),
+      v = manifest.version;
+    res.setHeader('content-type', 'application/json');
+    res.end(
+      JSON.stringify({
+        name,
+        'dist-tags': { latest: v },
+        versions: {
+          [v]: {
+            ...manifest,
+            dist: {
+              tarball: `${origin}/${name}.tgz`,
+              ...(bin ? { integrity: bin.integrity } : {}),
+            },
+          },
+        },
+      }),
+    );
+  });
+  registry = server;
   await new Promise(
     /** @param {(value?:undefined)=>void} done */ (done, reject) => {
       server.once('error', reject);
@@ -158,7 +164,7 @@ try {
   );
   const address = server.address();
   assert.ok(address && typeof address !== 'string');
-  origin = `http://127.0.0.1:${address.port}`;
+  const origin = `http://127.0.0.1:${address.port}`;
   await writeFile(
     join(temp, 'package.json'),
     JSON.stringify({ name: 'qq-ci-consumer', private: true, type: 'module' }),
@@ -1102,7 +1108,11 @@ try {
   primary = { error };
 } finally {
   await closeConsumerResources(
-    { client, server, removeDirectory: () => rm(temp, { recursive: true, force: true }) },
+    {
+      client,
+      server: registry,
+      removeDirectory: () => rm(temporary, { recursive: true, force: true }),
+    },
     primary,
   );
 }
