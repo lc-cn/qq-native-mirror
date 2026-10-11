@@ -1,0 +1,43 @@
+sdk/docs/architecture.md
+  s_2104cc474f1ce5::t_7f840b5a5716ea 81,84-87
+sdk/docs/architecture/encapsulation.md
+  s_2104cc474f1ce5::t_a0dfade940df11 108-116
+sdk/docs/development.md
+  s_2104cc474f1ce5::t_4cd2010a87a7d2 153-159
+sdk/src/cli/commands/messages.ts
+  s_2104cc474f1ce5::t_37d6159d1d53d9 7
+sdk/src/client/qq-client.ts
+  s_2104cc474f1ce5::t_96decf69a9539a 23
+sdk/src/features/forward/forward-resource-input.ts
+  s_2104cc474f1ce5::t_4aba5f9fa1d2c3 1-21
+sdk/src/features/forward/forward-resource-owner.ts
+  s_2104cc474f1ce5::t_f0705e62d2d472 9-10
+sdk/src/features/forward/forward-resource-transport.ts
+  s_2104cc474f1ce5::t_83a7e330a414fc 5
+sdk/src/features/forward/forward-resource-wire.ts
+  s_2104cc474f1ce5::t_1efba61a241eed 6-11
+sdk/src/kernel.ts
+  s_2104cc474f1ce5::t_a4d676fc74a422 79-84,86,89,91-97,99-103,107,318,376
+sdk/test/architecture.test.ts
+  s_2104cc474f1ce5::t_bf23c9d69df54a 362-400,693,710
+sdk/test/helpers/dependency-policy.ts
+  s_2104cc474f1ce5::t_57a2b696c43a37 125,172-173
+sdk/test/kernel-cleanup.test.ts
+  s_2104cc474f1ce5::t_87f7183b73791e 79,81-85,97,100-113
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "2d1a53d46807e35a73ee67859e569db8c0471276",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
