@@ -49,6 +49,20 @@ resources or depend on a lifecycle implementation. Regression tests verify
 single method acquisition, original receivers, retirement during getters and
 no fallback after native dispatch failure with controlled objects.
 
+The architecture runner is `test/architecture.test.ts`. It loads five focused
+suites in `test/architecture/`: dependency direction, module ownership,
+composition, contracts and resources. `test/helpers/source-graph.ts` reads the
+source inventory once and supplies the same graph to each suite; it never imports
+the SDK. Add a rule to its owning suite. A new suite must be wired into the runner,
+so standalone and full test commands exercise the same assertions.
+
+Resource checks also reject acquisition of Node's `process.getBuiltinModule`
+loader. Builtins must use explicit imports subject to the exact owner policy.
+Symbol resolution covers literal and constant keys, aliases and destructuring,
+while local methods and type-only declarations do not acquire the loader. These
+checks constrain visible resource acquisition; they do not establish a sandbox
+against arbitrary JavaScript execution.
+
 Architecture checks cover ambient `fetch` acquisition as well as import edges.
 Only the catalog, manifest download and group HTTP transport owners may acquire
 the global implementation. TypeScript symbol resolution detects direct access,

@@ -82,7 +82,8 @@ The diagrams are navigation aids; the exact permissions live in
 The parent facade and CLI import pure input modules (`query-input`,
 `download-input`, `merged-forward-input`, `send-input`, `face-input`, and
 contact-category projection/validation, `friend-request-input` and
-`group-request-input`, and `forward-resource-input`).
+`group-request-input`, `contact-operation-input`, `group-operation-input`, and
+`forward-resource-input`).
 Native operation modules reuse that implementation and retain internal reexports
 for existing contract consumers. Input capture therefore does not require the
 parent to depend on native querying, media-file writes, forward submission or
@@ -95,6 +96,8 @@ public facade constrains its private operation dispatcher to that union, the
 worker derives its classifier from it, and native dispatch handles the same union
 exhaustively. The low-level public `request(string, ...)` remains compatible. Adding a name without a corresponding native branch fails type
 checking; the worker no longer maintains a second handwritten allowlist.
+`src/runtime/operation-contracts.ts` owns the type-only correlated SDK payload and
+result tuples used by the facade; it does not validate native ABI or responses.
 
 Shared account/group identifier rules belong to `validation/identifiers`, not
 to message sending. Group inputs import that pure owner directly; the original
