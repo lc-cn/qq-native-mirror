@@ -1569,3 +1569,188 @@ for (const action of ['login', 'ready'] as const) {
     }
   });
 }
+
+for (const row of [
+  { primary: 'error', observer: 'none' },
+  { primary: 'opaque', observer: 'none' },
+  { primary: 'undefined', observer: 'none' },
+  { primary: 'error', observer: 'error' },
+  { primary: 'opaque', observer: 'undefined' },
+  { primary: 'undefined', observer: 'opaque' },
+  { primary: 'error', observer: 'undefined' },
+] as const) {
+  test(`spawn ${row.primary} failure retains original with ${row.observer} observer`, async () => {
+    const old = workerFixture(),
+      next = workerFixture();
+    const primary: unknown =
+      row.primary === 'error'
+        ? new Error('spawn fixture')
+        : row.primary === 'opaque'
+          ? { spawn: true }
+          : undefined;
+    const notification: unknown =
+      row.observer === 'error'
+        ? new Error('failed observer fixture')
+        : row.observer === 'opaque'
+          ? { observer: true }
+          : undefined;
+    let attempts = 0,
+      kills = 0,
+      notifications = 0;
+    const kill = old.worker.kill.bind(old.worker);
+    old.worker.kill = (...args) => {
+      kills++;
+      return kill(...args);
+    };
+    const send = next.worker.send.bind(next.worker);
+    next.worker.send = ((
+      message: { id: number; method: string },
+      callback: (error: Error | null) => void,
+    ) => {
+      const result = send(message, callback);
+      if (message.method === 'login')
+        queueMicrotask(() => {
+          const account = { uin: '123', uid: 'u_recovered' };
+          next.events.emit('message', { event: 'ready', payload: account });
+          next.events.emit('message', { id: message.id, result: account });
+        });
+      return result;
+    }) as typeof next.worker.send;
+    const lifecycle = new ClientLifecycle({
+      worker: old.worker,
+      timeout: 1000,
+      restart: {
+        spawn() {
+          attempts++;
+          if (attempts === 1) throw primary;
+          return next.worker;
+        },
+        payload: {},
+      },
+      emit(event, state) {
+        if (event === 'state' && state === 'failed') {
+          notifications++;
+          if (row.observer !== 'none') throw notification;
+        }
+      },
+      forward() {},
+      exportsUpdated() {},
+    });
+    try {
+      const result = await lifecycle.reconnect({ method: 'quick', uin: '123' }).then(
+        (value) => ({ value }),
+        (error: unknown) => ({ error }),
+      );
+      assert.ok('error' in result);
+      if (row.observer === 'none') assert.equal(result.error, primary);
+      else {
+        assert.ok(result.error instanceof AggregateError);
+        assert.deepEqual(result.error.errors, [primary, notification]);
+      }
+      assert.equal(notifications, 1);
+      assert.equal(kills, 1);
+      assert.equal(attempts, 1);
+      assert.equal(old.worker.exitCode, 0);
+      assert.equal(next.sent.length, 0);
+      assert.equal(lifecycle.state, 'failed');
+      assert.equal(lifecycle.account, undefined);
+      if (row.primary === 'error' && row.observer === 'error') {
+        assert.deepEqual(await lifecycle.reconnect({ method: 'quick', uin: '123' }), {
+          uin: '123',
+          uid: 'u_recovered',
+        });
+        assert.equal(attempts, 2);
+        assert.equal(kills, 1);
+        assert.deepEqual(
+          next.sent.map((sent) => sent.method),
+          ['init', 'login'],
+        );
+      }
+    } finally {
+      await lifecycle.close();
+    }
+  });
+}
+
+test('old worker stop failure and failed observer failure retain both originals without retry or spawn', async () => {
+  const old = workerFixture();
+  const primary = new Error('old stop fixture'),
+    notification = new Error('failed observer fixture');
+  let kills = 0,
+    spawns = 0;
+  old.worker.kill = () => {
+    kills++;
+    throw primary;
+  };
+  const lifecycle = new ClientLifecycle({
+    worker: old.worker,
+    timeout: 1000,
+    restart: {
+      spawn() {
+        spawns++;
+        return workerFixture().worker;
+      },
+      payload: {},
+    },
+    emit(event, state) {
+      if (event === 'state' && state === 'failed') throw notification;
+    },
+    forward() {},
+    exportsUpdated() {},
+  });
+  const result = await lifecycle.reconnect({ method: 'quick', uin: '123' }).then(
+    (value) => ({ value }),
+    (error: unknown) => ({ error }),
+  );
+  await assert.rejects(lifecycle.close(), (error: unknown) => error === primary);
+  assert.ok('error' in result && result.error instanceof AggregateError);
+  assert.deepEqual(result.error.errors, [primary, notification]);
+  assert.equal(kills, 1);
+  assert.equal(spawns, 0);
+  assert.equal(old.sent.length, 0);
+});
+
+test('spawn failure observer close preserves both failures and never repeats completed old stop', async () => {
+  const old = workerFixture();
+  const primary = new Error('spawn fixture'),
+    notification = { notification: true };
+  let closing: Promise<void> | undefined;
+  let kills = 0,
+    spawns = 0;
+  const kill = old.worker.kill.bind(old.worker);
+  old.worker.kill = (...args) => {
+    kills++;
+    return kill(...args);
+  };
+  const lifecycle = new ClientLifecycle({
+    worker: old.worker,
+    timeout: 1000,
+    restart: {
+      spawn() {
+        spawns++;
+        throw primary;
+      },
+      payload: {},
+    },
+    emit(event, state) {
+      if (event === 'state' && state === 'failed') {
+        closing = lifecycle.close();
+        throw notification;
+      }
+    },
+    forward() {},
+    exportsUpdated() {},
+  });
+  const result = await lifecycle.reconnect({ method: 'quick', uin: '123' }).then(
+    (value) => ({ value }),
+    (error: unknown) => ({ error }),
+  );
+  await closing;
+  assert.ok('error' in result && result.error instanceof AggregateError);
+  assert.deepEqual(result.error.errors, [primary, notification]);
+  assert.equal(lifecycle.close(), closing);
+  assert.equal(lifecycle.state, 'closed');
+  assert.equal(kills, 1);
+  assert.equal(spawns, 1);
+  assert.equal(old.sent.length, 0);
+});

@@ -86,6 +86,14 @@ login and closing tokens; nested account or shutdown work remains authoritative.
 Rollback does not reenter presentation with a compensating event. Joined callers
 receive the same result, and releasing the attempt permits explicit recovery.
 
+Errors before replacement assignment retain their original value, including a
+failed previous-worker stop or a throwing worker factory. The outer reconnect
+handler commits `failed` before presentation and retains both errors if notification
+also throws. It neither retries a terminal stop nor attempts cleanup of an
+unallocated replacement. Replacement failures already retired by the shared
+transaction keep their existing result; an unchanged failed state does not notify
+or wrap them again. A previous-worker stop failure does not prove process exit.
+
 Before changing account state, `ClientLifecycle` captures own-data `uin` and `uid`
 from worker readiness. It stores only those two fields, preserving decimal strings
 (including zero, leading zeros and values beyond JavaScript's safe integer range)

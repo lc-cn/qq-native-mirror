@@ -43,6 +43,11 @@
   offline, readiness or login work takes precedence. Reentrant same-request calls
   join the reserved result; another request rejects, and explicit recovery is
   available after the failed attempt is released.
+- Previous-worker retirement and replacement creation errors retain their
+  original value. If their `failed` notification also throws, reconnect rejects
+  with an `AggregateError` containing the operation and notification failures.
+  It does not retry termination or clean up an unallocated replacement. A failed
+  previous-worker termination remains a failure, without claiming process exit.
 - Parent close reserves its shared Promise before synchronous `closing` events.
   An observer failure cannot skip shutdown or the worker-exit gate. Successful
   cleanup reaches `closed` before close rejects with the original observer value;

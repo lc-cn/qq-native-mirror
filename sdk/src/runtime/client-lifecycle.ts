@@ -474,7 +474,15 @@ export class ClientLifecycle {
         .catch((error) => {
           if (!this.#closing) {
             this.#closed = true;
-            this.#setState('failed');
+            try {
+              this.#setState('failed');
+            } catch (notificationError) {
+              // eslint-disable-next-line preserve-caught-error -- Retain the operation and notification failures by identity.
+              throw new AggregateError(
+                [error, notificationError],
+                'QQ reconnect and state notification failed',
+              );
+            }
           }
           throw error;
         });
