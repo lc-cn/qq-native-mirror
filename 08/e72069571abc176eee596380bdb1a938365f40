@@ -1,0 +1,44 @@
+sdk/docs/architecture/encapsulation.md
+  s_2104cc474f1ce5::t_6fd98171605f63 38-45,519-527
+  s_2104cc474f1ce5::t_3542da8a9674ed 528
+sdk/docs/architecture/quality-gates.md
+  s_2104cc474f1ce5::t_6fd98171605f63 20-26
+sdk/docs/development.md
+  s_2104cc474f1ce5::t_6fd98171605f63 283-291
+sdk/docs/architecture.md
+  s_2104cc474f1ce5::t_6fd98171605f63 51-62
+sdk/scripts/consumers/contact-group-consumer-contract.mjs
+  s_2104cc474f1ce5::t_8ace6c023c9e1d 152,156-245,1204
+sdk/src/client/qq-client.ts
+  s_2104cc474f1ce5::t_9b4e899572cec6 111-128
+sdk/src/features/groups/group-events.ts
+  s_2104cc474f1ce5::t_53217a7f58c250 177-204
+sdk/src/native-services.ts
+  s_2104cc474f1ce5::t_5d67c66277fb04 84,322-326,328
+sdk/src/runtime/client-lifecycle.ts
+  s_2104cc474f1ce5::t_702bc2c534ec15 7-12,20-21,138,196-197
+sdk/test/client-lifecycle-event-types.test.ts
+  s_2104cc474f1ce5::t_42e7420770f7b2 1-29
+sdk/test/client-lifecycle-module.test.ts
+  s_2104cc474f1ce5::t_2027395bd2b926 45-48,76-79,109,130-198
+sdk/test/fixtures/client-lifecycle-event-types.ts
+  s_2104cc474f1ce5::t_85bd4148e7470a 1-20
+sdk/test/group-events.test.ts
+  s_2104cc474f1ce5::t_d63d22498c883a 3,295-404
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "08e72069571abc176eee596380bdb1a938365f40",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
