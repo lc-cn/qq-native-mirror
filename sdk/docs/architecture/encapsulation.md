@@ -35,6 +35,23 @@ State transitions still happen before their public events, and
 facade methods return the lifecycle's login/reconnect/close Promises directly so
 coalesced callers retain the same Promise identity.
 
+Before changing account state, `ClientLifecycle` captures own-data `uin` and `uid`
+from worker readiness. It stores only those two fields, preserving decimal strings
+(including zero, leading zeros and values beyond JavaScript's safe integer range)
+and nonblank UID strings without a prefix assumption or normalization. Invalid
+readiness emits only `invalid-worker-ready-account` diagnostics; it cannot publish
+`ready`, change the account, cancel restore timers or mark the client online.
+
+The same private capture validates public `login` replies before returning a fresh
+identity. Invalid replies reject with a fixed message; pending callers retain their
+shared Promise, and only an explicit subsequent call may retry. Readiness and the
+RPC reply remain separate: a valid reply does not synthesize readiness. Generation
+and closing checks run before inspection, after each fallible descriptor read and
+before publication. Closing from an online-state observer also suppresses the
+following raw readiness event. This validates the parent account contract, not
+native authorization or signing authenticity; low-level `request<T>` results and
+other forwarded worker payloads remain opaque.
+
 The lifecycle context separates typed SDK-produced `state`, `log` and `terminated`
 events from opaque forwarding. Their correlated tuples reuse `ClientEvents`, and
 the facade dispatches them exhaustively through the typed emitter. Unknown worker

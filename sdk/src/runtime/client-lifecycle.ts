@@ -22,6 +22,30 @@ export interface ClientLifecycleContext {
   exportsUpdated(exports: string[]): void;
 }
 
+/** Capture only the identity fields produced by the worker. No numeric
+ * conversion, UID prefix assumption or native ABI assertion belongs here.
+ * Fallible descriptor inspection may retire the client in controlled transports;
+ * recheck before reading another field or publishing a captured identity.
+ */
+function captureWorkerAccount(value: unknown, isCurrent: () => boolean): Account | undefined {
+  try {
+    if (!isCurrent()) return;
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return;
+    const uinField = Object.getOwnPropertyDescriptor(value, 'uin');
+    if (!isCurrent()) return;
+    const uidField = Object.getOwnPropertyDescriptor(value, 'uid');
+    if (!isCurrent()) return;
+    const uin: unknown = uinField && 'value' in uinField ? uinField.value : undefined;
+    const uid: unknown = uidField && 'value' in uidField ? uidField.value : undefined;
+    if (typeof uin !== 'string' || !/^\d+$/.test(uin) || typeof uid !== 'string' || !uid.trim())
+      return;
+    return { uin, uid };
+  } catch {
+    // Malformed worker data cannot expose thrown descriptor/serialization details.
+    return;
+  }
+}
+
 /** A parent-side failure after IPC submission cannot identify the native phase. */
 function requestFailure(method: string, error: Error): Error {
   if (
@@ -96,6 +120,7 @@ export class ClientLifecycle {
   }
   #attach(worker: ChildProcess) {
     const generation = ++this.#generation;
+    const isCurrent = () => generation === this.#generation && !this.#closed && !this.#closing;
     worker.on('message', (value: unknown) => {
       if (!value || typeof value !== 'object') return;
       const message = value as {
@@ -106,12 +131,19 @@ export class ClientLifecycle {
       if (message.event) {
         if (this.#closing) return;
         if (message.event === 'ready') {
-          this.#account = { ...message.payload } as unknown as Account;
-          this.#lastAccount = { ...message.payload } as unknown as Account;
+          const account = captureWorkerAccount(message.payload, isCurrent);
+          if (!isCurrent()) return;
+          if (!account) {
+            this.#context.forward('diagnostic', { stage: 'invalid-worker-ready-account' });
+            return;
+          }
+          this.#account = account;
+          this.#lastAccount = { ...account };
           this.#autoAttempts = 0;
           clearTimeout(this.#autoTimer);
           this.#autoTimer = undefined;
           this.#setState('online');
+          if (!isCurrent()) return;
         }
         if (
           message.event === 'disconnected' ||
@@ -255,14 +287,23 @@ export class ClientLifecycle {
     if (!this.#login) {
       this.#loginRequest = { ...request };
       this.#setState('connecting');
-      const loginPromise = this.request<Account>('login', { login: request }).catch((error) => {
-        if (this.#login === loginPromise) {
-          this.#login = undefined;
-          if (!this.#closed && !this.#closing && this.#state === 'connecting')
-            this.#setState('idle');
-        }
-        throw error;
-      });
+      const generation = this.#generation;
+      const isCurrent = () => generation === this.#generation && !this.#closed && !this.#closing;
+      const loginPromise = this.request<unknown>('login', { login: request })
+        .then((value) => {
+          const account = captureWorkerAccount(value, isCurrent);
+          if (!isCurrent()) throw new Error('QQ client closed or replaced during login');
+          if (!account) throw new Error('Invalid worker login account identity');
+          return account;
+        })
+        .catch((error) => {
+          if (this.#login === loginPromise) {
+            this.#login = undefined;
+            if (!this.#closed && !this.#closing && this.#state === 'connecting')
+              this.#setState('idle');
+          }
+          throw error;
+        });
       this.#login = loginPromise;
     }
     return this.#login;

@@ -471,6 +471,14 @@ never executes a verifier or scans unrelated account executors. Run the separate
 CI path gate after building, then the actual packed consumer; passing either one
 does not establish the other.
 
+Changes to parent account publication belong to `ClientLifecycle`. Exercise
+`test/client-account-boundary.test.ts` through the lifecycle interface: malformed
+readiness/replies, leading-zero and large identifiers, independent snapshots,
+coalesced login, and retirement during descriptor inspection or before the reply
+continuation. The installed worker-error consumer exercises the public client
+with controlled IPC. These checks prove parent publication behavior; they do not
+perform or certify native account authentication.
+
 When changing worker event presentation, keep the logic in
 `src/client/client-event-presentation.ts`. Check QR payload identity, synchronous
 message/alias ordering, original observer failures and the callback audit's bound

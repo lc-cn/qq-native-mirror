@@ -17,6 +17,7 @@ export async function verifyWorkerErrorRoutes({
   nativeContractsPath,
   errorsPath,
 }) {
+  await verifyClientIdentity(QQClient);
   await verifyClientPresentation(QQClient);
   const directory = await realpath(await mkdtemp(join(tmpdir(), 'qq-worker-error-')));
   /** @type {import("../../src/client/qq-client.ts").QQClient | undefined} */
@@ -143,6 +144,7 @@ export function createKernel(_native,_options,emit){return {
     }
     await client.close();
     return {
+      clientIdentityInstalledContract: true,
       clientEventPresentationInstalledContract: true,
       workerOpaqueErrorContract: true,
       workerErrorRecoveryContract: true,
@@ -279,6 +281,102 @@ async function verifyClientPresentation(QQClient) {
       await failingClient.close();
       failingClient.removeAllListeners();
     }
+  } finally {
+    Object.defineProperty(child, 'exitCode', { value: 0, configurable: true });
+    child.emit('exit', 0, null);
+    await client.close();
+    client.removeAllListeners();
+  }
+}
+
+/** Account identities cross the actual facade/lifecycle boundary as unknown IPC.
+ * @param {typeof import('../../src/client/qq-client.ts').QQClient} QQClient */
+async function verifyClientIdentity(QQClient) {
+  const child = new ChildProcess();
+  Object.defineProperty(child, 'connected', { value: true });
+  /** @type {number[]} */
+  const requests = [];
+  Object.defineProperty(child, 'send', {
+    value(/** @type {unknown} */ message) {
+      assert.ok(
+        message && typeof message === 'object' && 'id' in message && typeof message.id === 'number',
+      );
+      requests.push(message.id);
+      return true;
+    },
+  });
+  const client = new QQClient(child, 1000);
+  const readAccount = () => client.account;
+  /** @type {unknown[]} */
+  const ready = [];
+  /** @type {unknown[]} */
+  const diagnostics = [];
+  /** @type {unknown[]} */
+  const states = [];
+  EventEmitter.prototype.on.call(client, 'ready', (value) => ready.push(value));
+  EventEmitter.prototype.on.call(client, 'diagnostic', (value) => diagnostics.push(value));
+  EventEmitter.prototype.on.call(client, 'state', (value) => states.push(value));
+  try {
+    let coercions = 0,
+      getterReads = 0;
+    const invalid = {
+      errMsg: 'SECRET_NATIVE_WORDING',
+      uin: '123',
+      uid: {
+        toString() {
+          coercions++;
+          return 'SECRET_IDENTITY';
+        },
+      },
+    };
+    child.emit('message', { event: 'ready', payload: invalid });
+    const getterIdentity = {
+      uin: '123',
+      get uid() {
+        getterReads++;
+        return 'fixture';
+      },
+    };
+    child.emit('message', { event: 'ready', payload: getterIdentity });
+    assert.equal(ready.length, 0);
+    assert.equal(states.includes('online'), false);
+    assert.equal(readAccount(), undefined);
+    assert.deepEqual(diagnostics, [
+      { stage: 'invalid-worker-ready-account' },
+      { stage: 'invalid-worker-ready-account' },
+    ]);
+    assert.equal(coercions, 0);
+    assert.equal(getterReads, 0);
+    const pending = client.login({ method: 'qr' });
+    assert.strictEqual(client.login({ method: 'qr' }), pending);
+    assert.equal(requests.length, 1);
+    const rejection = assert.rejects(pending, { message: 'Invalid worker login account identity' });
+    child.emit('message', { id: requests[0], result: invalid });
+    await rejection;
+    assert.equal(coercions, 0);
+    const account = { uin: '000184467440737095516150000', uid: ' arbitrary-id ' };
+    const success = client.login({ method: 'qr' });
+    assert.strictEqual(client.waitForLogin(), success);
+    child.emit('message', { id: requests[1], result: account });
+    assert.deepEqual(await success, account);
+    child.emit('message', { event: 'ready', payload: account });
+    assert.deepEqual(readAccount(), account);
+    assert.equal(ready.length, 1);
+    assert.equal(states.includes('online'), true);
+    const snapshot = readAccount();
+    assert.ok(snapshot);
+    // Mutating the original IPC object cannot replace the stored captured scalar.
+    account.uin = '9';
+    account.uid = 'changed';
+    assert.equal(readAccount()?.uin, '000184467440737095516150000');
+    assert.equal(readAccount()?.uid, ' arbitrary-id ');
+    child.emit('message', { event: 'ready', payload: { uin: '0', uid: 'zero-id' } });
+    assert.deepEqual(readAccount(), { uin: '0', uid: 'zero-id' });
+    assert.equal(ready.length, 2);
+    Object.defineProperty(child, 'exitCode', { value: 0, configurable: true });
+    child.emit('exit', 0, null);
+    child.emit('message', { event: 'ready', payload: { uin: '0', uid: 'late' } });
+    assert.equal(ready.length, 2);
   } finally {
     Object.defineProperty(child, 'exitCode', { value: 0, configurable: true });
     child.emit('exit', 0, null);
