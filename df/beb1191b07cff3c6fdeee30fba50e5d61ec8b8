@@ -1,0 +1,37 @@
+sdk/docs/architecture/quality-gates.md
+  s_2104cc474f1ce5::t_6725162069961d 20-22,24-27
+  s_2104cc474f1ce5::t_4d9b6956345592 23
+sdk/test/helpers/external-dependencies.ts
+  s_2104cc474f1ce5::t_c3048873505971 90-98
+sdk/docs/development.md
+  s_2104cc474f1ce5::t_6725162069961d 205-207
+sdk/docs/contacts-groups.md
+  s_2104cc474f1ce5::t_ab27afdb4ee398 8
+  s_2104cc474f1ce5::t_05d8aa06506a26 5-7,9-10
+sdk/test/architecture.test.ts
+  s_2104cc474f1ce5::t_c3048873505971 9,19,60-84
+  s_2104cc474f1ce5::t_ea84dcdccfc6a4 85
+sdk/test/helpers/ambient-network.ts
+  s_2104cc474f1ce5::t_4d9b6956345592 19-30,34-47,62
+  s_2104cc474f1ce5::t_c3048873505971 1-18,31-33,48-61,63-68
+sdk/test/ambient-network.test.ts
+  s_2104cc474f1ce5::t_4d9b6956345592 20-21,34-38
+  s_2104cc474f1ce5::t_6725162069961d 22-25
+  s_2104cc474f1ce5::t_c3048873505971 1-19,26-33,39-87
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "dfbeb1191b07cff3c6fdeee30fba50e5d61ec8b8",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
