@@ -70,7 +70,7 @@ jobs:
         if: matrix.platform == 'linux'
         run: sudo apt-get update && sudo apt-get install -y libx11-xcb1 libgnutls30
       - name: Producer contracts
-        run: node --test tools/dedup-native-npm.test.mjs tools/verify-dedup-consumer.test.mjs
+        run: node --test tools/dedup-native-npm.test.mjs tools/native-storage-plan.test.mjs tools/verify-dedup-consumer.test.mjs
       - name: Acquire fixed full native source with preserved permanent materials
         env:
           GH_TOKEN: ${{ github.token }}

@@ -7,6 +7,10 @@ on:
       - 'sdk/**'
       - 'ci/**'
       - 'version-ci/**'
+      - 'tools/dedup-native-npm*.mjs'
+      - 'tools/native-storage-plan*.mjs'
+      - 'tools/check-native-storage.mjs'
+      - 'tools/eslint.config.mjs'
       - '.github/workflows/current-source-consumer.yml'
       - '.github/workflows/sdk-quality.yml'
   push:
@@ -14,6 +18,10 @@ on:
       - 'sdk/**'
       - 'ci/**'
       - 'version-ci/**'
+      - 'tools/dedup-native-npm*.mjs'
+      - 'tools/native-storage-plan*.mjs'
+      - 'tools/check-native-storage.mjs'
+      - 'tools/eslint.config.mjs'
       - '.github/workflows/current-source-consumer.yml'
       - '.github/workflows/sdk-quality.yml'
 
@@ -48,6 +56,8 @@ jobs:
         run: npm run format:check
       - name: Lint source and supported scripts
         run: npm run lint
+      - name: Check native storage producer formatting, lint and contracts
+        run: npm run check:native-storage
       - name: Check TypeScript contracts without emitting files
         run: npm run typecheck
       - name: Run deterministic tests

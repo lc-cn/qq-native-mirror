@@ -123,6 +123,27 @@ They do not create objects, load native code, execute IO or define concrete clas
 Internal Session, transport and codec ports stay in their existing ownership layers;
 public native manifest data is distinct from the proprietary native service types.
 
+## Native package build ownership
+
+Native storage production lives outside the installed SDK in repository `tools/`.
+`native-storage-plan.mjs` owns closed inventory validation, platform/ABI rules,
+content deduplication and final package serialization. It reads the supplied archive
+map synchronously and returns independently owned gzip and metadata buffers; it
+performs no filesystem, process or network IO. Package and manifest metadata are
+captured from the validated archive bytes, including nested values, before the
+first asynchronous write.
+
+`dedup-native-npm.mjs` stages that completed plan into a new directory. Its release
+entry point separately verifies the frozen source release, invokes npm packing and
+reads back the actual packed objects to compare every restored native path. A new
+source cohort must supply its own explicit provenance checks; changing a historical
+pin is not a way to accept a newer release. The generic planner and staging function
+can be reused without importing a platform's historical release facts into the SDK.
+
+The runtime consumer remains owned by `src/native/native-installed-storage.ts`;
+producer tooling never becomes part of client startup. Compression changes delivery
+storage, while every original runtime path and byte remains in the restored inventory.
+
 ## Encapsulation and variation points
 
 [Module ownership and interfaces](architecture/encapsulation.md) describes the
