@@ -109,6 +109,17 @@ requested native payloads. This does not establish a public npm release, current
 SDK default-installed execution on the other five hosts, newer `85ef15a` auxiliary
 acceptance, account operations or signing authenticity.
 
+A subsequent [new-cohort local installed proof](evidence/new-cohort-installed-df1693c-macos-arm64.json)
+binds SDK `df1693c` to the complete `85ef15a` arm64 auxiliary and its staged mirror
+manifest. Installation from an isolated local registry, default factory options,
+two real native prepare/close cycles, all 1,168 file hashes, unchanged warm file
+modification times and three actual video inputs passed on macOS arm64 / Node
+24.19.0. Neither phase requested native payloads. This test supplied the local
+candidate catalog and manifest through `fetchImpl`; it establishes candidate
+selection and installed reuse, not availability through the actual public
+catalog, npmjs publication, other five hosts, account operations or signing
+identity. The earlier public-metadata proof remains a separate artifact.
+
 The published npm `0.0.1`, working `0.0.2` candidate and each native mirror are
 separate artifacts. Push builds do not publish npm releases. See [first publication
 and trusted publishing](npm-first-publish.md).

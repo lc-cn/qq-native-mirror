@@ -1,0 +1,102 @@
+{
+  "schemaVersion": 1,
+  "sdkMain": {
+    "commit": "df1693c71ae301460bd7d27ff0c846582d0a689b",
+    "sha256": "feaa2be42fab0f1c16f81e16ce78c7bfdcdcb6dd26d0bf94533673700f0d23a0",
+    "bytes": 637888,
+    "integrity": "sha512-jA5O3sljjUJva+5e8lvBviTqrNr9ouqeQef1Jkat2Z/n58t8PhuH6tT90qu0uynH02Q21f0Cx2br9alJWJuuJw==",
+    "compiledMembers": 272
+  },
+  "nativeAuxiliary": {
+    "sha256": "01903e7d0489cde5301aca00a6d7175d29fd2463ba3ca1378d0a7d5edf0af5e7",
+    "bytes": 54924233,
+    "manifestSha256": "ae0fa9a7fd8a95a8703cde52a6f41e88df9dc2f6268319712449f2f823525b16",
+    "source": {
+      "commit": "85ef15aede7457b8c9f8410557c023e61ad108a8",
+      "runId": "38133938435",
+      "runAttempt": 1,
+      "version": "0.0.2",
+      "releaseManifestSha256": "c8bcb55782299e7113f0f59d229dad25febd5b39e5c4fd62f2ea765b269ef11d"
+    },
+    "paths": 1168,
+    "objects": 321
+  },
+  "candidateMetadata": {
+    "catalogSha256": "4d8c392dab18080b1175128d4136be9e3d5d2bbdd7707dc64d63aa5ca525fbb5",
+    "mirrorPlanSha256": "a90851d6ab87d6e179cc3f280b5131bc049e4b8f020fb0f8c37959fc0b49d410",
+    "selected": {
+      "platform": "darwin",
+      "arch": "arm64",
+      "version": {
+        "clientVersion": "7.0.2-53644",
+        "appId": "537391652",
+        "qua": "V1_MAC_7.0.2-53644_53644_GW_B"
+      },
+      "manifestUrl": "https://raw.githubusercontent.com/lc-cn/qq-native-mirror/main/packages/npm-0.0.2-ci-38133938435-attempt-1-darwin-arm64-codec-gzip-v1/470eb2f247ed14c1ecfe40be4fba01b8a40125cb410ed2080270af594fa8b438/manifest.json",
+      "manifestSha256": "470eb2f247ed14c1ecfe40be4fba01b8a40125cb410ed2080270af594fa8b438"
+    },
+    "fetchSubstituted": true,
+    "source": "local catalog serialized from staged mirror plan and exact staged manifest bytes",
+    "publicMetadataUsed": false
+  },
+  "verifier": {
+    "helperSha256": "5230f2313f0bf4351caef8b8cf5c3151547f96bbb4f2fa6972ce6f007488feea",
+    "runnerSha256": "8ed0280b0e78c51356636284338c9fc7f3d53537136dbd5b3399d7121a74b8ad",
+    "actualNodeProcessExit": 0,
+    "node": "v24.19.0",
+    "device": "darwin-arm64",
+    "installedMainOnly": true,
+    "npmDelivery": "isolated localhost registry with actual verified tarballs",
+    "requestedTarballs": [
+      "qq-native-client-darwin-arm64",
+      "silk-wasm",
+      "qq-native-client"
+    ]
+  },
+  "installedStorage": {
+    "wrapperVersionCatalogOverridesUsed": false,
+    "format": "installed-gzip-objects",
+    "manifestSha256": "ae0fa9a7fd8a95a8703cde52a6f41e88df9dc2f6268319712449f2f823525b16",
+    "nativePaths": 1168,
+    "objects": 321,
+    "cold": {
+      "requests": 4,
+      "payloadRequests": 0,
+      "bytes": 1270702,
+      "payloadBytes": 0
+    },
+    "warm": {
+      "requests": 2,
+      "payloadRequests": 0,
+      "bytes": 635351,
+      "payloadBytes": 0
+    },
+    "warmFileMtimesUnchanged": true,
+    "everyOriginalFileHashVerifiedInBothPhases": true,
+    "actualNativeExports": 104,
+    "emptyClientPreparedClosedInBothPhases": true,
+    "actualVideoInputs": 3,
+    "actualVideoBinary": {
+      "sha256": "101a8eb635806b8c06fd55e3353a5a129d643c42198a3eb0dcaca7eefeab74c4",
+      "bytes": 13167872
+    }
+  },
+  "receiptBindings": {
+    "input": "a10af05cac8e900b20dc0d79ed0833b5ecd673f4beb6d61e7ca88184e534811d",
+    "consumer": "1aed3e2d4e1eae6bd36d001a81a5207c1aa496f6ffd94504a1eaf478fd3522e7",
+    "video": "5349deb4eddaca570de2d7118344336f202076ab890254da1c98bc9368b3d924",
+    "independentReview": "a33fcd55571057f4b76fb0ed04700dfdb505b8b1f93fa38de5c10c38b77214db"
+  },
+  "limits": {
+    "actualPublicDefaultSelectionTested": false,
+    "publicNpmReleaseTested": false,
+    "otherFivePlatformsNewCohortRuntimeTested": false,
+    "loginAttempted": false,
+    "restoreAttempted": false,
+    "nativeSendAttempted": false,
+    "accountUsed": false,
+    "signingAuthenticityEstablished": false,
+    "published": false,
+    "catalogChanged": false
+  }
+}
