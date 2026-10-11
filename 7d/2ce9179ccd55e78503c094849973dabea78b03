@@ -1,0 +1,23 @@
+sdk/docs/contacts-groups.md
+  s_2104cc474f1ce5::t_99bf9d320fd181 12-15
+sdk/docs/group-creation-research.md
+  s_2104cc474f1ce5::t_17f74bf784e5ad 16-19,45-49
+  s_2104cc474f1ce5::t_6dd056c5ecfd16 51-58
+  s_2104cc474f1ce5::t_99bf9d320fd181 1-15,20-44,50,59-79
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "7d2ce9179ccd55e78503c094849973dabea78b03",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
