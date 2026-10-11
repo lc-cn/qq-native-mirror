@@ -1,4 +1,5 @@
-import type { NativePeer, NativeMessage } from '../../native/message-contracts.ts';
+import type { NativePeer } from '../../native/message-contracts.ts';
+import type { SentMessage } from '../../contracts/messages.ts';
 import type {
   PreparedMessageElement,
   PreparedSendElement,
@@ -11,16 +12,69 @@ import type {
 } from '../../runtime/media-contracts.ts';
 import type { MessageIdQueryPort } from './message-query.ts';
 import type { NativeEventChannel } from '../../runtime/native-event-channel.ts';
-import {
-  captureSendInput,
-  capturePrivateMessage,
-  captureGroupMessage,
-  sentReceipt,
-} from './send-input.ts';
+import { captureSendInput, capturePrivateMessage, captureGroupMessage } from './send-input.ts';
 import { createImageElement, createFileElement, createReplyElement } from './outbound-elements.ts';
 import { faceElement } from './face-input.ts';
 import { createVideoElement } from '../media/media-send.ts';
 import { createRecordElement } from '../media/media-record.ts';
+
+function record(value: unknown): value is object {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+/** Native callback fields must be own data. An accessor cannot stand in for an
+ * absent optional field or replace a validated receipt between reads. */
+function data(object: object, key: string): unknown {
+  const descriptor = Object.getOwnPropertyDescriptor(object, key);
+  if (descriptor && !('value' in descriptor))
+    throw new Error('Invalid native sent message receipt data');
+  return descriptor?.value;
+}
+function sentReceipt(message: object): SentMessage {
+  const messageId = data(message, 'msgId');
+  const sequence = data(message, 'msgSeq');
+  const rawTime = data(message, 'msgTime');
+  if (
+    typeof messageId !== 'string' ||
+    !/^\d+$/.test(messageId) ||
+    !/[1-9]/.test(messageId) ||
+    typeof sequence !== 'string' ||
+    !/^\d+$/.test(sequence) ||
+    typeof rawTime !== 'string' ||
+    !/^\d+$/.test(rawTime)
+  )
+    throw new Error('Invalid native sent message receipt metadata');
+  const time = Number(rawTime);
+  if (!Number.isSafeInteger(time) || time < 0)
+    throw new Error('Invalid native sent message receipt time');
+  return { messageId, sequence, time };
+}
+function sendUpdateReceipt(
+  updates: unknown,
+  uniqueId: string,
+  peer: NativePeer,
+): SentMessage | undefined {
+  if (!Array.isArray(updates)) throw new Error('Invalid native send update batch');
+  const length = data(updates, 'length');
+  if (typeof length !== 'number' || !Number.isSafeInteger(length) || length < 0)
+    throw new Error('Invalid native send update batch');
+  const matching: { message: object; status: unknown }[] = [];
+  for (let index = 0; index < length; index++) {
+    const message = data(updates, String(index));
+    if (!record(message)) throw new Error('Invalid native send update row');
+    if (data(message, 'guildId') !== uniqueId) continue;
+    const chatType = data(message, 'chatType');
+    if (chatType !== undefined && chatType !== peer.chatType) continue;
+    const peerUid = data(message, 'peerUid');
+    if (peerUid !== undefined && peerUid !== peer.peerUid) continue;
+    matching.push({ message, status: data(message, 'sendStatus') });
+  }
+  // Keep the existing batch policy: a matching terminal success takes precedence
+  // over matching failure rows, and the first success supplies the receipt.
+  const success = matching.find(({ status }) => status === 2);
+  if (success) return sentReceipt(success.message);
+  if (matching.some(({ status }) => status === 0)) throw new Error('Native message send failed');
+  return undefined;
+}
 
 export interface MessageSendPort extends MessageIdQueryPort, MediaStagingPort {
   generateMsgUniqueId?: (chatType: 1 | 2, serverTime: unknown) => unknown;
@@ -210,22 +264,19 @@ export function createNativeMessageSender(context: NativeMessageSenderContext) {
     if (usedSendIds.has(uniqueId)) throw new Error('Duplicate native send correlation identifier');
     usedSendIds.add(uniqueId);
     const destination = { ...peer, guildId: uniqueId };
+    // Vendor code receives a mutable destination. It cannot change which
+    // conversation the callback must acknowledge by rewriting that argument.
+    const correlation = { chatType: destination.chatType, peerUid: destination.peerUid };
     let dispatched = false;
     try {
       const sent = await eventCall(
         'Msg/onMsgInfoListUpdate',
-        (updates: NativeMessage[]) => {
-          const matching = updates.filter(
-            (message) =>
-              message.guildId === uniqueId &&
-              (message.chatType === undefined || message.chatType === peer.chatType) &&
-              (message.peerUid === undefined || message.peerUid === peer.peerUid),
-          );
-          const message = matching.find((message) => message.sendStatus === 2);
-          if (message) return sentReceipt(message);
-          if (matching.some((message) => message.sendStatus === 0))
-            throw new Error('Native message send failed');
-          return undefined;
+        (updates: unknown) => {
+          try {
+            return sendUpdateReceipt(updates, uniqueId, correlation);
+          } finally {
+            alive();
+          }
         },
         () => {
           alive();

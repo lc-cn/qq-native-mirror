@@ -229,6 +229,8 @@ export function dependencyViolation({ from, to, typeOnly }: SourceDependency): s
     return typeOnly && to === 'src/native/message-contracts.ts'
       ? undefined
       : 'Prepared outbound contracts only reference their reviewed native peer data type.';
+  if (from === 'src/native/message-contracts.ts')
+    return 'The constructed native peer descriptor owns only closed data declarations.';
   if (!to.startsWith('src/')) return externalDependencyViolation(from, to, typeOnly);
   if (to === 'src/features/contacts/friend-category-completion.ts')
     return [

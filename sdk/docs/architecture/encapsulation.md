@@ -320,6 +320,22 @@ to this owner; the dependency gate forbids it from importing send-input policy.
 Private recipient conversion, mention resolution, element preparation, unique-ID
 reservation and callback correlation therefore have one implementation owner.
 
+Send updates enter that owner as unknown data. It reads dense own array rows,
+captures the correlation/status fields and validates the first matching success
+receipt into `SentMessage` using one captured ID, sequence and timestamp. Accessors
+cannot supply those callback fields, and unknown values are not coerced.
+Unrelated correlations do not trigger receipt metadata reads. A matching success
+in a batch still precedes matching failure rows; the native return must also
+succeed. Missing peer metadata keeps its existing compatibility rule, while
+explicitly different peers cannot acknowledge the send. A separate captured
+conversation survives vendor mutation of the submitted destination argument.
+The former dynamic `NativeMessage` declaration and its private reexport are
+removed; outbound peer contracts contain closed data only. Send-input capture no
+longer owns native output validation. No new lifecycle or source module is added.
+The native return validator keeps its separate existing contract, including an
+explicit nonzero result from a getter that closes the sender. Callback data capture
+does not replace that error with a cancellation or change its reported code.
+
 The sender combines its local lifetime with the account signal. UID and
 preparation waits, generated IDs and the callback channel receive this signal;
 closing just this sender cannot close the shared account event channel. Pending

@@ -289,6 +289,14 @@ ports. The sender owns orchestration and receipt correlation. Test element
 projection independently of outbound filesystem setup; installed-consumer checks
 exercise both from the fresh archive and reject the removed mixed module.
 
+Native send updates remain unknown at the callback port. Keep output correlation
+and `SentMessage` validation in the sender, separate from pure caller input
+capture. Read own data fields once; reject accessor/sparse receipts instead of
+publishing invalid scalars or coercing objects. Capture the conversation separately
+from the mutable vendor argument, preserve batch-success and native-return ordering,
+and check retirement after projection. These receipts establish controlled SDK
+completion only; real delivery and signing evidence remain separate.
+
 Keep SDK-constructed native envelopes in `native/prepared-message-contracts.ts`.
 The sender accepts their closed `PreparedSendElement` union; the ordinary builder
 union and the ARK forward-card variant stay separate. Capture the whole ordinary

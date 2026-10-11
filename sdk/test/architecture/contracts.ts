@@ -88,7 +88,7 @@ test('public contract type dependencies have no cycles', () => {
   for (const path of files.filter((path) => label(path).startsWith('src/contracts/'))) walk(path);
 });
 
-test('prepared outbound contracts own only data declarations and their reviewed peer type', () => {
+test('outbound native contracts own closed data declarations and their reviewed peer type', () => {
   const from = 'src/native/prepared-message-contracts.ts';
   for (const to of [
     'src/native/native-object.ts',
@@ -101,25 +101,32 @@ test('prepared outbound contracts own only data declarations and their reviewed 
     undefined,
   );
   assert.ok(dependencyViolation({ from, to: 'src/native/message-contracts.ts', typeOnly: false }));
-  const tree = ts.createSourceFile(
-    from,
-    readFileSync(join(projectRoot, from), 'utf8'),
-    ts.ScriptTarget.Latest,
-    true,
-  );
-  for (const statement of tree.statements) {
-    if (ts.isImportDeclaration(statement)) {
-      assert.equal(statement.importClause?.isTypeOnly, true);
-      continue;
-    }
-    assert.ok(ts.isInterfaceDeclaration(statement) || ts.isTypeAliasDeclaration(statement));
-    if (ts.isInterfaceDeclaration(statement)) {
-      assert.equal(
-        statement.heritageClauses,
-        undefined,
-        'Constructed DTOs do not inherit dynamic native objects',
-      );
-      assert.equal(statement.members.some(ts.isIndexSignatureDeclaration), false);
+  const peer = 'src/native/message-contracts.ts';
+  assert.deepEqual(graph.get(join(projectRoot, peer)), []);
+  for (const to of ['src/native/native-object.ts', from, 'node:fs'])
+    for (const typeOnly of [true, false])
+      assert.ok(dependencyViolation({ from: peer, to, typeOnly }));
+  for (const path of [from, peer]) {
+    const tree = ts.createSourceFile(
+      path,
+      readFileSync(join(projectRoot, path), 'utf8'),
+      ts.ScriptTarget.Latest,
+      true,
+    );
+    for (const statement of tree.statements) {
+      if (ts.isImportDeclaration(statement)) {
+        assert.equal(statement.importClause?.isTypeOnly, true);
+        continue;
+      }
+      assert.ok(ts.isInterfaceDeclaration(statement) || ts.isTypeAliasDeclaration(statement));
+      if (ts.isInterfaceDeclaration(statement)) {
+        assert.equal(
+          statement.heritageClauses,
+          undefined,
+          'Constructed DTOs do not inherit dynamic native objects',
+        );
+        assert.equal(statement.members.some(ts.isIndexSignatureDeclaration), false);
+      }
     }
   }
 });

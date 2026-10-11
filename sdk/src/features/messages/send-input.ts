@@ -68,20 +68,3 @@ export function capturePrivateMessage(userId: unknown, message: unknown) {
 export function captureGroupMessage(groupId: unknown, message: unknown) {
   return { groupId: sendGroupId(groupId), message: captureSendInput(message, true) };
 }
-
-export function sentReceipt(message: Record<string, unknown>) {
-  if (
-    typeof message.msgId !== 'string' ||
-    !/^\d+$/.test(message.msgId) ||
-    !/[1-9]/.test(message.msgId) ||
-    typeof message.msgSeq !== 'string' ||
-    !/^\d+$/.test(message.msgSeq) ||
-    typeof message.msgTime !== 'string' ||
-    !/^\d+$/.test(message.msgTime)
-  )
-    throw new Error('Invalid native sent message receipt metadata');
-  const time = Number(message.msgTime);
-  if (!Number.isSafeInteger(time) || time < 0)
-    throw new Error('Invalid native sent message receipt time');
-  return { messageId: message.msgId, sequence: message.msgSeq, time };
-}

@@ -89,7 +89,7 @@ import { createMessageRecalls, type RecallContext } from './features/messages/re
 import { createIncomingMessageDelivery } from './features/messages/incoming-message-delivery.ts';
 
 import type { NativeObject as Native } from './native/native-object.ts';
-export type { NativePeer, NativeMessage } from './native/message-contracts.ts';
+export type { NativePeer } from './native/message-contracts.ts';
 import type { ServiceOperation } from './runtime/operations.ts';
 export type { ServiceOperation } from './runtime/operations.ts';
 

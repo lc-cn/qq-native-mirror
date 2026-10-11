@@ -215,6 +215,46 @@ export async function verifySendConsumer(packagePath) {
       f.services.close();
     }
   }
+  for (const field of /** @type {const} */ ([
+    'guildId',
+    'sendStatus',
+    'msgId',
+    'msgSeq',
+    'msgTime',
+  ])) {
+    let reads = 0;
+    const f = fixture({
+      send(listener, args) {
+        const raw = Object.defineProperty(
+          {
+            guildId: args[1].guildId,
+            sendStatus: 2,
+            msgId: '42',
+            msgSeq: '9',
+            msgTime: '100',
+          },
+          field,
+          {
+            get() {
+              reads++;
+              throw Error('Native send receipt accessor must not execute');
+            },
+          },
+        );
+        listener.onMsgInfoListUpdate([raw]);
+        return { result: 0 };
+      },
+    });
+    try {
+      await bounded(
+        assert.rejects(f.services.invokeOperation('sendGroupMessage', group()), /Invalid native/),
+      );
+      assert.equal(reads, 0);
+      assert.equal(f.calls.length, 1);
+    } finally {
+      f.services.close();
+    }
+  }
   const wrong = fixture({
     send(listener, args) {
       listener.onMsgInfoListUpdate([
@@ -335,7 +375,12 @@ export async function verifySendConsumer(packagePath) {
     } else assert.equal(f.calls.length, 1);
   }
   const publicChecks = await verifyPublicSendCapture(packagePath);
-  return { ...publicChecks, sendMessageContract: true, nativeSendAttempted: false };
+  return {
+    ...publicChecks,
+    sendMessageContract: true,
+    sendReceiptDataBoundaryContract: true,
+    nativeSendAttempted: false,
+  };
 }
 
 /** Public installed facade input capture before any controlled IPC is dispatched. @param {string} packagePath */
