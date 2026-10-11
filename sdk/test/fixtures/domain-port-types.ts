@@ -373,8 +373,8 @@ function verifyAudioVideoStagingPorts(
 }
 void verifyAudioVideoStagingPorts;
 
-import type { downloadAttachment } from '../../src/features/media/media-operations.ts';
-function verifyAttachmentDownloadPort(port: Parameters<typeof downloadAttachment>[0]) {
+import type { downloadAttachment } from '../../src/features/media/attachment-downloads.ts';
+function verifyAttachmentDownloadPort(port: NonNullable<Parameters<typeof downloadAttachment>[0]>) {
   // @ts-expect-error A download cannot send messages or acquire unrelated services.
   port.sendMsg({}, [], '');
   // @ts-expect-error The download port does not expose Session acquisition.
@@ -479,3 +479,14 @@ function verifyCategoryAssignmentPort(context: FriendCategoryAssignmentContext) 
   void receipt.result;
 }
 void verifyCategoryAssignmentPort;
+
+import type { AttachmentDownloadsContext } from '../../src/features/media/attachment-downloads.ts';
+function verifyAttachmentDownloadsContext(context: AttachmentDownloadsContext) {
+  // @ts-expect-error Download orchestration cannot acquire unrelated services.
+  context.getBuddyService();
+  // @ts-expect-error Its lazy native port cannot send messages.
+  context.getMessageService()?.sendMsg('fixture');
+  // @ts-expect-error Identity waits must carry the operation's cancellation signal.
+  context.awaitAlive(Promise.resolve('fixture'));
+}
+void verifyAttachmentDownloadsContext;

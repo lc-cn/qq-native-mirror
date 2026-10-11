@@ -67,7 +67,7 @@ export function isServiceOperation(value: unknown): value is ServiceOperation {
 }
 
 /** These readers propagate a per-request signal through all awaits and queued work.
- * An IPC timeout cannot undo an issued native call or a remote mutation.
+ * An IPC timeout cannot undo an issued native call, remote mutation or file copy.
  */
 export function isCancellableRead(value: unknown): boolean {
   return (
@@ -75,6 +75,7 @@ export function isCancellableRead(value: unknown): boolean {
     value === 'listGroupEssenceMessages' ||
     value === 'listGroupNotices' ||
     value === 'getGroupFilePage' ||
-    value === 'listGroupFiles'
+    value === 'listGroupFiles' ||
+    value === 'downloadAttachment'
   );
 }

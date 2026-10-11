@@ -17,7 +17,7 @@ import {
   captureDownloadPayload,
   captureDownloadRequest,
   downloadAttachment,
-} from '../src/features/media/media-operations.ts';
+} from '../src/features/media/attachment-downloads.ts';
 
 test('download correlates completion, stages native output and exclusively publishes local file', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'qq-download-'));

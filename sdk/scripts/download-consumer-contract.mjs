@@ -337,5 +337,184 @@ export async function verifyDownloadConsumer(packageRoot) {
     { createNativeServices } = await load('native-services.js'),
     { prepareCommand } = await load('cli.js');
   await checkDownloadContract({ QQClient, createNativeServices, prepareCommand });
-  return { attachmentDownloadContract: true, nativeAttachmentDownloadAttempted: false };
+  const ownerChecks = await verifyDownloadOwner(load);
+  return {
+    ...ownerChecks,
+    attachmentDownloadContract: true,
+    nativeAttachmentDownloadAttempted: false,
+  };
+}
+
+/** Local owner cancellation uses the installed shared channel without closing sibling waits. */
+async function verifyDownloadOwner(load) {
+  const { createAttachmentDownloads } = await load('features/media/attachment-downloads.js');
+  const { createNativeEventChannel } = await load('runtime/native-event-channel.js');
+  const directory = await mkdtemp(join(tmpdir(), 'qq-download-owner-'));
+  const account = new AbortController();
+  const channel = createNativeEventChannel(account.signal);
+  const tick = () => new Promise((resolve) => setImmediate(resolve));
+  const awaitAlive = (value, signal) =>
+    new Promise((resolve, reject) => {
+      const abort = () => reject(signal.reason);
+      const pending = Promise.resolve(value);
+      pending.then(
+        (result) => {
+          signal.removeEventListener('abort', abort);
+          resolve(result);
+        },
+        (error) => {
+          signal.removeEventListener('abort', abort);
+          reject(error);
+        },
+      );
+      if (signal.aborted) abort();
+      else signal.addEventListener('abort', abort, { once: true });
+    });
+  const bounded = async (promise) => {
+    let timer;
+    try {
+      await Promise.race([
+        promise,
+        new Promise((_, reject) => {
+          timer = setTimeout(() => reject(Error('Owner cancellation remained pending')), 1000);
+        }),
+      ]);
+    } finally {
+      clearTimeout(timer);
+    }
+  };
+  const payload = (name) => ({
+    peer: { type: 'private', userId: '456' },
+    messageId: '9',
+    elementId: '2',
+    destination: join(directory, name),
+  });
+  let releasePeer,
+    acquisitions = 0,
+    writes = 0,
+    resolutions = 0;
+  const peerOwner = createAttachmentDownloads({
+    signal: account.signal,
+    resolvePeer(peer) {
+      resolutions++;
+      assert.deepEqual(peer, { type: 'private', userId: '456' });
+      return new Promise((resolve) => {
+        releasePeer = resolve;
+      });
+    },
+    awaitAlive,
+    getMessageService() {
+      acquisitions++;
+      return {
+        downloadRichMedia() {
+          writes++;
+        },
+      };
+    },
+    eventCall: channel.call,
+  });
+  let releaseNative, entered;
+  const began = new Promise((resolve) => {
+    entered = resolve;
+  });
+  const nativeOwner = createAttachmentDownloads({
+    signal: account.signal,
+    resolvePeer: async () => ({ chatType: 1, peerUid: 'u_456' }),
+    awaitAlive,
+    getMessageService: () => ({
+      downloadRichMedia() {
+        writes++;
+        entered();
+        return new Promise((resolve) => {
+          releaseNative = resolve;
+        });
+      },
+    }),
+    eventCall: channel.call,
+  });
+  const sibling = createAttachmentDownloads({
+    signal: account.signal,
+    resolvePeer: async () => ({ chatType: 1, peerUid: 'u_456' }),
+    awaitAlive,
+    getMessageService() {
+      const service = {
+        async downloadRichMedia(request) {
+          assert.equal(this, service);
+          await writeFile(request.filePath, 'sibling bytes');
+          channel.dispatch('Msg/onRichMediaDownloadComplete', [
+            {
+              msgId: '9',
+              msgElementId: '2',
+              chatType: 1,
+              fileErrCode: '0',
+              fileSrvErrCode: '0',
+              filePath: request.filePath,
+            },
+          ]);
+        },
+      };
+      return service;
+    },
+    eventCall: channel.call,
+  });
+  try {
+    const otherWait = channel.call(
+      'fixture/other',
+      (value) => value,
+      () => ({ result: 0 }),
+      1000,
+    );
+    const requestAbort = new AbortController();
+    const requestPending = peerOwner.download(payload('request-cancelled'), requestAbort.signal);
+    const requestRejected = assert.rejects(requestPending, /cancel/i);
+    requestAbort.abort(new Error('fixture request cancelled'));
+    await bounded(requestRejected);
+    releasePeer({ chatType: 1, peerUid: 'u_456' });
+    await tick();
+    assert.equal(acquisitions, 0);
+    assert.equal(writes, 0);
+    assert.deepEqual(await readdir(directory), []);
+    const request = payload('peer-closed'),
+      pending = peerOwner.download(request),
+      rejected = assert.rejects(pending, /closed|abort/i);
+    request.peer.userId = '999';
+    request.destination = join(directory, 'mutated');
+    peerOwner.close();
+    await bounded(rejected);
+    releasePeer({ chatType: 1, peerUid: 'u_456' });
+    await tick();
+    assert.equal(resolutions, 2);
+    assert.equal(acquisitions, 0);
+    assert.equal(writes, 0);
+    assert.deepEqual(await readdir(directory), []);
+    assert.equal(account.signal.aborted, false);
+    channel.dispatch('fixture/other', ['still alive']);
+    assert.equal(await otherWait, 'still alive');
+    const nativePending = nativeOwner.download(payload('native-closed')),
+      nativeRejected = assert.rejects(nativePending, /closed|abort/i);
+    await began;
+    nativeOwner.close();
+    await bounded(nativeRejected);
+    releaseNative({ result: 0 });
+    await tick();
+    assert.equal(writes, 1);
+    assert.equal(account.signal.aborted, false);
+    assert.deepEqual(await sibling.download(payload('sibling')), {
+      file: join(directory, 'sibling'),
+    });
+    assert.equal(await readFile(join(directory, 'sibling'), 'utf8'), 'sibling bytes');
+    assert.deepEqual(await readdir(directory), ['sibling']);
+    return {
+      attachmentDownloadRequestCancellationContract: true,
+      attachmentDownloadOwnerCloseContract: true,
+      attachmentDownloadOwnerSiblingContract: true,
+      attachmentDownloadLateUidNoWriteContract: true,
+    };
+  } finally {
+    peerOwner.close();
+    nativeOwner.close();
+    sibling.close();
+    channel.close();
+    await rm(directory, { recursive: true, force: true });
+  }
 }

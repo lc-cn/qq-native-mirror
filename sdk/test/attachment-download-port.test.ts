@@ -4,7 +4,7 @@ import { mkdtemp, readFile, readdir, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import test from 'node:test';
-import { downloadAttachment } from '../src/features/media/media-operations.ts';
+import { downloadAttachment } from '../src/features/media/attachment-downloads.ts';
 import type { AttachmentDownloadPort } from '../src/runtime/media-contracts.ts';
 import { createNativeEventChannel } from '../src/runtime/native-event-channel.ts';
 
@@ -32,12 +32,8 @@ for (const mode of ['sync', 'async', 'rejected', 'closed'] as const) {
     const service: AttachmentDownloadPort = {
       get downloadRichMedia() {
         reads++;
-        if (reads === 1) {
-          assert.equal(existsSync(dirname(destination)), false, 'Support check precedes FS IO');
-          return () => assert.fail('The support-check method must not be cached and invoked');
-        }
-        assert.equal(reads, 2);
-        assert.equal(existsSync(dirname(destination)), true);
+        assert.equal(reads, 1);
+        assert.equal(existsSync(dirname(destination)), false, 'Method capture precedes FS IO');
         return function (
           this: AttachmentDownloadPort,
           request: Parameters<NonNullable<AttachmentDownloadPort['downloadRichMedia']>>[0],
@@ -124,7 +120,7 @@ for (const mode of ['sync', 'async', 'rejected', 'closed'] as const) {
         assert.deepEqual(result, { ok: true, value: { file: destination } });
         assert.equal(await readFile(destination, 'utf8'), 'fixture attachment');
       }
-      assert.equal(reads, 2);
+      assert.equal(reads, 1);
       assert.equal(calls, 1);
       assert.deepEqual(await readdir(dirname(destination)), result.ok ? ['output'] : []);
     } finally {

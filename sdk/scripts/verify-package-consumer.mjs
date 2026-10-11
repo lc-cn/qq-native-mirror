@@ -49,6 +49,8 @@ const packed = JSON.parse(
   run('npm', ['pack', '--ignore-scripts', '--json', '--pack-destination', destination], root),
 )[0];
 const files = packed.files.map((file) => file.path);
+if (files.some((path) => /^dist\/features\/media\/media-operations\.(?:js|d\.ts)$/.test(path)))
+  throw new Error('Obsolete generic media-operation module remains in package');
 if (files.some((path) => /^dist\/features\/messages\/message-elements\.(?:js|d\.ts)$/.test(path)))
   throw new Error('Obsolete mixed message-element module remains in package');
 if (

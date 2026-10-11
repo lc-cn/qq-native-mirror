@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { fork } from 'node:child_process';
-import { mkdtemp, writeFile, rm, realpath } from 'node:fs/promises';
+import { mkdtemp, writeFile, rm, realpath, readdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -20,8 +20,9 @@ export async function verifyWorkerReadCancellation({
     `
 import {createNativeServices} from ${JSON.stringify(pathToFileURL(await realpath(nativeServicesPath)).href)};
 const report=(event)=>process.send?.({fixture:event});
+let releaseUid, downloadCalls=0, msgAcquisitions=0;
 let releaseTicket, mode='ticket', fetches=0, closes=0;
-process.on('message',m=>{if(m?.fixtureControl==='release-ticket'){releaseTicket?.({result:0,clientKey:'synthetic-ticket'});setImmediate(()=>report('released:'+fetches));}if(m?.fixtureControl==='mode-http'){mode='http';report('mode-http');}if(m?.fixtureControl==='mode-success'){mode='success';report('mode-success');}});
+process.on('message',m=>{if(m?.fixtureControl==='release-uid'){releaseUid?.({uidInfo:new Map([['456','u_456']])});setImmediate(()=>report('uid-released:'+downloadCalls+':'+msgAcquisitions));}if(m?.fixtureControl==='release-ticket'){releaseTicket?.({result:0,clientKey:'synthetic-ticket'});setImmediate(()=>report('released:'+fetches));}if(m?.fixtureControl==='mode-http'){mode='http';report('mode-http');}if(m?.fixtureControl==='mode-success'){mode='success';report('mode-success');}});
 globalThis.fetch=async(url,init)=>{
  fetches++;
  if(String(url).startsWith('https://ssl.ptlogin2.qq.com/'))return new Response(null,{headers:{'set-cookie':'skey=abc; Path=/'}});
@@ -30,8 +31,9 @@ globalThis.fetch=async(url,init)=>{
  return Response.json({retcode:0,data:{msg_list:[],is_end:true,group_role:2,config_page_url:''}});
 };
 export function createKernel(_native,_options,emit){
- const services=createNativeServices({session:{getTicketService:()=>({forceFetchClientKey:()=>{if(mode==='ticket'){report('ticket-stalled');return new Promise(resolve=>releaseTicket=resolve);}return Promise.resolve({result:0,clientKey:'synthetic-ticket'});}}),getTipOffService:()=>({getPskey:async()=>({result:0,domainPskeyMap:new Map([['qun.qq.com','synthetic-key']])})}),getBuddyService:()=>({addKernelBuddyListener(){},removeKernelBuddyListener(){}}),getMsgService:()=>({addKernelMsgListener(){}}),getGroupService:()=>({addKernelGroupListener(){}})},version:'fixture',identity:{userId:'789'},events:{emit(){}}});
- return {async prepare(){},async login(){const account={uin:'789',uid:'u_fixture'};emit('ready',account);return account;},invokeOperation(method,payload,signal){return services.invokeOperation(method,payload,signal);},async close(){closes++;services.close();report('closed:'+closes);}};
+ const services=createNativeServices({session:{getTicketService:()=>({forceFetchClientKey:()=>{if(mode==='ticket'){report('ticket-stalled');return new Promise(resolve=>releaseTicket=resolve);}return Promise.resolve({result:0,clientKey:'synthetic-ticket'});}}),getTipOffService:()=>({getPskey:async()=>({result:0,domainPskeyMap:new Map([['qun.qq.com','synthetic-key']])})}),getBuddyService:()=>({addKernelBuddyListener(){},removeKernelBuddyListener(){}}),getUixConvertService:()=>({getUid(ids){if(ids.length!==1||ids[0]!=='456')throw Error('wrong download UID');report('download-uid-stalled');return new Promise(resolve=>releaseUid=resolve);}}),getMsgService:()=>{msgAcquisitions++;return {addKernelMsgListener(){},downloadRichMedia(){downloadCalls++;throw Error('cancelled download must not dispatch');}}},getGroupService:()=>({addKernelGroupListener(){}})},version:'fixture',identity:{userId:'789'},events:{emit(){}}});
+ msgAcquisitions=0;
+ return {async prepare(){},async login(){const account={uin:'789',uid:'u_fixture'};emit('ready',account);return account;},async invokeOperation(method,payload,signal){try{return await services.invokeOperation(method,payload,signal);}finally{if(method==='downloadAttachment')report('download-settled:'+signal?.aborted);}},async close(){closes++;services.close();report('closed:'+closes);}};
 }
 `,
   );
@@ -117,8 +119,36 @@ export function createKernel(_native,_options,emit){
       false,
       'request cancellation must not close Session',
     );
+    const downloadDirectory = join(directory, 'download-unused');
+    const downloaded = assert.rejects(
+      client.request(
+        'downloadAttachment',
+        {
+          peer: { type: 'private', userId: '456' },
+          messageId: '9',
+          elementId: '2',
+          destination: join(downloadDirectory, 'result'),
+        },
+        150,
+      ),
+      /timed out/,
+    );
+    await until('download-uid-stalled');
+    await downloaded;
+    await until('download-settled:true');
+    worker.send({ fixtureControl: 'release-uid' });
+    await until('uid-released:0:0');
+    await assert.rejects(readdir(downloadDirectory), { code: 'ENOENT' });
+    assert.equal(
+      seen.some((event) => event.startsWith('closed:')),
+      false,
+    );
+    assert.equal((await client.getGroupEssencePage('123')).isEnd, true);
     await client.close();
     return {
+      workerDownloadUidCancellation: true,
+      workerDownloadNoLateWrite: true,
+      workerDownloadSiblingReadSucceeded: true,
       workerReadCancellation: true,
       stalledTicketNoHttp: true,
       httpAborted: true,

@@ -3,7 +3,6 @@ import { createFriendCategoryMutations } from './features/contacts/friend-catego
 import { createGroupSearch } from './features/groups/group-search.ts';
 import { createGroupFiles } from './features/groups/group-files.ts';
 import { GroupFilePageHistory } from './features/groups/group-file-pages.ts';
-import { captureDownloadPayload } from './features/media/download-input.ts';
 import { createMessageQueries } from './features/messages/message-queries.ts';
 import { withCleanupFailure } from './runtime/cleanup.ts';
 import { NativeServiceLifetime } from './runtime/native-service-lifetime.ts';
@@ -34,7 +33,7 @@ import { createForwardMessages } from './features/forward/forward-messages.ts';
 import { createGroupRequests } from './features/groups/group-requests.ts';
 import { createFriendRequests } from './features/contacts/friend-requests.ts';
 import { createContactOperations } from './features/contacts/contact-operations.ts';
-import { downloadAttachment } from './features/media/media-operations.ts';
+import { createAttachmentDownloads } from './features/media/attachment-downloads.ts';
 import { createMessageResolution } from './features/messages/message-resolution.ts';
 import { createNativeMessageSender } from './features/messages/native-message-sender.ts';
 /** Native contracts extracted from local NapCat; this module never sends at startup. */
@@ -141,6 +140,15 @@ export function createNativeServices(context: NativeServiceContext) {
       resolveMessages: resolvedMessages,
       resolveMessage: resolvedMessage,
     } = messageResolution;
+    const attachmentDownloads = own(
+      createAttachmentDownloads({
+        signal: lifetime.signal,
+        resolvePeer,
+        awaitAlive,
+        getMessageService: () => service('Msg'),
+        eventCall,
+      }),
+    );
     const incomingMessages = own(
       createIncomingMessageDelivery({
         resolveMessages: (messages, rawMessages, signal) =>
@@ -403,12 +411,8 @@ export function createNativeServices(context: NativeServiceContext) {
             return messageQueries.getMessages(payload.peer, payload.messageIds);
           case 'getHistory':
             return messageQueries.getHistory(payload.peer, payload.options);
-          case 'downloadAttachment': {
-            const captured = captureDownloadPayload(payload);
-            const peer = await resolvePeer(captured.peer);
-            lifetime.signal.throwIfAborted();
-            return downloadAttachment(service('Msg'), peer, captured, eventCall, lifetime.signal);
-          }
+          case 'downloadAttachment':
+            return attachmentDownloads.download(payload, requestSignal);
           case 'recallMessage':
             return recallMessage(
               {

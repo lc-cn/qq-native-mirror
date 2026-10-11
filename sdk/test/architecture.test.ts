@@ -232,6 +232,9 @@ test('dependency policy rejects reverse, type-only and new cross-domain coupling
     ['src/features/groups/group-web-reads.ts', 'src/runtime/native-service-context.ts'],
     ['src/features/groups/group-web-reads.ts', 'src/runtime/native-service-lifetime.ts'],
     ['src/features/contacts/new-profile.ts', 'src/runtime/cleanup.ts'],
+    ['src/features/media/new-download.ts', 'src/runtime/cleanup.ts'],
+    ['src/features/media/attachment-downloads.ts', 'src/runtime/native-service-context.ts'],
+    ['src/features/media/attachment-downloads.ts', 'src/runtime/account-session-lifecycle.ts'],
     ['src/features/messages/native-message-sender.ts', 'src/runtime/native-service-context.ts'],
     ['src/features/groups/new-action.ts', 'src/runtime/native-service-context.ts'],
     ['src/features/groups/new-action.ts', 'src/features/media/media-send.ts'],
@@ -726,7 +729,7 @@ test('typed query, download and prepared element owners cannot regain the native
   for (const from of [
     'src/features/messages/message-query.ts',
     'src/features/messages/message-queries.ts',
-    'src/features/media/media-operations.ts',
+    'src/features/media/attachment-downloads.ts',
     'src/features/messages/face-input.ts',
     'src/features/messages/outbound-elements.ts',
     'src/features/media/media-record.ts',
@@ -817,4 +820,35 @@ test('ordinary send composition binds its owner without capturing input or resol
       undefined,
     );
   }
+});
+
+test('attachment composition delegates input and peer conversion to its download owner', () => {
+  for (const typeOnly of [false, true]) {
+    assert.ok(
+      dependencyViolation({
+        from: 'src/native-services.ts',
+        to: 'src/features/media/download-input.ts',
+        typeOnly,
+      }),
+    );
+    assert.equal(
+      dependencyViolation({
+        from: 'src/native-services.ts',
+        to: 'src/features/media/attachment-downloads.ts',
+        typeOnly,
+      }),
+      undefined,
+    );
+  }
+});
+
+test('attachment staging can preserve cleanup failures without acquiring runtime composition', () => {
+  assert.equal(
+    dependencyViolation({
+      from: 'src/features/media/attachment-downloads.ts',
+      to: 'src/runtime/cleanup.ts',
+      typeOnly: false,
+    }),
+    undefined,
+  );
 });

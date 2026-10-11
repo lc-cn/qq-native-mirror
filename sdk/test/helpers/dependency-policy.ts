@@ -242,6 +242,8 @@ export function dependencyViolation({ from, to, typeOnly }: SourceDependency): s
     return kernelDependencies.has(to) || (typeOnly && to === 'src/native/native-object.ts')
       ? undefined
       : 'Authentication composes its environment and account lifetime, not feature implementations.';
+  if (from === 'src/native-services.ts' && to === 'src/features/media/download-input.ts')
+    return 'Download input, peer conversion and cancellation belong to the attachment-download owner.';
   if (from === 'src/native-services.ts' && to === 'src/features/messages/send-input.ts')
     return 'Ordinary send input and recipient orchestration belong to the message sender.';
   if (from === 'src/native-services.ts' && to.startsWith('src/features/forward/'))
@@ -308,9 +310,16 @@ export function dependencyViolation({ from, to, typeOnly }: SourceDependency): s
         ? undefined
         : 'Features use unknown results and narrow ports; dynamic native objects require exact ownership.';
     if (typeOnly && (nativeContracts.has(to) || featurePorts.has(to))) return;
-    // Profile updates own a temporary native listener and preserve both lookup
-    // and removal failures. This pure helper does not grant runtime composition.
-    if (from === 'src/features/contacts/self-profile.ts' && to === 'src/runtime/cleanup.ts') return;
+    // These owners preserve primary and cleanup failures for temporary listeners
+    // or staging directories. The pure helper grants no runtime composition.
+    if (
+      [
+        'src/features/contacts/self-profile.ts',
+        'src/features/media/attachment-downloads.ts',
+      ].includes(from) &&
+      to === 'src/runtime/cleanup.ts'
+    )
+      return;
     if (to.startsWith('src/features/')) {
       if (from.split('/')[2] === to.split('/')[2]) return;
       if (crossFeatureDependencies.some((edge) => edge.from === from && edge.to === to)) return;

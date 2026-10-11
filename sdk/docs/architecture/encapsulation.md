@@ -443,15 +443,23 @@ hatch; field validation belongs to the receiving operation. The existing
 low-level `QQClient.request` default result type is retained for compatibility;
 RPC storage and settlement use `unknown` internally.
 
-Attachment download receives `AttachmentDownloadPort`, which exposes only the
-existing rich-media download request. The downloader cannot acquire other native
-services or submit messages; dependency and compile-only negative gates enforce
-that restriction. Callback payloads and native return values remain `unknown`.
-The support check still precedes filesystem IO, and dispatch reads the method
-again on the original receiver after staging. A successful callback waits for
-native invocation completion; rejection or close prevents destination publication,
-and late native failure remains observed. A narrow type does not freeze a dynamic
-getter or replace runtime completion/file validation.
+`features/media/attachment-downloads` owns the captured download request, peer
+resolution, lazy message port acquisition, callback completion and staging lifecycle.
+`native-services` composes and delegates to this owner. The narrow
+`AttachmentDownloadPort` exposes only the existing rich-media download request;
+dependency and compile-only negative gates prohibit acquiring other native services
+or submitting messages. Callback payloads and native return values remain `unknown`.
+The method is captured once before filesystem IO and dispatched with its original
+receiver. A successful callback waits for native invocation completion.
+
+Account, local-owner and per-request cancellation cover UID and callback waits.
+Closing this owner leaves the shared account channel available to sibling features.
+An IPC timeout propagates cancellation to the worker, preventing late UID results
+from starting a download. Late native failures remain observed. Cancellation cannot
+undo native work or a filesystem copy already issued; a published destination is
+retained. Staging cleanup is attempted once. When both the operation and cleanup
+fail, an `AggregateError` preserves both original values through the shared pure
+cleanup helper. This exact dependency permits no account/runtime composition.
 
 `native/prepared-message-contracts` owns the exact text, image, file, record,
 video, face and reply envelopes constructed by the SDK. Builders return their

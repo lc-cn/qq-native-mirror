@@ -23,7 +23,7 @@ export const externalRuntimeDependencies: Readonly<Record<string, readonly strin
   'src/features/groups/group-system-events.ts': ['node:crypto'],
   'src/features/media/builtin-record-codec.ts': ['node:fs/promises', 'silk-wasm'],
   'src/features/media/download-input.ts': ['node:path'],
-  'src/features/media/media-operations.ts': ['node:fs', 'node:fs/promises', 'node:path'],
+  'src/features/media/attachment-downloads.ts': ['node:fs', 'node:fs/promises', 'node:path'],
   'src/features/media/media-record.ts': [
     'node:crypto',
     'node:fs',

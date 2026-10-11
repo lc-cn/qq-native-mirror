@@ -27,6 +27,7 @@ script or weaken a historical plan to make it pass against newer artifacts.
 | Shared account/group identifier rules                                              | `src/validation/identifiers.ts`; preserve string IDs and operation-specific native limits |
 | Pure validation and input snapshots                                                | Feature input module, shared by facade and worker                                         |
 | Native callback projection or operation                                            | Relevant `src/features/` domain                                                           |
+| Attachment input, peer resolution, staging and download cancellation               | `src/features/media/attachment-downloads.ts`; composition only delegates                  |
 | Request correlation, shutdown or account ownership                                 | Existing `src/runtime/` lifetime owner                                                    |
 | Bundle source selection and source-specific runtime policy                         | `src/native/native-package.ts`                                                            |
 | Pure source options, manifest paths, version/runtime metadata and content identity | `src/native/native-manifest.ts`; CLI preflight uses this owner directly                   |
