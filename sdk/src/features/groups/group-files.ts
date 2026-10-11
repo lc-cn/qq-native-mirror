@@ -8,22 +8,19 @@ import {
   captureGroupFilePage,
   captureGroupFileList,
 } from './group-file-input.ts';
-import {
-  createGroupFolder,
-  deleteGroupFolder,
-  getGroupFileCount,
-} from './group-file-operations.ts';
+import { createGroupFolder, deleteGroupFolder } from './group-folder-operations.ts';
+import { getGroupFileCount } from './group-file-count.ts';
+import type { GroupFileCountContext } from './group-file-count.ts';
 import type {
-  GroupFileContext,
-  GroupFileCountContext,
+  GroupFolderDeletionContext,
   GroupFolderCreationContext,
-} from './group-file-operations.ts';
+} from './group-folder-operations.ts';
 
 export interface GroupFilesContext {
   readonly signal: AbortSignal;
   readonly getFileCountService: GroupFileCountContext['getRichMediaService'];
   readonly getFolderCreationService: GroupFolderCreationContext['getRichMediaService'];
-  readonly getFolderDeletionService: GroupFileContext['getRichMediaService'];
+  readonly getFolderDeletionService: GroupFolderDeletionContext['getRichMediaService'];
   readonly awaitAlive: <T>(value: T | PromiseLike<T>, requestSignal?: AbortSignal) => Promise<T>;
   /** Composition binds these decisions to the worker's measured binary profile. */
   readonly getFilePageService?: GroupFilePagesContext['getFilePageService'];

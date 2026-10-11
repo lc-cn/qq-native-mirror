@@ -99,7 +99,14 @@ existing group modules. The composition root only supplies ports and routes.
 lazy, operation-specific native ports and decisions bound to the measured
 binary profile. Input capture and rejection of unsupported operations happen there
 before native acquisition. The composition root routes calls to this owner;
-mutation/count response validation remains in `group-file-operations.ts`.
+`group-file-count.ts` owns the boxed completion bridge, singleton arrays and
+uint64 group correlation. `group-folder-operations.ts` owns creation snapshots
+and deletion acknowledgements. `group-file-operations.ts` only preserves old
+consumer exports; SDK implementation modules import the owned protocols directly.
+Their shared `group-file-result.ts` captures own data fields and checks action
+retirement after descriptor inspection, including thrown traps. Each protocol
+retains its response shape and status rules; closing during capture stops error
+interpretation and every subsequent native-field read.
 Listing callbacks are captured by `group-file-page-codec.ts`; page correlation,
 deadline and traversal belong to `group-file-pages.ts`. Pass only its listing
 method and worker-owned token history. The existing Msg listener routes callbacks,

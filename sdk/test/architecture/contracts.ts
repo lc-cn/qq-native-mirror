@@ -6,6 +6,22 @@ import ts from 'typescript';
 import { dependencyViolation } from '../helpers/dependency-policy.ts';
 import { projectRoot, sourceRoot, files, label, graph } from '../helpers/source-graph.ts';
 
+test('group-file compatibility exports cannot reacquire protocol execution', () => {
+  const path = join(sourceRoot, 'features/groups/group-file-operations.ts');
+  const tree = ts.createSourceFile(path, readFileSync(path, 'utf8'), ts.ScriptTarget.Latest, true);
+  assert.ok(tree.statements.length > 0);
+  for (const statement of tree.statements) {
+    assert.ok(ts.isExportDeclaration(statement) && statement.moduleSpecifier);
+    assert.ok(
+      ts.isStringLiteral(statement.moduleSpecifier) &&
+        ['./group-file-count.ts', './group-folder-operations.ts'].includes(
+          statement.moduleSpecifier.text,
+        ),
+      'The compatibility barrel only reexports the owned count and folder protocols',
+    );
+  }
+});
+
 test('package entry contains only public reexports', () => {
   const entry = join(sourceRoot, 'index.ts');
   const tree = ts.createSourceFile(

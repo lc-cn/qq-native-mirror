@@ -4,6 +4,39 @@ import test from 'node:test';
 import { dynamicNativeOwners, dependencyViolation } from '../helpers/dependency-policy.ts';
 import { projectRoot, graph } from '../helpers/source-graph.ts';
 
+test('group-file field capture stays private to count and folder protocols', () => {
+  const reader = 'src/features/groups/group-file-result.ts';
+  assert.deepEqual(graph.get(join(projectRoot, reader)), []);
+  for (const typeOnly of [false, true]) {
+    for (const from of [
+      'src/features/groups/group-file-count.ts',
+      'src/features/groups/group-folder-operations.ts',
+    ])
+      assert.equal(dependencyViolation({ from, to: reader, typeOnly }), undefined);
+    for (const from of [
+      'src/native-services.ts',
+      'src/features/groups/group-files.ts',
+      'src/features/groups/new-action.ts',
+      'src/client/qq-client.ts',
+    ])
+      assert.ok(dependencyViolation({ from, to: reader, typeOnly }));
+    for (const to of ['node:fs', 'src/runtime/feature-lifetime.ts', 'src/errors.ts'])
+      assert.ok(dependencyViolation({ from: reader, to, typeOnly }));
+    for (const from of [
+      'src/features/groups/group-files.ts',
+      'src/features/groups/new-action.ts',
+      'src/native-services.ts',
+    ])
+      assert.ok(
+        dependencyViolation({
+          from,
+          to: 'src/features/groups/group-file-operations.ts',
+          typeOnly,
+        }),
+      );
+  }
+});
+
 test('feature lifetime has no dependencies and only reviewed local owners can acquire it', () => {
   const lifetime = 'src/runtime/feature-lifetime.ts';
   assert.deepEqual(graph.get(join(projectRoot, lifetime)), []);

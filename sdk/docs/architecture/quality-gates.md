@@ -221,6 +221,14 @@ adapter contract. Avoid restating method names or adding a pattern without a rea
 variation point. Add tests for lifetime, correlation and input/projection
 boundaries; do not mirror implementation line by line.
 
+Group-file source regressions close the actual domain owner during outer status,
+inner status, creation fields and selected count-array descriptor inspection.
+They require the close error, one native dispatch and no subsequent field reads.
+The existing installed group-file action consumer verifies these ordering rules
+with controlled ports, preserves sibling account waits and checks compatibility
+export identity against the two emitted protocol modules. Both verification
+entries await that helper; these results do not establish a remote file action.
+
 Installed action checks exercise the compiled contact/group adapters and the real
 Session lifetime with controlled services. Their consumer helper has its own
 module in `scripts/`, rather than embedding action behavior in the packaging

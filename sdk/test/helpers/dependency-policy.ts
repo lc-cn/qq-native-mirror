@@ -196,6 +196,17 @@ export function dependencyViolation({ from, to, typeOnly }: SourceDependency): s
     return 'Domain input capture belongs to its domain owner; composition only routes payloads.';
   if (from === 'src/native-services.ts' && to === 'src/validation/identifiers.ts')
     return 'Group query input rules belong to the query owner; composition only routes payloads.';
+  if (to === 'src/features/groups/group-file-operations.ts')
+    return 'The compatibility barrel preserves old consumers; source owners import their protocol directly.';
+  if (from === 'src/features/groups/group-file-result.ts')
+    return 'Group-file field capture cannot acquire protocol, lifecycle or resource implementations.';
+  if (to === 'src/features/groups/group-file-result.ts')
+    return [
+      'src/features/groups/group-file-count.ts',
+      'src/features/groups/group-folder-operations.ts',
+    ].includes(from)
+      ? undefined
+      : 'Group-file field capture belongs only to the reviewed count and folder protocols.';
   if (from === 'src/runtime/kernel-method.ts')
     return 'Kernel method capture has no resource or lifecycle dependencies; its caller supplies the active-owner check.';
   if (to === 'src/runtime/kernel-method.ts')
@@ -309,6 +320,9 @@ export function dependencyViolation({ from, to, typeOnly }: SourceDependency): s
     [
       'src/features/groups/group-file-input.ts',
       'src/features/groups/group-file-operations.ts',
+      'src/features/groups/group-file-count.ts',
+      'src/features/groups/group-folder-operations.ts',
+      'src/features/groups/group-file-result.ts',
       'src/features/groups/group-file-page-codec.ts',
     ].includes(to)
   )

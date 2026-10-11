@@ -629,6 +629,22 @@ before acquiring native methods; existing mutation/count adapters retain their
 response validation, receiver handling and account cancellation. Composition cannot
 import input, operation or listing-codec implementations.
 
+`group-file-count` owns its boxed Promise bridge and correlated singleton arrays;
+`group-folder-operations` owns the distinct creation and deletion carriers. The
+old `group-file-operations` module reexports their functions and Context names for
+existing consumers, without execution or state. `group-files` imports the owned
+protocols directly. Creation checks the outer status before acquiring its nested
+carrier and validates its own inner status without constructing a deletion-shaped
+response.
+
+`group-file-result` captures own data fields for those two protocols only. It
+checks the action signal before and after descriptor inspection, with the final
+check outside the catch that sanitizes malformed native results. A descriptor
+trap may close the action even when it throws or returns a valid status. Retirement
+therefore wins before status interpretation or another field read. Count array
+selection applies the same ordering around length and element inspection; its
+existing then bridge still observes already-dispatched completion after close.
+
 `group-file-pages` owns the serialized page lane, early callback snapshots,
 request deadlines and complete traversal. Timer wakeups recheck the monotonic
 page deadline and rearm when early; they cannot retire an active query and free
