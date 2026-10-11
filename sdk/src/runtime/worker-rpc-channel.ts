@@ -87,9 +87,14 @@ export class WorkerRpcChannel {
     else pending.resolve(response.result);
   }
   rejectPending(error: Error, keep?: (method: string) => boolean): void {
+    const retired: [number, Pending][] = [];
+    // Detach the complete batch before cancellation transports can synchronously
+    // reenter receive() with a sibling reply. Retained close requests stay live.
     for (const [id, value] of this.#pending) {
       if (keep?.(value.method)) continue;
-      const pending = this.#take(id)!;
+      retired.push([id, this.#take(id)!]);
+    }
+    for (const [id, pending] of retired) {
       this.#cancelRead(id, pending);
       pending.reject(this.policy.failure(pending.method, error));
     }

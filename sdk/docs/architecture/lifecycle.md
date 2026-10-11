@@ -3,6 +3,17 @@
 - One worker owns one account data directory. Locks prevent concurrent owners.
 - Every pending IPC request settles once; timeout, reply, send failure, offline,
   exit and close all retire their corresponding map entries and timers.
+  Batch retirement detaches all selected entries before calling cancellation
+  transports, so a reentrant sibling reply cannot turn retirement into success.
+- Offline notifications retire the old account, restore policy and pending RPCs
+  before synchronous state observers run. Close RPCs retain their acknowledgement
+  path. Observer throws and injected late replies cannot undo that retirement;
+  observer-started login is new work. Logout and kick remove the previous default
+  account before observers can reconnect. The latest nested offline notification
+  controls automatic restore, which never overrides a new login or account.
+  Retry-policy inspection failure still retires the account and pending RPCs;
+  its original value is preserved, alongside any notification failure. Reentrant
+  close or a newer offline notification suppresses the obsolete event.
 - The channel captures the sending transport per request. The three reviewed HTTP
   reads use best-effort per-request cancellation on timeout, send failure and
   offline; it never targets a replacement worker. `WorkerReadRequests` owns their

@@ -247,3 +247,32 @@ test('hostile timeout retirement rejection is normalized without an unobserved c
   f.callbacks[0](new Error('late callback'));
   assert.equal(coercions, 0);
 });
+
+test('batch retirement detaches all selected replies before synchronous cancel transport reentry', async () => {
+  const sent: { id: number; method: string }[] = [];
+  const cancelled: number[] = [];
+  const failure = new Error('offline');
+  const channel = new WorkerRpcChannel(
+    () => ({
+      send(message) {
+        sent.push(message);
+      },
+      cancelRead(id) {
+        cancelled.push(id);
+        channel.receive({ id: sent[1]!.id, result: 'late sibling success' });
+        channel.receive({ id: sent[2]!.id, result: 'close acknowledged' });
+      },
+    }),
+    { failure: (_method, error) => error, responseFailure: () => failure },
+  );
+  const first = channel.request('getGroupEssencePage', {}, 1000);
+  const sibling = channel.request('listGroupNotices', {}, 1000);
+  const close = channel.request('close', {}, 1000);
+  const firstRejected = assert.rejects(first, (error) => error === failure);
+  const siblingRejected = assert.rejects(sibling, (error) => error === failure);
+  channel.rejectPending(failure, (method) => method === 'close');
+  await Promise.all([firstRejected, siblingRejected]);
+  assert.equal(await close, 'close acknowledged');
+  assert.deepEqual(cancelled, [sent[0]!.id, sent[1]!.id]);
+  assert.equal(sent.length, 3);
+});

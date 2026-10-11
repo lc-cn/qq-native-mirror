@@ -26,6 +26,10 @@ modules' dependency permissions. Both relative and external imports are checked.
 `QQClient` inherits from `EventEmitter` to implement the public event contract.
 `WorkerRpcChannel` owns its pending map, IDs, timer cleanup and settlement. It
 accepts a transport and a failure policy; callers cannot mutate pending state.
+Batch retirement detaches every selected RPC and clears its timer before sending
+any read-cancellation controls. A synchronous transport response therefore cannot
+successfully settle a sibling being retired. Retained close RPCs keep their
+acknowledgement path, and cancellation remains bound to the original transport.
 `ClientLifecycle` owns account state, login/restore coalescing, worker generations,
 automatic restore policy and shutdown. Its interface exposes state/account snapshots
 and request/login/reconnect/close; no pending maps or worker handles escape. Its named
@@ -70,6 +74,29 @@ before publication. Closing from an online-state observer also suppresses the
 following raw readiness event. This validates the parent account contract, not
 native authorization or signing authenticity; low-level `request<T>` results and
 other forwarded worker payloads remain opaque.
+
+Offline notifications commit account removal, the disconnected state, restore
+policy and retirement of previously pending RPCs before calling state observers.
+Close RPCs remain pending for their acknowledgement. A synchronous observer can
+neither deliver a successful late response to those old requests nor preserve the
+previous account as the default reconnect target after logout or kick. An explicit
+login started by that observer belongs to new work and is not rejected by the old
+notification. Observer failures retain their original identity and still stop
+later raw-event delivery.
+
+The lifecycle captures each offline notification's retry decision once. Its
+private revision only orders nested offline notifications within the same worker;
+it does not replace worker generations or add a public state. Automatic restore
+is scheduled after notification only if that decision remains current and no new
+login/account or shutdown has intervened. A nested nonretryable disconnection
+cannot be overridden by the older event when its observer returns.
+
+A retry-policy lookup failure still retires the account and old requests as
+nonretryable before propagating its original value. If state notification also
+throws, an `AggregateError` retains both values. A lookup that synchronously
+closes or delivers a newer offline notification cannot overwrite that transition
+or resume the older raw event. This is parent lifecycle behavior under controlled
+transport input, not validation of a proprietary native callback ABI.
 
 The lifecycle context separates typed SDK-produced `state`, `log` and `terminated`
 events from opaque forwarding. Their correlated tuples reuse `ClientEvents`, and

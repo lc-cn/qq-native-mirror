@@ -79,6 +79,7 @@ export class ClientLifecycle {
   #loginRequest?: LoginRequest;
   #defaultLogin: LoginRequest;
   #generation = 0;
+  #offlineRevision = 0;
   #lastAccount?: Account;
   #reconnecting?: Promise<Account>;
   #reconnectRequest?: LoginRequest;
@@ -131,6 +132,8 @@ export class ClientLifecycle {
       if (generation !== this.#generation || this.#closed) return;
       if (message.event) {
         if (this.#closing) return;
+        let offlineRevision: number | undefined;
+        let retryableDisconnect = false;
         if (message.event === 'ready') {
           const account = captureWorkerAccount(message.payload, isCurrent);
           if (!isCurrent()) return;
@@ -151,25 +154,39 @@ export class ClientLifecycle {
           message.event === 'logout' ||
           message.event === 'kicked'
         ) {
-          this.#login = undefined;
-          this.#account = undefined;
-          this.#setState('disconnected');
-          this.#rpc.rejectPending(
-            new Error(`QQ account became offline (${message.event}); request was not replayed`),
-            (method) => method === 'close',
-          );
-          if (message.event === 'disconnected' && message.payload?.retryable !== true) {
-            clearTimeout(this.#autoTimer);
-            this.#autoTimer = undefined;
+          const beforePolicyRevision = this.#offlineRevision;
+          let policyFailure: { error: unknown } | undefined;
+          try {
+            retryableDisconnect =
+              message.event === 'disconnected' && message.payload?.retryable === true;
+          } catch (error) {
+            policyFailure = { error };
           }
-          if (message.event !== 'disconnected') {
-            clearTimeout(this.#autoTimer);
-            this.#autoTimer = undefined;
-            this.#lastAccount = undefined;
+          // A fallible policy lookup cannot supersede a nested retirement or close.
+          if (!isCurrent() || beforePolicyRevision !== this.#offlineRevision) return;
+          try {
+            offlineRevision = this.#retireAccount(message.event, retryableDisconnect);
+          } catch (error) {
+            if (policyFailure) {
+              // eslint-disable-next-line preserve-caught-error -- Preserve both policy and observer failures.
+              throw new AggregateError(
+                [policyFailure.error, error],
+                'QQ offline policy inspection and notification failed',
+              );
+            }
+            throw error;
           }
+          if (policyFailure) throw policyFailure.error;
         }
         this.#context.forward(message.event, message.payload);
-        if (message.event === 'disconnected' && message.payload?.retryable === true)
+        if (
+          retryableDisconnect &&
+          offlineRevision === this.#offlineRevision &&
+          isCurrent() &&
+          this.#state === 'disconnected' &&
+          !this.#login &&
+          !this.#account
+        )
           this.#scheduleReconnect();
       } else {
         this.#rpc.receive(message);
@@ -210,6 +227,29 @@ export class ClientLifecycle {
     if (this.#state === state) return;
     this.#state = state;
     this.#context.emit('state', state);
+  }
+  /** Commit retirement before synchronous observers can throw, reply or log in.
+   * The revision prevents a nested offline notification from reviving an older
+   * event's automatic restore decision. It does not retire the worker generation.
+   */
+  #retireAccount(event: 'disconnected' | 'logout' | 'kicked', retryable: boolean): number {
+    const revision = ++this.#offlineRevision;
+    const stateChanged = this.#state !== 'disconnected';
+    this.#login = undefined;
+    this.#account = undefined;
+    this.#state = 'disconnected';
+    if (event !== 'disconnected' || !retryable) {
+      clearTimeout(this.#autoTimer);
+      this.#autoTimer = undefined;
+    }
+    if (event !== 'disconnected') this.#lastAccount = undefined;
+    this.#rpc.rejectPending(
+      new Error(`QQ account became offline (${event}); request was not replayed`),
+      (method) => method === 'close',
+    );
+    if (stateChanged && revision === this.#offlineRevision && this.#state === 'disconnected')
+      this.#context.emit('state', 'disconnected');
+    return revision;
   }
   #scheduleReconnect() {
     if (

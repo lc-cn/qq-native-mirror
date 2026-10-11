@@ -20,6 +20,7 @@ export async function verifyWorkerErrorRoutes({
   await verifyClientIdentity(QQClient);
   await verifyClientPresentation(QQClient);
   await verifyClientClosing(QQClient);
+  await verifyClientOffline(QQClient);
   const directory = await realpath(await mkdtemp(join(tmpdir(), 'qq-worker-error-')));
   /** @type {import("../../src/client/qq-client.ts").QQClient | undefined} */
   let client;
@@ -148,6 +149,9 @@ export function createKernel(_native,_options,emit){return {
       clientIdentityInstalledContract: true,
       clientLoginReentrancyContract: true,
       clientClosingObserverCleanupContract: true,
+      clientOfflineObserverRetirementContract: true,
+      clientOfflineBatchCancellationContract: true,
+      clientNestedOfflineRestoreContract: true,
       clientEventPresentationInstalledContract: true,
       workerOpaqueErrorContract: true,
       workerErrorRecoveryContract: true,
@@ -172,6 +176,139 @@ export function createKernel(_native,_options,emit){return {
       }
       await rm(directory, { recursive: true, force: true });
     }
+  }
+}
+
+/** Public state observers run only after old RPCs retire; their errors remain opaque.
+ * @param {typeof import('../../src/client/qq-client.ts').QQClient} QQClient */
+async function verifyClientOffline(QQClient) {
+  for (const offline of ['disconnected', 'logout', 'kicked']) {
+    for (const throws of [false, true]) {
+      const child = new ChildProcess();
+      Object.defineProperty(child, 'connected', { value: true, configurable: true });
+      /** @type {{id:number,method:string}[]} */
+      const sent = [];
+      /** @type {number[]} */
+      const cancelled = [];
+      Object.defineProperty(child, 'send', {
+        value(
+          /** @type {{id:number,method?:string,control?:string}} */ message,
+          /** @type {(error:Error|null)=>void} */ callback,
+        ) {
+          callback(null);
+          if (message.control === 'cancel-read') {
+            cancelled.push(message.id);
+            // The actual parent transport can reenter with any sibling response.
+            for (const pending of sent.slice())
+              child.emit('message', { id: pending.id, result: 'late' });
+          } else {
+            assert.equal(typeof message.method, 'string');
+            assert.ok(message.method);
+            sent.push({ id: message.id, method: message.method });
+          }
+          return true;
+        },
+      });
+      const client = new QQClient(child, 1000);
+      const original = Object.freeze({ observer: offline });
+      let rawEvents = 0;
+      EventEmitter.prototype.on.call(client, offline, () => {
+        rawEvents++;
+      });
+      child.emit('message', { event: 'ready', payload: { uin: '123', uid: 'fixture' } });
+      client.on('state', (state) => {
+        if (state !== 'disconnected') return;
+        assert.equal(client.account, undefined);
+        for (const message of sent.slice())
+          child.emit('message', { id: message.id, result: 'late' });
+        if (throws) throw original;
+      });
+      const read = client.listFriends().then(
+        (value) => ({ value }),
+        (/** @type {unknown} */ error) => ({ error }),
+      );
+      const merged = client.request('sendMergedForward').then(
+        (/** @type {unknown} */ value) => ({ value }),
+        (/** @type {unknown} */ error) => ({ error }),
+      );
+      const closing = client.request('close').then(
+        (/** @type {unknown} */ value) => ({ value }),
+        (/** @type {unknown} */ error) => ({ error }),
+      );
+      const cancelledReads = [
+        client.getGroupEssencePage('123'),
+        client.listGroupNotices('123'),
+      ].map((pending) =>
+        pending.then(
+          (value) => ({ value }),
+          (/** @type {unknown} */ error) => ({ error }),
+        ),
+      );
+      try {
+        const notify = () =>
+          child.emit('message', { event: offline, payload: { retryable: false } });
+        if (throws) assert.throws(notify, (error) => error === original);
+        else notify();
+        assert.equal(client.state, 'disconnected');
+        const readResult = await read;
+        assert.ok('error' in readResult && readResult.error instanceof Error);
+        assert.match(readResult.error.message, /offline/);
+        const mergedResult = await merged;
+        assert.ok('error' in mergedResult && mergedResult.error instanceof Error);
+        assert.ok('mergedForward' in mergedResult.error);
+        assert.deepEqual(mergedResult.error.mergedForward, {
+          phase: 'operation',
+          uploadCompletion: 'unknown',
+          cardCompletion: 'unknown',
+        });
+        assert.deepEqual(await closing, { value: 'late' });
+        for (const result of await Promise.all(cancelledReads)) {
+          assert.ok('error' in result && result.error instanceof Error);
+          assert.match(result.error.message, /offline/);
+        }
+        assert.equal(cancelled.length, 2);
+        assert.equal(rawEvents, throws ? 0 : 1);
+      } finally {
+        Object.defineProperty(child, 'exitCode', { value: 0, configurable: true });
+        child.emit('exit', 0, null);
+        await Promise.all([read, merged, closing, ...cancelledReads]);
+        await client.close();
+        client.removeAllListeners();
+      }
+    }
+  }
+  const child = new ChildProcess();
+  Object.defineProperty(child, 'connected', { value: true });
+  // No process exists; any obsolete automatic restore would enter the controlled factory.
+  Object.defineProperty(child, 'exitCode', { value: 0 });
+  let spawns = 0;
+  const client = new QQClient(
+    child,
+    1000,
+    { method: 'qr' },
+    {
+      spawn() {
+        spawns++;
+        throw new Error('Obsolete restore');
+      },
+      payload: {},
+    },
+    { delayMs: 1, maxAttempts: 1 },
+  );
+  client.on('disconnected', (info) => {
+    if (info?.retryable === true)
+      child.emit('message', { event: 'disconnected', payload: { retryable: false } });
+  });
+  try {
+    child.emit('message', { event: 'ready', payload: { uin: '123', uid: 'fixture' } });
+    child.emit('message', { event: 'disconnected', payload: { retryable: true } });
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    assert.equal(spawns, 0, 'The newer nonretryable notification owns the restore decision');
+    assert.equal(client.state, 'disconnected');
+  } finally {
+    child.emit('exit', 0, null);
+    await client.close();
+    client.removeAllListeners();
   }
 }
 

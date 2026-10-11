@@ -482,3 +482,366 @@ test('closing observer failure retains cleanup failure and never retries shutdow
   assert.equal(lifecycle.state, 'failed');
   assert.equal(lifecycle.close(), closing);
 });
+
+for (const offline of ['disconnected', 'logout', 'kicked'] as const) {
+  for (const throws of [false, true]) {
+    test(`${offline} retires pending requests before a ${throws ? 'throwing' : 'reentrant'} state observer`, async () => {
+      const f = workerFixture();
+      const opaque = { observer: offline };
+      f.worker.send = ((
+        message: { id: number; method: string },
+        callback: (error: Error | null) => void,
+      ) => {
+        f.sent.push(message);
+        callback(null);
+        return true;
+      }) as typeof f.worker.send;
+      const lifecycle = new ClientLifecycle({
+        worker: f.worker,
+        timeout: 1000,
+        emit(event, state) {
+          if (event !== 'state' || state !== 'disconnected') return;
+          for (const sent of f.sent.slice())
+            if (
+              sent.method === 'listFriends' ||
+              sent.method === 'sendMergedForward' ||
+              sent.method === 'close'
+            )
+              f.events.emit('message', { id: sent.id, result: 'late' });
+          if (throws) throw opaque;
+        },
+        forward() {},
+        exportsUpdated() {},
+      });
+      const readOutcome = lifecycle.request('listFriends').then(
+        (value) => ({ value }),
+        (error: unknown) => ({ error }),
+      );
+      const mergedOutcome = lifecycle.request('sendMergedForward').then(
+        (value) => ({ value }),
+        (error: unknown) => ({ error }),
+      );
+      const closeOutcome = lifecycle.request('close').then(
+        (value) => ({ value }),
+        (error: unknown) => ({ error }),
+      );
+      try {
+        if (throws)
+          assert.throws(
+            () => f.events.emit('message', { event: offline, payload: { retryable: false } }),
+            (error) => error === opaque,
+          );
+        else f.events.emit('message', { event: offline, payload: { retryable: false } });
+        const readResult = await readOutcome;
+        assert.ok('error' in readResult);
+        assert.match(String(readResult.error), /offline/);
+        const mergedResult = await mergedOutcome;
+        assert.ok('error' in mergedResult && mergedResult.error instanceof KernelRequestError);
+        assert.equal(mergedResult.error.mergedForward?.uploadCompletion, 'unknown');
+        assert.equal(mergedResult.error.mergedForward?.cardCompletion, 'unknown');
+        assert.deepEqual(await closeOutcome, { value: 'late' });
+      } finally {
+        Object.assign(f.worker, { exitCode: 0 });
+        const closing = lifecycle.close();
+        const sent = f.sent.at(-1);
+        assert.ok(sent && sent.method === 'close');
+        f.events.emit('message', { id: sent.id, result: null });
+        await closing;
+      }
+    });
+  }
+}
+
+for (const offline of ['logout', 'kicked'] as const) {
+  test(`${offline} clears the old restoration account before reentrant reconnect`, async () => {
+    const old = workerFixture(),
+      next = workerFixture();
+    let reconnect: Promise<unknown> | undefined;
+    let submittedLogin: unknown;
+    const send = next.worker.send.bind(next.worker);
+    next.worker.send = ((
+      message: { id: number; method: string; login?: unknown },
+      callback: (error: Error | null) => void,
+    ) => {
+      if (message.method === 'login') submittedLogin = message.login;
+      return send(message, callback);
+    }) as typeof next.worker.send;
+    const lifecycle = new ClientLifecycle({
+      worker: old.worker,
+      timeout: 1000,
+      restart: { spawn: () => next.worker, payload: {} },
+      emit(event, state) {
+        if (event === 'state' && state === 'disconnected') reconnect = lifecycle.reconnect();
+      },
+      forward() {},
+      exportsUpdated() {},
+    });
+    const login = lifecycle.login({ method: 'quick', uin: '123' });
+    const account = { uin: '123', uid: 'u_fixture' };
+    old.events.emit('message', { event: 'ready', payload: account });
+    old.events.emit('message', { id: old.sent[0].id, result: account });
+    await login;
+    old.events.emit('message', { event: offline, payload: {} });
+    const observed = reconnect?.then(
+      (value) => ({ value }),
+      (error: unknown) => ({ error }),
+    );
+    try {
+      await new Promise<void>((resolve) => setImmediate(resolve));
+      assert.deepEqual(submittedLogin, { method: 'restore' });
+    } finally {
+      const sent = next.sent.find((value) => value.method === 'login');
+      if (sent) {
+        next.events.emit('message', { event: 'ready', payload: account });
+        next.events.emit('message', { id: sent.id, result: account });
+      }
+      await observed;
+      await lifecycle.close();
+    }
+  });
+}
+
+for (const observer of ['state', 'raw'] as const) {
+  test(`${observer} offline observer can start a new login without old retirement or auto restore`, async (context) => {
+    context.mock.timers.enable({ apis: ['setTimeout'] });
+    const f = workerFixture();
+    let spawns = 0;
+    let nextLogin: Promise<unknown> | undefined;
+    const start = () => {
+      nextLogin = lifecycle.login({ method: 'quick', uin: '456' });
+    };
+    const lifecycle = new ClientLifecycle({
+      worker: f.worker,
+      timeout: 1000,
+      restart: {
+        spawn() {
+          spawns++;
+          return workerFixture().worker;
+        },
+        payload: {},
+      },
+      autoReconnect: { delayMs: 50, maxAttempts: 1 },
+      emit(event, state) {
+        if (observer === 'state' && event === 'state' && state === 'disconnected') start();
+      },
+      forward(event) {
+        if (observer === 'raw' && event === 'disconnected') start();
+      },
+      exportsUpdated() {},
+    });
+    const oldAccount = { uin: '123', uid: 'u_old' };
+    const oldLogin = lifecycle.login({ method: 'quick', uin: '123' });
+    f.events.emit('message', { event: 'ready', payload: oldAccount });
+    f.events.emit('message', { id: f.sent[0].id, result: oldAccount });
+    await oldLogin;
+    f.events.emit('message', { event: 'disconnected', payload: { retryable: true } });
+    assert.ok(nextLogin);
+    let settled = false;
+    const observed = nextLogin.then(
+      (value) => {
+        settled = true;
+        return value;
+      },
+      (error: unknown) => {
+        settled = true;
+        throw error;
+      },
+    );
+    try {
+      context.mock.timers.tick(60);
+      await new Promise<void>((resolve) => setImmediate(resolve));
+      assert.equal(spawns, 0);
+      assert.equal(settled, false);
+      assert.equal(lifecycle.state, 'connecting');
+      assert.equal(f.sent.filter((sent) => sent.method === 'login').length, 2);
+      const newAccount = { uin: '456', uid: 'u_new' };
+      const sent = f.sent.at(-1);
+      assert.ok(sent && sent.method === 'login');
+      f.events.emit('message', { event: 'ready', payload: newAccount });
+      f.events.emit('message', { id: sent.id, result: newAccount });
+      assert.deepEqual(await observed, newAccount);
+    } finally {
+      await lifecycle.close();
+    }
+  });
+}
+
+test('nested nonretryable disconnect blocks the outer retryable automatic restore decision', async (context) => {
+  context.mock.timers.enable({ apis: ['setTimeout'] });
+  const f = workerFixture();
+  let spawns = 0;
+  let nested = false;
+  const lifecycle = new ClientLifecycle({
+    worker: f.worker,
+    timeout: 1000,
+    restart: {
+      spawn() {
+        spawns++;
+        return workerFixture().worker;
+      },
+      payload: {},
+    },
+    autoReconnect: { delayMs: 50, maxAttempts: 1 },
+    emit() {},
+    forward(event) {
+      if (event === 'disconnected' && !nested) {
+        nested = true;
+        f.events.emit('message', { event: 'disconnected', payload: { retryable: false } });
+      }
+    },
+    exportsUpdated() {},
+  });
+  const account = { uin: '123', uid: 'u_old' };
+  const login = lifecycle.login({ method: 'quick', uin: '123' });
+  f.events.emit('message', { event: 'ready', payload: account });
+  f.events.emit('message', { id: f.sent[0].id, result: account });
+  await login;
+  try {
+    f.events.emit('message', { event: 'disconnected', payload: { retryable: true } });
+    context.mock.timers.tick(60);
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    assert.equal(nested, true);
+    assert.equal(spawns, 0);
+    assert.equal(lifecycle.state, 'disconnected');
+    assert.equal(f.sent.filter((sent) => sent.method === 'login').length, 1);
+  } finally {
+    await lifecycle.close();
+  }
+});
+
+for (const observerThrows of [false, true]) {
+  test(`offline policy getter failure retires old RPCs and preserves observer failure=${observerThrows}`, async () => {
+    const f = workerFixture();
+    const policyFailure = Object.freeze({ policy: 'opaque' });
+    const observerFailure = Object.freeze({ observer: 'opaque' });
+    const forwarded: string[] = [];
+    const lifecycle = new ClientLifecycle({
+      worker: f.worker,
+      timeout: 1000,
+      emit(event, state) {
+        if (event === 'state' && state === 'disconnected' && observerThrows) throw observerFailure;
+      },
+      forward(event) {
+        forwarded.push(event);
+      },
+      exportsUpdated() {},
+    });
+    f.events.emit('message', { event: 'ready', payload: { uin: '123', uid: 'fixture' } });
+    const outcome = lifecycle.request('listFriends').then(
+      (value: unknown) => ({ value }),
+      (error: unknown) => ({ error }),
+    );
+    const request = f.sent.at(-1)!;
+    let reads = 0;
+    const payload = Object.defineProperty({}, 'retryable', {
+      get() {
+        reads++;
+        throw policyFailure;
+      },
+    });
+    try {
+      assert.throws(
+        () => f.events.emit('message', { event: 'disconnected', payload }),
+        (error: unknown) => {
+          if (observerThrows) {
+            assert.ok(error instanceof AggregateError);
+            assert.deepEqual(error.errors, [policyFailure, observerFailure]);
+          } else assert.equal(error, policyFailure);
+          return true;
+        },
+      );
+      f.events.emit('message', { id: request.id, result: 'late success' });
+      const result = await outcome;
+      assert.ok('error' in result && result.error instanceof Error);
+      assert.match(result.error.message, /offline/);
+      assert.equal(lifecycle.account, undefined);
+      assert.equal(lifecycle.state, 'disconnected');
+      assert.equal(reads, 1);
+      assert.deepEqual(forwarded, ['ready']);
+    } finally {
+      await lifecycle.close();
+      await outcome;
+    }
+  });
+}
+
+test('offline policy getter close cannot overwrite closing or forward the obsolete event', async () => {
+  const f = workerFixture();
+  const forwarded: string[] = [];
+  const lifecycle = new ClientLifecycle({
+    worker: f.worker,
+    timeout: 1000,
+    emit() {},
+    forward(event) {
+      forwarded.push(event);
+    },
+    exportsUpdated() {},
+  });
+  f.events.emit('message', { event: 'ready', payload: { uin: '123', uid: 'fixture' } });
+  let closing: Promise<void> | undefined;
+  let reads = 0;
+  const payload = Object.defineProperty({}, 'retryable', {
+    get() {
+      reads++;
+      closing = lifecycle.close();
+      return true;
+    },
+  });
+  try {
+    f.events.emit('message', { event: 'disconnected', payload });
+    assert.equal(lifecycle.state, 'closing');
+    assert.equal(reads, 1);
+    assert.deepEqual(forwarded, ['ready']);
+    assert.ok(closing);
+    await closing;
+    assert.equal(lifecycle.state, 'closed');
+  } finally {
+    await closing;
+    await lifecycle.close();
+  }
+});
+
+test('offline policy getter nested nonretryable notification defeats outer retryable restore', async (context) => {
+  context.mock.timers.enable({ apis: ['setTimeout'] });
+  const f = workerFixture();
+  let spawns = 0;
+  const forwarded: unknown[] = [];
+  const lifecycle = new ClientLifecycle({
+    worker: f.worker,
+    timeout: 1000,
+    restart: {
+      spawn() {
+        spawns++;
+        return workerFixture().worker;
+      },
+      payload: {},
+    },
+    autoReconnect: { delayMs: 50, maxAttempts: 1 },
+    emit() {},
+    forward(event, payload) {
+      if (event === 'disconnected') forwarded.push(payload);
+    },
+    exportsUpdated() {},
+  });
+  f.events.emit('message', { event: 'ready', payload: { uin: '123', uid: 'fixture' } });
+  const nested = { retryable: false };
+  let reads = 0;
+  const outer = Object.defineProperty({}, 'retryable', {
+    get() {
+      reads++;
+      f.events.emit('message', { event: 'disconnected', payload: nested });
+      return true;
+    },
+  });
+  try {
+    f.events.emit('message', { event: 'disconnected', payload: outer });
+    context.mock.timers.tick(60);
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    assert.equal(spawns, 0);
+    assert.equal(reads, 1);
+    assert.deepEqual(forwarded, [nested]);
+    assert.equal(lifecycle.state, 'disconnected');
+  } finally {
+    await lifecycle.close();
+  }
+});
