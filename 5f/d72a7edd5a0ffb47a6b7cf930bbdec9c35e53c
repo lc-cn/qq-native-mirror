@@ -1,0 +1,49 @@
+sdk/test/cli-command-plan.test.ts
+  s_2104cc474f1ce5::t_3b509b267a0914 33-70
+sdk/test/cli-entrypoint.test.ts
+  s_2104cc474f1ce5::t_3b509b267a0914 33-44
+sdk/test/helpers/dependency-policy.ts
+  s_2104cc474f1ce5::t_19a4e891389f12 323-340
+sdk/docs/development.md
+  s_2104cc474f1ce5::t_9cab8e442d6ee4 39-40,52-59
+  s_2104cc474f1ce5::t_c62af3dc31a358 60
+sdk/scripts/verify-package-consumer.mjs
+  s_2104cc474f1ce5::t_9cab8e442d6ee4 5,368-390
+  s_2104cc474f1ce5::t_24c875f3cf4983 391-394,610
+sdk/test/architecture.test.ts
+  s_2104cc474f1ce5::t_19a4e891389f12 58-77
+sdk/src/cli.ts
+  s_2104cc474f1ce5::t_fc90ff12eb098f 11-17,99
+sdk/docs/architecture.md
+  s_2104cc474f1ce5::t_9cab8e442d6ee4 58-60
+sdk/test/helpers/external-dependencies.ts
+  s_2104cc474f1ce5::t_e72e5d5682e82e 6-8
+sdk/src/cli/command-contracts.ts
+  s_2104cc474f1ce5::t_640bba5836a186 1-10
+sdk/src/cli/command-input.ts
+  s_2104cc474f1ce5::t_3320d2693eaf00 1-52
+sdk/src/cli/command-plan.ts
+  s_2104cc474f1ce5::t_06e3bb10fc7a73 1-8,10-15,17-41,44-47,49-54,56-59,61-62,65-69
+sdk/src/cli/commands/contacts.ts
+  s_2104cc474f1ce5::t_9e8699b7d09e50 1-112
+sdk/src/cli/commands/groups.ts
+  s_2104cc474f1ce5::t_48ba3477fb973e 1-326
+sdk/src/cli/commands/messages.ts
+  s_2104cc474f1ce5::t_ef5da28ab6b41e 1-191
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "5fd72a7edd5a0ffb47a6b7cf930bbdec9c35e53c",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
