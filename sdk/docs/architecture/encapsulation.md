@@ -30,8 +30,8 @@ accepts a transport and a failure policy; callers cannot mutate pending state.
 automatic restore policy and shutdown. Its interface exposes state/account snapshots
 and request/login/reconnect/close; no pending maps or worker handles escape. Its named
 context supplies the worker factory, event sink and native-export update hook.
-`QQClient` keeps the existing `EventEmitter` API, QR/error presentation, callback audit
-and message aliases. State transitions still happen before their public events, and
+`QQClient` keeps the existing `EventEmitter` API and composes event presentation.
+State transitions still happen before their public events, and
 facade methods return the lifecycle's login/reconnect/close Promises directly so
 coalesced callers retain the same Promise identity.
 
@@ -42,6 +42,27 @@ events retain their compatibility path, including QR decoding, login-error
 presentation and message aliases. Reconnection rejection values use that opaque
 path because JavaScript can throw any value; this separation does not claim to
 validate worker IPC or normalize those errors.
+
+`client/client-event-presentation` owns one public client's worker-event
+presentation and callback shape audit, including events observed before
+`createClient` returns and across worker replacements. It exposes only forwarding
+and audit snapshots. `QQClient` composes it with a dynamically obtained event sink
+that keeps the original emitter receiver. Public operations and worker lifecycle
+remain with their existing owners.
+
+Unknown payloads keep their identity. QR decoding updates the original image
+field; login errors become `Error` objects. A message's primary event is emitted
+before the alias is chosen, so an observer's peer changes affect that alias and a
+synchronous observer failure prevents later delivery. Failures are not wrapped or
+retried. This preserves event presentation, not a claim that an opaque worker
+payload satisfies a business contract.
+
+The audit counts repeated callback shapes before event delivery, retains at most
+128 distinct shapes and returns copied records and argument-type arrays. It does
+not retain argument contents. Generation filtering and close suppression occur in
+`ClientLifecycle` before presentation. Dependency checks give the presentation
+owner only its type-only audit contract and give only `QQClient` permission to
+compose it; lifecycle, native loading, transport and IO cannot move into this module.
 
 `runtime/operation-contracts` binds each internal business command to its SDK
 payload and result using domain DTOs. Discriminated call tuples keep the association

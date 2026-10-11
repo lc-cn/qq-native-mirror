@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
-import { fork } from 'node:child_process';
+import { EventEmitter } from 'node:events';
+import { ChildProcess, fork } from 'node:child_process';
 import { mkdtemp, writeFile, rm, realpath } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -16,6 +17,7 @@ export async function verifyWorkerErrorRoutes({
   nativeContractsPath,
   errorsPath,
 }) {
+  await verifyClientPresentation(QQClient);
   const directory = await realpath(await mkdtemp(join(tmpdir(), 'qq-worker-error-')));
   /** @type {import("../../src/client/qq-client.ts").QQClient | undefined} */
   let client;
@@ -141,6 +143,7 @@ export function createKernel(_native,_options,emit){return {
     }
     await client.close();
     return {
+      clientEventPresentationInstalledContract: true,
       workerOpaqueErrorContract: true,
       workerErrorRecoveryContract: true,
       workerErrorNoRetryContract: true,
@@ -164,5 +167,122 @@ export function createKernel(_native,_options,emit){return {
       }
       await rm(directory, { recursive: true, force: true });
     }
+  }
+}
+
+/** Controlled IPC into the actual installed facade; no child is spawned.
+ * @param {typeof import('../../src/client/qq-client.ts').QQClient} QQClient */
+async function verifyClientPresentation(QQClient) {
+  const child = new ChildProcess();
+  const client = new QQClient(child, 100);
+  try {
+    const types = ['string'];
+    const payload = { family: 'Msg', name: 'first', argumentTypes: types };
+    let observedAuditCount = 0;
+    EventEmitter.prototype.on.call(client, 'native-callback', () => {
+      observedAuditCount = client.nativeCallbackAudit[0]?.count ?? 0;
+    });
+    child.emit('message', { event: 'native-callback', payload });
+    assert.equal(observedAuditCount, 1);
+    types.push('number');
+    child.emit('message', {
+      event: 'native-callback',
+      payload: { family: 'Msg', name: 'first', argumentTypes: ['string'] },
+    });
+    for (let index = 0; index < 140; index++)
+      child.emit('message', {
+        event: 'native-callback',
+        payload: { family: 'Msg', name: `callback-${index}`, argumentTypes: [] },
+      });
+    child.emit('message', {
+      event: 'native-callback',
+      payload: { family: 'Msg', name: 'first', argumentTypes: ['string'] },
+    });
+    assert.equal(observedAuditCount, 3);
+    const snapshot = client.nativeCallbackAudit;
+    assert.equal(snapshot.length, 128);
+    assert.deepEqual(snapshot[0], {
+      family: 'Msg',
+      name: 'first',
+      argumentTypes: ['string'],
+      count: 3,
+    });
+    snapshot[0].argumentTypes.push('mutated');
+    snapshot[0].count = 99;
+    snapshot.pop();
+    assert.equal(client.nativeCallbackAudit.length, 128);
+    assert.equal(client.nativeCallbackAudit[0].count, 3);
+    assert.deepEqual(client.nativeCallbackAudit[0].argumentTypes, ['string']);
+    const qr = { image: Buffer.from('fixture').toString('base64') };
+    /** @type {unknown[]} */
+    const observed = [];
+    EventEmitter.prototype.on.call(client, 'qrcode', (value) => observed.push(value));
+    child.emit('message', { event: 'qrcode', payload: qr });
+    assert.strictEqual(observed[0], qr);
+    assert.ok(Buffer.isBuffer(qr.image));
+    assert.equal(qr.image.toString(), 'fixture');
+    EventEmitter.prototype.on.call(client, 'login-error', (value) => observed.push(value));
+    child.emit('message', { event: 'login-error', payload: { message: 'controlled failure' } });
+    assert.ok(observed[1] instanceof Error);
+    assert.equal(observed[1].message, 'controlled failure');
+    /** @type {[string,unknown][]} */
+    const messages = [];
+    for (const event of ['message', 'message.group', 'message.private', 'fixture-opaque'])
+      EventEmitter.prototype.on.call(client, event, (value) => messages.push([event, value]));
+    const group = { peer: { type: 'group' }, unknown: { retained: true } };
+    const direct = { peer: { type: 'private' } };
+    const opaque = Object.freeze({ value: Symbol('opaque') });
+    child.emit('message', { event: 'message', payload: group });
+    child.emit('message', { event: 'message', payload: direct });
+    child.emit('message', { event: 'fixture-opaque', payload: opaque });
+    assert.deepEqual(
+      messages.map(([event]) => event),
+      ['message', 'message.group', 'message', 'message.private', 'fixture-opaque'],
+    );
+    assert.strictEqual(messages[0][1], group);
+    assert.strictEqual(messages[1][1], group);
+    assert.strictEqual(messages[2][1], direct);
+    assert.strictEqual(messages[3][1], direct);
+    assert.strictEqual(messages[4][1], opaque);
+    child.emit('message', { event: 'fixture-opaque', payload: null });
+    assert.strictEqual(messages[5][1], null);
+    const mutation = { peer: { type: 'group' } };
+    EventEmitter.prototype.once.call(client, 'message', () => {
+      mutation.peer.type = 'private';
+    });
+    child.emit('message', { event: 'message', payload: mutation });
+    assert.equal(messages[7][0], 'message.private');
+    assert.strictEqual(messages[7][1], mutation);
+    Object.defineProperty(child, 'exitCode', { value: 0, configurable: true });
+    child.emit('exit', 0, null);
+    child.emit('message', { event: 'fixture-opaque', payload: opaque });
+    assert.equal(messages.length, 8);
+    const failingChild = new ChildProcess();
+    const failingClient = new QQClient(failingChild, 100);
+    const original = Error('controlled presentation observer');
+    let aliasCalls = 0;
+    try {
+      EventEmitter.prototype.on.call(failingClient, 'message', () => {
+        throw original;
+      });
+      EventEmitter.prototype.on.call(failingClient, 'message.group', () => {
+        aliasCalls++;
+      });
+      assert.throws(
+        () => failingChild.emit('message', { event: 'message', payload: group }),
+        (error) => error === original,
+      );
+      assert.equal(aliasCalls, 0);
+    } finally {
+      Object.defineProperty(failingChild, 'exitCode', { value: 0, configurable: true });
+      failingChild.emit('exit', 0, null);
+      await failingClient.close();
+      failingClient.removeAllListeners();
+    }
+  } finally {
+    Object.defineProperty(child, 'exitCode', { value: 0, configurable: true });
+    child.emit('exit', 0, null);
+    await client.close();
+    client.removeAllListeners();
   }
 }

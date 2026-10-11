@@ -314,3 +314,33 @@ test('existing-forward input exposes pure capture without execution or lifecycle
     undefined,
   );
 });
+
+test('public client delegates worker event presentation without decoding or auditing payloads', () => {
+  const source = ts.createSourceFile(
+    'qq-client.ts',
+    readFileSync(join(sourceRoot, 'client/qq-client.ts'), 'utf8'),
+    ts.ScriptTarget.Latest,
+    true,
+  );
+  const bindings: ts.PropertyAssignment[] = [];
+  const presentations = new Set([
+    'native-callback',
+    'login-error',
+    'qrcode',
+    'message.group',
+    'message.private',
+  ]);
+  function visit(node: ts.Node): void {
+    if (ts.isPropertyAssignment(node) && node.name.getText(source) === 'forward')
+      bindings.push(node);
+    assert.ok(
+      !ts.isStringLiteral(node) || !presentations.has(node.text),
+      'Worker event presentation and callback audit belong to their client owner.',
+    );
+    ts.forEachChild(node, visit);
+  }
+  visit(source);
+  assert.equal(bindings.length, 1);
+  assert.ok(ts.isPropertyAccessExpression(bindings[0]!.initializer));
+  assert.equal(bindings[0]!.initializer.name.text, 'forward');
+});

@@ -60,36 +60,37 @@ public `EventEmitter` client. Use composed ports for actual platform, codec and
 transport differences. A new base class or generic helper needs a shared invariant
 and real callers; similar method names alone do not establish that need.
 
-| Location                                         | Responsibility                                                                                           |
-| ------------------------------------------------ | -------------------------------------------------------------------------------------------------------- |
-| `src/index.ts`                                   | Public exports only; preserves the package interface without acquiring resources.                        |
-| `src/client/qq-client.ts`                        | Public client facade, callback presentation and typed operations.                                        |
-| `src/client/create-client.ts`                    | Native bundle selection, worker bootstrap and transactional initialization.                              |
-| `src/cli.ts`, `src/worker.ts`                    | Executable entry points. Their emitted URLs are runtime contracts.                                       |
-| `src/cli/`                                       | Command planning and ownership of client execution, QR output, watches and process signals.              |
-| `src/cli/commands/`                              | Domain definitions pairing accepted flags with a captured public-client action plan.                     |
-| `src/cli/command-plan.ts`                        | Compose the single command registry, reject duplicate names and capture flags before planning.           |
-| `src/cli/command-input.ts`                       | Shared argument parsing and primitive flags; no command or client acquisition dependencies.              |
-| `src/kernel.ts`, `src/native-services.ts`        | Compose one native session and domain adapters. They are composition roots, not public extension points. |
-| `src/worker/`                                    | Native initialization ownership and the Node acquisition binding; no business DTO or IPC presentation.   |
-| `src/runtime/`                                   | Account/worker ownership, request/callback lifetimes and composition dependencies.                       |
-| `src/runtime/kernel-method.ts`                   | Shared method capture for preparation/startup; lifecycle checks remain with the calling owner.           |
-| `src/features/contacts/`, `src/features/groups/` | Friend, category, group and request actions/events.                                                      |
-| `src/features/messages/`                         | Message input capture, native projection, querying and recall.                                           |
-| `src/features/media/`, `src/features/forward/`   | Media codecs and forward-resource transports.                                                            |
-| `src/native/`                                    | Bundle resolution, provenance, storage and native contract checks.                                       |
-| `src/native/native-contracts.ts`                 | Pure binary capability registry and matching; no file or host acquisition.                               |
-| `src/native/native-contract-inspection.ts`       | Worker-owned hashing of the selected wrapper and capture of actual host provenance.                      |
-| `src/native/native-manifest.ts`                  | Pure source-option and manifest rules shared by CLI preflight and preparation.                           |
-| `src/native/native-directory-verification.ts`    | Read-only integrity verification of an already selected local/npm inventory.                             |
-| `src/storage/`                                   | Process/account-directory ownership and locking.                                                         |
-| `src/validation/`                                | Shared pure identity rules; native field-width limits remain with the specific operation.                |
-| `src/contracts/`                                 | Public DTOs owned by client, contacts, groups, messages, forward, native and event domains.              |
-| `src/types.ts`, `src/errors.ts`                  | Compatibility type exports and public errors. Contracts do not import implementation modules.            |
-| `test/`                                          | Deterministic regression fixtures, including worker substitution.                                        |
-| `scripts/`                                       | Build/release entry points and separately authorized account acceptance executors.                       |
-| `scripts/consumers/`                             | Shared consumer contracts used by local and CI verification; no account executor imports.                |
-| `scripts/consumer-module-policy.ts`              | The single reviewed consumer directory, exact glue files and computed-import exceptions.                 |
+| Location                                         | Responsibility                                                                                             |
+| ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
+| `src/index.ts`                                   | Public exports only; preserves the package interface without acquiring resources.                          |
+| `src/client/qq-client.ts`                        | Public client facade and typed operations; composes lifecycle and event presentation.                      |
+| `src/client/client-event-presentation.ts`        | Worker event presentation and bounded callback shape audit; no lifecycle, transport or native acquisition. |
+| `src/client/create-client.ts`                    | Native bundle selection, worker bootstrap and transactional initialization.                                |
+| `src/cli.ts`, `src/worker.ts`                    | Executable entry points. Their emitted URLs are runtime contracts.                                         |
+| `src/cli/`                                       | Command planning and ownership of client execution, QR output, watches and process signals.                |
+| `src/cli/commands/`                              | Domain definitions pairing accepted flags with a captured public-client action plan.                       |
+| `src/cli/command-plan.ts`                        | Compose the single command registry, reject duplicate names and capture flags before planning.             |
+| `src/cli/command-input.ts`                       | Shared argument parsing and primitive flags; no command or client acquisition dependencies.                |
+| `src/kernel.ts`, `src/native-services.ts`        | Compose one native session and domain adapters. They are composition roots, not public extension points.   |
+| `src/worker/`                                    | Native initialization ownership and the Node acquisition binding; no business DTO or IPC presentation.     |
+| `src/runtime/`                                   | Account/worker ownership, request/callback lifetimes and composition dependencies.                         |
+| `src/runtime/kernel-method.ts`                   | Shared method capture for preparation/startup; lifecycle checks remain with the calling owner.             |
+| `src/features/contacts/`, `src/features/groups/` | Friend, category, group and request actions/events.                                                        |
+| `src/features/messages/`                         | Message input capture, native projection, querying and recall.                                             |
+| `src/features/media/`, `src/features/forward/`   | Media codecs and forward-resource transports.                                                              |
+| `src/native/`                                    | Bundle resolution, provenance, storage and native contract checks.                                         |
+| `src/native/native-contracts.ts`                 | Pure binary capability registry and matching; no file or host acquisition.                                 |
+| `src/native/native-contract-inspection.ts`       | Worker-owned hashing of the selected wrapper and capture of actual host provenance.                        |
+| `src/native/native-manifest.ts`                  | Pure source-option and manifest rules shared by CLI preflight and preparation.                             |
+| `src/native/native-directory-verification.ts`    | Read-only integrity verification of an already selected local/npm inventory.                               |
+| `src/storage/`                                   | Process/account-directory ownership and locking.                                                           |
+| `src/validation/`                                | Shared pure identity rules; native field-width limits remain with the specific operation.                  |
+| `src/contracts/`                                 | Public DTOs owned by client, contacts, groups, messages, forward, native and event domains.                |
+| `src/types.ts`, `src/errors.ts`                  | Compatibility type exports and public errors. Contracts do not import implementation modules.              |
+| `test/`                                          | Deterministic regression fixtures, including worker substitution.                                          |
+| `scripts/`                                       | Build/release entry points and separately authorized account acceptance executors.                         |
+| `scripts/consumers/`                             | Shared consumer contracts used by local and CI verification; no account executor imports.                  |
+| `scripts/consumer-module-policy.ts`              | The single reviewed consumer directory, exact glue files and computed-import exceptions.                   |
 
 The parent facade and CLI import pure input modules (`query-input`,
 `download-input`, `merged-forward-input`, `send-input`, `face-input`, and
@@ -117,6 +118,13 @@ message input exports remain compatible. Transport-specific uint64 limits stay
 with the request that requires them, rather than silently narrowing all group
 operations. The dependency gate forbids these group inputs from reaching back
 into message-send validation.
+
+`client/client-event-presentation` owns the QR image conversion, login error
+presentation, message aliases and bounded callback shape audit. The public facade
+binds its event sink and exposes independent audit snapshots. The lifecycle owner
+filters retired worker events before forwarding them; presentation neither
+acquires a worker nor interprets authorization state. SDK-produced state/log/
+termination events keep the lifecycle's correlated typed outlet.
 
 Feature modules may depend on public contracts and narrow native/runtime ports.
 They do not import the public Client or compose other account sessions. Relative

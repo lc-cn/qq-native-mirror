@@ -1,3 +1,4 @@
+import { createClientEventPresentation } from './client-event-presentation.ts';
 import { captureForwardSubmission } from '../features/forward/forward-input.ts';
 import { captureFriendRequest } from '../features/contacts/friend-request-input.ts';
 import { captureGroupRequestOperation } from '../features/groups/group-request-input.ts';
@@ -93,7 +94,7 @@ import type { NativeCallbackAudit } from '../contracts/native.ts';
 export class QQClient extends EventEmitter<ClientEvents> {
   readonly nativeExports: string[] = [];
   readonly #lifecycle: ClientLifecycle;
-  readonly #callbackAudit = new Map<string, NativeCallbackAudit>();
+  readonly #events: ReturnType<typeof createClientEventPresentation>;
   constructor(
     worker: ChildProcess,
     timeout: number,
@@ -102,6 +103,9 @@ export class QQClient extends EventEmitter<ClientEvents> {
     autoReconnect?: ClientOptions['autoReconnect'],
   ) {
     super();
+    this.#events = createClientEventPresentation((event, payload) =>
+      Reflect.apply(this.emit, this, [event, payload]),
+    );
     this.#lifecycle = new ClientLifecycle({
       worker,
       timeout,
@@ -125,7 +129,7 @@ export class QQClient extends EventEmitter<ClientEvents> {
           }
         }
       },
-      forward: (event, payload) => this.#emitLifecycleEvent(event, payload),
+      forward: this.#events.forward,
       exportsUpdated: (exports) =>
         this.nativeExports.splice(0, this.nativeExports.length, ...exports),
     });
@@ -136,48 +140,9 @@ export class QQClient extends EventEmitter<ClientEvents> {
   get account(): Readonly<Account> | undefined {
     return this.#lifecycle.account;
   }
-  /** Present native callback payloads without giving the facade lifecycle ownership. */
-  #emitLifecycleEvent(event: string, value: unknown): void {
-    let payload = value as (Record<string, unknown> & { peer?: { type?: unknown } }) | undefined;
-    if (event === 'native-callback') {
-      const { family, name, argumentTypes } = payload ?? {};
-      if (
-        typeof family === 'string' &&
-        typeof name === 'string' &&
-        Array.isArray(argumentTypes) &&
-        argumentTypes.every((value) => typeof value === 'string')
-      ) {
-        const key = JSON.stringify([family, name, argumentTypes]);
-        const existing = this.#callbackAudit.get(key);
-        if (existing) existing.count++;
-        else if (this.#callbackAudit.size < 128)
-          this.#callbackAudit.set(key, {
-            family,
-            name,
-            argumentTypes: [...argumentTypes],
-            count: 1,
-          });
-      }
-    }
-    if (event === 'login-error')
-      payload = new Error(
-        typeof payload?.message === 'string' ? payload.message : 'Native login failed',
-      ) as unknown as Record<string, unknown>;
-    if (event === 'qrcode' && payload && typeof payload.image === 'string')
-      payload.image = Buffer.from(payload.image, 'base64');
-    Reflect.apply(this.emit, this, [event, payload]);
-    if (event === 'message')
-      Reflect.apply(this.emit, this, [
-        payload?.peer?.type === 'group' ? 'message.group' : 'message.private',
-        payload,
-      ]);
-  }
   /** Bounded shape-only audit includes callbacks received before createClient() returns. */
   get nativeCallbackAudit(): NativeCallbackAudit[] {
-    return [...this.#callbackAudit.values()].map((value) => ({
-      ...value,
-      argumentTypes: [...value.argumentTypes],
-    }));
+    return this.#events.audit;
   }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Preserve the existing public request return contract; RPC internals use unknown.
   request<T = any>(method: string, payload: object = {}, timeoutMs?: number): Promise<T> {

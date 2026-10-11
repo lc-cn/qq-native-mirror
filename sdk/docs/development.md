@@ -470,3 +470,11 @@ reviewed exception with a reason and its compiled module inventory. The collecto
 never executes a verifier or scans unrelated account executors. Run the separate
 CI path gate after building, then the actual packed consumer; passing either one
 does not establish the other.
+
+When changing worker event presentation, keep the logic in
+`src/client/client-event-presentation.ts`. Check QR payload identity, synchronous
+message/alias ordering, original observer failures and the callback audit's bound
+and independent snapshots. Run the focused `client-event-presentation`, `client`
+and `client-lifecycle-module` tests, then `npm run check`; the installed worker
+error consumer also exercises the public client's presentation path. These
+controlled checks do not log in or establish real QQ event semantics.

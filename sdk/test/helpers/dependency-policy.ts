@@ -280,6 +280,14 @@ export function dependencyViolation({ from, to, typeOnly }: SourceDependency): s
     return to === 'src/storage/process-lock.ts'
       ? undefined
       : 'Package locking uses the shared process-lock primitive, not bundle management.';
+  if (from === 'src/client/client-event-presentation.ts')
+    return typeOnly && to === 'src/contracts/native.ts'
+      ? undefined
+      : 'Client event presentation owns only delivery and shape audit; it cannot acquire lifecycle or native resources.';
+  if (to === 'src/client/client-event-presentation.ts')
+    return from === 'src/client/qq-client.ts' && !typeOnly
+      ? undefined
+      : 'Only the public client composes its event presentation owner.';
   if (from === 'src/types.ts')
     return typeOnly && isContract(to)
       ? undefined
@@ -414,6 +422,7 @@ export function dependencyViolation({ from, to, typeOnly }: SourceDependency): s
       : 'The package entry only reexports its reviewed public interface.';
   if (from === 'src/client/qq-client.ts')
     return facadeInputs.has(to) ||
+      to === 'src/client/client-event-presentation.ts' ||
       to === 'src/runtime/client-lifecycle.ts' ||
       (typeOnly && to === 'src/runtime/operation-contracts.ts')
       ? undefined

@@ -350,3 +350,39 @@ test('resolved profile query has a single dispatcher and only its public DTO dep
   }
   assert.ok(dependencyViolation({ from: query, to: 'src/contracts/contacts.ts', typeOnly: false }));
 });
+
+test('client event presentation has one composer and no lifecycle, native or IO dependencies', () => {
+  const presentation = 'src/client/client-event-presentation.ts';
+  const edges = graph.get(join(projectRoot, presentation))!;
+  assert.deepEqual(
+    edges.map(({ target, typeOnly }) => ({ target, typeOnly })),
+    [{ target: join(projectRoot, 'src/contracts/native.ts'), typeOnly: true }],
+  );
+  assert.equal(
+    dependencyViolation({ from: 'src/client/qq-client.ts', to: presentation, typeOnly: false }),
+    undefined,
+  );
+  for (const typeOnly of [false, true]) {
+    for (const from of [
+      'src/client/create-client.ts',
+      'src/runtime/client-lifecycle.ts',
+      'src/native-services.ts',
+      'src/features/messages/recall-events.ts',
+      'src/client/new-owner.ts',
+    ])
+      assert.ok(dependencyViolation({ from, to: presentation, typeOnly }));
+    for (const to of [
+      'src/runtime/client-lifecycle.ts',
+      'src/runtime/worker-rpc-channel.ts',
+      'src/native/native-object.ts',
+      'src/native/native-package.ts',
+      'src/client/qq-client.ts',
+      'src/contracts/events.ts',
+      'node:fs',
+    ])
+      assert.ok(dependencyViolation({ from: presentation, to, typeOnly }));
+  }
+  assert.ok(
+    dependencyViolation({ from: presentation, to: 'src/contracts/native.ts', typeOnly: false }),
+  );
+});
