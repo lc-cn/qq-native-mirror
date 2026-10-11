@@ -4,7 +4,7 @@ import { realpathSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { createClient } from './index.ts';
-import { validateDownloadMirrors } from './native/native-manifest.ts';
+import { validateDownloadMirrors, validateNativeSourceOptions } from './native/native-manifest.ts';
 import { KernelRequestError, MergedForwardError } from './errors.ts';
 import type { ClientOptions, LoginRequest } from './contracts/client.ts';
 
@@ -74,27 +74,13 @@ Account commands accept optional --uin UIN. Empty card/remark clears it.
 Commands restore existing authorization unless login --method qr is explicit.
 `;
 function validateConfig(value: unknown): asserts value is ClientOptions {
-  if (!value || typeof value !== 'object') throw new Error('Configuration must be a JSON object');
+  if (!value || typeof value !== 'object' || Array.isArray(value))
+    throw new Error('Configuration must be a JSON object');
   const options = value as ClientOptions;
   if (!options.dataDir || typeof options.dataDir !== 'string')
     throw new Error('Configuration requires dataDir');
-  if (options.wrapperPath && options.manifestUrl)
-    throw new Error('Choose wrapperPath or manifestUrl');
-  if (
-    options.version &&
-    ![options.version.clientVersion, options.version.appId, options.version.qua].every(
-      (v) => typeof v === 'string' && !!v,
-    )
-  )
-    throw new Error('Version requires complete metadata');
-  if (options.catalogUrl) {
-    const url = new URL(options.catalogUrl);
-    if (url.protocol !== 'https:' || url.username || url.password)
-      throw new Error('Catalog requires HTTPS without credentials');
-  }
+  validateNativeSourceOptions(options);
   validateDownloadMirrors(options.downloadMirrors);
-  if (options.manifestUrl && !/^[a-f0-9]{64}$/i.test(options.manifestSha256 ?? ''))
-    throw new Error('Mirror requires trusted manifestSha256');
 }
 async function main() {
   const { command, flags } = parse(process.argv.slice(2));
@@ -110,8 +96,8 @@ async function main() {
   const configPath = resolve(required(flags, 'config'));
   if (command === 'init') {
     const options: ClientOptions = { dataDir: resolve(required(flags, 'data-dir')) };
-    if (flags.wrapper) {
-      options.wrapperPath = resolve(flags.wrapper);
+    if (flags.wrapper !== undefined) {
+      options.wrapperPath = resolve(required(flags, 'wrapper'));
     }
     if (['client-version', 'app-id', 'qua'].some((key) => flags[key] !== undefined)) {
       options.version = {
@@ -120,12 +106,13 @@ async function main() {
         qua: required(flags, 'qua'),
       };
     }
-    if (flags.manifest) {
-      options.manifestUrl = flags.manifest;
+    if (flags.manifest !== undefined) {
+      options.manifestUrl = required(flags, 'manifest');
       options.manifestSha256 = required(flags, 'manifest-sha256');
     }
-    if (flags.catalog) options.catalogUrl = flags.catalog;
-    if (flags['download-mirror']) options.downloadMirrors = [flags['download-mirror']];
+    if (flags.catalog !== undefined) options.catalogUrl = required(flags, 'catalog');
+    if (flags['download-mirror'] !== undefined)
+      options.downloadMirrors = [required(flags, 'download-mirror')];
     validateConfig(options);
     await mkdir(dirname(configPath), { recursive: true });
     await writeFile(configPath, JSON.stringify(options, null, 2) + '\n', {

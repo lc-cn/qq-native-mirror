@@ -6,8 +6,43 @@ export const nativeHashPattern = /^[a-f0-9]{64}$/i;
 /** Validate version metadata without imposing the catalog's numeric ordering format. */
 export function assertNativeVersion(value: unknown): asserts value is QQVersion {
   const v = value as QQVersion | undefined;
-  if (!v || ![v.clientVersion, v.appId, v.qua].every((x) => typeof x === 'string' && x.length > 0))
+  if (
+    !v ||
+    typeof v !== 'object' ||
+    Array.isArray(v) ||
+    ![v.clientVersion, v.appId, v.qua].every((x) => typeof x === 'string' && x.length > 0)
+  )
     throw new Error('A native package requires clientVersion, appId and qua');
+}
+
+/** Only omission selects a default source. Validate explicit selectors before any I/O.
+ * Source precedence and acquisition remain the bundle preparation owner's responsibility.
+ */
+export function validateNativeSourceOptions(options: {
+  wrapperPath?: unknown;
+  manifestUrl?: unknown;
+  manifestSha256?: unknown;
+  catalogUrl?: unknown;
+  version?: unknown;
+}): void {
+  for (const key of ['wrapperPath', 'manifestUrl', 'catalogUrl'] as const) {
+    const value = options[key];
+    if (value !== undefined && (typeof value !== 'string' || value.length === 0))
+      throw new Error(`${key} must be a nonempty string when provided`);
+  }
+  if (options.wrapperPath !== undefined && options.manifestUrl !== undefined)
+    throw new Error('Choose wrapperPath or manifestUrl');
+  if (options.version !== undefined) assertNativeVersion(options.version);
+  if (options.catalogUrl !== undefined) {
+    const url = new URL(options.catalogUrl as string);
+    if (url.protocol !== 'https:' || url.username || url.password)
+      throw new Error('Catalog requires HTTPS without credentials');
+  }
+  if (
+    options.manifestUrl !== undefined &&
+    (typeof options.manifestSha256 !== 'string' || !nativeHashPattern.test(options.manifestSha256))
+  )
+    throw new Error('Mirror requires trusted manifestSha256');
 }
 
 /** Both fields are required when a bundle restricts the Node internal ABI. */

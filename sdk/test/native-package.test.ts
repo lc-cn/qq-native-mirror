@@ -12,8 +12,51 @@ import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { prepareNative, safeRelative } from '../src/native/native-package.ts';
 import type { NativeManifest } from '../src/types.ts';
+import type { ClientOptions } from '../src/contracts/client.ts';
 import { sameNativeContent } from '../src/native/native-manifest.ts';
 const sha = (value: string | Buffer) => createHash('sha256').update(value).digest('hex');
+
+test('explicit invalid native selectors reject before lookup, download or cache creation', async (t) => {
+  const directory = await mkdtemp(join(tmpdir(), 'qq-invalid-source-'));
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  let requests = 0;
+  const original = globalThis.fetch;
+  t.after(() => {
+    globalThis.fetch = original;
+  });
+  globalThis.fetch = async () => {
+    requests++;
+    throw new Error('Unexpected source lookup');
+  };
+  for (const key of ['wrapperPath', 'manifestUrl', 'catalogUrl'] as const) {
+    for (const value of [null, false, 0, '', [], {}]) {
+      await assert.rejects(
+        prepareNative({
+          dataDir: join(directory, 'account'),
+          cacheDir: join(directory, 'cache'),
+          [key]: value,
+        } as unknown as ClientOptions),
+        new RegExp(`${key} must be a nonempty string`),
+      );
+    }
+  }
+  for (const version of [null, false, 0, '', [], {}, { clientVersion: '1' }]) {
+    await assert.rejects(
+      prepareNative({
+        dataDir: directory,
+        wrapperPath: join(directory, 'absent-wrapper.node'),
+        version,
+      } as unknown as ClientOptions),
+      /requires clientVersion, appId and qua/,
+    );
+  }
+  await assert.rejects(
+    prepareNative({ dataDir: directory, manifestUrl: 'https://fixture.example/manifest.json' }),
+    /Mirror requires trusted manifestSha256/,
+  );
+  assert.equal(requests, 0);
+  assert.deepEqual(await readdir(directory), []);
+});
 
 const identityManifest = (): NativeManifest => ({
   schemaVersion: 1,

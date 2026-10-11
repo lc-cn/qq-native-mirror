@@ -29,7 +29,7 @@ script or weaken a historical plan to make it pass against newer artifacts.
 | Native callback projection or operation                                            | Relevant `src/features/` domain                                                           |
 | Request correlation, shutdown or account ownership                                 | Existing `src/runtime/` lifetime owner                                                    |
 | Bundle source selection and source-specific runtime policy                         | `src/native/native-package.ts`                                                            |
-| Pure manifest paths, version/runtime metadata, mirror options and content identity | `src/native/native-manifest.ts`; CLI preflight uses this owner directly                   |
+| Pure source options, manifest paths, version/runtime metadata and content identity | `src/native/native-manifest.ts`; CLI preflight uses this owner directly                   |
 | Integrity of an already selected local/npm directory                               | `src/native/native-directory-verification.ts`; no download, installation or cache repair  |
 | Mirror installation transaction and content cache                                  | `src/native/native-bundle-installer.ts`; package locking stays in `src/storage/`          |
 | Worker initialization state and candidate ownership                                | `src/worker/native-bootstrap.ts`; reserve initialization before any await                 |
@@ -39,6 +39,14 @@ script or weaken a historical plan to make it pass against newer artifacts.
 | CLI flags and client execution                                                     | `src/cli/`; executable entry remains `cli.ts`                                             |
 
 Follow the change through its owners:
+
+Native source options use `undefined` to mean omitted. Explicit `null`, boolean,
+empty string or incomplete version metadata must fail in the shared pure preflight,
+before bundle lookup, download, cache creation or worker startup. CLI configuration
+and initialization use the same rules as `createClient`; do not duplicate version
+or source checks in another entry point. Preflight does not choose source precedence
+or replace directory verification. Existing local wrappers, trusted manifests,
+fixed-version offline selection and default latest selection keep their own policies.
 
 - A new operation starts in its domain contract and pure input capture. Add the
   facade method and closed operation name, then the domain adapter and exhaustive

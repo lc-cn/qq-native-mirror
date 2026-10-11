@@ -1,7 +1,7 @@
 import { EventEmitter } from 'node:events';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, writeFile, rm } from 'node:fs/promises';
+import { mkdtemp, writeFile, rm, readdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -13,6 +13,51 @@ import {
   observeWatchEvents,
 } from '../src/cli.ts';
 import type { QQClient } from '../src/index.ts';
+
+test('CLI config rejects explicit invalid native selectors without opening a client', async (t) => {
+  const directory = await mkdtemp(join(tmpdir(), 'qq-cli-invalid-source-'));
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  const config = join(directory, 'qq.json');
+  for (const key of ['wrapperPath', 'manifestUrl', 'catalogUrl', 'version']) {
+    for (const value of [null, false, '']) {
+      await writeFile(
+        config,
+        JSON.stringify({ dataDir: join(directory, 'account'), [key]: value }),
+      );
+      const result = spawnSync(process.execPath, ['src/cli.ts', 'config', '--config', config], {
+        encoding: 'utf8',
+      });
+      assert.equal(result.status, 1, `${key}: ${JSON.stringify(value)}`);
+      assert.match(result.stderr, key === 'version' ? /requires clientVersion/ : /nonempty string/);
+      assert.equal(result.stdout, '');
+    }
+  }
+  assert.deepEqual(await readdir(directory), ['qq.json']);
+});
+
+test('CLI init rejects empty source flags before writing configuration', async (t) => {
+  const directory = await mkdtemp(join(tmpdir(), 'qq-cli-empty-source-'));
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  for (const flag of ['wrapper', 'manifest', 'catalog', 'download-mirror']) {
+    const result = spawnSync(
+      process.execPath,
+      [
+        'src/cli.ts',
+        'init',
+        '--config',
+        join(directory, 'qq.json'),
+        '--data-dir',
+        directory,
+        `--${flag}`,
+        '',
+      ],
+      { encoding: 'utf8' },
+    );
+    assert.equal(result.status, 1, flag);
+    assert.match(result.stderr, new RegExp(`--${flag} is required`));
+  }
+  assert.deepEqual(await readdir(directory), []);
+});
 
 test('batch-message CLI validates IDs before login and emits null for missing positions', async () => {
   const action = await prepareCommand('messages', {

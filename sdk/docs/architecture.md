@@ -62,7 +62,7 @@ The diagrams are navigation aids; the exact permissions live in
 | `src/features/messages/`                         | Message input capture, native projection, querying and recall.                                           |
 | `src/features/media/`, `src/features/forward/`   | Media codecs and forward-resource transports.                                                            |
 | `src/native/`                                    | Bundle resolution, provenance, storage and native contract checks.                                       |
-| `src/native/native-manifest.ts`                  | Pure manifest and mirror option rules shared by CLI preflight and preparation.                           |
+| `src/native/native-manifest.ts`                  | Pure source-option and manifest rules shared by CLI preflight and preparation.                           |
 | `src/native/native-directory-verification.ts`    | Read-only integrity verification of an already selected local/npm inventory.                             |
 | `src/storage/`                                   | Process/account-directory ownership and locking.                                                         |
 | `src/validation/`                                | Shared pure identity rules; native field-width limits remain with the specific operation.                |

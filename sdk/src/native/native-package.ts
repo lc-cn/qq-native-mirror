@@ -16,6 +16,7 @@ import {
   sameNativeContent,
   safeRelative,
   validateDownloadMirrors,
+  validateNativeSourceOptions,
   validateRemoteInventory,
 } from './native-manifest.ts';
 import { verifyNativeDirectory } from './native-directory-verification.ts';
@@ -131,9 +132,8 @@ async function download(url: string, maxBytes: number): Promise<Buffer> {
   return Buffer.concat(chunks);
 }
 export async function prepareNative(options: ClientOptions): Promise<PreparedNative> {
+  validateNativeSourceOptions(options);
   const mirrors = validateDownloadMirrors(options.downloadMirrors);
-  if (options.wrapperPath && options.manifestUrl)
-    throw new Error('Choose wrapperPath or manifestUrl');
   if (options.wrapperPath) {
     const wrapperPath = options.wrapperPath;
     const adjacent = await readFile(join(dirname(wrapperPath), 'manifest.json'), 'utf8').catch(

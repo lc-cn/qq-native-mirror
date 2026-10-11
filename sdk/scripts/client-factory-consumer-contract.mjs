@@ -172,6 +172,7 @@ async function verifyNativeSourceSelection(createClient, directory, bridgePath) 
   const requests = [];
   let init;
   let index = 0;
+  let workerStarts = 0;
   const save = async (value) => writeFile(join(auxiliary, 'manifest.json'), JSON.stringify(value));
   const openAndClose = async (options, expectedWrapper, expectedVersion) => {
     init = undefined;
@@ -206,6 +207,7 @@ async function verifyNativeSourceSelection(createClient, directory, bridgePath) 
     await writeFile(join(auxiliary, 'wrapper.node'), bytes);
     await save(manifest);
     childProcess.fork = (...args) => {
+      workerStarts++;
       const worker = originalFork(...args);
       const send = worker.send.bind(worker);
       worker.send = (message, ...rest) => {
@@ -244,6 +246,21 @@ async function verifyNativeSourceSelection(createClient, directory, bridgePath) 
       assert.ok(payload, `Unexpected fixture download: ${url}`);
       return new Response(payload);
     };
+    // JavaScript callers cross the same preflight before any source lookup or worker.
+    for (const key of ['wrapperPath', 'manifestUrl', 'catalogUrl', 'version']) {
+      for (const value of [null, false, 0, '', [], {}]) {
+        await assert.rejects(
+          createClient({ dataDir: directory, [key]: value }),
+          key === 'version' ? /requires clientVersion/ : /nonempty string/,
+        );
+      }
+    }
+    await assert.rejects(
+      createClient({ dataDir: directory, manifestUrl }),
+      /Mirror requires trusted manifestSha256/,
+    );
+    assert.deepEqual(requests, []);
+    assert.equal(workerStarts, 0);
     // Pinning keeps offline resolution; default selection establishes latest first.
     await openAndClose({ version }, join(auxiliary, 'wrapper.node'), version);
     assert.deepEqual(requests, []);
@@ -368,6 +385,7 @@ async function verifyNativeSourceSelection(createClient, directory, bridgePath) 
     assert.deepEqual(requests, []);
     return {
       nativeSourceSelectionContract: true,
+      nativeSourcePreflightContract: true,
       nativeDirectoryInstalledContract: true,
       nativeDefaultLatestContract: true,
       nativePinnedOfflineContract: true,
