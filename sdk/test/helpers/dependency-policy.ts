@@ -77,6 +77,7 @@ const bootstrapTypeDependencies = new Set([
   'src/runtime/media-contracts.ts',
 ]);
 const kernelDependencies = new Set([
+  'src/runtime/kernel-method.ts',
   'src/native-services.ts',
   'src/native/login-request.ts',
   'src/runtime/account-session-lifecycle.ts',
@@ -164,6 +165,16 @@ export const crossFeatureDependencies = [
 ] as const;
 
 export function dependencyViolation({ from, to, typeOnly }: SourceDependency): string | undefined {
+  if (from === 'src/runtime/kernel-method.ts')
+    return 'Kernel method capture has no resource or lifecycle dependencies; its caller supplies the active-owner check.';
+  if (to === 'src/runtime/kernel-method.ts')
+    return [
+      'src/kernel.ts',
+      'src/runtime/kernel-environment.ts',
+      'src/runtime/account-session-lifecycle.ts',
+    ].includes(from)
+      ? undefined
+      : 'Kernel method capture belongs only to preparation and account startup; business modules use their typed ports.';
   if (from === 'src/native/prepared-message-contracts.ts')
     return typeOnly && to === 'src/native/message-contracts.ts'
       ? undefined
@@ -291,8 +302,9 @@ export function dependencyViolation({ from, to, typeOnly }: SourceDependency): s
       ? undefined
       : 'Service composition cannot acquire bundles, account directories or authentication owners.';
   if (from === 'src/runtime/kernel-environment.ts')
-    return typeOnly &&
-      ['src/native/native-object.ts', 'src/runtime/account-session-lifecycle.ts'].includes(to)
+    return to === 'src/runtime/kernel-method.ts' ||
+      (typeOnly &&
+        ['src/native/native-object.ts', 'src/runtime/account-session-lifecycle.ts'].includes(to))
       ? undefined
       : 'Environment preparation uses injected callbacks and does not interpret authentication state.';
   if (from.startsWith('src/storage/'))

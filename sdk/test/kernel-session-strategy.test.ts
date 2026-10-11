@@ -46,6 +46,7 @@ async function fixture(sessionExports: Record<string, any>, startupExports?: Rec
   );
   return {
     kernel,
+    login,
     events,
     async close() {
       await kernel.close();
@@ -294,3 +295,58 @@ for (const strategy of ['startup', 'direct'] as const) {
     });
   }
 }
+
+for (const method of ['startNT', 'getMachineGuid'] as const)
+  for (const retire of [false, true])
+    test(`native ${method} getter is captured once; close in getter=${retire}`, async () => {
+      let listener: { onOpentelemetryInit(value: { is_init: boolean }): void } | undefined;
+      let reads = 0,
+        dispatches = 0,
+        secondCalls = 0;
+      let closePromise: Promise<void> | undefined;
+      const session = {
+        init(_config: unknown, _depends: unknown, _dispatcher: unknown, value: typeof listener) {
+          listener = value;
+        },
+        startNT(flag: number) {
+          assert.equal(this, session);
+          assert.equal(flag, 0);
+          listener!.onOpentelemetryInit({ is_init: true });
+        },
+        getMsgService: () => ({ addKernelMsgListener() {} }),
+        getGroupService: () => ({ addKernelGroupListener() {} }),
+        getBuddyService: () => ({ addKernelBuddyListener() {} }),
+      };
+      const f = await fixture({ create: () => session });
+      const receiver = method === 'startNT' ? session : f.login;
+      Object.defineProperty(receiver, method, {
+        configurable: true,
+        get() {
+          reads++;
+          if (retire) closePromise ??= f.kernel.close();
+          if (reads > 1)
+            return () => {
+              secondCalls++;
+              throw new Error('second getter function dispatched');
+            };
+          return function (this: unknown, ...args: unknown[]) {
+            assert.equal(this, receiver);
+            dispatches++;
+            if (method === 'getMachineGuid') return '0123456789abcdef0123456789abcdef';
+            assert.deepEqual(args, [0]);
+            listener!.onOpentelemetryInit({ is_init: true });
+          };
+        },
+      });
+      try {
+        const login = f.kernel.login({ method: 'qr' });
+        if (retire) await assert.rejects(login, /closed/i);
+        else await login;
+        assert.equal(reads, 1);
+        assert.equal(dispatches, retire ? 0 : 1);
+        assert.equal(secondCalls, 0);
+      } finally {
+        await closePromise;
+        await f.close();
+      }
+    });

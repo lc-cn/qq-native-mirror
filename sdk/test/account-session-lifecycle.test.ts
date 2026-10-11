@@ -353,3 +353,41 @@ for (const failureAt of ['start', 'compose']) {
     }
   });
 }
+
+for (const retire of [false, true])
+  test(`session init getter is captured once with original receiver; close=${retire}`, async () => {
+    let reads = 0,
+      dispatches = 0,
+      secondCalls = 0;
+    const reached = deferred<void>();
+    const session = {};
+    const f = await fixture({ session });
+    Object.defineProperty(session, 'init', {
+      get() {
+        reads++;
+        reached.resolve();
+        if (retire) f.owner.close();
+        if (reads > 1)
+          return () => {
+            secondCalls++;
+            throw new Error('second init getter function');
+          };
+        return function (this: unknown) {
+          assert.equal(this, session);
+          dispatches++;
+        };
+      },
+    });
+    try {
+      f.owner.begin();
+      await reached.promise;
+      await flush();
+      assert.equal(reads, 1);
+      assert.equal(dispatches, retire ? 0 : 1);
+      assert.equal(secondCalls, 0);
+      assert.deepEqual(f.errors, []);
+      if (retire) assert.equal(f.calls.includes('start'), false);
+    } finally {
+      await f.dispose();
+    }
+  });

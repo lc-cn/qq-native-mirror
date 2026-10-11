@@ -6,6 +6,11 @@ Use `npm run check` before submitting a change. The same checks run in SDK quali
 CI, including installation of a newly packed archive. A passing fixture test does
 not establish interoperability with QQ or prove an account operation succeeded.
 
+Run `npm run check:architecture` while choosing or changing module ownership. It
+checks source placement, exact dependency permissions, type and runtime cycles,
+pure input closures and formatter coverage without loading QQ. It also runs as
+part of the full test gate; passing it alone does not replace `npm run check`.
+
 Historical read-only account batches use `scripts/readonly-sdk-acceptance.ts`
 for package integrity checks, exclusive execution reservation and the fixed
 restore/read/close sequence. Their versioned entry scripts contain only immutable
@@ -37,6 +42,7 @@ script or weaken a historical plan to make it pass against newer artifacts.
 | Worker initialization state and candidate ownership                                | `src/worker/native-bootstrap.ts`; reserve initialization before any await                 |
 | Bind Node addon loading, codecs and account-directory locking                      | `src/worker/bootstrap.ts`; `worker.ts` remains the IPC entry                              |
 | Prepare local engine/login configuration                                           | `src/runtime/kernel-environment.ts`; no connection or authentication                      |
+| Capture preparation/startup methods and retain their native receiver               | `src/runtime/kernel-method.ts`; the calling owner supplies its lifecycle check            |
 | Compose an authenticated Session and feature adapters                              | `kernel.ts` and `native-services.ts`                                                      |
 | CLI command flags and action planning                                              | `src/cli/commands/` by domain; `command-plan.ts` composes definitions and captures flags  |
 | CLI argument parsing and client execution                                          | `src/cli/command-input.ts` and `client-command.ts`; executable entry remains `cli.ts`     |
@@ -74,6 +80,14 @@ of maintaining a second flag table or command switch.
 Avoid a catch-all `utils`, `common` or base class for unrelated operations. A helper
 belongs next to the invariant it protects. Share it when callers actually have
 that same invariant, not because their code happens to look similar.
+
+Kernel preparation, account initialization and the selected startup strategy use
+`runtime/kernel-method` for method capture. Capture each property once, retain
+its original receiver and check the owning lifetime after acquisition and before
+dispatch. Factory selection captures available methods before invoking one;
+exceptions must never select a fallback or replay a call. The helper owns no
+Session, state, IO or cleanup. Business adapters cannot import it: their narrow
+typed ports remain the interface for native operations.
 
 `features/groups/group-web-reads.ts` owns the three account-bound HTTP read
 operations. It combines the request and account signals, checks the account and

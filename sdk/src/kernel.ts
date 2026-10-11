@@ -11,6 +11,7 @@ import type {
 import { createKernelEnvironment } from './runtime/kernel-environment.ts';
 import { AuthenticationAttempt } from './runtime/authentication-attempt.ts';
 import { observeWorkerTask } from './runtime/worker-task.ts';
+import { invokeKernelMethod } from './runtime/kernel-method.ts';
 
 // QQ exports are proprietary and versioned; this boundary intentionally validates
 // the required methods at runtime rather than asserting a stable upstream API.
@@ -87,10 +88,6 @@ export function createKernel(
     if (failure) reportCleanupFailure(failure.error, error);
     notify('login-error', result);
   };
-  const invoke = (object: NativeObject, method: string, ...args: unknown[]) => {
-    if (typeof object[method] !== 'function') throw new Error(`Native kernel is missing ${method}`);
-    return object[method](...args);
-  };
   const transitionOffline = (details: Record<string, unknown>) => {
     if (closed) return;
     generation++;
@@ -135,15 +132,18 @@ export function createKernel(
     const expectedPending = pending;
     const session = accountSession!;
     const active = () => !closed && generation === attempt && accountSession === session;
+    const assertActive = () => {
+      if (!active()) throw new Error('Native account session is no longer current');
+    };
     ownedSession = new AccountSessionLifecycle({
       session,
       account,
       options,
-      machineGuid: () => invoke(loginService!, 'getMachineGuid'),
+      machineGuid: () => invokeKernelMethod(loginService, 'getMachineGuid', [], assertActive),
       startNative: () =>
         sessionStrategy === 'startup'
-          ? invoke(startupSession!, 'start')
-          : invoke(session, 'startNT', 0),
+          ? invokeKernelMethod(startupSession, 'start', [], assertActive)
+          : invokeKernelMethod(session, 'startNT', [0], assertActive),
       isCurrent: active,
       isPending: () => pending === expectedPending,
       createServices: createNativeServices,

@@ -17,6 +17,14 @@ consumer. The package consumer uses fake services and an isolated replacement
 kernel; this command does not log into an account. Codec dependencies are packed
 from npm's populated cache for the offline consumer installation.
 
+`npm run check:architecture` exposes the source architecture checks separately
+for module placement and dependency changes. They still run in the full `test`
+gate. Kernel method capture has exactly three permitted owners: kernel
+composition, environment preparation and account startup. It cannot acquire
+resources or depend on a lifecycle implementation. Regression tests verify
+single method acquisition, original receivers, retirement during getters and
+no fallback after native dispatch failure with controlled objects.
+
 Architecture checks cover ambient `fetch` acquisition as well as import edges.
 Only the catalog, manifest download and group HTTP transport owners may acquire
 the global implementation. TypeScript symbol resolution detects direct access,

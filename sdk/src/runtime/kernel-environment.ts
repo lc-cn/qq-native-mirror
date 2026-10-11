@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { hostname, platform, release } from 'node:os';
 import type { NativeObject } from '../native/native-object.ts';
 import type { AccountSessionOptions } from './account-session-lifecycle.ts';
+import { captureKernelMethod, invokeKernelMethod } from './kernel-method.ts';
 
 export interface KernelEnvironment {
   loginService: NativeObject;
@@ -38,10 +39,8 @@ class KernelEnvironmentPreparation {
     let sessionStrategy: KernelEnvironment['sessionStrategy'] | undefined;
     const diagnostic = context.diagnostic;
     const noop = () => {};
-    const invoke = (object: NativeObject, method: string, ...args: unknown[]) => {
-      if (typeof object[method] !== 'function')
-        throw new Error(`Native kernel is missing ${method}`);
-      return object[method](...args);
+    const assertActive = () => {
+      if (context.isClosed()) throw new Error('Client is closed');
     };
     if (context.isClosed()) throw new Error('Client is closed');
     const globalDir = join(context.options.dataDir, 'global');
@@ -52,27 +51,41 @@ class KernelEnvironmentPreparation {
     ];
     if (!nativePlatform) throw new Error(`Unsupported platform: ${platform()}`);
     diagnostic({ stage: 'engine-get' });
-    const engine = invoke(context.wrapper.NodeIQQNTWrapperEngine ?? {}, 'get');
+    const engine = invokeKernelMethod(
+      context.wrapper.NodeIQQNTWrapperEngine,
+      'get',
+      [],
+      assertActive,
+    );
     diagnostic({ stage: 'login-service-get' });
-    const loginService: NativeObject = invoke(context.wrapper.NodeIKernelLoginService ?? {}, 'get');
+    const loginService = invokeKernelMethod(
+      context.wrapper.NodeIKernelLoginService,
+      'get',
+      [],
+      assertActive,
+    ) as NativeObject;
     diagnostic({ stage: 'session-create' });
     const startupFactory = context.wrapper.NodeIQQNTStartupSessionWrapper;
     const accountFactory = context.wrapper.NodeIQQNTWrapperSession;
     // Choose from the exported surface before dispatching either factory.
     // A thrown native call may already have effects; never use it as a probe
     // for another signature or Session strategy.
-    if (
-      typeof startupFactory?.create === 'function' &&
-      typeof accountFactory?.getNTWrapperSession === 'function'
-    ) {
+    const createStartup = captureKernelMethod(startupFactory, 'create', assertActive);
+    const getAccount = createStartup
+      ? captureKernelMethod(accountFactory, 'getNTWrapperSession', assertActive)
+      : undefined;
+    if (createStartup && getAccount) {
       sessionStrategy = 'startup';
-      startupSession = invoke(startupFactory, 'create');
+      startupSession = createStartup() as NativeObject;
       this.#references.add(startupSession!);
-      accountSession = invoke(accountFactory, 'getNTWrapperSession', 'nt_1');
-    } else if (typeof accountFactory?.create === 'function') {
+      accountSession = getAccount('nt_1') as NativeObject;
+    } else {
+      const createAccount = captureKernelMethod(accountFactory, 'create', assertActive);
+      if (!createAccount)
+        throw new Error('Native kernel has no supported Session creation surface');
       sessionStrategy = 'direct';
-      accountSession = invoke(accountFactory, 'create');
-    } else throw new Error('Native kernel has no supported Session creation surface');
+      accountSession = createAccount() as NativeObject;
+    }
     context.onAcquired({
       loginService: loginService!,
       accountSession: accountSession!,
@@ -86,41 +99,56 @@ class KernelEnvironmentPreparation {
     const hostName = context.options.device?.hostname ?? hostname();
     const engineCallbacks = context.engineCallbacks();
     diagnostic({ stage: 'engine-init' });
-    invoke(
+    invokeKernelMethod(
       engine,
       'initWithDeskTopConfig',
-      {
-        base_path_prefix: '',
-        platform_type: nativePlatform,
-        app_type: 4,
-        app_version: context.options.version.clientVersion,
-        os_version: osVersion,
-        use_xlog: false,
-        qua: context.options.version.qua,
-        global_path_config: { desktopGlobalPath: globalDir },
-        thumb_config: { maxSide: 324, minSide: 48, longLimit: 6, density: 2 },
-      },
-      new Proxy(engineCallbacks, { get: (target, key) => Reflect.get(target, key) ?? noop }),
+      [
+        {
+          base_path_prefix: '',
+          platform_type: nativePlatform,
+          app_type: 4,
+          app_version: context.options.version.clientVersion,
+          os_version: osVersion,
+          use_xlog: false,
+          qua: context.options.version.qua,
+          global_path_config: { desktopGlobalPath: globalDir },
+          thumb_config: { maxSide: 324, minSide: 48, longLimit: 6, density: 2 },
+        },
+        new Proxy(engineCallbacks, { get: (target, key) => Reflect.get(target, key) ?? noop }),
+      ],
+      assertActive,
     );
     diagnostic({ stage: 'login-config' });
-    invoke(loginService!, 'initConfig', {
-      machineId: '',
-      appid: context.options.version.appId,
-      platVer: osVersion,
-      commonPath: globalDir,
-      clientVer: context.options.version.clientVersion,
-      hostName,
-      externalVersion: false,
-    });
+    invokeKernelMethod(
+      loginService,
+      'initConfig',
+      [
+        {
+          machineId: '',
+          appid: context.options.version.appId,
+          platVer: osVersion,
+          commonPath: globalDir,
+          clientVer: context.options.version.clientVersion,
+          hostName,
+          externalVersion: false,
+        },
+      ],
+      assertActive,
+    );
     if (context.options.rememberPassword !== undefined) {
       if (typeof context.options.rememberPassword !== 'boolean')
         throw new TypeError('rememberPassword must be boolean');
-      invoke(loginService!, 'setRemerberPwd', context.options.rememberPassword);
+      invokeKernelMethod(
+        loginService,
+        'setRemerberPwd',
+        [context.options.rememberPassword],
+        assertActive,
+      );
     }
     const listener = context.loginCallbacks();
     this.#references.add(listener);
     diagnostic({ stage: 'login-listener' });
-    invoke(loginService!, 'addKernelLoginListener', listener);
+    invokeKernelMethod(loginService, 'addKernelLoginListener', [listener], assertActive);
   }
 }
 

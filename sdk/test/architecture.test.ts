@@ -57,6 +57,28 @@ function dependencies(path: string): Dependency[] {
 const graph = new Map(files.map((path) => [path, dependencies(path)]));
 const runtimeEdges = (path: string) => graph.get(path)!.filter((edge) => !edge.typeOnly);
 
+test('kernel method capture is private to preparation and account startup', () => {
+  const capture = 'src/runtime/kernel-method.ts';
+  assert.deepEqual(graph.get(join(projectRoot, capture)), []);
+  for (const typeOnly of [false, true]) {
+    for (const from of [
+      'src/kernel.ts',
+      'src/runtime/kernel-environment.ts',
+      'src/runtime/account-session-lifecycle.ts',
+    ])
+      assert.equal(dependencyViolation({ from, to: capture, typeOnly }), undefined);
+    for (const from of [
+      'src/native-services.ts',
+      'src/runtime/new-owner.ts',
+      'src/features/groups/new-operation.ts',
+      'src/client/qq-client.ts',
+    ])
+      assert.ok(dependencyViolation({ from, to: capture, typeOnly }));
+    for (const to of ['src/runtime/account-session-lifecycle.ts', 'src/errors.ts', 'node:fs'])
+      assert.ok(dependencyViolation({ from: capture, to, typeOnly }));
+  }
+});
+
 test('ambient network acquisition requires an exact transport owner', () => {
   const config = ts.readConfigFile(join(projectRoot, 'tsconfig.json'), ts.sys.readFile);
   assert.equal(config.error, undefined);
@@ -593,6 +615,7 @@ const pureModules = new Set([
   'src/validation/identifiers.ts',
   'src/features/contacts/friend-categories.ts',
   'src/features/messages/query-input.ts',
+  'src/features/messages/recall-input.ts',
   'src/features/groups/group-essence-input.ts',
   'src/features/groups/group-file-input.ts',
   'src/features/groups/group-search-input.ts',
@@ -611,6 +634,7 @@ const pureRoots = [
   'native/native-manifest.ts',
   'features/contacts/friend-categories.ts',
   'features/messages/query-input.ts',
+  'features/messages/recall-input.ts',
   'validation/identifiers.ts',
   'features/groups/group-essence-input.ts',
   'features/groups/group-file-input.ts',

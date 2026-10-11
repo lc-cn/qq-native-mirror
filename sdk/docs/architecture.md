@@ -61,6 +61,7 @@ The diagrams are navigation aids; the exact permissions live in
 | `src/kernel.ts`, `src/native-services.ts`        | Compose one native session and domain adapters. They are composition roots, not public extension points. |
 | `src/worker/`                                    | Native initialization ownership and the Node acquisition binding; no business DTO or IPC presentation.   |
 | `src/runtime/`                                   | Account/worker ownership, request/callback lifetimes and composition dependencies.                       |
+| `src/runtime/kernel-method.ts`                   | Shared method capture for preparation/startup; lifecycle checks remain with the calling owner.           |
 | `src/features/contacts/`, `src/features/groups/` | Friend, category, group and request actions/events.                                                      |
 | `src/features/messages/`                         | Message input capture, native projection, querying and recall.                                           |
 | `src/features/media/`, `src/features/forward/`   | Media codecs and forward-resource transports.                                                            |

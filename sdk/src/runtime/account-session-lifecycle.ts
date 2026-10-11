@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { hostname, platform, release, type } from 'node:os';
 import { normalizeKernelError } from '../errors.ts';
 import { observeWorkerTask } from './worker-task.ts';
+import { invokeKernelMethod } from './kernel-method.ts';
 import type { NativeObject } from '../native/native-object.ts';
 import type { NativeContractProfile } from '../native/native-contracts.ts';
 import type { NativeServiceContext } from './native-service-context.ts';
@@ -81,13 +82,6 @@ export class AccountSessionLifecycle {
 
   #pending(): boolean {
     return this.#active() && this.#context.isPending();
-  }
-
-  #invoke(method: string, ...args: unknown[]): unknown {
-    const session = this.#context.session;
-    if (typeof session[method] !== 'function')
-      throw new Error(`Native kernel is missing ${method}`);
-    return session[method](...args);
   }
 
   #callbacks(names: string[], overrides: NativeObject = {}, family = 'Session'): NativeObject {
@@ -223,61 +217,67 @@ export class AccountSessionLifecycle {
           },
         },
       );
-      this.#invoke(
+      invokeKernelMethod(
+        this.#context.session,
         'init',
-        {
-          selfUin: this.#account.uin,
-          selfUid: this.#account.uid,
-          desktopPathConfig: { account_path: this.#context.options.dataDir },
-          clientVer: this.#context.options.version.clientVersion,
-          a2: '',
-          d2: '',
-          d2Key: '',
-          machineId: '',
-          platform: nativePlatform,
-          platVer: osVersion,
-          appid: this.#context.options.version.appId,
-          rdeliveryConfig: {
-            appKey: '',
-            systemId: 0,
-            appId: '',
-            logicEnvironment: '',
+        [
+          {
+            selfUin: this.#account.uin,
+            selfUid: this.#account.uid,
+            desktopPathConfig: { account_path: this.#context.options.dataDir },
+            clientVer: this.#context.options.version.clientVersion,
+            a2: '',
+            d2: '',
+            d2Key: '',
+            machineId: '',
             platform: nativePlatform,
-            language: '',
-            sdkVersion: '',
-            userId: '',
-            appVersion: '',
-            osVersion: '',
-            bundleId: '',
-            serverUrl: '',
-            fixedAfterHitKeys: [''],
+            platVer: osVersion,
+            appid: this.#context.options.version.appId,
+            rdeliveryConfig: {
+              appKey: '',
+              systemId: 0,
+              appId: '',
+              logicEnvironment: '',
+              platform: nativePlatform,
+              language: '',
+              sdkVersion: '',
+              userId: '',
+              appVersion: '',
+              osVersion: '',
+              bundleId: '',
+              serverUrl: '',
+              fixedAfterHitKeys: [''],
+            },
+            defaultFileDownloadPath: downloadsDir,
+            deviceInfo: {
+              guid,
+              buildVer: this.#context.options.version.clientVersion,
+              localId: 2052,
+              devName: hostName,
+              devType: type(),
+              vendorName: '',
+              osVer: osVersion,
+              vendorOsName: type(),
+              setMute: false,
+              vendorType: 0,
+            },
+            deviceConfig: '{"appearance":{"isSplitViewMode":true},"msg":{}}',
           },
-          defaultFileDownloadPath: downloadsDir,
-          deviceInfo: {
-            guid,
-            buildVer: this.#context.options.version.clientVersion,
-            localId: 2052,
-            devName: hostName,
-            devType: type(),
-            vendorName: '',
-            osVer: osVersion,
-            vendorOsName: type(),
-            setMute: false,
-            vendorType: 0,
-          },
-          deviceConfig: '{"appearance":{"isSplitViewMode":true},"msg":{}}',
+          this.#callbacks(
+            ['onMSFStatusChange', 'onMSFSsoError', 'getGroupCode'],
+            this.#context.depends,
+            'Depends',
+          ),
+          this.#callbacks(
+            ['dispatchRequest', 'dispatchCall', 'dispatchCallWithJson'],
+            {},
+            'Dispatcher',
+          ),
+          this.#sessionCallbacks,
+        ],
+        () => {
+          if (!this.#pending()) throw new Error('Native account session is no longer current');
         },
-        this.#callbacks(
-          ['onMSFStatusChange', 'onMSFSsoError', 'getGroupCode'],
-          this.#context.depends,
-          'Depends',
-        ),
-        this.#callbacks(
-          ['dispatchRequest', 'dispatchCall', 'dispatchCallWithJson'],
-          {},
-          'Dispatcher',
-        ),
-        this.#sessionCallbacks,
       );
       if (!this.#pending()) return;
       await this.#context.startNative();
