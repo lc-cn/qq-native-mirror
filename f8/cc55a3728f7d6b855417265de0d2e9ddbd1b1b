@@ -1,0 +1,71 @@
+sdk/src/runtime/operations.ts
+  s_2104cc474f1ce5::t_7305e43d3b5037 33
+sdk/src/cli/commands/groups.ts
+  s_2104cc474f1ce5::t_3ab18e0995c8ef 8,161-168
+  s_2104cc474f1ce5::t_bb19d8ec0c88a7 169-170
+sdk/src/client/qq-client.ts
+  s_2104cc474f1ce5::t_7305e43d3b5037 9,342-344
+  s_2104cc474f1ce5::t_a8ddf696578f2e 345-346
+sdk/test/helpers/dependency-policy.ts
+  s_2104cc474f1ce5::t_7305e43d3b5037 220,341
+sdk/src/features/groups/group-file-deletion.ts
+  s_2104cc474f1ce5::t_7305e43d3b5037 1-12,22-72,75,86-97
+  s_2104cc474f1ce5::t_aed3006d87da97 13-21,73-74,76-85
+sdk/src/runtime/operation-contracts.ts
+  s_2104cc474f1ce5::t_7305e43d3b5037 96
+sdk/src/native/native-contracts.ts
+  s_2104cc474f1ce5::t_7305e43d3b5037 17,29-31,55,72,89,104,119,133,222-226
+  s_2104cc474f1ce5::t_3a984a8ea33904 227-228
+sdk/src/cli.ts
+  s_2104cc474f1ce5::t_3ab18e0995c8ef 70
+sdk/src/native-services.ts
+  s_2104cc474f1ce5::t_7305e43d3b5037 20,357-364,476-477
+sdk/test/group-file-action-lifetime.test.ts
+  s_2104cc474f1ce5::t_46fa267a0a4649 11,26-33,39,70-80
+sdk/docs/contacts-groups.md
+  s_2104cc474f1ce5::t_b9fbc26c586111 325-356
+sdk/src/features/groups/group-files.ts
+  s_2104cc474f1ce5::t_7305e43d3b5037 7,14,34-35,148-155,159,161-164
+  s_2104cc474f1ce5::t_46fa267a0a4649 156-158,160
+  s_2104cc474f1ce5::t_020a72a42d1283 165-166
+sdk/docs/architecture/encapsulation.md
+  s_2104cc474f1ce5::t_b9fbc26c586111 416-423
+sdk/test/client.test.ts
+  s_2104cc474f1ce5::t_46fa267a0a4649 1025-1044
+sdk/src/features/groups/group-file-input.ts
+  s_2104cc474f1ce5::t_7305e43d3b5037 37-44
+sdk/scripts/consumers/group-file-action-consumer-contract.mjs
+  s_2104cc474f1ce5::t_4c8d5f069b8f60 35-94,267-268
+sdk/test/architecture/composition.ts
+  s_2104cc474f1ce5::t_7305e43d3b5037 90
+sdk/scripts/verify-package-consumer.mjs
+  s_2104cc474f1ce5::t_3ab18e0995c8ef 554-556
+sdk/README.md
+  s_2104cc474f1ce5::t_6e078c2b4b8e85 74,82-84
+sdk/docs/development.md
+  s_2104cc474f1ce5::t_68cc94e4fa4074 51-54
+sdk/docs/evidence/group-file-delete-contract.json
+  s_2104cc474f1ce5::t_1d0245381926e7 1-1421
+sdk/docs/sdk-acceptance.md
+  s_2104cc474f1ce5::t_b43009e7d1f5f6 108-117
+sdk/test/group-file-deletion-integration.test.ts
+  s_2104cc474f1ce5::t_ad2f582e7d8d9a 1-181
+sdk/test/group-file-deletion.test.ts
+  s_2104cc474f1ce5::t_f115492fa25682 1-263
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "f8cc55a3728f7d6b855417265de0d2e9ddbd1b1b",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
