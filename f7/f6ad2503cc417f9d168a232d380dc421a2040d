@@ -1,0 +1,44 @@
+sdk/test/architecture/dependency-direction.ts
+  s_2104cc474f1ce5::t_f6a3f5a36f697a 150-155
+sdk/src/native/native-catalog.ts
+  s_2104cc474f1ce5::t_61bfe3dfe1d846 3,86-95
+sdk/src/native/native-package.ts
+  s_2104cc474f1ce5::t_61bfe3dfe1d846 23,106-128,132-139
+sdk/docs/architecture/encapsulation.md
+  s_2104cc474f1ce5::t_70c4e8ac927717 1006-1017,1025-1026
+sdk/test/installed-native.test.ts
+  s_2104cc474f1ce5::t_61597155a7fe75 32-33,157-158
+sdk/test/native-video-package.test.ts
+  s_2104cc474f1ce5::t_61597155a7fe75 61-62
+sdk/test/client-factory-consumer.test.ts
+  s_2104cc474f1ce5::t_70c4e8ac927717 17
+sdk/test/helpers/dependency-policy.ts
+  s_2104cc474f1ce5::t_f6a3f5a36f697a 307-315
+sdk/scripts/consumers/client-factory-consumer-contract.mjs
+  s_2104cc474f1ce5::t_70c4e8ac927717 407-426
+  s_2104cc474f1ce5::t_e6f7472f217f53 4,248-252,312-325,395-406,427-435,538
+sdk/src/native/native-response.ts
+  s_2104cc474f1ce5::t_141d7a21b89536 1-86
+sdk/test/native-catalog.test.ts
+  s_2104cc474f1ce5::t_564bf1d8e9ae71 111-148
+sdk/test/native-package.test.ts
+  s_2104cc474f1ce5::t_d5605b205e5676 699-811
+sdk/test/native-response.test.ts
+  s_2104cc474f1ce5::t_ca9d59a717f8ed 1-216
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "f7f6ad2503cc417f9d168a232d380dc421a2040d",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
