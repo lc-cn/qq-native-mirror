@@ -1,0 +1,40 @@
+sdk/scripts/client-factory-consumer-contract.mjs
+  s_2104cc474f1ce5::t_be208395f5c977 388
+  s_2104cc474f1ce5::t_3d0da5834c3697 175,210,249-263
+sdk/docs/architecture.md
+  s_2104cc474f1ce5::t_be208395f5c977 65
+sdk/test/client-factory-consumer.test.ts
+  s_2104cc474f1ce5::t_be208395f5c977 13
+sdk/test/native-package.test.ts
+  s_2104cc474f1ce5::t_3f95f7aacbad8a 15,19-59
+  s_2104cc474f1ce5::t_96ce201aab08f2 60
+sdk/docs/development.md
+  s_2104cc474f1ce5::t_be208395f5c977 32,43-49
+  s_2104cc474f1ce5::t_7816ea48c56f16 50
+sdk/src/native/native-package.ts
+  s_2104cc474f1ce5::t_9046094bc0f0fa 19,135
+sdk/src/cli.ts
+  s_2104cc474f1ce5::t_9046094bc0f0fa 7,77-78,82,99-100,109-110,113-115
+sdk/src/native/native-manifest.ts
+  s_2104cc474f1ce5::t_9046094bc0f0fa 9-14,18-45
+  s_2104cc474f1ce5::t_904e299179ad47 46-47
+sdk/test/cli.test.ts
+  s_2104cc474f1ce5::t_3f95f7aacbad8a 4,17-48
+  s_2104cc474f1ce5::t_538849078b9717 49-61
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "1993ac7cb702b7247114a1429ee0d637715becbd",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
