@@ -1,0 +1,38 @@
+sdk/docs/architecture/quality-gates.md
+  s_2104cc474f1ce5::t_7c69c7dc40bf5e 31-33,129-135
+  s_2104cc474f1ce5::t_03557d1e869e92 28-30,136
+sdk/docs/development.md
+  s_2104cc474f1ce5::t_c10dfc062ec5f1 350-351
+sdk/test/consumer-tooling-gates.test.mjs
+  s_2104cc474f1ce5::t_774a6b7cf134e2 126-176
+ci/verify-consumer.mjs
+  s_2104cc474f1ce5::t_12e38bd66a8e41 26-27,91-104,343
+sdk/eslint.config.mjs
+  s_2104cc474f1ce5::t_b806b0c706ef48 64-67,91-94
+sdk/scripts/consumers/history-lifecycle-consumer-contract.mjs
+  s_2104cc474f1ce5::t_6d0d2634c79652 3,6-11,19-26,43,57,67,88,90-95,108-117,119-127,173-174,176,178-207,221-223,225,252-254,256,258,260,263,265,272-290,301,303-308,310
+sdk/scripts/consumers/kernel-session-consumer-contract.mjs
+  s_2104cc474f1ce5::t_ac6c9a9034ad4c 8,12-20,23,25,27,31,36,42,81,86,118,120,126-131,137,139,151,177-183,210,247,266,278-279,281-283,286-294,316
+sdk/scripts/consumers/worker-error-consumer-contract.mjs
+  s_2104cc474f1ce5::t_567dc27d8f8abf 8-11,20,22,65-66,69,71,73-77,89,91,103-121,126,129,131-133,158-161
+sdk/scripts/consumers/worker-read-consumer-contract.mjs
+  s_2104cc474f1ce5::t_f541c163d75eec 8-11,53-54,57,59,61-66,68
+sdk/tsconfig.scripts.json
+  s_2104cc474f1ce5::t_4305bf16fa36d7 24-28
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b734c861ac8710e1e0e96fed62b50ea25f61ba6d",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
