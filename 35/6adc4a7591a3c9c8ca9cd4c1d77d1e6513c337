@@ -1,0 +1,95 @@
+sdk/docs/development.md
+  s_2104cc474f1ce5::t_1779b11a78cf2b 358-375
+ci/consumer-module-paths.test.mjs
+  s_2104cc474f1ce5::t_a2f8a62f018b4c 15,18-20
+ci/current-source-mirror.mjs
+  s_2104cc474f1ce5::t_5fbac5af770c5f 11
+ci/verify-consumer.mjs
+  s_2104cc474f1ce5::t_db7b650e94221c 12-39
+sdk/docs/architecture.md
+  s_2104cc474f1ce5::t_e70712d417eb03 76-78
+sdk/docs/architecture/quality-gates.md
+  s_2104cc474f1ce5::t_1ea04d5187cc29 20-38
+sdk/docs/current-source-mirror.md
+  s_2104cc474f1ce5::t_525b95adc6aa34 52
+sdk/eslint.config.mjs
+  s_2104cc474f1ce5::t_800b65db419462 53-63,76-86,88-89
+sdk/package.json
+  s_2104cc474f1ce5::t_dc638189bae5bb 30-33
+sdk/scripts/check-consumer-modules.ts
+  s_2104cc474f1ce5::t_a1aade6e07b1be 1-16
+sdk/scripts/consumer-module-policy.ts
+  s_2104cc474f1ce5::t_a9543f86726da3 1-70
+sdk/scripts/consumer-module-references.ts
+  s_2104cc474f1ce5::t_7b7da415c56cd6 2-3,15,32-39,48-72,79,105-109,289-292,295
+sdk/scripts/consumers/client-factory-consumer-contract.mjs
+  s_2104cc474f1ce5::t_832e052e1fe1b5 10-12,117,120,216,229
+sdk/scripts/consumers/contact-group-snapshot-consumer-contract.mjs
+  s_2104cc474f1ce5::t_44bbd2adbffd5a 10,14,231,233
+sdk/scripts/consumers/element-preparation-consumer-contract.mjs
+  s_2104cc474f1ce5::t_5b5c13c691aa90 12,17,34,73,77,129,134,164,168-169
+sdk/scripts/consumers/face-consumer-contract.mjs
+  s_2104cc474f1ce5::t_90842e273fcdb8 12,15,20,48,72,90
+sdk/scripts/consumers/group-essence-consumer-contract.mjs
+  s_2104cc474f1ce5::t_0238c3b80b494b 12,16,18,20,57,91,151
+sdk/scripts/consumers/group-file-pages-consumer-contract.mjs
+  s_2104cc474f1ce5::t_0688cbc6560607 14,18,22,26,30,34,47,61,113,139,248,258
+sdk/scripts/consumers/group-query-owner-consumer-contract.mjs
+  s_2104cc474f1ce5::t_ade6cb46a82c46 10,14
+sdk/scripts/consumers/group-search-consumer-contract.mjs
+  s_2104cc474f1ce5::t_ee15ccf8bf0fa9 12,14,18,20,25,53,64,71,168
+sdk/scripts/consumers/mirror-consumer-contract.mjs
+  s_2104cc474f1ce5::t_63fb01886f8737 7-9,37,78
+sdk/scripts/consumers/public-contract-consumer.mjs
+  s_2104cc474f1ce5::t_c303ca45a18384 10
+sdk/scripts/consumers/request-result-consumer-contract.mjs
+  s_2104cc474f1ce5::t_ef7382a2eca6a9 10,14,25,88
+sdk/scripts/verify-package-consumer.mjs
+  s_2104cc474f1ce5::t_141df02695067a 6-39
+sdk/test/client-factory-consumer.test.ts
+  s_2104cc474f1ce5::t_23c45cbc15f226 4
+sdk/test/consumer-module-references.test.ts
+  s_2104cc474f1ce5::t_d5750680bd9978 3,166-314
+sdk/test/consumer-role-policy.test.ts
+  s_2104cc474f1ce5::t_e5ed0f2ea6e7f9 1-91
+sdk/test/consumer-tooling-gates.test.mjs
+  s_2104cc474f1ce5::t_66564cf2389777 13,17,47,82,149,170,195,231,249
+sdk/test/download-consumer.test.ts
+  s_2104cc474f1ce5::t_8196685d4248f6 5
+sdk/test/forward-resource-services.test.ts
+  s_2104cc474f1ce5::t_353d4901a54b62 6
+sdk/test/group-file-pages-consumer.test.ts
+  s_2104cc474f1ce5::t_ec5a8201388548 4
+sdk/test/history-lifecycle-services.test.ts
+  s_2104cc474f1ce5::t_017248c3117631 6
+sdk/test/mirror-consumer-contract.test.ts
+  s_2104cc474f1ce5::t_c7ed4fbeeedb7e 6
+sdk/test/received-forward-services.test.ts
+  s_2104cc474f1ce5::t_2d199e83eee6c0 5
+sdk/test/worker-contact-routes.test.ts
+  s_2104cc474f1ce5::t_905f06b41ac4ac 4
+sdk/test/worker-delivery.test.mjs
+  s_2104cc474f1ce5::t_95b84badc7e5bf 3
+sdk/test/worker-error-routes.test.ts
+  s_2104cc474f1ce5::t_e94a5e133a448d 4
+sdk/test/worker-read-routes.test.ts
+  s_2104cc474f1ce5::t_aa0eea6a2663d8 5
+sdk/tsconfig.scripts.json
+  s_2104cc474f1ce5::t_2e2f90d7fac4af 14-24
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "356adc4a7591a3c9c8ca9cd4c1d77d1e6513c337",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
