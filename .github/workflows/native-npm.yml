@@ -2,6 +2,11 @@ name: Native npm packages
 on:
   workflow_dispatch:
     inputs:
+      storage:
+        description: Native package storage (object mode also retains complete plain fallbacks)
+        type: choice
+        options: [plain, gzip-objects-v1]
+        default: plain
       publish:
         description: Publish all six platform packages after every consumer passes
         type: boolean
@@ -15,6 +20,7 @@ on:
       - '.github/workflows/native-npm.yml'
       - 'ci/**'
       - 'sdk/**'
+      - 'tools/native-storage-plan.mjs'
 permissions:
   contents: read
 jobs:
@@ -68,6 +74,7 @@ jobs:
     timeout-minutes: 30
     env:
       NATIVE_DOWNLOAD_PROXY: https://gh-proxy.com/
+      NATIVE_NPM_STORAGE: ${{ inputs.storage || 'plain' }}
     defaults:
       run:
         shell: bash
@@ -108,8 +115,8 @@ jobs:
         working-directory: sdk
         run: |
           if [ '${{ matrix.platform }}' = 'win32' ]; then npm exec tsc; else npm run build; fi
-      - name: Pinned native download contracts
-        run: node --test ci/verified-download.test.mjs
+      - name: Native download and package distribution contracts
+        run: node --test ci/verified-download.test.mjs ci/native-package-distribution.test.mjs
       - uses: actions/download-artifact@v4
         with:
           name: video-${{ matrix.platform }}-${{ matrix.arch }}
@@ -145,6 +152,7 @@ jobs:
             out/*.tgz
             out/*.json
             out/bridges/
+            out/full-native/
           retention-days: 14
   aggregate:
     needs: build
@@ -193,7 +201,14 @@ jobs:
           version=$(node -p "require('./release/release-manifest.json').version")
           tar -czf release/acceptance-evidence.tar.gz -C release evidence
           printf 'CI-built candidates for local first publication. No npm publish was performed. Source commit: %s. Acceptance: https://github.com/%s/actions/runs/%s\n' "$GITHUB_SHA" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID" > release/notes.md
-          gh release create "npm-v$version-ci-$GITHUB_RUN_ID" release/*.tgz release/release-manifest.json release/acceptance-evidence.tar.gz release/video-materials/*.json --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease --latest=false --title "npm $version CI candidate $GITHUB_RUN_ID" --notes-file release/notes.md
+          assets=(release/*.tgz release/release-manifest.json release/acceptance-evidence.tar.gz release/video-materials/*.json)
+          if [ -d release/full-native ]; then
+            mkdir -p archive-fallback/package
+            cp -R release/full-native release/tested-main archive-fallback/package/
+            tar --format=ustar -czf release/full-native-fallback.tar.gz -C archive-fallback package
+            assets+=(release/full-native-fallback.tar.gz)
+          fi
+          gh release create "npm-v$version-ci-$GITHUB_RUN_ID" "${assets[@]}" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease --latest=false --title "npm $version CI candidate $GITHUB_RUN_ID" --notes-file release/notes.md
       - uses: actions/upload-artifact@v4
         with:
           name: npm-release

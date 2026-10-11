@@ -132,11 +132,23 @@ test('seven-package release checks each object receipt and the separately bound 
     manifestSha256?: string;
     receipt?: string;
     receiptSha256?: string;
+    testedMain?: { path: string; sha256: string; size: number; integrity: string };
   }
   const packages: Row[] = [];
+  const nativeFallbacks: {
+    name: string;
+    version: string;
+    path: string;
+    size: number;
+    sha256: string;
+    integrity: string;
+    manifestSha256: string;
+  }[] = [];
   const mainPath = 'evidence/aggregated-main.consumer.json';
   try {
     await mkdir(join(root, 'evidence'));
+    await mkdir(join(root, 'full-native'));
+    await mkdir(join(root, 'tested-main'));
     for (const name of [...names, 'qq-native-client']) {
       const staging = join(root, 'staging');
       await mkdir(join(staging, 'package/objects'), { recursive: true });
@@ -184,6 +196,36 @@ test('seven-package release checks each object receipt and the separately bound 
         );
         await writeFile(join(staging, 'package/manifest.json'), manifestBytes);
         await writeFile(join(staging, 'package/README.md'), 'Controlled archive fixture');
+        const fullStaging = join(root, 'full-staging');
+        const original = JSON.parse(manifestBytes.toString());
+        delete original.npmStorage;
+        for (const [path, bytes] of payloads) {
+          await mkdir(join(fullStaging, 'package', ...path.split('/').slice(0, -1)), {
+            recursive: true,
+          });
+          await writeFile(join(fullStaging, 'package', path), bytes);
+        }
+        const originalBytes = Buffer.from(JSON.stringify(original));
+        await writeFile(join(fullStaging, 'package/manifest.json'), originalBytes);
+        await writeFile(join(fullStaging, 'package/package.json'), JSON.stringify(metadata));
+        await writeFile(join(fullStaging, 'package/README.md'), 'Original full fixture');
+        const fallbackPath = `full-native/${name}-0.0.3.tgz`;
+        execFileSync(
+          'tar',
+          ['--format=ustar', '-czf', join(root, fallbackPath), '-C', fullStaging, 'package'],
+          { env: { ...process.env, COPYFILE_DISABLE: '1' } },
+        );
+        const fallbackBytes = await readFile(join(root, fallbackPath));
+        nativeFallbacks.push({
+          name,
+          version: '0.0.3',
+          path: fallbackPath,
+          size: fallbackBytes.length,
+          sha256: sha(fallbackBytes),
+          integrity: 'sha512-' + createHash('sha512').update(fallbackBytes).digest('base64'),
+          manifestSha256: sha(originalBytes),
+        });
+        await rm(fullStaging, { recursive: true });
       }
       await writeFile(join(staging, 'package/package.json'), JSON.stringify(metadata));
       const tarball = `${name}-0.0.3.tgz`;
@@ -222,6 +264,24 @@ test('seven-package release checks each object receipt and the separately bound 
       packages.push(row);
       await rm(staging, { recursive: true });
     }
+    const actualMain = await readFile(join(root, packages[6]!.tarball));
+    for (const [index, target] of targets.entries()) {
+      const row = packages[index]!;
+      const path = `tested-main/${target}/${packages[6]!.tarball}`;
+      await mkdir(join(root, 'tested-main', target));
+      await writeFile(join(root, path), actualMain);
+      row.testedMain = {
+        path,
+        size: actualMain.length,
+        sha256: sha(actualMain),
+        integrity: 'sha512-' + createHash('sha512').update(actualMain).digest('base64'),
+      };
+      const receipt = JSON.parse((await readFile(join(root, row.receipt!))).toString());
+      receipt.installedNativeStorage.mainPackageSha256 = sha(actualMain);
+      const bytes = Buffer.from(JSON.stringify(receipt));
+      await writeFile(join(root, row.receipt!), bytes);
+      row.receiptSha256 = sha(bytes);
+    }
     const aggregateStorage = {
       ...installedNativeStorage,
       packageSha256: packages[0]!.sha256,
@@ -238,12 +298,64 @@ test('seven-package release checks each object receipt and the separately bound 
       runAttempt: 1,
       version: '0.0.3',
       packages,
+      nativeFallbacks,
       aggregateReceipt: { path: mainPath, sha256: sha(mainBytes) },
     };
     const save = () => writeFile(join(root, 'release-manifest.json'), JSON.stringify(release));
     await save();
     // No real consumer ran; missing video materials continue to block publication.
     assert.equal((await validateRelease(root)).videoMaterialsPending, true);
+    const fallback = nativeFallbacks[0]!;
+    const fallbackOriginal = await readFile(join(root, fallback.path));
+    await writeFile(join(root, fallback.path), Buffer.from('tampered'));
+    const originalDeclaration = { ...fallback };
+    fallback.size = 8;
+    fallback.sha256 = sha(Buffer.from('tampered'));
+    fallback.integrity = 'sha512-' + createHash('sha512').update('tampered').digest('base64');
+    await save();
+    await assert.rejects(validateRelease(root));
+    await writeFile(join(root, fallback.path), fallbackOriginal);
+    Object.assign(fallback, originalDeclaration);
+    await save();
+    await writeFile(join(root, 'full-native/extra.tgz'), 'extra');
+    await assert.rejects(validateRelease(root));
+    await rm(join(root, 'full-native/extra.tgz'));
+    const removed = nativeFallbacks.pop()!;
+    await save();
+    await assert.rejects(validateRelease(root), /six complete native fallbacks/);
+    nativeFallbacks.push(removed);
+    await save();
+    const tested = packages[0]!.testedMain!;
+    const testedOriginal = await readFile(join(root, tested.path));
+    const testedDeclaration = { ...tested };
+    const changedMainDirectory = join(root, 'changed-main');
+    await mkdir(join(changedMainDirectory, 'package'), { recursive: true });
+    await writeFile(
+      join(changedMainDirectory, 'package/package.json'),
+      JSON.stringify({
+        name: 'qq-native-client',
+        version: '0.0.3',
+        optionalDependencies: Object.fromEntries(names.map((name) => [name, '0.0.3'])),
+      }),
+    );
+    await writeFile(
+      join(changedMainDirectory, 'package/README.md'),
+      'changed but valid main archive',
+    );
+    execFileSync(
+      'tar',
+      ['--format=ustar', '-czf', join(root, tested.path), '-C', changedMainDirectory, 'package'],
+      { env: { ...process.env, COPYFILE_DISABLE: '1' } },
+    );
+    const changedMainBytes = await readFile(join(root, tested.path));
+    tested.size = changedMainBytes.length;
+    tested.sha256 = sha(changedMainBytes);
+    tested.integrity = 'sha512-' + createHash('sha512').update(changedMainBytes).digest('base64');
+    await save();
+    await assert.rejects(validateRelease(root));
+    await writeFile(join(root, tested.path), testedOriginal);
+    Object.assign(tested, testedDeclaration);
+    await save();
     const row = packages[1]!;
     const corrected = await readFile(join(root, row.receipt!));
     const plain = Buffer.from(

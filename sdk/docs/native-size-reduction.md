@@ -283,3 +283,39 @@ any one causes release receipt rejection. Native version was explicitly pinned.
 This is local preparation/storage/codec proof for one device, with no login,
 account restore or QQ business action. It does not establish default-latest
 selection, execution on the other five devices, signing authenticity or npm publication.
+
+## Formal CI object distribution with complete fallback (2026-10-11)
+
+The native npm workflow now has an explicit `storage` choice: `plain` remains the
+default, while `gzip-objects-v1` produces object auxiliaries and independently
+retains all six complete plain archives. All thinning, bridge and codec work occurs
+before the full archive is frozen. An object failure stops the job; the workflow
+does not silently publish a different storage mode.
+
+The local invocation of the formal distribution owner built all six actual
+complete-source packages into 738 objects representing 2,434 original paths. Every
+packed object was read back and every full fallback member matched the original
+complete source bytes, including CodeResources, codecs, notices and provenance.
+This is offline packaging evidence; it does not establish six native executions.
+Windows x64's object archive is slightly larger than its plain fallback, so this
+format must not be described as a size improvement for every platform.
+
+An object release must include six independently bound full fallbacks and the
+exact six tested main archives. The aggregate rejects mixed storage modes, another
+CI build identity and receipts bound to a different selected/main archive. The
+GitHub candidate sidecar retains these twelve archives; the existing downloader
+checks their closed inventory and exact identities before restoring them for
+release validation. npm publication selects only the original seven package names.
+
+The workflow changes have not been remotely run or published. The original complete
+source release remains the independent fallback and materials trust root; old plain
+consumer receipts are not reused as object-storage acceptance.
+
+The local macOS arm64 main-only consumer also passed using the newly produced
+auxiliary: 1,168 original paths verified, warm object cache reused, three local
+video clips decoded, and 104 native exports prepared and closed. Its exact main,
+auxiliary and manifest hashes were checked against the emitted installed receipt.
+This is pinned local installation evidence, with no login, account restore or QQ
+business operation; the other five platforms still require actual CI consumers.
+The [local evidence](evidence/object-ci-distribution-09fe46d-local.json) records the
+six archive identities and the separate one-host runtime result.

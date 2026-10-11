@@ -149,6 +149,20 @@ verified cohort. Explicit invalid values cannot fall back to the historical sour
 The generic planner and staging function preserve the supplied package version
 without importing a platform's historical release facts into the SDK.
 
+The formal platform build uses `ci/native-package-distribution.mjs` to capture a
+closed complete source directory, invoke offline npm packing, and compare actual
+packed members before exposing output. Object mode uses the same pure storage
+planner and retains a separate plain tarball under `full-native/`; it never mutates
+the supplied complete directory. A failed object build fails the job.
+
+`ci/aggregate-release.mjs` retains six full fallbacks and the exact main tarball
+tested by each platform, bound to that build's CI identity. Release validation owns
+`native-fallbacks.mjs`: it independently compares every original runtime path,
+seal, license and byte, checks ABI/npm metadata, and closes both retained artifact
+inventories. The final Linux consumer separately binds the final aggregate main.
+The candidate downloader restores the declared twelve retained archives from a
+closed sidecar before applying the same release checks; it does not install them.
+
 The runtime consumer remains owned by `src/native/native-installed-storage.ts`;
 producer tooling never becomes part of client startup. Compression changes delivery
 storage, while every original runtime path and byte remains in the restored inventory.

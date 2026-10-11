@@ -1,0 +1,237 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-11",
+  "sourceBaseCommit": "09fe46d048fb1e4a6bdbd8dd84d12519600b9309",
+  "sourceReleaseSha256": "c8bcb55782299e7113f0f59d229dad25febd5b39e5c4fd62f2ea765b269ef11d",
+  "codeSha256": {
+    "ci/native-package-distribution.mjs": "7ee7608eedcea0b595abb361a76e03aadc33c4d2e4910c7699b6076c639fc136",
+    "ci/build-platform.mjs": "7d6ed466e2aed50befef7c3a284636ad24bc0fcb933a6dfabdcfc4231decfce0",
+    "ci/aggregate-release.mjs": "a7ce8a37ebcbca7f36fe2559cda8a0437232d91cdb1164b3ccf498cd27785751",
+    "sdk/scripts/native-fallbacks.mjs": "e3530298743aeadf1d971cbf3b807d913b7ae56f7bf498020f1451eefa8091a0",
+    "sdk/scripts/local-first-publish.mjs": "ba6c75a3f57d9c372d96fa85a2859ede5c3c720670e141220bb516b38b0f9454",
+    "sdk/scripts/download-npm-candidate.mjs": "c67a2e71dcd9ea4135735e1b2d1396d17fe166b2e75e9b499028c74fbf1d4edb",
+    ".github/workflows/native-npm.yml": "cbc1c3eabbc9f2402528116e44dd9f9bd3437117c22811183b2b30cd65f3815e",
+    "tools/check-native-storage.mjs": "8292a33dd2503c812ac362b8a265b77fc630663ea829a8d96d585e99063a296a"
+  },
+  "sixPlatformDistribution": {
+    "owner": "ci/native-package-distribution.mjs",
+    "offline": true,
+    "originalPaths": 2434,
+    "objects": 738,
+    "allPackedOriginalMembersByteEqual": true,
+    "rows": [
+      {
+        "device": "linux-x64",
+        "source": {
+          "tarball": "qq-native-client-linux-x64-0.0.2.tgz",
+          "sha256": "f11b6ca9058909c71bfb6b0e69d6db86fa226c11d3565db94870f7700d560cd0",
+          "size": 70030140,
+          "manifestSha256": "eb2cefcfb1cecbcbcb5c71fc0f0f9ddfdf96c47c8f2e1b804eb98f6cbc6fd5d2"
+        },
+        "selected": {
+          "storage": "gzip-objects-v1",
+          "tarball": "qq-native-client-linux-x64-0.0.2.tgz",
+          "size": 69959609,
+          "sha256": "e9a548e23f4b17b71c891a9d488d6e2f769d457c852e9d6f9c4e8e2b6cdbb980",
+          "manifestSha256": "d3d2f0a306a8903429e92aa6a46b23d4ad81bb48539c74dbef70593fef938a13",
+          "originalPaths": 19,
+          "objectCount": 19,
+          "fullNativeFallback": {
+            "path": "full-native/qq-native-client-linux-x64-0.0.2.tgz",
+            "size": 70030093,
+            "sha256": "d8a3282cf7861e6cc7056df5f79eef78e3629fea32f4d66ac01643164cd63fe4",
+            "manifestSha256": "eb2cefcfb1cecbcbcb5c71fc0f0f9ddfdf96c47c8f2e1b804eb98f6cbc6fd5d2"
+          }
+        },
+        "completeFallbackAllMembersByteEqual": true
+      },
+      {
+        "device": "linux-arm64",
+        "source": {
+          "tarball": "qq-native-client-linux-arm64-0.0.2.tgz",
+          "sha256": "473125e5f93c4801bf030897d603bcce3cee95d57ba687323f4b62e424f9670e",
+          "size": 72005567,
+          "manifestSha256": "97bcbf19c2aa1a471b6248da67471de8a80bb5a6bfa57a268b95680fd286f475"
+        },
+        "selected": {
+          "storage": "gzip-objects-v1",
+          "tarball": "qq-native-client-linux-arm64-0.0.2.tgz",
+          "size": 71896459,
+          "sha256": "b9337bdd4a864bfec6f58153c7020661944b216cba08fe29c70d878d89940c3e",
+          "manifestSha256": "04376a511d81e578a7257f6b9fc2eb3e97a98fa738db5ce3df3d91ef73d3e579",
+          "originalPaths": 20,
+          "objectCount": 20,
+          "fullNativeFallback": {
+            "path": "full-native/qq-native-client-linux-arm64-0.0.2.tgz",
+            "size": 72005603,
+            "sha256": "ae7437ca8e65cc3bad6136b1522d8244b0332f70f1a76c97210f385e00d18eaf",
+            "manifestSha256": "97bcbf19c2aa1a471b6248da67471de8a80bb5a6bfa57a268b95680fd286f475"
+          }
+        },
+        "completeFallbackAllMembersByteEqual": true
+      },
+      {
+        "device": "darwin-x64",
+        "source": {
+          "tarball": "qq-native-client-darwin-x64-0.0.2.tgz",
+          "sha256": "9e9d9bce0ae523bf0874d7d43a2d79d8550889ee66fa706551d67af9ac518476",
+          "size": 65852245,
+          "manifestSha256": "2e7033de888f068ccb0bbb1343bfe45650b115759c066d3ee8480e1853963ca1"
+        },
+        "selected": {
+          "storage": "gzip-objects-v1",
+          "tarball": "qq-native-client-darwin-x64-0.0.2.tgz",
+          "size": 59968021,
+          "sha256": "7cdd2e3e41a043a3103fe3e617ebef0a16a72cb80f98cc18dacfbaa521d2f2cd",
+          "manifestSha256": "f42c2a0992d1bbae6de18ee9685413bdd8bdebbdffeac8b28079fa26d00c69f3",
+          "originalPaths": 1168,
+          "objectCount": 321,
+          "fullNativeFallback": {
+            "path": "full-native/qq-native-client-darwin-x64-0.0.2.tgz",
+            "size": 65852253,
+            "sha256": "e5d3109a518686258fa2eb7fc8a125d499f4889b3b04383fa028eeaab06ae9be",
+            "manifestSha256": "2e7033de888f068ccb0bbb1343bfe45650b115759c066d3ee8480e1853963ca1"
+          }
+        },
+        "completeFallbackAllMembersByteEqual": true
+      },
+      {
+        "device": "darwin-arm64",
+        "source": {
+          "tarball": "qq-native-client-darwin-arm64-0.0.2.tgz",
+          "sha256": "3d7c5d8b4510e86b0de2180112b80aa49cb630d284d37cbd1d999206bff177c3",
+          "size": 59911859,
+          "manifestSha256": "5acfef8736ba2bbe48ee1ef1982e77ef23468c6cc9464c4d04efd897cff0464e"
+        },
+        "selected": {
+          "storage": "gzip-objects-v1",
+          "tarball": "qq-native-client-darwin-arm64-0.0.2.tgz",
+          "size": 54924233,
+          "sha256": "01903e7d0489cde5301aca00a6d7175d29fd2463ba3ca1378d0a7d5edf0af5e7",
+          "manifestSha256": "ae0fa9a7fd8a95a8703cde52a6f41e88df9dc2f6268319712449f2f823525b16",
+          "originalPaths": 1168,
+          "objectCount": 321,
+          "fullNativeFallback": {
+            "path": "full-native/qq-native-client-darwin-arm64-0.0.2.tgz",
+            "size": 59911877,
+            "sha256": "8c93414362ad463987619136eec98c14cc260ed871af7de27bb1b25315f0bbe2",
+            "manifestSha256": "5acfef8736ba2bbe48ee1ef1982e77ef23468c6cc9464c4d04efd897cff0464e"
+          }
+        },
+        "completeFallbackAllMembersByteEqual": true
+      },
+      {
+        "device": "win32-x64",
+        "source": {
+          "tarball": "qq-native-client-win32-x64-0.0.2.tgz",
+          "sha256": "0b1bc8dc8e57465d8698e1d7f27483df68a74d01b993830da472803e33142f42",
+          "size": 66610812,
+          "manifestSha256": "6ed2a079bb2cb342e71a37bce736c737c23a0f7d5da3a65d8ceb0c9f89174532"
+        },
+        "selected": {
+          "storage": "gzip-objects-v1",
+          "tarball": "qq-native-client-win32-x64-0.0.2.tgz",
+          "size": 66616109,
+          "sha256": "2bc96977f88ab381bd6580c0eb40e750c6b3e4b45fcc577576f4ec54e4bda56e",
+          "manifestSha256": "02fa79e6f2eca6e721b955df8b3163ea3dfc5834335805a0118006f53592102e",
+          "originalPaths": 32,
+          "objectCount": 31,
+          "fullNativeFallback": {
+            "path": "full-native/qq-native-client-win32-x64-0.0.2.tgz",
+            "size": 66610812,
+            "sha256": "0b1bc8dc8e57465d8698e1d7f27483df68a74d01b993830da472803e33142f42",
+            "manifestSha256": "6ed2a079bb2cb342e71a37bce736c737c23a0f7d5da3a65d8ceb0c9f89174532"
+          }
+        },
+        "completeFallbackAllMembersByteEqual": true
+      },
+      {
+        "device": "win32-arm64",
+        "source": {
+          "tarball": "qq-native-client-win32-arm64-0.0.2.tgz",
+          "sha256": "bcf85a2cd2188b27ef111c9e05c36de6d6383e1c3836051330129bcfc4bf5184",
+          "size": 54121947,
+          "manifestSha256": "3c6a2251c9a09d7cfa48ee0939ce3e9214ffe9a7a77a8bc4bcaa8460eb60db42"
+        },
+        "selected": {
+          "storage": "gzip-objects-v1",
+          "tarball": "qq-native-client-win32-arm64-0.0.2.tgz",
+          "size": 54104810,
+          "sha256": "476f26dfd7dcb9aa8bb6b5f87ae0271a8e9fceb97b9354656e45804c9db089b0",
+          "manifestSha256": "e77860c02613c31a0391f93309ac833dd97988f2a4164c8f30bc8b9ff4b1f818",
+          "originalPaths": 27,
+          "objectCount": 26,
+          "fullNativeFallback": {
+            "path": "full-native/qq-native-client-win32-arm64-0.0.2.tgz",
+            "size": 54121947,
+            "sha256": "bcf85a2cd2188b27ef111c9e05c36de6d6383e1c3836051330129bcfc4bf5184",
+            "manifestSha256": "3c6a2251c9a09d7cfa48ee0939ce3e9214ffe9a7a77a8bc4bcaa8460eb60db42"
+          }
+        },
+        "completeFallbackAllMembersByteEqual": true
+      }
+    ]
+  },
+  "localMacArm64InstalledConsumer": {
+    "completed": true,
+    "actualExit": 0,
+    "input": {
+      "platform": "darwin",
+      "arch": "arm64",
+      "node": "v24.19.0",
+      "ciSha256": "9a365bcd9e765378d97644437e908706d9e6d669c78efbbf786be48c1f7641ed",
+      "mainSha256": "5f0451aac5a0298745bcf6752d66af917127f4ecc712731780707fca94b2edad",
+      "mainBytes": 647462,
+      "compiledMembers": 272,
+      "auxiliarySha256": "01903e7d0489cde5301aca00a6d7175d29fd2463ba3ca1378d0a7d5edf0af5e7",
+      "auxiliaryBytes": 54924233,
+      "manifestSha256": "ae0fa9a7fd8a95a8703cde52a6f41e88df9dc2f6268319712449f2f823525b16",
+      "scope": "actual CI main-only installed consumer, empty account preparation/close and local codec; no login/restore/QQ business",
+      "loginAuthorized": false
+    },
+    "consumerSha256": "42ee449b83d9e0858248a67b8f60573637cc1c5e7a4b4e90baf42fe85890e0b1",
+    "nativeExports": 104,
+    "installedNativeStorage": {
+      "format": "gzip-objects-v1",
+      "nativePaths": 1168,
+      "objects": 321,
+      "allOriginalFilesVerified": true,
+      "warmCacheReused": true,
+      "networkFallbackAttempted": false,
+      "nativeManifestSha256": "ae0fa9a7fd8a95a8703cde52a6f41e88df9dc2f6268319712449f2f823525b16",
+      "packageSha256": "01903e7d0489cde5301aca00a6d7175d29fd2463ba3ca1378d0a7d5edf0af5e7",
+      "mainPackageSha256": "5f0451aac5a0298745bcf6752d66af917127f4ecc712731780707fca94b2edad"
+    },
+    "automaticPlatformSelection": true,
+    "installedMainOnly": true,
+    "prepared": true,
+    "closed": true,
+    "localVideoPassed": true,
+    "localVideoInputs": 3,
+    "alteredPackageManifestMainReceiptRejected": true,
+    "loginAttempted": false,
+    "accountRestoreAttempted": false,
+    "qqBusinessAttempted": false,
+    "published": false,
+    "otherFivePlatformsExecuted": false,
+    "proofSha256": "7ab560e261ec91aac9cf2682792d210af26d596f54d27195578892e7df99a823"
+  },
+  "quality": {
+    "sdkTests": 2011,
+    "nativeStorageAndDistributionTests": 28,
+    "failed": 0,
+    "skipped": 0,
+    "formatLintTypesBuildInstalledConsumer": "passed"
+  },
+  "limits": {
+    "remoteWorkflowExecuted": false,
+    "otherFiveNativePlatformsExecuted": false,
+    "completeSevenObjectReleaseAssembled": false,
+    "published": false,
+    "publicDefaultChanged": false,
+    "loginAttempted": false,
+    "accountRestoreAttempted": false,
+    "businessOperationsAttempted": false,
+    "signingAuthenticityVerified": false
+  }
+}

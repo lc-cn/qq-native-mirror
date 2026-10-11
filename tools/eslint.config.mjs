@@ -8,7 +8,7 @@ const prettier = require('eslint-config-prettier');
 
 export default [
   {
-    files: ['*.mjs'],
+    files: ['**/*.mjs'],
     languageOptions: { globals: globals.node },
     linterOptions: { reportUnusedDisableDirectives: 'error' },
     rules: {

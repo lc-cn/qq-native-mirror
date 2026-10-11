@@ -285,3 +285,12 @@ also cover getter throws, malformed codes and void list versus approval results.
 Login-retirement fixtures prepare their local environment before starting the
 login budget, so cold filesystem work cannot replace the targeted close failure.
 Production login deadlines and exact retirement assertions are unchanged.
+
+The native storage gate also checks formatting and lint for the formal platform
+build, aggregate and distribution owner. Four offline distribution tests pack real
+fixture tarballs, compare selected/fallback bytes, and reject corrupted inventories
+or an existing output directory. Fallback release regressions reject omitted,
+extra or rehashed incompatible artifacts and bind each retained tested main to its
+consumer receipt. Candidate download fixtures verify exact twelve-member sidecar
+restoration, all declared digests, same-candidate resume and symlink rejection.
+These fixture binaries are never executed and establish no platform login proof.

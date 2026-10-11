@@ -16,6 +16,7 @@ on:
       - '.github/workflows/current-source-consumer.yml'
       - '.github/workflows/dedup-native-candidate.yml'
       - '.github/workflows/sdk-quality.yml'
+      - '.github/workflows/native-npm.yml'
   push:
     paths:
       - 'sdk/**'
@@ -30,6 +31,7 @@ on:
       - '.github/workflows/current-source-consumer.yml'
       - '.github/workflows/dedup-native-candidate.yml'
       - '.github/workflows/sdk-quality.yml'
+      - '.github/workflows/native-npm.yml'
 
 permissions:
   contents: read

@@ -4,6 +4,7 @@ import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 import { readNativePackageMembers } from './native-package-members.mjs';
+import { validateNativeFallbacks } from './native-fallbacks.mjs';
 import { validateVideoMaterials, verifyVideoMaterialsOnline } from './video-materials.mjs';
 export { verifyVideoMaterialsOnline } from './video-materials.mjs';
 const targets = [
@@ -191,6 +192,7 @@ export async function validateRelease(directory) {
     packages.push({ ...row, path: file.path });
   }
   const diskTarballs = (await readdir(root)).filter((name) => name.endsWith('.tgz')).sort();
+  await validateNativeFallbacks(root, manifest, nativePackages);
   requireThat(
     JSON.stringify(diskTarballs) === JSON.stringify(packages.map((row) => row.tarball).sort()),
     'Unexpected or missing tarball',

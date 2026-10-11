@@ -4,6 +4,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const directory = dirname(fileURLToPath(import.meta.url));
+const root = dirname(directory);
 const require = createRequire(new URL('../sdk/package.json', import.meta.url));
 const sources = [
   'dedup-native-npm.mjs',
@@ -16,30 +17,38 @@ const sources = [
   'verify-dedup-consumer.test.mjs',
   'check-native-storage.mjs',
   'eslint.config.mjs',
-];
+]
+  .map((path) => 'tools/' + path)
+  .concat([
+    'ci/build-platform.mjs',
+    'ci/aggregate-release.mjs',
+    'ci/native-package-distribution.mjs',
+    'ci/native-package-distribution.test.mjs',
+  ]);
 
 function run(arguments_) {
-  execFileSync(process.execPath, arguments_, { cwd: directory, stdio: 'inherit' });
+  execFileSync(process.execPath, arguments_, { cwd: root, stdio: 'inherit' });
 }
 
 run([
   join(dirname(require.resolve('prettier/package.json')), 'bin/prettier.cjs'),
   '--config',
-  '../sdk/.prettierrc.json',
+  'sdk/.prettierrc.json',
   '--check',
   ...sources,
 ]);
 run([
   join(dirname(require.resolve('eslint/package.json')), 'bin/eslint.js'),
   '--config',
-  'eslint.config.mjs',
+  'tools/eslint.config.mjs',
   '--max-warnings=0',
   ...sources,
 ]);
 run([
   '--test',
-  'dedup-native-npm.test.mjs',
-  'native-storage-plan.test.mjs',
-  'native-source-identity.test.mjs',
-  'verify-dedup-consumer.test.mjs',
+  'tools/dedup-native-npm.test.mjs',
+  'tools/native-storage-plan.test.mjs',
+  'tools/native-source-identity.test.mjs',
+  'tools/verify-dedup-consumer.test.mjs',
+  'ci/native-package-distribution.test.mjs',
 ]);

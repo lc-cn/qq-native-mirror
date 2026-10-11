@@ -4,6 +4,7 @@ import { join, resolve } from 'node:path';
 import { createHash, randomUUID } from 'node:crypto';
 import { gunzipSync } from 'node:zlib';
 import { pathToFileURL } from 'node:url';
+import { readNativeTarFiles } from './native-tar-files.mjs';
 import { validateRelease, firstMainEvidencePaths } from './local-first-publish.mjs';
 const repository = 'lc-cn/qq-native-mirror';
 const targets = [
@@ -26,6 +27,83 @@ function api(path) {
   } catch {
     throw new Error('Invalid GitHub metadata');
   }
+}
+/** Restore only independently declared complete fallback and tested-main archives. */
+export async function restoreNativeFallbacks(archive, root, manifest) {
+  check(
+    Array.isArray(manifest.nativeFallbacks) && manifest.nativeFallbacks.length === 6,
+    'Incomplete native fallback declaration',
+  );
+  const expected = new Map();
+  for (const target of targets) {
+    const name = `qq-native-client-${target}`;
+    const fallback = manifest.nativeFallbacks.filter((row) => row.name === name);
+    const packages = manifest.packages.filter((row) => row.name === name);
+    check(
+      fallback.length === 1 && packages.length === 1 && fallback[0].version === manifest.version,
+      'Native fallback identity mismatch',
+    );
+    for (const [row, path] of [
+      [fallback[0], `full-native/${name}-${manifest.version}.tgz`],
+      [packages[0].testedMain, `tested-main/${target}/qq-native-client-${manifest.version}.tgz`],
+    ]) {
+      check(
+        row?.path === path &&
+          /^[a-f0-9]{64}$/.test(row.sha256) &&
+          Number.isSafeInteger(row.size) &&
+          row.size > 0 &&
+          row.size <= 512 * 1024 ** 2,
+        'Invalid native fallback archive declaration',
+      );
+      expected.set('package/' + path, row);
+    }
+  }
+  const files = await readNativeTarFiles(archive, { maxArchiveBytes: 2 * 1024 ** 3 });
+  check(
+    files.size === 12 && [...files.keys()].every((path) => expected.has(path)),
+    'Native fallback archive is not closed',
+  );
+  for (const [path, row] of expected) {
+    const bytes = files.get(path);
+    check(
+      bytes.length === row.size &&
+        sha(bytes) === row.sha256 &&
+        row.integrity === 'sha512-' + createHash('sha512').update(bytes).digest('base64'),
+      'Native fallback archive bytes mismatch',
+    );
+  }
+  for (const [path, bytes] of files) {
+    const relative = path.slice('package/'.length),
+      parts = relative.split('/');
+    let parent = root;
+    for (const part of parts.slice(0, -1)) {
+      parent = join(parent, part);
+      await mkdir(parent).catch((error) => {
+        if (error.code !== 'EEXIST') throw error;
+      });
+      const stat = await lstat(parent);
+      check(stat.isDirectory() && !stat.isSymbolicLink(), 'Native fallback parent must be regular');
+    }
+    const destination = join(root, relative);
+    try {
+      const stat = await lstat(destination);
+      check(stat.isFile() && !stat.isSymbolicLink(), 'Native fallback destination must be regular');
+      check((await readFile(destination)).equals(bytes), 'Existing native fallback differs');
+      continue;
+    } catch (error) {
+      if (error.code !== 'ENOENT') throw error;
+    }
+    const temporary = join(parent, `.${randomUUID()}.tmp`);
+    try {
+      await writeFile(temporary, bytes, { flag: 'wx' });
+      await rename(temporary, destination);
+    } finally {
+      await unlink(temporary).catch((error) => {
+        if (error.code !== 'ENOENT') throw error;
+      });
+    }
+  }
+  return { members: 12 };
 }
 export function extractEvidence(compressed, includeFirstMain = false) {
   const tar = gunzipSync(compressed, { maxOutputLength: 8 * 1024 * 1024 });
@@ -132,7 +210,14 @@ export async function downloadCandidate(
   const includesMaterials = materialAssets.some((name) =>
     release.assets.some((asset) => asset.name === name),
   );
-  const expected = [...baseAssets, ...(includesMaterials ? materialAssets : [])];
+  const includesFallbacks = release.assets.some(
+    (asset) => asset.name === 'full-native-fallback.tar.gz',
+  );
+  const expected = [
+    ...baseAssets,
+    ...(includesMaterials ? materialAssets : []),
+    ...(includesFallbacks ? ['full-native-fallback.tar.gz'] : []),
+  ];
   check(
     Array.isArray(release.assets) && release.assets.length === expected.length,
     'Unexpected candidate asset count',
@@ -252,6 +337,10 @@ export async function downloadCandidate(
     (manifest.videoMaterials !== undefined) === includesMaterials,
     'Candidate video material assets/declaration mismatch',
   );
+  check(
+    (manifest.nativeFallbacks !== undefined) === includesFallbacks,
+    'Candidate fallback assets/declaration mismatch',
+  );
   const includeFirstMain = run.path === '.github/workflows/native-first-main.yml';
   if (includeFirstMain) {
     check(
@@ -291,6 +380,8 @@ export async function downloadCandidate(
     }),
   );
   if (failure) throw failure;
+  if (includesFallbacks)
+    await restoreNativeFallbacks(join(root, 'full-native-fallback.tar.gz'), root, manifest);
   const evidence = extractEvidence(
     await readFile(join(root, 'acceptance-evidence.tar.gz')),
     includeFirstMain,
