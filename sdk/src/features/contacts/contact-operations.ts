@@ -5,7 +5,8 @@
  * https://github.com/NapNeko/NapCatQQ/tree/26d7533e0f5800fdff865ab2f2ad7692917e1076/packages/napcat-core
  */
 import { nativeResultError } from '../../errors.ts';
-export type ContactOperation = 'getUserProfile' | 'setFriendRemark' | 'deleteFriend';
+import { captureContactOperation, type ContactOperation } from './contact-operation-input.ts';
+export type { ContactOperation } from './contact-operation-input.ts';
 export interface ContactProfile {
   userId: string;
   uid: string;
@@ -27,17 +28,8 @@ export interface ContactOperationsContext {
   signal: AbortSignal;
   awaitAlive<T>(value: T | PromiseLike<T>): Promise<T>;
 }
-function userId(value: unknown): string {
-  if (typeof value !== 'string' || !/^\d+$/.test(value))
-    throw new Error('userId must be a numeric string');
-  return value;
-}
 function string(value: unknown, name: string): string {
   if (typeof value !== 'string') throw new Error(`${name} must be a string`);
-  return value;
-}
-function flag(value: unknown, name: string): boolean {
-  if (typeof value !== 'boolean') throw new Error(`${name} must be a boolean`);
   return value;
 }
 function checkResult(result: unknown, method: string, alive: () => void): void {
@@ -120,32 +112,14 @@ export function createContactOperations(context: ContactOperationsContext) {
     payload: Record<string, unknown>,
   ): Promise<ContactProfile | void> {
     alive();
-    const id = userId(payload.userId);
-    // Validate all mutation arguments before even resolving the account UID.
-    let remark: string | undefined;
-    let block = false;
-    let both = false;
-    if (method === 'setFriendRemark') remark = string(payload.remark, 'remark');
-    else if (method === 'deleteFriend') {
-      const supplied = payload.options;
-      if (
-        supplied !== undefined &&
-        (!supplied || typeof supplied !== 'object' || Array.isArray(supplied))
-      )
-        throw new Error('options must be an object');
-      const options = (supplied ?? {}) as Record<string, unknown>;
-      const capturedBlock = options.block;
-      if (capturedBlock !== undefined) block = flag(capturedBlock, 'block');
-      const capturedBoth = options.both;
-      if (capturedBoth !== undefined) both = flag(capturedBoth, 'both');
-    } else if (method !== 'getUserProfile')
-      throw new Error(`Unsupported contact operation: ${method}`);
+    const captured = captureContactOperation(method, payload);
     alive();
+    const id = captured.payload.userId;
     const uid = await awaitAlive(resolveUid(id));
     alive();
     if (typeof uid !== 'string' || !uid.trim())
       throw new Error('User UID resolution returned no UID');
-    if (method === 'getUserProfile') {
+    if (captured.method === 'getUserProfile') {
       const profiles = await awaitAlive(readProfile(uid));
       alive();
       if (!(profiles instanceof Map)) throw new Error('Native profile response must be a Map');
@@ -158,9 +132,11 @@ export function createContactOperations(context: ContactOperationsContext) {
       return projected;
     }
     const result =
-      method === 'setFriendRemark'
-        ? await awaitAlive(setRemark(uid, remark!))
-        : await awaitAlive(deleteBuddy(uid, block, both));
+      captured.method === 'setFriendRemark'
+        ? await awaitAlive(setRemark(uid, captured.payload.remark))
+        : await awaitAlive(
+            deleteBuddy(uid, captured.payload.options.block, captured.payload.options.both),
+          );
     alive();
     checkResult(result, method, alive);
   }

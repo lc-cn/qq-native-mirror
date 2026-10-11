@@ -340,6 +340,20 @@ captured once and invoked with the original receiver and an explicit second
 receipt projection prevents a successful DTO from escaping. Composition only
 injects the port and capability decisions, then routes these three actions.
 
+`contact-operation-input` and `group-operation-input` own pure preflight for the
+three contact and eight group management actions. Each returns a closed captured
+intent whose discriminator retains the exact payload type. The facade, domain
+owner and CLI share these rules; only CLI flag parsing remains in command plans.
+Captured options are new objects with populated defaults. Public option fields
+remain optional, while internal IPC types require the captured flags and reason.
+The existing decimal spelling and range policy is preserved; management IDs are
+not silently converted to the positive query or uint64 file rules. Public group
+remark keeps its existing additional positive-ID admission rule. Facade captures
+run in async methods so validation failures remain rejected Promises.
+These modules reference only their domain data contracts and cannot acquire
+resources, resolve UIDs or import execution owners. Domain entry checks lifetime
+both before and after capture; even a validated accessor can retire the account.
+
 `createContactOperations` and `createGroupOperations` receive separate mutation
 ports, not a Session or arbitrary service locator. The contact module owns profile
 lookup, remark and deletion validation; the group module owns its eight management
@@ -365,7 +379,11 @@ once and recheck retirement before accepting it. Rejection codes come from that
 captured status, rather than a second read of the opaque native response.
 
 The checked `contact-group-snapshot-consumer-contract.mjs` runs these contracts
-against the installed compiled owners in local and platform consumers. Its native
+against the installed compiled owners in local and platform consumers. It also
+checks all eleven facade actions reject invalid JavaScript before controlled IPC,
+that deletion options are detached, and that a prepared kick CLI plan retains its
+original flags. The actual installed facade and CLI are used with a substituted
+transport, not an authenticated worker. Its native
 services are controlled fixtures; this evidence does not establish remote friend
 or group mutation, profile interoperability, or account authentication.
 

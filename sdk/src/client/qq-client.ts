@@ -1,4 +1,6 @@
 import { captureGroupSearch } from '../features/groups/group-search-input.ts';
+import { captureGroupOperation } from '../features/groups/group-operation-input.ts';
+import { captureContactOperation } from '../features/contacts/contact-operation-input.ts';
 import {
   captureCreateGroupFolder,
   captureDeleteGroupFolder,
@@ -284,14 +286,23 @@ export class QQClient extends EventEmitter<ClientEvents> {
     const captured = captureDownloadRequest(peer, messageId, elementId, destination);
     return this.#operation('downloadAttachment', captured);
   }
-  getUserProfile(userId: string): Promise<UserProfile> {
-    return this.#operation('getUserProfile', { userId });
+  async getUserProfile(userId: string): Promise<UserProfile> {
+    return this.#operation(
+      'getUserProfile',
+      captureContactOperation('getUserProfile', { userId }).payload,
+    );
   }
-  setFriendRemark(userId: string, remark: string): Promise<void> {
-    return this.#operation('setFriendRemark', { userId, remark });
+  async setFriendRemark(userId: string, remark: string): Promise<void> {
+    return this.#operation(
+      'setFriendRemark',
+      captureContactOperation('setFriendRemark', { userId, remark }).payload,
+    );
   }
-  deleteFriend(userId: string, options: DeleteFriendOptions = {}): Promise<void> {
-    return this.#operation('deleteFriend', { userId, options });
+  async deleteFriend(userId: string, options: DeleteFriendOptions = {}): Promise<void> {
+    return this.#operation(
+      'deleteFriend',
+      captureContactOperation('deleteFriend', { userId, options }).payload,
+    );
   }
   listFriendRequests(): Promise<FriendRequest[]> {
     return this.#operation('listFriendRequests');
@@ -355,11 +366,16 @@ export class QQClient extends EventEmitter<ClientEvents> {
 
   async setGroupRemark(groupId: string, remark: string): Promise<void> {
     const capturedGroupId = sendGroupId(groupId);
-    if (typeof remark !== 'string') throw new Error('remark must be a string');
-    return this.#operation('setGroupRemark', { groupId: capturedGroupId, remark });
+    return this.#operation(
+      'setGroupRemark',
+      captureGroupOperation('setGroupRemark', { groupId: capturedGroupId, remark }).payload,
+    );
   }
-  setGroupName(groupId: string, name: string): Promise<void> {
-    return this.#operation('setGroupName', { groupId, name });
+  async setGroupName(groupId: string, name: string): Promise<void> {
+    return this.#operation(
+      'setGroupName',
+      captureGroupOperation('setGroupName', { groupId, name }).payload,
+    );
   }
   /** Native acknowledgement requires both status layers to be zero.
    * This does not confirm remote state; the mutation is issued once, without retry.
@@ -372,23 +388,38 @@ export class QQClient extends EventEmitter<ClientEvents> {
     const captured = captureGroupEssenceRequest(groupId, messageId, enabled);
     return this.#operation('setGroupEssenceMessage', captured);
   }
-  setGroupMute(groupId: string, enabled: boolean): Promise<void> {
-    return this.#operation('setGroupMute', { groupId, enabled });
+  async setGroupMute(groupId: string, enabled: boolean): Promise<void> {
+    return this.#operation(
+      'setGroupMute',
+      captureGroupOperation('setGroupMute', { groupId, enabled }).payload,
+    );
   }
-  setGroupMemberMute(groupId: string, userId: string, seconds: number): Promise<void> {
-    return this.#operation('setGroupMemberMute', { groupId, userId, seconds });
-  }
-  /** Native submission only; completion does not confirm the remote group state. */
-  setGroupMemberCard(groupId: string, userId: string, card: string): Promise<void> {
-    return this.#operation('setGroupMemberCard', { groupId, userId, card });
-  }
-  /** Native submission only; completion does not confirm the remote group state. */
-  setGroupAdmin(groupId: string, userId: string, enabled: boolean): Promise<void> {
-    return this.#operation('setGroupAdmin', { groupId, userId, enabled });
+  async setGroupMemberMute(groupId: string, userId: string, seconds: number): Promise<void> {
+    return this.#operation(
+      'setGroupMemberMute',
+      captureGroupOperation('setGroupMemberMute', { groupId, userId, seconds }).payload,
+    );
   }
   /** Native submission only; completion does not confirm the remote group state. */
-  kickGroupMember(groupId: string, userId: string, options: KickOptions = {}): Promise<void> {
-    return this.#operation('kickGroupMember', { groupId, userId, options });
+  async setGroupMemberCard(groupId: string, userId: string, card: string): Promise<void> {
+    return this.#operation(
+      'setGroupMemberCard',
+      captureGroupOperation('setGroupMemberCard', { groupId, userId, card }).payload,
+    );
+  }
+  /** Native submission only; completion does not confirm the remote group state. */
+  async setGroupAdmin(groupId: string, userId: string, enabled: boolean): Promise<void> {
+    return this.#operation(
+      'setGroupAdmin',
+      captureGroupOperation('setGroupAdmin', { groupId, userId, enabled }).payload,
+    );
+  }
+  /** Native submission only; completion does not confirm the remote group state. */
+  async kickGroupMember(groupId: string, userId: string, options: KickOptions = {}): Promise<void> {
+    return this.#operation(
+      'kickGroupMember',
+      captureGroupOperation('kickGroupMember', { groupId, userId, options }).payload,
+    );
   }
   setNickname(name: string): Promise<void> {
     return this.#operation('setNickname', { name });
@@ -429,8 +460,8 @@ export class QQClient extends EventEmitter<ClientEvents> {
     return this.#operation('deleteGroupNotice', { groupId, noticeId });
   }
   /** Native submission only; completion does not confirm the remote group state. */
-  leaveGroup(groupId: string): Promise<void> {
-    return this.#operation('leaveGroup', { groupId });
+  async leaveGroup(groupId: string): Promise<void> {
+    return this.#operation('leaveGroup', captureGroupOperation('leaveGroup', { groupId }).payload);
   }
   close(): Promise<void> {
     return this.#lifecycle.close();

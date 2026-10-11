@@ -39,13 +39,13 @@ test('actual internal dispatch links every command to its payload and result wit
     ['captureFriendCategoryAssignment(userId, categoryId)', "{ userId, categoryId: '7' }"],
     ["this.#operation('listFriends')", "this.#operation('listGroups')"],
     [
-      "this.#operation('setGroupMute', { groupId, enabled })",
-      "this.#operation('setGroupMute', { groupId, enabled: 'yes' })",
+      "captureGroupOperation('setGroupMute', { groupId, enabled }).payload",
+      "{ groupId, enabled: 'yes' }",
     ],
     ['captureRecallRequest(peer, messageId)', '{ peer }'],
     ["this.#operation('listFriends')", "this.#operation('listFriends', { groupId: '123' })"],
     [
-      "this.#operation('setGroupMute', { groupId, enabled })",
+      "this.#operation(\n      'setGroupMute',\n      captureGroupOperation('setGroupMute', { groupId, enabled }).payload,\n    )",
       "this.#operation(enabled ? 'setGroupMute' : 'setGroupName', { groupId, enabled })",
     ],
     ['options: captured.params,', 'options: { folderId: captured.params.folderId },'],
@@ -53,6 +53,14 @@ test('actual internal dispatch links every command to its payload and result wit
     [
       'options: { pageStart: query.pageStart, pageLimit: query.pageLimit },',
       'options: { pageStart: query.pageStart },',
+    ],
+    [
+      "captureContactOperation('deleteFriend', { userId, options }).payload",
+      '{ userId, options: {} }',
+    ],
+    [
+      "captureGroupOperation('kickGroupMember', { groupId, userId, options }).payload",
+      '{ groupId, userId, options: {} }',
     ],
   ];
   for (const [before, after] of cases) {

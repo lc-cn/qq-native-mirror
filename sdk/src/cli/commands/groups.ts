@@ -1,4 +1,5 @@
 import { resolve } from 'node:path';
+import { captureGroupOperation } from '../../features/groups/group-operation-input.ts';
 import { captureGroupSearch } from '../../features/groups/group-search-input.ts';
 import {
   captureCreateGroupFolder,
@@ -83,7 +84,8 @@ export const groupsCommands = {
       const group = numeric(flags, 'group-id');
       const name = required(flags, 'name');
       if (!name.trim()) throw new Error('--name must not be blank');
-      return (client) => client.setGroupName(group, name);
+      const input = captureGroupOperation('setGroupName', { groupId: group, name }).payload;
+      return (client) => client.setGroupName(input.groupId, input.name);
     },
   },
   'group-search': {
@@ -153,7 +155,8 @@ export const groupsCommands = {
     prepare(flags) {
       const group = numeric(flags, 'group-id');
       const remark = required(flags, 'remark', true);
-      return (client) => client.setGroupRemark(group, remark);
+      const input = captureGroupOperation('setGroupRemark', { groupId: group, remark }).payload;
+      return (client) => client.setGroupRemark(input.groupId, input.remark);
     },
   },
   'group-essence': {
@@ -173,7 +176,8 @@ export const groupsCommands = {
     prepare(flags) {
       const group = numeric(flags, 'group-id');
       const enabled = bool(flags, 'enabled');
-      return (client) => client.setGroupMute(group, enabled);
+      const input = captureGroupOperation('setGroupMute', { groupId: group, enabled }).payload;
+      return (client) => client.setGroupMute(input.groupId, input.enabled);
     },
   },
   'member-mute': {
@@ -184,7 +188,12 @@ export const groupsCommands = {
       const seconds = Number(numeric(flags, 'seconds'));
       if (!Number.isSafeInteger(seconds))
         throw new Error('--seconds must be a nonnegative safe integer');
-      return (client) => client.setGroupMemberMute(group, user, seconds);
+      const input = captureGroupOperation('setGroupMemberMute', {
+        groupId: group,
+        userId: user,
+        seconds,
+      }).payload;
+      return (client) => client.setGroupMemberMute(input.groupId, input.userId, input.seconds);
     },
   },
   'member-card': {
@@ -193,7 +202,12 @@ export const groupsCommands = {
       const group = numeric(flags, 'group-id');
       const user = numeric(flags, 'user-id');
       const card = required(flags, 'card', true);
-      return (client) => client.setGroupMemberCard(group, user, card);
+      const input = captureGroupOperation('setGroupMemberCard', {
+        groupId: group,
+        userId: user,
+        card,
+      }).payload;
+      return (client) => client.setGroupMemberCard(input.groupId, input.userId, input.card);
     },
   },
   'member-admin': {
@@ -202,7 +216,12 @@ export const groupsCommands = {
       const group = numeric(flags, 'group-id');
       const user = numeric(flags, 'user-id');
       const enabled = bool(flags, 'enabled');
-      return (client) => client.setGroupAdmin(group, user, enabled);
+      const input = captureGroupOperation('setGroupAdmin', {
+        groupId: group,
+        userId: user,
+        enabled,
+      }).payload;
+      return (client) => client.setGroupAdmin(input.groupId, input.userId, input.enabled);
     },
   },
   'group-kick': {
@@ -214,7 +233,12 @@ export const groupsCommands = {
         rejectRejoin: bool(flags, 'reject-rejoin', false),
         reason: flags.reason ?? '',
       };
-      return (client) => client.kickGroupMember(group, user, options);
+      const input = captureGroupOperation('kickGroupMember', {
+        groupId: group,
+        userId: user,
+        options,
+      }).payload;
+      return (client) => client.kickGroupMember(input.groupId, input.userId, input.options);
     },
   },
   'group-essence-list': {
@@ -285,7 +309,8 @@ export const groupsCommands = {
     flags: ['config', 'uin', 'group-id'],
     prepare(flags) {
       const group = numeric(flags, 'group-id');
-      return (client) => client.leaveGroup(group);
+      const input = captureGroupOperation('leaveGroup', { groupId: group }).payload;
+      return (client) => client.leaveGroup(input.groupId);
     },
   },
 } satisfies Record<string, ClientCommandDefinition>;

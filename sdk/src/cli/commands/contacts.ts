@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
+import { captureContactOperation } from '../../features/contacts/contact-operation-input.ts';
 import {
   captureFriendCategoryAssignment,
   captureFriendCategoryId,
@@ -35,8 +36,10 @@ export const contactsCommands = {
   profile: {
     flags: ['config', 'uin', 'target'],
     prepare(flags) {
-      const target = numeric(flags, 'target');
-      return (client) => client.getUserProfile(target);
+      const input = captureContactOperation('getUserProfile', {
+        userId: numeric(flags, 'target'),
+      }).payload;
+      return (client) => client.getUserProfile(input.userId);
     },
   },
   requests: {
@@ -56,9 +59,11 @@ export const contactsCommands = {
   'friend-remark': {
     flags: ['config', 'uin', 'target', 'remark'],
     prepare(flags) {
-      const target = numeric(flags, 'target');
-      const remark = required(flags, 'remark', true);
-      return (client) => client.setFriendRemark(target, remark);
+      const input = captureContactOperation('setFriendRemark', {
+        userId: numeric(flags, 'target'),
+        remark: required(flags, 'remark', true),
+      }).payload;
+      return (client) => client.setFriendRemark(input.userId, input.remark);
     },
   },
   'friend-category-rename': {
@@ -114,9 +119,11 @@ export const contactsCommands = {
   'friend-delete': {
     flags: ['config', 'uin', 'target', 'block', 'both'],
     prepare(flags) {
-      const target = numeric(flags, 'target');
-      const options = { block: bool(flags, 'block', false), both: bool(flags, 'both', false) };
-      return (client) => client.deleteFriend(target, options);
+      const input = captureContactOperation('deleteFriend', {
+        userId: numeric(flags, 'target'),
+        options: { block: bool(flags, 'block', false), both: bool(flags, 'both', false) },
+      }).payload;
+      return (client) => client.deleteFriend(input.userId, input.options);
     },
   },
 } satisfies Record<string, ClientCommandDefinition>;

@@ -4,15 +4,8 @@
  * These contracts are fake-tested; no real group mutation is part of verification.
  */
 import { nativeResultError } from '../../errors.ts';
-export type GroupOperation =
-  | 'setGroupName'
-  | 'setGroupRemark'
-  | 'setGroupMute'
-  | 'setGroupMemberMute'
-  | 'setGroupMemberCard'
-  | 'setGroupAdmin'
-  | 'kickGroupMember'
-  | 'leaveGroup';
+import { captureGroupOperation, type GroupOperation } from './group-operation-input.ts';
+export type { GroupOperation } from './group-operation-input.ts';
 // Pinned NodeIKernelGroupService declares void/Promise<void> for these four.
 // A void return acknowledges submission only, not remote permission or effect.
 const voidOperations = new Set<GroupOperation>([
@@ -43,18 +36,9 @@ export interface GroupOperationsContext {
   signal: AbortSignal;
   awaitAlive<T>(value: T | PromiseLike<T>): Promise<T>;
 }
-function id(value: unknown, field: string): string {
-  if (typeof value !== 'string' || !/^\d+$/.test(value))
-    throw new Error(`${field} must be a numeric string`);
-  return value;
-}
 function text(value: unknown, field: string, allowEmpty = false): string {
   if (typeof value !== 'string' || (!allowEmpty && !value.trim()))
     throw new Error(`${field} must be ${allowEmpty ? 'a string' : 'a nonempty string'}`);
-  return value;
-}
-function boolean(value: unknown, field: string): boolean {
-  if (typeof value !== 'boolean') throw new Error(`${field} must be a boolean`);
   return value;
 }
 export function createGroupOperations(context: GroupOperationsContext) {
@@ -71,26 +55,25 @@ export function createGroupOperations(context: GroupOperationsContext) {
     payload: Record<string, unknown>,
   ): Promise<void> {
     alive();
-    const groupId = id(payload.groupId, 'groupId');
+    const captured = captureGroupOperation(method, payload);
+    alive();
+    const groupId = captured.payload.groupId;
     let call: NativeGroupCall;
-    switch (method) {
+    switch (captured.method) {
       case 'setGroupName':
-        call = { method: 'modifyGroupName', args: [groupId, text(payload.name, 'name'), false] };
+        call = { method: 'modifyGroupName', args: [groupId, captured.payload.name, false] };
         break;
       case 'setGroupRemark':
         call = {
           method: 'modifyGroupRemark',
-          args: [groupId, text(payload.remark, 'remark', true)],
+          args: [groupId, captured.payload.remark],
         };
         break;
       case 'setGroupMute':
-        call = { method: 'setGroupShutUp', args: [groupId, boolean(payload.enabled, 'enabled')] };
+        call = { method: 'setGroupShutUp', args: [groupId, captured.payload.enabled] };
         break;
       case 'setGroupMemberMute': {
-        const userId = id(payload.userId, 'userId');
-        const seconds = payload.seconds;
-        if (typeof seconds !== 'number' || !Number.isSafeInteger(seconds) || seconds < 0)
-          throw new Error('seconds must be a nonnegative safe integer');
+        const { userId, seconds } = captured.payload;
         call = {
           method: 'setMemberShutUp',
           args: [groupId, [{ uid: await memberUid(userId), timeStamp: seconds }]],
@@ -98,14 +81,12 @@ export function createGroupOperations(context: GroupOperationsContext) {
         break;
       }
       case 'setGroupMemberCard': {
-        const userId = id(payload.userId, 'userId');
-        const card = text(payload.card, 'card', true);
+        const { userId, card } = captured.payload;
         call = { method: 'modifyMemberCardName', args: [groupId, await memberUid(userId), card] };
         break;
       }
       case 'setGroupAdmin': {
-        const userId = id(payload.userId, 'userId');
-        const enabled = boolean(payload.enabled, 'enabled');
+        const { userId, enabled } = captured.payload;
         call = {
           method: 'modifyMemberRole',
           args: [groupId, await memberUid(userId), enabled ? 3 : 2],
@@ -113,41 +94,25 @@ export function createGroupOperations(context: GroupOperationsContext) {
         break;
       }
       case 'kickGroupMember': {
-        const userId = id(payload.userId, 'userId');
-        const supplied = payload.options;
-        if (
-          supplied !== undefined &&
-          (!supplied || typeof supplied !== 'object' || Array.isArray(supplied))
-        )
-          throw new Error('options must be an object');
-        const options = (supplied ?? {}) as Record<string, unknown>;
-        const capturedRejectRejoin = options.rejectRejoin;
-        const rejectRejoin =
-          capturedRejectRejoin === undefined
-            ? false
-            : boolean(capturedRejectRejoin, 'rejectRejoin');
-        const capturedReason = options.reason;
-        const reason = capturedReason === undefined ? '' : text(capturedReason, 'reason', true);
+        const { userId, options } = captured.payload;
         call = {
           method: 'kickMember',
-          args: [groupId, [await memberUid(userId)], rejectRejoin, reason],
+          args: [groupId, [await memberUid(userId)], options.rejectRejoin, options.reason],
         };
         break;
       }
       case 'leaveGroup':
         call = { method: 'quitGroup', args: [groupId] };
         break;
-      default:
-        throw new Error(`Unsupported group operation: ${method}`);
     }
     alive();
     const service = context.getGroupService();
     alive();
-    const captured = service?.[call.method];
+    const capturedMethod = service?.[call.method];
     alive();
-    if (typeof captured !== 'function')
+    if (typeof capturedMethod !== 'function')
       throw new Error(`Native group service is missing ${call.method}`);
-    const result: unknown = await awaitAlive(Reflect.apply(captured, service, call.args));
+    const result: unknown = await awaitAlive(Reflect.apply(capturedMethod, service, call.args));
     alive();
     if (result === undefined && voidOperations.has(method)) return;
     // GeneralCallResult methods require result zero; explicit failure or malformed

@@ -629,6 +629,8 @@ test('public contract type dependencies have no cycles', () => {
 // This list describes reviewed pure modules, not permitted dependencies of general
 // composition modules. Adding an input helper requires reviewing its runtime closure.
 const pureModules = new Set([
+  'src/features/contacts/contact-operation-input.ts',
+  'src/features/groups/group-operation-input.ts',
   'src/native/native-manifest.ts',
   'src/types.ts',
   'src/errors.ts',
@@ -651,6 +653,8 @@ const pureModules = new Set([
   'src/features/forward/merged-forward-card.ts',
 ]);
 const pureRoots = [
+  'features/contacts/contact-operation-input.ts',
+  'features/groups/group-operation-input.ts',
   'native/native-manifest.ts',
   'features/contacts/friend-categories.ts',
   'features/messages/query-input.ts',
@@ -895,6 +899,40 @@ test('attachment staging can preserve cleanup failures without acquiring runtime
     }),
     undefined,
   );
+});
+
+test('management input owners stay pure while facade and CLI share their captures', () => {
+  for (const [input, contract, command, operation] of [
+    [
+      'contacts/contact-operation-input.ts',
+      'contacts.ts',
+      'contacts.ts',
+      'contacts/contact-operations.ts',
+    ],
+    ['groups/group-operation-input.ts', 'groups.ts', 'groups.ts', 'groups/group-operations.ts'],
+  ]) {
+    const to = `src/features/${input}`;
+    assert.equal(
+      dependencyViolation({ from: to, to: `src/contracts/${contract}`, typeOnly: true }),
+      undefined,
+    );
+    for (const typeOnly of [false, true]) {
+      assert.ok(dependencyViolation({ from: 'src/native-services.ts', to, typeOnly }));
+      assert.ok(dependencyViolation({ from: to, to: `src/features/${operation}`, typeOnly }));
+      assert.ok(
+        dependencyViolation({ from: to, to: 'src/runtime/native-event-channel.ts', typeOnly }),
+      );
+      assert.equal(
+        dependencyViolation({ from: 'src/client/qq-client.ts', to, typeOnly }),
+        undefined,
+      );
+      assert.equal(
+        dependencyViolation({ from: `src/cli/commands/${command}`, to, typeOnly }),
+        undefined,
+      );
+    }
+    assert.ok(dependencyViolation({ from: to, to: `src/contracts/${contract}`, typeOnly: false }));
+  }
 });
 
 test('recall composition delegates input capture and recipient orchestration to its domain owner', () => {

@@ -56,6 +56,14 @@ checks single-read mutation options, profile projection, captured error codes an
 retirement during result access. Both local and platform verifiers await it and
 record `contactGroupSnapshotChecks`. Strict compiler and lint negative fixtures
 reject invalid native ports and ignored mutation Promises without running them.
+The same helper imports the installed facade and CLI to verify eleven management
+preflight paths, detached options and captured command plans through a controlled
+IPC transport. Source and compiler regressions require correlated action inputs
+and populated internal IPC defaults without changing optional public options.
+Both management input modules participate in the pure runtime-closure check;
+dependency fixtures also forbid type imports from native execution or runtime
+owners. These checks establish validation and routing, not account authorization
+or remote management effects.
 The client-factory consumer types its public
 factory, captured worker options and initialization payloads while running the
 actual worker with a replacement kernel and addon loader. Invalid source-option

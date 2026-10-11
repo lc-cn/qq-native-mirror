@@ -70,7 +70,7 @@ export interface ServiceOperationContracts {
   listFriendCategories: Operation<undefined, FriendCategory[]>;
   getUserProfile: Operation<{ userId: string }, UserProfile>;
   setFriendRemark: Operation<{ userId: string; remark: string }, void>;
-  deleteFriend: Operation<{ userId: string; options: DeleteFriendOptions }, void>;
+  deleteFriend: Operation<{ userId: string; options: Required<DeleteFriendOptions> }, void>;
   listFriendRequests: Operation<undefined, FriendRequest[]>;
   handleFriendRequest: Operation<
     { request: Pick<FriendRequest, 'uid' | 'time'>; accept: boolean },
@@ -99,7 +99,10 @@ export interface ServiceOperationContracts {
   setGroupMemberMute: Operation<{ groupId: string; userId: string; seconds: number }, void>;
   setGroupMemberCard: Operation<{ groupId: string; userId: string; card: string }, void>;
   setGroupAdmin: Operation<{ groupId: string; userId: string; enabled: boolean }, void>;
-  kickGroupMember: Operation<{ groupId: string; userId: string; options: KickOptions }, void>;
+  kickGroupMember: Operation<
+    { groupId: string; userId: string; options: Required<KickOptions> },
+    void
+  >;
   leaveGroup: Operation<{ groupId: string }, void>;
   listGroupRequests: Operation<{ options: GroupRequestOptions }, GroupRequestPage>;
   handleGroupRequest: Operation<

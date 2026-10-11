@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { EventEmitter } from 'node:events';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
@@ -210,6 +211,7 @@ export async function verifyContactGroupSnapshots(packageRoot) {
   assert.equal(lookups, 0);
   assert.equal(account.signal.aborted, false);
   return {
+    ...(await verifyPublicOperationInputs(packageRoot)),
     contactMutationSnapshotContract: true,
     groupMutationSnapshotContract: true,
     contactProfileSnapshotContract: true,
@@ -219,5 +221,109 @@ export async function verifyContactGroupSnapshots(packageRoot) {
     nativeContactMutationAttempted: false,
     nativeGroupManagementAttempted: false,
     nativeContactProfileReadAttempted: false,
+  };
+}
+
+/** Installed facade and CLI proof through a controlled IPC transport.
+ * @param {string} packageRoot
+ */
+async function verifyPublicOperationInputs(packageRoot) {
+  /** @type {Promise<typeof import('../src/index.ts')>} */
+  const entry = import(pathToFileURL(join(packageRoot, 'dist/index.js')).href);
+  /** @type {Promise<typeof import('../src/cli.ts')>} */
+  const cli = import(pathToFileURL(join(packageRoot, 'dist/cli.js')).href);
+  const [{ QQClient }, { prepareCommand }] = await Promise.all([entry, cli]);
+  class ControlledWorker extends EventEmitter {
+    connected = true;
+    /** @type {number | null} */
+    exitCode = null;
+    stdout = new EventEmitter();
+    stderr = new EventEmitter();
+    /** @type {Record<string, unknown>[]} */
+    requests = [];
+    /** @param {Record<string, unknown>} value @param {(error: Error | null) => void} callback */
+    send(value, callback) {
+      this.requests.push(value);
+      callback(null);
+      queueMicrotask(() => {
+        this.emit('message', { id: value.id, result: undefined });
+        if (value.method === 'close') {
+          this.connected = false;
+          this.exitCode = 0;
+          this.emit('exit', 0, null);
+        }
+      });
+    }
+    kill() {
+      this.connected = false;
+      this.exitCode = 0;
+      queueMicrotask(() => this.emit('exit', 0, null));
+      return true;
+    }
+  }
+  const worker = new ControlledWorker();
+  // Only this fixture transport is substituted; the facade and CLI are installed code.
+  const client = new QQClient(
+    /** @type {import('node:child_process').ChildProcess} */ (/** @type {unknown} */ (worker)),
+    1000,
+  );
+  worker.emit('message', { event: 'ready', payload: { uin: '456', uid: 'u_fixture' } });
+  try {
+    const invalid = [
+      () => client.getUserProfile('invalid'),
+      () => Reflect.apply(client.setFriendRemark, client, ['123', 42]),
+      () => Reflect.apply(client.deleteFriend, client, ['123', { block: 'invalid' }]),
+      () => client.setGroupName('123', ' '),
+      () => client.setGroupRemark('0', ''),
+      () => Reflect.apply(client.setGroupMute, client, ['123', 1]),
+      () => client.setGroupMemberMute('123', '456', -1),
+      () => client.setGroupMemberCard('123', 'invalid', ''),
+      () => Reflect.apply(client.setGroupAdmin, client, ['123', '456', 'invalid']),
+      () => Reflect.apply(client.kickGroupMember, client, ['123', '456', { reason: 42 }]),
+      () => client.leaveGroup('invalid'),
+    ];
+    for (const attempt of invalid) await assert.rejects(async () => attempt());
+    assert.equal(worker.requests.length, 0);
+    let reads = 0;
+    const options = {
+      get block() {
+        assert.equal(++reads, 1);
+        return true;
+      },
+    };
+    const deletion = client.deleteFriend('000123', options);
+    Object.defineProperty(options, 'block', { value: false });
+    await deletion;
+    const sent = worker.requests.at(-1);
+    assert.equal(sent?.method, 'deleteFriend');
+    assert.equal(sent?.userId, '000123');
+    assert.notEqual(sent?.options, options);
+    assert.deepEqual(sent?.options, { block: true, both: false });
+    assert.equal(reads, 1);
+    const flags = {
+      'group-id': '000123',
+      'user-id': '000456',
+      'reject-rejoin': 'true',
+      reason: ' exact ',
+    };
+    const kick = await prepareCommand('group-kick', flags);
+    flags['reject-rejoin'] = 'false';
+    flags.reason = 'changed';
+    await kick(client);
+    const kicked = worker.requests.at(-1);
+    assert.equal(kicked?.method, 'kickGroupMember');
+    assert.equal(kicked?.groupId, '000123');
+    assert.equal(kicked?.userId, '000456');
+    assert.deepEqual(kicked?.options, { rejectRejoin: true, reason: ' exact ' });
+  } finally {
+    await client.close();
+  }
+  assert.equal(worker.connected, false);
+  assert.equal(worker.exitCode, 0);
+  return {
+    contactGroupFacadeInputContract: true,
+    contactGroupFacadeDetachedOptionsContract: true,
+    contactGroupCliCapturedPlanContract: true,
+    contactGroupControlledIpcRetired: true,
   };
 }

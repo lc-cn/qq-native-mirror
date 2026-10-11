@@ -181,6 +181,16 @@ record, with another retirement check after projection. Preserve the original ra
 carrier and Map lookup behavior. Installed controlled consumers verify these
 rules separately from authorized real-account acceptance.
 
+Contact and group management capture lives in `contact-operation-input.ts` and
+`group-operation-input.ts`. Use these pure functions in the public facade, domain
+owner and CLI plans; avoid duplicating business validation in any of those callers.
+The captured intent discriminator carries the exact action payload. Capture before
+IPC and UID lookup, copy options and populate defaults, and preserve Promise
+rejections in public methods. The execution owner checks lifetime before and after
+capture and still owns native completion and UID validation. Composition forwards
+requests; it cannot import these input modules. Keep their imports limited to
+their own domain data contracts, including type dependencies.
+
 Group query envelopes and rows follow the same capture-before-validation rule.
 Use intrinsic Map operations for native membership maps, and commit the complete
 validated member batch only after checking Session retirement. Keep this policy
