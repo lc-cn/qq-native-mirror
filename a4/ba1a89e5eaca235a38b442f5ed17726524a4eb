@@ -1,0 +1,47 @@
+sdk/README.md
+  s_2104cc474f1ce5::t_ffbf1f7a6ff534 55-59
+sdk/docs/architecture/encapsulation.md
+  s_2104cc474f1ce5::t_51931297b7e705 71-91
+sdk/docs/architecture/lifecycle.md
+  s_2104cc474f1ce5::t_9ef04f90b07d6e 100-111,113
+sdk/scripts/consumers/worker-error-consumer-contract.mjs
+  s_2104cc474f1ce5::t_c2849851830fbc 6,37,170,198-258
+sdk/scripts/verify-package-consumer.mjs
+  s_2104cc474f1ce5::t_539d6f53351550 62-63
+sdk/src/kernel.ts
+  s_2104cc474f1ce5::t_641b66ba34e27c 13,278
+sdk/src/runtime/account-session-lifecycle.ts
+  s_2104cc474f1ce5::t_33e6a105898ed1 5,123
+sdk/src/runtime/authentication-attempt.ts
+  s_2104cc474f1ce5::t_c1702bde7dbf13 2,94
+sdk/src/runtime/background-task.ts
+  s_2104cc474f1ce5::t_4e3057892ddd5f 3-10,12
+sdk/src/runtime/client-lifecycle.ts
+  s_2104cc474f1ce5::t_1f2690fde39b21 3,322-330,422-434
+sdk/src/worker.ts
+  s_2104cc474f1ce5::t_f7564c6cef0962 6,74
+sdk/test/architecture/dependency-direction.ts
+  s_2104cc474f1ce5::t_4f1b9a437d0f87 311-346
+sdk/test/client-background-failure.test.mjs
+  s_2104cc474f1ce5::t_b9bd652866e5ef 1-102
+sdk/test/helpers/dependency-policy.ts
+  s_2104cc474f1ce5::t_8991db60ba8bf3 61,87,216-231
+sdk/test/source-promise-gates.test.mjs
+  s_2104cc474f1ce5::t_8c46b1a1d1bce3 6,15,42,63-217
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a4ba1a89e5eaca235a38b442f5ed17726524a4eb",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
