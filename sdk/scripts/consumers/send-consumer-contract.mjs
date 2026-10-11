@@ -125,6 +125,21 @@ export async function verifySendConsumer(packagePath) {
       f.services.close();
     }
   }
+  for (const boundary of sendInputDataCases()) {
+    const f = fixture();
+    try {
+      await assert.rejects(
+        f.services.invokeOperation('sendGroupMessage', group(boundary.message)),
+        /input|element|text|identifier/i,
+      );
+      assert.equal(boundary.reads(), 0);
+      assert.deepEqual(f.conversions, []);
+      assert.equal(f.generated(), 0);
+      assert.equal(f.calls.length, 0);
+    } finally {
+      f.services.close();
+    }
+  }
   /** @type {(value:unknown)=>void} */
   let resolveUid = () => assert.fail('UID wait not started');
   const snapshot = fixture({
@@ -432,6 +447,15 @@ async function verifyPublicSendCapture(packagePath) {
         ]),
     ])
       await assert.rejects(Promise.resolve().then(action));
+    for (const boundary of sendInputDataCases()) {
+      await assert.rejects(
+        Promise.resolve().then(() =>
+          Reflect.apply(client.sendGroupMessage, client, ['123', boundary.message]),
+        ),
+        /input|element|text|identifier/i,
+      );
+      assert.equal(boundary.reads(), 0);
+    }
     assert.equal(calls.length, 0);
     for (const [method, id] of /** @type {const} */ ([
       ['sendPrivateMessage', '000456'],
@@ -453,6 +477,7 @@ async function verifyPublicSendCapture(packagePath) {
     return {
       publicSendPreflightContract: true,
       publicSendSnapshotContract: true,
+      sendInputDataBoundaryContract: true,
       privateUidSenderRouteContract: true,
       sendUidCloseNoLateWriteContract: true,
     };
@@ -466,4 +491,39 @@ async function verifyPublicSendCapture(packagePath) {
 /** @param {unknown} value @returns {asserts value is Record<string,unknown>} */
 function assertRecord(value) {
   assert.ok(value !== null && typeof value === 'object' && !Array.isArray(value));
+}
+
+/** Caller accessors must never enter installed IPC or native preparation.
+ * @returns {{message:unknown,reads:()=>number}[]} */
+function sendInputDataCases() {
+  const cases = [];
+  for (const [field, element] of /** @type {[string,Record<string,unknown>][]} */ ([
+    ['type', { type: 'text', text: 'fixture' }],
+    ['text', { type: 'text', text: 'fixture' }],
+    ['userId', { type: 'at', userId: '456' }],
+    ['id', { type: 'face', id: 0 }],
+    ['file', { type: 'image', file: '/synthetic/image.png' }],
+    ['name', { type: 'file', file: '/synthetic/file.txt', name: 'file.txt' }],
+    ['messageId', { type: 'reply', messageId: '42' }],
+  ])) {
+    let reads = 0;
+    const value = element[field];
+    Object.defineProperty(element, field, {
+      get() {
+        reads++;
+        return value;
+      },
+    });
+    cases.push({ message: [element], reads: () => reads });
+  }
+  let slotReads = 0;
+  const slots = Object.defineProperty([{ type: 'text', text: 'fixture' }], '0', {
+    get() {
+      slotReads++;
+      return { type: 'text', text: 'fixture' };
+    },
+  });
+  cases.push({ message: slots, reads: () => slotReads });
+  cases.push({ message: [Object.create({ type: 'text', text: 'fixture' })], reads: () => 0 });
+  return cases;
 }

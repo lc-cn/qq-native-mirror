@@ -315,7 +315,12 @@ sender; deferred preparation cannot dispatch after shutdown.
 Ordinary private/group sends enter the existing message sender through captured
 public intent. The facade and sender reuse `capturePrivateMessage` and
 `captureGroupMessage`, so the complete element batch is copied before IPC,
-recipient UID lookup or media preparation. `native-services` routes raw payloads
+recipient UID lookup or media preparation. Selected fields are captured once as
+own data before validation; accessors are rejected without execution, inherited
+fields cannot supply intent, and caller iterators cannot replace array slots.
+Optional mention aliases and empty text retain their existing semantics. Unknown
+discriminators are rejected without coercion. This does not make arbitrary Proxy
+descriptor traps side-effect free. `native-services` routes raw payloads
 to this owner; the dependency gate forbids it from importing send-input policy.
 Private recipient conversion, mention resolution, element preparation, unique-ID
 reservation and callback correlation therefore have one implementation owner.
@@ -377,8 +382,8 @@ ordinary public message input. The formatter preserves its former type reexport.
 The sender captures the entire input batch before asynchronous preparation and
 uses the closed prepared union instead of a dynamic native-object array. Invalid
 later elements cannot start earlier UID or media work. This capture copies
-validated fields; it does not establish descriptor-safe getter handling.
-Reply fields still use their existing nonempty string checks before construction.
+validated own data fields without executing getters.
+Reply IDs retain their positive numeric spelling, including leading zeros.
 Video thumbnail lookup remains a typed Map lookup, including the possibility
 that a requested key is absent. This internal model does not assert a complete
 callback ABI: raw received elements retain their existing projection contracts.
