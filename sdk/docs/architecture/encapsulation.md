@@ -1003,6 +1003,18 @@ restoration and mirror installation keep their distinct existing format, locking
 cache and repair policies. These differences are deliberately not hidden inside
 a universal manifest parser.
 
+`native/native-response` owns bounded bytes from one HTTP response, shared by
+catalog and package transports. It copies accepted chunks, cancels rejected HTTP
+bodies, and cancels then releases an acquired reader when a read fails. Each
+cleanup is attempted once; the primary and opaque cleanup errors remain available.
+An already-errored stream that rejects cancellation with the same value retains
+that single failure. Successful EOF releases without cancellation. Redirect
+validation remains in bundle acquisition and establishes its failure before
+discarding the response; a failed discard cannot dispatch the next request.
+The response module neither fetches nor interprets URLs, metadata or hashes.
+Its exact dependency on the pure cleanup helper grants no account or IO ownership.
+Request timeouts remain with the transports; this module adds no cancellation deadline.
+
 The source and installed-archive factory checks exercise these selection policies
 through `createClient`, with controlled metadata/payload responses and addon
 loading. They verify default latest with installed packages, whole-inventory
@@ -1010,6 +1022,8 @@ reuse, matching corruption rejection, metadata failures, pinned offline resoluti
 version fallback before runtime checks, explicit catalog/manifest precedence,
 legacy wrappers and local codec inventory discovery. No account or real addon
 interoperability is claimed by those fixtures.
+HTTP failure fixtures also verify catalog/manifest body cancellation and retention
+of opaque cleanup errors before any account directory, cache or worker acquisition.
 
 ## CLI execution
 

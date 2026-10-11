@@ -20,6 +20,7 @@ import {
   validateRemoteInventory,
 } from './native-manifest.ts';
 import { verifyNativeDirectory } from './native-directory-verification.ts';
+import { discardNativeResponse, readNativeResponse } from './native-response.ts';
 
 // Internal compatibility exports; input consumers import the pure manifest owner.
 export { safeRelative, validateDownloadMirrors } from './native-manifest.ts';
@@ -102,34 +103,40 @@ async function download(url: string, maxBytes: number): Promise<Buffer> {
   for (let hops = 0; hops <= 5; hops++) {
     response = await fetch(current, { signal: AbortSignal.timeout(600_000), redirect: 'manual' });
     if (![301, 302, 303, 307, 308].includes(response.status)) break;
-    const location = response.headers.get('location');
-    await response.body?.cancel();
-    if (!location || hops === 5) throw new Error('Invalid native download redirect');
-    const next = new URL(location, current);
-    // Release assets redirect to GitHub's HTTPS object storage. Do not
-    // broaden arbitrary mirror redirect behavior or forward credentials.
-    if (
-      current.hostname !== 'github.com' ||
-      next.protocol !== 'https:' ||
-      !['release-assets.githubusercontent.com', 'objects.githubusercontent.com'].includes(
-        next.hostname,
-      ) ||
-      next.username ||
-      next.password
-    )
-      throw new Error('Untrusted native download redirect');
+    let next: URL;
+    try {
+      const location = response.headers.get('location');
+      if (!location || hops === 5) throw new Error('Invalid native download redirect');
+      next = new URL(location, current);
+      // Release assets redirect to GitHub's HTTPS object storage. Do not
+      // broaden arbitrary mirror redirect behavior or forward credentials.
+      if (
+        current.hostname !== 'github.com' ||
+        next.protocol !== 'https:' ||
+        !['release-assets.githubusercontent.com', 'objects.githubusercontent.com'].includes(
+          next.hostname,
+        ) ||
+        next.username ||
+        next.password
+      )
+        throw new Error('Untrusted native download redirect');
+    } catch (error) {
+      // Capture policy failure before releasing the response; cleanup cannot replace it.
+      await discardNativeResponse(response, { error });
+      throw error;
+    }
+    await discardNativeResponse(response);
     current = next;
   }
   if (!response) throw new Error('Native download failed');
-  if (!response.ok || !response.body) throw new Error(`Download failed: HTTP ${response.status}`);
-  const chunks: Buffer[] = [];
-  let size = 0;
-  for await (const chunk of response.body) {
-    size += chunk.length;
-    if (size > maxBytes) throw new Error('Native package download exceeds size limit');
-    chunks.push(Buffer.from(chunk));
-  }
-  return Buffer.concat(chunks);
+  return readNativeResponse(response, {
+    maxBytes,
+    errors: {
+      http: (status) => `Download failed: HTTP ${status}`,
+      empty: (status) => `Download failed: HTTP ${status}`,
+      tooLarge: 'Native package download exceeds size limit',
+    },
+  });
 }
 export async function prepareNative(options: ClientOptions): Promise<PreparedNative> {
   validateNativeSourceOptions(options);

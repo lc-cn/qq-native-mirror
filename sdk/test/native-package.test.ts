@@ -696,3 +696,116 @@ test('content cache directory cannot redirect installation writes outside the ca
   assert.equal(payloads, 0);
   assert.deepEqual(await readdir(outside), []);
 });
+
+test('manifest HTTP and redirect failures release bodies without following or creating cache', async (t) => {
+  const directory = await mkdtemp(join(tmpdir(), 'qq-body-retirement-'));
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  const original = globalThis.fetch;
+  t.after(() => {
+    globalThis.fetch = original;
+  });
+  const cleanup = { opaque: 'cancel failure' };
+  for (const scenario of [
+    { status: 503, location: undefined, message: /Download failed: HTTP 503/ },
+    { status: 302, location: undefined, message: /Invalid native download redirect/ },
+    {
+      status: 302,
+      location: 'https://untrusted.example/native',
+      message: /Untrusted native download redirect/,
+    },
+    {
+      status: 302,
+      location: 'https://release-assets.githubusercontent.com/native',
+      message: undefined,
+    },
+  ]) {
+    let calls = 0,
+      cancellations = 0;
+    globalThis.fetch = async () => {
+      calls++;
+      return new Response(
+        new ReadableStream({
+          cancel() {
+            cancellations++;
+            throw cleanup;
+          },
+        }),
+        {
+          status: scenario.status,
+          headers: scenario.location ? { location: scenario.location } : undefined,
+        },
+      );
+    };
+    await assert.rejects(
+      prepareNative({
+        dataDir: join(directory, 'account'),
+        cacheDir: join(directory, 'cache'),
+        manifestUrl: 'https://github.com/example/manifest.json',
+        manifestSha256: 'a'.repeat(64),
+      }),
+      (error: unknown) => {
+        if (scenario.message) {
+          assert.ok(error instanceof AggregateError);
+          assert.match(error.errors[0].message, scenario.message);
+          assert.equal(error.errors[1], cleanup);
+        } else assert.equal(error, cleanup);
+        return true;
+      },
+    );
+    assert.equal(calls, 1);
+    assert.equal(cancellations, 1);
+    assert.deepEqual(await readdir(directory), []);
+  }
+});
+
+test('failed accelerator body is cancelled before verified origin fallback starts', async (t) => {
+  const directory = await mkdtemp(join(tmpdir(), 'qq-body-fallback-'));
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  const original = globalThis.fetch;
+  t.after(() => {
+    globalThis.fetch = original;
+  });
+  const bytes = Buffer.from('verified native fixture');
+  const origin = 'https://github.com/example/releases/download/v1/wrapper.node';
+  const body = JSON.stringify({
+    schemaVersion: 1,
+    id: 'body-fallback',
+    platform: process.platform,
+    arch: process.arch,
+    wrapper: 'wrapper.node',
+    version: { clientVersion: 'test', appId: '1', qua: 'test' },
+    files: [{ path: 'wrapper.node', url: origin, sha256: sha(bytes) }],
+  });
+  const steps: string[] = [];
+  globalThis.fetch = async (input) => {
+    const url = String(input);
+    if (url === 'https://fixture.example/manifest.json') {
+      steps.push('manifest');
+      return new Response(body);
+    }
+    if (url === 'https://failed.example/' + origin) {
+      steps.push('accelerator');
+      return new Response(
+        new ReadableStream({
+          cancel() {
+            steps.push('cancel');
+          },
+        }),
+        { status: 502 },
+      );
+    }
+    assert.equal(url, origin);
+    steps.push('origin');
+    assert.equal(steps.at(-2), 'cancel');
+    return new Response(bytes);
+  };
+  const result = await prepareNative({
+    dataDir: join(directory, 'account'),
+    cacheDir: join(directory, 'cache'),
+    manifestUrl: 'https://fixture.example/manifest.json',
+    manifestSha256: sha(body),
+    downloadMirrors: ['https://failed.example/'],
+  });
+  assert.deepEqual(await readFile(result.wrapperPath), bytes);
+  assert.deepEqual(steps, ['manifest', 'accelerator', 'cancel', 'origin']);
+});

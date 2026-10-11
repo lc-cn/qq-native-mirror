@@ -108,3 +108,41 @@ test('catalog resolution binds selected version while preserving explicit reques
     requested,
   );
 });
+
+test('rejected catalog HTTP body is released and cleanup failures retain the HTTP error', async (t) => {
+  const original = globalThis.fetch;
+  t.after(() => {
+    globalThis.fetch = original;
+  });
+  for (const cleanup of [undefined, { opaque: 'cleanup failure' }]) {
+    let cancellations = 0;
+    globalThis.fetch = async () =>
+      new Response(
+        new ReadableStream({
+          cancel() {
+            cancellations++;
+            if (cleanup !== undefined) throw cleanup;
+          },
+        }),
+        { status: 503 },
+      );
+    await assert.rejects(
+      resolveNativeCatalog({
+        dataDir: '/unused',
+        catalogUrl: 'https://fixture.example/catalog.json',
+      }),
+      (error: unknown) => {
+        if (cleanup === undefined) {
+          assert.ok(error instanceof Error);
+          assert.match(error.message, /Native catalog unavailable: HTTP 503/);
+        } else {
+          assert.ok(error instanceof AggregateError);
+          assert.match(error.errors[0].message, /Native catalog unavailable: HTTP 503/);
+          assert.equal(error.errors[1], cleanup);
+        }
+        return true;
+      },
+    );
+    assert.equal(cancellations, 1);
+  }
+});

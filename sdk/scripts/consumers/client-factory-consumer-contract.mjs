@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import childProcess from 'node:child_process';
 import { createRequire, syncBuiltinESMExports } from 'node:module';
-import { cp, mkdtemp, mkdir, readFile, realpath, rm, writeFile } from 'node:fs/promises';
+import { access, cp, mkdtemp, mkdir, readFile, realpath, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -245,6 +245,11 @@ async function verifyNativeSourceSelection(createClient, directory, bridgePath) 
   const payloads = new Map([['https://fixture.example/wrapper.node', bytes]]);
   /** @type {'catalog' | 'manifest' | undefined} */
   let rejectedMetadata;
+  /** @type {'catalog' | 'manifest' | undefined} */
+  let rejectedResponse;
+  /** @type {{error:unknown}|undefined} */
+  let cancellationFailure;
+  let cancellations = 0;
   /** @type {string[]} */
   const requests = [];
   /** @type {CapturedInitialization|undefined} */
@@ -304,6 +309,20 @@ async function verifyNativeSourceSelection(createClient, directory, bridgePath) 
     globalThis.fetch = async (input) => {
       const url = String(input);
       requests.push(url);
+      if (
+        (rejectedResponse === 'catalog' && url.endsWith('catalog.json')) ||
+        (rejectedResponse === 'manifest' && url === manifestUrl)
+      ) {
+        return new Response(
+          new ReadableStream({
+            cancel() {
+              cancellations++;
+              if (cancellationFailure) throw cancellationFailure.error;
+            },
+          }),
+          { status: 503 },
+        );
+      }
       const body = JSON.stringify({ ...manifest, version: remoteVersion, files: remoteFiles });
       if (url.endsWith('catalog.json')) {
         if (rejectedMetadata === 'catalog') throw Error('Fixture catalog unavailable');
@@ -373,6 +392,47 @@ async function verifyNativeSourceSelection(createClient, directory, bridgePath) 
       assert.deepEqual(requests, stage === 'catalog' ? [catalogUrl] : [catalogUrl, manifestUrl]);
     }
     rejectedMetadata = undefined;
+    // The public factory owns failed HTTP responses before any account/cache/worker acquisition.
+    const startsBeforeHttpFailure = workerStarts;
+    for (const stage of /** @type {const} */ (['catalog', 'manifest'])) {
+      for (const failingCancellation of [false, true]) {
+        const opaque = Proxy.revocable({}, {});
+        opaque.revoke();
+        cancellationFailure = failingCancellation ? { error: opaque.proxy } : undefined;
+        requests.length = 0;
+        rejectedResponse = stage;
+        cancellations = 0;
+        const dataDir = join(directory, `http-data-${stage}-${failingCancellation}`);
+        const cacheDir = join(directory, `http-cache-${stage}-${failingCancellation}`);
+        await assert.rejects(
+          createClient({ dataDir, cacheDir }),
+          (/** @type {unknown} */ error) => {
+            let primary = error;
+            if (failingCancellation) {
+              assert.ok(error instanceof AggregateError);
+              assert.equal(error.errors.length, 2);
+              assert.equal(error.errors[1], opaque.proxy);
+              primary = error.errors[0];
+            }
+            assert.ok(primary instanceof Error);
+            assert.equal(
+              primary.message,
+              stage === 'catalog'
+                ? 'Native catalog unavailable: HTTP 503'
+                : 'Download failed: HTTP 503',
+            );
+            return true;
+          },
+        );
+        assert.equal(cancellations, 1);
+        assert.equal(workerStarts, startsBeforeHttpFailure);
+        assert.deepEqual(requests, stage === 'catalog' ? [catalogUrl] : [catalogUrl, manifestUrl]);
+        await assert.rejects(access(dataDir), { code: 'ENOENT' });
+        await assert.rejects(access(cacheDir), { code: 'ENOENT' });
+      }
+    }
+    rejectedResponse = undefined;
+    cancellationFailure = undefined;
     requests.length = 0;
     catalogVersionOverride = { ...version, qua: 'catalog-does-not-match-manifest' };
     await assert.rejects(
@@ -475,6 +535,7 @@ async function verifyNativeSourceSelection(createClient, directory, bridgePath) 
       nativeDirectoryInstalledContract: true,
       nativeDefaultLatestContract: true,
       nativePinnedOfflineContract: true,
+      nativeHttpFailureCleanupContract: true,
     };
   } finally {
     globalThis.fetch = originalFetch;

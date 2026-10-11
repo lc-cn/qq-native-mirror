@@ -304,6 +304,15 @@ export function dependencyViolation({ from, to, typeOnly }: SourceDependency): s
     return typeOnly && to === 'src/contracts/native.ts'
       ? undefined
       : 'Manifest preflight only owns pure metadata rules, never filesystem or source selection.';
+  if (from === 'src/native/native-response.ts')
+    return !typeOnly && to === 'src/runtime/cleanup.ts'
+      ? undefined
+      : 'Native response consumption owns only bounded bytes and cleanup, never transport or bundle policy.';
+  if (to === 'src/native/native-response.ts')
+    return !typeOnly &&
+      ['src/native/native-catalog.ts', 'src/native/native-package.ts'].includes(from)
+      ? undefined
+      : 'Only catalog and package transports consume native HTTP responses.';
   if (from === 'src/native/native-directory-verification.ts')
     return (!typeOnly && to === 'src/native/native-manifest.ts') ||
       (typeOnly && to === 'src/contracts/native.ts')

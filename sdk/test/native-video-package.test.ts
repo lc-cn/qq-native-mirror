@@ -58,6 +58,8 @@ async function installedFixture(t: any, value = manifest()) {
     'native/native-directory-verification.ts',
     'native/native-bundle-installer.ts',
     'native/native-catalog.ts',
+    'native/native-response.ts',
+    'runtime/cleanup.ts',
     'storage/process-lock.ts',
     'storage/native-package-lock.ts',
     'contracts/client.ts',

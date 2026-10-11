@@ -1,5 +1,6 @@
 import type { ClientOptions } from '../contracts/client.ts';
 import type { QQVersion } from '../contracts/native.ts';
+import { readNativeResponse } from './native-response.ts';
 export const DEFAULT_NATIVE_CATALOG =
   'https://raw.githubusercontent.com/lc-cn/qq-native-mirror/main/catalog.json';
 export interface NativeCatalog {
@@ -82,16 +83,16 @@ export function selectNativePackage(
 export async function resolveNativeCatalog(options: ClientOptions): Promise<ClientOptions> {
   const url = httpsUrl(options.catalogUrl ?? DEFAULT_NATIVE_CATALOG);
   const response = await fetch(url, { redirect: 'error', signal: AbortSignal.timeout(30000) });
-  if (!response.ok) throw new Error(`Native catalog unavailable: HTTP ${response.status}`);
-  if (!response.body) throw new Error('Native catalog response is empty');
-  const chunks: Buffer[] = [];
-  let size = 0;
-  for await (const chunk of response.body) {
-    size += chunk.length;
-    if (size > 1024 * 1024) throw new Error('Native catalog too large');
-    chunks.push(Buffer.from(chunk));
-  }
-  const body = Buffer.concat(chunks).toString('utf8');
+  const body = (
+    await readNativeResponse(response, {
+      maxBytes: 1024 * 1024,
+      errors: {
+        http: (status) => `Native catalog unavailable: HTTP ${status}`,
+        empty: () => 'Native catalog response is empty',
+        tooLarge: 'Native catalog too large',
+      },
+    })
+  ).toString('utf8');
   const selected = selectNativePackage(
     JSON.parse(body),
     process.platform,
