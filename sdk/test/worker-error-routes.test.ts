@@ -1,10 +1,11 @@
 import test from 'node:test';
+import assert from 'node:assert/strict';
 import { fileURLToPath } from 'node:url';
 import { QQClient } from '../src/index.ts';
 import { verifyWorkerErrorRoutes } from '../scripts/consumers/worker-error-consumer-contract.mjs';
 
 test('actual worker replies to opaque failures and the same worker serves the next query', async () => {
-  await verifyWorkerErrorRoutes({
+  const checks = await verifyWorkerErrorRoutes({
     QQClient,
     workerPath: fileURLToPath(new URL('../src/worker.ts', import.meta.url)),
     kernelPath: fileURLToPath(new URL('../src/kernel.ts', import.meta.url)),
@@ -13,4 +14,5 @@ test('actual worker replies to opaque failures and the same worker serves the ne
       new URL('../src/native/native-contract-inspection.ts', import.meta.url),
     ),
   });
+  assert.equal(checks.clientLoginReentrancyContract, true);
 });

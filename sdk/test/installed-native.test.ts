@@ -3,7 +3,6 @@ import assert from 'node:assert/strict';
 import {
   mkdtemp,
   mkdir,
-  copyFile,
   writeFile,
   rm,
   symlink,
@@ -12,34 +11,18 @@ import {
   readdir,
 } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join, dirname } from 'node:path';
+import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { gzipSync } from 'node:zlib';
 import { createHash } from 'node:crypto';
+import { copyNativePackageSource } from './helpers/native-package-fixture.ts';
 
 test('installed platform bundle integrity and explicit source precedence', async (t) => {
   const root = await realpath(await mkdtemp(join(tmpdir(), 'qq-installed-fixture-')));
   t.after(() => rm(root, { recursive: true, force: true }));
-  for (const name of [
-    'native/native-installed-storage.ts',
-    'native/native-package.ts',
-    'native/native-manifest.ts',
-    'native/native-directory-verification.ts',
-    'native/native-bundle-installer.ts',
-    'native/native-catalog.ts',
-    'native/native-response.ts',
-    'runtime/cleanup.ts',
-    'storage/process-lock.ts',
-    'storage/native-package-lock.ts',
-    'contracts/client.ts',
-    'contracts/native.ts',
-  ]) {
-    const target = join(root, name);
-    await mkdir(dirname(target), { recursive: true });
-    await copyFile(new URL('../src/' + name, import.meta.url), target);
-  }
+  await copyNativePackageSource(root);
   const pkg = join(root, 'node_modules', `qq-native-client-${process.platform}-${process.arch}`);
   await mkdir(pkg, { recursive: true });
   await writeFile(
@@ -147,24 +130,7 @@ const execute = promisify(execFile);
 const hash = (bytes: Uint8Array) => createHash('sha256').update(bytes).digest('hex');
 async function objectFixture() {
   const root = await realpath(await mkdtemp(join(tmpdir(), 'qq-installed-object-')));
-  for (const name of [
-    'native/native-installed-storage.ts',
-    'native/native-package.ts',
-    'native/native-manifest.ts',
-    'native/native-directory-verification.ts',
-    'native/native-bundle-installer.ts',
-    'native/native-catalog.ts',
-    'native/native-response.ts',
-    'runtime/cleanup.ts',
-    'storage/process-lock.ts',
-    'storage/native-package-lock.ts',
-    'contracts/client.ts',
-    'contracts/native.ts',
-  ]) {
-    const target = join(root, name);
-    await mkdir(dirname(target), { recursive: true });
-    await copyFile(new URL('../src/' + name, import.meta.url), target);
-  }
+  await copyNativePackageSource(root);
   const pkg = join(root, 'node_modules', `qq-native-client-${process.platform}-${process.arch}`);
   await mkdir(join(pkg, 'objects'), { recursive: true });
   await writeFile(

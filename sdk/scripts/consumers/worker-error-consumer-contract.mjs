@@ -145,6 +145,7 @@ export function createKernel(_native,_options,emit){return {
     await client.close();
     return {
       clientIdentityInstalledContract: true,
+      clientLoginReentrancyContract: true,
       clientEventPresentationInstalledContract: true,
       workerOpaqueErrorContract: true,
       workerErrorRecoveryContract: true,
@@ -347,7 +348,30 @@ async function verifyClientIdentity(QQClient) {
     ]);
     assert.equal(coercions, 0);
     assert.equal(getterReads, 0);
+    /** @type {Promise<import('../../src/contracts/client.ts').Account> | undefined} */
+    let nestedLogin;
+    /** @type {Promise<import('../../src/contracts/client.ts').Account> | undefined} */
+    let nestedWait;
+    /** @type {Promise<void> | undefined} */
+    let differentLogin;
+    /** @param {import('../../src/contracts/client.ts').ClientState} state */
+    const onConnecting = (state) => {
+      if (state !== 'connecting') return;
+      client.off('state', onConnecting);
+      assert.equal(requests.length, 0, 'Connecting must precede login dispatch');
+      nestedLogin = client.login({ method: 'qr' });
+      nestedWait = client.waitForLogin();
+      differentLogin = assert.rejects(
+        client.login({ method: 'quick', uin: '456' }),
+        /different login request/,
+      );
+    };
+    client.on('state', onConnecting);
     const pending = client.login({ method: 'qr' });
+    assert.strictEqual(nestedLogin, pending);
+    assert.strictEqual(nestedWait, pending);
+    assert.ok(differentLogin);
+    await differentLogin;
     assert.strictEqual(client.login({ method: 'qr' }), pending);
     assert.equal(requests.length, 1);
     const rejection = assert.rejects(pending, { message: 'Invalid worker login account identity' });

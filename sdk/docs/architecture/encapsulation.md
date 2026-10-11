@@ -37,6 +37,16 @@ coalesced callers retain the same Promise identity. Close reserves its shared
 Promise before notifying synchronous state observers; a reentrant close therefore
 joins the same transaction and cannot finish before worker retirement.
 
+Login also reserves its shared Promise and captured request before the synchronous
+`connecting` event. An observer calling the same login or `waitForLogin` joins
+that transaction; a different request rejects instead of dispatching another
+authorization. The event remains before the first login IPC. Source and installed
+public-client fixtures exercise this reentrancy without executing native login.
+If a connecting observer throws, the reserved login Promise rejects with that
+value and the attempt is released; joined callers cannot remain pending. This
+failure is now a Promise rejection rather than a synchronous exception from
+`login`. Closing from the observer prevents login dispatch.
+
 Before changing account state, `ClientLifecycle` captures own-data `uin` and `uid`
 from worker readiness. It stores only those two fields, preserving decimal strings
 (including zero, leading zeros and values beyond JavaScript's safe integer range)

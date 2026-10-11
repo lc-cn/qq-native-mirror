@@ -151,6 +151,16 @@ public native manifest data is distinct from the proprietary native service type
 
 ## Native package build ownership
 
+Isolated package tests use `test/helpers/native-package-fixture.ts` to copy the
+native package entry's static runtime dependency closure from the architecture
+graph. This single owner replaces per-test source inventories, so a new relative
+runtime import enters every fixture automatically. Type-only dependencies are
+not copied, and unresolved relative imports reject before any file is written.
+The graph is inspected without importing SDK implementations. Installed platform
+packages, fake native payloads and temporary-directory cleanup remain owned by
+each test. This is a source-fixture guarantee, not native compatibility evidence;
+reviewed computed loaders do not imply that their runtime targets are copied.
+
 Native storage production lives outside the installed SDK in repository `tools/`.
 `native-storage-plan.mjs` owns closed inventory validation, platform/ABI rules,
 content deduplication and final package serialization. It reads the supplied archive

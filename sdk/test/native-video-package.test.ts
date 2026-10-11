@@ -1,20 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {
-  mkdtemp,
-  mkdir,
-  writeFile,
-  readFile,
-  copyFile,
-  rm,
-  symlink,
-  realpath,
-} from 'node:fs/promises';
+import { mkdtemp, mkdir, writeFile, readFile, rm, symlink, realpath } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { createHash } from 'node:crypto';
 import { prepareNative } from '../src/native/native-package.ts';
+import { copyNativePackageSource } from './helpers/native-package-fixture.ts';
 const hash = (bytes: string | Buffer) => createHash('sha256').update(bytes).digest('hex');
 const version = { clientVersion: 'fixture', appId: '1', qua: 'fixture' };
 const payloads = new Map([
@@ -51,24 +43,7 @@ async function installedFixture(t: any, value = manifest()) {
   const root = await realpath(await mkdtemp(join(tmpdir(), 'qq-installed-video-')));
   t.after(() => rm(root, { recursive: true, force: true }));
   await mkdir(join(root, 'src'));
-  for (const name of [
-    'native/native-installed-storage.ts',
-    'native/native-package.ts',
-    'native/native-manifest.ts',
-    'native/native-directory-verification.ts',
-    'native/native-bundle-installer.ts',
-    'native/native-catalog.ts',
-    'native/native-response.ts',
-    'runtime/cleanup.ts',
-    'storage/process-lock.ts',
-    'storage/native-package-lock.ts',
-    'contracts/client.ts',
-    'contracts/native.ts',
-  ]) {
-    const target = join(root, 'src', name);
-    await mkdir(dirname(target), { recursive: true });
-    await copyFile(new URL(`../src/${name}`, import.meta.url), target);
-  }
+  await copyNativePackageSource(join(root, 'src'));
   await writeFile(join(root, 'package.json'), JSON.stringify({ type: 'module' }));
   const base = join(root, 'node_modules', `qq-native-client-${process.platform}-${process.arch}`);
   await writeBundle(base, value);

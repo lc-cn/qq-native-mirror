@@ -271,3 +271,127 @@ test('reentrant close shares the original cleanup rejection without another atte
   assert.equal(lifecycle.close(), closing);
   assert.equal(kills, 1);
 });
+
+test('connecting observers join the reserved login and wait while another account rejects before IPC', async () => {
+  const f = workerFixture();
+  let same: Promise<unknown> | undefined;
+  let waiting: Promise<unknown> | undefined;
+  let different: Promise<unknown> | undefined;
+  const lifecycle = new ClientLifecycle({
+    worker: f.worker,
+    timeout: 1000,
+    emit(event, state) {
+      if (event !== 'state' || state !== 'connecting') return;
+      assert.equal(f.sent.length, 0, 'State still precedes login IPC');
+      same = lifecycle.login({ method: 'quick', uin: '123' });
+      waiting = lifecycle.waitForLogin();
+      different = lifecycle.login({ method: 'quick', uin: '456' });
+    },
+    forward() {},
+    exportsUpdated() {},
+  });
+  const first = lifecycle.login({ method: 'quick', uin: '123' });
+  assert.equal(same, first);
+  assert.equal(waiting, first);
+  await assert.rejects(different!, /different login request/);
+  assert.deepEqual(
+    f.sent.map((value) => value.method),
+    ['login'],
+  );
+  const account = { uin: '123', uid: 'u_fixture' };
+  f.events.emit('message', { id: f.sent[0].id, result: account });
+  assert.deepEqual(await first, account);
+  await lifecycle.close();
+});
+
+test('close in connecting presentation cancels all joined login callers without dispatch', async () => {
+  const f = workerFixture();
+  let joined: Promise<unknown> | undefined;
+  let closing: Promise<void> | undefined;
+  const lifecycle = new ClientLifecycle({
+    worker: f.worker,
+    timeout: 1000,
+    emit(event, state) {
+      if (event === 'state' && state === 'connecting') {
+        joined = lifecycle.waitForLogin();
+        closing = lifecycle.close();
+      }
+    },
+    forward() {},
+    exportsUpdated() {},
+  });
+  const first = lifecycle.login();
+  assert.equal(first, joined);
+  await assert.rejects(first, /closed/);
+  await closing;
+  assert.deepEqual(
+    f.sent.map((value) => value.method),
+    ['close'],
+  );
+});
+
+test('connecting observer throw rejects the reserved attempt by identity and permits explicit recovery', async () => {
+  const f = workerFixture();
+  const original = { failure: 'Opaque observer failure' };
+  let shouldThrow = true;
+  let joined: Promise<unknown> | undefined;
+  const lifecycle = new ClientLifecycle({
+    worker: f.worker,
+    timeout: 1000,
+    emit(event, state) {
+      if (event === 'state' && state === 'connecting' && shouldThrow) {
+        joined = lifecycle.waitForLogin();
+        throw original;
+      }
+    },
+    forward() {},
+    exportsUpdated() {},
+  });
+  const first = lifecycle.login();
+  assert.equal(joined, first);
+  await assert.rejects(first, (error: unknown) => error === original);
+  assert.equal(lifecycle.state, 'idle');
+  assert.equal(f.sent.length, 0);
+  shouldThrow = false;
+  const recovered = lifecycle.login();
+  assert.notEqual(first, recovered);
+  assert.equal(f.sent.length, 1);
+  const account = { uin: '123', uid: 'u_fixture' };
+  f.events.emit('message', { id: f.sent[0].id, result: account });
+  assert.deepEqual(await recovered, account);
+  await lifecycle.close();
+});
+
+test('synchronous worker login reply settles the already reserved shared promise', async () => {
+  const f = workerFixture();
+  const account = { uin: '123', uid: 'u_fixture' };
+  const originalSend = f.worker.send.bind(f.worker);
+  f.worker.send = ((
+    message: { id: number; method: string },
+    callback: (error: Error | null) => void,
+  ) => {
+    if (message.method !== 'login') return originalSend(message, callback);
+    f.sent.push(message);
+    f.events.emit('message', { id: message.id, result: account });
+    callback(null);
+    return true;
+  }) as typeof f.worker.send;
+  let joined: Promise<unknown> | undefined;
+  const lifecycle = new ClientLifecycle({
+    worker: f.worker,
+    timeout: 1000,
+    emit(event, state) {
+      if (event === 'state' && state === 'connecting') joined = lifecycle.login();
+    },
+    forward() {},
+    exportsUpdated() {},
+  });
+  const first = lifecycle.login();
+  assert.equal(first, joined);
+  assert.deepEqual(await first, account);
+  assert.deepEqual(
+    f.sent.map((value) => value.method),
+    ['login'],
+  );
+  await lifecycle.close();
+});

@@ -284,30 +284,45 @@ export class ClientLifecycle {
     ) {
       return Promise.reject(new Error('A different login request is already in progress'));
     }
-    if (!this.#login) {
-      this.#loginRequest = { ...request };
+    if (this.#login) return this.#login;
+    let resolve!: (account: Account) => void;
+    let reject!: (reason: unknown) => void;
+    const loginPromise = new Promise<Account>((fulfilled, rejected) => {
+      resolve = fulfilled;
+      reject = rejected;
+    });
+    // Reserve before synchronous state observers can join, replace or close this attempt.
+    this.#loginRequest = { ...request };
+    this.#login = loginPromise;
+    const generation = this.#generation;
+    const isCurrent = () => generation === this.#generation && !this.#closed && !this.#closing;
+    let submitted: Promise<unknown>;
+    try {
       this.#setState('connecting');
-      const generation = this.#generation;
-      const isCurrent = () => generation === this.#generation && !this.#closed && !this.#closing;
-      const loginPromise = this.request<unknown>('login', { login: request })
-        .then((value) => {
-          const account = captureWorkerAccount(value, isCurrent);
-          if (!isCurrent()) throw new Error('QQ client closed or replaced during login');
-          if (!account) throw new Error('Invalid worker login account identity');
-          return account;
-        })
-        .catch((error) => {
-          if (this.#login === loginPromise) {
-            this.#login = undefined;
-            if (!this.#closed && !this.#closing && this.#state === 'connecting')
-              this.#setState('idle');
-          }
-          throw error;
-        });
-      this.#login = loginPromise;
+      if (!isCurrent()) throw new Error('QQ client closed or replaced during login');
+      submitted = this.request<unknown>('login', { login: request });
+    } catch (error) {
+      submitted = Promise.reject(error);
     }
-    return this.#login;
+    submitted
+      .then((value) => {
+        const account = captureWorkerAccount(value, isCurrent);
+        if (!isCurrent()) throw new Error('QQ client closed or replaced during login');
+        if (!account) throw new Error('Invalid worker login account identity');
+        return account;
+      })
+      .catch((error) => {
+        if (this.#login === loginPromise) {
+          this.#login = undefined;
+          if (!this.#closed && !this.#closing && this.#state === 'connecting')
+            this.#setState('idle');
+        }
+        throw error;
+      })
+      .then(resolve, reject);
+    return loginPromise;
   }
+
   waitForLogin(): Promise<Account> {
     if (this.#closing || this.#closed) return Promise.reject(new Error('QQ client is closed'));
     // A completed login Promise exposes its mutable result to its caller.
