@@ -1,0 +1,28 @@
+sdk/src/native-services.ts
+  s_2104cc474f1ce5::t_cc0cfc539f6c6f 1-10,12-15,34-37,41-74,76-83,85,88,96-153,190-202,243-245
+  s_2104cc474f1ce5::t_e8da7eadc949b3 299,328,410,444,463,469-470,477,484
+sdk/docs/architecture/encapsulation.md
+  s_2104cc474f1ce5::t_f8535f3c575286 56-67
+sdk/test/composition-service-ports.test.ts
+  s_2104cc474f1ce5::t_d0250c4bd3a58e 1-52
+sdk/docs/development.md
+  s_2104cc474f1ce5::t_f8535f3c575286 334-344
+sdk/test/fixtures/composition-service-port-types.ts
+  s_2104cc474f1ce5::t_7e0ef5cc0d27a1 1-75
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "cbdafafa06aeab8a4825250ec49bb82ebd471048",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
