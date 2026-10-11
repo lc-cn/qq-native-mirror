@@ -1,0 +1,39 @@
+.github/workflows/dedup-native-candidate.yml
+  s_2104cc474f1ce5::t_b4956befc5c04a 73
+.github/workflows/sdk-quality.yml
+  s_2104cc474f1ce5::t_c5d9f6f84189f8 10-13,21-24,59-60
+sdk/docs/architecture.md
+  s_2104cc474f1ce5::t_33def015aa71bf 126-146
+sdk/docs/architecture/quality-gates.md
+  s_2104cc474f1ce5::t_880d1f22f5509c 20-29
+sdk/package.json
+  s_2104cc474f1ce5::t_602375350cf524 29,33-34
+tools/check-native-storage.mjs
+  s_2104cc474f1ce5::t_8e793216b26664 1-35
+tools/dedup-native-npm.mjs
+  s_2104cc474f1ce5::t_d91205c7516976 1-51,53-153,155-252,254-274
+tools/dedup-native-npm.test.mjs
+  s_2104cc474f1ce5::t_12320b2d92c303 1-155
+tools/eslint.config.mjs
+  s_2104cc474f1ce5::t_6403dc7a463529 1-31
+tools/native-storage-plan.mjs
+  s_2104cc474f1ce5::t_0494e2b9435854 1-212
+tools/native-storage-plan.test.mjs
+  s_2104cc474f1ce5::t_adde1cb8dd6c54 1-171
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "24339280702bdfae314652d353e20de7fc5aee3d",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
