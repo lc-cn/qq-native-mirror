@@ -172,6 +172,15 @@ its type. Validate the full batch before publication and check account retiremen
 after projection. Preserve opaque `raw` identity separately from those validated
 scalars; this does not require a dynamic native-object port.
 
+Friend deletion and member kick options follow that same single-read rule before
+UID lookup. Keep native completion policies in each domain: void acknowledges
+submission only, while a result-bearing completion needs numeric zero. Capture
+the result code once, check retirement, and construct failures from the captured
+value. Contact profile identity and DTO fields must come from one captured core
+record, with another retirement check after projection. Preserve the original raw
+carrier and Map lookup behavior. Installed controlled consumers verify these
+rules separately from authorized real-account acceptance.
+
 Group query envelopes and rows follow the same capture-before-validation rule.
 Use intrinsic Map operations for native membership maps, and commit the complete
 validated member batch only after checking Session retirement. Keep this policy

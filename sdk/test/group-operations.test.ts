@@ -327,3 +327,113 @@ for (const absent of [undefined, null]) {
     });
   });
 }
+
+for (const mode of ['changing', 'abort', 'pending-mutation'] as const) {
+  test(`kickGroupMember captures options once: ${mode}`, async () => {
+    const controller = new AbortController();
+    const reason = Error('fixture account closed');
+    const reads = { options: 0, rejectRejoin: 0, reason: 0 };
+    let lookups = 0;
+    const calls: unknown[][] = [];
+    let finish!: (uid: string) => void;
+    const uid = new Promise<string>((resolve) => {
+      finish = resolve;
+    });
+    const options = {
+      get rejectRejoin() {
+        reads.rejectRejoin++;
+        return mode === 'pending-mutation' || reads.rejectRejoin === 1 ? true : 'malicious';
+      },
+      get reason() {
+        reads.reason++;
+        return mode === 'pending-mutation' || reads.reason === 1 ? 'captured' : 123;
+      },
+    };
+    const payload: Record<string, unknown> = {
+      groupId: '123',
+      userId: '456',
+      get options() {
+        reads.options++;
+        if (mode === 'abort') controller.abort(reason);
+        return options;
+      },
+    };
+    const service: GroupMutationPort = {
+      kickMember(...args) {
+        assert.equal(this, service);
+        calls.push(args);
+      },
+    };
+    const operations = createWithContext({
+      signal: controller.signal,
+      awaitAlive: async (value) => value,
+      resolveUid: () => {
+        lookups++;
+        return mode === 'pending-mutation' ? uid : Promise.resolve('u_uid');
+      },
+      getGroupService: () => service,
+    });
+    const pending = operations.invokeOperation('kickGroupMember', payload);
+    if (mode === 'abort') {
+      await assert.rejects(pending, (error) => error === reason);
+      assert.equal(lookups, 0);
+      assert.equal(calls.length, 0);
+    } else {
+      if (mode === 'pending-mutation') {
+        Object.defineProperty(payload, 'options', {
+          value: { rejectRejoin: false, reason: 'changed' },
+        });
+        payload.userId = '999';
+        payload.groupId = '999';
+        finish('u_uid');
+      }
+      await pending;
+      assert.deepEqual(calls, [['123', ['u_uid'], true, 'captured']]);
+      assert.equal(lookups, 1);
+    }
+    assert.equal(reads.options, 1);
+    if (mode !== 'abort') assert.deepEqual(reads, { options: 1, rejectRejoin: 1, reason: 1 });
+  });
+}
+
+for (const mode of ['failure', 'abort', 'throw'] as const) {
+  test(`group ACK captures result once: ${mode}`, async () => {
+    const controller = new AbortController();
+    const original = Error('ACK getter original');
+    const reason = Error('fixture account closed');
+    let reads = 0,
+      calls = 0;
+    const result = {
+      get result() {
+        reads++;
+        if (mode === 'throw') throw original;
+        if (mode === 'abort') {
+          controller.abort(reason);
+          return 0;
+        }
+        return reads === 1 ? 7 : 0;
+      },
+    };
+    const operations = createWithContext({
+      signal: controller.signal,
+      awaitAlive: async (value) => value,
+      resolveUid: async () => 'u_uid',
+      getGroupService: () => ({
+        modifyGroupName() {
+          calls++;
+          return result;
+        },
+      }),
+    });
+    await assert.rejects(
+      operations.invokeOperation('setGroupName', { groupId: '123', name: 'name' }),
+      mode === 'throw'
+        ? (error) => error === original
+        : mode === 'abort'
+          ? (error) => error === reason
+          : { code: 7 },
+    );
+    assert.equal(reads, 1);
+    assert.equal(calls, 1);
+  });
+}

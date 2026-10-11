@@ -354,3 +354,258 @@ for (const entry of operationCases) {
     });
   }
 }
+
+for (const mode of ['changing', 'abort', 'pending-mutation'] as const) {
+  test(`deleteFriend captures options once: ${mode}`, async () => {
+    const lifetime = new NativeServiceLifetime();
+    const reads = { options: 0, block: 0, both: 0 };
+    let lookups = 0;
+    const calls: unknown[] = [];
+    let finish!: (uid: string) => void;
+    const uid = new Promise<string>((resolve) => {
+      finish = resolve;
+    });
+    const options = {
+      get block() {
+        reads.block++;
+        return mode === 'pending-mutation' || reads.block === 1 ? true : 'malicious';
+      },
+      get both() {
+        reads.both++;
+        return mode === 'pending-mutation' || reads.both === 1 ? false : 'malicious';
+      },
+    };
+    const payload: Record<string, unknown> = {
+      userId: '123',
+      get options() {
+        reads.options++;
+        if (mode === 'abort') lifetime.close();
+        return options;
+      },
+    };
+    const operations = createNarrowContactOperations({
+      signal: lifetime.signal,
+      awaitAlive: lifetime.awaitAlive,
+      resolveUid: () => {
+        lookups++;
+        return mode === 'pending-mutation' ? uid : Promise.resolve('u_uid');
+      },
+      getBuddyService: () => ({
+        delBuddy(request) {
+          calls.push(request);
+        },
+      }),
+      getProfileService: () => ({}),
+    });
+    try {
+      const pending = operations.invokeOperation('deleteFriend', payload);
+      if (mode === 'abort') {
+        await assert.rejects(pending, /closed|abort/i);
+        assert.equal(lookups, 0);
+        assert.equal(calls.length, 0);
+      } else {
+        if (mode === 'pending-mutation') {
+          Object.defineProperty(payload, 'options', { value: { block: false, both: true } });
+          payload.userId = '999';
+          finish('u_uid');
+        }
+        await pending;
+        assert.deepEqual(calls, [{ friendUid: 'u_uid', tempBlock: true, tempBothDel: false }]);
+        assert.equal(lookups, 1);
+      }
+      assert.equal(reads.options, 1);
+      if (mode !== 'abort') assert.deepEqual(reads, { options: 1, block: 1, both: 1 });
+    } finally {
+      lifetime.close();
+      finish('u_uid');
+    }
+  });
+}
+
+test('profile captures coreInfo once and projects the validated object', async () => {
+  let reads = 0;
+  const raw = {
+    get coreInfo() {
+      return ++reads === 1
+        ? { uid: 'u_uid', uin: '123', nick: 'captured', remark: 'remark' }
+        : { uid: 'u_wrong', uin: '999', nick: 'unvalidated', remark: 'wrong' };
+    },
+  };
+  const operations = createContactOperations(
+    {
+      getProfileService: () => ({
+        getCoreAndBaseInfo: () => new Map([['u_uid', raw]]),
+      }),
+    },
+    async () => 'u_uid',
+  );
+  assert.deepEqual(await operations.invokeOperation('getUserProfile', { userId: '123' }), {
+    uid: 'u_uid',
+    userId: '123',
+    nickname: 'captured',
+    remark: 'remark',
+    raw,
+  });
+  assert.equal(reads, 1);
+});
+
+for (const stage of ['map', 'identity', 'nickname'] as const) {
+  for (const effect of ['close', 'throw'] as const) {
+    test(`profile ${stage} ${effect} cannot publish or replay`, async () => {
+      const lifetime = new NativeServiceLifetime();
+      const original = Error('original getter failure');
+      let calls = 0,
+        reads = 0;
+      const trigger = () => {
+        reads++;
+        if (effect === 'throw') throw original;
+        lifetime.close();
+      };
+      const core = {
+        get uid() {
+          if (stage === 'identity') trigger();
+          return 'u_uid';
+        },
+        uin: '123',
+        get nick() {
+          if (stage === 'nickname') trigger();
+          return 'nickname';
+        },
+        remark: '',
+      };
+      const raw = { coreInfo: core };
+      const profiles = new Map([['u_uid', raw]]);
+      profiles.get = (key) => {
+        if (stage === 'map') trigger();
+        return Map.prototype.get.call(profiles, key);
+      };
+      const operations = createNarrowContactOperations({
+        signal: lifetime.signal,
+        awaitAlive: lifetime.awaitAlive,
+        resolveUid: async () => 'u_uid',
+        getBuddyService: () => ({}),
+        getProfileService: () => ({
+          getCoreAndBaseInfo() {
+            calls++;
+            return profiles;
+          },
+        }),
+      });
+      try {
+        await assert.rejects(
+          operations.invokeOperation('getUserProfile', { userId: '123' }),
+          effect === 'throw' ? (error) => error === original : /closed|abort/i,
+        );
+        assert.equal(calls, 1);
+        assert.equal(reads, 1);
+      } finally {
+        lifetime.close();
+      }
+    });
+  }
+}
+
+for (const mode of ['failure', 'abort', 'throw'] as const) {
+  test(`contact ACK captures result once: ${mode}`, async () => {
+    const lifetime = new NativeServiceLifetime();
+    const original = Error('ACK getter original');
+    let reads = 0,
+      calls = 0;
+    const result = {
+      get result() {
+        reads++;
+        if (mode === 'throw') throw original;
+        if (mode === 'abort') {
+          lifetime.close();
+          return 0;
+        }
+        return reads === 1 ? 7 : 0;
+      },
+    };
+    const operations = createNarrowContactOperations({
+      signal: lifetime.signal,
+      awaitAlive: lifetime.awaitAlive,
+      resolveUid: async () => 'u_uid',
+      getProfileService: () => ({}),
+      getBuddyService: () => ({
+        delBuddy() {
+          calls++;
+          return result;
+        },
+      }),
+    });
+    try {
+      await assert.rejects(
+        operations.invokeOperation('deleteFriend', { userId: '123' }),
+        mode === 'throw'
+          ? (error) => error === original
+          : mode === 'abort'
+            ? /closed|abort/i
+            : { code: 7 },
+      );
+      assert.equal(reads, 1);
+      assert.equal(calls, 1);
+    } finally {
+      lifetime.close();
+    }
+  });
+}
+
+for (const mode of ['close', 'throw', 'valid'] as const) {
+  test(`profile Map method getter ${mode} is captured before lookup`, async () => {
+    const lifetime = new NativeServiceLifetime();
+    const original = Error('Map method getter original');
+    const raw = { coreInfo: { uid: 'u_uid', uin: '123', nick: 'captured', remark: '' } };
+    const profiles = new Map([['u_uid', raw]]);
+    let getterReads = 0,
+      lookupCalls = 0,
+      nativeCalls = 0;
+    Object.defineProperty(profiles, 'get', {
+      get() {
+        getterReads++;
+        if (mode === 'throw') throw original;
+        if (mode === 'close') lifetime.close();
+        return function (this: typeof profiles, key: string) {
+          assert.equal(this, profiles);
+          assert.equal(key, 'u_uid');
+          lookupCalls++;
+          return Map.prototype.get.call(this, key);
+        };
+      },
+    });
+    const operations = createNarrowContactOperations({
+      signal: lifetime.signal,
+      awaitAlive: lifetime.awaitAlive,
+      resolveUid: async () => 'u_uid',
+      getBuddyService: () => ({}),
+      getProfileService: () => ({
+        getCoreAndBaseInfo() {
+          nativeCalls++;
+          return profiles;
+        },
+      }),
+    });
+    try {
+      const pending = operations.invokeOperation('getUserProfile', { userId: '123' });
+      if (mode === 'valid') {
+        assert.deepEqual(await pending, {
+          userId: '123',
+          uid: 'u_uid',
+          nickname: 'captured',
+          remark: '',
+          raw,
+        });
+      } else {
+        await assert.rejects(
+          pending,
+          mode === 'throw' ? (error) => error === original : /closed|abort/i,
+        );
+      }
+      assert.equal(getterReads, 1);
+      assert.equal(lookupCalls, mode === 'valid' ? 1 : 0);
+      assert.equal(nativeCalls, 1);
+    } finally {
+      lifetime.close();
+    }
+  });
+}

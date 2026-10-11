@@ -24,7 +24,14 @@ test('group-query owner consumer rejects an invalid port and an unobserved asser
     'await assert.rejects(preflight[method](id)',
     'assert.rejects(preflight[method](id)',
   );
-  const reports = await new ESLint({ cwd: root }).lintText(floating, { filePath: queryHelper });
+  const reports = await new ESLint({
+    cwd: root,
+    // In-memory negative fixtures need a persistent program in CI too. Single-run
+    // inference can reuse the earlier compiler parse and lose imported types.
+    overrideConfig: {
+      languageOptions: { parserOptions: { disallowAutomaticSingleRunInference: true } },
+    },
+  }).lintText(floating, { filePath: queryHelper });
   assert.ok(
     reports
       .flatMap((report) => report.messages)
@@ -35,6 +42,37 @@ function replaceOnce(value, before, after) {
   assert.equal(value.split(before).length - 1, 1, `Fixture anchor must occur once: ${before}`);
   return value.replace(before, after);
 }
+
+test('contact/group snapshot consumer rejects an invalid native port and unobserved mutation without execution', async () => {
+  const file = resolve(root, 'scripts/contact-group-snapshot-consumer-contract.mjs');
+  const actual = readFileSync(file, 'utf8');
+  assert.deepEqual(diagnostics(actual, file), []);
+  assert.ok(
+    diagnostics(
+      replaceOnce(actual, 'getBuddyService: () => buddy,', 'getBuddyService: () => 42,'),
+      file,
+    ).length > 0,
+  );
+  const eslint = new ESLint({
+    cwd: root,
+    overrideConfig: {
+      languageOptions: { parserOptions: { disallowAutomaticSingleRunInference: true } },
+    },
+  });
+  const good = await eslint.lintText(actual, { filePath: file });
+  assert.equal(good[0].errorCount, 0);
+  const floating = replaceOnce(
+    actual,
+    "await contact.invokeOperation('deleteFriend', {",
+    "contact.invokeOperation('deleteFriend', {",
+  );
+  const reports = await eslint.lintText(floating, { filePath: file });
+  assert.ok(
+    reports
+      .flatMap((report) => report.messages)
+      .some((message) => message.ruleId === '@typescript-eslint/no-floating-promises'),
+  );
+});
 function diagnostics(replacement, checkedFile = helper) {
   const configPath = resolve(root, 'tsconfig.scripts.json');
   const config = ts.readConfigFile(configPath, ts.sys.readFile);

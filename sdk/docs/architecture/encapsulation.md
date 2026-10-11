@@ -353,6 +353,22 @@ The existing per-method completion policy remains local to each domain; void
 confirms submission only, and result-bearing methods require a validated success
 code. These internal ports do not add types to the public package interface.
 
+Deletion and kick options are captured once, including their individual flags and
+texts, before UID lookup. Validation and dispatch use those same scalars, so
+changing accessors or mutation during the lookup cannot replace validated input.
+Contact profile projection captures the requested Map entry and its core fields
+once; the original `raw` carrier retains identity. Map lookup overrides retain
+their existing receiver and behavior. Retirement is checked after lookup method
+acquisition, lookup and
+projection, before returning the DTO. Both domains capture the completion status
+once and recheck retirement before accepting it. Rejection codes come from that
+captured status, rather than a second read of the opaque native response.
+
+The checked `contact-group-snapshot-consumer-contract.mjs` runs these contracts
+against the installed compiled owners in local and platform consumers. Its native
+services are controlled fixtures; this evidence does not establish remote friend
+or group mutation, profile interoperability, or account authentication.
+
 `createSelfProfile` owns one temporary Profile listener and a serialized
 nickname/signature update. Its four-method port preserves opaque registration
 IDs. It captures the selected input before awaiting UID/detail, retains the

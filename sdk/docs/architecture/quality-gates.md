@@ -45,12 +45,17 @@ bundle and video-native CI. Runtime output is recreated from a clean `dist`
 directory so obsolete emitted modules cannot make a packaging check pass.
 
 `tsconfig.scripts.json` governs all TypeScript scripts, the client-factory, shared worker-delivery, face,
-group-search, group-query owner, group-essence, group-file page, element-preparation and mirror consumers, and the module-reference
+group-search, group-query owner, contact/group snapshot, group-essence, group-file page, element-preparation and mirror consumers, and the module-reference
 collector. Checked consumers bind dynamic installed imports to their source
 contracts. The group-query owner consumer uses the installed query module and
 shared callback channel to check input rejection, local cancellation of stalled
 queries and continued sibling operations. Its native services are controlled;
 these results do not prove account queries or native interoperability.
+The contact/group snapshot consumer imports the installed domain owners and
+checks single-read mutation options, profile projection, captured error codes and
+retirement during result access. Both local and platform verifiers await it and
+record `contactGroupSnapshotChecks`. Strict compiler and lint negative fixtures
+reject invalid native ports and ignored mutation Promises without running them.
 The client-factory consumer types its public
 factory, captured worker options and initialization payloads while running the
 actual worker with a replacement kernel and addon loader. Invalid source-option
@@ -93,6 +98,12 @@ Negative gate fixtures prove that missing preparation/action awaits, invalid
 receipts and missing video thumbnail guards fail without executing those
 fixtures. Other JavaScript acceptance helpers still receive syntax lint; strict
 JavaScript checking remains an explicit migration.
+
+In-memory typed lint fixtures disable automatic single-run inference so their
+changed contents are reparsed with a persistent program, including under
+`CI=true`. Production ESLint configuration and promise rules stay unchanged.
+Use the same CI environment when validating a lint fixture; a local negative
+diagnostic alone does not establish that the CI fixture will behave identically.
 
 The module-reference collector reads the local packed verifier and platform
 consumer helper closures without executing them. It checks supported static

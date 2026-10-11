@@ -114,19 +114,20 @@ export function createGroupOperations(context: GroupOperationsContext) {
       }
       case 'kickGroupMember': {
         const userId = id(payload.userId, 'userId');
+        const supplied = payload.options;
         if (
-          payload.options !== undefined &&
-          (!payload.options ||
-            typeof payload.options !== 'object' ||
-            Array.isArray(payload.options))
+          supplied !== undefined &&
+          (!supplied || typeof supplied !== 'object' || Array.isArray(supplied))
         )
           throw new Error('options must be an object');
-        const options = (payload.options ?? {}) as Record<string, unknown>;
+        const options = (supplied ?? {}) as Record<string, unknown>;
+        const capturedRejectRejoin = options.rejectRejoin;
         const rejectRejoin =
-          options.rejectRejoin === undefined
+          capturedRejectRejoin === undefined
             ? false
-            : boolean(options.rejectRejoin, 'rejectRejoin');
-        const reason = options.reason === undefined ? '' : text(options.reason, 'reason', true);
+            : boolean(capturedRejectRejoin, 'rejectRejoin');
+        const capturedReason = options.reason;
+        const reason = capturedReason === undefined ? '' : text(capturedReason, 'reason', true);
         call = {
           method: 'kickMember',
           args: [groupId, [await memberUid(userId)], rejectRejoin, reason],
@@ -151,8 +152,11 @@ export function createGroupOperations(context: GroupOperationsContext) {
     if (result === undefined && voidOperations.has(method)) return;
     // GeneralCallResult methods require result zero; explicit failure or malformed
     // returns also reject for void methods. No mutation is retried.
-    if (!result || typeof result !== 'object' || (result as { result?: unknown }).result !== 0) {
-      throw nativeResultError(`Native group ${method} failed`, result);
+    const code =
+      result && typeof result === 'object' ? (result as { result?: unknown }).result : undefined;
+    alive();
+    if (code !== 0) {
+      throw nativeResultError(`Native group ${method} failed`, { result: code });
     }
   }
   return { invokeOperation };
