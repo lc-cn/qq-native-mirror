@@ -1,0 +1,66 @@
+tools/tsconfig.consumer-ci.json
+  s_2104cc474f1ce5::t_6b899a0ccc1cf6 1-13
+sdk/scripts/consumer-module-policy.ts
+  s_2104cc474f1ce5::t_a79fe4e91526cc 65
+tools/consumer-ci-gates.test.mjs
+  s_2104cc474f1ce5::t_07302e11b4c9f1 22,44-45,64-66,75-79
+  s_2104cc474f1ce5::t_c239c75ae7742c 1-21,23-43,46-63,67-74,80
+  s_2104cc474f1ce5::t_c2f2f4e508c5a4 81-83
+ci/verify-consumer.mjs
+  s_2104cc474f1ce5::t_540b699d4fdedd 1-12,14-101,103-148,150-151,153-196,198-1107
+ci/consumer-resources.mjs
+  s_2104cc474f1ce5::t_6b899a0ccc1cf6 1-21,28-32,34-38,42-55,57-62,64-68,76-103
+  s_2104cc474f1ce5::t_6732383f591da8 22-24,27,33,63,69,74-75
+  s_2104cc474f1ce5::t_ee7f0498835756 25-26,56
+  s_2104cc474f1ce5::t_bc2e2058d7c228 39-41,70-73
+ci/consumer-resources.test.mjs
+  s_2104cc474f1ce5::t_ee7f0498835756 1-9,15,26-39,46-52,57-65,80-114,123-128,151-156,161-174
+  s_2104cc474f1ce5::t_bc2e2058d7c228 10-14,16-25,40-45,53-56,66-79,115-122,129-150,157-160
+ci/npm.mjs
+  s_2104cc474f1ce5::t_6b899a0ccc1cf6 6-7
+  s_2104cc474f1ce5::t_9bf9b1a011b86f 1-5,8-12
+tools/eslint.config.mjs
+  s_2104cc474f1ce5::t_6732383f591da8 2,9,33-54
+  s_2104cc474f1ce5::t_f202ff530ae913 55
+tools/check-native-storage.mjs
+  s_2104cc474f1ce5::t_07302e11b4c9f1 36-37,73-74
+  s_2104cc474f1ce5::t_a79fe4e91526cc 20-21,62,71-72
+  s_2104cc474f1ce5::t_6732383f591da8 29-35,51-55
+  s_2104cc474f1ce5::t_44cc3e983df754 56
+ci/current-source-mirror.mjs
+  s_2104cc474f1ce5::t_4b682dff609a04 54-55,57-64,66-71,82,123
+sdk/docs/architecture/encapsulation.md
+  s_2104cc474f1ce5::t_c2ffb73a78d5a5 3,165-181
+sdk/docs/architecture/quality-gates.md
+  s_2104cc474f1ce5::t_6ed93b1fbcdb81 27-37,51-56,113-115
+sdk/docs/development.md
+  s_2104cc474f1ce5::t_b9d2fa379949be 129-138
+sdk/scripts/consumers/friend-query-consumer-contract.mjs
+  s_2104cc474f1ce5::t_532a5833443f41 1-355
+sdk/scripts/consumers/history-query-consumer-contract.mjs
+  s_2104cc474f1ce5::t_4e33973ce63822 1-202
+sdk/scripts/verify-package-consumer.mjs
+  s_2104cc474f1ce5::t_e20b5127e0f55f 43-44,320-322,374-376,561-562
+version-ci/build-main-contract.mjs
+  s_2104cc474f1ce5::t_12f3f069c9ef62 7,17,29
+version-ci/main-artifact.mjs
+  s_2104cc474f1ce5::t_f25c8049e3a83b 5-8,10-12,14-49,51-58,61-73,75,79-81,84-90
+version-ci/main-artifact.test.mjs
+  s_2104cc474f1ce5::t_d367a7e263f0ae 7-61,63-76,78-89,91-120
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c64716bafaa20bbd5aa373b2e17a043d809dbcd7",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
