@@ -67,6 +67,15 @@ termination Promise. Terminal failures remain observable without a second stop
 attempt, and an old deadline cannot terminate a replacement worker. This shared
 Promise is private lifecycle ownership, not a new public module or retry policy.
 
+Replacement initialization and login failure share this private retirement
+transaction with login deadlines. Its result is reserved before cancellation or
+notification can reenter. Pending requests use the existing safe error normalizer;
+the operation's original value remains in the caller's result or aggregate. A
+replacement login deadline may reach the transaction again through reconnect's
+catch, which joins the same result instead of notifying or wrapping failures twice.
+The replacement reference is captured for cleanup; ordinary success, initial
+worker retirement and spawn failures retain their separate lifecycle ordering.
+
 Before changing account state, `ClientLifecycle` captures own-data `uin` and `uid`
 from worker readiness. It stores only those two fields, preserving decimal strings
 (including zero, leading zeros and values beyond JavaScript's safe integer range)

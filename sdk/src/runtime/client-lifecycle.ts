@@ -2,7 +2,7 @@ import type { ChildProcess } from 'node:child_process';
 import { WorkerRpcChannel } from './worker-rpc-channel.ts';
 import { terminateWorker, type WorkerTerminationOptions } from './worker-termination.ts';
 import { withCleanupFailure } from './cleanup.ts';
-import { deserializeKernelError, KernelRequestError } from '../errors.ts';
+import { deserializeKernelError, KernelRequestError, normalizeKernelError } from '../errors.ts';
 import { normalizeLoginRequest } from '../native/login-request.ts';
 import type { Account, ClientOptions, ClientState, LoginRequest } from '../contracts/client.ts';
 import type { ClientEvents } from '../contracts/events.ts';
@@ -72,6 +72,7 @@ export class ClientLifecycle {
   #closePromise?: Promise<void>;
   #retiringWorker = false;
   #termination?: { worker: ChildProcess; promise: Promise<void> };
+  #failureRetirement?: { worker: ChildProcess; promise: Promise<void> };
   #state: ClientState = 'idle';
   #account?: Account;
   #rpc: WorkerRpcChannel;
@@ -285,44 +286,66 @@ export class ClientLifecycle {
     return this.#rpc.request(method, payload, timeoutMs) as Promise<T>;
   }
   async #requestTimedOut(method: string, error: Error): Promise<Error> {
-    if (method === 'login') {
-      // A timed-out authorization must not later make this generation online.
-      const worker = this.#worker;
-      const stateChanged = this.#state !== 'failed';
-      this.#closed = true;
-      this.#account = undefined;
-      this.#state = 'failed';
-      clearTimeout(this.#autoTimer);
-      this.#autoTimer = undefined;
-      this.#rpc.rejectPending(error);
-      // Reserve this worker's termination before synchronous presentation can
-      // close or reconnect. Those paths join the same exit gate, never retry it.
-      const stopped = this.#stopWorker(false, worker);
-      let notificationFailure: { error: unknown } | undefined;
-      try {
-        if (stateChanged && !this.#closing && this.#state === 'failed')
-          this.#context.emit('state', 'failed');
-      } catch (error) {
-        notificationFailure = { error };
-      }
-      try {
-        await stopped;
-      } catch (cleanupError) {
-        // eslint-disable-next-line preserve-caught-error -- AggregateError retains both original and cleanup errors.
-        throw new AggregateError(
-          notificationFailure
-            ? [error, notificationFailure.error, cleanupError]
-            : [error, cleanupError],
-          'QQ login timeout and worker cleanup failed',
-        );
-      }
-      if (notificationFailure)
-        throw new AggregateError(
-          [error, notificationFailure.error],
-          'QQ login timeout and state notification failed',
-        );
-    }
+    if (method === 'login') await this.#retireFailedWorker(this.#worker, error, 'login timeout');
     return error;
+  }
+  /** One worker failure owns retirement, presentation and the exit gate.
+   * A reconnect's login timeout may reach this transaction again through its
+   * catch; joining the result prevents duplicate notification and aggregation.
+   */
+  #retireFailedWorker(
+    worker: ChildProcess,
+    error: unknown,
+    operation: 'login timeout' | 'reconnect',
+  ): Promise<void> {
+    if (this.#failureRetirement?.worker === worker) return this.#failureRetirement.promise;
+    let resolve!: () => void;
+    let reject!: (error: unknown) => void;
+    const promise = new Promise<void>((fulfilled, rejected) => {
+      resolve = fulfilled;
+      reject = rejected;
+    });
+    // Reserve before cancellation transports or synchronous observers reenter.
+    this.#failureRetirement = { worker, promise };
+    this.#finishFailureRetirement(worker, error, operation).then(resolve, reject);
+    return promise;
+  }
+  async #finishFailureRetirement(
+    worker: ChildProcess,
+    error: unknown,
+    operation: 'login timeout' | 'reconnect',
+  ): Promise<void> {
+    const stateChanged = !this.#closing && this.#state !== 'failed';
+    this.#closed = true;
+    this.#account = undefined;
+    if (!this.#closing) this.#state = 'failed';
+    clearTimeout(this.#autoTimer);
+    this.#autoTimer = undefined;
+    this.#rpc.rejectPending(normalizeKernelError(error));
+    const stopped = this.#stopWorker(false, worker);
+    let notificationFailure: { error: unknown } | undefined;
+    try {
+      if (stateChanged && !this.#closing && this.#state === 'failed')
+        this.#context.emit('state', 'failed');
+    } catch (error) {
+      notificationFailure = { error };
+    }
+    try {
+      await stopped;
+    } catch (cleanupError) {
+      // eslint-disable-next-line preserve-caught-error -- AggregateError retains operation, notification and cleanup failures.
+      throw new AggregateError(
+        notificationFailure
+          ? [error, notificationFailure.error, cleanupError]
+          : [error, cleanupError],
+        `QQ ${operation} and worker cleanup failed`,
+      );
+    }
+    if (notificationFailure)
+      throw new AggregateError(
+        [error, notificationFailure.error],
+        `QQ ${operation} and state notification failed`,
+      );
   }
   login(request: LoginRequest = this.#defaultLogin): Promise<Account> {
     if (this.#closing || this.#closed) return Promise.reject(new Error('QQ client is closed'));
@@ -462,21 +485,13 @@ export class ClientLifecycle {
     this.#closed = false;
     this.#worker = this.#restart!.spawn();
     this.#attach(this.#worker);
+    const replacement = this.#worker;
     try {
       const result = await this.request<{ exports: string[] }>('init', this.#restart!.payload);
       this.#context.exportsUpdated(result.exports);
       return await this.login(login);
     } catch (error) {
-      if (!this.#closing) {
-        this.#closed = true;
-        this.#setState('failed');
-      }
-      try {
-        await this.#stopWorker();
-      } catch (cleanupError) {
-        // eslint-disable-next-line preserve-caught-error -- AggregateError retains both original and cleanup errors.
-        throw new AggregateError([error, cleanupError], 'QQ reconnect and worker cleanup failed');
-      }
+      await this.#retireFailedWorker(replacement, error, 'reconnect');
       throw error;
     }
   }

@@ -22,6 +22,7 @@ export async function verifyWorkerErrorRoutes({
   await verifyClientClosing(QQClient);
   await verifyClientOffline(QQClient);
   await verifyClientLoginTimeout(QQClient);
+  await verifyClientReconnectFailure(QQClient);
   const directory = await realpath(await mkdtemp(join(tmpdir(), 'qq-worker-error-')));
   /** @type {import("../../src/client/qq-client.ts").QQClient | undefined} */
   let client;
@@ -154,6 +155,7 @@ export function createKernel(_native,_options,emit){return {
       clientOfflineBatchCancellationContract: true,
       clientNestedOfflineRestoreContract: true,
       clientLoginTimeoutObserverRetirementContract: true,
+      clientReconnectFailureRetirementContract: true,
       clientEventPresentationInstalledContract: true,
       workerOpaqueErrorContract: true,
       workerErrorRecoveryContract: true,
@@ -178,6 +180,161 @@ export function createKernel(_native,_options,emit){return {
       }
       await rm(directory, { recursive: true, force: true });
     }
+  }
+}
+
+/** @param {typeof import('../../src/client/qq-client.ts').QQClient} QQClient */
+async function verifyClientReconnectFailure(QQClient) {
+  for (const mode of ['init', 'cleanup-failure', 'close-reentry', 'login-timeout']) {
+    const previous = new ChildProcess();
+    const replacement = new ChildProcess();
+    const observer = Object.freeze({ reconnectObserver: true });
+    const cleanup = Object.freeze({ reconnectCleanup: true });
+    /** @type {{id:number,method:string}[]} */
+    const sent = [];
+    let oldKills = 0,
+      newKills = 0,
+      exited = false;
+    for (const child of [previous, replacement]) {
+      Object.defineProperty(child, 'connected', { value: true, configurable: true });
+      Object.defineProperty(child, 'kill', {
+        value() {
+          if (child === previous) oldKills++;
+          else newKills++;
+          if (child === replacement && mode === 'cleanup-failure') throw cleanup;
+          setTimeout(() => {
+            if (child === replacement) exited = true;
+            Object.defineProperty(child, 'exitCode', { value: 0, configurable: true });
+            child.emit('exit', 0, null);
+          }, 5);
+          return true;
+        },
+      });
+    }
+    Object.defineProperty(replacement, 'send', {
+      value(
+        /** @type {{id:number,method?:string}} */ message,
+        /** @type {(error:Error|null)=>void} */ callback,
+      ) {
+        callback(null);
+        if (message.method) sent.push({ id: message.id, method: message.method });
+        if (message.method === 'init' && mode === 'login-timeout')
+          queueMicrotask(() =>
+            replacement.emit('message', { id: message.id, result: { exports: [] } }),
+          );
+        return true;
+      },
+    });
+    const client = new QQClient(
+      previous,
+      mode === 'login-timeout' ? 100 : 1000,
+      { method: 'qr' },
+      { spawn: () => replacement, payload: {} },
+    );
+    /** @type {Promise<{closed:true}|{error:unknown}>|undefined} */
+    let closing;
+    let notifications = 0;
+    client.on('state', (state) => {
+      if (state !== 'failed' || notifications++) return;
+      for (const message of sent.filter((value) => !['init', 'login'].includes(value.method)))
+        replacement.emit('message', { id: message.id, result: 'late' });
+      replacement.emit('message', { event: 'ready', payload: { uin: '123', uid: 'late' } });
+      if (mode === 'close-reentry')
+        closing = client.close().then(
+          () => ({ closed: true }),
+          (/** @type {unknown} */ error) => ({ error }),
+        );
+      throw observer;
+    });
+    const reconnect = client.reconnect({ method: 'qr' }).then(
+      (value) => ({ value }),
+      (/** @type {unknown} */ error) => ({ error }),
+    );
+    // Previous worker termination has a real asynchronous exit gate.
+    for (
+      let attempt = 0;
+      !sent.some((value) => value.method === 'init') && attempt < 100;
+      attempt++
+    )
+      await new Promise((resolve) => setTimeout(resolve, 1));
+    const sibling = client.request('listFriends').then(
+      (/** @type {unknown} */ value) => ({ value }),
+      (/** @type {unknown} */ error) => ({ error }),
+    );
+    const merged = client.request('sendMergedForward').then(
+      (/** @type {unknown} */ value) => ({ value }),
+      (/** @type {unknown} */ error) => ({ error }),
+    );
+    const init = sent.find((value) => value.method === 'init');
+    assert.ok(init);
+    if (mode !== 'login-timeout')
+      replacement.emit('message', {
+        id: init.id,
+        error: { message: 'controlled init failure', code: 7 },
+      });
+    /** @type {{error:unknown}|undefined} */
+    let primaryFailure;
+    try {
+      const result = await reconnect;
+      assert.ok('error' in result && result.error instanceof AggregateError);
+      const failures = result.error.errors;
+      assert.ok(failures[0] instanceof Error);
+      if (mode === 'login-timeout') assert.match(failures[0].message, /login timed out/i);
+      else {
+        assert.equal(failures[0].message, 'controlled init failure');
+        assert.equal(Reflect.get(failures[0], 'code'), 7);
+      }
+      assert.strictEqual(failures[1], observer);
+      assert.equal(failures.length, mode === 'cleanup-failure' ? 3 : 2);
+      if (mode === 'cleanup-failure') assert.strictEqual(failures[2], cleanup);
+      const siblingResult = await sibling;
+      assert.ok('error' in siblingResult);
+      assert.strictEqual(siblingResult.error, failures[0]);
+      const mergedResult = await merged;
+      assert.ok('error' in mergedResult && mergedResult.error instanceof Error);
+      assert.equal(mergedResult.error.message, failures[0].message);
+      assert.deepEqual(Reflect.get(mergedResult.error, 'mergedForward'), {
+        phase: 'operation',
+        uploadCompletion: 'unknown',
+        cardCompletion: 'unknown',
+      });
+      assert.equal(notifications, 1);
+      assert.equal(oldKills, 1);
+      assert.equal(newKills, 1);
+      assert.equal(client.account, undefined);
+      assert.equal(client.state, mode === 'close-reentry' ? 'closed' : 'failed');
+      if (mode !== 'cleanup-failure') assert.equal(exited, true);
+      if (closing) assert.deepEqual(await closing, { closed: true });
+      assert.equal(sent.filter((value) => value.method === 'init').length, 1);
+      assert.equal(
+        sent.filter((value) => value.method === 'login').length,
+        mode === 'login-timeout' ? 1 : 0,
+      );
+    } catch (error) {
+      primaryFailure = { error };
+    }
+    try {
+      for (const child of [previous, replacement]) {
+        Object.defineProperty(child, 'exitCode', { value: 0, configurable: true });
+        child.emit('exit', 0, null);
+      }
+      await Promise.all([reconnect, sibling, merged]);
+      if (mode === 'cleanup-failure')
+        await assert.rejects(client.close(), (error) => error === cleanup);
+      else await client.close();
+      assert.equal(newKills, 1);
+    } catch (cleanupError) {
+      if (primaryFailure)
+        throw new AggregateError(
+          [primaryFailure.error, cleanupError],
+          'Controlled reconnect verification and cleanup failed',
+          { cause: cleanupError },
+        );
+      throw cleanupError;
+    } finally {
+      client.removeAllListeners();
+    }
+    if (primaryFailure) throw primaryFailure.error;
   }
 }
 

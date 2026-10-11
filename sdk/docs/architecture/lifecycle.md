@@ -29,6 +29,12 @@
   Close and explicit reconnect join that worker's reserved termination Promise,
   including a terminal failure, without repeating signals or cleanup deadlines.
   A replacement starts only after the previous worker has exited successfully.
+- Replacement initialization and login failures use the same retirement
+  transaction as a login deadline. They reject sibling requests before notifying
+  `failed`, then wait for the captured replacement's exit. An ordinary operation
+  failure retains its identity; notification and cleanup failures are retained
+  alongside it. A replacement login timeout joins its existing retirement result
+  when it reaches reconnect's catch, without another notification or aggregation.
 - Parent close reserves its shared Promise before synchronous `closing` events.
   An observer failure cannot skip shutdown or the worker-exit gate. Successful
   cleanup reaches `closed` before close rejects with the original observer value;

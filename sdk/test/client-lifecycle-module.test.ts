@@ -1101,3 +1101,239 @@ test('login timeout clears a previously queued automatic restore without clearin
   assert.equal(lifecycle.account, undefined);
   assert.equal(f.worker.exitCode, 0);
 });
+
+for (const phase of ['init', 'login'] as const) {
+  for (const observer of ['none', 'error', 'opaque', 'undefined'] as const) {
+    for (const cleanupFails of [false, true]) {
+      test(`replacement ${phase} failure retires siblings (${observer} observer, cleanup ${cleanupFails ? 'fails' : 'succeeds'})`, async (context) => {
+        context.mock.timers.enable({ apis: ['setTimeout'] });
+        const old = workerFixture(),
+          next = workerFixture();
+        const primary = new Error(`${phase} failed fixture`);
+        const notification: unknown =
+          observer === 'error'
+            ? new Error('failed observer fixture')
+            : observer === 'opaque'
+              ? { opaque: true }
+              : undefined;
+        const cleanup = new Error('replacement kill fixture');
+        let fail: ((error: Error | null) => void) | undefined;
+        let kills = 0,
+          notifications = 0;
+        next.worker.send = ((
+          message: { id: number; method: string },
+          callback: (error: Error | null) => void,
+        ) => {
+          next.sent.push(message);
+          if (message.method === phase) fail = callback;
+          else {
+            callback(null);
+            if (message.method === 'init')
+              queueMicrotask(() =>
+                next.events.emit('message', { id: message.id, result: { exports: [] } }),
+              );
+          }
+          return true;
+        }) as typeof next.worker.send;
+        next.worker.kill = () => {
+          kills++;
+          if (cleanupFails) throw cleanup;
+          Object.assign(next.worker, { exitCode: 0, connected: false });
+          next.events.emit('exit', 0, null);
+          return true;
+        };
+        const lifecycle = new ClientLifecycle({
+          worker: old.worker,
+          timeout: 1000,
+          restart: { spawn: () => next.worker, payload: {} },
+          emit(event, state) {
+            if (event === 'state' && state === 'failed') {
+              notifications++;
+              for (const sent of next.sent)
+                if (sent.method === 'listFriends' || sent.method === 'sendMergedForward')
+                  next.events.emit('message', { id: sent.id, result: 'late' });
+              if (observer !== 'none') throw notification;
+            }
+          },
+          forward() {},
+          exportsUpdated() {},
+        });
+        const reconnect = lifecycle.reconnect({ method: 'quick', uin: '123' }).then(
+          (value) => ({ value }),
+          (error: unknown) => ({ error }),
+        );
+        await new Promise<void>((resolve) => setImmediate(resolve));
+        assert.ok(fail);
+        let readSettled = false,
+          mergedSettled = false;
+        const read = lifecycle.request('listFriends', {}, 2000).then(
+          (value) => {
+            readSettled = true;
+            return { value };
+          },
+          (error: unknown) => {
+            readSettled = true;
+            return { error };
+          },
+        );
+        const merged = lifecycle.request('sendMergedForward', {}, 2000).then(
+          (value) => {
+            mergedSettled = true;
+            return { value };
+          },
+          (error: unknown) => {
+            mergedSettled = true;
+            return { error };
+          },
+        );
+        fail(primary);
+        const result = await reconnect;
+        const retired = { read: readSettled, merged: mergedSettled, kills };
+        next.events.emit('message', { event: 'ready', payload: { uin: '123', uid: 'u_late' } });
+        context.mock.timers.tick(2000);
+        const [readResult, mergedResult] = await Promise.all([read, merged]);
+        assert.deepEqual(retired, { read: true, merged: true, kills: 1 });
+        assert.equal(notifications, 1);
+        assert.equal(lifecycle.account, undefined);
+        assert.ok('error' in readResult && readResult.error === primary);
+        assert.ok('error' in mergedResult && mergedResult.error instanceof KernelRequestError);
+        assert.equal(mergedResult.error.mergedForward?.uploadCompletion, 'unknown');
+        assert.equal(mergedResult.error.mergedForward?.cardCompletion, 'unknown');
+        assert.ok('error' in result);
+        if (observer === 'none' && !cleanupFails) assert.equal(result.error, primary);
+        else {
+          assert.ok(result.error instanceof AggregateError);
+          assert.deepEqual(result.error.errors, [
+            primary,
+            ...(observer === 'none' ? [] : [notification]),
+            ...(cleanupFails ? [cleanup] : []),
+          ]);
+        }
+        if (phase === 'init')
+          assert.equal(next.sent.filter((sent) => sent.method === 'login').length, 0);
+        if (cleanupFails)
+          await assert.rejects(lifecycle.close(), (error: unknown) => error === cleanup);
+        assert.equal(kills, 1);
+      });
+    }
+  }
+}
+
+test('reconnect login timeout joins the completed failure transaction without duplicate notification or aggregation', async (context) => {
+  context.mock.timers.enable({ apis: ['setTimeout'] });
+  const old = workerFixture(),
+    next = workerFixture();
+  const original = new Error('timeout observer fixture');
+  let notifications = 0,
+    kills = 0;
+  const kill = next.worker.kill.bind(next.worker);
+  next.worker.kill = (...args) => {
+    kills++;
+    return kill(...args);
+  };
+  const lifecycle = new ClientLifecycle({
+    worker: old.worker,
+    timeout: 10,
+    restart: { spawn: () => next.worker, payload: {} },
+    emit(event, state) {
+      if (event === 'state' && state === 'failed') {
+        notifications++;
+        throw original;
+      }
+    },
+    forward() {},
+    exportsUpdated() {},
+  });
+  const reconnect = lifecycle.reconnect({ method: 'quick', uin: '123' }).then(
+    (value) => ({ value }),
+    (error: unknown) => ({ error }),
+  );
+  await new Promise<void>((resolve) => setImmediate(resolve));
+  assert.ok(next.sent.some((sent) => sent.method === 'login'));
+  const read = lifecycle.request('listFriends', {}, 1000).then(
+    (value) => ({ value }),
+    (error: unknown) => ({ error }),
+  );
+  context.mock.timers.tick(10);
+  const result = await reconnect;
+  const readResult = await read;
+  assert.ok('error' in result && result.error instanceof AggregateError);
+  assert.equal(result.error.errors.length, 2);
+  assert.ok(result.error.errors[0] instanceof Error);
+  assert.match(result.error.errors[0].message, /login timed out/);
+  assert.equal(result.error.errors[1], original);
+  assert.ok('error' in readResult && readResult.error === result.error.errors[0]);
+  assert.equal(notifications, 1);
+  assert.equal(kills, 1);
+});
+
+test('replacement failure observer close joins one stop and waits for actual replacement exit', async () => {
+  const old = workerFixture(),
+    next = workerFixture();
+  const primary = new Error('init failure fixture'),
+    original = new Error('observer fixture');
+  let fail: ((error: Error | null) => void) | undefined;
+  let kills = 0;
+  let closing: Promise<void> | undefined;
+  let reconnectSettled = false,
+    closeSettled = false;
+  next.worker.send = ((
+    message: { id: number; method: string },
+    callback: (error: Error | null) => void,
+  ) => {
+    next.sent.push(message);
+    if (message.method === 'init') fail = callback;
+    else callback(null);
+    return true;
+  }) as typeof next.worker.send;
+  next.worker.kill = () => {
+    kills++;
+    return true;
+  };
+  const lifecycle = new ClientLifecycle({
+    worker: old.worker,
+    timeout: 1000,
+    restart: { spawn: () => next.worker, payload: {} },
+    emit(event, state) {
+      if (event === 'state' && state === 'failed') {
+        closing = lifecycle.close();
+        closing.then(
+          () => {
+            closeSettled = true;
+          },
+          () => {
+            closeSettled = true;
+          },
+        );
+        throw original;
+      }
+    },
+    forward() {},
+    exportsUpdated() {},
+  });
+  const reconnect = lifecycle.reconnect({ method: 'quick', uin: '123' }).then(
+    (value) => {
+      reconnectSettled = true;
+      return { value };
+    },
+    (error: unknown) => {
+      reconnectSettled = true;
+      return { error };
+    },
+  );
+  await new Promise<void>((resolve) => setImmediate(resolve));
+  assert.ok(fail);
+  fail(primary);
+  await new Promise<void>((resolve) => setImmediate(resolve));
+  const beforeExit = { kills, reconnectSettled, closeSettled };
+  Object.assign(next.worker, { exitCode: 0, connected: false });
+  next.events.emit('exit', 0, null);
+  const result = await reconnect;
+  await closing;
+  assert.deepEqual(beforeExit, { kills: 1, reconnectSettled: false, closeSettled: false });
+  assert.ok('error' in result && result.error instanceof AggregateError);
+  assert.deepEqual(result.error.errors, [primary, original]);
+  assert.equal(lifecycle.close(), closing);
+  assert.equal(lifecycle.state, 'closed');
+  assert.equal(kills, 1);
+});
