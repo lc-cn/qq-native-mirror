@@ -1,0 +1,52 @@
+sdk/src/runtime/feature-lifetime.ts
+  s_2104cc474f1ce5::t_2ef0df0588c9e6 1-41,43,45-55
+  s_2104cc474f1ce5::t_4b8bee0fbbefb2 42,44
+sdk/test/architecture.test.ts
+  s_2104cc474f1ce5::t_7739c4c48ce278 60-75,77
+  s_2104cc474f1ce5::t_cfb372071bfa1b 76,78-83
+sdk/src/features/contacts/contact-directory.ts
+  s_2104cc474f1ce5::t_7739c4c48ce278 38-42
+  s_2104cc474f1ce5::t_2ef0df0588c9e6 9,25,37,43,141
+sdk/test/feature-lifetime.test.ts
+  s_2104cc474f1ce5::t_4b8bee0fbbefb2 7-19
+  s_2104cc474f1ce5::t_eed0a953927140 1-6,20-115
+sdk/src/features/groups/group-files.ts
+  s_2104cc474f1ce5::t_2ef0df0588c9e6 2,53-58,106
+sdk/docs/architecture/encapsulation.md
+  s_2104cc474f1ce5::t_1aa48ae76a2792 3-11
+ci/verify-consumer.mjs
+  s_2104cc474f1ce5::t_1aa48ae76a2792 38,232
+  s_2104cc474f1ce5::t_185ea9e83132c5 347
+sdk/test/helpers/dependency-policy.ts
+  s_2104cc474f1ce5::t_2ef0df0588c9e6 172-180
+sdk/scripts/verify-package-consumer.mjs
+  s_2104cc474f1ce5::t_1aa48ae76a2792 36,216-218,629
+sdk/scripts/consumers/contact-directory-lifetime-consumer-contract.mjs
+  s_2104cc474f1ce5::t_5c9fb5a580b5a1 69
+  s_2104cc474f1ce5::t_1118f1bc520c69 53
+  s_2104cc474f1ce5::t_1aa48ae76a2792 1-52,54-68,70-80
+sdk/test/contact-directory.test.ts
+  s_2104cc474f1ce5::t_eed0a953927140 4,17-51,58-72,74-76
+  s_2104cc474f1ce5::t_1118f1bc520c69 57
+  s_2104cc474f1ce5::t_5c9fb5a580b5a1 52-56,73
+sdk/src/features/forward/long-message-response.ts
+  s_2104cc474f1ce5::t_8d2cc3fec1eea0 198-210,213-217
+sdk/test/long-message-response.test.ts
+  s_2104cc474f1ce5::t_c44599d7451cb5 253-314
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "5584040e6a958143133c9a351ddf85d9cf205260",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
