@@ -68,6 +68,27 @@ as `loginError`. Explicit login owns its returned Promise after taking over; inv
 login input and rejected reconnect admission do not consume the configured task.
 No scheduler, initialization hook or task token enters the package-root interface.
 
+Automatic restoration has one private task identity containing its captured
+restore request and optional timer. Queued and in-flight work therefore share
+notification/retry authority instead of leaving a detached failure continuation.
+Close, normalized explicit login, admitted manual reconnect and account retirement
+remove that authority synchronously. A same-request manual reconnect joins the
+reserved Promise and takes over error observation; malformed or conflicting
+requests do not steal the admitted task. The public reconnect entry and automatic
+scheduler share `#beginReconnect`, which distinguishes the actual task owner;
+replacement authorization uses the private login entry so it cannot invalidate
+its own automatic task. Worker generation changes are part of that replacement,
+so task retirement uses identity rather than rejecting every generation change.
+
+Readiness, crashes and failed-worker cleanup cancel only queued timers. Active
+failures retain their original notification even when cleanup sets the worker
+closed. Completion and failure release only their own task, never a newer one.
+Failure notification and retry-policy inspection each recheck ownership after
+calling application code. A retry getter that retires the task and then throws is
+obsolete; a getter throwing while still active escapes through the common task
+observer. The task does not replay requests or undo submitted native work, and a
+new eligible offline decision gets its own delay and captured account request.
+
 `runtime/background-task` consumes a background continuation's escaping rejection
 and defers a safely projected exception until current settlements run. The parent
 configured-login and automatic-restore owners share this terminal rule with worker

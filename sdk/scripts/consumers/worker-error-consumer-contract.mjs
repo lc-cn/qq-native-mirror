@@ -28,6 +28,7 @@ export async function verifyWorkerErrorRoutes({
   await verifyClientCloseFailureNotification(QQClient);
   await verifyClientLoginFailureNotification(QQClient);
   await verifyClientNativeExportsSnapshot(QQClient);
+  await verifyClientAutomaticRestore(QQClient);
   const directory = await realpath(await mkdtemp(join(tmpdir(), 'qq-worker-error-')));
   /** @type {import("../../src/client/qq-client.ts").QQClient | undefined} */
   let client;
@@ -168,6 +169,7 @@ export function createKernel(_native,_options,emit){return {
       clientLoginFailureNotificationContract: true,
       clientNativeExportsSnapshotContract: true,
       clientBackgroundNotificationFailureContract: true,
+      clientAutomaticRestoreRetirementContract: true,
       clientEventPresentationInstalledContract: true,
       workerOpaqueErrorContract: true,
       workerErrorRecoveryContract: true,
@@ -192,6 +194,167 @@ export function createKernel(_native,_options,emit){return {
       }
       await rm(directory, { recursive: true, force: true });
     }
+  }
+}
+
+/** @param {typeof import('../../src/client/qq-client.ts').QQClient} QQClient */
+async function verifyClientAutomaticRestore(QQClient) {
+  for (const mode of ['close', 'active', 'manual', 'conflict', 'observer-close']) {
+    const previous = new ChildProcess(),
+      replacement = new ChildProcess();
+    let spawns = 0,
+      logins = 0,
+      retryableReads = 0;
+    /** @type {{id:number,method:string}[]} */
+    const requests = [];
+    /** @type {unknown[]} */
+    const notifications = [];
+    /** @type {(value:number)=>void} */
+    let initDispatched = () => {};
+    const initialized = new Promise((resolve) => {
+      initDispatched = resolve;
+    });
+    for (const child of [previous, replacement]) {
+      Object.defineProperty(child, 'connected', { value: true, configurable: true });
+      Object.defineProperty(child, 'kill', {
+        value() {
+          Object.defineProperty(child, 'exitCode', { value: 0, configurable: true });
+          queueMicrotask(() => child.emit('exit', 0, null));
+          return true;
+        },
+      });
+      Object.defineProperty(child, 'send', {
+        value(
+          /** @type {{id:number,method?:string}} */ message,
+          /** @type {(error:Error|null)=>void} */ callback,
+        ) {
+          callback(null);
+          if (child === replacement && message.method) {
+            requests.push({ id: message.id, method: message.method });
+            if (message.method === 'init') initDispatched(message.id);
+            if (message.method === 'login') logins++;
+          }
+          if (message.method === 'close')
+            queueMicrotask(() => {
+              Object.defineProperty(child, 'exitCode', { value: 0, configurable: true });
+              child.emit('message', { id: message.id, result: null });
+              child.emit('exit', 0, null);
+            });
+          return true;
+        },
+      });
+    }
+    const client = new QQClient(
+      previous,
+      1000,
+      { method: 'restore' },
+      {
+        spawn() {
+          spawns++;
+          return replacement;
+        },
+        payload: {},
+      },
+      { delayMs: 1, maxAttempts: 1 },
+    );
+    client.on('reconnect-error', (error) => {
+      notifications.push(error);
+      if (mode === 'observer-close') {
+        Object.defineProperty(error, 'retryable', {
+          get() {
+            retryableReads++;
+            return true;
+          },
+        });
+        observed.closing = client.close();
+      }
+    });
+    /** @type {{closing?:Promise<void>,manual?:Promise<{error:unknown}|{value:unknown}>,joined?:Promise<{error:unknown}|{value:unknown}>}} */
+    const observed = {};
+    previous.emit('message', { event: 'ready', payload: { uin: '123', uid: 'fixture' } });
+    const payload = { retryable: true };
+    previous.emit('message', { event: 'disconnected', payload });
+    /** @type {{error:unknown}|undefined} */
+    let primary;
+    try {
+      const id = await initialized;
+      if (mode === 'manual') {
+        const manual = client.reconnect({ method: 'restore', uin: '123' });
+        assert.strictEqual(client.reconnect({ method: 'restore', uin: '123' }), manual);
+        observed.joined = client.reconnect({ method: 'restore', uin: '123' }).then(
+          (value) => ({ value }),
+          (/** @type {unknown} */ error) => ({ error }),
+        );
+        observed.manual = manual.then(
+          (value) => ({ value }),
+          (/** @type {unknown} */ error) => ({ error }),
+        );
+      }
+      if (mode === 'conflict')
+        await assert.rejects(client.reconnect({ method: 'qr' }), /different reconnect/i);
+      if (mode === 'close') {
+        const closing = client.close();
+        assert.strictEqual(client.close(), closing);
+        await closing;
+      }
+      replacement.emit('message', {
+        id,
+        error: { message: 'controlled automatic restore failure', code: 7 },
+      });
+      await new Promise((resolve) => setImmediate(resolve));
+      await new Promise((resolve) => setImmediate(resolve));
+      if (mode === 'close' || mode === 'manual') assert.equal(notifications.length, 0);
+      else {
+        assert.equal(notifications.length, 1);
+        assert.ok(notifications[0] instanceof Error);
+        assert.equal(notifications[0].message, 'controlled automatic restore failure');
+        assert.equal(Reflect.get(notifications[0], 'code'), 7);
+      }
+      if (observed.manual) {
+        const result = await observed.manual;
+        await observed.joined;
+        assert.ok('error' in result && result.error instanceof Error);
+        assert.ok(observed.joined);
+        const joined = await observed.joined;
+        assert.ok('error' in joined);
+        assert.strictEqual(joined.error, result.error);
+        assert.equal(result.error.message, 'controlled automatic restore failure');
+        assert.equal(Reflect.get(result.error, 'code'), 7);
+      }
+      assert.equal(spawns, 1);
+      assert.equal(logins, 0);
+      assert.equal(requests.filter((value) => value.method === 'init').length, 1);
+      assert.equal(client.account, undefined);
+      if (mode === 'observer-close') {
+        assert.ok(observed.closing);
+        await observed.closing;
+        assert.equal(retryableReads, 0);
+        assert.equal(spawns, 1);
+      }
+    } catch (error) {
+      primary = { error };
+    }
+    try {
+      for (const child of [previous, replacement]) {
+        Object.defineProperty(child, 'exitCode', { value: 0, configurable: true });
+        child.emit('exit', 0, null);
+      }
+      await observed.closing;
+      await observed.manual;
+      await observed.joined;
+      await client.close();
+    } catch (error) {
+      if (primary)
+        throw new AggregateError(
+          [primary.error, error],
+          'Automatic restore verification and teardown failed',
+          { cause: error },
+        );
+      throw error;
+    } finally {
+      client.removeAllListeners();
+    }
+    if (primary) throw primary.error;
   }
 }
 

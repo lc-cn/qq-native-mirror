@@ -146,7 +146,7 @@ function parentTaskOwnershipViolations(source) {
       if (
         !method ||
         method.expression.kind !== ts.SyntaxKind.ThisKeyword ||
-        method.name.text !== (event === 'loginError' ? '#startLogin' : 'reconnect')
+        method.name.text !== (event === 'loginError' ? '#startLogin' : '#beginReconnect')
       )
         violations.push(`${event} must belong to its reviewed login/reconnect operation`);
       const parent = node.parent;

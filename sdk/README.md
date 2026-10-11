@@ -63,7 +63,11 @@ Omit `uin` only with exactly one eligible record. Explicit quick login uses
 
 `authenticated` precedes account Session startup; `login`, `ready` and the login
 Promise indicate readiness. Each client owns one account/data directory. Close
-preserves authorization files. Use explicit `reconnect` after a failure.
+preserves authorization files. Use explicit `reconnect` after a failure. With `autoReconnect` enabled, only a
+retryable disconnect schedules restoration. Close or a manual login cancels its
+pending task and obsolete error notifications. A same-request manual `reconnect`
+joins the shared result and takes over error observation; invalid or conflicting
+requests leave the admitted restore in charge. Submitted work is not undone.
 In the working source, `client.nativeExports` returns a fresh `string[]` snapshot.
 Editing or freezing it does not change the client. Reread the property after
 reconnect; previously read arrays retain their original contents.

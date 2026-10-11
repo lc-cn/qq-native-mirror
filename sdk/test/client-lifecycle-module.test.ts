@@ -1,7 +1,7 @@
-import { test } from 'node:test';
+import { test, type TestContext } from 'node:test';
 import assert from 'node:assert/strict';
 import { EventEmitter } from 'node:events';
-import type { ChildProcess } from 'node:child_process';
+import { spawnSync, type ChildProcess } from 'node:child_process';
 import { ClientLifecycle } from '../src/runtime/client-lifecycle.ts';
 import { KernelRequestError } from '../src/errors.ts';
 function workerFixture() {
@@ -2515,4 +2515,387 @@ test('waitForLogin joining active configured login preserves automatic failure n
   } finally {
     await lifecycle.close();
   }
+});
+
+function pendingRestoreWorker() {
+  const fixture = workerFixture();
+  let callback: ((error: Error | null) => void) | undefined;
+  const send = fixture.worker.send.bind(fixture.worker);
+  fixture.worker.send = ((
+    message: { id: number; method: string },
+    completed: (error: Error | null) => void,
+  ) => {
+    if (message.method === 'init') {
+      fixture.sent.push(message);
+      callback = completed;
+      return true;
+    }
+    return send(message, completed);
+  }) as typeof fixture.worker.send;
+  return {
+    ...fixture,
+    fail(error: Error) {
+      assert.ok(callback);
+      callback(error);
+    },
+  };
+}
+
+async function automaticRestoreFixture(
+  context: TestContext,
+  spawn: () => ChildProcess,
+  timeout = 1000,
+  onError?: (error: unknown) => void,
+) {
+  context.mock.timers.enable({ apis: ['setTimeout'] });
+  const old = workerFixture(),
+    errors: unknown[] = [];
+  const lifecycle = new ClientLifecycle({
+    worker: old.worker,
+    timeout,
+    restart: { spawn, payload: {} },
+    autoReconnect: { delayMs: 10, maxAttempts: 3 },
+    emit() {},
+    forward(event, error) {
+      if (event === 'reconnect-error') {
+        errors.push(error);
+        onError?.(error);
+      }
+    },
+    exportsUpdated() {},
+  });
+  const account = { uin: '123', uid: 'u_restore' };
+  const login = lifecycle.login({ method: 'quick', uin: '123' });
+  old.events.emit('message', { event: 'ready', payload: account });
+  old.events.emit('message', { id: old.sent[0].id, result: account });
+  await login;
+  return {
+    old,
+    lifecycle,
+    errors,
+    disconnect() {
+      old.events.emit('message', { event: 'disconnected', payload: { retryable: true } });
+    },
+    async start() {
+      this.disconnect();
+      context.mock.timers.tick(10);
+      await new Promise<void>((resolve) => setImmediate(resolve));
+    },
+  };
+}
+
+for (const action of ['close', 'login'] as const) {
+  test(`${action} cancels queued automatic restoration without a replacement`, async (context) => {
+    const next = workerFixture();
+    let spawns = 0;
+    const f = await automaticRestoreFixture(context, () => {
+      spawns++;
+      return next.worker;
+    });
+    let manual: Promise<unknown> | undefined;
+    try {
+      f.disconnect();
+      if (action === 'close') await f.lifecycle.close();
+      else {
+        const login = f.lifecycle.login({ method: 'quick', uin: '456' });
+        manual = login.then(
+          (value) => ({ value }),
+          (error: unknown) => ({ error }),
+        );
+      }
+      context.mock.timers.tick(10);
+      await new Promise<void>((resolve) => setImmediate(resolve));
+      assert.equal(spawns, 0);
+      assert.deepEqual(f.errors, []);
+      if (manual) {
+        const sent = f.old.sent.at(-1);
+        assert.ok(sent && sent.method === 'login');
+        const account = { uin: '456', uid: 'u_manual' };
+        f.old.events.emit('message', { event: 'ready', payload: account });
+        f.old.events.emit('message', { id: sent.id, result: account });
+        assert.deepEqual(await manual, { value: account });
+      }
+    } finally {
+      await f.lifecycle.close();
+      await manual;
+    }
+  });
+}
+
+test('completed close retires in-flight automatic initialization failure notification', async (context) => {
+  const next = pendingRestoreWorker();
+  const f = await automaticRestoreFixture(context, () => next.worker);
+  await f.start();
+  await f.lifecycle.close();
+  next.fail(new Error('late init fixture'));
+  await new Promise<void>((resolve) => setImmediate(resolve));
+  assert.deepEqual(f.errors, []);
+  assert.equal(f.lifecycle.state, 'closed');
+});
+
+for (const phase of ['init', 'spawn', 'timeout'] as const) {
+  test(`active automatic ${phase} failure still reports once after failed retirement`, async (context) => {
+    const next = pendingRestoreWorker(),
+      primary = new Error('active restore fixture');
+    let spawns = 0;
+    const f = await automaticRestoreFixture(
+      context,
+      () => {
+        spawns++;
+        if (phase === 'spawn') throw primary;
+        return next.worker;
+      },
+      100,
+    );
+    try {
+      await f.start();
+      if (phase === 'init') next.fail(primary);
+      if (phase === 'timeout') context.mock.timers.tick(100);
+      await new Promise<void>((resolve) => setImmediate(resolve));
+      assert.equal(f.errors.length, 1);
+      if (phase === 'timeout') {
+        assert.ok(f.errors[0] instanceof Error);
+        assert.match(f.errors[0].message, /init timed out/);
+      } else assert.equal(f.errors[0], primary);
+      assert.equal(f.lifecycle.state, 'failed');
+      context.mock.timers.tick(100);
+      await new Promise<void>((resolve) => setImmediate(resolve));
+      assert.equal(spawns, 1);
+      assert.equal(f.errors.length, 1);
+    } finally {
+      await f.lifecycle.close();
+    }
+  });
+}
+
+test('manual same-request reconnect joins active automatic Promise and owns its failure', async (context) => {
+  const next = pendingRestoreWorker(),
+    primary = new Error('manually joined fixture');
+  const f = await automaticRestoreFixture(context, () => next.worker);
+  try {
+    await f.start();
+    const manual = f.lifecycle.reconnect({ method: 'restore', uin: '123' });
+    assert.equal(f.lifecycle.reconnect({ method: 'restore', uin: '123' }), manual);
+    const observed = manual.then(
+      (value) => ({ value }),
+      (error: unknown) => ({ error }),
+    );
+    next.fail(primary);
+    assert.deepEqual(await observed, { error: primary });
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    assert.deepEqual(f.errors, []);
+  } finally {
+    await f.lifecycle.close();
+  }
+});
+
+test('invalid and conflicting reconnect admission do not consume active automatic failure reporting', async (context) => {
+  const next = pendingRestoreWorker(),
+    primary = new Error('active retained fixture');
+  const f = await automaticRestoreFixture(context, () => next.worker);
+  try {
+    await f.start();
+    await assert.rejects(f.lifecycle.reconnect({ method: 'quick', uin: 'invalid' }));
+    await assert.rejects(
+      f.lifecycle.reconnect({ method: 'quick', uin: '456' }),
+      /different reconnect/,
+    );
+    next.fail(primary);
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    assert.deepEqual(f.errors, [primary]);
+  } finally {
+    await f.lifecycle.close();
+  }
+});
+
+for (const action of ['close', 'recover'] as const) {
+  test(`automatic failure observer ${action} prevents subsequent retryable inspection`, async (context) => {
+    const primary = new Error('restore observer fixture');
+    let reads = 0,
+      spawns = 0;
+    Object.defineProperty(primary, 'retryable', {
+      get() {
+        reads++;
+        return true;
+      },
+    });
+    const next = workerFixture();
+    const send = next.worker.send.bind(next.worker);
+    next.worker.send = ((
+      message: { id: number; method: string },
+      callback: (error: Error | null) => void,
+    ) => {
+      const result = send(message, callback);
+      if (message.method === 'login')
+        queueMicrotask(() => {
+          const account = { uin: '456', uid: 'u_recovered' };
+          next.events.emit('message', { event: 'ready', payload: account });
+          next.events.emit('message', { id: message.id, result: account });
+        });
+      return result;
+    }) as typeof next.worker.send;
+    let nested: Promise<unknown> | undefined;
+    const f = await automaticRestoreFixture(
+      context,
+      () => {
+        spawns++;
+        if (spawns === 1) throw primary;
+        return next.worker;
+      },
+      1000,
+      () => {
+        const operation =
+          action === 'close'
+            ? f.lifecycle.close()
+            : f.lifecycle.reconnect({ method: 'quick', uin: '456' });
+        nested = operation.then(
+          (value) => ({ value }),
+          (error: unknown) => ({ error }),
+        );
+      },
+    );
+    try {
+      await f.start();
+      await nested;
+      assert.equal(reads, 0);
+      assert.equal(spawns, action === 'close' ? 1 : 2);
+      context.mock.timers.tick(100);
+      await new Promise<void>((resolve) => setImmediate(resolve));
+      assert.equal(spawns, action === 'close' ? 1 : 2);
+      assert.deepEqual(f.errors, [primary]);
+    } finally {
+      await f.lifecycle.close();
+      await nested;
+    }
+  });
+}
+
+test('retryable policy getter reentrant close cannot arrange another automatic restore', async (context) => {
+  const primary = new Error('policy fixture');
+  let reads = 0,
+    spawns = 0;
+  let closed: Promise<void> | undefined;
+  const f = await automaticRestoreFixture(context, () => {
+    spawns++;
+    throw primary;
+  });
+  Object.defineProperty(primary, 'retryable', {
+    get() {
+      reads++;
+      closed = f.lifecycle.close();
+      return true;
+    },
+  });
+  try {
+    await f.start();
+    await closed;
+    assert.equal(reads, 1);
+    context.mock.timers.tick(100);
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    assert.equal(spawns, 1);
+    assert.equal(f.lifecycle.state, 'closed');
+  } finally {
+    await f.lifecycle.close();
+  }
+});
+
+test('successful automatic restore releases ownership so a later disconnect can restore again', async (context) => {
+  const next = workerFixture(),
+    final = workerFixture();
+  let spawns = 0;
+  const f = await automaticRestoreFixture(context, () =>
+    ++spawns === 1 ? next.worker : final.worker,
+  );
+  try {
+    await f.start();
+    for (const worker of [next, final]) {
+      const sent = worker.sent.find((sent) => sent.method === 'login');
+      assert.ok(sent);
+      const account = { uin: '123', uid: 'u_restore' };
+      worker.events.emit('message', { event: 'ready', payload: account });
+      worker.events.emit('message', { id: sent.id, result: account });
+      await new Promise<void>((resolve) => setImmediate(resolve));
+      assert.equal(f.lifecycle.state, 'online');
+      if (worker === next) {
+        worker.events.emit('message', { event: 'disconnected', payload: { retryable: true } });
+        context.mock.timers.tick(10);
+        await new Promise<void>((resolve) => setImmediate(resolve));
+      }
+    }
+    assert.equal(spawns, 2);
+    assert.deepEqual(f.errors, []);
+  } finally {
+    await f.lifecycle.close();
+  }
+});
+
+test('retired automatic retryable getter close plus throw is silent without suppressing process fatal behavior', () => {
+  const url = new URL('../src/runtime/client-lifecycle.ts', import.meta.url).href;
+  const child = spawnSync(
+    process.execPath,
+    [
+      '--input-type=module',
+      '--eval',
+      `
+    import {EventEmitter} from 'node:events';
+    import {ClientLifecycle} from ${JSON.stringify(url)};
+    const worker=new EventEmitter();let spawns=0,reads=0,errors=0,closing;
+    Object.assign(worker,{connected:true,exitCode:null,signalCode:null,send(message,callback){callback(null);return true;},kill(){worker.exitCode=0;worker.connected=false;worker.emit('exit',0,null);return true;}});
+    const primary=new Error('restore fixture'),policy=new Error('retired policy fixture');
+    const lifecycle=new ClientLifecycle({worker,timeout:1000,restart:{spawn(){spawns++;throw primary;},payload:{}},autoReconnect:{delayMs:1,maxAttempts:3},emit(){},exportsUpdated(){},forward(event){if(event==='reconnect-error')errors++;}});
+    Object.defineProperty(primary,'retryable',{get(){reads++;closing=lifecycle.close();throw policy;}});
+    const login=lifecycle.login({method:'quick',uin:'123'});worker.emit('message',{event:'ready',payload:{uin:'123',uid:'u_fixture'}});worker.emit('message',{id:1,result:{uin:'123',uid:'u_fixture'}});await login;
+    worker.emit('message',{event:'disconnected',payload:{retryable:true}});
+    setTimeout(async()=>{await closing;console.log(JSON.stringify({spawns,reads,errors,state:lifecycle.state}));},100);
+  `,
+    ],
+    { encoding: 'utf8', timeout: 5000 },
+  );
+  assert.equal(child.error, undefined);
+  assert.equal(child.signal, null);
+  assert.equal(child.status, 0);
+  assert.deepEqual(JSON.parse(child.stdout.trim()), {
+    spawns: 1,
+    reads: 1,
+    errors: 1,
+    state: 'closed',
+  });
+  assert.equal(child.stderr.includes('UnhandledPromiseRejectionWarning'), false);
+});
+
+test('active automatic retryable getter throw remains fatal in warn mode with original policy identity', () => {
+  const url = new URL('../src/runtime/client-lifecycle.ts', import.meta.url).href;
+  const child = spawnSync(
+    process.execPath,
+    [
+      '--unhandled-rejections=warn',
+      '--input-type=module',
+      '--eval',
+      `
+    import {EventEmitter} from 'node:events';
+    import {ClientLifecycle} from ${JSON.stringify(url)};
+    const worker=new EventEmitter();let spawns=0,reads=0,errors=0;
+    Object.assign(worker,{connected:true,exitCode:null,signalCode:null,send(message,callback){callback(null);return true;},kill(){worker.exitCode=0;worker.connected=false;worker.emit('exit',0,null);return true;}});
+    const primary=new Error('restore fixture'),policy=new Error('active policy fixture');
+    process.on('uncaughtExceptionMonitor',(error,origin)=>console.log(JSON.stringify({samePolicy:error===policy,origin,spawns,reads,errors})));
+    const lifecycle=new ClientLifecycle({worker,timeout:1000,restart:{spawn(){spawns++;throw primary;},payload:{}},autoReconnect:{delayMs:1,maxAttempts:3},emit(){},exportsUpdated(){},forward(event,error){if(event==='reconnect-error'){if(error!==primary)throw new Error('wrong primary');errors++;}}});
+    Object.defineProperty(primary,'retryable',{get(){reads++;throw policy;}});
+    const login=lifecycle.login({method:'quick',uin:'123'});worker.emit('message',{event:'ready',payload:{uin:'123',uid:'u_fixture'}});worker.emit('message',{id:1,result:{uin:'123',uid:'u_fixture'}});await login;
+    worker.emit('message',{event:'disconnected',payload:{retryable:true}});
+    setTimeout(()=>console.log('unexpected continuation'),100);
+  `,
+    ],
+    { encoding: 'utf8', timeout: 5000 },
+  );
+  assert.equal(child.error, undefined);
+  assert.equal(child.signal, null);
+  assert.equal(child.status, 1);
+  assert.deepEqual(JSON.parse(child.stdout.trim()), {
+    samePolicy: true,
+    origin: 'uncaughtException',
+    spawns: 1,
+    reads: 1,
+    errors: 1,
+  });
+  assert.equal(child.stderr.includes('UnhandledPromiseRejectionWarning'), false);
 });

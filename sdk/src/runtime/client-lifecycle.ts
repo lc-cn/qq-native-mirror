@@ -93,6 +93,15 @@ function requestFailure(method: string, error: Error): Error {
   });
 }
 
+/** One captured restore owns its timer and later notification/retry authority.
+ * Its worker generation changes during replacement; explicit intent retires
+ * this identity instead of treating the replacement itself as supersession.
+ */
+interface AutomaticRestoreTask {
+  readonly login: LoginRequest;
+  timer?: NodeJS.Timeout;
+}
+
 /** Owns a client's worker generations, authorization state and shutdown.
  * Requests are never replayed. Callback presentation belongs to the public facade.
  * Only explicitly retryable disconnections can schedule automatic restoration.
@@ -119,7 +128,7 @@ export class ClientLifecycle {
   #reconnectRequest?: LoginRequest;
   #restart?: { spawn(): ChildProcess; payload: object };
   #auto?: { maxAttempts: number; delayMs: number };
-  #autoTimer?: NodeJS.Timeout;
+  #automaticRestore?: AutomaticRestoreTask;
   #autoAttempts = 0;
   #configuredLogin?: { generation: number; handle?: NodeJS.Immediate };
   readonly #context: ClientLifecycleContext;
@@ -179,8 +188,7 @@ export class ClientLifecycle {
           this.#account = account;
           this.#lastAccount = { ...account };
           this.#autoAttempts = 0;
-          clearTimeout(this.#autoTimer);
-          this.#autoTimer = undefined;
+          this.#cancelScheduledRestore();
           this.#setState('online');
           if (!isCurrent()) return;
         }
@@ -200,7 +208,7 @@ export class ClientLifecycle {
           // A fallible policy lookup cannot supersede a nested retirement or close.
           if (!isCurrent() || beforePolicyRevision !== this.#offlineRevision) return;
           try {
-            offlineRevision = this.#retireAccount(message.event, retryableDisconnect);
+            offlineRevision = this.#retireAccount(message.event);
           } catch (error) {
             if (policyFailure) {
               // eslint-disable-next-line preserve-caught-error -- Preserve both policy and observer failures.
@@ -229,8 +237,7 @@ export class ClientLifecycle {
     });
     const fail = (error: Error) => {
       if (generation !== this.#generation || this.#closed) return;
-      clearTimeout(this.#autoTimer);
-      this.#autoTimer = undefined;
+      this.#cancelScheduledRestore();
       this.#closed = true;
       this.#rpc.rejectPending(error);
       this.#account = undefined;
@@ -285,17 +292,14 @@ export class ClientLifecycle {
    * The revision prevents a nested offline notification from reviving an older
    * event's automatic restore decision. It does not retire the worker generation.
    */
-  #retireAccount(event: 'disconnected' | 'logout' | 'kicked', retryable: boolean): number {
+  #retireAccount(event: 'disconnected' | 'logout' | 'kicked'): number {
     this.#cancelConfiguredLogin();
+    this.#cancelAutomaticRestore();
     const revision = ++this.#offlineRevision;
     const stateChanged = this.#state !== 'disconnected';
     this.#login = undefined;
     this.#account = undefined;
     this.#state = 'disconnected';
-    if (event !== 'disconnected' || !retryable) {
-      clearTimeout(this.#autoTimer);
-      this.#autoTimer = undefined;
-    }
     if (event !== 'disconnected') this.#lastAccount = undefined;
     this.#rpc.rejectPending(
       new Error(`QQ account became offline (${event}); request was not replayed`),
@@ -305,27 +309,63 @@ export class ClientLifecycle {
       this.#context.emit('state', 'disconnected');
     return revision;
   }
+  #cancelAutomaticRestore(): void {
+    const task = this.#automaticRestore;
+    this.#automaticRestore = undefined;
+    if (task?.timer !== undefined) clearTimeout(task.timer);
+  }
+  #cancelScheduledRestore(): void {
+    // Readiness or failure cancels queued work, but an admitted restore still
+    // owns its outcome. A failed/closed worker alone is not explicit takeover.
+    if (this.#automaticRestore?.timer !== undefined) this.#cancelAutomaticRestore();
+  }
   #scheduleReconnect() {
     if (
       !this.#auto ||
       !this.#restart ||
       !this.#lastAccount ||
       this.#closing ||
-      this.#autoTimer ||
+      this.#automaticRestore ||
       this.#reconnecting ||
       this.#autoAttempts >= this.#auto.maxAttempts
     )
       return;
-    this.#autoTimer = setTimeout(() => {
-      this.#autoTimer = undefined;
+    const task: AutomaticRestoreTask = {
+      login: { method: 'restore', uin: this.#lastAccount.uin },
+    };
+    this.#automaticRestore = task;
+    const ownsTask = () => this.#automaticRestore === task && !this.#closing;
+    const release = () => {
+      if (this.#automaticRestore === task) this.#automaticRestore = undefined;
+    };
+    task.timer = setTimeout(() => {
+      task.timer = undefined;
+      if (!ownsTask()) return;
       this.#autoAttempts++;
       observeBackgroundTask(
-        this.reconnect().catch((error) => {
-          // Promise rejection can carry arbitrary thrown values; preserve their identity.
-          this.#context.forward('reconnect-error', error);
-          // Login/initialization failures do not establish a transport-only cause.
-          // Require explicit evidence before another automatic restore attempt.
-          if (error?.retryable === true) this.#scheduleReconnect();
+        this.#beginReconnect(task.login, task).then(release, (error: unknown) => {
+          try {
+            if (!ownsTask()) return;
+            // A current failure stays observable even after worker retirement.
+            this.#context.forward('reconnect-error', error);
+            if (!ownsTask()) return;
+            let retryable: boolean;
+            try {
+              // Preserve the compatibility flag while treating a property lookup
+              // as fallible application code that can retire this task.
+              retryable = (error as { retryable?: unknown } | null | undefined)?.retryable === true;
+            } catch (policyError) {
+              if (!ownsTask()) return;
+              throw policyError;
+            }
+            if (!ownsTask()) return;
+            release();
+            // Only explicit transport evidence admits another automatic attempt.
+            if (retryable) this.#scheduleReconnect();
+          } finally {
+            // Notification/policy throws cannot retain this task or clear a newer one.
+            release();
+          }
         }),
       );
     }, this.#auto.delayMs);
@@ -373,8 +413,7 @@ export class ClientLifecycle {
     this.#closed = true;
     this.#account = undefined;
     if (!this.#closing) this.#state = 'failed';
-    clearTimeout(this.#autoTimer);
-    this.#autoTimer = undefined;
+    this.#cancelScheduledRestore();
     this.#rpc.rejectPending(normalizeKernelError(error));
     const stopped = this.#stopWorker(false, worker);
     let notificationFailure: { error: unknown } | undefined;
@@ -448,6 +487,7 @@ export class ClientLifecycle {
       return Promise.reject(error);
     }
     this.#cancelConfiguredLogin();
+    this.#cancelAutomaticRestore();
     return this.#startLogin(request);
   }
   #startLogin(request: LoginRequest): Promise<Account> {
@@ -521,6 +561,11 @@ export class ClientLifecycle {
       ...(this.#lastAccount ? { uin: this.#lastAccount.uin } : {}),
     },
   ): Promise<Account> {
+    return this.#beginReconnect(login);
+  }
+  #beginReconnect(login: LoginRequest, automatic?: AutomaticRestoreTask): Promise<Account> {
+    if (automatic && this.#automaticRestore !== automatic)
+      return Promise.reject(new Error('QQ automatic restore was superseded'));
     if (this.#closing || this.#state === 'closed')
       return Promise.reject(new Error('QQ client is closed'));
     try {
@@ -540,11 +585,11 @@ export class ClientLifecycle {
       ) {
         return Promise.reject(new Error('A different reconnect request is already in progress'));
       }
+      if (!automatic) this.#cancelAutomaticRestore();
       return this.#reconnecting;
     }
+    if (!automatic) this.#cancelAutomaticRestore();
     this.#cancelConfiguredLogin();
-    clearTimeout(this.#autoTimer);
-    this.#autoTimer = undefined;
     const before = {
       state: this.#state,
       account: this.#account,
@@ -639,7 +684,7 @@ export class ClientLifecycle {
       if (this.#worker !== replacement || this.#closed || this.#closing)
         throw new Error('QQ client closed or replaced during initialization');
       this.#context.exportsUpdated(exports);
-      return await this.login(login);
+      return await this.#startLogin(login);
     } catch (error) {
       await this.#retireFailedWorker(replacement, error, 'reconnect');
       throw error;
@@ -647,6 +692,7 @@ export class ClientLifecycle {
   }
   close(): Promise<void> {
     this.#cancelConfiguredLogin();
+    this.#cancelAutomaticRestore();
     if (this.#closePromise) return this.#closePromise;
     let resolve!: () => void;
     let reject!: (reason: unknown) => void;
@@ -674,8 +720,7 @@ export class ClientLifecycle {
     });
   }
   async #finishClose(): Promise<void> {
-    clearTimeout(this.#autoTimer);
-    this.#autoTimer = undefined;
+    this.#cancelAutomaticRestore();
     if (this.#closing) return;
     if (this.#retiringWorker) {
       this.#closing = true;

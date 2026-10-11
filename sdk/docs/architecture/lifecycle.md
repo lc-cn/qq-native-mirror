@@ -28,6 +28,22 @@
   Retry-policy inspection failure still retires the account and pending RPCs;
   its original value is preserved, alongside any notification failure. Reentrant
   close or a newer offline notification suppresses the obsolete event.
+- One automatic restore task owns its captured account request, timer, failure
+  notification and retry decision. Explicit close, normalized manual login,
+  admitted manual reconnect and a new offline transition retire that task.
+  A manual reconnect joining the same request keeps the exact shared Promise and
+  takes over its failure; invalid or conflicting admission leaves the automatic
+  task in charge. Readiness and worker failure cancel queued timers while an
+  already admitted restore still reports its active failure, including after
+  failed-worker retirement. Internal replacement login does not cancel its own
+  automatic task. Successful completion releases only that task's identity.
+  Failure delivery checks ownership before and after the observer, and after
+  retry-policy inspection. A callback or property lookup that closes or replaces
+  the task cannot schedule another attempt. A policy getter that retires the task
+  and throws is obsolete; an active throwing getter still follows the background
+  exception contract. In-flight initialization or authorization is not undone,
+  and no request is replayed. Each new eligible offline decision schedules its
+  own bounded delay with the account captured at that decision.
 - The channel captures the sending transport per request. The three reviewed HTTP
   reads use best-effort per-request cancellation on timeout, send failure and
   offline; it never targets a replacement worker. `WorkerReadRequests` owns their
