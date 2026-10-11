@@ -1,0 +1,47 @@
+sdk/docs/architecture/lifecycle.md
+  s_2104cc474f1ce5::t_38078590fc931a 22-24
+ci/consumer-resources.test.mjs
+  s_2104cc474f1ce5::t_7b898c579d7c93 8,175-190
+  s_2104cc474f1ce5::t_fc72209db6e428 191
+tools/tsconfig.consumer-ci.json
+  s_2104cc474f1ce5::t_c467e440a249df 11-12
+ci/verify-consumer.mjs
+  s_2104cc474f1ce5::t_566d90d46d2b79 47-48,50-51,55-158,167,1111-1115
+sdk/src/runtime/cleanup.ts
+  s_2104cc474f1ce5::t_56140e1493435d 44-47
+  s_2104cc474f1ce5::t_e12e19ebccdacc 17-41
+ci/consumer-acquisition.test.mjs
+  s_2104cc474f1ce5::t_7b898c579d7c93 1-27,30-33,35-41,44-84,86,89-123,126-128
+  s_2104cc474f1ce5::t_c467e440a249df 28-29,42-43,87-88,124-125
+  s_2104cc474f1ce5::t_1848506edc00b2 34,85
+tools/eslint.config.mjs
+  s_2104cc474f1ce5::t_5cbb4a61fcfb9e 39
+sdk/docs/architecture/encapsulation.md
+  s_2104cc474f1ce5::t_38078590fc931a 177-179,200-202
+sdk/docs/architecture/quality-gates.md
+  s_2104cc474f1ce5::t_38078590fc931a 56-58
+tools/check-native-storage.mjs
+  s_2104cc474f1ce5::t_5cbb4a61fcfb9e 33,73
+ci/consumer-resources.mjs
+  s_2104cc474f1ce5::t_949ae7d1f9f12a 4,18,93-94
+sdk/test/native-services-cleanup.test.ts
+  s_2104cc474f1ce5::t_a690190e7731ed 4,207-250
+sdk/test/worker-bootstrap.test.ts
+  s_2104cc474f1ce5::t_8861f02ca67914 441-494
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "f3af35c1e6a9172b20c5f74b70362066d846b6d6",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
