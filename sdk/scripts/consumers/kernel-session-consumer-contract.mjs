@@ -5,27 +5,41 @@ import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 /** Installed compiled kernel, fake native services, real isolated directories.
+ * @param {string} packageRoot
  * No addon, account credentials, network, authentication or native start call.
  */
 export async function verifyKernelSessionConsumer(packageRoot) {
-  const { createKernel } = await import(pathToFileURL(join(packageRoot, 'dist/kernel.js')).href);
+  /** @type {Promise<typeof import('../../src/kernel.ts')>} */
+  const kernelModule = import(pathToFileURL(join(packageRoot, 'dist/kernel.js')).href);
+  const { createKernel } = await kernelModule;
+  /**
+   * @param {{create?:()=>unknown,getNTWrapperSession?:(name:string)=>unknown}} accountFactory
+   * @param {{create:()=>unknown}|undefined} [startupFactory]
+   * @param {unknown} [loginFailure]
+   * @param {(name:string,payload:unknown)=>void} [onEvent]
+   */
   async function fixture(accountFactory, startupFactory, loginFailure, onEvent) {
     const dataDir = await mkdtemp(join(tmpdir(), 'qq-installed-session-'));
+    /** @type {{onLoginConnected():void,onLoginFailed(value:unknown):void,onQRCodeLoginSucceed(value:{uin:string,uid:string}):void}|undefined} */
     let loginListener;
+    /** @type {string[]} */
     const events = [];
+    /** @type {string[]} */
     const dispatches = [];
     const service = {
       initConfig() {},
-      addKernelLoginListener(value) {
+      addKernelLoginListener(/** @type {NonNullable<typeof loginListener>} */ value) {
         loginListener = value;
       },
       connect() {
         dispatches.push('connect');
+        assert.ok(loginListener);
         loginListener.onLoginConnected();
       },
       getMsfStatus: () => 0,
       getQRCodePicture() {
         dispatches.push('qr');
+        assert.ok(loginListener);
         if (loginFailure !== undefined) {
           loginListener.onLoginFailed(loginFailure);
           return true;
@@ -64,11 +78,12 @@ export async function verifyKernelSessionConsumer(packageRoot) {
     };
   }
   for (const failureAt of ['create', 'get']) {
+    /** @type {unknown[][]} */
     const calls = [];
     const failure = Object.assign(new Error('mock native creation rejected'), { code: -7010 });
     const f = await fixture(
       {
-        getNTWrapperSession(name) {
+        getNTWrapperSession(/** @type {string} */ name) {
           calls.push(['get', name]);
           if (failureAt === 'get') throw failure;
           return {};
@@ -100,20 +115,28 @@ export async function verifyKernelSessionConsumer(packageRoot) {
     }
   }
   for (const strategy of ['direct', 'startup']) {
+    /** @type {unknown[][]} */
     const starts = [];
+    /** @type {{onOpentelemetryInit(value:{is_init:boolean}):void}|undefined} */
     let listener;
     const failure = Object.assign(new Error('mock dispatched Session start rejected'), {
       code: -7011,
     });
     const session = {
-      init(_config, _depends, _dispatcher, callback) {
+      init(
+        /** @type {unknown} */ _config,
+        /** @type {unknown} */ _depends,
+        /** @type {unknown} */ _dispatcher,
+        /** @type {NonNullable<typeof listener>} */ callback,
+      ) {
         listener = callback;
       },
       getMsgService: () => ({ addKernelMsgListener() {} }),
       getGroupService: () => ({ addKernelGroupListener() {} }),
       getBuddyService: () => ({ addKernelBuddyListener() {} }),
-      startNT(...args) {
+      startNT(/** @type {unknown[]} */ ...args) {
         starts.push(['direct', ...args]);
+        assert.ok(listener);
         listener.onOpentelemetryInit({ is_init: true });
         if (args.length) throw failure;
       },
@@ -125,6 +148,7 @@ export async function verifyKernelSessionConsumer(packageRoot) {
             create: () => ({
               start() {
                 starts.push(['startup']);
+                assert.ok(listener);
                 listener.onOpentelemetryInit({ is_init: true });
                 throw failure;
               },
@@ -150,7 +174,13 @@ export async function verifyKernelSessionConsumer(packageRoot) {
         return rejects ? Promise.reject(failure) : undefined;
       };
       const session = {
-        init(_config, _depends, _dispatcher, listener) {
+        init(
+          /** @type {unknown} */ _config,
+          /** @type {unknown} */ _depends,
+          /** @type {unknown} */ _dispatcher,
+          /** @type {{onOpentelemetryInit(value:{is_init:boolean}):void}} */ listener,
+        ) {
+          assert.ok(listener);
           listener.onOpentelemetryInit({ is_init: true });
         },
         startNT: start,
@@ -177,6 +207,7 @@ export async function verifyKernelSessionConsumer(packageRoot) {
       }
     }
   }
+  /** @type {string[]} */
   const calls = [];
   const partial = await fixture(
     {
@@ -213,6 +244,7 @@ export async function verifyKernelSessionConsumer(packageRoot) {
   } finally {
     await unsupported.close();
   }
+  /** @type {{self?:unknown}} */
   const circular = {};
   circular.self = circular;
   for (const payload of [
@@ -231,6 +263,7 @@ export async function verifyKernelSessionConsumer(packageRoot) {
       assert.equal(f.kernel.prepare(), prepared);
       await prepared;
       await assert.rejects(f.kernel.login({ method: 'qr' }), (error) => {
+        assert.ok(error instanceof Error);
         assert.equal(error.message, 'Native login failed');
         return true;
       });
@@ -242,11 +275,23 @@ export async function verifyKernelSessionConsumer(packageRoot) {
     }
   }
   for (const stage of ['login-connect', 'msf-status']) {
+    /** @type {Promise<void>|undefined} */
+    let closing;
     const close = () => {
-      void f.kernel.close();
+      closing = f.kernel.close();
+      // The reentrant caller cannot await; retain and observe its completion.
+      closing.catch(() => {});
     };
     const f = await fixture({ create: () => ({}) }, undefined, undefined, (name, payload) => {
-      if (stage === 'login-connect' && name === 'diagnostic' && payload.stage === stage) close();
+      if (
+        stage === 'login-connect' &&
+        name === 'diagnostic' &&
+        payload !== null &&
+        typeof payload === 'object' &&
+        'stage' in payload &&
+        payload.stage === stage
+      )
+        close();
     });
     if (stage === 'msf-status')
       f.service.getMsfStatus = () => {
@@ -268,6 +313,7 @@ export async function verifyKernelSessionConsumer(packageRoot) {
       assert.equal(f.events.includes('authenticated'), false);
       assert.equal(f.events.includes('ready'), false);
     } finally {
+      await closing;
       await f.close();
     }
   }

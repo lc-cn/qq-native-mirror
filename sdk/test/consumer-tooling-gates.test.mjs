@@ -123,6 +123,57 @@ function diagnostics(replacement, checkedFile = helper) {
     .filter((item) => item.file && resolve(item.file.fileName) === checkedFile);
 }
 
+for (const fixture of [
+  {
+    name: 'worker-read',
+    before: "await client.login({ method: 'restore', uin: '789' });",
+    invalid: "await client.login({ method: 'restore', uin: 789 });",
+    ignored: "client.login({ method: 'restore', uin: '789' });",
+  },
+  {
+    name: 'worker-error',
+    before: "await client.login({ method: 'restore', uin: '789' });",
+    invalid: "await client.login({ method: 'restore', uin: 789 });",
+    ignored: "client.login({ method: 'restore', uin: '789' });",
+  },
+  {
+    name: 'history-lifecycle',
+    before: 'await assert.rejects(client.waitForLogin(), /closed/);',
+    invalid: 'await assert.rejects(client.waitForLogin(42), /closed/);',
+    ignored: 'assert.rejects(client.waitForLogin(), /closed/);',
+  },
+  {
+    name: 'kernel-session',
+    before: 'await f.kernel.prepare();',
+    invalid: 'await f.kernel.prepare(42);',
+    ignored: 'f.kernel.prepare();',
+  },
+]) {
+  test(`${fixture.name} consumer rejects invalid calls and unobserved lifecycle work without execution`, async () => {
+    const file = resolve(root, `scripts/consumers/${fixture.name}-consumer-contract.mjs`);
+    const actual = readFileSync(file, 'utf8');
+    assert.deepEqual(diagnostics(actual, file), []);
+    assert.ok(diagnostics(replaceOnce(actual, fixture.before, fixture.invalid), file).length > 0);
+    const eslint = new ESLint({
+      cwd: root,
+      overrideConfig: {
+        languageOptions: { parserOptions: { disallowAutomaticSingleRunInference: true } },
+      },
+    });
+    const good = await eslint.lintText(actual, { filePath: file });
+    assert.equal(good[0].errorCount, 0);
+    for (const prefix of ['', 'void ']) {
+      const broken = replaceOnce(actual, fixture.before, `${prefix}${fixture.ignored}`);
+      const reports = await eslint.lintText(broken, { filePath: file });
+      assert.ok(
+        reports
+          .flatMap((report) => report.messages)
+          .some((message) => message.ruleId === '@typescript-eslint/no-floating-promises'),
+      );
+    }
+  });
+}
+
 test('consumer compiler gate rejects missing preparation await and fabricated send receipts without running the helper', () => {
   assert.deepEqual(diagnostics(source), [], 'Actual checked helper must be type-correct first');
   const missingAwait = replaceOnce(

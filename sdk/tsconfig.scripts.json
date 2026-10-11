@@ -21,6 +21,10 @@
     "scripts/consumers/mirror-consumer-contract.mjs",
     "scripts/consumers/group-essence-consumer-contract.mjs",
     "scripts/consumers/group-file-pages-consumer-contract.mjs",
-    "scripts/consumers/worker-delivery-consumer-contract.mjs"
+    "scripts/consumers/worker-delivery-consumer-contract.mjs",
+    "scripts/consumers/worker-read-consumer-contract.mjs",
+    "scripts/consumers/worker-error-consumer-contract.mjs",
+    "scripts/consumers/history-lifecycle-consumer-contract.mjs",
+    "scripts/consumers/kernel-session-consumer-contract.mjs"
   ]
 }

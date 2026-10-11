@@ -23,6 +23,8 @@ import {verifyForwardResourceConsumer} from '../sdk/scripts/consumers/forward-re
 import {verifyForwardResourceTypes} from '../sdk/scripts/consumers/forward-resource-type-contract.mjs';
 import {verifyDownloadConsumer} from '../sdk/scripts/consumers/download-consumer-contract.mjs';
 import {verifyKernelSessionConsumer} from '../sdk/scripts/consumers/kernel-session-consumer-contract.mjs';
+import {verifyWorkerReadCancellation} from '../sdk/scripts/consumers/worker-read-consumer-contract.mjs';
+import {verifyWorkerErrorRoutes} from '../sdk/scripts/consumers/worker-error-consumer-contract.mjs';
 import {verifyHistoryLifecycleConsumer} from '../sdk/scripts/consumers/history-lifecycle-consumer-contract.mjs';
 import {verifyVideoConsumerContract} from '../sdk/scripts/consumers/video-consumer-contract.mjs';
 import {verifyContactGroupConsumer} from '../sdk/scripts/consumers/contact-group-consumer-contract.mjs';
@@ -86,6 +88,20 @@ try {
  const elementPreparationChecks=await verifyElementPreparationConsumer(installedRoot);
  const friendCategoryMutationChecks=await verifyFriendCategoryMutationsConsumer(installedRoot);
  const workerBootstrapChecks=await verifyWorkerBootstrapConsumer(installedRoot);
+ // Real installed worker routing with controlled kernel hooks; no account/native loading.
+ const workerReadChecks = await verifyWorkerReadCancellation({
+  QQClient: sdk.QQClient,
+  workerPath: join(installedRoot, 'dist/worker.js'),
+  kernelPath: join(installedRoot, 'dist/kernel.js'),
+  nativeServicesPath: join(installedRoot, 'dist/native-services.js'),
+ });
+ const workerErrorChecks = await verifyWorkerErrorRoutes({
+  QQClient: sdk.QQClient,
+  workerPath: join(installedRoot, 'dist/worker.js'),
+  kernelPath: join(installedRoot, 'dist/kernel.js'),
+  nativeContractsPath: join(installedRoot, 'dist/native/native-contracts.js'),
+  errorsPath: join(installedRoot, 'dist/errors.js'),
+ });
  const {prepareNative}=await import(pathToFileURL(join(installedRoot,'dist/native/native-package.js')).href);
  const installedManifest=JSON.parse(await readFile(join(temp,'node_modules',platformName,'manifest.json')));
  // Pin the actual auxiliary version; default latest mirror consumption has its own consumer.
@@ -324,5 +340,5 @@ try{assert.deepEqual(await success.invokeOperation('listFriends'),[]);assert.equ
  globalThis.fetch=()=>{throw new Error('Unexpected mirror request with installed platform package');};
  client=await sdk.createClient({dataDir:join(temp,'unused-account'),cacheDir:nativeCache,version:installedManifest.version,autoReconnect:false,timeoutMs:30000});
  const exports=client.nativeExports.length;if(exports<80)throw new Error('Unexpected native export inventory');await client.close();if(client.state!=='closed')throw new Error('Client did not close');
- await writeFile('out/consumer.json',JSON.stringify({platform:process.platform,arch:process.arch,node:process.version,exports,installedNativeStorage,workerBootstrapChecks,clientFactoryChecks,contactGroupChecks,actionPortChecks,profileRequestChecks,groupRequestChecks,groupNoticeChecks,groupWebChecks,groupSearchChecks,groupQueryOwnerChecks,contactGroupSnapshotChecks,requestResultChecks,...messageBatchChecks,...forwardChecks,...recallChecks,...mentionChecks,...sendChecks,...receivedChecks,...receivedForwardChecks,...forwardResourceChecks,...historyLifecycleChecks,...videoChecks,...mergedForwardChecks,automaticVideoCodec:installedVideo!==undefined,installedVideoDecoder:installedVideo?.passed===true,installedVideoFakeCache:installedVideo?.sdkFakeCache===true,installedVideo,installedMainOnly:true,automaticPlatformSelection:true,explicitNativeVersion:installedManifest.version,tarballRequests,...faceChecks,...elementPreparationChecks,...friendCategoryMutationChecks,messageQueryContract:true,historyQueryContract:true,nativeHistoryQueryAttempted:false,nativeMessageQueryAttempted:false,selfProfileContract:true,profileMutationAttempted:false,groupOperationContract:true,groupMutationAttempted:false,groupMemberQueryContract:true,groupMemberIdentityContract:true,nativeGroupMemberQueryAttempted:false,groupMetadataEventContract:true,businessWatchContract:true,nativeGroupMetadataObserved:false,friendMetadataEventContract:true,nativeFriendMetadataObserved:false,friendListQueryContract:true,friendListBatchContract:true,friendProfileQueryContract:true,groupListQueryContract:true,nativeGroupListQueryAttempted:false,nativeFriendListQueryAttempted:false,prepared:true,closed:true,loginAttempted:false,registry:'isolated local fixture serving actual CI tarballs'},null,2));console.log(await readFile('out/consumer.json','utf8'));
+ await writeFile('out/consumer.json',JSON.stringify({platform:process.platform,arch:process.arch,node:process.version,exports,installedNativeStorage,workerBootstrapChecks,workerReadChecks,workerErrorChecks,clientFactoryChecks,contactGroupChecks,actionPortChecks,profileRequestChecks,groupRequestChecks,groupNoticeChecks,groupWebChecks,groupSearchChecks,groupQueryOwnerChecks,contactGroupSnapshotChecks,requestResultChecks,...messageBatchChecks,...forwardChecks,...recallChecks,...mentionChecks,...sendChecks,...receivedChecks,...receivedForwardChecks,...forwardResourceChecks,...historyLifecycleChecks,...videoChecks,...mergedForwardChecks,automaticVideoCodec:installedVideo!==undefined,installedVideoDecoder:installedVideo?.passed===true,installedVideoFakeCache:installedVideo?.sdkFakeCache===true,installedVideo,installedMainOnly:true,automaticPlatformSelection:true,explicitNativeVersion:installedManifest.version,tarballRequests,...faceChecks,...elementPreparationChecks,...friendCategoryMutationChecks,messageQueryContract:true,historyQueryContract:true,nativeHistoryQueryAttempted:false,nativeMessageQueryAttempted:false,selfProfileContract:true,profileMutationAttempted:false,groupOperationContract:true,groupMutationAttempted:false,groupMemberQueryContract:true,groupMemberIdentityContract:true,nativeGroupMemberQueryAttempted:false,groupMetadataEventContract:true,businessWatchContract:true,nativeGroupMetadataObserved:false,friendMetadataEventContract:true,nativeFriendMetadataObserved:false,friendListQueryContract:true,friendListBatchContract:true,friendProfileQueryContract:true,groupListQueryContract:true,nativeGroupListQueryAttempted:false,nativeFriendListQueryAttempted:false,prepared:true,closed:true,loginAttempted:false,registry:'isolated local fixture serving actual CI tarballs'},null,2));console.log(await readFile('out/consumer.json','utf8'));
 }finally{await client?.close();server.closeAllConnections();await new Promise(done=>server.close(done));await rm(temp,{recursive:true,force:true});}

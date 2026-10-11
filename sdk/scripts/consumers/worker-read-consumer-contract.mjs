@@ -5,7 +5,10 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-/** Real worker IPC; only kernel bootstrap/dlopen and HTTP are synthetic. */
+/** Real worker IPC; only kernel bootstrap/dlopen and HTTP are synthetic.
+ * @param {{QQClient: typeof import('../../src/client/qq-client.ts').QQClient,
+ * workerPath:string, kernelPath:string, nativeServicesPath:string}} options
+ */
 export async function verifyWorkerReadCancellation({
   QQClient,
   workerPath,
@@ -47,15 +50,22 @@ export function createKernel(_native,_options,emit){
     serialization: 'advanced',
     stdio: ['ignore', 'pipe', 'pipe', 'ipc'],
   });
+  assert.ok(worker.stdout);
+  assert.ok(worker.stderr);
   worker.stdout.resume();
   worker.stderr.resume();
+  /** @type {string[]} */
   const seen = [];
+  /** @type {Map<string, () => void>} */
   const waiting = new Map();
-  worker.on('message', (message) => {
-    if (typeof message?.fixture !== 'string') return;
-    seen.push(message.fixture);
-    waiting.get(message.fixture)?.();
+  worker.on('message', (/** @type {unknown} */ message) => {
+    if (!message || typeof message !== 'object' || !('fixture' in message)) return;
+    const event = message.fixture;
+    if (typeof event !== 'string') return;
+    seen.push(event);
+    waiting.get(event)?.();
   });
+  /** @param {string} event @returns {Promise<void>} */
   const until = (event) => {
     if (seen.includes(event)) return Promise.resolve();
     return new Promise((resolve, reject) => {

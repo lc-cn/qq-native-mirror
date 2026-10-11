@@ -1,10 +1,14 @@
 import assert from 'node:assert/strict';
-import { EventEmitter } from 'node:events';
 import { join, dirname } from 'node:path';
-import { spawnSync } from 'node:child_process';
+import { ChildProcess, spawnSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 
-/** Owned fake-service/worker contracts; no native addon or account operations. */
+/** Owned fake-service/worker contracts; no native addon or account operations.
+ * @param {{QQClient:typeof import('../../src/index.ts').QQClient,
+ * createNativeServices:typeof import('../../src/native-services.ts').createNativeServices,
+ * observeWatchFailures:typeof import('../../src/cli.ts').observeWatchFailures,
+ * prepareCommand:typeof import('../../src/cli.ts').prepareCommand}} context
+ */
 export async function checkHistoryLifecycle({
   QQClient,
   createNativeServices,
@@ -12,11 +16,14 @@ export async function checkHistoryLifecycle({
   prepareCommand,
 }) {
   let uidCalls = 0,
-    historyCalls = 0,
-    finishUid;
-  const uid = new Promise((resolve) => {
-    finishUid = resolve;
-  });
+    historyCalls = 0;
+  /** @type {(value:{uidInfo:Map<string,string>})=>void} */
+  let finishUid = () => assert.fail('UID resolver not installed');
+  const uid = new Promise(
+    /** @param {(value:{uidInfo:Map<string,string>})=>void} resolve */ (resolve) => {
+      finishUid = resolve;
+    },
+  );
   const raw = {
     msgId: '900719925474099312345',
     msgSeq: '9',
@@ -33,7 +40,7 @@ export async function checkHistoryLifecycle({
     session: {
       getMsgService: () => ({
         addKernelMsgListener() {},
-        getMsgsIncludeSelf(...args) {
+        getMsgsIncludeSelf(/** @type {unknown[]} */ ...args) {
           historyCalls++;
           assert.deepEqual(args, [
             { chatType: 1, peerUid: 'u_456' },
@@ -47,7 +54,7 @@ export async function checkHistoryLifecycle({
       getBuddyService: () => ({ addKernelBuddyListener() {} }),
       getGroupService: () => ({ addKernelGroupListener() {} }),
       getUixConvertService: () => ({
-        getUid(ids) {
+        getUid(/** @type {string[]} */ ids) {
           uidCalls++;
           assert.deepEqual(ids, ['456']);
           return uid;
@@ -57,6 +64,7 @@ export async function checkHistoryLifecycle({
     version: '7.0.2-53644',
     events: { emit: () => {} },
   });
+  /** @type {Extract<import('../../src/contracts/messages.ts').Peer,{type:'private'}>} */
   const peer = { type: 'private', userId: '456' },
     options = { before: '000900719925474099312345', limit: 2 };
   try {
@@ -77,9 +85,14 @@ export async function checkHistoryLifecycle({
     options.limit = 100;
     finishUid({ uidInfo: new Map([['456', 'u_456']]) });
     const messages = await result;
+    assert.ok(Array.isArray(messages));
     assert.equal(messages.length, 1);
-    assert.equal(messages[0].messageId, raw.msgId);
-    assert.deepEqual(messages[0].peer, { type: 'private', userId: '456' });
+    /** @type {unknown} */
+    const message = messages[0];
+    assert.ok(message !== null && typeof message === 'object');
+    assert.ok('messageId' in message && 'peer' in message);
+    assert.equal(message.messageId, raw.msgId);
+    assert.deepEqual(message.peer, { type: 'private', userId: '456' });
     assert.equal(historyCalls, 1);
   } finally {
     services.close();
@@ -92,24 +105,26 @@ export async function checkHistoryLifecycle({
 
   // Observe service shutdown before a dispatched native Promise ever settles.
   // Releasing this late Promise cannot replay or deliver the retired operation.
+  /** @type {[import('../../src/runtime/operations.ts').ServiceOperation,Record<string,unknown>,string][]} */
+  const queries = [
+    ['getHistory', { peer: { type: 'group', groupId: '123' } }, 'getMsgsIncludeSelf'],
+    ['getMessage', { peer: { type: 'group', groupId: '123' }, messageId: '42' }, 'getMsgsByMsgId'],
+    [
+      'getMessages',
+      { peer: { type: 'group', groupId: '123' }, messageIds: ['42'] },
+      'getMsgsByMsgId',
+    ],
+  ];
   for (const reentrant of [false, true])
-    for (const [method, query, nativeMethod] of [
-      ['getHistory', { peer: { type: 'group', groupId: '123' } }, 'getMsgsIncludeSelf'],
-      [
-        'getMessage',
-        { peer: { type: 'group', groupId: '123' }, messageId: '42' },
-        'getMsgsByMsgId',
-      ],
-      [
-        'getMessages',
-        { peer: { type: 'group', groupId: '123' }, messageIds: ['42'] },
-        'getMsgsByMsgId',
-      ],
-    ]) {
-      let begin,
-        rejectNative,
-        calls = 0,
-        deadline;
+    for (const [method, query, nativeMethod] of queries) {
+      /** @type {()=>void} */
+      let begin = () => assert.fail('Begin resolver not installed');
+      /** @type {(reason:unknown)=>void} */
+      let rejectNative = () => assert.fail('Rejection observer not installed');
+      let calls = 0;
+      /** @type {ReturnType<typeof setTimeout>|undefined} */
+      let deadline;
+      /** @type {Promise<void>} */
       const began = new Promise((resolve) => {
         begin = resolve;
       });
@@ -155,31 +170,41 @@ export async function checkHistoryLifecycle({
       }
     }
 
-  class Worker extends EventEmitter {
-    connected = true;
+  // Genuine ChildProcess shape, controlled IPC only; construction does not spawn.
+  class Worker extends ChildProcess {
     autoExitAfterClose = true;
-    exitCode = null;
-    stdout = new EventEmitter();
-    stderr = new EventEmitter();
+    /** @type {(Record<string,unknown>&{id:number,method:string})[]} */
     requests = [];
-    send(value, callback) {
-      this.requests.push(value);
-      callback(null);
-      if (value.method === 'close')
-        queueMicrotask(() => {
-          this.emit('message', { id: value.id, result: null });
-          setImmediate(() => {
-            if (!this.autoExitAfterClose) return;
-            this.connected = false;
-            this.exitCode = 0;
-            this.emit('exit', 0, null);
-          });
-        });
-    }
-    kill() {
-      this.connected = false;
-      queueMicrotask(() => this.emit('exit', 0, null));
-      return true;
+    constructor() {
+      super();
+      Object.defineProperty(this, 'connected', { value: true, configurable: true });
+      Object.defineProperty(this, 'send', {
+        value: (
+          /** @type {Record<string,unknown>&{id:number,method:string}} */ value,
+          /** @type {(error:Error|null)=>void} */ callback,
+        ) => {
+          this.requests.push(value);
+          callback(null);
+          if (value.method === 'close')
+            queueMicrotask(() => {
+              this.emit('message', { id: value.id, result: null });
+              setImmediate(() => {
+                if (!this.autoExitAfterClose) return;
+                Object.defineProperty(this, 'connected', { value: false, configurable: true });
+                this.exitCode = 0;
+                this.emit('exit', 0, null);
+              });
+            });
+          return true;
+        },
+      });
+      Object.defineProperty(this, 'kill', {
+        value: () => {
+          Object.defineProperty(this, 'connected', { value: false, configurable: true });
+          queueMicrotask(() => this.emit('exit', 0, null));
+          return true;
+        },
+      });
     }
   }
   const worker = new Worker(),
@@ -193,8 +218,11 @@ export async function checkHistoryLifecycle({
     (await login).uin = '456';
     assert.deepEqual(await client.waitForLogin(), { uin: '123', uid: 'u_original' });
     for (const invalid of [{ before: 42 }, { limit: '2' }, { reverse: 'false' }])
-      await assert.rejects(client.getHistory({ type: 'group', groupId: '123' }, invalid));
+      await assert.rejects(
+        Reflect.apply(client.getHistory, client, [{ type: 'group', groupId: '123' }, invalid]),
+      );
     assert.equal(worker.requests.length, 1);
+    /** @type {Extract<import('../../src/contracts/messages.ts').Peer,{type:'group'}>} */
     const peer = { type: 'group', groupId: '123' },
       options = { before: raw.msgId, limit: 2 };
     const history = client.getHistory(peer, options);
@@ -221,34 +249,45 @@ export async function checkHistoryLifecycle({
     await client.close();
   }
 
-  const watched = new EventEmitter(),
-    failures = [];
+  const watched = new QQClient(new Worker(), 500);
+  /** @type {Error[]} */
+  const failures = [];
   const remove = observeWatchFailures(watched, { maxAttempts: 2 }, (error) => failures.push(error));
-  watched.emit('disconnected', { retryable: true });
+  watched.emit('disconnected', { source: 'msf', kind: 'transport', args: [], retryable: true });
   assert.equal(failures.length, 0);
-  watched.emit('disconnected', { retryable: false });
+  watched.emit('disconnected', { source: 'msf', kind: 'unknown', args: [], retryable: false });
   assert.equal(failures.length, 1);
-  watched.emit('kicked', { retryable: true });
+  watched.emit('kicked', { source: 'kicked', kind: 'forced', args: [], retryable: true });
   assert.equal(failures.length, 2);
   remove();
-  watched.emit('logout');
+  watched.emit('logout', undefined);
   assert.equal(failures.length, 2);
+  await watched.close();
   const action = await prepareCommand('history', {
     kind: 'group',
     target: '123',
     before: raw.msgId,
     limit: '2',
   });
-  let cliCalls = 0;
-  await action({
-    getHistory(peer, options) {
-      cliCalls++;
-      assert.deepEqual(peer, { type: 'group', groupId: '123' });
-      assert.deepEqual(options, { before: raw.msgId, limit: 2 });
-      return [];
-    },
-  });
-  assert.equal(cliCalls, 1);
+  const cliWorker = new Worker();
+  const cliClient = new QQClient(cliWorker, 500);
+  try {
+    const login = cliClient.login({ method: 'restore', uin: '123' });
+    const account = { uin: '123', uid: 'u_fixture' };
+    cliWorker.emit('message', { event: 'ready', payload: account });
+    cliWorker.emit('message', { id: cliWorker.requests[0].id, result: account });
+    await login;
+    const pending = action(cliClient);
+    const request = cliWorker.requests[1];
+    assert.equal(request.method, 'getHistory');
+    assert.deepEqual(request.peer, { type: 'group', groupId: '123' });
+    assert.deepEqual(request.options, { before: raw.msgId, limit: 2, reverse: false });
+    cliWorker.emit('message', { id: request.id, result: [] });
+    assert.deepEqual(await pending, []);
+    assert.equal(cliWorker.requests.filter((value) => value.method === 'getHistory').length, 1);
+  } finally {
+    await cliClient.close();
+  }
   return {
     pendingReadCloseContract: true,
     reentrantReadCloseContract: true,
@@ -259,10 +298,16 @@ export async function checkHistoryLifecycle({
   };
 }
 
+/** @param {string} packageRoot */
 export async function verifyHistoryLifecycleConsumer(packageRoot) {
-  const load = (file) => import(pathToFileURL(join(packageRoot, 'dist', file)).href);
+  /** @type {Promise<typeof import('../../src/index.ts')>} */
+  const clientModule = import(pathToFileURL(join(packageRoot, 'dist/index.js')).href);
+  /** @type {Promise<typeof import('../../src/native-services.ts')>} */
+  const servicesModule = import(pathToFileURL(join(packageRoot, 'dist/native-services.js')).href);
+  /** @type {Promise<typeof import('../../src/cli.ts')>} */
+  const cliModule = import(pathToFileURL(join(packageRoot, 'dist/cli.js')).href);
   const [{ QQClient }, { createNativeServices }, { observeWatchFailures, prepareCommand }] =
-    await Promise.all([load('index.js'), load('native-services.js'), load('cli.js')]);
+    await Promise.all([clientModule, servicesModule, cliModule]);
   const checks = await checkHistoryLifecycle({
     QQClient,
     createNativeServices,
