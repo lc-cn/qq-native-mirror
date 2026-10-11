@@ -82,10 +82,11 @@ try {
  const friendCategoryRenameChecks=await verifyFriendCategoryRenameConsumer(installedRoot);
  const workerBootstrapChecks=await verifyWorkerBootstrapConsumer(installedRoot);
  const {prepareNative}=await import(pathToFileURL(join(installedRoot,'dist/native/native-package.js')).href);
+ const installedManifest=JSON.parse(await readFile(join(temp,'node_modules',platformName,'manifest.json')));
+ // Pin the actual auxiliary version; default latest mirror consumption has its own consumer.
  const nativeCache=join(temp,'native-cache');
  globalThis.fetch=()=>{throw new Error('Unexpected mirror request with installed platform package');};
- const autoNative=await prepareNative({dataDir:join(temp,'unused-video-account'),cacheDir:nativeCache});
- const installedManifest=JSON.parse(await readFile(join(temp,'node_modules',platformName,'manifest.json')));
+ const autoNative=await prepareNative({dataDir:join(temp,'unused-video-account'),cacheDir:nativeCache,version:installedManifest.version});
  let installedVideo,installedNativeStorage;
  if(installedManifest.npmStorage!==undefined){
   assert.equal(installedManifest.npmStorage.format,'gzip-objects-v1');
@@ -93,7 +94,7 @@ try {
   assert.ok(nativeRoot.startsWith((await realpath(nativeCache))+sep));
   for(const file of installedManifest.files){const bytes=await readFile(join(nativeRoot,file.path));assert.equal(bytes.length,file.size);assert.equal(createHash('sha256').update(bytes).digest('hex'),file.sha256);}
   const before=await stat(autoNative.wrapperPath);
-  const warm=await prepareNative({dataDir:join(temp,'unused-video-account'),cacheDir:nativeCache});
+  const warm=await prepareNative({dataDir:join(temp,'unused-video-account'),cacheDir:nativeCache,version:installedManifest.version});
   assert.equal(warm.wrapperPath,autoNative.wrapperPath);assert.equal((await stat(warm.wrapperPath)).mtimeMs,before.mtimeMs);
   installedNativeStorage={format:'gzip-objects-v1',nativePaths:installedManifest.files.length,objects:installedManifest.npmStorage.objects.length,allOriginalFilesVerified:true,warmCacheReused:true,networkFallbackAttempted:false};
  }
@@ -102,7 +103,7 @@ try {
   assert.equal(nativeRoot,await realpath(join(temp,'node_modules',platformName)));
   for(const file of installedManifest.files){const bytes=await readFile(join(nativeRoot,file.path));if(file.size!==undefined)assert.equal(bytes.length,file.size);assert.equal(createHash('sha256').update(bytes).digest('hex'),file.sha256);}
   const before=await stat(autoNative.wrapperPath);
-  const warm=await prepareNative({dataDir:join(temp,'unused-video-account'),cacheDir:nativeCache});
+  const warm=await prepareNative({dataDir:join(temp,'unused-video-account'),cacheDir:nativeCache,version:installedManifest.version});
   assert.deepEqual(warm,autoNative);assert.equal((await stat(warm.wrapperPath)).mtimeMs,before.mtimeMs);
   installedNativeStorage={format:'plain-installed',nativePaths:installedManifest.files.length,allInstalledFilesVerified:true,installedPathsReused:true,networkFallbackAttempted:false};
  }
@@ -313,7 +314,7 @@ let successCalls=0;const success=createNativeServices({ session: {getMsgService:
 try{assert.deepEqual(await success.invokeOperation('listFriends'),[]);assert.equal(successCalls,1);}finally{success.close();}
  }
  globalThis.fetch=()=>{throw new Error('Unexpected mirror request with installed platform package');};
- client=await sdk.createClient({dataDir:join(temp,'unused-account'),cacheDir:nativeCache,autoReconnect:false,timeoutMs:30000});
+ client=await sdk.createClient({dataDir:join(temp,'unused-account'),cacheDir:nativeCache,version:installedManifest.version,autoReconnect:false,timeoutMs:30000});
  const exports=client.nativeExports.length;if(exports<80)throw new Error('Unexpected native export inventory');await client.close();if(client.state!=='closed')throw new Error('Client did not close');
- await writeFile('out/consumer.json',JSON.stringify({platform:process.platform,arch:process.arch,node:process.version,exports,installedNativeStorage,workerBootstrapChecks,contactGroupChecks,actionPortChecks,profileRequestChecks,groupRequestChecks,groupNoticeChecks,groupWebChecks,groupSearchChecks,...messageBatchChecks,...forwardChecks,...recallChecks,...mentionChecks,...sendChecks,...receivedChecks,...receivedForwardChecks,...forwardResourceChecks,...historyLifecycleChecks,...videoChecks,...mergedForwardChecks,automaticVideoCodec:installedVideo!==undefined,installedVideoDecoder:installedVideo?.passed===true,installedVideoFakeCache:installedVideo?.sdkFakeCache===true,installedVideo,installedMainOnly:true,automaticPlatformSelection:true,tarballRequests,...faceChecks,...elementPreparationChecks,...friendCategoryRenameChecks,messageQueryContract:true,historyQueryContract:true,nativeHistoryQueryAttempted:false,nativeMessageQueryAttempted:false,selfProfileContract:true,profileMutationAttempted:false,groupOperationContract:true,groupMutationAttempted:false,groupMemberQueryContract:true,groupMemberIdentityContract:true,nativeGroupMemberQueryAttempted:false,groupMetadataEventContract:true,businessWatchContract:true,nativeGroupMetadataObserved:false,friendMetadataEventContract:true,nativeFriendMetadataObserved:false,friendListQueryContract:true,friendListBatchContract:true,friendProfileQueryContract:true,groupListQueryContract:true,nativeGroupListQueryAttempted:false,nativeFriendListQueryAttempted:false,prepared:true,closed:true,loginAttempted:false,registry:'isolated local fixture serving actual CI tarballs'},null,2));console.log(await readFile('out/consumer.json','utf8'));
+ await writeFile('out/consumer.json',JSON.stringify({platform:process.platform,arch:process.arch,node:process.version,exports,installedNativeStorage,workerBootstrapChecks,contactGroupChecks,actionPortChecks,profileRequestChecks,groupRequestChecks,groupNoticeChecks,groupWebChecks,groupSearchChecks,...messageBatchChecks,...forwardChecks,...recallChecks,...mentionChecks,...sendChecks,...receivedChecks,...receivedForwardChecks,...forwardResourceChecks,...historyLifecycleChecks,...videoChecks,...mergedForwardChecks,automaticVideoCodec:installedVideo!==undefined,installedVideoDecoder:installedVideo?.passed===true,installedVideoFakeCache:installedVideo?.sdkFakeCache===true,installedVideo,installedMainOnly:true,automaticPlatformSelection:true,explicitNativeVersion:installedManifest.version,tarballRequests,...faceChecks,...elementPreparationChecks,...friendCategoryRenameChecks,messageQueryContract:true,historyQueryContract:true,nativeHistoryQueryAttempted:false,nativeMessageQueryAttempted:false,selfProfileContract:true,profileMutationAttempted:false,groupOperationContract:true,groupMutationAttempted:false,groupMemberQueryContract:true,groupMemberIdentityContract:true,nativeGroupMemberQueryAttempted:false,groupMetadataEventContract:true,businessWatchContract:true,nativeGroupMetadataObserved:false,friendMetadataEventContract:true,nativeFriendMetadataObserved:false,friendListQueryContract:true,friendListBatchContract:true,friendProfileQueryContract:true,groupListQueryContract:true,nativeGroupListQueryAttempted:false,nativeFriendListQueryAttempted:false,prepared:true,closed:true,loginAttempted:false,registry:'isolated local fixture serving actual CI tarballs'},null,2));console.log(await readFile('out/consumer.json','utf8'));
 }finally{await client?.close();server.closeAllConnections();await new Promise(done=>server.close(done));await rm(temp,{recursive:true,force:true});}

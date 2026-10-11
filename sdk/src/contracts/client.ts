@@ -4,7 +4,7 @@ export type LoginRequest =
   { method: 'qr' } | { method: 'quick'; uin: string } | { method: 'restore'; uin?: string };
 
 export interface ClientOptions {
-  /** HTTPS native catalog; defaults to the project's GitHub mirror. */
+  /** HTTPS native catalog; defaults to the project's GitHub mirror and selects device latest when version is omitted. */
   catalogUrl?: string;
   /** HTTPS proxy prefixes for native file URLs, e.g. https://proxy.example/. Original URL is the final fallback. */
   downloadMirrors?: string[];
@@ -18,6 +18,7 @@ export interface ClientOptions {
   /** Libraries loaded globally before the QQ wrapper. Linux defaults to libgnutls.so.30. */
   preloadLibraries?: string[];
   dataDir: string;
+  /** Pin native version metadata. Without an explicit source, a matching installed platform package works offline. */
   version?: QQVersion;
   device?: { hostname?: string; osVersion?: string };
   login?: LoginRequest;

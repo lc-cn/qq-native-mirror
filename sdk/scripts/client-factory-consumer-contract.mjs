@@ -161,7 +161,14 @@ async function verifyNativeSourceSelection(createClient, directory, bridgePath) 
     files: [{ path: 'wrapper.node', url: './wrapper.node', sha256: hash(bytes) }],
   };
   const manifestUrl = 'https://fixture.example/manifest.json';
+  const catalogUrl = 'https://raw.githubusercontent.com/lc-cn/qq-native-mirror/main/catalog.json';
   let remoteVersion = version;
+  /** @type {typeof version | undefined} */
+  let catalogVersionOverride;
+  let remoteFiles = manifest.files;
+  const payloads = new Map([['https://fixture.example/wrapper.node', bytes]]);
+  /** @type {'catalog' | 'manifest' | undefined} */
+  let rejectedMetadata;
   const requests = [];
   let init;
   let index = 0;
@@ -211,8 +218,9 @@ async function verifyNativeSourceSelection(createClient, directory, bridgePath) 
     globalThis.fetch = async (input) => {
       const url = String(input);
       requests.push(url);
-      const body = JSON.stringify({ ...manifest, version: remoteVersion });
-      if (url.endsWith('catalog.json'))
+      const body = JSON.stringify({ ...manifest, version: remoteVersion, files: remoteFiles });
+      if (url.endsWith('catalog.json')) {
+        if (rejectedMetadata === 'catalog') throw Error('Fixture catalog unavailable');
         return new Response(
           JSON.stringify({
             schemaVersion: 1,
@@ -220,35 +228,109 @@ async function verifyNativeSourceSelection(createClient, directory, bridgePath) 
               {
                 platform: process.platform,
                 arch: process.arch,
-                version: remoteVersion,
+                version: catalogVersionOverride ?? remoteVersion,
                 manifestUrl,
                 manifestSha256: hash(body),
               },
             ],
           }),
         );
-      if (url === manifestUrl) return new Response(body);
-      assert.equal(url, 'https://fixture.example/wrapper.node');
-      return new Response(bytes);
+      }
+      if (url === manifestUrl) {
+        if (rejectedMetadata === 'manifest') throw Error('Fixture manifest unavailable');
+        return new Response(body);
+      }
+      const payload = payloads.get(url);
+      assert.ok(payload, `Unexpected fixture download: ${url}`);
+      return new Response(payload);
     };
-    // Matching auxiliary is entirely local. A corrupt package must not become a fallback.
-    await openAndClose({}, join(auxiliary, 'wrapper.node'), version);
+    // Pinning keeps offline resolution; default selection establishes latest first.
+    await openAndClose({ version }, join(auxiliary, 'wrapper.node'), version);
     assert.deepEqual(requests, []);
     await writeFile(join(auxiliary, 'wrapper.node'), 'corrupted');
-    await assert.rejects(createClient({ dataDir: directory }), /failed verification/);
+    await assert.rejects(createClient({ dataDir: directory, version }), /failed verification/);
     assert.deepEqual(requests, []);
     await writeFile(join(auxiliary, 'wrapper.node'), bytes);
-    // A version mismatch is checked before the auxiliary's runtime constraint.
+
+    await openAndClose({}, join(auxiliary, 'wrapper.node'), version);
+    assert.deepEqual(requests, [catalogUrl, manifestUrl]);
+    requests.length = 0;
+    await writeFile(join(auxiliary, 'wrapper.node'), 'corrupted');
+    await assert.rejects(createClient({ dataDir: directory }), /failed verification/);
+    assert.deepEqual(
+      requests,
+      [catalogUrl, manifestUrl],
+      'Matching corrupt content never falls back',
+    );
+    await writeFile(join(auxiliary, 'wrapper.node'), bytes);
+    for (const stage of /** @type {const} */ (['catalog', 'manifest'])) {
+      requests.length = 0;
+      rejectedMetadata = stage;
+      await assert.rejects(createClient({ dataDir: directory }), /Fixture .* unavailable/);
+      assert.deepEqual(requests, stage === 'catalog' ? [catalogUrl] : [catalogUrl, manifestUrl]);
+    }
+    rejectedMetadata = undefined;
+    requests.length = 0;
+    catalogVersionOverride = { ...version, qua: 'catalog-does-not-match-manifest' };
+    await assert.rejects(
+      createClient({ dataDir: directory }),
+      /does not match the trusted native manifest/,
+    );
+    assert.deepEqual(requests, [catalogUrl, manifestUrl]);
+    catalogVersionOverride = undefined;
+    requests.length = 0;
+
+    // Same version and wrapper hash do not imply the same complete bundle.
+    const dependency = Buffer.from('fixture selected dependency');
+    remoteFiles = [
+      ...manifest.files,
+      { path: 'dependency.bin', url: './dependency.bin', sha256: hash(dependency) },
+    ];
+    payloads.set('https://fixture.example/dependency.bin', dependency);
+    const differentBody = JSON.stringify({ ...manifest, files: remoteFiles });
+    const differentTarget = join(directory, 'source-cache', hash(differentBody), 'wrapper.node');
+    await openAndClose({}, differentTarget, version);
+    assert.deepEqual(requests.slice(0, 2), [catalogUrl, manifestUrl]);
+    assert.deepEqual(requests.slice(2).sort(), [...payloads.keys()].sort());
+    assert.deepEqual(await readFile(join(dirname(differentTarget), 'dependency.bin')), dependency);
+    remoteFiles = manifest.files;
+    requests.length = 0;
+
+    // A valid different ABI constraint is an unselected bundle, not a host failure.
     await save({ ...manifest, nodeVersion: 'v0.0.1', nodeConfigSha256: '0'.repeat(64) });
+    const unconstrainedTarget = join(
+      directory,
+      'source-cache',
+      hash(JSON.stringify(manifest)),
+      'wrapper.node',
+    );
+    await openAndClose({}, unconstrainedTarget, version);
+    assert.deepEqual(requests, [catalogUrl, manifestUrl]);
+    requests.length = 0;
+    // Malformed installed metadata must still reject before content-miss fallback.
+    await save({ ...manifest, nodeVersion: process.version });
+    await assert.rejects(
+      createClient({ dataDir: directory }),
+      /Invalid native Node runtime constraint/,
+    );
+    assert.deepEqual(requests, [catalogUrl, manifestUrl]);
+    await save(manifest);
+    requests.length = 0;
+
     remoteVersion = { ...version, clientVersion: '2.0.0' };
     const body = JSON.stringify({ ...manifest, version: remoteVersion });
     const target = join(directory, 'source-cache', hash(body), 'wrapper.node');
+    await openAndClose({}, target, remoteVersion);
+    assert.deepEqual(
+      requests,
+      [catalogUrl, manifestUrl],
+      'Latest replaces an older auxiliary and reuses verified content',
+    );
+    requests.length = 0;
+    // A version mismatch is checked before the auxiliary's runtime constraint.
+    await save({ ...manifest, nodeVersion: 'v0.0.1', nodeConfigSha256: '0'.repeat(64) });
     await openAndClose({ version: remoteVersion }, target, remoteVersion);
-    assert.deepEqual(requests, [
-      'https://raw.githubusercontent.com/lc-cn/qq-native-mirror/main/catalog.json',
-      manifestUrl,
-      'https://fixture.example/wrapper.node',
-    ]);
+    assert.deepEqual(requests, [catalogUrl, manifestUrl]);
     requests.length = 0;
     // Explicit catalog and manifest each bypass the installed runtime mismatch.
     await openAndClose(
@@ -284,7 +366,12 @@ async function verifyNativeSourceSelection(createClient, directory, bridgePath) 
     await openAndClose({ wrapperPath: local }, local, version);
     assert.equal(init.options.videoCodecPath, join(dirname(local), 'codec.mjs'));
     assert.deepEqual(requests, []);
-    return { nativeSourceSelectionContract: true, nativeDirectoryInstalledContract: true };
+    return {
+      nativeSourceSelectionContract: true,
+      nativeDirectoryInstalledContract: true,
+      nativeDefaultLatestContract: true,
+      nativePinnedOfflineContract: true,
+    };
   } finally {
     globalThis.fetch = originalFetch;
     childProcess.fork = originalFork;

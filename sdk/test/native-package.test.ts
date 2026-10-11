@@ -12,7 +12,74 @@ import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { prepareNative, safeRelative } from '../src/native/native-package.ts';
 import type { NativeManifest } from '../src/types.ts';
+import { sameNativeContent } from '../src/native/native-manifest.ts';
 const sha = (value: string | Buffer) => createHash('sha256').update(value).digest('hex');
+
+const identityManifest = (): NativeManifest => ({
+  schemaVersion: 1,
+  id: 'identity-fixture',
+  platform: process.platform,
+  arch: process.arch,
+  wrapper: 'wrapper.node',
+  videoCodec: 'codec.node',
+  version: { clientVersion: '1.0.0', appId: '1', qua: 'fixture' },
+  files: ['wrapper.node', 'codec.node', 'dependency.bin'].map((path) => ({
+    path,
+    url: './' + path,
+    sha256: sha(path),
+    size: path.length,
+  })),
+});
+test('native content identity ignores storage representation and inventory order', () => {
+  const installed = identityManifest();
+  const remote: NativeManifest = {
+    ...installed,
+    id: 'different-transport',
+    files: installed.files.toReversed().map(({ size: _size, ...file }) => ({
+      ...file,
+      url: 'https://fixture.example/' + file.path + '.gz',
+      sha256: file.sha256.toUpperCase(),
+      encoding: 'gzip',
+      downloadSha256: 'a'.repeat(64),
+    })),
+  };
+  assert.equal(sameNativeContent(installed, remote), true);
+  assert.equal(sameNativeContent(remote, installed), true);
+});
+test('native content identity compares every original file and runtime constraint', () => {
+  const installed = identityManifest();
+  const changes: Partial<NativeManifest>[] = [
+    { wrapper: 'codec.node' },
+    { videoCodec: undefined },
+    { nodeVersion: process.version, nodeConfigSha256: 'a'.repeat(64) },
+    { arch: 'another-device' },
+    { version: { ...installed.version, appId: '2' } },
+    { version: { ...installed.version, qua: 'another-profile' } },
+    { files: installed.files.slice(0, 2) },
+    {
+      files: installed.files.map((file) =>
+        file.path === 'dependency.bin' ? { ...file, sha256: 'b'.repeat(64) } : file,
+      ),
+    },
+    { files: installed.files.map((file) => ({ ...file, size: file.size! + 1 })) },
+  ];
+  for (const change of changes)
+    assert.equal(sameNativeContent(installed, { ...installed, ...change }), false);
+});
+test('malformed inventories reject before a different bundle can become a cache miss', () => {
+  const installed = identityManifest();
+  for (const files of [
+    [...installed.files, installed.files[0]!],
+    installed.files.map((file) => ({ ...file, sha256: 'bad' })),
+    installed.files.map((file) => ({ ...file, path: '../' + file.path })),
+    [...installed.files, { path: 'wrapper.node/child', url: './child', sha256: 'a'.repeat(64) }],
+    [],
+  ]) {
+    const invalid = { ...installed, id: 'different', files };
+    assert.throws(() => sameNativeContent(invalid, installed));
+    assert.throws(() => sameNativeContent(installed, invalid));
+  }
+});
 
 test('failed installation waits for sibling downloads, releases staging and permits repair', async (t) => {
   const dir = await mkdtemp(join(tmpdir(), 'qq-install-failure-'));

@@ -11,7 +11,9 @@ import { acquirePackageLock } from '../storage/native-package-lock.ts';
 import { installVerifiedBundle } from './native-bundle-installer.ts';
 import {
   assertNativeVersion,
+  assertNodeRuntimeConstraint,
   nativeHashPattern,
+  sameNativeContent,
   safeRelative,
   validateDownloadMirrors,
   validateRemoteInventory,
@@ -28,23 +30,20 @@ interface PreparedNative {
   videoCodecPath?: string;
 }
 function verifyNodeRuntime(manifest: NativeManifest): void {
+  assertNodeRuntimeConstraint(manifest);
   if (manifest.nodeVersion === undefined && manifest.nodeConfigSha256 === undefined) return;
   if (
-    typeof manifest.nodeVersion !== 'string' ||
-    !/^v\d+\.\d+\.\d+$/.test(manifest.nodeVersion) ||
-    typeof manifest.nodeConfigSha256 !== 'string' ||
-    !nativeHashPattern.test(manifest.nodeConfigSha256)
-  )
-    throw new Error('Invalid native Node runtime constraint');
-  if (
     manifest.nodeVersion !== process.version ||
-    manifest.nodeConfigSha256.toLowerCase() !== digest(Buffer.from(JSON.stringify(process.config)))
+    manifest.nodeConfigSha256!.toLowerCase() !== digest(Buffer.from(JSON.stringify(process.config)))
   )
     throw new Error(
       `Native internal-ABI adapter requires matching Node ${manifest.nodeVersion} and build configuration`,
     );
 }
-async function installedNative(options: ClientOptions): Promise<PreparedNative | undefined> {
+async function installedNative(
+  options: ClientOptions,
+  selected?: NativeManifest,
+): Promise<PreparedNative | undefined> {
   const name = `qq-native-client-${process.platform}-${process.arch}`;
   let entry: string;
   try {
@@ -70,6 +69,7 @@ async function installedNative(options: ClientOptions): Promise<PreparedNative |
     )
   )
     return;
+  if (selected && !sameNativeContent(manifest, selected)) return;
   verifyNodeRuntime(manifest);
   const base =
     manifest.npmStorage === undefined
@@ -185,7 +185,9 @@ export async function prepareNative(options: ClientOptions): Promise<PreparedNat
       ...(codec === undefined ? {} : { videoCodecPath: codec }),
     };
   }
-  if (!options.manifestUrl && !options.catalogUrl) {
+  const automaticLatest = !options.version && !options.manifestUrl && !options.catalogUrl;
+  // A fixed version can resolve locally; the default must establish catalog latest first.
+  if (options.version && !options.manifestUrl && !options.catalogUrl) {
     const installed = await installedNative(options);
     if (installed) return installed;
   }
@@ -226,6 +228,10 @@ export async function prepareNative(options: ClientOptions): Promise<PreparedNat
     );
   }
   const codec = validateRemoteInventory(manifest);
+  if (automaticLatest) {
+    const installed = await installedNative({ ...options, version: manifest.version }, manifest);
+    if (installed) return installed;
+  }
   const target = await installVerifiedBundle({
     manifestBytes: body,
     manifest,

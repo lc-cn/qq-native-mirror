@@ -74,7 +74,7 @@ test('installed platform bundle integrity and explicit source precedence', async
     calls++;
     throw new Error('explicit mirror selected');
   };
-  const result = await prepareNative({ dataDir: root });
+  const result = await prepareNative({ dataDir: root, version });
   assert.equal(result.wrapperPath, join(pkg, 'wrapper.node'));
   assert.deepEqual(result.version, version);
   assert.equal(calls, 0);
@@ -96,7 +96,7 @@ test('installed platform bundle integrity and explicit source precedence', async
   );
   assert.equal(calls, 2);
   await writeFile(join(pkg, 'wrapper.node'), 'corrupted');
-  await assert.rejects(prepareNative({ dataDir: root }), /failed verification/);
+  await assert.rejects(prepareNative({ dataDir: root, version }), /failed verification/);
   assert.equal(calls, 2, 'corruption does not silently download a replacement');
   await rm(join(pkg, 'wrapper.node'));
   await t.test('symlink rejection when platform permits creating links', async (sub) => {
@@ -109,7 +109,7 @@ test('installed platform bundle integrity and explicit source precedence', async
       }
       throw error;
     }
-    await assert.rejects(prepareNative({ dataDir: root }), /failed verification/);
+    await assert.rejects(prepareNative({ dataDir: root, version }), /failed verification/);
   });
   await rm(join(pkg, 'wrapper.node'), { force: true });
   await writeFile(join(pkg, 'wrapper.node'), bytes);
@@ -118,18 +118,27 @@ test('installed platform bundle integrity and explicit source precedence', async
     nodeVersion: process.version,
     nodeConfigSha256: createHash('sha256').update(JSON.stringify(process.config)).digest('hex'),
   });
-  assert.equal((await prepareNative({ dataDir: root })).wrapperPath, join(pkg, 'wrapper.node'));
+  assert.equal(
+    (await prepareNative({ dataDir: root, version })).wrapperPath,
+    join(pkg, 'wrapper.node'),
+  );
   await save({ ...manifest, nodeVersion: 'v0.0.1', nodeConfigSha256: '0'.repeat(64) });
-  await assert.rejects(prepareNative({ dataDir: root }), /requires matching Node/);
+  await assert.rejects(prepareNative({ dataDir: root, version }), /requires matching Node/);
   assert.equal(calls, 2);
   await save({ ...manifest, nodeVersion: process.version });
-  await assert.rejects(prepareNative({ dataDir: root }), /Invalid native Node runtime constraint/);
+  await assert.rejects(
+    prepareNative({ dataDir: root, version }),
+    /Invalid native Node runtime constraint/,
+  );
   await save({ ...manifest, arch: 'incorrect' });
-  await assert.rejects(prepareNative({ dataDir: root }), /does not match device/);
+  await assert.rejects(prepareNative({ dataDir: root, version }), /does not match device/);
   await save({ ...manifest, files: [...manifest.files, ...manifest.files] });
-  await assert.rejects(prepareNative({ dataDir: root }), /Invalid installed native manifest/);
+  await assert.rejects(
+    prepareNative({ dataDir: root, version }),
+    /Invalid installed native manifest/,
+  );
   await save({ ...manifest, files: [] });
-  await assert.rejects(prepareNative({ dataDir: root }), /wrapper is missing/);
+  await assert.rejects(prepareNative({ dataDir: root, version }), /wrapper is missing/);
 });
 
 const execute = promisify(execFile);
@@ -176,7 +185,7 @@ async function objectFixture() {
     id: 'object-fixture',
     platform: process.platform,
     arch: process.arch,
-    version: { clientVersion: 'fixture', appId: '1', qua: 'fixture' },
+    version: { clientVersion: '1.0.0', appId: '1', qua: 'fixture' },
     wrapper: 'wrapper.node',
     npmStorage: { format: 'gzip-objects-v1', objects: [object] },
     files: ['wrapper.node', 'nested/duplicate.node'].map((path) => ({
@@ -198,7 +207,7 @@ test('installed gzip storage coordinates independent processes through real lock
   );
   await writeFile(
     join(f.root, 'run.mjs'),
-    `import{prepareNative}from'./native/native-package.ts';globalThis.fetch=()=>{throw Error('Network forbidden')};try{await(await import('node:fs/promises')).symlink('missing','deny-probe');throw Error('Symlinks were not denied');}catch(e){if(e.code!=='EPERM')throw e;}const native=await prepareNative({cacheDir:process.argv[2]});console.log(JSON.stringify(native));`,
+    `import{prepareNative}from'./native/native-package.ts';globalThis.fetch=()=>{throw Error('Network forbidden')};try{await(await import('node:fs/promises')).symlink('missing','deny-probe');throw Error('Symlinks were not denied');}catch(e){if(e.code!=='EPERM')throw e;}const native=await prepareNative({cacheDir:process.argv[2],version:${JSON.stringify(f.manifest.version)}});console.log(JSON.stringify(native));`,
   );
   const env = { ...process.env };
   delete env.NODE_OPTIONS;
@@ -249,7 +258,7 @@ test('installed storage corruption never falls back; explicit version selects ca
   calls = 0;
   await writeFile(join(f.pkg, f.object.path), 'corrupt');
   await assert.rejects(
-    prepareNative({ cacheDir: f.cache }),
+    prepareNative({ cacheDir: f.cache, version: f.manifest.version }),
     /Invalid installed storage regular file|compressed checksum mismatch/,
   );
   assert.equal(calls, 0);
@@ -267,4 +276,65 @@ test('installed storage corruption never falls back; explicit version selects ca
     /only supported for installed native packages/,
   );
   assert.equal(calls, 1);
+});
+
+test('default latest reuses matching npm object storage after trusted metadata, without payload downloads', async (t) => {
+  const f = await objectFixture();
+  t.after(() => rm(f.root, { recursive: true, force: true }));
+  const { prepareNative } = await import(
+    pathToFileURL(join(f.root, 'native/native-package.ts')).href
+  );
+  const { npmStorage: _storage, ...rawManifest } = f.manifest;
+  const selected = {
+    ...rawManifest,
+    id: 'remote-representation',
+    files: rawManifest.files.toReversed().map((file) => ({
+      ...file,
+      url: 'https://fixture.example/' + file.path + '.gz',
+      encoding: 'gzip',
+      downloadSha256: f.object.downloadSha256,
+    })),
+  };
+  const body = JSON.stringify(selected);
+  const manifestUrl = 'https://fixture.example/manifest.json';
+  const catalogUrl = 'https://raw.githubusercontent.com/lc-cn/qq-native-mirror/main/catalog.json';
+  const previous = globalThis.fetch;
+  t.after(() => {
+    globalThis.fetch = previous;
+  });
+  const requests: string[] = [];
+  globalThis.fetch = async (input) => {
+    const url = String(input);
+    requests.push(url);
+    if (url === catalogUrl)
+      return Response.json({
+        schemaVersion: 1,
+        packages: [
+          {
+            platform: process.platform,
+            arch: process.arch,
+            version: selected.version,
+            manifestUrl,
+            manifestSha256: hash(Buffer.from(body)),
+          },
+        ],
+      });
+    assert.equal(url, manifestUrl, 'No remote payload request is permitted');
+    return new Response(body);
+  };
+  const result = await prepareNative({ dataDir: f.root, cacheDir: f.cache });
+  assert.deepEqual(result.version, f.manifest.version);
+  assert.deepEqual(await readFile(result.wrapperPath), f.raw);
+  assert.deepEqual(requests, [catalogUrl, manifestUrl]);
+  requests.length = 0;
+  assert.deepEqual(await prepareNative({ dataDir: f.root, cacheDir: f.cache }), result);
+  assert.deepEqual(requests, [catalogUrl, manifestUrl]);
+  await rm(f.cache, { recursive: true, force: true });
+  await writeFile(join(f.pkg, f.object.path), 'corrupt');
+  requests.length = 0;
+  await assert.rejects(
+    prepareNative({ dataDir: f.root, cacheDir: f.cache }),
+    /Invalid installed storage regular file|compressed checksum mismatch/,
+  );
+  assert.deepEqual(requests, [catalogUrl, manifestUrl]);
 });

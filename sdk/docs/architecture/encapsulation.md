@@ -545,8 +545,9 @@ file lifetimes remain with the media constructors; video retains its existing
 abort/deadline checks, while image and record retain the sender's completion
 checks. The port shares the native method contract, not a new preparation policy.
 
-`native/native-manifest` owns pure manifest-relative paths, nonempty version
-metadata, mirror-prefix options, codec membership and remote inventory rules.
+`native/native-manifest` owns pure manifest-relative paths, version/runtime
+metadata, mirror-prefix options, codec membership, original content identity and
+remote inventory rules.
 The CLI uses it directly, so parameter preflight has no runtime dependency on
 bundle acquisition, package locking or installation. Catalog numeric version
 ordering remains a separate policy. The dependency gate checks this module's
@@ -559,10 +560,23 @@ package lock, write files, repair a cache or load an addon. Bundle preparation
 retains the source policy and passes a canonical root. The legacy local codec
 inventory preflight keeps its stricter scalar checks and original diagnostics.
 
-`native/native-package` retains explicit wrapper/manifest precedence, optional
-npm selection and catalog fallback, Node runtime constraints and trusted remote
-manifest acquisition. A mismatching installed version falls back before runtime
-constraints; corruption of a matching installed package rejects. A legacy
+`native/native-package` owns source selection, Node runtime compatibility and
+trusted remote manifest acquisition. With no explicit source or version, it
+first resolves device latest from the catalog and verifies the selected manifest.
+Only then can it reuse an installed npm package with matching full version,
+runtime constraints, wrapper, codec and every original file path/hash. Inventory
+order and transport/storage representation do not affect original content;
+declared sizes must agree when both representations include them. Matching npm
+files or compressed objects still pass their existing integrity checks before
+reuse. A valid different inventory selects the trusted mirror/cache, while a
+corrupt matching package rejects. Metadata failures cannot establish latest and
+therefore reject without stale-package fallback.
+
+An explicit version may resolve a matching npm package offline; a mismatching
+installed version falls back before runtime constraints. Explicit catalog or
+manifest sources bypass npm selection. Catalog resolution binds selected version
+metadata as well as the manifest digest; a caller's explicit version constraints
+are preserved. A legacy
 explicit wrapper with version may still lack an inventory; automatic local codec
 discovery requires the complete verified inventory. Remote sources reject npm
 object storage and validate the raw manifest digest before decoding it. Storage
@@ -572,7 +586,8 @@ a universal manifest parser.
 
 The source and installed-archive factory checks exercise these selection policies
 through `createClient`, with controlled metadata/payload responses and addon
-loading. They verify default optional-package resolution, corruption rejection,
+loading. They verify default latest with installed packages, whole-inventory
+reuse, matching corruption rejection, metadata failures, pinned offline resolution,
 version fallback before runtime checks, explicit catalog/manifest precedence,
 legacy wrappers and local codec inventory discovery. No account or real addon
 interoperability is claimed by those fixtures.

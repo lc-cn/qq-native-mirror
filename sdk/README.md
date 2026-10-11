@@ -17,9 +17,12 @@ npm install qq-native-client@0.0.1
 
 The main package pins six optional packages:
 `qq-native-client-{darwin,linux,win32}-{x64,arm64}`. npm selects the matching device.
-The SDK verifies a compatible installed package first; otherwise its catalog
-selects the latest compatible native version for that device. Native versions
-and npm versions are independent. Linux requires glibc. Current Windows bundles
+In the working source, omitting `version` resolves the catalog's latest version
+for that device. An installed package is reused only when its full version,
+runtime constraints and original file inventory match the trusted manifest.
+Otherwise the selected bundle is downloaded or reused from verified cache.
+Catalog or manifest failures reject; they do not silently select an older package.
+Native versions and npm versions are independent. Linux requires glibc. Current Windows bundles
 require official Node **24.20.0** with matching runtime configuration;
 macOS/Linux require Node 24 or later.
 
@@ -97,7 +100,8 @@ Shutdown releases subscriptions and closes the client.
 ## Native packages and mirrors
 
 Explicit `wrapperPath`, `manifestUrl` or `catalogUrl` override default selection.
-An explicit native version selects the matching platform/version entry. Download
+An explicit native version reuses a matching installed package offline, or selects
+the matching platform/version catalog entry. Download
 accelerators are opt-in configuration.
 
 ```ts

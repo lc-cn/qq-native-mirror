@@ -92,3 +92,19 @@ test('catalog rejects malformed entries, metadata and unsafe version order', () 
     );
   }
 });
+
+test('catalog resolution binds selected version while preserving explicit requested metadata', async (t) => {
+  const original = globalThis.fetch;
+  t.after(() => {
+    globalThis.fetch = original;
+  });
+  const selected = { ...entry('2.0.0'), platform: process.platform, arch: process.arch };
+  globalThis.fetch = async () => Response.json({ schemaVersion: 1, packages: [selected] });
+  const options = { dataDir: '/unused' };
+  assert.deepEqual((await resolveNativeCatalog(options)).version, selected.version);
+  const requested = { ...selected.version, appId: 'caller-pinned-app' };
+  assert.deepEqual(
+    (await resolveNativeCatalog({ ...options, version: requested })).version,
+    requested,
+  );
+});

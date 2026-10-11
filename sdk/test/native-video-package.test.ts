@@ -87,7 +87,7 @@ for (const entry of ['installed', 'local'] as const) {
     const options =
       entry === 'local'
         ? { wrapperPath: join(f.base, 'wrapper.node'), dataDir: f.root }
-        : { dataDir: f.root };
+        : { dataDir: f.root, version };
     const result = await f.prepare(options);
     assert.equal(result.videoCodecPath, join(f.base, 'video/codec.node'));
     const old = manifest();
@@ -103,7 +103,7 @@ for (const entry of ['installed', 'local'] as const) {
       const options =
         entry === 'local'
           ? { wrapperPath: join(f.base, 'wrapper.node'), dataDir: f.root }
-          : { dataDir: f.root };
+          : { dataDir: f.root, version };
       await assert.rejects(f.prepare(options), /path|codec|manifest|listed|missing/i);
     });
   }
@@ -112,7 +112,7 @@ for (const entry of ['installed', 'local'] as const) {
     const options =
       entry === 'local'
         ? { wrapperPath: join(f.base, 'wrapper.node'), dataDir: f.root }
-        : { dataDir: f.root };
+        : { dataDir: f.root, version };
     for (const path of ['video/codec.node', 'lib/dependency.bin']) {
       await writeFile(join(f.base, path), 'corrupt');
       await assert.rejects(f.prepare(options), /verification|hash|digest|file/i);

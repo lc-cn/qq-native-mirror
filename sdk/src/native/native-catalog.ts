@@ -98,5 +98,10 @@ export async function resolveNativeCatalog(options: ClientOptions): Promise<Clie
     process.arch,
     options.version,
   );
-  return { ...options, manifestUrl: selected.manifestUrl, manifestSha256: selected.manifestSha256 };
+  return {
+    ...options,
+    version: options.version ?? selected.version,
+    manifestUrl: selected.manifestUrl,
+    manifestSha256: selected.manifestSha256,
+  };
 }
