@@ -102,6 +102,33 @@ test('group-file composition cannot regain operation policy through input or ada
   }
 });
 
+test('essence composition binds the group owner without acquiring message query policy', () => {
+  for (const typeOnly of [false, true]) {
+    assert.ok(
+      dependencyViolation({
+        from: 'src/native-services.ts',
+        to: 'src/features/messages/message-query.ts',
+        typeOnly,
+      }),
+    );
+    assert.equal(
+      dependencyViolation({
+        from: 'src/features/groups/group-essence.ts',
+        to: 'src/features/messages/message-query.ts',
+        typeOnly,
+      }),
+      undefined,
+    );
+    assert.ok(
+      dependencyViolation({
+        from: 'src/features/groups/new-action.ts',
+        to: 'src/features/messages/message-query.ts',
+        typeOnly,
+      }),
+    );
+  }
+});
+
 test('category composition cannot regain input or creation completion policy', () => {
   for (const typeOnly of [false, true]) {
     for (const to of [

@@ -413,6 +413,15 @@ cleanup helper. This exact dependency permits no account/runtime composition.
 
 ## Contact and group domain operations
 
+`createGroupEssenceMutations` owns the exact native group-message lookup and
+delegates validated sequence/random mutation to the existing essence protocol.
+It accepts a lazy message-query port and a guarded mutation callback; construction
+acquires no service and creates no additional lifetime. Invalid intent and retired
+accounts fail before lookup. Acquisition is followed by a retirement check before
+dispatch. The composition root only binds these dependencies and routes the intent;
+it cannot import message-query implementation or construct native peer fields.
+The exact cross-domain query dependency belongs to this group module alone.
+
 `ContactDirectory` owns the account's UID cache, recipient resolution and validated
 friend/category reads. Its lazy Buddy, Profile and UID ports expose only the three native methods it
 actually uses, returning `unknown`; it cannot acquire arbitrary native services.

@@ -25,7 +25,6 @@ import { createContactDirectory } from './features/contacts/contact-directory.ts
 import { createNativeEventChannel } from './runtime/native-event-channel.ts';
 import { createForwardResourceOwner } from './features/forward/forward-resource-owner.ts';
 import type { LongMessageResponseService } from './features/forward/long-message-response.ts';
-import { queryNativeMessage } from './features/messages/message-query.ts';
 import { createSelfProfile } from './features/contacts/self-profile.ts';
 import { createGroupWebReads } from './features/groups/group-web-reads.ts';
 import { createGroupNotices } from './features/groups/group-notices.ts';
@@ -38,7 +37,7 @@ import { createMessageResolution } from './features/messages/message-resolution.
 import { createNativeMessageSender } from './features/messages/native-message-sender.ts';
 /** Native contracts extracted from local NapCat; this module never sends at startup. */
 import { createGroupOperations } from './features/groups/group-operations.ts';
-import { setGroupEssenceMessage } from './features/groups/group-essence.ts';
+import { createGroupEssenceMutations } from './features/groups/group-essence.ts';
 import { createGroupEvents } from './features/groups/group-events.ts';
 import { createGroupQueries } from './features/groups/group-queries.ts';
 import { createGroupSystemEvents } from './features/groups/group-system-events.ts';
@@ -302,6 +301,12 @@ export function createNativeServices(context: NativeServiceContext) {
       signal: lifetime.signal,
       awaitAlive,
     });
+    const groupEssence = createGroupEssenceMutations({
+      signal: lifetime.signal,
+      awaitAlive,
+      getMessageService: () => service('Msg'),
+      invoke: (name, request) => call(service('Group'), name, request),
+    });
     const forwardMessages = own(
       createForwardMessages({
         getMessageService: () => service('Msg'),
@@ -474,18 +479,7 @@ export function createNativeServices(context: NativeServiceContext) {
               requestSignal,
             );
           case 'setGroupEssenceMessage':
-            return setGroupEssenceMessage(
-              {
-                signal: lifetime.signal,
-                awaitAlive,
-                query: (groupId, messageId) =>
-                  queryNativeMessage(service('Msg'), { chatType: 2, peerUid: groupId }, messageId),
-                invoke: (name, request) => call(service('Group'), name, request),
-              },
-              payload.groupId,
-              payload.messageId,
-              payload.enabled,
-            );
+            return groupEssence.setMessage(payload.groupId, payload.messageId, payload.enabled);
           case 'setGroupRemark':
           case 'setGroupMute':
           case 'setGroupMemberMute':

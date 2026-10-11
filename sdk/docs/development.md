@@ -44,6 +44,7 @@ script or weaken a historical plan to make it pass against newer artifacts.
 | Prepare local engine/login configuration                                           | `src/runtime/kernel-environment.ts`; no connection or authentication                      |
 | Capture preparation/startup methods and retain their native receiver               | `src/runtime/kernel-method.ts`; the calling owner supplies its lifecycle check            |
 | Compose an authenticated Session and feature adapters                              | `kernel.ts` and `native-services.ts`                                                      |
+| Resolve exact group messages and derive native essence mutation fields             | `src/features/groups/group-essence.ts`; composition binds lazy ports only                 |
 | CLI command flags and action planning                                              | `src/cli/commands/` by domain; `command-plan.ts` composes definitions and captures flags  |
 | CLI argument parsing and client execution                                          | `src/cli/command-input.ts` and `client-command.ts`; executable entry remains `cli.ts`     |
 

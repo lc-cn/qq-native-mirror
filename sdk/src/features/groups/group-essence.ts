@@ -1,5 +1,6 @@
 import { nativeResultError } from '../../errors.ts';
 import { captureGroupEssenceRequest } from './group-essence-input.ts';
+import { queryNativeMessage, type MessageIdQueryPort } from '../messages/message-query.ts';
 
 export interface GroupEssenceContext {
   signal: AbortSignal;
@@ -13,6 +14,36 @@ export interface GroupEssenceContext {
     },
   ): unknown;
   awaitAlive<T>(value: T | PromiseLike<T>): Promise<T>;
+}
+
+export interface GroupEssenceMutationContext {
+  readonly signal: AbortSignal;
+  readonly getMessageService: () => MessageIdQueryPort;
+  readonly invoke: GroupEssenceContext['invoke'];
+  readonly awaitAlive: GroupEssenceContext['awaitAlive'];
+}
+
+/** Own the native group-message lookup as well as the mutation. Construction
+ * acquires no service; invalid intent and retirement fail before lazy acquisition.
+ * The account composition root binds ports without knowing native peer fields.
+ */
+export function createGroupEssenceMutations(context: GroupEssenceMutationContext) {
+  const operation: GroupEssenceContext = {
+    signal: context.signal,
+    awaitAlive: (value) => context.awaitAlive(value),
+    invoke: (method, request) => context.invoke(method, request),
+    query(groupId, messageId) {
+      context.signal.throwIfAborted();
+      const service = context.getMessageService();
+      context.signal.throwIfAborted();
+      return queryNativeMessage(service, { chatType: 2, peerUid: groupId }, messageId);
+    },
+  };
+  return {
+    setMessage(groupId: unknown, messageId: unknown, enabled: unknown): Promise<void> {
+      return setGroupEssenceMessage(operation, groupId, messageId, enabled);
+    },
+  };
 }
 
 /** Essence has two status layers rather than GeneralCallResult.result.

@@ -137,6 +137,11 @@ const facadeInputs = new Set([
 // does not gain permission to import an entire neighboring feature directory.
 export const crossFeatureDependencies = [
   {
+    from: 'src/features/groups/group-essence.ts',
+    to: 'src/features/messages/message-query.ts',
+    reason: 'Essence mutations resolve native sequence and random from an exact group message.',
+  },
+  {
     from: 'src/features/groups/group-essence-input.ts',
     to: 'src/features/messages/query-input.ts',
     reason: 'Essence actions resolve an exact message using pure query input capture.',
@@ -314,6 +319,8 @@ export function dependencyViolation({ from, to, typeOnly }: SourceDependency): s
       : 'Authentication composes its environment and account lifetime, not feature implementations.';
   if (from === 'src/native-services.ts' && to === 'src/features/messages/recall-input.ts')
     return 'Recall intent capture and recipient orchestration belong to the recall owner.';
+  if (from === 'src/native-services.ts' && to === 'src/features/messages/message-query.ts')
+    return 'Native message lookup and peer construction belong to the consuming domain owner.';
   if (from === 'src/native-services.ts' && to === 'src/features/media/download-input.ts')
     return 'Download input, peer conversion and cancellation belong to the attachment-download owner.';
   if (from === 'src/native-services.ts' && to === 'src/features/messages/send-input.ts')

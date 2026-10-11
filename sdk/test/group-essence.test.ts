@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { captureGroupEssenceRequest } from '../src/features/groups/group-essence-input.ts';
 import {
+  createGroupEssenceMutations,
   setGroupEssenceMessage,
   type GroupEssenceContext,
 } from '../src/features/groups/group-essence.ts';
@@ -37,6 +38,60 @@ function fixture(raw: unknown = message(), response: unknown = receipt()) {
   };
   return { context, lifetime, queries, mutations };
 }
+
+test('essence owner acquires no native service until validated intent is submitted', async () => {
+  const lifetime = new NativeServiceLifetime();
+  let acquired = 0;
+  const owner = createGroupEssenceMutations({
+    signal: lifetime.signal,
+    awaitAlive: lifetime.awaitAlive,
+    getMessageService() {
+      acquired++;
+      throw new Error('Unexpected lookup acquisition');
+    },
+    invoke() {
+      throw new Error('Unexpected mutation');
+    },
+  });
+  assert.equal(acquired, 0);
+  await assert.rejects(owner.setMessage('0', messageId, true));
+  assert.equal(acquired, 0);
+  lifetime.close();
+  await assert.rejects(
+    owner.setMessage('123', messageId, true),
+    (error: unknown) => error === lifetime.signal.reason,
+  );
+  assert.equal(acquired, 0);
+});
+
+test('essence owner rechecks retirement after lazy query service acquisition', async () => {
+  const lifetime = new NativeServiceLifetime();
+  let lookups = 0;
+  let mutations = 0;
+  const owner = createGroupEssenceMutations({
+    signal: lifetime.signal,
+    awaitAlive: lifetime.awaitAlive,
+    getMessageService() {
+      lifetime.close();
+      return {
+        getMsgsByMsgId() {
+          lookups++;
+          return { result: 0, msgList: [message()] };
+        },
+      };
+    },
+    invoke() {
+      mutations++;
+      return receipt();
+    },
+  });
+  await assert.rejects(
+    owner.setMessage('123', messageId, true),
+    (error: unknown) => error === lifetime.signal.reason,
+  );
+  assert.equal(lookups, 0);
+  assert.equal(mutations, 0);
+});
 
 for (const enabled of [true, false])
   test(`essence ${enabled} resolves the exact message before one native mutation`, async () => {
