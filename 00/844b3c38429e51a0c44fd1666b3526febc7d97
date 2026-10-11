@@ -1,0 +1,41 @@
+sdk/README.md
+  s_2104cc474f1ce5::t_065fe68cc71201 51-55
+sdk/docs/architecture/encapsulation.md
+  s_2104cc474f1ce5::t_187f6310b32594 34,49-52,59-70
+sdk/docs/architecture/lifecycle.md
+  s_2104cc474f1ce5::t_7374ad1128476c 13-21
+sdk/scripts/consumers/client-factory-consumer-contract.mjs
+  s_2104cc474f1ce5::t_62d78adad74201 195,204,223-365
+sdk/scripts/verify-package-consumer.mjs
+  s_2104cc474f1ce5::t_1d358edc9487c3 418-419
+sdk/src/client/create-client.ts
+  s_2104cc474f1ce5::t_3f4579c445ff0d 9,87
+sdk/src/client/qq-client.ts
+  s_2104cc474f1ce5::t_e09ce1cbea0cac 94,96-99,102-110,154-157
+sdk/src/runtime/client-lifecycle.ts
+  s_2104cc474f1ce5::t_ebc81cad5ccae9 123,288,401-437,445-449,540,644
+sdk/test/architecture/contracts.ts
+  s_2104cc474f1ce5::t_df10030ca5b895 190,279,288,290,299
+sdk/test/client-factory-consumer.test.ts
+  s_2104cc474f1ce5::t_9f9ecdfb2e8ad5 11
+sdk/test/client-lifecycle-module.test.ts
+  s_2104cc474f1ce5::t_7d3c4c5843536f 2109-2518
+sdk/test/client.test.ts
+  s_2104cc474f1ce5::t_33a192a5ce3a2c 6,1307,1312,1332,1339
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "00844b3c38429e51a0c44fd1666b3526febc7d97",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
