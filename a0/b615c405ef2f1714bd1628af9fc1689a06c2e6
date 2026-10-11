@@ -1,0 +1,55 @@
+sdk/README.md
+  s_2104cc474f1ce5::t_52a688747433fd 20-25,103-104
+sdk/docs/architecture/encapsulation.md
+  s_2104cc474f1ce5::t_52a688747433fd 548-550,563-579,589-590
+sdk/src/native/native-catalog.ts
+  s_2104cc474f1ce5::t_746bce3d7555e6 101-106
+sdk/scripts/client-factory-consumer-contract.mjs
+  s_2104cc474f1ce5::t_f4e90897e37b28 164,168-171,221-223,238-245,247-248,251,254-259,265-272,281-298,315,323-325
+  s_2104cc474f1ce5::t_41a55dcc6dfa17 260-264,275-278,299,301-311,316-319,326
+  s_2104cc474f1ce5::t_8c5b0a33a361fd 166-167,231,273-274,279-280
+  s_2104cc474f1ce5::t_fef4732a3d31ec 312-314,327-331,333,369-374
+sdk/src/contracts/client.ts
+  s_2104cc474f1ce5::t_746bce3d7555e6 7,21
+sdk/docs/development.md
+  s_2104cc474f1ce5::t_52a688747433fd 15-21
+  s_2104cc474f1ce5::t_36af6b8e40ea99 11-14,22-28
+sdk/src/native/native-package.ts
+  s_2104cc474f1ce5::t_746bce3d7555e6 16,43-46,72,188-190,231-234
+  s_2104cc474f1ce5::t_8c5b0a33a361fd 14,33,37
+sdk/src/native/native-manifest.ts
+  s_2104cc474f1ce5::t_746bce3d7555e6 51-52,54,56,59,61-84,87-118
+  s_2104cc474f1ce5::t_8c5b0a33a361fd 13-24,85-86
+  s_2104cc474f1ce5::t_a7451f68f2d1f7 129
+sdk/test/native-package.test.ts
+  s_2104cc474f1ce5::t_affe401873a181 15,18-78
+  s_2104cc474f1ce5::t_8f6d1aa5044a15 79-83
+sdk/test/installed-native.test.ts
+  s_2104cc474f1ce5::t_affe401873a181 77,99,112,121-124,126,129-132,134,136-139,141,188,210,261,280-314
+  s_2104cc474f1ce5::t_5aa2a9fbc15ee2 315-340
+sdk/test/client-factory-consumer.test.ts
+  s_2104cc474f1ce5::t_f4e90897e37b28 14-15
+sdk/test/native-catalog.test.ts
+  s_2104cc474f1ce5::t_affe401873a181 95-105
+  s_2104cc474f1ce5::t_90d2b7063c34b8 106-110
+ci/verify-consumer.mjs
+  s_2104cc474f1ce5::t_087674a799b302 85-86,89,97,106,317,319
+sdk/test/native-video-package.test.ts
+  s_2104cc474f1ce5::t_5f9e88b7431bbe 90,106,115
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a0b615c405ef2f1714bd1628af9fc1689a06c2e6",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
