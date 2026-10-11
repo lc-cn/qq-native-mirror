@@ -1,5 +1,14 @@
 import type { Peer } from '../../contracts/messages.ts';
 
+/** Capture only selected caller fields; getters cannot change a validated value.
+ * Descriptor traps on a Proxy may still execute caller code. */
+function ownField(value: object, key: string): unknown {
+  const descriptor = Object.getOwnPropertyDescriptor(value, key);
+  if (descriptor && !('value' in descriptor))
+    throw new Error('Message query peer requires own data properties');
+  return descriptor?.value;
+}
+
 export function normalizeMessageQuery(
   peer: unknown,
   messageId: unknown,
@@ -8,11 +17,16 @@ export function normalizeMessageQuery(
     throw new Error('messageId must be a numeric string');
   if (!peer || typeof peer !== 'object' || Array.isArray(peer))
     throw new Error('Message query requires a peer');
-  const p = peer as Record<string, unknown>;
-  if (p.type === 'private' && typeof p.userId === 'string' && /^\d+$/.test(p.userId))
-    return { peer: { type: 'private', userId: p.userId }, messageId };
-  if (p.type === 'group' && typeof p.groupId === 'string' && /^\d+$/.test(p.groupId))
-    return { peer: { type: 'group', groupId: p.groupId }, messageId };
+  const type = ownField(peer, 'type');
+  if (type === 'private') {
+    const userId = ownField(peer, 'userId');
+    if (typeof userId === 'string' && /^\d+$/.test(userId))
+      return { peer: { type: 'private', userId }, messageId };
+  } else if (type === 'group') {
+    const groupId = ownField(peer, 'groupId');
+    if (typeof groupId === 'string' && /^\d+$/.test(groupId))
+      return { peer: { type: 'group', groupId }, messageId };
+  }
   throw new Error('Message query peer requires a private userId or group groupId numeric string');
 }
 
@@ -79,13 +93,21 @@ export function normalizeHistoryQuery(
 }
 
 export function messageIds(value: unknown): string[] {
-  if (!Array.isArray(value) || value.length < 1 || value.length > 100)
+  if (!Array.isArray(value)) throw new Error('messageIds requires between 1 and 100 IDs');
+  const length = Object.getOwnPropertyDescriptor(value, 'length')?.value;
+  if (typeof length !== 'number' || !Number.isInteger(length) || length < 1 || length > 100)
     throw new Error('messageIds requires between 1 and 100 IDs');
-  const ids = Array.from(value, (id) => {
+  const ids: string[] = [];
+  // Bound and validate the same own slots; a custom iterator cannot replace them.
+  for (let index = 0; index < length; index++) {
+    const descriptor = Object.getOwnPropertyDescriptor(value, String(index));
+    if (!descriptor || !('value' in descriptor))
+      throw new Error('messageIds requires dense own data properties');
+    const id: unknown = descriptor.value;
     if (typeof id !== 'string' || !/^\d+$/.test(id))
       throw new Error('messageIds must contain numeric strings');
-    return id;
-  });
+    ids.push(id);
+  }
   if (new Set(ids).size !== ids.length)
     throw new Error('messageIds must not contain duplicate IDs');
   return ids;

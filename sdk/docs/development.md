@@ -297,6 +297,14 @@ from the mutable vendor argument, preserve batch-success and native-return order
 and check retirement after projection. These receipts establish controlled SDK
 completion only; real delivery and signing evidence remain separate.
 
+`features/messages/query-input.ts` owns single/batch/history query input capture.
+Single and batch peers read only their selected own data fields, once; a class or
+null-prototype object with valid own fields remains usable. Query ID batches are
+bounded and copied from dense own array slots, without consuming a custom iterator
+or executing slot accessors. Preserve numeric spelling, the 100-ID ceiling and
+exact duplicate policy. Both the public facade and native query owner use this
+capture before worker IPC, UID resolution or query dispatch.
+
 Keep SDK-constructed native envelopes in `native/prepared-message-contracts.ts`.
 The sender accepts their closed `PreparedSendElement` union; the ordinary builder
 union and the ARK forward-card variant stay separate. Capture the whole ordinary

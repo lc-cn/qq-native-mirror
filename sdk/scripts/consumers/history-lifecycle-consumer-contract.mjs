@@ -290,8 +290,84 @@ export async function checkHistoryLifecycle({
   } finally {
     await cliClient.close();
   }
+  // The installed facade rejects unstable selected inputs before worker IPC.
+  const inputWorker = new Worker(),
+    inputClient = new QQClient(inputWorker, 500);
+  let getterReads = 0,
+    iteratorCalls = 0;
+  try {
+    const login = inputClient.login({ method: 'restore', uin: '123' });
+    const account = { uin: '123', uid: 'u_fixture' };
+    inputWorker.emit('message', { event: 'ready', payload: account });
+    inputWorker.emit('message', { id: inputWorker.requests[0].id, result: account });
+    await login;
+    for (const privatePeer of [false, true]) {
+      const kind = privatePeer ? 'private' : 'group',
+        key = privatePeer ? 'userId' : 'groupId';
+      for (const field of ['type', key]) {
+        const peer = { type: kind, [key]: '123' };
+        Object.defineProperty(peer, field, {
+          get() {
+            getterReads++;
+            throw Error('caller getter');
+          },
+        });
+        await assert.rejects(Reflect.apply(inputClient.getMessage, inputClient, [peer, '42']));
+        await assert.rejects(Reflect.apply(inputClient.getMessages, inputClient, [peer, ['42']]));
+        await assert.rejects(
+          Reflect.apply(inputClient.getForwardMessages, inputClient, [peer, '42']),
+        );
+      }
+    }
+    const accessor = Object.defineProperty(new Array(1), '0', {
+      get() {
+        getterReads++;
+        return '42';
+      },
+    });
+    const hiddenInvalid = ['42', null];
+    Object.defineProperty(hiddenInvalid, Symbol.iterator, {
+      value() {
+        iteratorCalls++;
+        return ['42'][Symbol.iterator]();
+      },
+    });
+    for (const ids of [accessor, hiddenInvalid])
+      await assert.rejects(
+        Reflect.apply(inputClient.getMessages, inputClient, [
+          { type: 'group', groupId: '123' },
+          ids,
+        ]),
+      );
+    assert.equal(inputWorker.requests.length, 1);
+    assert.equal(getterReads, 0);
+    assert.equal(iteratorCalls, 0);
+    class GroupPeer {
+      type = 'group';
+      groupId = '000123';
+    }
+    const ids = ['00042'];
+    Object.defineProperty(ids, Symbol.iterator, {
+      value() {
+        iteratorCalls++;
+        return Array.from({ length: 101 }, (_, i) => String(i))[Symbol.iterator]();
+      },
+    });
+    const pending = Reflect.apply(inputClient.getMessages, inputClient, [new GroupPeer(), ids]);
+    const request = inputWorker.requests[1];
+    assert.equal(request.method, 'getMessages');
+    assert.deepEqual(request.peer, { type: 'group', groupId: '000123' });
+    assert.deepEqual(request.messageIds, ['00042']);
+    inputWorker.emit('message', { id: request.id, result: [undefined] });
+    assert.deepEqual(await pending, [undefined]);
+    assert.equal(iteratorCalls, 0);
+  } finally {
+    await inputClient.close();
+  }
   await checkQueryEnvelope(createNativeServices);
   return {
+    queryInputDataBoundaryContract: true,
+    queryInputBeforeIpcContract: true,
     queryEnvelopeBoundaryContract: true,
     queryRawIdentityContract: true,
     pendingReadCloseContract: true,
