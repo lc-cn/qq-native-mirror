@@ -48,6 +48,12 @@ also belong to a reviewed layer or business domain, even when it has no imports.
 The diagrams are navigation aids; the exact permissions live in
 `test/helpers/dependency-policy.ts`.
 
+The source inventory is closed to regular `.ts` files and directories; unreviewed
+formats and links fail instead of bypassing the graph. Service composition binds
+only exact reviewed domain factories, ingress/history owners and context types.
+New business files do not inherit permission to be imported by the composition
+root. Both runtime and explicit type permissions must match its observed imports.
+
 A module's location follows the responsibility it owns. Domain modules own
 validation, projection and operation ordering; composition roots bind their
 ports and route calls. Runtime modules own lifetimes and transport, while public

@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
 import ts from 'typescript';
@@ -8,7 +10,62 @@ import {
   dependencyViolation,
   sourceOwnershipViolation,
 } from '../helpers/dependency-policy.ts';
-import { projectRoot, files, label, relativeTarget, graph } from '../helpers/source-graph.ts';
+import {
+  projectRoot,
+  files,
+  label,
+  relativeTarget,
+  graph,
+  sourceFiles,
+} from '../helpers/source-graph.ts';
+
+test('source inventory rejects unreviewed files rather than omitting their dependencies', (t) => {
+  const directory = mkdtempSync(join(tmpdir(), 'qq-source-inventory-'));
+  t.after(() => rmSync(directory, { recursive: true, force: true }));
+  const source = join(directory, 'src');
+  mkdirSync(source);
+  const entry = join(source, 'entry.ts');
+  const hidden = join(source, 'hidden.mts');
+  writeFileSync(entry, "import './hidden.mts';\n");
+  writeFileSync(hidden, 'export {};\n');
+  // An imported module enters the compiler even though the root list contains only .ts.
+  const program = ts.createProgram([entry], { noEmit: true, noLib: true });
+  assert.ok(program.getSourceFile(hidden));
+  assert.throws(() => sourceFiles(source), /Unreviewed source entry: .*hidden\.mts/);
+  rmSync(hidden);
+  writeFileSync(entry, 'export {};\n');
+  mkdirSync(join(source, 'features'));
+  writeFileSync(join(source, 'features', 'owner.ts'), 'export {};\n');
+  assert.deepEqual(sourceFiles(source).sort(), [entry, join(source, 'features', 'owner.ts')]);
+  for (const extension of ['cts', 'tsx', 'js', 'mjs', 'cjs', 'json', 'txt']) {
+    const file = join(source, `unreviewed.${extension}`);
+    writeFileSync(file, '');
+    assert.throws(() => sourceFiles(source), /Unreviewed source entry:/);
+    rmSync(file);
+  }
+});
+
+test('source inventory rejects linked files and directories without traversing them', (t) => {
+  const directory = mkdtempSync(join(tmpdir(), 'qq-source-links-'));
+  t.after(() => rmSync(directory, { recursive: true, force: true }));
+  const source = join(directory, 'src');
+  const outside = join(directory, 'outside');
+  mkdirSync(source);
+  mkdirSync(outside);
+  const externalFile = join(outside, 'owner.ts');
+  writeFileSync(externalFile, 'export {};\n');
+  // Windows junctions exercise directory links without requiring symlink privileges.
+  const linkedDirectory = join(source, 'linked');
+  symlinkSync(outside, linkedDirectory, process.platform === 'win32' ? 'junction' : 'dir');
+  assert.throws(() => sourceFiles(source), /Unreviewed source entry: .*linked/);
+  assert.throws(() => sourceFiles(linkedDirectory), /Unreviewed source entry: .*linked/);
+  rmSync(linkedDirectory);
+  if (process.platform !== 'win32') {
+    symlinkSync(externalFile, join(source, 'linked.ts'));
+    assert.throws(() => sourceFiles(source), /Unreviewed source entry: .*linked\.ts/);
+  }
+  assert.equal(readFileSync(externalFile, 'utf8'), 'export {};\n');
+});
 
 test('every source module has a reviewed owner even when it has no dependencies', () => {
   for (const path of files)

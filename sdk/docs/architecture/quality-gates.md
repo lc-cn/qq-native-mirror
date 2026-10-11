@@ -92,6 +92,23 @@ source inventory once and supplies the same graph to each suite; it never import
 the SDK. Add a rule to its owning suite. A new suite must be wired into the runner,
 so standalone and full test commands exercise the same assertions.
 
+The source inventory accepts only regular `.ts` files and directories. Other
+files, symbolic links and directory junctions fail before graph construction;
+they cannot silently disappear from dependency, cycle or ambient-resource checks.
+Adding another source format requires reviewing the compiler, resolver, formatter
+and inventory together. Temporary-directory regressions prove that an imported
+`.mts` can enter the compiler outside its root list and that linked entries are
+rejected without traversing their targets. Windows uses a directory junction for
+this fixture; linked-file fixtures additionally run on platforms without Windows
+symlink privilege requirements.
+
+Service composition has separate exact permissions for runtime domain factories,
+event ingress and history, and for explicitly imported context/port types.
+Neither permission opens a feature directory. The gate compares both lists with
+the actual composition imports, including inline type imports, so obsolete grants
+fail. New domain helpers require an ownership decision before composition can
+depend on them.
+
 Resource checks also reject acquisition of Node's `process.getBuiltinModule`
 loader. Builtins must use explicit imports subject to the exact owner policy.
 Symbol resolution covers literal and constant keys, aliases and destructuring,

@@ -1,9 +1,14 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, resolve, dirname } from 'node:path';
 import test from 'node:test';
 import ts from 'typescript';
-import { dependencyViolation } from '../helpers/dependency-policy.ts';
+import { extractSourceDependencies } from '../helpers/source-dependencies.ts';
+import {
+  dependencyViolation,
+  serviceFeatureRuntimeDependencies,
+  serviceFeatureTypeDependencies,
+} from '../helpers/dependency-policy.ts';
 import { projectRoot, sourceRoot, label, runtimeEdges } from '../helpers/source-graph.ts';
 
 test('service composition delegates message-update ingress without projecting recall records', () => {
@@ -343,4 +348,63 @@ test('public client delegates worker event presentation without decoding or audi
   assert.equal(bindings.length, 1);
   assert.ok(ts.isPropertyAccessExpression(bindings[0]!.initializer));
   assert.equal(bindings[0]!.initializer.name.text, 'forward');
+});
+
+// Parse real import syntax rather than feeding only handcrafted policy paths.
+test('new business helpers cannot enter service composition through runtime or type imports', () => {
+  const from = 'src/native-services.ts';
+  for (const domain of ['contacts', 'groups', 'messages', 'media', 'forward']) {
+    for (const typeOnly of [false, true]) {
+      const source = `import ${typeOnly ? 'type ' : ''}{ NewBusiness } from './features/${domain}/new-business.ts';`;
+      const extracted = extractSourceDependencies(from, source);
+      assert.deepEqual(extracted.violations, []);
+      assert.equal(extracted.dependencies.length, 1);
+      for (const edge of extracted.dependencies) {
+        const to = label(resolve(dirname(join(projectRoot, from)), edge.specifier));
+        assert.ok(dependencyViolation({ from, to, typeOnly: edge.typeOnly }), source);
+      }
+    }
+  }
+});
+
+test('service feature permissions exactly match observed factories and explicit context imports', () => {
+  const from = 'src/native-services.ts';
+  const runtime = runtimeEdges(join(projectRoot, from))
+    .filter((edge) => edge.target && label(edge.target).startsWith('src/features/'))
+    .map((edge) => label(edge.target!));
+  assert.deepEqual(
+    [...new Set(runtime)].sort(),
+    [...serviceFeatureRuntimeDependencies].sort(),
+    'Remove obsolete runtime grants or review the newly observed factory.',
+  );
+  const source = ts.createSourceFile(
+    from,
+    readFileSync(join(projectRoot, from), 'utf8'),
+    ts.ScriptTarget.Latest,
+    true,
+  );
+  const types = new Set<string>();
+  for (const node of source.statements) {
+    if (
+      !ts.isImportDeclaration(node) ||
+      !ts.isStringLiteral(node.moduleSpecifier) ||
+      !node.moduleSpecifier.text.startsWith('./features/')
+    )
+      continue;
+    const clause = node.importClause;
+    if (!clause) continue;
+    const named = clause.namedBindings;
+    if (
+      clause.isTypeOnly ||
+      (named && ts.isNamedImports(named) && named.elements.some((item) => item.isTypeOnly))
+    )
+      types.add(label(resolve(dirname(join(projectRoot, from)), node.moduleSpecifier.text)));
+  }
+  assert.deepEqual(
+    [...types].sort(),
+    [...serviceFeatureTypeDependencies].sort(),
+    'Mixed imports must expose only reviewed Context/port type edges; remove obsolete grants.',
+  );
+  for (const to of types)
+    assert.equal(dependencyViolation({ from, to, typeOnly: true }), undefined);
 });

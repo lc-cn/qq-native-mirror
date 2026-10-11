@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readdirSync, readFileSync } from 'node:fs';
+import { lstatSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { extractSourceDependencies } from './source-dependencies.ts';
@@ -13,15 +13,22 @@ interface Dependency {
   line: number;
   target?: string;
 }
-function sourceFiles(directory: string): string[] {
-  return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+export function sourceFiles(directory: string): string[] {
+  const invalid = (path: string) =>
+    new Error(`Unreviewed source entry: ${path}; expected regular .ts files and directories.`);
+  const root = lstatSync(directory);
+  if (!root.isDirectory() || root.isSymbolicLink()) throw invalid(directory);
+  const files: string[] = [];
+  for (const entry of readdirSync(directory, { withFileTypes: true })) {
     const path = join(directory, entry.name);
-    return entry.isDirectory()
-      ? sourceFiles(path)
-      : entry.isFile() && path.endsWith('.ts')
-        ? [path]
-        : [];
-  });
+    // A compiler can follow imported files and links outside its root include pattern.
+    // Fail before graph construction instead of silently leaving those modules unchecked.
+    if (entry.isSymbolicLink()) throw invalid(path);
+    if (entry.isDirectory()) files.push(...sourceFiles(path));
+    else if (entry.isFile() && path.endsWith('.ts')) files.push(path);
+    else throw invalid(path);
+  }
+  return files;
 }
 export const files = sourceFiles(sourceRoot).sort();
 const fileSet = new Set(files);

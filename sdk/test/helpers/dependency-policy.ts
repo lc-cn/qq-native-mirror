@@ -94,10 +94,59 @@ const serviceRuntimeDependencies = new Set([
   'src/runtime/native-event-channel.ts',
   'src/runtime/operations.ts',
 ]);
-const serviceForwardDependencies = new Set([
-  'src/features/forward/forward-messages.ts',
+// Exact composition permissions: runtime factories/ingress/history and separately reviewed context ports.
+export const serviceFeatureRuntimeDependencies = [
+  'src/features/contacts/friend-category-assignment.ts',
+  'src/features/contacts/friend-category-mutations.ts',
+  'src/features/groups/group-search.ts',
+  'src/features/groups/group-files.ts',
+  'src/features/groups/group-file-pages.ts',
+  'src/features/messages/message-queries.ts',
+  'src/features/contacts/friend-system-events.ts',
+  'src/features/contacts/contact-directory.ts',
   'src/features/forward/forward-resource-owner.ts',
-]);
+  'src/features/contacts/self-profile.ts',
+  'src/features/groups/group-web-reads.ts',
+  'src/features/groups/group-notices.ts',
+  'src/features/forward/forward-messages.ts',
+  'src/features/groups/group-requests.ts',
+  'src/features/contacts/friend-requests.ts',
+  'src/features/contacts/contact-operations.ts',
+  'src/features/media/attachment-downloads.ts',
+  'src/features/messages/message-resolution.ts',
+  'src/features/messages/native-message-sender.ts',
+  'src/features/groups/group-operations.ts',
+  'src/features/groups/group-essence.ts',
+  'src/features/groups/group-events.ts',
+  'src/features/groups/group-queries.ts',
+  'src/features/groups/group-system-events.ts',
+  'src/features/messages/recall-events.ts',
+  'src/features/messages/recall-operation.ts',
+  'src/features/messages/incoming-message-delivery.ts',
+] as const;
+export const serviceFeatureTypeDependencies = [
+  'src/features/contacts/friend-category-assignment.ts',
+  'src/features/contacts/friend-category-mutations.ts',
+  'src/features/groups/group-search.ts',
+  'src/features/groups/group-files.ts',
+  'src/features/messages/message-queries.ts',
+  'src/features/contacts/contact-directory.ts',
+  'src/features/forward/long-message-response.ts',
+  'src/features/contacts/self-profile.ts',
+  'src/features/groups/group-web-reads.ts',
+  'src/features/groups/group-notices.ts',
+  'src/features/forward/forward-messages.ts',
+  'src/features/groups/group-requests.ts',
+  'src/features/contacts/friend-requests.ts',
+  'src/features/contacts/contact-operations.ts',
+  'src/features/media/attachment-downloads.ts',
+  'src/features/messages/message-resolution.ts',
+  'src/features/messages/native-message-sender.ts',
+  'src/features/groups/group-operations.ts',
+  'src/features/groups/group-essence.ts',
+  'src/features/groups/group-queries.ts',
+  'src/features/messages/recall-operation.ts',
+] as const;
 const nativeContracts = new Set([
   'src/native/native-object.ts',
   'src/native/native-contracts.ts',
@@ -322,59 +371,19 @@ export function dependencyViolation({ from, to, typeOnly }: SourceDependency): s
     return kernelDependencies.has(to) || (typeOnly && to === 'src/native/native-object.ts')
       ? undefined
       : 'Authentication composes its environment and account lifetime, not feature implementations.';
-  if (from === 'src/native-services.ts' && to === 'src/features/messages/recall-input.ts')
-    return 'Recall intent capture and recipient orchestration belong to the recall owner.';
-  if (from === 'src/native-services.ts' && to === 'src/features/messages/message-query.ts')
-    return 'Native message lookup and peer construction belong to the consuming domain owner.';
-  if (from === 'src/native-services.ts' && to === 'src/features/media/download-input.ts')
-    return 'Download input, peer conversion and cancellation belong to the attachment-download owner.';
-  if (from === 'src/native-services.ts' && to === 'src/features/messages/send-input.ts')
-    return 'Ordinary send input and recipient orchestration belong to the message sender.';
-  if (from === 'src/native-services.ts' && to.startsWith('src/features/forward/'))
-    return serviceForwardDependencies.has(to) ||
-      (typeOnly && to === 'src/features/forward/long-message-response.ts')
-      ? undefined
-      : 'Forward resource state and orchestration belong to the forward owner, not composition.';
-  if (
-    from === 'src/native-services.ts' &&
-    [
-      'src/features/groups/group-file-input.ts',
-      'src/features/groups/group-file-operations.ts',
-      'src/features/groups/group-file-count.ts',
-      'src/features/groups/group-folder-operations.ts',
-      'src/features/groups/group-file-deletion.ts',
-      'src/features/groups/group-file-result.ts',
-      'src/features/groups/group-file-page-codec.ts',
-    ].includes(to)
-  )
-    return 'Group-file capture and operation orchestration belong to the group-files owner.';
-  if (from === 'src/native-services.ts' && to === 'src/features/groups/group-search-input.ts')
-    return 'Search input capture and capability enforcement belong to the group-search owner.';
-  if (
-    from === 'src/native-services.ts' &&
-    [
-      'src/features/messages/inbound-elements.ts',
-      'src/features/messages/inbound-messages.ts',
-      'src/features/messages/inbound-mentions.ts',
-    ].includes(to)
-  )
-    return 'Message projection and identity orchestration belong to the message-resolution owner.';
-  if (
-    from === 'src/native-services.ts' &&
-    [
-      'src/features/contacts/friend-categories.ts',
-      'src/features/contacts/friend-category-create.ts',
-      'src/features/contacts/friend-category-completion.ts',
-    ].includes(to)
-  )
-    return 'Category validation and write completion belong to the contact mutation owner.';
-  if (from === 'src/native-services.ts')
-    return to.startsWith('src/features/') ||
-      serviceRuntimeDependencies.has(to) ||
+  if (from === 'src/native-services.ts') {
+    if (to.startsWith('src/features/'))
+      return (typeOnly ? serviceFeatureTypeDependencies : serviceFeatureRuntimeDependencies).some(
+        (path) => path === to,
+      )
+        ? undefined
+        : 'Service composition binds only reviewed domain factories, ingress, history and context ports.';
+    return serviceRuntimeDependencies.has(to) ||
       to === 'src/native/native-contracts.ts' ||
       (typeOnly && nativeContracts.has(to))
       ? undefined
       : 'Service composition cannot acquire bundles, account directories or authentication owners.';
+  }
   if (from === 'src/runtime/kernel-environment.ts')
     return to === 'src/runtime/kernel-method.ts' ||
       (typeOnly &&
