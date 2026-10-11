@@ -379,6 +379,12 @@ async function verifyAssignment(packageRoot, createNativeServices, QQClient) {
       wrapperSha256: '7882b8e3055cd38584861042befacd8be9939896f5cbbca6fa4a230926b48526',
     },
     {
+      platform: 'linux',
+      arch: 'arm64',
+      clientVersion: '3.2.32-52194',
+      wrapperSha256: 'c302361f52494de257044e912e43ed244bb29ee59f59345d25a8959327828337',
+    },
+    {
       platform: 'darwin',
       arch: 'arm64',
       clientVersion: '7.0.2-53644',
@@ -388,7 +394,6 @@ async function verifyAssignment(packageRoot, createNativeServices, QQClient) {
   assert.equal(profiles.length, expectedProfiles.length);
   for (const expected of expectedProfiles)
     assert.equal(profiles.filter((value) => matches(expected, value)).length, 1);
-  const profile = expectedProfiles[0]; // Shared worker/CLI/close fixture remains Linux x64.
   const allProfiles = await readProfiles(packageRoot, 'group-search-contract.json');
   assert.equal(allProfiles.length, 6);
   /** @type {[import('../../src/native/native-contracts.ts').NativeContractProfile|undefined,string][]} */
@@ -409,6 +414,15 @@ async function verifyAssignment(packageRoot, createNativeServices, QQClient) {
       ),
     ]),
   ];
+  for (const expected of expectedProfiles) {
+    for (const key of ['platform', 'arch', 'clientVersion', 'wrapperSha256']) {
+      const incomplete = { ...expected };
+      Reflect.deleteProperty(incomplete, key);
+      cases.push([incomplete, expected.clientVersion]);
+    }
+    for (const other of expectedProfiles.filter((value) => value !== expected))
+      cases.push([{ ...expected, wrapperSha256: other.wrapperSha256 }, expected.clientVersion]);
+  }
   for (const [binaryProfile, version] of cases) {
     let buddyAcquisitions = 0,
       uidAcquisitions = 0;
@@ -457,6 +471,7 @@ async function verifyAssignment(packageRoot, createNativeServices, QQClient) {
         });
         assert.deepEqual(calls, [['u_exact', 0xffff_ffff]]);
         assert.equal(uidAcquisitions, 1);
+        assert.equal(buddyAcquisitions, 1);
       } else {
         await assert.rejects(
           services.invokeOperation('setFriendCategory', { userId: '000123', categoryId: 1 }),
@@ -470,172 +485,178 @@ async function verifyAssignment(packageRoot, createNativeServices, QQClient) {
       services.close();
     }
   }
-  let calls = 0;
-  /** @type {(value:unknown)=>void} */
-  let resolveUid = () => assert.fail('UID resolver missing');
-  const buddy = {
-    addKernelBuddyListener() {},
-    setBuddyCategory() {
-      calls++;
-      return { result: 73, errMsg: 'private fixture detail' };
-    },
-  };
-  const services = createNativeServices({
-    session: {
-      getBuddyService: () => buddy,
-      getUixConvertService: () => ({ getUid: () => ({ uidInfo: new Map([['123', 'u_exact']]) }) }),
-      getMsgService: () => ({ addKernelMsgListener() {} }),
-      getGroupService: () => ({ addKernelGroupListener() {} }),
-    },
-    version: profile.clientVersion,
-    binaryProfile: profile,
-    events: { emit() {} },
-  });
-  try {
-    await assert.rejects(
-      services.invokeOperation('setFriendCategory', { userId: '123', categoryId: 0 }),
-      (error) => {
-        assert.ok(error instanceof Error && 'code' in error);
-        return error.code === 73 && !error.message.includes('private fixture detail');
+  for (const profile of expectedProfiles) {
+    let calls = 0;
+    /** @type {(value:unknown)=>void} */
+    let resolveUid = () => assert.fail('UID resolver missing');
+    const buddy = {
+      addKernelBuddyListener() {},
+      setBuddyCategory() {
+        calls++;
+        return { result: 73, errMsg: 'private fixture detail' };
       },
-    );
-    assert.equal(calls, 1);
-    for (const payload of [
-      { userId: '0', categoryId: 1 },
-      { userId: '123', categoryId: -1 },
-      { userId: '123', categoryId: '1' },
-    ])
-      await assert.rejects(services.invokeOperation('setFriendCategory', payload));
-    assert.equal(calls, 1);
-  } finally {
-    services.close();
-  }
-  const closed = createNativeServices({
-    session: {
-      getBuddyService: () => buddy,
-      getUixConvertService: () => ({
-        getUid: () =>
-          new Promise((resolve) => {
-            resolveUid = resolve;
-          }),
-      }),
-      getMsgService: () => ({ addKernelMsgListener() {} }),
-      getGroupService: () => ({ addKernelGroupListener() {} }),
-    },
-    version: profile.clientVersion,
-    binaryProfile: profile,
-    events: { emit() {} },
-  });
-  const pending = closed.invokeOperation('setFriendCategory', { userId: '123', categoryId: 1 });
-  const rejected = assert.rejects(pending);
-  await new Promise((resolve) => setImmediate(resolve));
-  closed.close();
-  await rejected;
-  resolveUid({ uidInfo: new Map([['123', 'u_exact']]) });
-  await new Promise((resolve) => setImmediate(resolve));
-  assert.equal(calls, 1);
-  const { terminateWorker } =
-    await /** @type {Promise<typeof import('../../src/runtime/worker-termination.ts')>} */ (
-      import(pathToFileURL(join(packageRoot, 'dist/runtime/worker-termination.js')).href)
-    );
-  const directory = await realpath(await mkdtemp(join(tmpdir(), 'qq-assignment-worker-')));
-  /** @type {import('node:child_process').ChildProcess|undefined} */
-  let worker;
-  /** @type {import('../../src/index.ts').QQClient|undefined} */
-  let client;
-  try {
-    const kernelPath = await realpath(join(packageRoot, 'dist/kernel.js'));
-    const nativePath = await realpath(join(packageRoot, 'dist/native-services.js'));
-    await writeFile(join(directory, 'fixture.node'), 'synthetic wrapper; never loaded');
-    const fixture = join(directory, 'kernel.mjs'),
-      hook = join(directory, 'hook.mjs');
-    await writeFile(
-      fixture,
-      `import {createNativeServices} from ${JSON.stringify(pathToFileURL(nativePath).href)};
-export function createKernel(_n,_o,emit){let calls=0;const buddy={addKernelBuddyListener(){},setBuddyCategory(uid,id){if(this!==buddy||uid!=='u_exact'||id!==4294967295)throw Error('incorrect assignment dispatch');calls++;if(calls>2)throw Error('unexpected repeat');return {result:0};}};const services=createNativeServices({session:{getBuddyService:()=>buddy,getUixConvertService:()=>({getUid(/** @type {string[]} */ ids){if(ids.length!==1||ids[0]!=='000123')throw Error('incorrect UID query');return {uidInfo:new Map([['000123','u_exact']])};}}),getMsgService:()=>({addKernelMsgListener(){}}),getGroupService:()=>({addKernelGroupListener(){}})},version:${JSON.stringify(profile.clientVersion)},binaryProfile:${JSON.stringify(profile)},events:{emit(){}}});return {async prepare(){},async login(){const account={uin:'999',uid:'fixture'};emit('ready',account);return account;},invokeOperation(method,payload,signal){return services.invokeOperation(method,payload,signal);},async close(){services.close();}};}`,
-    );
-    await writeFile(
-      hook,
-      `import {registerHooks} from 'node:module';process.dlopen=()=>{};registerHooks({resolve(s,c,next){const r=next(s,c);if(r.url===${JSON.stringify(pathToFileURL(kernelPath).href)})return {url:${JSON.stringify(pathToFileURL(fixture).href)},shortCircuit:true};return r;}});`,
-    );
-    worker = fork(await realpath(join(packageRoot, 'dist/worker.js')), [], {
-      cwd: directory,
-      execArgv: ['--import', pathToFileURL(hook).href],
-      serialization: 'advanced',
-      stdio: ['ignore', 'pipe', 'pipe', 'ipc'],
-    });
-    worker.stdout?.resume();
-    worker.stderr?.resume();
-    client = new QQClient(worker, 3000);
-    await client.request('init', {
-      options: {
-        dataDir: join(directory, 'account-unused'),
-        wrapperPath: join(directory, 'fixture.node'),
-        version: { clientVersion: profile.clientVersion, appId: 'fixture', qua: 'fixture' },
-        preloadLibraries: [],
-      },
-    });
-    await client.login({ method: 'restore', uin: '999' });
-    const originalSend = worker.send;
-    /** @type {{userId:unknown,categoryId:unknown}[]} */
-    const assignmentMessages = [];
-    const currentWorker = worker;
-    Object.defineProperty(worker, 'send', {
-      value: (
-        /** @type {Parameters<import('node:child_process').ChildProcess['send']>} */ ...args
-      ) => {
-        const message = args[0];
-        if (
-          message &&
-          typeof message === 'object' &&
-          'method' in message &&
-          message.method === 'setFriendCategory'
-        ) {
-          assert.ok('userId' in message && 'categoryId' in message);
-          assignmentMessages.push({ userId: message.userId, categoryId: message.categoryId });
-        }
-        return Reflect.apply(originalSend, currentWorker, args);
-      },
-    });
-    await client.setFriendCategory('000123', 0xffff_ffff);
-    const command = await prepareCommand('friend-category-set', {
-      target: '000123',
-      'category-id': '4294967295',
-    });
-    await command(client);
-    for (const id of ['-1', '1.5', '4294967296', 'abc'])
-      await assert.rejects(
-        prepareCommand('friend-category-set', { target: '000123', 'category-id': id }),
-      );
-    await assert.rejects(client.setFriendCategory('0', 1));
-    assert.deepEqual(
-      assignmentMessages.map(({ userId, categoryId }) => ({ userId, categoryId })),
-      [
-        { userId: '000123', categoryId: 0xffff_ffff },
-        { userId: '000123', categoryId: 0xffff_ffff },
-      ],
-    );
-    await client.close();
-    return {
-      friendCategoryAssignmentBinaryGateContract: true,
-      friendCategoryAssignmentLinuxMacCompositionContract: true,
-      friendCategoryAssignmentSharedWorkerFixturePlatform: 'linux/x64',
-      friendCategoryAssignmentCompositionContract: true,
-      friendCategoryAssignmentFacadeContract: true,
-      friendCategoryAssignmentCliContract: true,
-      friendCategoryAssignmentActualWorkerRouteContract: true,
-      friendCategoryAssignmentCloseContract: true,
-      nativeFriendCategoryAssignmentAttempted: false,
     };
-  } finally {
+    const services = createNativeServices({
+      session: {
+        getBuddyService: () => buddy,
+        getUixConvertService: () => ({
+          getUid: () => ({ uidInfo: new Map([['123', 'u_exact']]) }),
+        }),
+        getMsgService: () => ({ addKernelMsgListener() {} }),
+        getGroupService: () => ({ addKernelGroupListener() {} }),
+      },
+      version: profile.clientVersion,
+      binaryProfile: profile,
+      events: { emit() {} },
+    });
     try {
-      await client?.close();
+      await assert.rejects(
+        services.invokeOperation('setFriendCategory', { userId: '123', categoryId: 0 }),
+        (error) => {
+          assert.ok(error instanceof Error && 'code' in error);
+          return error.code === 73 && !error.message.includes('private fixture detail');
+        },
+      );
+      assert.equal(calls, 1);
+      for (const payload of [
+        { userId: '0', categoryId: 1 },
+        { userId: '123', categoryId: -1 },
+        { userId: '123', categoryId: '1' },
+      ])
+        await assert.rejects(services.invokeOperation('setFriendCategory', payload));
+      assert.equal(calls, 1);
+    } finally {
+      services.close();
+    }
+    const closed = createNativeServices({
+      session: {
+        getBuddyService: () => buddy,
+        getUixConvertService: () => ({
+          getUid: () =>
+            new Promise((resolve) => {
+              resolveUid = resolve;
+            }),
+        }),
+        getMsgService: () => ({ addKernelMsgListener() {} }),
+        getGroupService: () => ({ addKernelGroupListener() {} }),
+      },
+      version: profile.clientVersion,
+      binaryProfile: profile,
+      events: { emit() {} },
+    });
+    const pending = closed.invokeOperation('setFriendCategory', { userId: '123', categoryId: 1 });
+    const rejected = assert.rejects(pending);
+    await new Promise((resolve) => setImmediate(resolve));
+    closed.close();
+    await rejected;
+    resolveUid({ uidInfo: new Map([['123', 'u_exact']]) });
+    await new Promise((resolve) => setImmediate(resolve));
+    assert.equal(calls, 1);
+    const { terminateWorker } =
+      await /** @type {Promise<typeof import('../../src/runtime/worker-termination.ts')>} */ (
+        import(pathToFileURL(join(packageRoot, 'dist/runtime/worker-termination.js')).href)
+      );
+    const directory = await realpath(await mkdtemp(join(tmpdir(), 'qq-assignment-worker-')));
+    /** @type {import('node:child_process').ChildProcess|undefined} */
+    let worker;
+    /** @type {import('../../src/index.ts').QQClient|undefined} */
+    let client;
+    try {
+      const kernelPath = await realpath(join(packageRoot, 'dist/kernel.js'));
+      const nativePath = await realpath(join(packageRoot, 'dist/native-services.js'));
+      await writeFile(join(directory, 'fixture.node'), 'synthetic wrapper; never loaded');
+      const fixture = join(directory, 'kernel.mjs'),
+        hook = join(directory, 'hook.mjs');
+      await writeFile(
+        fixture,
+        `import {createNativeServices} from ${JSON.stringify(pathToFileURL(nativePath).href)};
+export function createKernel(_n,_o,emit){let calls=0;const buddy={addKernelBuddyListener(){},setBuddyCategory(uid,id){if(this!==buddy||uid!=='u_exact'||id!==4294967295)throw Error('incorrect assignment dispatch');calls++;if(calls>2)throw Error('unexpected repeat');return {result:0};}};const services=createNativeServices({session:{getBuddyService:()=>buddy,getUixConvertService:()=>({getUid(/** @type {string[]} */ ids){if(ids.length!==1||ids[0]!=='000123')throw Error('incorrect UID query');return {uidInfo:new Map([['000123','u_exact']])};}}),getMsgService:()=>({addKernelMsgListener(){}}),getGroupService:()=>({addKernelGroupListener(){}})},version:${JSON.stringify(profile.clientVersion)},binaryProfile:${JSON.stringify(profile)},events:{emit(){}}});return {async prepare(){},async login(){const account={uin:'999',uid:'fixture'};emit('ready',account);return account;},invokeOperation(method,payload,signal){return services.invokeOperation(method,payload,signal);},async close(){services.close();}};}`,
+      );
+      await writeFile(
+        hook,
+        `import {registerHooks} from 'node:module';process.dlopen=()=>{};registerHooks({resolve(s,c,next){const r=next(s,c);if(r.url===${JSON.stringify(pathToFileURL(kernelPath).href)})return {url:${JSON.stringify(pathToFileURL(fixture).href)},shortCircuit:true};return r;}});`,
+      );
+      worker = fork(await realpath(join(packageRoot, 'dist/worker.js')), [], {
+        cwd: directory,
+        execArgv: ['--import', pathToFileURL(hook).href],
+        serialization: 'advanced',
+        stdio: ['ignore', 'pipe', 'pipe', 'ipc'],
+      });
+      worker.stdout?.resume();
+      worker.stderr?.resume();
+      client = new QQClient(worker, 3000);
+      await client.request('init', {
+        options: {
+          dataDir: join(directory, 'account-unused'),
+          wrapperPath: join(directory, 'fixture.node'),
+          version: { clientVersion: profile.clientVersion, appId: 'fixture', qua: 'fixture' },
+          preloadLibraries: [],
+        },
+      });
+      await client.login({ method: 'restore', uin: '999' });
+      const originalSend = worker.send;
+      /** @type {{userId:unknown,categoryId:unknown}[]} */
+      const assignmentMessages = [];
+      const currentWorker = worker;
+      Object.defineProperty(worker, 'send', {
+        value: (
+          /** @type {Parameters<import('node:child_process').ChildProcess['send']>} */ ...args
+        ) => {
+          const message = args[0];
+          if (
+            message &&
+            typeof message === 'object' &&
+            'method' in message &&
+            message.method === 'setFriendCategory'
+          ) {
+            assert.ok('userId' in message && 'categoryId' in message);
+            assignmentMessages.push({ userId: message.userId, categoryId: message.categoryId });
+          }
+          return Reflect.apply(originalSend, currentWorker, args);
+        },
+      });
+      await client.setFriendCategory('000123', 0xffff_ffff);
+      const command = await prepareCommand('friend-category-set', {
+        target: '000123',
+        'category-id': '4294967295',
+      });
+      await command(client);
+      for (const id of ['-1', '1.5', '4294967296', 'abc'])
+        await assert.rejects(
+          prepareCommand('friend-category-set', { target: '000123', 'category-id': id }),
+        );
+      await assert.rejects(client.setFriendCategory('0', 1));
+      assert.deepEqual(
+        assignmentMessages.map(({ userId, categoryId }) => ({ userId, categoryId })),
+        [
+          { userId: '000123', categoryId: 0xffff_ffff },
+          { userId: '000123', categoryId: 0xffff_ffff },
+        ],
+      );
+      await client.close();
     } finally {
       try {
-        if (worker) await terminateWorker(worker, { forceDelayMs: 100, deadlineMs: 1500 });
+        await client?.close();
       } finally {
-        await rm(directory, { recursive: true, force: true });
+        try {
+          if (worker) await terminateWorker(worker, { forceDelayMs: 100, deadlineMs: 1500 });
+        } finally {
+          await rm(directory, { recursive: true, force: true });
+        }
       }
     }
   }
+  return {
+    friendCategoryAssignmentBinaryGateContract: true,
+    friendCategoryAssignmentLinuxMacCompositionContract: true,
+    friendCategoryAssignmentSharedWorkerFixturePlatform: 'linux/x64,linux/arm64,darwin/arm64',
+    friendCategoryAssignmentLinuxArmCompositionContract: true,
+    friendCategoryAssignmentThreeProfileWorkerCliContract: true,
+    friendCategoryAssignmentCompositionContract: true,
+    friendCategoryAssignmentFacadeContract: true,
+    friendCategoryAssignmentCliContract: true,
+    friendCategoryAssignmentActualWorkerRouteContract: true,
+    friendCategoryAssignmentCloseContract: true,
+    nativeFriendCategoryAssignmentAttempted: false,
+  };
 }

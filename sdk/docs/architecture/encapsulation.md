@@ -798,7 +798,7 @@ mutation owners to import this completion module, and prevents it from acquiring
 native services or identity modules. Public facade and CLI reuse pure category
 capture; adding a feature does not grant them native execution dependencies.
 
-Assignment is enabled only for the measured Linux x64 and macOS ARM64 profiles recorded in
+Assignment is enabled only for the measured Linux x64/ARM64 and macOS ARM64 profiles recorded in
 `evidence/friend-category-assignment-contract.json`. Controlled installed-consumer
 checks exercise the public method, worker routing, CLI planning and native adapter
 with substituted services. These checks do not establish remote category changes
@@ -815,6 +815,12 @@ inference from exact command/body matching to a pinned independent protocol
 implementation. Only this per-binary evidence extends the registry; shared
 completion handling cannot do so. The reusable adapter and composition ports
 remain unchanged when a verified profile is added.
+Linux ARM64 reuses these owners after its own same-request field mapping and
+actual `0x10eb / 1` supplier-call tuple are bound to the fixed protocol source.
+Its concrete supplier target remains unproved; the gate records an inferred
+parameter contract, without asserting transport implementation or remote effect.
+The installed worker/CLI contract exercises each enabled profile with substituted
+services and rejects the three remaining exact profiles before acquisition.
 
 `features/groups/group-files` owns file-count, folder and listing dispatch policy.
 Composition injects lazy method-specific ports and measured-profile decisions,

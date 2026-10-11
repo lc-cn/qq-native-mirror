@@ -110,6 +110,174 @@
       ]
     },
     {
+      "platform": "linux",
+      "arch": "arm64",
+      "wrapperSha256": "c302361f52494de257044e912e43ed244bb29ee59f59345d25a8959327828337",
+      "clientVersion": "3.2.32-52194",
+      "manifestSha256": "263fc8fe7416b06e99af43db2418ef28679ae91b88a014990ef2191673e3ee7f",
+      "method": "setBuddyCategory",
+      "argumentCount": 2,
+      "arguments": [
+        "UID string",
+        "categoryId:uint32"
+      ],
+      "binding": "0x148fb20",
+      "core": "0x975e18",
+      "receiver": "descriptor87230e0 name667146b/method+10=148fb20; unwrap firstqword at148fcb8 then virtualc0; KernelBuddy AP86b56b8+c0 ->975e18. Buddy+60 preserves Session supplied request-provider pair; AP878a420+58 ->1e911c8 thunk ->1e90e14.",
+      "normalResult": "Node argc2 binding calls493fad8 string converter and493fc98 uint32 converter. Bound callback AP8751190+10 ->1765028 ->1765348 ->17655ac/17655e0;1765624 signed-int32 result ->1765634 napi_create_int32;176564c result property,176569c UTF8 errMsg/17656b4 property,17656e8 resolve_deferred.",
+      "identityDataflow": "975e3c captures original string x21;975fdc selector1000 setter ->same request/provider1e90e14 ->1ee5944 ->factory1ef76b4/1ef77a0 ->BuddySetCategoryWorker AP87900e0. Exact virtual30 ->1ef97e8 copies original selector1000 scalar string through1c5178c to generic CPBMessageOpti field1; no unrelated vector1000 codec inferred.",
+      "categoryDataflow": "975e34 captures category w20;975fe8/975ff4 writes uint32 selector61af; same request1ef97e8 reads61af into destination field2. Typed BuddyListCategory uint32 codec registers61af/memberoffset0; source0 V2 Node categoryId serializes row0; original same-instance cache+0xc0 and refresh-to-cached path rechecked.",
+      "listCategoryIdNamespaceVerified": true,
+      "wireDataflow": "Worker ctor1ef9754 passes command10eb/sub1 to31c5ad0, stored+30/+34. Actual virtual30 serializes same field1string/field2uint32 body to31c5fc0 caller sp70;cmd/sub savedsp6c/sp68.31c7ec8 retains all three and31c8098 invokes captured supplier virtualb8 with w1=10eb,w2=1,x3=samebody. Concrete supplier target beyond this call remains unresolved.",
+      "uidInterpretation": "Inference from actual exact command0x10eb/subcommand1 and field1string/field2uint32 body matched to the pinned independent protocol implementation; not a native named UID codec connection or an official QQ schema.",
+      "primaryProtocolSources": [
+        {
+          "repository": "LLOneBot/LuckyLilliaBot",
+          "commit": "4c9670c548c84461b8105054bd1ff0c1dddbb8b9",
+          "path": "src/ntqqapi/proto/oidb.ts",
+          "lines": [
+            621,
+            625
+          ],
+          "gitBlobSha": "d774d495603a5629c7db32898dd267316cb27657",
+          "sha256": "91f8b0f153ab68e2fa93a423d6a56f38e928670d67f432bd9365c8da49312ca9",
+          "url": "https://github.com/LLOneBot/LuckyLilliaBot/blob/4c9670c548c84461b8105054bd1ff0c1dddbb8b9/src/ntqqapi/proto/oidb.ts#L621-L625"
+        },
+        {
+          "repository": "LLOneBot/LuckyLilliaBot",
+          "commit": "4c9670c548c84461b8105054bd1ff0c1dddbb8b9",
+          "path": "src/main/qqProtocol/mixins/friend.ts",
+          "lines": [
+            126,
+            132
+          ],
+          "gitBlobSha": "5efab014c8a6a00247eee6590ea6841fd8cfee8a",
+          "sha256": "de374ad2a3c336e157832133f3c56d77dff34aa57924e8f8fc123c01af9b2c81",
+          "url": "https://github.com/LLOneBot/LuckyLilliaBot/blob/4c9670c548c84461b8105054bd1ff0c1dddbb8b9/src/main/qqProtocol/mixins/friend.ts#L126-L132"
+        }
+      ],
+      "abiFunctions": [
+        {
+          "start": "0x148fb20",
+          "end": "0x148fe08",
+          "rawSha256": "0e87cad0bcd863a6b8a5911baeb9c58f9ea06dcf5272ee64d5387ad32b63942d"
+        },
+        {
+          "start": "0x493fad8",
+          "end": "0x493fbb8",
+          "rawSha256": "395561c3e16762f7803b3c407b2c6bb68db6b14d729417e857790769b2af43b1"
+        },
+        {
+          "start": "0x493fc98",
+          "end": "0x493fd78",
+          "rawSha256": "8626c8cde7388633e30859846bed441f230cc798ff42ec2414fc3aa1e5e786e8"
+        },
+        {
+          "start": "0x975e18",
+          "end": "0x976420",
+          "rawSha256": "8e4a2dd5faff7cfb48fa1340aee521159117b6f6d0413a30b72a481e62e13173"
+        },
+        {
+          "start": "0x1765028",
+          "end": "0x17652e4",
+          "rawSha256": "8308661f346d66068df932edf51a5f9966820ae838d376c8a2d121818bde0794"
+        },
+        {
+          "start": "0x1765348",
+          "end": "0x1765440",
+          "rawSha256": "408c629cd2c8b93f109affc7ae8a59a8b8c8a23cab5880355768060361f5dcd4"
+        },
+        {
+          "start": "0x17655e0",
+          "end": "0x176574c",
+          "rawSha256": "e6cbb45ff8cbadb0c3f243fed9786b793638d78afce1a892caaadb5e7c8dfe3d"
+        }
+      ],
+      "functions": [
+        {
+          "start": "0x961da0",
+          "end": "0x961ed8",
+          "rawSha256": "82078d1ac00342dc485421e599508f23d06aab9b99e8d0cab49460c4e3a5b419"
+        },
+        {
+          "start": "0x8e721c",
+          "end": "0x8e74dc",
+          "rawSha256": "fa1f6c8d33db5c6879bcbb396f041cc3f2ae1492ac37d308ae85a989794f709e"
+        },
+        {
+          "start": "0x8caa14",
+          "end": "0x8caa40",
+          "rawSha256": "7c4e777b555728895532c974431b57c6ad9270def1c19a77dac6d92e1f38eb30"
+        },
+        {
+          "start": "0x1e8b05c",
+          "end": "0x1e8b414",
+          "rawSha256": "32a2feb47bed9e1327992ee7c3b0b31c311e22f90c423fe31f984b8208a703d2"
+        },
+        {
+          "start": "0x1e90e14",
+          "end": "0x1e9112c",
+          "rawSha256": "9705cffe2dd35c196b7979df677e5344b05708a9bd58f4f50eb6ad48a4f608b4"
+        },
+        {
+          "start": "0x1ee5944",
+          "end": "0x1ee5cf8",
+          "rawSha256": "60bb39b65604fb4185872b88e13a46281c82f0b4fa5f4cc8a5d9f6b2b0c4970d"
+        },
+        {
+          "start": "0x1ef77a0",
+          "end": "0x1ef7880",
+          "rawSha256": "d5b81e91d3cdd4608debf9c69fa9d5bfd78591528427ad6121434b41eed8a747"
+        },
+        {
+          "start": "0x1ef9754",
+          "end": "0x1ef97e8",
+          "rawSha256": "65311357bd438a404072449966cc7b0c2ebcab1aeaedda0fc84c181c11097d23"
+        },
+        {
+          "start": "0x1ef97e8",
+          "end": "0x1ef9968",
+          "rawSha256": "f3a99f7c804a4a732a17ff8f8f7959d758d5e7e151fc48487bc1997b923660fe"
+        },
+        {
+          "start": "0x1c5178c",
+          "end": "0x1c51854",
+          "rawSha256": "75bddf51e8f1a2fd41a1eacc9d8f93df5f79fa2ba7afa083d5bd3a33b86e1597"
+        },
+        {
+          "start": "0x31c5ad0",
+          "end": "0x31c5b04",
+          "rawSha256": "9ce7436856a59d95c9fad70c202515f20d428d586303df330bb1ee6146dd843a"
+        },
+        {
+          "start": "0x31c5fc0",
+          "end": "0x31c640c",
+          "rawSha256": "a4752ac1ec3c24ffdaf115569077f7c2547f2832b6f76d9dec40400803beb7db"
+        },
+        {
+          "start": "0x31c7ec8",
+          "end": "0x31c8230",
+          "rawSha256": "aaae6ce7f17a49410e8d6c1763d2f37f2288f4232bfaf039649aa4903aa9e219"
+        },
+        {
+          "start": "0x9deb28",
+          "end": "0x9dee3c",
+          "rawSha256": "d9c5a8b7e17ade5054c4bf18af6b667b7db55c6f320ed081c4a0297f3a1b6f67"
+        },
+        {
+          "start": "0xa32b18",
+          "end": "0xa32b98",
+          "rawSha256": "94d5cb76163a76a52f3361aaf73afe46aacaa9795c266dc438101bde3204ac80"
+        },
+        {
+          "start": "0x1498950",
+          "end": "0x1498b38",
+          "rawSha256": "76cd58d091e8137c1c0d79d088530e15093c684f320bc438db1e087f9412c41a"
+        }
+      ],
+      "transportBoundary": "The concrete registered supplier virtualb8 target is not established. A previous research interpretation conflated wrapper+40/+48 incoming Session pair with actual registry receiver wrapper+8/+10; corrected static analysis keeps these pairs separate. This does not alter the proven request tuple at the actual indirect-call boundary."
+    },
+    {
       "platform": "darwin",
       "arch": "arm64",
       "wrapperSha256": "fbc8ad9b328d05e16784d76b0181dda894c17001179dbf8c0d5dd00dc6271358",
@@ -353,6 +521,22 @@
     {
       "path": "architecture-refactor/category-assignment-darwin-consumer-next/login-contract-receipt.json",
       "sha256": "ef87ad87e73a12406f58b514f9787f21816607d8377cbf60e69f3571047378f4"
+    },
+    {
+      "path": "architecture-refactor/category-assignment-linux-arm64-next/continuation-20261012/root/abi-namespace-recheck.json",
+      "sha256": "73fe6b38bfb0dd3cdde3974f6c9b3d79fe4fd64ec6c35dd08dedfed1cacd5d7e"
+    },
+    {
+      "path": "architecture-refactor/category-assignment-linux-arm64-next/continuation-20261012/protocol/receipt.json",
+      "sha256": "b56955a6f7ac36fef9cb3c120080ce060c1fb87332c21f7ea2c44045ed0d3c3a"
+    },
+    {
+      "path": "architecture-refactor/category-assignment-linux-arm64-next/continuation-20261012/protocol/admission-review.json",
+      "sha256": "a679ea2cede5ddac86905d4ce641fdb21da0ef8240bdaa2171c822813026df90"
+    },
+    {
+      "path": "architecture-refactor/category-assignment-linux-arm64-next/continuation-20261012/supplier/login-contract-receipt.json",
+      "sha256": "f7bfe34fbd8a59c12645dc782bb82d5524fe371c6e217e6fda8998c60a3287a4"
     }
   ],
   "acceptancePolicy": "Only own-data finite int32 result strictly numeric0 yields void native ACK; nonzero safe numeric code rejects without errMsg disclosure. This is SDK acceptance, not remote effect evidence.",
@@ -360,7 +544,7 @@
   "invariants": [
     "Validate and capture public userId/categoryId primitives before acquiring services; reuse existing ID resolution policy rather than invent UID/UIN parsing.",
     "Resolve public userId to captured native UID once; do not pass original UIN to native string slot.",
-    "Capability match must precede first native acquisition/dispatch and be exact profile/version/wrapper hash; only the listed Linux x64 and macOS ARM64 exact binary scopes are enabled.",
+    "Capability match must precede first native acquisition/dispatch and be exact profile/version/wrapper hash; only the listed Linux x64/ARM64 and macOS ARM64 exact binary scopes are enabled.",
     "Acquire nullable service and capture method once, check alive after each fallible/reentrant getter, Reflect.apply with original receiver and exactly2 arguments.",
     "No mutation before validation/UID resolution completion; close or abort before dispatch preserves original cancellation and issues no write.",
     "One native dispatch, no retry/replay/readback; deadline5000 and postdispatch cancellation report remote effect unknown.",
@@ -369,11 +553,12 @@
   ],
   "limits": [
     "No real account/server mutation outcome; native ACK does not establish membership effect.",
-    "Other4 platform identity dataflows not independently bound here; do not extend gate.",
+    "Other3 platform identity dataflows not independently bound here; do not extend gate.",
     "No proof of protected/default-category admissibility or category existence; uint32 including0 alone cannot establish those policies.",
     "Batch setBatchBuddyCategory identity/semantics remain a separate unproved capability.",
     "Protocol field numbers and concrete codec identity establish static routing only, not server acceptance or membership change.",
-    "macOS UID semantics are inferred from exact native command/body matching to a pinned independent protocol implementation; this does not establish signing authenticity or server acceptance."
+    "macOS and Linux ARM64 UID semantics are inferred from exact native command/body matching to a pinned independent protocol implementation; this does not establish signing authenticity or server acceptance.",
+    "Linux ARM64 proof ends at an actual supplier virtualb8 call carrying the matched command/body. Concrete transport implementation remains unresolved; no server or signing proof follows."
   ],
   "nativeExecuted": false,
   "accountUsed": false

@@ -37,8 +37,8 @@ type BinaryContract = readonly [
 // own platform-specific namespace evidence in friend-category-rename-contract.json;
 // deletion uses its separate friend-category-delete-contract.json evidence.
 // Assignment binds same-instance identity routing and the V2 category namespace
-// in friend-category-assignment-contract.json. Mac UID interpretation uses the
-// exact encoded command/body matched to a pinned independent protocol source.
+// in friend-category-assignment-contract.json. UID interpretation on Mac and
+// Linux ARM uses the exact command/body matched to a pinned protocol source.
 // Reordering binds explicit rows and ordinals in friend-category-reorder-contract.json.
 const binaryProfiles: readonly BinaryContract[] = [
   [
@@ -69,6 +69,7 @@ const binaryProfiles: readonly BinaryContract[] = [
       'categoryCreation',
       'categoryRenaming',
       'categoryDeletion',
+      'categoryAssignment',
       'groupFileCount',
       'groupFileDeletion',
       'groupFilePages',
