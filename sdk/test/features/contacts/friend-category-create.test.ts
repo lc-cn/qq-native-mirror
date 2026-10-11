@@ -8,13 +8,13 @@ import {
   friendCategoryName,
   createFriendCategory,
   projectCreatedFriendCategory,
-} from '../src/features/contacts/friend-category-create.ts';
+} from '../../../src/features/contacts/friend-category-create.ts';
 import {
   supportsCategoryCreation,
   type NativeContractProfile,
-} from '../src/native/native-contracts.ts';
-import { inspectNativeContracts } from '../src/native/native-contract-inspection.ts';
-import { createNativeServices } from '../src/native-services.ts';
+} from '../../../src/native/native-contracts.ts';
+import { inspectNativeContracts } from '../../../src/native/native-contract-inspection.ts';
+import { createNativeServices } from '../../../src/native-services.ts';
 
 const profiles: NativeContractProfile[] = [
   {

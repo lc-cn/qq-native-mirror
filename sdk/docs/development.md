@@ -43,6 +43,18 @@ New files do not inherit loader, transport or composition exceptions.
 Run `npm run check:architecture` while changing ownership. It reads source syntax
 without importing the SDK. Passing it does not replace the full package gate.
 
+Domain tests follow their implementation owner: contact-only regressions live in
+`test/features/contacts/`. Tests spanning contacts and groups retain their shared
+entry. Keep helpers in `test/helpers/` and data or generated worker fixtures in
+`test/fixtures/`; these directories do not own automatic `.test.ts` or `.test.mjs`
+entries. Architecture suites remain registered by `test/architecture.test.ts`.
+
+`npm test` uses quoted recursive patterns for both test formats, so nested domain
+tests participate without shell-dependent expansion. `test/test-discovery.test.ts`
+checks actual nested TS/MJS execution and the file inventory. Run a domain alone
+with `node --test "test/features/contacts/*.test.ts"` while editing it, then run
+the complete gate before delivery.
+
 ## Design the interface and lifetime together
 
 Keep credentials, native handles, pending maps, timers and request IDs private.

@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { createContactDirectory } from '../src/features/contacts/contact-directory.ts';
-import { NativeServiceLifetime } from '../src/runtime/native-service-lifetime.ts';
+import { createContactDirectory } from '../../../src/features/contacts/contact-directory.ts';
+import { NativeServiceLifetime } from '../../../src/runtime/native-service-lifetime.ts';
 const profile = (uid = 'u_a', uin = '123') => ({
   coreInfo: { uid, uin, nick: 'fixture', remark: '' },
 });

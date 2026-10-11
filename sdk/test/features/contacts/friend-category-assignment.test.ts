@@ -4,7 +4,7 @@ import {
   createFriendCategoryAssignment,
   type FriendCategoryAssignmentContext,
   type FriendCategoryAssignmentPort,
-} from '../src/features/contacts/friend-category-assignment.ts';
+} from '../../../src/features/contacts/friend-category-assignment.ts';
 
 function fixture(overrides: Partial<FriendCategoryAssignmentContext> = {}) {
   const calls: unknown[][] = [];

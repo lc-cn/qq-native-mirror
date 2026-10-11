@@ -1,9 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { EventEmitter } from 'node:events';
-import { createFriendSystemEvents } from '../src/features/contacts/friend-system-events.ts';
-import { createNativeServices } from '../src/native-services.ts';
-import { observeWatchEvents } from '../src/cli.ts';
+import { createFriendSystemEvents } from '../../../src/features/contacts/friend-system-events.ts';
+import { createNativeServices } from '../../../src/native-services.ts';
+import { observeWatchEvents } from '../../../src/cli.ts';
 
 const notice = (msgId = '1', uid = 'u_friend', busiId: unknown = '19324'): any => ({
   msgId,

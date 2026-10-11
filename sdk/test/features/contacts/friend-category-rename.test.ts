@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { createFriendCategoryMutations } from '../src/features/contacts/friend-category-mutations.ts';
+import { createFriendCategoryMutations } from '../../../src/features/contacts/friend-category-mutations.ts';
 
 test('exact two arguments and receiver; uint32 zero accepted without assuming business effect', async () => {
   const calls: unknown[][] = [];

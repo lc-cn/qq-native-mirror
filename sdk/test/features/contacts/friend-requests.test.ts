@@ -4,7 +4,7 @@ import {
   createFriendRequests as createWithContext,
   type FriendBuddyPort,
   type FriendBuddyListener,
-} from '../src/features/contacts/friend-requests.ts';
+} from '../../../src/features/contacts/friend-requests.ts';
 function createFriendRequests(
   session: { getBuddyService(): FriendBuddyPort },
   emit: (event: string, payload: unknown) => void,

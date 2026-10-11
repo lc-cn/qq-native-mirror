@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { createFriendEvents } from '../src/features/contacts/friend-events.ts';
+import { createFriendEvents } from '../../../src/features/contacts/friend-events.ts';
 
 const user = { uid: 'u_friend', uin: '900719925474099312345', nick: '昵称' };
 const category = { categoryId: 1, categoryName: '好友', categoryMbCount: 1, buddyList: [user] };

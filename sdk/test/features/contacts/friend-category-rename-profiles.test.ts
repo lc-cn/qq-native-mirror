@@ -3,25 +3,28 @@ import { readFileSync } from 'node:fs';
 import { EventEmitter } from 'node:events';
 import type { ChildProcess } from 'node:child_process';
 import test from 'node:test';
-import { createNativeServices } from '../src/native-services.ts';
-import { QQClient } from '../src/index.ts';
-import { prepareCommand, validateCommandFlags } from '../src/cli/command-plan.ts';
+import { createNativeServices } from '../../../src/native-services.ts';
+import { QQClient } from '../../../src/index.ts';
+import { prepareCommand, validateCommandFlags } from '../../../src/cli/command-plan.ts';
 import {
   supportsCategoryRenaming,
   supportsCategoryDeletion,
   type NativeContractProfile,
-} from '../src/native/native-contracts.ts';
+} from '../../../src/native/native-contracts.ts';
 
 const profiles = (
   JSON.parse(
-    readFileSync(new URL('../docs/evidence/group-search-contract.json', import.meta.url), 'utf8'),
+    readFileSync(
+      new URL('../../../docs/evidence/group-search-contract.json', import.meta.url),
+      'utf8',
+    ),
   ) as { profiles: NativeContractProfile[] }
 ).profiles;
 
 const verifiedProfiles = (
   JSON.parse(
     readFileSync(
-      new URL('../docs/evidence/friend-category-rename-contract.json', import.meta.url),
+      new URL('../../../docs/evidence/friend-category-rename-contract.json', import.meta.url),
       'utf8',
     ),
   ) as { profiles: NativeContractProfile[] }

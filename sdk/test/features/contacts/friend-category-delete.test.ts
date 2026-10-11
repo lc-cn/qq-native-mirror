@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { createFriendCategoryMutations } from '../src/features/contacts/friend-category-mutations.ts';
+import { createFriendCategoryMutations } from '../../../src/features/contacts/friend-category-mutations.ts';
 
 test('delete sends one uint32 argument with original receiver and zero/max ACK only', async () => {
   const calls: unknown[][] = [];

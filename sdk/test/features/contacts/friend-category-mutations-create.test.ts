@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { createFriendCategoryMutations } from '../src/features/contacts/friend-category-mutations.ts';
+import { createFriendCategoryMutations } from '../../../src/features/contacts/friend-category-mutations.ts';
 
 test('creation captures method once, keeps receiver and explicit undefined argument', async () => {
   let reads = 0;

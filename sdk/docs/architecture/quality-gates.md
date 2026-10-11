@@ -95,6 +95,14 @@ projection of every proprietary result.
 
 ## Deterministic behavior and package checks
 
+The test entry passes quoted `test/**/*.test.ts` and `test/**/*.test.mjs` patterns
+to Node, covering root and nested domain tests with the same process isolation.
+Test discovery has a controlled subprocess regression for both formats and an
+inventory check against duplicates or executable fixtures. Helper and fixture
+directories do not contain automatic test entries; the architecture runner alone
+registers its focused suites. Contact-only regressions mirror their domain under
+`test/features/contacts/`, while shared regressions retain their common entry.
+
 Tests cross the existing owner interfaces using controlled adapters. They cover
 input snapshots and rejection before acquisition, original method receivers,
 callback correlation, early callback followed by invocation failure, malformed

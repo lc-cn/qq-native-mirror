@@ -4,7 +4,7 @@ import {
   createSelfProfile as createNarrowSelfProfile,
   type SelfProfilePort,
   type SelfProfileListener,
-} from '../src/features/contacts/self-profile.ts';
+} from '../../../src/features/contacts/self-profile.ts';
 function createSelfProfile(
   session: { getProfileService(): SelfProfilePort },
   resolveSelfUid: () => string | Promise<string>,

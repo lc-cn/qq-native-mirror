@@ -4,7 +4,7 @@ import {
   captureFriendCategories,
   projectFriendCategories,
   projectFriends,
-} from '../src/features/contacts/friend-categories.ts';
+} from '../../../src/features/contacts/friend-categories.ts';
 
 const category = (uids = ['u_a']) => ({
   categoryId: 3,

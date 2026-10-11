@@ -4,11 +4,11 @@ import test from 'node:test';
 import {
   supportsCategoryAssignment,
   type NativeContractProfile,
-} from '../src/native/native-contracts.ts';
+} from '../../../src/native/native-contracts.ts';
 
 const evidence = JSON.parse(
   readFileSync(
-    new URL('../docs/evidence/friend-category-assignment-contract.json', import.meta.url),
+    new URL('../../../docs/evidence/friend-category-assignment-contract.json', import.meta.url),
     'utf8',
   ),
 ) as { profiles: NativeContractProfile[]; nativeExecuted: boolean; accountUsed: boolean };

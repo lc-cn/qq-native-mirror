@@ -1,11 +1,11 @@
 import { test } from 'node:test';
-import { NativeServiceLifetime } from '../src/runtime/native-service-lifetime.ts';
+import { NativeServiceLifetime } from '../../../src/runtime/native-service-lifetime.ts';
 import assert from 'node:assert/strict';
 import {
   createContactOperations as createNarrowContactOperations,
   type BuddyMutationPort,
   type ContactProfilePort,
-} from '../src/features/contacts/contact-operations.ts';
+} from '../../../src/features/contacts/contact-operations.ts';
 
 function createContactOperations(
   services: {

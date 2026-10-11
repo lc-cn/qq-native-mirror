@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { createContactOperations } from '../src/features/contacts/contact-operations.ts';
-import { NativeServiceLifetime } from '../src/runtime/native-service-lifetime.ts';
+import { createContactOperations } from '../../../src/features/contacts/contact-operations.ts';
+import { NativeServiceLifetime } from '../../../src/runtime/native-service-lifetime.ts';
 
 const fields = ['coreInfo', 'uid', 'uin', 'nick', 'remark'] as const;
 for (const selected of fields) {
