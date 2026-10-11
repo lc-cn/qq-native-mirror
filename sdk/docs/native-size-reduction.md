@@ -217,3 +217,37 @@ a version string. The resolver retains its complete-content equality rule.
 This local runtime result covers only the matching older arm64 auxiliary; it does
 not establish default runtime acceptance of the other five devices, the newer
 candidates, public npm publication, account compatibility or signing authenticity.
+
+## Reusing the producer for independently bound source cohorts (2026-10-11)
+
+The manual `dedup-native-candidate.yml` workflow accepts a complete `source_tag`
+and an independently verified `source_release_sha256` together. Leaving both empty
+retains the frozen historical source. New inputs pass the same exact digest to the
+producer, SDK binding and installed-consumer verifier. The ordinary full native
+package workflow and default catalog retain their existing distribution policy.
+
+For a locally acquired complete release, use the independently checked digest of
+its exact `release-manifest.json` bytes at each step:
+
+```sh
+node tools/dedup-native-npm.mjs --device darwin-arm64 --source candidate-source --out out --source-release-sha256 "$SOURCE_RELEASE_SHA256"
+# Build and pack the current SDK into out before binding it.
+node tools/verify-dedup-consumer.mjs --bind-main out --source-release-sha256 "$SOURCE_RELEASE_SHA256"
+# Run the installed consumer before verifying its receipts.
+node tools/verify-dedup-consumer.mjs --verify-consumer out --source-release-sha256 "$SOURCE_RELEASE_SHA256"
+```
+
+The digest must come from the reviewed source, not the candidate's own claimed
+identity. The complete source validator still checks all seven archives, consumer
+receipts and codec materials. Only omission selects the historical source; invalid
+explicit digests reject. Package versions follow the bound source, while native
+export and Windows ABI requirements remain tied to the measured profiles.
+
+[Actual local six-platform build evidence](evidence/generic-source-six-platform-local.json)
+binds the new production entry point and consumer inspector to native source
+`85ef15a` / run `38133938435`. All six CLI builds exited successfully, restored
+all 2,434 original path byte sequences from 738 objects during packed readback,
+and produced exactly the same archives as the earlier independently inspected
+cohort. Missing or incorrect source digests failed before creating output directories.
+This is local archive evidence; this workflow revision has not run on GitHub, and
+these checks do not execute QQ or establish account, business or signing acceptance.

@@ -1,12 +1,34 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, writeFile, access } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { createHash } from 'node:crypto';
 import { gunzipSync } from 'node:zlib';
-import { stageDeduplicatedPackage } from './dedup-native-npm.mjs';
+import { stageDeduplicatedPackage, buildCandidate } from './dedup-native-npm.mjs';
 const sha = (b) => createHash('sha256').update(b).digest('hex');
+
+test('explicit null trust root is rejected before staging and is acquired once', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'dedup-null-pin-'));
+  try {
+    await writeFile(join(root, 'release-manifest.json'), '{}');
+    const output = join(root, 'out');
+    let reads = 0;
+    await assert.rejects(
+      buildCandidate('linux-x64', output, root, {
+        get sourceReleaseSha256() {
+          reads++;
+          return null;
+        },
+      }),
+      /Independent source release SHA-256 required/,
+    );
+    assert.equal(reads, 1);
+    await assert.rejects(access(output), { code: 'ENOENT' });
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
 function fixture() {
   const raw = new Map([
     ['wrapper.node', Buffer.from('native')],

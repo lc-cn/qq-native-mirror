@@ -10,6 +10,8 @@ const sources = [
   'dedup-native-npm.test.mjs',
   'native-storage-plan.mjs',
   'native-storage-plan.test.mjs',
+  'native-source-identity.mjs',
+  'native-source-identity.test.mjs',
   'verify-dedup-consumer.mjs',
   'verify-dedup-consumer.test.mjs',
   'check-native-storage.mjs',
@@ -38,5 +40,6 @@ run([
   '--test',
   'dedup-native-npm.test.mjs',
   'native-storage-plan.test.mjs',
+  'native-source-identity.test.mjs',
   'verify-dedup-consumer.test.mjs',
 ]);

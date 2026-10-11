@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   validateDedupInstalledReceipts,
   inspectConsumerSdkFiles,
+  inspectDedupCandidate,
 } from './verify-dedup-consumer.mjs';
 import { mkdtemp, writeFile, rm } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -15,6 +16,40 @@ const fixtures = [
   '1c8920f2db13e3c1b28b708bc94d3889ed8bd10f15ee5d89881d99715188b468',
   '53a0baad6f0853d39e53263c22c847bd78435fc263e6844450878b471d13cc57',
 ];
+
+test('candidate inspection acquires its independent trust root once and rejects explicit null', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'consumer-null-pin-'));
+  try {
+    await writeFile(
+      join(root, 'dedup-build.json'),
+      JSON.stringify({
+        schemaVersion: 1,
+        experimental: true,
+        device: 'linux-x64',
+        source: {},
+        accountAcceptanceEstablished: false,
+        signingAuthenticityEstablished: false,
+        published: false,
+        defaultsChanged: false,
+      }),
+    );
+    await writeFile(join(root, 'source-native-manifest.json'), '{}');
+    await writeFile(join(root, 'source-release-manifest.json'), '{}');
+    let reads = 0;
+    await assert.rejects(
+      inspectDedupCandidate(root, {
+        get sourceReleaseSha256() {
+          reads++;
+          return null;
+        },
+      }),
+      /Independent source release SHA-256 required/,
+    );
+    assert.equal(reads, 1);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
 function windowsArm() {
   const build = { device: 'win32-arm64' };
   const manifest = {
@@ -205,4 +240,31 @@ test('consumer SDK archive refuses unrelated package identity and changed metada
     const files = await mainArchiveFiles({ metadata });
     assert.throws(() => inspectConsumerSdkFiles(files), /consumer SDK/);
   }
+});
+
+test('explicit source inventory counts retain exact exports, ABI and account boundaries', () => {
+  const x = windowsArm();
+  const sourceContract = { paths: 30, objects: 29, exports: 98 };
+  x.receipt.installedNativeStorage.nativePaths = 30;
+  x.receipt.installedNativeStorage.objects = 29;
+  assert.throws(() => validateDedupInstalledReceipts(x.build, x.manifest, x.receipt, x.video));
+  validateDedupInstalledReceipts(x.build, x.manifest, x.receipt, x.video, sourceContract);
+  x.receipt.exports = 99;
+  assert.throws(() =>
+    validateDedupInstalledReceipts(x.build, x.manifest, x.receipt, x.video, sourceContract),
+  );
+  x.receipt.exports = 98;
+  x.receipt.accountUsed = true;
+  assert.throws(() =>
+    validateDedupInstalledReceipts(x.build, x.manifest, x.receipt, x.video, sourceContract),
+  );
+});
+
+test('consumer SDK version is bound to its selected source rather than accepting any main', async () => {
+  const files = await mainArchiveFiles({
+    metadata: { name: 'qq-native-client', version: '1.2.3-next.1' },
+  });
+  assert.throws(() => inspectConsumerSdkFiles(files), /Wrong consumer SDK/);
+  inspectConsumerSdkFiles(files, '1.2.3-next.1');
+  assert.throws(() => inspectConsumerSdkFiles(files, '1.2.3-next.2'), /Wrong consumer SDK/);
 });

@@ -1,6 +1,15 @@
 name: Experimental full native object storage
 on:
   workflow_dispatch:
+    inputs:
+      source_tag:
+        description: Complete native release tag (leave both source inputs empty for the frozen historical candidate)
+        required: false
+        type: string
+      source_release_sha256:
+        description: Independently verified SHA-256 of exact source release-manifest.json bytes
+        required: false
+        type: string
 permissions:
   contents: read
   actions: read
@@ -70,13 +79,26 @@ jobs:
         if: matrix.platform == 'linux'
         run: sudo apt-get update && sudo apt-get install -y libx11-xcb1 libgnutls30
       - name: Producer contracts
-        run: node --test tools/dedup-native-npm.test.mjs tools/native-storage-plan.test.mjs tools/verify-dedup-consumer.test.mjs
-      - name: Acquire fixed full native source with preserved permanent materials
+        run: node --test tools/dedup-native-npm.test.mjs tools/native-storage-plan.test.mjs tools/native-source-identity.test.mjs tools/verify-dedup-consumer.test.mjs
+      - name: Require paired source identity inputs
+        env:
+          SOURCE_TAG: ${{ inputs.source_tag }}
+          SOURCE_RELEASE_SHA256: ${{ inputs.source_release_sha256 }}
+        run: |
+          node -e "const {SOURCE_TAG:t,SOURCE_RELEASE_SHA256:s}=process.env;if(Boolean(t)!==Boolean(s)|| (t&&(!/^npm-v\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?-ci-\d+$/.test(t)||!/^[a-f0-9]{64}$/.test(s))))throw Error('Provide both verified source tag and manifest SHA, or neither')"
+      - name: Acquire complete full native source with preserved permanent materials
         env:
           GH_TOKEN: ${{ github.token }}
-        run: node sdk/scripts/download-npm-candidate.mjs npm-v0.0.2-ci-37962268125 candidate-source
+          SOURCE_TAG: ${{ inputs.source_tag || 'npm-v0.0.2-ci-37962268125' }}
+        run: node sdk/scripts/download-npm-candidate.mjs "$SOURCE_TAG" candidate-source
       - name: Pack complete native bytes as deduplicated objects
-        run: node tools/dedup-native-npm.mjs --device ${{ matrix.device }} --source candidate-source --out out
+        env:
+          SOURCE_RELEASE_SHA256: ${{ inputs.source_release_sha256 }}
+          DEVICE: ${{ matrix.device }}
+        run: |
+          source_args=()
+          if [ -n "$SOURCE_RELEASE_SHA256" ]; then source_args=(--source-release-sha256 "$SOURCE_RELEASE_SHA256"); fi
+          node tools/dedup-native-npm.mjs --device "$DEVICE" --source candidate-source --out out "${source_args[@]}"
       - name: Install build dependencies without lifecycle scripts
         working-directory: sdk
         run: npm ci --ignore-scripts --no-audit --no-fund
@@ -86,11 +108,21 @@ jobs:
           if [ '${{ matrix.platform }}' = 'win32' ]; then npm exec tsc; else npm run build; fi
           npm pack --ignore-scripts --pack-destination ../out --json
       - name: Bind this SDK separately from original native source
-        run: node tools/verify-dedup-consumer.mjs --bind-main out
+        env:
+          SOURCE_RELEASE_SHA256: ${{ inputs.source_release_sha256 }}
+        run: |
+          source_args=()
+          if [ -n "$SOURCE_RELEASE_SHA256" ]; then source_args=(--source-release-sha256 "$SOURCE_RELEASE_SHA256"); fi
+          node tools/verify-dedup-consumer.mjs --bind-main out "${source_args[@]}"
       - name: Install main only, restore full inventory and run codec without account
         run: node ci/verify-consumer.mjs
       - name: Verify installed full inventory, warm cache, preparation and actual decoding
-        run: node tools/verify-dedup-consumer.mjs --verify-consumer out
+        env:
+          SOURCE_RELEASE_SHA256: ${{ inputs.source_release_sha256 }}
+        run: |
+          source_args=()
+          if [ -n "$SOURCE_RELEASE_SHA256" ]; then source_args=(--source-release-sha256 "$SOURCE_RELEASE_SHA256"); fi
+          node tools/verify-dedup-consumer.mjs --verify-consumer out "${source_args[@]}"
       - uses: actions/upload-artifact@v4
         if: success()
         with:

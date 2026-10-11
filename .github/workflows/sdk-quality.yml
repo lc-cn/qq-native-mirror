@@ -9,10 +9,12 @@ on:
       - 'version-ci/**'
       - 'tools/dedup-native-npm*.mjs'
       - 'tools/native-storage-plan*.mjs'
+      - 'tools/native-source-identity*.mjs'
       - 'tools/verify-dedup-consumer*.mjs'
       - 'tools/check-native-storage.mjs'
       - 'tools/eslint.config.mjs'
       - '.github/workflows/current-source-consumer.yml'
+      - '.github/workflows/dedup-native-candidate.yml'
       - '.github/workflows/sdk-quality.yml'
   push:
     paths:
@@ -21,10 +23,12 @@ on:
       - 'version-ci/**'
       - 'tools/dedup-native-npm*.mjs'
       - 'tools/native-storage-plan*.mjs'
+      - 'tools/native-source-identity*.mjs'
       - 'tools/verify-dedup-consumer*.mjs'
       - 'tools/check-native-storage.mjs'
       - 'tools/eslint.config.mjs'
       - '.github/workflows/current-source-consumer.yml'
+      - '.github/workflows/dedup-native-candidate.yml'
       - '.github/workflows/sdk-quality.yml'
 
 permissions:

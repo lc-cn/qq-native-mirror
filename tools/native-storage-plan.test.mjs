@@ -50,6 +50,22 @@ function sync(source) {
   source.files.set('package.json', Buffer.from(JSON.stringify(source.metadata)));
   source.files.set('README.md', Buffer.from('source README'));
 }
+
+test('new SDK package versions retain their identity through complete object staging', async () => {
+  const source = fixture();
+  source.metadata.version = '1.2.3-next.1';
+  sync(source);
+  const root = await mkdtemp(join(tmpdir(), 'storage-version-'));
+  try {
+    const staged = await stageDeduplicatedPackage(source, join(root, 'package'));
+    const metadata = JSON.parse(await readFile(join(root, 'package/package.json')));
+    assert.equal(metadata.version, '1.2.3-next.1');
+    assert.equal(staged.originalPaths, source.manifest.files.length);
+    assert.deepEqual(staged.manifest.version, source.manifest.version);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
 for (const [label, mutate] of [
   [
     'vendor version',

@@ -21,7 +21,8 @@ from npm's populated cache for the offline consumer installation.
 the same pinned Prettier and zero-warning ESLint dependencies, then runs its closed
 inventory, platform metadata, asynchronous input ownership and packed SDK identity regressions. It is
 part of `check` and the SDK quality workflow. `tools/check-native-storage.mjs` lists
-the covered producer, planner, consumer verifier, tests and gate/configuration files explicitly;
+the covered producer, planner, pure source identity check, consumer verifier,
+tests and gate/configuration files explicitly;
 unrelated historical research tools are not included. These JavaScript build tools
 have formatting and lint coverage, without a claim of TypeScript type checking.
 The platform candidate workflow also runs the same producer regressions before
@@ -29,6 +30,13 @@ building. The consumer verifier shares one packed-module inspection between SDK
 binding and receipt verification; its portable tar fixtures reject obsolete-only
 loader paths and unrelated package identities. None of these deterministic tests
 loads QQ or uses an account.
+
+Source identity regressions require an independent manifest digest, reject missing
+or malformed trust roots and mismatched seven-package cohorts, and preserve owned
+nested metadata after caller mutation. Producer and consumer option regressions
+capture the source digest once and reject explicit `null`; omission alone selects
+the frozen historical source. Future package versions retain their original version
+metadata without weakening the measured native export or Windows ABI requirements.
 
 The npm `pretest` and `preverify:package` hooks first run
 `check:consumer-modules`. This static preflight shares

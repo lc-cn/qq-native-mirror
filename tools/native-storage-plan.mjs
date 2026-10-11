@@ -50,7 +50,8 @@ function validateIdentity(manifest, metadata) {
   );
   requireCondition(
     metadata?.name === `qq-native-client-${manifest.platform}-${manifest.arch}` &&
-      metadata.version === '0.0.2' &&
+      typeof metadata.version === 'string' &&
+      /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/.test(metadata.version) &&
       JSON.stringify(metadata.os) === JSON.stringify([manifest.platform]) &&
       JSON.stringify(metadata.cpu) === JSON.stringify([manifest.arch]),
     'Source npm identity mismatch',

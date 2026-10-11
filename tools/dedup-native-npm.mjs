@@ -9,6 +9,7 @@ import { validateRelease } from '../sdk/scripts/local-first-publish.mjs';
 import { npm } from '../ci/npm.mjs';
 import { readNativeTarFiles } from '../sdk/scripts/native-tar-files.mjs';
 import { planNativeStorage } from './native-storage-plan.mjs';
+import { inspectNativeSourceIdentity } from './native-source-identity.mjs';
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const workspace = resolve(repo, '../..');
 
@@ -94,36 +95,47 @@ async function sourceTar(tar) {
     files,
   };
 }
-async function readPinnedSource(device, sourceDirectory) {
+async function readPinnedSource(device, sourceDirectory, sourceReleaseSha256) {
   requireCondition(Object.hasOwn(sourcePins, device), 'Unsupported candidate device');
+  const releaseBytes = await readFile(join(sourceDirectory, 'release-manifest.json'));
+  const expectedReleaseSha256 =
+    sourceReleaseSha256 === undefined
+      ? '9a362f3c4abada4c8cfc397039c20835bcb5393e0ae356873cccb518be9c8e1a'
+      : sourceReleaseSha256;
+  const boundRelease = inspectNativeSourceIdentity(releaseBytes, expectedReleaseSha256);
   const validated = await validateRelease(sourceDirectory);
   const release = validated.manifest;
   requireCondition(
+    JSON.stringify(release) === JSON.stringify(boundRelease),
+    'Source release changed during validation',
+  );
+  requireCondition(
     release.schemaVersion === 2 &&
-      release.commit === '6cae1ec0a5e1bfb03cb7871083915b3d03272347' &&
-      release.runId === '37962268125' &&
-      release.runAttempt === 1 &&
-      release.version === '0.0.2' &&
+      (sourceReleaseSha256 !== undefined ||
+        (release.commit === '6cae1ec0a5e1bfb03cb7871083915b3d03272347' &&
+          release.runId === '37962268125' &&
+          release.runAttempt === 1 &&
+          release.version === '0.0.2')) &&
       validated.videoMaterials?.pending === false,
     'Source complete release/materials identity mismatch',
   );
-  const releaseBytes = await readFile(join(sourceDirectory, 'release-manifest.json'));
-  requireCondition(
-    sha256(releaseBytes) === '9a362f3c4abada4c8cfc397039c20835bcb5393e0ae356873cccb518be9c8e1a',
-    'Source release bytes mismatch',
-  );
+  requireCondition(sha256(releaseBytes) === expectedReleaseSha256, 'Source release bytes mismatch');
   const row = release.packages.find((pkg) => pkg.name === 'qq-native-client-' + device);
+  requireCondition(row, 'Missing native source package');
+  const expected = row.manifestSha256;
   const pin = sourcePins[device];
-  const expected = pin.manifestSha256;
-  requireCondition(
-    row.manifestSha256 === expected &&
-      row.sha256 === pin.tarballSha256 &&
-      row.size === pin.tarballSize,
-    'Native source manifest/tarball pin mismatch',
-  );
+  if (sourceReleaseSha256 === undefined)
+    requireCondition(
+      row.manifestSha256 === pin.manifestSha256 &&
+        row.sha256 === pin.tarballSha256 &&
+        row.size === pin.tarballSize,
+      'Native source manifest/tarball pin mismatch',
+    );
   const source = await sourceTar(join(sourceDirectory, row.tarball));
   requireCondition(
-    source.manifest.files.length === pin.nativePaths,
+    (sourceReleaseSha256 !== undefined || source.manifest.files.length === pin.nativePaths) &&
+      source.metadata.version === release.version &&
+      sha256(source.files.get('manifest.json')) === expected,
     'Source full inventory mismatch',
   );
   return { release, releaseBytes, row, source, expected };
@@ -157,10 +169,14 @@ export async function buildCandidate(
   device,
   outputDirectory,
   sourceDirectory = join(workspace, '.local/releases/npm-0.0.2-ci-37962268125'),
+  options = {},
 ) {
+  // Capture the caller's independent trust root before source reads can yield.
+  const sourceReleaseSha256 = options.sourceReleaseSha256;
   const { release, releaseBytes, row, source, expected } = await readPinnedSource(
     device,
     sourceDirectory,
+    sourceReleaseSha256,
   );
   const scratch = await mkdtemp(join(tmpdir(), 'qq-dedup-pack-'));
   try {
@@ -260,7 +276,8 @@ if (process.argv[1] && pathToFileURL(resolve(process.argv[1])).href === import.m
   );
   for (let i = 0; i < args.length; i += 2) {
     requireCondition(
-      ['--device', '--source', '--out'].includes(args[i]) && options[args[i]] === undefined,
+      ['--device', '--source', '--out', '--source-release-sha256'].includes(args[i]) &&
+        options[args[i]] === undefined,
       'Invalid/duplicate argument',
     );
     options[args[i]] = args[i + 1];
@@ -270,6 +287,12 @@ if (process.argv[1] && pathToFileURL(resolve(process.argv[1])).href === import.m
     options['--out'] ??
     join(workspace, `.local/releases/dedup-full-${options['--device']}-local-v1`);
   console.log(
-    JSON.stringify(await buildCandidate(options['--device'], out, options['--source']), null, 2),
+    JSON.stringify(
+      await buildCandidate(options['--device'], out, options['--source'], {
+        sourceReleaseSha256: options['--source-release-sha256'],
+      }),
+      null,
+      2,
+    ),
   );
 }

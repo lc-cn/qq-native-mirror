@@ -133,12 +133,21 @@ performs no filesystem, process or network IO. Package and manifest metadata are
 captured from the validated archive bytes, including nested values, before the
 first asynchronous write.
 
+`native-source-identity.mjs` owns the shared pure source identity check. It requires
+an independently supplied digest of the complete release manifest bytes and captures
+the seven matching package identities, repository, commit and CI run. It does not
+validate archives, consumer receipts or codec materials; those remain with the
+complete release validator.
+
 `dedup-native-npm.mjs` stages that completed plan into a new directory. Its release
-entry point separately verifies the frozen source release, invokes npm packing and
-reads back the actual packed objects to compare every restored native path. A new
-source cohort must supply its own explicit provenance checks; changing a historical
-pin is not a way to accept a newer release. The generic planner and staging function
-can be reused without importing a platform's historical release facts into the SDK.
+entry point separately verifies the complete source release, invokes npm packing and
+reads back the actual packed objects to compare every restored native path.
+`verify-dedup-consumer.mjs` checks the candidate and installed receipts against the
+same independently bound source. Both entry points retain their frozen historical
+source when the digest option is omitted; an explicit digest selects a separately
+verified cohort. Explicit invalid values cannot fall back to the historical source.
+The generic planner and staging function preserve the supplied package version
+without importing a platform's historical release facts into the SDK.
 
 The runtime consumer remains owned by `src/native/native-installed-storage.ts`;
 producer tooling never becomes part of client startup. Compression changes delivery

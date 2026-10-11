@@ -48,6 +48,13 @@ script or weaken a historical plan to make it pass against newer artifacts.
 | CLI command flags and action planning                                              | `src/cli/commands/` by domain; `command-plan.ts` composes definitions and captures flags  |
 | CLI argument parsing and client execution                                          | `src/cli/command-input.ts` and `client-command.ts`; executable entry remains `cli.ts`     |
 
+Native package production has separate repository owners: `tools/native-storage-plan.mjs`
+owns pure inventory transformation, `tools/native-source-identity.mjs` owns pure
+release identity capture, `tools/dedup-native-npm.mjs` owns filesystem/npm staging,
+and `tools/verify-dedup-consumer.mjs` owns candidate and installed receipt checks.
+Keep these build-time modules out of SDK startup. A new release changes its explicit
+source inputs; it does not replace historical pins or copy a version-specific builder.
+
 Group-file deletion and its per-file acknowledgement belong to
 `src/features/groups/group-file-deletion.ts`; `group-files.ts` owns capability
 selection and the shared action lifetime.

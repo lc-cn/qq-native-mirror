@@ -5,6 +5,7 @@ import { pathToFileURL } from 'node:url';
 import { createHash } from 'node:crypto';
 import { gunzipSync } from 'node:zlib';
 import { readNativeTarFiles } from '../sdk/scripts/native-tar-files.mjs';
+import { inspectNativeSourceIdentity } from './native-source-identity.mjs';
 const sha = (b) => createHash('sha256').update(b).digest('hex');
 const check = (ok, message) => {
   if (!ok) throw Error(message);
@@ -19,7 +20,11 @@ export const deviceContracts = {
 };
 const sourceCommit = '6cae1ec0a5e1bfb03cb7871083915b3d03272347';
 const sourceReleaseSha = '9a362f3c4abada4c8cfc397039c20835bcb5393e0ae356873cccb518be9c8e1a';
-export async function inspectDedupCandidate(directory) {
+export async function inspectDedupCandidate(directory, options = {}) {
+  const sourceReleaseSha256 = options.sourceReleaseSha256;
+  const expectedReleaseSha256 =
+    sourceReleaseSha256 === undefined ? sourceReleaseSha : sourceReleaseSha256;
+  const explicitlyBound = sourceReleaseSha256 !== undefined;
   const buildBytes = await readFile(join(directory, 'dedup-build.json')),
     build = JSON.parse(buildBytes);
   check(
@@ -28,14 +33,15 @@ export async function inspectDedupCandidate(directory) {
       Object.hasOwn(deviceContracts, build.device),
     'Unsupported dedup candidate',
   );
-  check(
-    build.source.repository === 'lc-cn/qq-native-mirror' &&
-      build.source.commit === sourceCommit &&
-      build.source.runId === '37962268125' &&
-      build.source.runAttempt === 1 &&
-      build.source.releaseManifestSha256 === sourceReleaseSha,
-    'Wrong original native source',
-  );
+  if (!explicitlyBound)
+    check(
+      build.source.repository === 'lc-cn/qq-native-mirror' &&
+        build.source.commit === sourceCommit &&
+        build.source.runId === '37962268125' &&
+        build.source.runAttempt === 1 &&
+        build.source.releaseManifestSha256 === sourceReleaseSha,
+      'Wrong original native source',
+    );
   check(
     build.accountAcceptanceEstablished === false &&
       build.signingAuthenticityEstablished === false &&
@@ -43,13 +49,27 @@ export async function inspectDedupCandidate(directory) {
       build.defaultsChanged === false,
     'Candidate acceptance scope changed',
   );
-  const contract = deviceContracts[build.device];
   const originalBytes = await readFile(join(directory, 'source-native-manifest.json')),
     original = JSON.parse(originalBytes);
   const releaseBytes = await readFile(join(directory, 'source-release-manifest.json')),
-    release = JSON.parse(releaseBytes);
+    release = inspectNativeSourceIdentity(releaseBytes, expectedReleaseSha256);
   check(
-    sha(releaseBytes) === sourceReleaseSha &&
+    build.source.repository === release.repository &&
+      build.source.commit === release.commit &&
+      build.source.runId === release.runId &&
+      build.source.runAttempt === release.runAttempt &&
+      build.source.releaseManifestSha256 === expectedReleaseSha256,
+    'Candidate source differs from independent identity',
+  );
+  const contract = explicitlyBound
+    ? {
+        ...deviceContracts[build.device],
+        paths: original.files.length,
+        objects: new Set(original.files.map((file) => file.sha256)).size,
+      }
+    : deviceContracts[build.device];
+  check(
+    sha(releaseBytes) === expectedReleaseSha256 &&
       sha(originalBytes) === build.source.auxiliary.nativeManifestSha256,
     'Original source manifests changed',
   );
@@ -78,7 +98,7 @@ export async function inspectDedupCandidate(directory) {
   check(sha(manifestBytes) === build.candidate.nativeManifestSha256, 'Candidate manifest changed');
   check(
     metadata.name === 'qq-native-client-' + build.device &&
-      metadata.version === '0.0.2' &&
+      metadata.version === release.version &&
       Object.keys(metadata.scripts ?? {}).length === 0,
     'Candidate npm metadata changed',
   );
@@ -134,22 +154,22 @@ export async function inspectDedupCandidate(directory) {
   for (const file of inventory)
     check(raw.get(file.sha256)?.length === file.size, 'Original file absent from object set');
   check(raw.size === new Set(inventory.map((f) => f.sha256)).size, 'Unused storage object');
-  return { buildBytes, build, manifest, manifestBytes, packedBytes };
+  return { buildBytes, build, manifest, manifestBytes, packedBytes, release, contract };
 }
 /** Inspect the consumer archive once at each binding boundary. */
-export function inspectConsumerSdkFiles(files) {
+export function inspectConsumerSdkFiles(files, expectedVersion = '0.0.2') {
   const pkg = JSON.parse(files.get('package/package.json'));
-  check(pkg.name === 'qq-native-client' && pkg.version === '0.0.2', 'Wrong consumer SDK');
+  check(pkg.name === 'qq-native-client' && pkg.version === expectedVersion, 'Wrong consumer SDK');
   const loader = files.get('package/dist/native/native-installed-storage.js');
   check(Buffer.isBuffer(loader), 'Consumer SDK has no installed storage loader');
   return { storageLoaderSha256: sha(loader) };
 }
-export async function bindConsumerSdk(directory, environment = process.env) {
-  const { build } = await inspectDedupCandidate(directory);
-  const tarball = 'qq-native-client-0.0.2.tgz',
+export async function bindConsumerSdk(directory, environment = process.env, options = {}) {
+  const { build, release } = await inspectDedupCandidate(directory, options);
+  const tarball = `qq-native-client-${release.version}.tgz`,
     bytes = await readFile(join(directory, tarball)),
     files = await readNativeTarFiles(join(directory, tarball));
-  const { storageLoaderSha256 } = inspectConsumerSdkFiles(files);
+  const { storageLoaderSha256 } = inspectConsumerSdkFiles(files, release.version);
   const binding = {
     schemaVersion: 1,
     tarball,
@@ -163,8 +183,8 @@ export async function bindConsumerSdk(directory, environment = process.env) {
   await writeFile(join(directory, 'consumer-sdk.json'), JSON.stringify(binding, null, 2) + '\n');
   return binding;
 }
-export function validateDedupInstalledReceipts(build, manifest, receipt, video) {
-  const contract = deviceContracts[build.device];
+export function validateDedupInstalledReceipts(build, manifest, receipt, video, sourceContract) {
+  const contract = sourceContract ?? deviceContracts[build.device];
   check(contract, 'Unsupported consumer device');
   check(
     `${receipt.platform}-${receipt.arch}` === build.device &&
@@ -266,8 +286,11 @@ export function validateDedupInstalledReceipts(build, manifest, receipt, video) 
     ].sort(),
   );
 }
-export async function verifyDedupConsumer(directory, environment = process.env) {
-  const { buildBytes, build, manifest } = await inspectDedupCandidate(directory);
+export async function verifyDedupConsumer(directory, environment = process.env, options = {}) {
+  const { buildBytes, build, manifest, release, contract } = await inspectDedupCandidate(
+    directory,
+    options,
+  );
   const bindingBytes = await readFile(join(directory, 'consumer-sdk.json')),
     binding = JSON.parse(bindingBytes);
   check(
@@ -278,14 +301,15 @@ export async function verifyDedupConsumer(directory, environment = process.env) 
   assert.deepEqual(binding.nativeSource, build.source);
   const mainBytes = await readFile(join(directory, binding.tarball));
   check(
-    binding.tarball === 'qq-native-client-0.0.2.tgz' &&
+    binding.tarball === `qq-native-client-${release.version}.tgz` &&
       sha(mainBytes) === binding.sha256 &&
       mainBytes.length === binding.size,
     'Consumer SDK changed',
   );
   const main = await readNativeTarFiles(join(directory, binding.tarball));
   check(
-    inspectConsumerSdkFiles(main).storageLoaderSha256 === binding.storageLoaderSha256,
+    inspectConsumerSdkFiles(main, release.version).storageLoaderSha256 ===
+      binding.storageLoaderSha256,
     'Consumer storage loader changed',
   );
   const receiptBytes = await readFile(join(directory, 'consumer.json')),
@@ -293,7 +317,7 @@ export async function verifyDedupConsumer(directory, environment = process.env) 
   const videoBytes = await readFile(join(directory, 'installed-video.json')),
     video = JSON.parse(videoBytes);
   assert.deepEqual(receipt.installedVideo, video);
-  validateDedupInstalledReceipts(build, manifest, receipt, video);
+  validateDedupInstalledReceipts(build, manifest, receipt, video, contract);
   const proof = {
     schemaVersion: 1,
     experimental: true,
@@ -320,13 +344,17 @@ export async function verifyDedupConsumer(directory, environment = process.env) 
 }
 if (process.argv[1] && pathToFileURL(resolve(process.argv[1])).href === import.meta.url) {
   check(
-    process.argv.length === 4 && ['--bind-main', '--verify-consumer'].includes(process.argv[2]),
-    'Usage: node tools/verify-dedup-consumer.mjs --bind-main|--verify-consumer DIRECTORY',
+    [4, 6].includes(process.argv.length) &&
+      ['--bind-main', '--verify-consumer'].includes(process.argv[2]) &&
+      (process.argv.length === 4 || process.argv[4] === '--source-release-sha256'),
+    'Usage: node tools/verify-dedup-consumer.mjs --bind-main|--verify-consumer DIRECTORY [--source-release-sha256 SHA]',
   );
   console.log(
     JSON.stringify(
       await (process.argv[2] === '--bind-main' ? bindConsumerSdk : verifyDedupConsumer)(
         resolve(process.argv[3]),
+        process.env,
+        { sourceReleaseSha256: process.argv[5] },
       ),
     ),
   );
