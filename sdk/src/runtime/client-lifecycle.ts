@@ -4,6 +4,12 @@ import { terminateWorker } from './worker-termination.ts';
 import { deserializeKernelError, KernelRequestError } from '../errors.ts';
 import { normalizeLoginRequest } from '../native/login-request.ts';
 import type { Account, ClientOptions, ClientState, LoginRequest } from '../contracts/client.ts';
+import type { ClientEvents } from '../contracts/events.ts';
+
+/** SDK-produced events with guaranteed payload types. Worker events remain unknown. */
+export type ClientLifecycleEvent = {
+  [Name in 'state' | 'log' | 'terminated']: [event: Name, ...payload: ClientEvents[Name]];
+}['state' | 'log' | 'terminated'];
 
 export interface ClientLifecycleContext {
   worker: ChildProcess;
@@ -11,7 +17,8 @@ export interface ClientLifecycleContext {
   defaultLogin?: LoginRequest;
   restart?: { spawn(): ChildProcess; payload: object };
   autoReconnect?: ClientOptions['autoReconnect'];
-  emit(event: string, payload: unknown): void;
+  emit(...event: ClientLifecycleEvent): void;
+  forward(event: string, payload: unknown): void;
   exportsUpdated(exports: string[]): void;
 }
 
@@ -128,7 +135,7 @@ export class ClientLifecycle {
             this.#lastAccount = undefined;
           }
         }
-        this.#context.emit(message.event, message.payload);
+        this.#context.forward(message.event, message.payload);
         if (message.event === 'disconnected' && message.payload?.retryable === true)
           this.#scheduleReconnect();
       } else {
@@ -186,7 +193,8 @@ export class ClientLifecycle {
       this.#autoTimer = undefined;
       this.#autoAttempts++;
       void this.reconnect().catch((error) => {
-        this.#context.emit('reconnect-error', error);
+        // Promise rejection can carry arbitrary thrown values; preserve their identity.
+        this.#context.forward('reconnect-error', error);
         // Login/initialization failures do not establish a transport-only cause.
         // Require explicit evidence before another automatic restore attempt.
         if (error?.retryable === true) this.#scheduleReconnect();

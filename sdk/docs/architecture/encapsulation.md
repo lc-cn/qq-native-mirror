@@ -35,6 +35,14 @@ and message aliases. State transitions still happen before their public events, 
 facade methods return the lifecycle's login/reconnect/close Promises directly so
 coalesced callers retain the same Promise identity.
 
+The lifecycle context separates typed SDK-produced `state`, `log` and `terminated`
+events from opaque forwarding. Their correlated tuples reuse `ClientEvents`, and
+the facade dispatches them exhaustively through the typed emitter. Unknown worker
+events retain their compatibility path, including QR decoding, login-error
+presentation and message aliases. Reconnection rejection values use that opaque
+path because JavaScript can throw any value; this separation does not claim to
+validate worker IPC or normalize those errors.
+
 `runtime/operation-contracts` binds each internal business command to its SDK
 payload and result using domain DTOs. Discriminated call tuples keep the association
 for literal and union callers; payload-free commands cannot receive arbitrary
@@ -507,6 +515,16 @@ fail, an `AggregateError` preserves both original values through the shared pure
 cleanup helper. This exact dependency permits no account/runtime composition.
 
 ## Contact and group domain operations
+
+`createGroupEventIngress` in `group-events.ts` owns the native metadata callback
+sequence: optional trace, normalized observer delivery, then raw query completion.
+It receives named emission, raw dispatch and trace-decision ports. Composition
+binds these ports and registers the resulting callbacks; it does not implement
+their sequence. Invalid metadata still reaches the raw query channel after its
+diagnostic, while observer exceptions stop dispatch and preserve their identity.
+Raw callback objects are forwarded unchanged. The existing account listener and
+channel still own retirement; this module adds no lifetime or listener. The
+projection-only `createGroupEvents` interface remains available.
 
 Group-file deletion belongs to `group-file-deletion`, with a lazy single-method
 port and the existing action lifetime supplied by `group-files`. It captures one

@@ -149,10 +149,100 @@ export async function verifyContactGroupConsumer(packageRoot) {
     await /** @type {Promise<typeof import('../../src/cli.ts')>} */ (
       import(pathToFileURL(join(packageRoot, 'dist/cli.js')).href)
     );
-  const { createGroupEvents } =
+  const { createGroupEvents, createGroupEventIngress } =
     await /** @type {Promise<typeof import('../../src/features/groups/group-events.ts')>} */ (
       import(pathToFileURL(join(packageRoot, 'dist/features/groups/group-events.js')).href)
     );
+  // Exercise the installed ingress owner rather than reproducing composition ordering.
+  {
+    /** @type {unknown[]} */
+    const order = [];
+    const raw = [{ groupCode: '123', groupName: 'fixture' }];
+    const detail = {
+      groupCode: '123',
+      groupName: 'fixture',
+      memberNum: 0,
+      maxMemberNum: 200,
+      ownerUid: 'u_owner',
+      ownerUin: '456',
+      fingerMemo: '',
+    };
+    let trace = true;
+    let traceReads = 0;
+    const ingress = createGroupEventIngress({
+      emit(event) {
+        order.push(event);
+      },
+      dispatchList(kind, groups) {
+        assert.equal(kind, 2);
+        assert.strictEqual(groups, raw);
+        order.push('raw-list');
+      },
+      dispatchDetail(value) {
+        assert.strictEqual(value, detail);
+        order.push('raw-detail');
+      },
+      traceEnabled() {
+        traceReads++;
+        return trace;
+      },
+    });
+    ingress.onGroupListUpdate(2, raw);
+    assert.deepEqual(order, ['diagnostic', 'group-list-updated', 'raw-list']);
+    order.length = 0;
+    trace = false;
+    ingress.onGroupListUpdate(2, raw);
+    assert.deepEqual(order, ['group-list-updated', 'raw-list']);
+    assert.equal(traceReads, 2);
+    order.length = 0;
+    ingress.onGroupDetailInfoChange(detail);
+    assert.deepEqual(order, ['group-info-updated', 'raw-detail']);
+    /** @type {unknown[]} */
+    const invalidOrder = [];
+    const invalidRaw = [{ groupCode: '123' }, { groupCode: '456', groupName: 7 }];
+    const invalid = createGroupEventIngress({
+      emit(event) {
+        invalidOrder.push(event);
+      },
+      dispatchList(_kind, groups) {
+        assert.strictEqual(groups, invalidRaw);
+        invalidOrder.push('raw');
+      },
+      dispatchDetail() {
+        assert.fail('Unexpected detail dispatch');
+      },
+      traceEnabled() {
+        return false;
+      },
+    });
+    invalid.onGroupListUpdate(2, invalidRaw);
+    assert.deepEqual(invalidOrder, ['diagnostic', 'raw']);
+    const original = Error('controlled observer failure');
+    let dispatches = 0;
+    const throwing = createGroupEventIngress({
+      emit() {
+        throw original;
+      },
+      dispatchList() {
+        dispatches++;
+      },
+      dispatchDetail() {
+        dispatches++;
+      },
+      traceEnabled() {
+        return false;
+      },
+    });
+    assert.throws(
+      () => throwing.onGroupListUpdate(2, raw),
+      (error) => error === original,
+    );
+    assert.throws(
+      () => throwing.onGroupDetailInfoChange(detail),
+      (error) => error === original,
+    );
+    assert.equal(dispatches, 0);
+  }
   const { EventEmitter } = await import('node:events');
   const facadeWorker = new ChildProcess();
   Object.defineProperty(facadeWorker, 'exitCode', { value: 0, configurable: true });
@@ -1111,6 +1201,7 @@ export async function verifyContactGroupConsumer(packageRoot) {
     assert.equal(events.listenerCount('group-mute'), 0);
     assert.equal(events.listenerCount('friend-added'), 0);
     return {
+      groupEventIngressInstalledContract: true,
       groupEventCapturedScalarsContract: true,
       groupEventIntrinsicMapContract: true,
       groupEventProjectionFailureContract: true,

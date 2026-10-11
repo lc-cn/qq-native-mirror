@@ -174,3 +174,31 @@ export function createGroupEvents(emit: (event: string, payload: unknown) => voi
     },
   };
 }
+
+export interface GroupEventIngressContext {
+  emit(event: string, payload: unknown): void;
+  dispatchList(kind: unknown, groups: unknown): void;
+  dispatchDetail(value: unknown): void;
+  traceEnabled(): boolean;
+}
+
+/** Preserve normalized observer delivery before raw query completion. */
+export function createGroupEventIngress(context: GroupEventIngressContext) {
+  const { emit, dispatchList, dispatchDetail, traceEnabled } = context;
+  const events = createGroupEvents(emit);
+  return {
+    onGroupListUpdate(kind: unknown, groups: unknown): void {
+      if (traceEnabled())
+        emit('diagnostic', {
+          stage: `group-list-update:kind-${typeof kind === 'number' || typeof kind === 'boolean' ? String(kind) : typeof kind}:count-${Array.isArray(groups) ? groups.length : 'non-array'}`,
+        });
+      events.onGroupListUpdate(kind, groups);
+      dispatchList(kind, groups);
+    },
+    onMemberInfoChange: events.onMemberInfoChange,
+    onGroupDetailInfoChange(value: unknown): void {
+      events.onGroupDetailInfoChange(value);
+      dispatchDetail(value);
+    },
+  };
+}

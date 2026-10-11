@@ -42,7 +42,10 @@ test('module coalesces login promises and owns account state before emitting raw
   const lifecycle: ClientLifecycle = new ClientLifecycle({
     worker: f.worker,
     timeout: 1000,
-    emit(event, payload) {
+    emit(event, _payload) {
+      events.push(event);
+    },
+    forward(event, payload) {
       events.push(event);
       if (event === 'ready') assert.deepEqual(lifecycle.account, payload);
     },
@@ -70,7 +73,10 @@ test('reconnect filters retired-generation events and updates exports without re
     worker: old.worker,
     timeout: 1000,
     restart: { spawn: () => next.worker, payload: {} },
-    emit: (event) => events.push(event),
+    emit: (event, _payload) => {
+      events.push(event);
+    },
+    forward: (event) => events.push(event),
     exportsUpdated: (value) => exports.push(value),
   });
   const login = lifecycle.login();
@@ -100,6 +106,7 @@ test('offline settles submitted merged forward as unknown and leaves callback pr
     worker: f.worker,
     timeout: 1000,
     emit: (event, payload) => rawEvents.push({ event, payload }),
+    forward: (event, payload) => rawEvents.push({ event, payload }),
     exportsUpdated() {},
   });
   const raw = { image: 'YmFzZTY0' };
@@ -119,4 +126,73 @@ test('offline settles submitted merged forward as unknown and leaves callback pr
   const close = lifecycle.close();
   assert.equal(lifecycle.close(), close);
   await close;
+});
+
+test('SDK state and termination use the typed outlet while unknown worker events retain identity', () => {
+  const f = workerFixture();
+  const observed: { outlet: string; event: string; payload: unknown }[] = [];
+  const lifecycle = new ClientLifecycle({
+    worker: f.worker,
+    timeout: 1000,
+    emit: (event, payload) => observed.push({ outlet: 'typed', event, payload }),
+    forward: (event, payload) => observed.push({ outlet: 'unknown', event, payload }),
+    exportsUpdated() {},
+  });
+  const opaque = { untouched: true };
+  f.events.emit('message', { event: 'vendor-extension', payload: opaque });
+  const failure = new Error('controlled worker failure');
+  f.events.emit('error', failure);
+  assert.deepEqual(
+    observed.map(({ outlet, event }) => [outlet, event]),
+    [
+      ['unknown', 'vendor-extension'],
+      ['typed', 'state'],
+      ['typed', 'terminated'],
+    ],
+  );
+  assert.equal(observed[0].payload, opaque);
+  assert.equal(observed[1].payload, 'failed');
+  assert.equal(observed[2].payload, failure);
+  assert.equal(lifecycle.state, 'failed');
+});
+
+test('automatic reconnect preserves an opaque rejection on the unknown outlet', async () => {
+  const f = workerFixture();
+  const opaque = { retryable: false, identity: 'opaque-rejection' };
+  let settle!: (value: unknown) => void;
+  const observed = new Promise<unknown>((resolve) => {
+    settle = resolve;
+  });
+  const lifecycle = new ClientLifecycle({
+    worker: f.worker,
+    timeout: 1000,
+    restart: {
+      spawn() {
+        throw opaque;
+      },
+      payload: {},
+    },
+    autoReconnect: { delayMs: 1, maxAttempts: 1 },
+    emit() {},
+    forward(event, payload) {
+      if (event === 'reconnect-error') settle(payload);
+    },
+    exportsUpdated() {},
+  });
+  const login = lifecycle.login();
+  const account = { uin: '123', uid: 'u_fixture' };
+  f.events.emit('message', { event: 'ready', payload: account });
+  f.events.emit('message', { id: f.sent[0].id, result: account });
+  await login;
+  f.events.emit('message', { event: 'disconnected', payload: { retryable: true } });
+  let timer!: ReturnType<typeof setTimeout>;
+  try {
+    const deadline = new Promise<never>((_, reject) => {
+      timer = setTimeout(() => reject(new Error('fixture reconnect did not settle')), 1000);
+    });
+    assert.equal(await Promise.race([observed, deadline]), opaque);
+  } finally {
+    clearTimeout(timer);
+    await lifecycle.close();
+  }
 });

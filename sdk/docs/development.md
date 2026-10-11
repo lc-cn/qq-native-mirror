@@ -280,6 +280,15 @@ once, validate the whole batch and guard projection failures with a fixed
 diagnostic. Keep the application emit call outside that guard so an application
 listener error is not mislabeled as invalid native data. Use intrinsic Map
 enumeration for member callbacks, matching the query owner's storage policy.
+Native group metadata callbacks enter through `createGroupEventIngress`: keep
+trace, observer and raw query completion ordering in that domain module. The
+composition root only binds its ports and registers the callbacks. Verify invalid
+batches, observer exceptions and raw object identity through this same entry.
+
+Use the lifecycle's correlated `emit` tuples for SDK-produced state, log and
+termination events. Use its separate opaque `forward` port for worker callbacks
+and arbitrary reconnection rejection values. Do not route guaranteed payloads
+through `forward` to bypass type errors or widen the typed emitter to a string.
 
 Ordinary private/group sends belong to `features/messages/native-message-sender`.
 Use pure `capturePrivateMessage` / `captureGroupMessage` at the facade and domain

@@ -108,7 +108,24 @@ export class QQClient extends EventEmitter<ClientEvents> {
       defaultLogin,
       restart,
       autoReconnect,
-      emit: (event, payload) => this.#emitLifecycleEvent(event, payload),
+      emit: (...event) => {
+        switch (event[0]) {
+          case 'state':
+            this.emit('state', event[1]);
+            break;
+          case 'log':
+            this.emit('log', event[1]);
+            break;
+          case 'terminated':
+            this.emit('terminated', event[1]);
+            break;
+          default: {
+            const exhaustive: never = event;
+            return exhaustive;
+          }
+        }
+      },
+      forward: (event, payload) => this.#emitLifecycleEvent(event, payload),
       exportsUpdated: (exports) =>
         this.nativeExports.splice(0, this.nativeExports.length, ...exports),
     });

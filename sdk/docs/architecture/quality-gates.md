@@ -17,6 +17,13 @@ consumer. The package consumer uses fake services and an isolated replacement
 kernel; this command does not log into an account. Codec dependencies are packed
 from npm's populated cache for the offline consumer installation.
 
+Lifecycle event compiler regressions reject invalid state, log and termination
+payloads at the actual emission seam without executing the invalid fixtures.
+Group metadata ingress regressions verify observer/query ordering, malformed
+batch dispatch and exception identity; the packed consumer repeats the entry
+contract against newly compiled code. These checks establish SDK behavior with
+controlled ports, not QQ account events.
+
 `npm run check:native-storage` checks the repository's native storage producer and consumer verifier with
 the same pinned Prettier and zero-warning ESLint dependencies, then runs its closed
 inventory, platform metadata, asynchronous input ownership and packed SDK identity regressions. It is

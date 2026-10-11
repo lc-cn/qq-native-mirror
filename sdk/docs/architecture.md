@@ -48,6 +48,18 @@ also belong to a reviewed layer or business domain, even when it has no imports.
 The diagrams are navigation aids; the exact permissions live in
 `test/helpers/dependency-policy.ts`.
 
+A module's location follows the responsibility it owns. Domain modules own
+validation, projection and operation ordering; composition roots bind their
+ports and route calls. Runtime modules own lifetimes and transport, while public
+contracts remain independent of implementations. Review these responsibilities
+before adding a file or dependency. Moving code without transferring ownership
+does not improve the structure.
+
+Use inheritance where callers depend on substitutable behavior, as with the
+public `EventEmitter` client. Use composed ports for actual platform, codec and
+transport differences. A new base class or generic helper needs a shared invariant
+and real callers; similar method names alone do not establish that need.
+
 | Location                                         | Responsibility                                                                                           |
 | ------------------------------------------------ | -------------------------------------------------------------------------------------------------------- |
 | `src/index.ts`                                   | Public exports only; preserves the package interface without acquiring resources.                        |

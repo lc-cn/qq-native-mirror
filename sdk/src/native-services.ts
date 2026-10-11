@@ -81,7 +81,7 @@ import {
   createGroupEssenceMutations,
   type GroupEssenceMutationContext,
 } from './features/groups/group-essence.ts';
-import { createGroupEvents } from './features/groups/group-events.ts';
+import { createGroupEventIngress } from './features/groups/group-events.ts';
 import { createGroupQueries, type GroupQueriesContext } from './features/groups/group-queries.ts';
 import { createGroupSystemEvents } from './features/groups/group-system-events.ts';
 import { createMessageUpdateEvents } from './features/messages/recall-events.ts';
@@ -319,22 +319,13 @@ export function createNativeServices(context: NativeServiceContext) {
         if (!lifetime.closed) emit('kicked', { info: args[0], args });
       },
     });
-    const groupEvents = createGroupEvents(emit);
-    listener('Group', {
-      onGroupListUpdate: (kind: unknown, groups: unknown) => {
-        if (process.env.QQ_NATIVE_TRACE_FIELDS === '1')
-          emit('diagnostic', {
-            stage: `group-list-update:kind-${typeof kind === 'number' || typeof kind === 'boolean' ? String(kind) : typeof kind}:count-${Array.isArray(groups) ? groups.length : 'non-array'}`,
-          });
-        groupEvents.onGroupListUpdate(kind, groups);
-        dispatch('Group/onGroupListUpdate', [kind, groups]);
-      },
-      onMemberInfoChange: groupEvents.onMemberInfoChange,
-      onGroupDetailInfoChange: (value: unknown) => {
-        groupEvents.onGroupDetailInfoChange(value);
-        dispatch('Group/onGroupDetailInfoChange', [value]);
-      },
+    const groupEvents = createGroupEventIngress({
+      emit,
+      dispatchList: (kind, groups) => dispatch('Group/onGroupListUpdate', [kind, groups]),
+      dispatchDetail: (value) => dispatch('Group/onGroupDetailInfoChange', [value]),
+      traceEnabled: () => process.env.QQ_NATIVE_TRACE_FIELDS === '1',
     });
+    listener('Group', groupEvents);
     const groupQueries = own(
       createGroupQueries({
         signal: lifetime.signal,

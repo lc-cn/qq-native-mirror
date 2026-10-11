@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { createGroupEvents } from '../src/features/groups/group-events.ts';
+import { createGroupEvents, createGroupEventIngress } from '../src/features/groups/group-events.ts';
 
 test('group detail synchronization projects only declared metadata and preserves exact IDs', () => {
   const events: [string, any][] = [];
@@ -291,4 +291,114 @@ test('application emit errors remain visible rather than becoming native diagnos
     () => listener.onMemberInfoChange('123', 0, new Map()),
     (value) => value === error,
   );
+});
+
+test('group ingress preserves normalized-before-raw ordering and original callback references', () => {
+  const order: string[] = [];
+  const groups = [{ groupCode: '123', groupName: 'group' }];
+  const detail = {
+    groupCode: '123',
+    groupName: 'changed',
+    ownerUid: 'uid',
+    ownerUin: '456',
+    fingerMemo: '',
+    memberNum: 1,
+    maxMemberNum: 200,
+  };
+  const ingress = createGroupEventIngress({
+    emit: (event) => {
+      order.push(event);
+    },
+    dispatchList: (kind, value) => {
+      assert.equal(kind, 0);
+      assert.equal(value, groups);
+      order.push('raw-list');
+    },
+    dispatchDetail: (value) => {
+      assert.equal(value, detail);
+      order.push('raw-detail');
+    },
+    traceEnabled: () => false,
+  });
+  ingress.onGroupListUpdate(0, groups);
+  ingress.onGroupDetailInfoChange(detail);
+  assert.deepEqual(order, ['group-list-updated', 'raw-list', 'group-info-updated', 'raw-detail']);
+});
+
+test('group ingress invalid batches still complete raw routes and tracing is evaluated per callback', () => {
+  const events: string[] = [];
+  let trace = false;
+  const invalid = [{ groupCode: false }];
+  const ingress = createGroupEventIngress({
+    emit: (event) => {
+      events.push(event);
+    },
+    dispatchList: (_kind, value) => {
+      assert.equal(value, invalid);
+      events.push('raw-list');
+    },
+    dispatchDetail: () => {
+      events.push('raw-detail');
+    },
+    traceEnabled: () => trace,
+  });
+  ingress.onGroupListUpdate(0, invalid);
+  trace = true;
+  ingress.onGroupListUpdate(0, invalid);
+  ingress.onGroupDetailInfoChange({ groupCode: false });
+  assert.deepEqual(events, [
+    'diagnostic',
+    'raw-list',
+    'diagnostic',
+    'diagnostic',
+    'raw-list',
+    'diagnostic',
+    'raw-detail',
+  ]);
+});
+
+test('group ingress observer failures prevent query dispatch without replacing the error', () => {
+  const failure = { marker: 'observer' };
+  let dispatches = 0;
+  const ingress = createGroupEventIngress({
+    emit: () => {
+      throw failure;
+    },
+    dispatchList: () => {
+      dispatches++;
+    },
+    dispatchDetail: () => {
+      dispatches++;
+    },
+    traceEnabled: () => false,
+  });
+  assert.throws(
+    () => ingress.onGroupListUpdate(0, []),
+    (error) => error === failure,
+  );
+  assert.throws(
+    () => ingress.onGroupDetailInfoChange({ groupCode: '123' }),
+    (error) => error === failure,
+  );
+  assert.equal(dispatches, 0);
+});
+
+test('group ingress preserves dispatch after a normalized observer retires its own delivery', () => {
+  const order: string[] = [];
+  let closed = false;
+  const ingress = createGroupEventIngress({
+    emit: (event) => {
+      if (!closed) order.push(event);
+      closed = true;
+    },
+    dispatchList: () => {
+      order.push('raw-list');
+    },
+    dispatchDetail: () => {
+      order.push('raw-detail');
+    },
+    traceEnabled: () => false,
+  });
+  ingress.onGroupListUpdate(0, []);
+  assert.deepEqual(order, ['group-list-updated', 'raw-list']);
 });
