@@ -174,7 +174,9 @@ export function dependencyViolation({ from, to, typeOnly }: SourceDependency): s
   if (to === 'src/runtime/feature-lifetime.ts')
     return [
       'src/features/contacts/contact-directory.ts',
+      'src/features/contacts/friend-requests.ts',
       'src/features/groups/group-files.ts',
+      'src/features/groups/group-requests.ts',
     ].includes(from)
       ? undefined
       : 'Feature lifetime requires an exact reviewed local operation owner.';

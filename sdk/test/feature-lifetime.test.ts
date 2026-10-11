@@ -4,6 +4,24 @@ import test from 'node:test';
 import { FeatureLifetime } from '../src/runtime/feature-lifetime.ts';
 import { NativeServiceLifetime } from '../src/runtime/native-service-lifetime.ts';
 
+for (const reason of [null, { kind: 'parent-reason' }])
+  test(`explicit ${reason === null ? 'null' : 'opaque'} retirement reason retains identity`, async () => {
+    const parent = new AbortController();
+    const life = new FeatureLifetime({
+      signal: parent.signal,
+      awaitAlive: async (value) => value,
+      closedMessage: 'Feature closed',
+    });
+    const stopped = assert.rejects(
+      life.wait(new Promise<never>(() => {})),
+      (error) => error === reason,
+    );
+    life.close(reason);
+    await stopped;
+    assert.equal(life.signal.reason, reason);
+    assert.equal(parent.signal.aborted, false);
+  });
+
 test('injected wait remains a plain call without acquiring the feature as its receiver', async () => {
   const life = new FeatureLifetime({
     signal: new AbortController().signal,

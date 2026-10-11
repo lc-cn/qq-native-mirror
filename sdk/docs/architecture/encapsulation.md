@@ -9,6 +9,14 @@ completion remains observed and local listeners are released on every exit.
 This module cannot acquire native services, domain implementations or IO. Cache
 clearing, page history and mutation acknowledgements stay with their domain owners.
 
+Friend and group request owners also use `FeatureLifetime` for native completion;
+their account-abort retirement passes through the original cancellation reason.
+Listener removal, callback quarantine, request correlation and pending list
+rejection remain domain-owned. Group member queries and self-profile lookup retain
+their distinct parent-cancellation policies and pass local signals into the account
+wait. Local close therefore releases both waits before native completion; it does
+not leave an account abort listener retaining a retired feature.
+
 The group-file owner retires its count, creation and deletion actions separately
 from the account lifetime. Its action signal guards capability checks, service
 acquisition and captured methods; the account wait also receives that local

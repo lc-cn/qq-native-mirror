@@ -34,6 +34,7 @@ import { verifyGroupSearchConsumer } from './consumers/group-search-consumer-con
 import { verifyGroupQueryOwnerConsumer } from './consumers/group-query-owner-consumer-contract.mjs';
 import { verifyContactGroupSnapshots } from './consumers/contact-group-snapshot-consumer-contract.mjs';
 import { verifyContactDirectoryLifetimeConsumer } from './consumers/contact-directory-lifetime-consumer-contract.mjs';
+import { verifyFeatureWaitRetirementConsumer } from './consumers/feature-wait-retirement-consumer-contract.mjs';
 import { verifyRequestResultConsumer } from './consumers/request-result-consumer-contract.mjs';
 import { verifyGroupFileActionLifetimeConsumer } from './consumers/group-file-action-consumer-contract.mjs';
 import { verifyGroupFilePagesConsumer } from './consumers/group-file-pages-consumer-contract.mjs';
@@ -214,6 +215,9 @@ const requestResultChecks = await verifyRequestResultConsumer(
   join(destination, 'node_modules/qq-native-client'),
 );
 const contactDirectoryLifetimeChecks = await verifyContactDirectoryLifetimeConsumer(
+  join(destination, 'node_modules/qq-native-client'),
+);
+const featureWaitRetirementChecks = await verifyFeatureWaitRetirementConsumer(
   join(destination, 'node_modules/qq-native-client'),
 );
 const groupFileActionChecks = await verifyGroupFileActionLifetimeConsumer(
@@ -627,6 +631,7 @@ const receipt = {
     groupQueryOwnerChecks,
     contactGroupSnapshotChecks,
     contactDirectoryLifetimeChecks,
+    featureWaitRetirementChecks,
     requestResultChecks,
     groupFilePagesChecks,
     groupFileActionChecks,

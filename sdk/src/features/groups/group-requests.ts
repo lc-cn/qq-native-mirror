@@ -1,4 +1,5 @@
 import { nativeResultError } from '../../errors.ts';
+import { FeatureLifetime } from '../../runtime/feature-lifetime.ts';
 import { captureGroupRequestOperation, type GroupRequestOperation } from './group-request-input.ts';
 export type { GroupRequestOperation } from './group-request-input.ts';
 /** Fixed upstream NapCatQQ 26d7533e0f5800fdff865ab2f2ad7692917e1076:
@@ -81,12 +82,16 @@ export interface GroupRequestsContext {
   getGroupService(): GroupRequestPort | null | undefined;
   emit(event: string, payload: unknown): void;
   signal: AbortSignal;
-  awaitAlive<T>(value: T | PromiseLike<T>): Promise<T>;
+  awaitAlive<T>(value: T | PromiseLike<T>, requestSignal?: AbortSignal): Promise<T>;
 }
 export function createGroupRequests(context: GroupRequestsContext) {
   const { signal, awaitAlive } = context;
   let closed = false;
-  const controller = new AbortController();
+  const lifetime = new FeatureLifetime({
+    signal,
+    awaitAlive,
+    closedMessage: 'Group request service is closed',
+  });
   const alive = () => {
     signal.throwIfAborted();
     if (closed) throw new Error('Group request service is closed');
@@ -100,25 +105,7 @@ export function createGroupRequests(context: GroupRequestsContext) {
     alive();
     if (code !== 0) throw nativeResultError(message, { result: code });
   };
-  const awaitValue = async <T>(value: T | PromiseLike<T>): Promise<T> => {
-    const pending = Promise.resolve(value);
-    if (controller.signal.aborted) {
-      void pending.catch(() => {});
-      throw controller.signal.reason;
-    }
-    let abort!: () => void;
-    const stopped = new Promise<never>((_, reject) => {
-      abort = () => reject(controller.signal.reason);
-      controller.signal.addEventListener('abort', abort, { once: true });
-    });
-    try {
-      const result = await Promise.race([awaitAlive(pending), stopped]);
-      alive();
-      return result;
-    } finally {
-      controller.signal.removeEventListener('abort', abort);
-    }
-  };
+  const awaitValue = lifetime.wait;
   alive();
   const service = context.getGroupService();
   alive();
@@ -315,7 +302,7 @@ export function createGroupRequests(context: GroupRequestsContext) {
     if (closed) return;
     closed = true;
     signal.removeEventListener('abort', retire);
-    controller.abort(signal.aborted ? signal.reason : new Error('Group request service is closed'));
+    lifetime.close(signal.aborted ? signal.reason : undefined);
     const current = pending;
     pending = undefined;
     seen.clear();

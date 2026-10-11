@@ -48,8 +48,9 @@ export class FeatureLifetime {
     }
   };
 
-  close(): void {
+  /** A domain that retires on account abort can preserve that exact reason. */
+  close(reason: unknown = new Error(this.#closedMessage)): void {
     if (this.#controller.signal.aborted) return;
-    this.#controller.abort(new Error(this.#closedMessage));
+    this.#controller.abort(reason);
   }
 }

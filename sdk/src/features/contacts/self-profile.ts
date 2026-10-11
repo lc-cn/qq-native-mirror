@@ -32,7 +32,7 @@ export interface SelfProfileContext {
   getProfileService(): SelfProfilePort | null | undefined;
   resolveSelfUid(): string | Promise<string>;
   signal: AbortSignal;
-  awaitAlive<T>(value: T | PromiseLike<T>): Promise<T>;
+  awaitAlive<T>(value: T | PromiseLike<T>, requestSignal?: AbortSignal): Promise<T>;
 }
 function record(value: unknown): Record<string, unknown> | undefined {
   return value && typeof value === 'object' && !Array.isArray(value)
@@ -67,7 +67,7 @@ export function createSelfProfile(context: SelfProfileContext) {
       signal.addEventListener('abort', abort, { once: true });
     });
     try {
-      const result = await Promise.race([awaitAlive(pending), stopped]);
+      const result = await Promise.race([awaitAlive(pending, controller.signal), stopped]);
       alive();
       return result;
     } finally {

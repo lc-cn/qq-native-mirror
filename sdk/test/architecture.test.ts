@@ -63,7 +63,9 @@ test('feature lifetime has no dependencies and only reviewed local owners can ac
   for (const typeOnly of [false, true]) {
     for (const from of [
       'src/features/contacts/contact-directory.ts',
+      'src/features/contacts/friend-requests.ts',
       'src/features/groups/group-files.ts',
+      'src/features/groups/group-requests.ts',
     ])
       assert.equal(dependencyViolation({ from, to: lifetime, typeOnly }), undefined);
     for (const from of [

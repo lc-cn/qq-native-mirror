@@ -1,4 +1,5 @@
 import { nativeResultError } from '../../errors.ts';
+import { FeatureLifetime } from '../../runtime/feature-lifetime.ts';
 import { createFriendEvents } from './friend-events.ts';
 import { captureFriendRequest, type FriendRequestOperation } from './friend-request-input.ts';
 export type { FriendRequestOperation } from './friend-request-input.ts';
@@ -73,29 +74,17 @@ export interface FriendRequestsContext {
   getBuddyService(): FriendBuddyPort | null | undefined;
   emit(event: string, payload: unknown): void;
   signal: AbortSignal;
-  awaitAlive<T>(value: T | PromiseLike<T>): Promise<T>;
+  awaitAlive<T>(value: T | PromiseLike<T>, requestSignal?: AbortSignal): Promise<T>;
 }
 export function createFriendRequests(context: FriendRequestsContext) {
   const { signal, awaitAlive } = context;
   let closed = false;
-  const controller = new AbortController();
-  const awaitValue = async <T>(value: T | PromiseLike<T>): Promise<T> => {
-    const pending = Promise.resolve(value);
-    if (controller.signal.aborted) {
-      void pending.catch(() => {});
-      throw controller.signal.reason;
-    }
-    let abort!: () => void;
-    const stopped = new Promise<never>((_, reject) => {
-      abort = () => reject(controller.signal.reason);
-      controller.signal.addEventListener('abort', abort, { once: true });
-    });
-    try {
-      return await Promise.race([awaitAlive(pending), stopped]);
-    } finally {
-      controller.signal.removeEventListener('abort', abort);
-    }
-  };
+  const lifetime = new FeatureLifetime({
+    signal,
+    awaitAlive,
+    closedMessage: 'Friend request service is closed',
+  });
+  const awaitValue = lifetime.wait;
   const alive = () => {
     signal.throwIfAborted();
     if (closed) throw new Error('Friend request service is closed');
@@ -269,9 +258,7 @@ export function createFriendRequests(context: FriendRequestsContext) {
   function retire() {
     if (closed) return;
     closed = true;
-    controller.abort(
-      signal.aborted ? signal.reason : new Error('Friend request service is closed'),
-    );
+    lifetime.close(signal.aborted ? signal.reason : undefined);
     signal.removeEventListener('abort', retire);
     for (const waiter of waiters) waiter.reject(new Error('Friend request service is closed'));
     waiters.clear();

@@ -22,7 +22,7 @@ export interface GroupQueriesContext {
   signal: AbortSignal;
   getGroupService(): GroupQueryPort | null | undefined;
   eventCall: NativeEventChannel['call'];
-  awaitAlive<T>(value: T | PromiseLike<T>): Promise<T>;
+  awaitAlive<T>(value: T | PromiseLike<T>, requestSignal?: AbortSignal): Promise<T>;
   commitMembers(members: readonly GroupMember[]): void;
 }
 /** Owns input validation, query coalescing and callback quarantine.
@@ -51,7 +51,7 @@ export function createGroupQueries(context: GroupQueriesContext) {
     });
     void stopped.catch(() => {});
     try {
-      const result = await Promise.race([awaitAlive(pending), stopped]);
+      const result = await Promise.race([awaitAlive(pending, controller.signal), stopped]);
       alive();
       return result;
     } finally {
