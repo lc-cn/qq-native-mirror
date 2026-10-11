@@ -1,0 +1,29 @@
+sdk/docs/architecture/encapsulation.md
+  s_2104cc474f1ce5::t_4345e32119495e 471-478
+sdk/docs/architecture/quality-gates.md
+  s_2104cc474f1ce5::t_d533079e19f30d 94-97
+sdk/scripts/consumers/contact-group-snapshot-consumer-contract.mjs
+  s_2104cc474f1ce5::t_273bf8356cf172 280-355,419-420
+sdk/src/features/contacts/contact-operations.ts
+  s_2104cc474f1ce5::t_930e27dae2914e 30-41
+sdk/src/features/groups/group-operations.ts
+  s_2104cc474f1ce5::t_04f71bf0eff2f9 120-128
+sdk/test/contact-group-ack-retirement.test.ts
+  s_2104cc474f1ce5::t_fe377088fb444e 1-123
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c2ddcaa60ef7965df6cd1f7a8a72d39599de31f9",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
