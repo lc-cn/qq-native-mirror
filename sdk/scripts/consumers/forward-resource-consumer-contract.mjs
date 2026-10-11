@@ -1,4 +1,5 @@
-/** @typedef {{'cli.js':typeof import('../../src/cli.ts'),
+/** @typedef {{'features/forward/forward-resource-owner.js':typeof import('../../src/features/forward/forward-resource-owner.ts'),
+'cli.js':typeof import('../../src/cli.ts'),
 'index.js':typeof import('../../src/index.ts'),
 'native-services.js':typeof import('../../src/native-services.ts')}} InstalledModules */
 import assert from 'node:assert/strict';
@@ -298,6 +299,8 @@ export async function verifyForwardResourceConsumer(packagePath) {
   /** @template {keyof InstalledModules} Name @param {Name} name @returns {Promise<InstalledModules[Name]>} */
   const load = (name) => import(pathToFileURL(join(packagePath, 'dist', name)).href);
   const { createNativeServices } = await load('native-services.js');
+  const { createForwardResourceOwner } = await load('features/forward/forward-resource-owner.js');
+  await verifyOwnerRetirement(createForwardResourceOwner);
   await checkForwardResourceServices({ createNativeServices });
   await checkForwardResourceTypedElements({ createNativeServices });
   const { QQClient } = await load('index.js');
@@ -415,6 +418,7 @@ export async function verifyForwardResourceConsumer(packagePath) {
   assert.doesNotMatch(merged.stderr, /Unknown command|ENOENT/);
   return {
     forwardResourceContract: true,
+    forwardResourceOwnerRetirementContract: true,
     forwardResourceTypedElementsContract: true,
     nativeForwardResourceAttempted: false,
   };
@@ -455,4 +459,158 @@ function controlledCloseWorker() {
     },
   });
   return worker;
+}
+
+/** Installed owner uses synthetic ports only, never a client or account.
+ * @param {InstalledModules['features/forward/forward-resource-owner.js']['createForwardResourceOwner']} createOwner */
+async function verifyOwnerRetirement(createOwner) {
+  const peer = { type: 'group', groupId: '123' };
+  const nodes = [{ userId: '456', nickname: 'fixture', time: 1, text: 'text' }];
+  const response = resourceFixture().response;
+  /** @param {Partial<import('../../src/features/forward/forward-resource-owner.ts').ForwardResourceOwnerContext>} [overrides] */
+  function fixture(overrides = {}) {
+    const controller = new AbortController();
+    /** @type {(()=>void)[]} */
+    const cleanup = [];
+    /** @type {string[]} */
+    const effects = [];
+    const owner = createOwner({
+      selfUid: 'u_self',
+      signal: controller.signal,
+      resolvePeer: async () => {
+        effects.push('resolve');
+        return { chatType: 2, peerUid: '123' };
+      },
+      getMessageService() {
+        effects.push('acquire');
+        return {
+          sendSsoCmdReqByContend(command) {
+            effects.push(command.includes('SsoSend') ? 'upload' : 'read');
+            return {
+              rspbuffer: command.includes('SsoSend') ? Buffer.from('12031a0172', 'hex') : response,
+            };
+          },
+        };
+      },
+      sendPrepared: async (_peer, _elements, onDispatch) => {
+        effects.push('card');
+        onDispatch();
+        return { messageId: '42', sequence: '9', time: 100 };
+      },
+      defer: (step) => cleanup.push(step),
+      ...overrides,
+    });
+    return {
+      owner,
+      controller,
+      cleanup,
+      effects,
+      close: () => {
+        for (const step of cleanup) step();
+        controller.abort();
+      },
+    };
+  }
+  /** @param {Promise<unknown>} pending */
+  async function rejectsPromptly(pending) {
+    /** @type {ReturnType<typeof setTimeout>|undefined} */
+    let timer;
+    try {
+      await Promise.race([
+        assert.rejects(pending),
+        new Promise((_, reject) => {
+          timer = setTimeout(
+            () => reject(Error('Installed forward owner cancellation stalled')),
+            1000,
+          );
+        }),
+      ]);
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+  const upload = fixture();
+  try {
+    upload.cleanup[0]();
+    await rejectsPromptly(upload.owner.sendMerged(peer, nodes, {}));
+    assert.deepEqual(upload.effects, []);
+    assert.equal((await upload.owner.readResource('r')).resourceId, 'r');
+    assert.deepEqual(upload.effects, ['acquire', 'read']);
+  } finally {
+    upload.close();
+  }
+  const read = fixture();
+  try {
+    read.cleanup[1]();
+    await rejectsPromptly(read.owner.readResource('r'));
+    assert.deepEqual(read.effects, []);
+    assert.deepEqual(await read.owner.sendMerged(peer, nodes, {}), {
+      messageId: '42',
+      sequence: '9',
+      time: 100,
+      resourceId: 'r',
+    });
+    assert.deepEqual(read.effects, ['resolve', 'acquire', 'upload', 'card']);
+  } finally {
+    read.close();
+  }
+  /** @type {(reason:unknown)=>void} */
+  let rejectLate = () => assert.fail('Resolver not called');
+  let resolutions = 0;
+  const stalled = fixture({
+    resolvePeer: () => {
+      resolutions++;
+      return new Promise((_, reject) => {
+        rejectLate = reject;
+      });
+    },
+  });
+  const pending = stalled.owner.sendMerged(peer, nodes, {});
+  stalled.cleanup[0]();
+  try {
+    await rejectsPromptly(pending);
+    assert.equal(resolutions, 1);
+    assert.deepEqual(stalled.effects, []);
+    rejectLate(Error('Late synthetic resolver failure'));
+    await new Promise((done) => setImmediate(done));
+  } finally {
+    stalled.close();
+  }
+  for (const failed of [false, true]) {
+    const controller = new AbortController();
+    let submissions = 0;
+    const settled = fixture({
+      signal: controller.signal,
+      sendPrepared: (_peer, _elements, onDispatch) => {
+        submissions++;
+        onDispatch();
+        controller.abort(Error('Synthetic retirement during submission'));
+        return failed
+          ? Promise.reject(Object.assign(Error('Synthetic native failure'), { code: 7 }))
+          : Promise.resolve({ messageId: '42', sequence: '9', time: 100 });
+      },
+    });
+    try {
+      await assert.rejects(settled.owner.sendMerged(peer, nodes, {}), (error) => {
+        assert.ok(error instanceof Error && 'code' in error && 'progress' in error);
+        assert.equal(error.code, failed ? 7 : undefined);
+        assertRecord(error.progress);
+        assert.equal(error.progress.resourceId, 'r');
+        assert.equal(error.progress.cardCompletion, 'unknown');
+        return true;
+      });
+      assert.equal(submissions, 1);
+      assert.deepEqual(settled.effects, ['resolve', 'acquire', 'upload']);
+    } finally {
+      settled.close();
+    }
+  }
+  const aborted = fixture();
+  try {
+    aborted.controller.abort();
+    await rejectsPromptly(aborted.owner.sendMerged(peer, nodes, {}));
+    assert.deepEqual(aborted.effects, []);
+  } finally {
+    aborted.close();
+  }
 }

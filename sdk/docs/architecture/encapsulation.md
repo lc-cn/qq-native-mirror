@@ -415,6 +415,17 @@ signal. Read preflight precedes native service acquisition; merged sending still
 captures input, resolves the destination, checks cancellation, then uploads and
 sends the card. Two deferred cleanup entries retain the original upload/read order
 and account cleanup error semantics. Construction never acquires native services.
+Each cleanup retires its own lane before closing its lazy transport, including
+when no transport exists yet. Upload cleanup cannot retire reads, and read cleanup
+cannot retire uploads. The lanes combine local retirement with the account signal;
+peer and card waits cancel promptly, observe late rejections and release their
+abort subscriptions. Preparation checks retirement before and after port capture,
+provider calls and upload-constructor inspection, preserving receivers and the existing
+error contracts. A constructor candidate cannot be retained after cleanup already
+ran. A submitted card retains its uploaded resource and unknown completion on
+cancellation, with no replay or assumption that native work was undone. An
+already rejected card result keeps its explicit native code when dispatch also
+retires the lane; a successful result still cannot publish after retirement.
 
 `merged-forward-input` owns the complete peer, node and card-option snapshot. It
 validates the captured own data descriptors, preserving strict field/prototype
