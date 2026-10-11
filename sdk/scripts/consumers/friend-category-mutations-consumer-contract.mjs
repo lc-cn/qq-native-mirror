@@ -390,6 +390,12 @@ async function verifyAssignment(packageRoot, createNativeServices, QQClient) {
       clientVersion: '7.0.2-53644',
       wrapperSha256: 'fbc8ad9b328d05e16784d76b0181dda894c17001179dbf8c0d5dd00dc6271358',
     },
+    {
+      platform: 'win32',
+      arch: 'x64',
+      clientVersion: '9.9.33-52230',
+      wrapperSha256: '63112ab9161e127f5f7e17998a7196e143808923fb54cbbf7b4e21426187a5f0',
+    },
   ];
   assert.equal(profiles.length, expectedProfiles.length);
   for (const expected of expectedProfiles)
@@ -489,11 +495,13 @@ async function verifyAssignment(packageRoot, createNativeServices, QQClient) {
     let calls = 0;
     /** @type {(value:unknown)=>void} */
     let resolveUid = () => assert.fail('UID resolver missing');
+    /** @type {unknown} */
+    let acknowledgement = { result: 73, errMsg: 'private fixture detail' };
     const buddy = {
       addKernelBuddyListener() {},
       setBuddyCategory() {
         calls++;
-        return { result: 73, errMsg: 'private fixture detail' };
+        return acknowledgement;
       },
     };
     const services = createNativeServices({
@@ -518,19 +526,37 @@ async function verifyAssignment(packageRoot, createNativeServices, QQClient) {
         },
       );
       assert.equal(calls, 1);
+      for (const malformed of [
+        { result: '0', errMsg: 'private fixture detail' },
+        {},
+        { result: 0x8000_0000, errMsg: 'private fixture detail' },
+      ]) {
+        acknowledgement = malformed;
+        /** @type {number} */
+        const before = calls;
+        await assert.rejects(
+          services.invokeOperation('setFriendCategory', { userId: '123', categoryId: 1 }),
+          (error) => error instanceof Error && !error.message.includes('private fixture detail'),
+        );
+        assert.equal(calls, before + 1, 'Malformed ACK must not retry the mutation');
+      }
       for (const payload of [
         { userId: '0', categoryId: 1 },
         { userId: '123', categoryId: -1 },
         { userId: '123', categoryId: '1' },
       ])
         await assert.rejects(services.invokeOperation('setFriendCategory', payload));
-      assert.equal(calls, 1);
+      assert.equal(calls, 4);
     } finally {
       services.close();
     }
+    let lateBuddyAcquisitions = 0;
     const closed = createNativeServices({
       session: {
-        getBuddyService: () => buddy,
+        getBuddyService: () => {
+          lateBuddyAcquisitions++;
+          return buddy;
+        },
         getUixConvertService: () => ({
           getUid: () =>
             new Promise((resolve) => {
@@ -544,6 +570,8 @@ async function verifyAssignment(packageRoot, createNativeServices, QQClient) {
       binaryProfile: profile,
       events: { emit() {} },
     });
+    lateBuddyAcquisitions = 0;
+    const beforeClosedCalls = calls;
     const pending = closed.invokeOperation('setFriendCategory', { userId: '123', categoryId: 1 });
     const rejected = assert.rejects(pending);
     await new Promise((resolve) => setImmediate(resolve));
@@ -551,7 +579,62 @@ async function verifyAssignment(packageRoot, createNativeServices, QQClient) {
     await rejected;
     resolveUid({ uidInfo: new Map([['123', 'u_exact']]) });
     await new Promise((resolve) => setImmediate(resolve));
-    assert.equal(calls, 1);
+    assert.equal(calls, beforeClosedCalls);
+    assert.equal(lateBuddyAcquisitions, 0);
+    /** @type {(error:Error)=>void} */
+    let rejectNative = () => assert.fail('Native rejection latch missing');
+    /** @type {()=>void} */
+    let markDispatched = () => assert.fail('Dispatch latch missing');
+    const dispatched = new Promise((resolve) => {
+      markDispatched = () => resolve(undefined);
+    });
+    let pendingWrites = 0;
+    const pendingBuddy = {
+      addKernelBuddyListener() {},
+      setBuddyCategory(/** @type {string} */ uid, /** @type {number} */ categoryId) {
+        assert.equal(this, pendingBuddy);
+        assert.deepEqual([uid, categoryId], ['u_exact', 1]);
+        pendingWrites++;
+        markDispatched();
+        return new Promise((_, reject) => {
+          rejectNative = reject;
+        });
+      },
+    };
+    const pendingServices = createNativeServices({
+      session: {
+        getBuddyService: () => pendingBuddy,
+        getUixConvertService: () => ({
+          getUid: () => ({ uidInfo: new Map([['123', 'u_exact']]) }),
+        }),
+        getMsgService: () => ({ addKernelMsgListener() {} }),
+        getGroupService: () => ({ addKernelGroupListener() {} }),
+      },
+      version: profile.clientVersion,
+      binaryProfile: profile,
+      events: { emit() {} },
+    });
+    /** @type {unknown[]} */
+    const unhandled = [];
+    const onUnhandled = (/** @type {unknown} */ error) => unhandled.push(error);
+    process.on('unhandledRejection', onUnhandled);
+    try {
+      const mutation = pendingServices.invokeOperation('setFriendCategory', {
+        userId: '123',
+        categoryId: 1,
+      });
+      const unknownEffect = assert.rejects(mutation, /assignment; remote effect unknown/);
+      await dispatched;
+      pendingServices.close();
+      await unknownEffect;
+      rejectNative(new Error('late controlled mutation failure'));
+      await new Promise((resolve) => setImmediate(resolve));
+      assert.deepEqual(unhandled, []);
+      assert.equal(pendingWrites, 1);
+    } finally {
+      pendingServices.close();
+      process.removeListener('unhandledRejection', onUnhandled);
+    }
     const { terminateWorker } =
       await /** @type {Promise<typeof import('../../src/runtime/worker-termination.ts')>} */ (
         import(pathToFileURL(join(packageRoot, 'dist/runtime/worker-termination.js')).href)
@@ -649,9 +732,15 @@ export function createKernel(_n,_o,emit){let calls=0;const buddy={addKernelBuddy
   return {
     friendCategoryAssignmentBinaryGateContract: true,
     friendCategoryAssignmentLinuxMacCompositionContract: true,
-    friendCategoryAssignmentSharedWorkerFixturePlatform: 'linux/x64,linux/arm64,darwin/arm64',
+    friendCategoryAssignmentSharedWorkerFixturePlatform: expectedProfiles
+      .map(({ platform, arch }) => `${platform}/${arch}`)
+      .join(','),
     friendCategoryAssignmentLinuxArmCompositionContract: true,
-    friendCategoryAssignmentThreeProfileWorkerCliContract: true,
+    friendCategoryAssignmentEnabledProfilesWorkerCliContract: true,
+    friendCategoryAssignmentVerifiedProfileCount: expectedProfiles.length,
+    friendCategoryAssignmentMalformedAckContract: true,
+    friendCategoryAssignmentPostDispatchCloseContract: true,
+    friendCategoryAssignmentLateUidNoAcquisitionContract: true,
     friendCategoryAssignmentCompositionContract: true,
     friendCategoryAssignmentFacadeContract: true,
     friendCategoryAssignmentCliContract: true,

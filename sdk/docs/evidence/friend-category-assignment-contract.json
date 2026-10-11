@@ -401,6 +401,652 @@
         }
       ],
       "traceDistinction": "Completion closure50a1000+8 contains KernelTrace, not the original request. The separate original PB request route above supplies identity evidence. BuddyExtSpecifyUidCodec11d7150 belongs to another vector route and is not used as proof here."
+    },
+    {
+      "platform": "win32",
+      "arch": "x64",
+      "clientVersion": "9.9.33-52230",
+      "wrapperSha256": "63112ab9161e127f5f7e17998a7196e143808923fb54cbbf7b4e21426187a5f0",
+      "manifestSha256": "7373fca97953a24c550bb73298b5008f4988fad934eaab4c1a21f07dd7dfc9c8",
+      "method": "setBuddyCategory",
+      "argumentCount": 2,
+      "arguments": [
+        "UID string",
+        "categoryId:uint32"
+      ],
+      "binding": "0x181015abc",
+      "core": "0x1800a5478",
+      "receiver": "Normal Session18002b606 ->host factory180016e6c/constructor1800176ce/pair18001904c ->same Session+490 pair installation18002b859/180002ec8; getter180032076 ->host+538 secondary alias from actual constructor1807a2968 installing AP183f78868 at object+20. Core180095074 retains same alias+60/+68; AP183ecafa8+b8 ->1800a5478 ->actual secondaryAP183f78868+58/1807a6ec6.",
+      "normalResult": "Original env/deferred carrier180d692f1 ->callback1821c204c payload ->1821c215e ->1821c2283; bound QQNT.dll NAPI imports create signed int32 result and UTF8 errMsg named properties, then resolve original deferred. Nonzero status also serializes; numeric0 acceptance is SDK policy.",
+      "identityDataflow": "Node181015abc string conversion180bf2b5f/180bf2aae ->core selector1000; same original PB ->actual receiver1807a6ec6 ->closure1807a704e/1807adec0 ->factory1810c3d6c ->cached worker18246f608 ->serializer18246f68a. Selector1000 via1807cea7e becomes field1 string, unchanged original source.",
+      "categoryDataflow": "Node181015abc uint32 converter180bf2d23 preserves r8d ->core selector61af. Same original PB reaches18246f68a, selector61af via1809972d8 becomes field2 numeric. Uint32 narrowing comes from original Node/Core typed source, not the generic serializer alone.",
+      "listCategoryIdNamespaceVerified": true,
+      "categoryNamespace": "Fresh core factory18004a547/180022a60 ->18001687c installs same original object/control selfweak+38/+40. V2 AP183ecafa8+1a0/1800ac960 locks that core, SDK source0 caches+ c0/c8 and copies rows stride64 preserving first8. Node18101b4e2 exposes row0 uint32 categoryId. Rename1800a6a5a compares same cached row0 and writes selector61af, also written by this assignment. Refresh-success reuses same core/list callback.",
+      "wireDataflow": "Worker18246f608 ->base181720b1c stores command10eb at+30/sub1 at+34 and original request+20/+28. Worker18246f68a serializes same PB using actual generic PB AP1842613e8 (field1 virtual178, field2 virtual158, serialization virtual100). Base181720b80 retains same encoded body, command and subcommand through both dispatch branches ->181721c8c ->actual supplier virtualb8 leaf1802aa0d2, with edx=10eb/r8d=1/r9=body.",
+      "uidInterpretation": "Inference from exact command0x10eb/subcommand1 and field1 string/field2 uint32 body matched to the pinned independent protocol implementation; not a native named UID codec connection or an official QQ schema.",
+      "primaryProtocolSources": [
+        {
+          "repository": "LLOneBot/LuckyLilliaBot",
+          "commit": "4c9670c548c84461b8105054bd1ff0c1dddbb8b9",
+          "path": "src/ntqqapi/proto/oidb.ts",
+          "lines": [
+            621,
+            625
+          ],
+          "gitBlobSha": "d774d495603a5629c7db32898dd267316cb27657",
+          "sha256": "91f8b0f153ab68e2fa93a423d6a56f38e928670d67f432bd9365c8da49312ca9",
+          "url": "https://github.com/LLOneBot/LuckyLilliaBot/blob/4c9670c548c84461b8105054bd1ff0c1dddbb8b9/src/ntqqapi/proto/oidb.ts#L621-L625"
+        },
+        {
+          "repository": "LLOneBot/LuckyLilliaBot",
+          "commit": "4c9670c548c84461b8105054bd1ff0c1dddbb8b9",
+          "path": "src/main/qqProtocol/mixins/friend.ts",
+          "lines": [
+            126,
+            132
+          ],
+          "gitBlobSha": "5efab014c8a6a00247eee6590ea6841fd8cfee8a",
+          "sha256": "de374ad2a3c336e157832133f3c56d77dff34aa57924e8f8fc123c01af9b2c81",
+          "url": "https://github.com/LLOneBot/LuckyLilliaBot/blob/4c9670c548c84461b8105054bd1ff0c1dddbb8b9/src/main/qqProtocol/mixins/friend.ts#L126-L132"
+        }
+      ],
+      "functions": [
+        {
+          "start": "0x180095074",
+          "end": "0x1800951a7",
+          "rawSha256": "d1e3549c09102b1fab18e0c74734da7d25bc43327cc4132cbc51a7e3e0670b79",
+          "wholePdata": true
+        },
+        {
+          "start": "0x181015abc",
+          "end": "0x181015cb4",
+          "rawSha256": "1f9edc50671e227832d075bea525ee7759910e7c2b9e9076492d70e4ff167305",
+          "wholePdata": true
+        },
+        {
+          "start": "0x1800a5478",
+          "end": "0x1800a56c6",
+          "rawSha256": "e1723e47cc918d2e6803aa6ebab195147702fdbe48c0cc9da22030183a2c1e47",
+          "wholePdata": true
+        },
+        {
+          "start": "0x180bf2b5f",
+          "end": "0x180bf2c3a",
+          "rawSha256": "f318da46fbb94ef9b1881914811d8ca1dc7581b086f903d877377f2d6dee6525",
+          "wholePdata": true
+        },
+        {
+          "start": "0x180bf2d23",
+          "end": "0x180bf2dc0",
+          "rawSha256": "e921729dd87c4a16b5da0776252b197ebb983f336978909725c10d38f1c3786a",
+          "wholePdata": true
+        },
+        {
+          "start": "0x180bf2aae",
+          "end": "0x180bf2b5f",
+          "rawSha256": "b28b3307bc5a2b061c0cbb3d38b5c8d1fff1d0d48c40e851df90da42108b3eff",
+          "wholePdata": true
+        },
+        {
+          "start": "0x180d5edb1",
+          "end": "0x180d5edee",
+          "rawSha256": "88d9cc499e1df4d99a30378161bc76239083a1a2531e546d8644ae54f98b5589",
+          "wholePdata": true
+        },
+        {
+          "start": "0x180d692f1",
+          "end": "0x180d69376",
+          "rawSha256": "c4b2b591bea3b8117b99d6ec19eb6de31d79c08b489cbb5989add1831aa6e3fc",
+          "wholePdata": true
+        },
+        {
+          "start": "0x1821c204c",
+          "end": "0x1821c20de",
+          "rawSha256": "740c309fc68ee5ea09cb95c23cf56315995a501e813fb5e1de4a7e821b66f03a",
+          "wholePdata": true
+        },
+        {
+          "start": "0x180020712",
+          "end": "0x180020740",
+          "rawSha256": "4f0162ab5b16f081dccada701eb8f08ebd0517787ed324da980a24d5793bee27",
+          "wholePdata": true
+        },
+        {
+          "start": "0x1807a2968",
+          "end": "0x1807a2ae2",
+          "rawSha256": "d565db966780b2b168bfa4982bf717a264a8ab1aad8cfcd40e5ca8f8f619ddea",
+          "wholePdata": true
+        },
+        {
+          "start": "0x1807a6ec6",
+          "end": "0x1807a6fbb",
+          "rawSha256": "e92e464ba09d059207cf4d0adb4bd984f02f72397e33b44c8f5a225df0b2b7ff",
+          "wholePdata": true
+        },
+        {
+          "start": "0x1807a704e",
+          "end": "0x1807a7109",
+          "rawSha256": "8c0c0b595b781fadfc838a102b400462398f1224012ede3edd5f65074a5b4dd9",
+          "wholePdata": true
+        },
+        {
+          "start": "0x1821c215e",
+          "end": "0x1821c21c2",
+          "rawSha256": "71cd358b49187127eae583c12c28e080f2ba864f38385164fd0eb85f11a72bc6",
+          "wholePdata": true
+        },
+        {
+          "start": "0x1821c226e",
+          "end": "0x1821c2283",
+          "rawSha256": "dbf538be88cac492ef6fd6712b703bdf6dbd5aa953be9d861a37d19ba373b174",
+          "wholePdata": true
+        },
+        {
+          "start": "0x1821c2283",
+          "end": "0x1821c23f5",
+          "rawSha256": "0d8b17d910f299f66d75931e1d1fb97a14a3a488577856210b7dc2b1784fff6b",
+          "wholePdata": true
+        },
+        {
+          "start": "0x1821c242a",
+          "end": "0x1821c24b3",
+          "rawSha256": "3453a859fc8ee2cf99ff4780f54e9decea3a8701197ec875afdb1956228448d8",
+          "wholePdata": true
+        },
+        {
+          "start": "0x180bf33ff",
+          "end": "0x180bf348e",
+          "rawSha256": "ab8effb40997b8a1bd96eca0a856727595a2a217ac5586eec52b86f29e94df68",
+          "wholePdata": true
+        },
+        {
+          "start": "0x1800139e4",
+          "end": "0x180013a30",
+          "rawSha256": "e0af260dbbfbf63a630dfd6172958f97905ae3eb82c00670c2fa29616420fb88",
+          "wholePdata": true
+        },
+        {
+          "start": "0x1821b03c2",
+          "end": "0x1821b0411",
+          "rawSha256": "b57a4a73a24152daba879a1b767d3217be991d6974bb5832e8c72ba952bdd9d2",
+          "wholePdata": true
+        },
+        {
+          "start": "0x180046448",
+          "end": "0x180046481",
+          "rawSha256": "bd01faba998cacad90a47df4cb8ebd6970192111f90a1e6a1ee78a652f6e2ace",
+          "wholePdata": true
+        },
+        {
+          "start": "0x18075b810",
+          "end": "0x18075b896",
+          "rawSha256": "aa235dd47da3128f75a1f241890209dcc26fb2a4c3aaa522e765f4e5850cc1cb",
+          "wholePdata": true
+        },
+        {
+          "start": "0x1810c3d6c",
+          "end": "0x1810c3e86",
+          "rawSha256": "7446f33ff3c64bed8de65586498a8fa0f08fa75641314a7c8d11fbaf27403f26",
+          "wholePdata": true
+        },
+        {
+          "start": "0x1810c3f29",
+          "end": "0x1810c3f66",
+          "rawSha256": "73780627ed1f3853fb42ae822cb665ebbb129533bc8733124e33c79f237f5e70",
+          "wholePdata": true
+        },
+        {
+          "start": "0x1810c765c",
+          "end": "0x1810c76ca",
+          "rawSha256": "97cde468d88b5e883a98cb08509de181d5103636eb3e591789b6076fbc5607ec",
+          "wholePdata": true
+        },
+        {
+          "start": "0x1810c76f2",
+          "end": "0x1810c7733",
+          "rawSha256": "f7e29f933f7796b638ce2c9e8531b6ad878baff64b187d39ad92c4ce6477f315",
+          "wholePdata": true
+        },
+        {
+          "start": "0x1810c7778",
+          "end": "0x1810c77cc",
+          "rawSha256": "3d3241ebc784c0fb5fad346a38ab25a27f9c6943f3494773161faad2880df935",
+          "wholePdata": true
+        },
+        {
+          "start": "0x18246f608",
+          "end": "0x18246f66a",
+          "rawSha256": "1ded8ccb994345f6095ed87361bd945e9aaa19cf787dabd5f04c3b706007e2ec",
+          "wholePdata": true
+        },
+        {
+          "start": "0x181720b1c",
+          "end": "0x181720b73",
+          "rawSha256": "9f900c39ce58f5c56b9dd6f52a365fba295fa2dc947234bd29cdd3e354b1062c",
+          "wholePdata": true
+        },
+        {
+          "start": "0x18246f68a",
+          "end": "0x18246f724",
+          "rawSha256": "1eb533953c02444167223c6f95fb8e6f54a36f687857232d437c26ff97b4a950",
+          "wholePdata": true
+        },
+        {
+          "start": "0x181720b80",
+          "end": "0x181720dee",
+          "rawSha256": "5db00c4f18c92a31b4477dd1464aa939ba02d15433969fb2e9e21358a04bb6b7",
+          "wholePdata": true
+        },
+        {
+          "start": "0x1807cea7e",
+          "end": "0x1807ceb09",
+          "rawSha256": "6417031e9b9f2c79efbf211012aa137e8198b7b34330fe184d51b1a8aaaf1ec8",
+          "wholePdata": true
+        },
+        {
+          "start": "0x1809972d8",
+          "end": "0x180997340",
+          "rawSha256": "4d17ac68c6b356b46c64496ee85b6e0daee8894e0ea031dad08d0a83fa1adb1e",
+          "wholePdata": true
+        },
+        {
+          "start": "0x180c70dda",
+          "end": "0x180c70e17",
+          "rawSha256": "793ee8f40bcc490195fb434ce8601e79831ad30f640b5aa8161a4e7ff1746d14",
+          "wholePdata": true
+        },
+        {
+          "start": "0x181721c8c",
+          "end": "0x181721d76",
+          "rawSha256": "d92c97bddcad6450ce93fcadfcb3f1e77d332c0a54f40fe944d6abf8e00746e0",
+          "wholePdata": true
+        },
+        {
+          "start": "0x180d3a4d0",
+          "end": "0x180d3a4e6",
+          "rawSha256": "44bdc9806df44ddfafacee72f59a7c07fdde29cb5cced4dceb96f299337a611d",
+          "wholePdata": true
+        },
+        {
+          "start": "0x180d3a2a0",
+          "end": "0x180d3a30e",
+          "rawSha256": "63fb7750e786f012a1319bcd943ee3ccad4af4c7027a81fda4e318e70aeba46f",
+          "wholePdata": true
+        },
+        {
+          "start": "0x1802aa0d2",
+          "end": "0x1802aa0df",
+          "rawSha256": "03b4c0bfba586b0ffc2d1c4f15f1dc5dbc83e37f8c50029998ac03b6712132d5",
+          "wholePdata": false
+        },
+        {
+          "start": "0x1821832d0",
+          "end": "0x1821832f0",
+          "rawSha256": "49e789365dc8c58f5f1953d2db409a2ec3bbc896cc9655202bde687b79c0411f",
+          "wholePdata": false
+        },
+        {
+          "start": "0x1821866d0",
+          "end": "0x182186945",
+          "rawSha256": "582fe5057e726af46871b0c46852234326463f7d3d9f9c40cdae336d50d6cb7a",
+          "wholePdata": true
+        },
+        {
+          "start": "0x18218c2f0",
+          "end": "0x18218c2fb",
+          "rawSha256": "5f327d0b3192cdb1285939916902a6882cab8d0497e6904e3f7b9dff8e151028",
+          "wholePdata": false
+        },
+        {
+          "start": "0x18218c330",
+          "end": "0x18218c51e",
+          "rawSha256": "b1ec0109bcdb77bd38700c0f4d83b8de8620cf93da2ccaacf6660bf22509f122",
+          "wholePdata": true
+        },
+        {
+          "start": "0x18004a727",
+          "end": "0x18004a7b2",
+          "rawSha256": "81b69c173bd081e1ced1e77600094320d54b5b7d410cf866dc57f72629662d44",
+          "wholePdata": true
+        },
+        {
+          "start": "0x18004a61a",
+          "end": "0x18004a66b",
+          "rawSha256": "1fdde41941f581b2ba590a1d867ffe439d5084d9494869ab2736bdab2ba0a9cd",
+          "wholePdata": true
+        },
+        {
+          "start": "0x1807adec0",
+          "end": "0x1807adf86",
+          "rawSha256": "b1e31629228494164f46587e1271218e5e950bce70c55aff6ecb0b3600255dfd",
+          "wholePdata": true
+        },
+        {
+          "start": "0x1807aaa3a",
+          "end": "0x1807aaa8e",
+          "rawSha256": "54a8aeddcf863e5c258a57bb3e4dd0f0edec0be08febfaf7370214d400b53ed7",
+          "wholePdata": true
+        },
+        {
+          "start": "0x1807a33e0",
+          "end": "0x1807a349c",
+          "rawSha256": "e1da436ec6397e65fb38413cd71464d9452ab5d0effbb3c45c5e46f7ee8ddff7",
+          "wholePdata": true
+        },
+        {
+          "start": "0x18004a547",
+          "end": "0x18004a5c6",
+          "rawSha256": "26fa4f7b991469bbb5ddd46b537b2077c5a317e8a4cf1bef58826162e81ba22e",
+          "wholePdata": true
+        },
+        {
+          "start": "0x18003230d",
+          "end": "0x18003235f",
+          "rawSha256": "f8042233901aef11f39a5f6b45fa65b975b3fc16c423fe599a74726cd92623e9",
+          "wholePdata": true
+        },
+        {
+          "start": "0x180032076",
+          "end": "0x18003223d",
+          "rawSha256": "1950cbaf2d2bfd54431485154550fa4b2b74f3c129470620f40409749f1e12f6",
+          "wholePdata": true
+        },
+        {
+          "start": "0x18001a5fa",
+          "end": "0x18001a9b3",
+          "rawSha256": "ead7e51596091e0832359a413e6439b631d6c48f118ac5c4a5bac3ac2ed70756",
+          "wholePdata": true
+        },
+        {
+          "start": "0x1800176ce",
+          "end": "0x18001893c",
+          "rawSha256": "eac78a65c0468628bb7c0698d6f49e39e7be17583831bdaea8176905630e92f7",
+          "wholePdata": true
+        },
+        {
+          "start": "0x18001b538",
+          "end": "0x18001b55a",
+          "rawSha256": "941f477ab986ca2fb6e5625573f591a30df411921e45dde949ded480f248ea97",
+          "wholePdata": false
+        },
+        {
+          "start": "0x180020e86",
+          "end": "0x180020ec4",
+          "rawSha256": "823a8f4aacaa66255a90d757c541b4c9b01fd3236c64268a1f3bc9551a8c9a6d",
+          "wholePdata": true
+        },
+        {
+          "start": "0x180020ddb",
+          "end": "0x180020e3f",
+          "rawSha256": "3eadfdf6921a959f2e1c84060481cd836be8eb221933096a0ad679f0263e71fe",
+          "wholePdata": true
+        },
+        {
+          "start": "0x18001971a",
+          "end": "0x180019754",
+          "rawSha256": "262360c78651f94151dc6cfa8185d2eff9995d79ecdd2207e50ab2735b62a9a2",
+          "wholePdata": true
+        },
+        {
+          "start": "0x1800194ee",
+          "end": "0x18001954a",
+          "rawSha256": "6b7d62b13ce8b0cd52e913978c1c220c6e842c461ffc9ce2696205865d72482b",
+          "wholePdata": true
+        },
+        {
+          "start": "0x18004bb0e",
+          "end": "0x18004be21",
+          "rawSha256": "02daa838ef15b5672bc5050fbc3d629a0112c787069f304ec85a63cae77c1060",
+          "wholePdata": true
+        },
+        {
+          "start": "0x180022a60",
+          "end": "0x180022a8e",
+          "rawSha256": "1c464b252f79296c3cf0b8e29973a70ea265b44653c7942841bb9193e376fc20",
+          "wholePdata": true
+        },
+        {
+          "start": "0x180016e6c",
+          "end": "0x180017086",
+          "rawSha256": "bb669f2ad0a561eb3b8a9dce063fe9ad693d1b3b41709a2147e5a6232bf7bf2f",
+          "wholePdata": true
+        },
+        {
+          "start": "0x18001687c",
+          "end": "0x1800168cd",
+          "rawSha256": "8ac6c22ae4829eceeff254222545e658cab45a6693a806dfab2f751747679083",
+          "wholePdata": true
+        },
+        {
+          "start": "0x18004ba7b",
+          "end": "0x18004bb0e",
+          "rawSha256": "8a869fb8c9d0535531fbdde01f00bf3dbb6500e55a62a10c6a92bc26af537718",
+          "wholePdata": true
+        },
+        {
+          "start": "0x1800168ce",
+          "end": "0x180016922",
+          "rawSha256": "cad76366d9520839723b431a7337f75f45f682a401c322357d88e7c139ec5288",
+          "wholePdata": true
+        },
+        {
+          "start": "0x18002b606",
+          "end": "0x18002c99c",
+          "rawSha256": "156aa453963340571e96aae9a9feacaf2ecf38dead093c13e9d9c6a27f0ce0da",
+          "wholePdata": true
+        },
+        {
+          "start": "0x18001904c",
+          "end": "0x1800190b8",
+          "rawSha256": "44f60fba0ba1d0a92b570580ef41ade70ca8fc8f682a6336bf91de9192444a43",
+          "wholePdata": true
+        },
+        {
+          "start": "0x180002ec8",
+          "end": "0x180002f11",
+          "rawSha256": "0ee7c5685e2e6a47e451a8ac4e2da2cbd3c87fb11242498ac945d22dce6cb8ea",
+          "wholePdata": true
+        },
+        {
+          "start": "0x1800ac960",
+          "end": "0x1800acb43",
+          "rawSha256": "7c58acc249b54d02c107bce94aa1b0d8a14b046aaba5b0128c51a1e1563219b0",
+          "wholePdata": true
+        },
+        {
+          "start": "0x1800a6a5a",
+          "end": "0x1800a6ceb",
+          "rawSha256": "b2b7f76d38694f622fdb0661b0f4a36a264b9b1cdaf416694716d3b26d5d3a18",
+          "wholePdata": true
+        },
+        {
+          "start": "0x1800acf40",
+          "end": "0x1800ad195",
+          "rawSha256": "f3149485caf52f5440bcc525a56ee8179ecc71ce2739fea4b288083d6345a848",
+          "wholePdata": true
+        },
+        {
+          "start": "0x18101af80",
+          "end": "0x18101b1a4",
+          "rawSha256": "b1b0f232329d432f4de06220711455c9b8fefc630db8cd2370a8385d40cfad0e",
+          "wholePdata": true
+        },
+        {
+          "start": "0x18101b4e2",
+          "end": "0x18101b6f1",
+          "rawSha256": "bfcfae8394feafb483ff3727aa3b397cc0453e7cae6ab28c68cf9308ff3958d1",
+          "wholePdata": true
+        },
+        {
+          "start": "0x1800ad2d6",
+          "end": "0x1800adb35",
+          "rawSha256": "bc1b8b2ad5534456294d0cb4728900f853df2dc64b5f09f66db4bbdd78a3f7df",
+          "wholePdata": true
+        },
+        {
+          "start": "0x1800add62",
+          "end": "0x1800ade16",
+          "rawSha256": "0ec65fe1ff1cd4b82185335c344b12e44ed9362daefc790d0c2d8bf15a062f8a",
+          "wholePdata": true
+        },
+        {
+          "start": "0x1800ad2ae",
+          "end": "0x1800ad2d6",
+          "rawSha256": "af402f5466ef3953684ec941b5106f15de8af51a73166b49f4d6202bdbfa0c4f",
+          "wholePdata": true
+        },
+        {
+          "start": "0x1800c8bac",
+          "end": "0x1800c8c70",
+          "rawSha256": "c82adc7426f1394447445332d121df0b9166b3c73bc134f3818e4898ea874d45",
+          "wholePdata": true
+        },
+        {
+          "start": "0x1800c9973",
+          "end": "0x1800c99bb",
+          "rawSha256": "2496560dd5175446d627e4957d46e441c8167ee635a95ff125c2937e2c0e54eb",
+          "wholePdata": true
+        },
+        {
+          "start": "0x1800c97ae",
+          "end": "0x1800c9821",
+          "rawSha256": "61750a6497ae240d9b331fe92bdd01b7b41d73c2f5cfcbadd1ab5e7b3ae57f74",
+          "wholePdata": true
+        },
+        {
+          "start": "0x1800ace22",
+          "end": "0x1800aceed",
+          "rawSha256": "36eda2930147e90c64a1f58b0894990adc7c5ad3dc69c89c2c27f92a8ea084b2",
+          "wholePdata": true
+        },
+        {
+          "start": "0x1800c8e78",
+          "end": "0x1800c8eac",
+          "rawSha256": "3b886aaae335cb1aeec0d3c1f973f62af3fb8ed05d16ec15c1f7c8265806d87b",
+          "wholePdata": true
+        },
+        {
+          "start": "0x1800c8ec6",
+          "end": "0x1800c8f2b",
+          "rawSha256": "4569c8b623bd7c59b1a31a4ba3703db663ec123e1a558a13cc5e69b6bc41c7b5",
+          "wholePdata": true
+        },
+        {
+          "start": "0x1800c8f58",
+          "end": "0x1800c8f7b",
+          "rawSha256": "5c134afa99692d1ea91427a6c5dc0d6b0108873b7d3246767991ef349c6698ac",
+          "wholePdata": true
+        },
+        {
+          "start": "0x1800c8f7c",
+          "end": "0x1800c9492",
+          "rawSha256": "a748f59cafcd9b554806cc162dba8ef152241f11437cc5fc2afc372e5c098271",
+          "wholePdata": true
+        },
+        {
+          "start": "0x1800c9776",
+          "end": "0x1800c97a5",
+          "rawSha256": "c2612f8030def8636d7abc77e0970677c2bfaf57f71b232debc4d78df24a00ec",
+          "wholePdata": true
+        },
+        {
+          "start": "0x1800ae77a",
+          "end": "0x1800ae8d6",
+          "rawSha256": "192ecff5097cb3a6add46639f12c63cb496c7b37ea748b4b72e263b42cdd6c2b",
+          "wholePdata": true
+        },
+        {
+          "start": "0x1800c9bf5",
+          "end": "0x1800c9c6c",
+          "rawSha256": "2c36b48384a823a2eb6b1958eae81bc265215b4dbbf5d6fc46400ca531bcc173",
+          "wholePdata": true
+        },
+        {
+          "start": "0x1800c9c98",
+          "end": "0x1800c9ce0",
+          "rawSha256": "18d33f23301c74125004e4109e914737b9acb215872d1a0771b405d9e7723807",
+          "wholePdata": true
+        },
+        {
+          "start": "0x1800c9d24",
+          "end": "0x1800c9d9a",
+          "rawSha256": "ae6f9db7784a0535b5aaa9a901af6db4ebb431238611f89a2b4ddf0f965c87c5",
+          "wholePdata": true
+        },
+        {
+          "start": "0x1800c9d9a",
+          "end": "0x1800c9e03",
+          "rawSha256": "199cad5f40c953915ff76218505c01478304dcbe122af4c6793d26b19f09d31e",
+          "wholePdata": true
+        },
+        {
+          "start": "0x1800c9e2a",
+          "end": "0x1800c9f58",
+          "rawSha256": "c9ba421aeea1c6efd282674253d3c0534084d47800297102be38de609bca0f2e",
+          "wholePdata": true
+        },
+        {
+          "start": "0x1800c8cf8",
+          "end": "0x1800c8d33",
+          "rawSha256": "c9b545a5614b03cc703272b422da076cf58bc70cca32742fdcc5b125babefc3e",
+          "wholePdata": true
+        },
+        {
+          "start": "0x1800c8c70",
+          "end": "0x1800c8c8d",
+          "rawSha256": "766b44e0bd1dcdef9bb429879a01251829a15ba294d0035b1a78b2e0d50fb2b0",
+          "wholePdata": true
+        },
+        {
+          "start": "0x1800bf37c",
+          "end": "0x1800bf3c0",
+          "rawSha256": "9a53f8ec7b01c3dc65e5059c73dd10248584ebb628e94b35ad554b3e42852284",
+          "wholePdata": true
+        },
+        {
+          "start": "0x1800c8d33",
+          "end": "0x1800c8d68",
+          "rawSha256": "3ed957caf6e2bc49c1a12b229657ae799f2d82eef11047526390212d6e98a60a",
+          "wholePdata": true
+        },
+        {
+          "start": "0x1800c8d68",
+          "end": "0x1800c8da9",
+          "rawSha256": "7ed077398fdd7a57aaac83548235246a1b596f180abab52e9ce590218ccb59db",
+          "wholePdata": true
+        },
+        {
+          "start": "0x1800c8c8e",
+          "end": "0x1800c8cd8",
+          "rawSha256": "c730f37f293f7b4328c29a40060ed3a119361c7cc52364092ebd59712e4da1f5",
+          "wholePdata": true
+        },
+        {
+          "start": "0x1800c8da9",
+          "end": "0x1800c8ddb",
+          "rawSha256": "00dd58dd2106c51a3d54afae2287d9ca41d4994c2333710aa6f0cc4a037bd873",
+          "wholePdata": true
+        },
+        {
+          "start": "0x1800b392c",
+          "end": "0x1800b3980",
+          "rawSha256": "5f0678081bbd654ae7dc9a482eb97b810017dfb7cf9421156c5b1a2556a18897",
+          "wholePdata": true
+        }
+      ],
+      "rawReplay": {
+        "uniqueRanges": 97,
+        "rawBytes": 30772,
+        "wholePdata": 93,
+        "explicitBoundedLeaves": 4,
+        "actualIndependentExit": 0
+      },
+      "limits": [
+        "Concrete final transport supplier target remains unresolved; actual command/subcommand/body call is bound.",
+        "Only an actual normal host installation and fresh-core selfweak path are proven, not every lifecycle/replacement path.",
+        "Normal ACK path is bound; NAPI error paths are not asserted to resolve.",
+        "No native runtime, account, remote membership, signing authenticity or server acceptance proof."
+      ]
     }
   ],
   "relocations": {
@@ -537,6 +1183,46 @@
     {
       "path": "architecture-refactor/category-assignment-linux-arm64-next/continuation-20261012/supplier/login-contract-receipt.json",
       "sha256": "f7bfe34fbd8a59c12645dc782bb82d5524fe371c6e217e6fda8998c60a3287a4"
+    },
+    {
+      "path": "architecture-refactor/category-assignment-windows-x64-next/continuation-20261012/binding/login-contract-receipt.json",
+      "sha256": "8af697fc777ab604761b68ec7b7982659e37fcc263ae5e5f09d02d3243c41164"
+    },
+    {
+      "path": "architecture-refactor/category-assignment-windows-x64-next/continuation-20261012/binding/ack-followup/login-contract-receipt.json",
+      "sha256": "0d70fc0568d004a23b5b1a3b7a3f932d9cf97db60f4e877c56250510bc27dce5"
+    },
+    {
+      "path": "architecture-refactor/category-assignment-windows-x64-next/continuation-20261012/protocol/protocol-stage.json",
+      "sha256": "c35fc463cdec72d2cb7f1dc3db2d931550e9056ecc8281833ba6e0702aff8f5e"
+    },
+    {
+      "path": "architecture-refactor/category-assignment-windows-x64-next/continuation-20261012/protocol/receiver-followup/receiver-chain-receipt.json",
+      "sha256": "d39d095027f9eaeda38f4adb76ecf3484aa1a68b896e9c2d206ebf0b5985a69d"
+    },
+    {
+      "path": "architecture-refactor/category-assignment-windows-x64-next/continuation-20261012/protocol/session-host-followup/session-host-receipt.json",
+      "sha256": "98e9f078b4b32e5172dac831a31cc4d1ed27b1345992ce5bff8ab99da81b0f2b"
+    },
+    {
+      "path": "architecture-refactor/category-assignment-windows-x64-next/continuation-20261012/root/namespace-recheck.json",
+      "sha256": "393f058a2f949b35ca3c3a9c2896e777273b323e2a5c2a31ceca56837aafaf89"
+    },
+    {
+      "path": "architecture-refactor/category-assignment-windows-x64-next/continuation-20261012/root/namespace-entry-functions.json",
+      "sha256": "ca06e7244f1de581c08147b89dbc63f8721f08056c5da1af4895a28d6cdb752e"
+    },
+    {
+      "path": "architecture-refactor/category-assignment-windows-x64-next/continuation-20261012/root/ack-independent-recheck.json",
+      "sha256": "f02a5f11c2529f97d50278f9393479102f7bb0d9b64dbcfb3bdc711f0d130c81"
+    },
+    {
+      "path": "architecture-refactor/category-assignment-windows-x64-next/continuation-20261012/root/call-chain-host-independent-recheck.json",
+      "sha256": "d05756897f3d17041cf9efd7b10b57e485484299960369e1c87017cbfe33c0c6"
+    },
+    {
+      "path": "architecture-refactor/category-assignment-windows-x64-next/continuation-20261012/binding/admission-review/login-contract-receipt.json",
+      "sha256": "f9e54f5f7ea129983003d3941cd26194dd8016366d346dadea57d54d5619c058"
     }
   ],
   "acceptancePolicy": "Only own-data finite int32 result strictly numeric0 yields void native ACK; nonzero safe numeric code rejects without errMsg disclosure. This is SDK acceptance, not remote effect evidence.",
@@ -544,7 +1230,7 @@
   "invariants": [
     "Validate and capture public userId/categoryId primitives before acquiring services; reuse existing ID resolution policy rather than invent UID/UIN parsing.",
     "Resolve public userId to captured native UID once; do not pass original UIN to native string slot.",
-    "Capability match must precede first native acquisition/dispatch and be exact profile/version/wrapper hash; only the listed Linux x64/ARM64 and macOS ARM64 exact binary scopes are enabled.",
+    "Capability match must precede first native acquisition/dispatch and be exact profile/version/wrapper hash; only the listed Linux x64/ARM64, macOS ARM64 and Windows x64 exact binary scopes are enabled.",
     "Acquire nullable service and capture method once, check alive after each fallible/reentrant getter, Reflect.apply with original receiver and exactly2 arguments.",
     "No mutation before validation/UID resolution completion; close or abort before dispatch preserves original cancellation and issues no write.",
     "One native dispatch, no retry/replay/readback; deadline5000 and postdispatch cancellation report remote effect unknown.",
@@ -553,12 +1239,12 @@
   ],
   "limits": [
     "No real account/server mutation outcome; native ACK does not establish membership effect.",
-    "Other3 platform identity dataflows not independently bound here; do not extend gate.",
+    "Other2 platform identity dataflows not independently bound here; do not extend gate.",
     "No proof of protected/default-category admissibility or category existence; uint32 including0 alone cannot establish those policies.",
     "Batch setBatchBuddyCategory identity/semantics remain a separate unproved capability.",
     "Protocol field numbers and concrete codec identity establish static routing only, not server acceptance or membership change.",
-    "macOS and Linux ARM64 UID semantics are inferred from exact native command/body matching to a pinned independent protocol implementation; this does not establish signing authenticity or server acceptance.",
-    "Linux ARM64 proof ends at an actual supplier virtualb8 call carrying the matched command/body. Concrete transport implementation remains unresolved; no server or signing proof follows."
+    "macOS, Linux ARM64 and Windows x64 UID semantics are inferred from exact native command/body matching to a pinned independent protocol implementation; this does not establish signing authenticity or server acceptance.",
+    "Linux ARM64 and Windows x64 proofs end at an actual supplier virtualb8 call carrying the matched command/body. Concrete transport implementation remains unresolved; no server or signing proof follows."
   ],
   "nativeExecuted": false,
   "accountUsed": false
