@@ -1,0 +1,47 @@
+sdk/docs/architecture/encapsulation.md
+  s_2104cc474f1ce5::t_a06e80d8d2102d 464-484
+sdk/docs/development.md
+  s_2104cc474f1ce5::t_46a731fb151c3d 30
+sdk/scripts/recall-consumer-contract.mjs
+  s_2104cc474f1ce5::t_15c52a043bf42b 163,170-376
+sdk/src/client/qq-client.ts
+  s_2104cc474f1ce5::t_342ab4f410ff3a 31,275-276
+sdk/src/features/messages/recall-input.ts
+  s_2104cc474f1ce5::t_143c5d1fdd8402 1-32
+sdk/src/features/messages/recall-operation.ts
+  s_2104cc474f1ce5::t_51bfb2b0907004 1,4-5,7-9,11-14,17-20,22-101
+sdk/src/native-services.ts
+  s_2104cc474f1ce5::t_d53ab0ddd28aeb 46,143-151,426
+sdk/test/architecture.test.ts
+  s_2104cc474f1ce5::t_e47cd8c2be8cfd 855-881
+sdk/test/client.test.ts
+  s_2104cc474f1ce5::t_6b6f9b984fb282 1092-1141
+sdk/test/fixtures/domain-port-types.ts
+  s_2104cc474f1ce5::t_f3c816ffad64a0 275,280-282
+sdk/test/helpers/dependency-policy.ts
+  s_2104cc474f1ce5::t_763f0a5653fcff 123,246-247
+sdk/test/native-services.test.ts
+  s_2104cc474f1ce5::t_2b94b7b07ced37 1716-1721,1732-1734
+sdk/test/operation-contracts.test.ts
+  s_2104cc474f1ce5::t_ca46a969614019 45
+sdk/test/recall-input.test.ts
+  s_2104cc474f1ce5::t_9b810636d3bab3 1-35
+sdk/test/recall-operation.test.ts
+  s_2104cc474f1ce5::t_5fa278aaef8315 3-6,8-9,11-37,40-64,66-81,83-88,90,93-101,103-129,131-151,159,161,163,166-172,174-185,187-207,209-242,244-250,252,254-263,265-268,270-273,275-375
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "432d6d982fbf06364949262ca78693081045df21",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
