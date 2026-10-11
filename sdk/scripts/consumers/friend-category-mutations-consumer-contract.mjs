@@ -396,6 +396,12 @@ async function verifyAssignment(packageRoot, createNativeServices, QQClient) {
       clientVersion: '9.9.33-52230',
       wrapperSha256: '63112ab9161e127f5f7e17998a7196e143808923fb54cbbf7b4e21426187a5f0',
     },
+    {
+      platform: 'darwin',
+      arch: 'x64',
+      clientVersion: '7.0.2-53644',
+      wrapperSha256: 'e91c58872d3d498f2d3ac1c304ab3ae4602d016274cf3e0f0cb651ad765f1f54',
+    },
   ];
   assert.equal(profiles.length, expectedProfiles.length);
   for (const expected of expectedProfiles)

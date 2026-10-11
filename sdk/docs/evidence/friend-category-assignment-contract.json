@@ -1047,6 +1047,569 @@
         "Normal ACK path is bound; NAPI error paths are not asserted to resolve.",
         "No native runtime, account, remote membership, signing authenticity or server acceptance proof."
       ]
+    },
+    {
+      "platform": "darwin",
+      "arch": "x64",
+      "clientVersion": "7.0.2-53644",
+      "wrapperSha256": "e91c58872d3d498f2d3ac1c304ab3ae4602d016274cf3e0f0cb651ad765f1f54",
+      "manifestSha256": "50c9ed62df5461220d27da8a589f3635b311ba1233cc499ebf3b80c0db2ae559",
+      "method": "setBuddyCategory",
+      "argumentCount": 2,
+      "arguments": [
+        "UID string",
+        "categoryId:uint32"
+      ],
+      "binding": "0x908d86",
+      "core": "0x8d958",
+      "receiver": "Descriptor5b20e20 ->Node908d86 ->same JS16B carrier unwrap ->actual core AP5aa4b00+c0/8d958. Normal Session2d310 installs actual host pair at+4d0 through1b98c/225d0/1d530. Host ctor1bcf0 constructs Buddy child and installs object+30 alias at host528; Session32700/1effc getter ->corefactory44b68/807b0 retains same pair+60/+68. Weaklock119ce ->secondary AP5bb71f8+58/thunk134cbf2 adjusts-30 ->134c9b8.",
+      "normalResult": "Node908e62 promise ->895b36/922fba carrier C+30env/C+38deferred ->callback C+18 AP5b549e0+10/bef2a0 ->bef3fe inlinebef524/heapbef740 ->bef536. Actual imported NAPI stubs serialize signedint32 result, UTF8 errMsg and resolve original deferred after checked named-property success. Numeric0 is SDK ACK policy.",
+      "identityDataflow": "Original Node string309b1bb/309b117 ->8d958 string span ->PB selector1000 virtuala0. Same original PB ->134c9b8 closure+20 ->13542de/1354319 ->actual workerfactory138033a ->cachedworker138a936 ->138a99e. Selector1000 via133ddf4 sourcevirtual70 becomes destination field1 string via virtual180.",
+      "categoryDataflow": "Original Node uint32 converter309b344 ->R15D ->core8d958 R14D ->selector61af virtual70. Same original PB reaches138a99e; helper137432c sourcevirtual58 ->destination field2 numeric virtual160. Uint32 semantics come from original Node/core source, not generic numeric helper alone.",
+      "listCategoryIdNamespaceVerified": true,
+      "categoryNamespace": "Fresh core44a21/24fc0 ->22658/22712 installs same original object/control selfweak38/40. V2Node90d1e2 ->corevirtual1a8/933a8 ->af250 locks same core and copies actual+c0/c8 rows stride64. Cachedcopy93b08/9acc6/9ada0/744dd0 preserves first8 including row0 uint32; Node745208/745238 exposes categoryId. SDK source0 branchaf6b5 ->93b32 mode0 retains copied row. Rename8eb06 compares same core cachedrow0 and writes same selector61af. Successful refreshafc7e reissues samecorevirtual1a8 refreshfalse with retained source.",
+      "wireDataflow": "Worker138a936 ->base1af0bce stores original pair+20/+28, command10eb+30/sub1+34. AP5bbcfa0+30/138a99e encodes same PB into actual output through serializationvirtual100. Base1af0c18 uses same body stack-b8, both dispatch branches ->1af1ac8 preserve command/subcommand/body and invoke actual supplier virtualc0 (not other-platform b8).",
+      "uidInterpretation": "Inference from exact command0x10eb/subcommand1 and field1 string/field2 uint32 body matched to the pinned independent protocol implementation; not a native named UID codec connection or an official QQ schema.",
+      "primaryProtocolSources": [
+        {
+          "repository": "LLOneBot/LuckyLilliaBot",
+          "commit": "4c9670c548c84461b8105054bd1ff0c1dddbb8b9",
+          "path": "src/ntqqapi/proto/oidb.ts",
+          "lines": [
+            621,
+            625
+          ],
+          "gitBlobSha": "d774d495603a5629c7db32898dd267316cb27657",
+          "sha256": "91f8b0f153ab68e2fa93a423d6a56f38e928670d67f432bd9365c8da49312ca9",
+          "url": "https://github.com/LLOneBot/LuckyLilliaBot/blob/4c9670c548c84461b8105054bd1ff0c1dddbb8b9/src/ntqqapi/proto/oidb.ts#L621-L625"
+        },
+        {
+          "repository": "LLOneBot/LuckyLilliaBot",
+          "commit": "4c9670c548c84461b8105054bd1ff0c1dddbb8b9",
+          "path": "src/main/qqProtocol/mixins/friend.ts",
+          "lines": [
+            126,
+            132
+          ],
+          "gitBlobSha": "5efab014c8a6a00247eee6590ea6841fd8cfee8a",
+          "sha256": "de374ad2a3c336e157832133f3c56d77dff34aa57924e8f8fc123c01af9b2c81",
+          "url": "https://github.com/LLOneBot/LuckyLilliaBot/blob/4c9670c548c84461b8105054bd1ff0c1dddbb8b9/src/main/qqProtocol/mixins/friend.ts#L126-L132"
+        }
+      ],
+      "functions": [
+        {
+          "start": "0xc032",
+          "end": "0xc064",
+          "rawSha256": "8b9f61f75dbe6f2f3e1f794a419d69c664d41f253cb2d26c43fce2f82e101e7f"
+        },
+        {
+          "start": "0x1b98c",
+          "end": "0x1bbe0",
+          "rawSha256": "414471374bd712864ae1cfffcdfd257468b31d399e1235388de7f451616f2bf1"
+        },
+        {
+          "start": "0x1bbe0",
+          "end": "0x1bbea",
+          "rawSha256": "f0d08524aa743846d75a8b2b3094989ccf3b29947a54cead593c840f034a5ec8"
+        },
+        {
+          "start": "0x1bcf0",
+          "end": "0x1d50d",
+          "rawSha256": "36b6975de7c2d9ff13b6a7ced80f53817871fe77a9021230179d707ceb354709"
+        },
+        {
+          "start": "0x1d530",
+          "end": "0x1d561",
+          "rawSha256": "7092b9710d31785cda8495748238b8660fd43fe9175a01364e12c624d2427077"
+        },
+        {
+          "start": "0x1d748",
+          "end": "0x1d768",
+          "rawSha256": "6f90dd0fb9052e2d56f4ef8ac003f59f2379aaf1b73b73de79b22a6fd6cadd58"
+        },
+        {
+          "start": "0x1d768",
+          "end": "0x1d7ac",
+          "rawSha256": "3552cb143397df407938d71b5d45534ad8ccd2dbacce144e4cada619d5b5b77f"
+        },
+        {
+          "start": "0x1effc",
+          "end": "0x1f020",
+          "rawSha256": "14c1dd33276aae26443807050182de0fb4522a58914fc327d40f7fd02eb05191"
+        },
+        {
+          "start": "0x225d0",
+          "end": "0x22658",
+          "rawSha256": "e57eacaa2d4eec64631199344bf281c3476403884daaa8510ae6ab74ac250ec9"
+        },
+        {
+          "start": "0x22658",
+          "end": "0x226ae",
+          "rawSha256": "dfe26d19b90ec0cabf45bd8cf5c176c5f0a3b173e38bcefd972cc9623b6261dd"
+        },
+        {
+          "start": "0x22712",
+          "end": "0x2274f",
+          "rawSha256": "e5d76da39b70bc7393ead498e0decbf1b98832d4aa272a2567d638f3ddadb3e4"
+        },
+        {
+          "start": "0x2396f",
+          "end": "0x239e0",
+          "rawSha256": "df542ca6245eb72b2fc28d0b45dcbd89545d5f49156ee6cf9667dcc5df798f7b"
+        },
+        {
+          "start": "0x239e0",
+          "end": "0x23a10",
+          "rawSha256": "c0b3499f750bce24ef083cbb33d285f21240d235f34dec851324f3c6b9c68875"
+        },
+        {
+          "start": "0x23a52",
+          "end": "0x23a8e",
+          "rawSha256": "3c7a57f8edd2534c2712dd15dfa6ed2d4d3f85dd51334f5e07f4f735a83b27db"
+        },
+        {
+          "start": "0x24fc0",
+          "end": "0x24ff0",
+          "rawSha256": "f94e7c6807f7d9c35a39027d4f200a86e280623f4eea1e913a1f31753a33c4f2"
+        },
+        {
+          "start": "0x2bb04",
+          "end": "0x2c660",
+          "rawSha256": "8fbe9a8dc600c15550ce3b0540ad57f9442769bf6f57b70e17d0ad1d294c355f"
+        },
+        {
+          "start": "0x2d310",
+          "end": "0x2ea9d",
+          "rawSha256": "8ffa7ab4ad3c9b4de9b3ec9f47cf0d31ed6291a251034013594417500e222868"
+        },
+        {
+          "start": "0x32700",
+          "end": "0x328e3",
+          "rawSha256": "35faedfaa2bf9b139547785cb8eea88b24ff41d9444bf00129ae0b5e32f98fc6"
+        },
+        {
+          "start": "0x328e3",
+          "end": "0x3290e",
+          "rawSha256": "581250d9beec0b32447550ee076ae7f58799bb9ed0745a58e4982b1ff24bd8d7"
+        },
+        {
+          "start": "0x44a21",
+          "end": "0x44aaa",
+          "rawSha256": "c471b03a6f373fcf19ec68caa6e4daa75b091e1409b88470ae7df58be15360a8"
+        },
+        {
+          "start": "0x44aec",
+          "end": "0x44b28",
+          "rawSha256": "c0e115ff4458bc187668c1879a31d5195bfe459189ef8c062d0df8388cbb1181"
+        },
+        {
+          "start": "0x44b68",
+          "end": "0x44bf8",
+          "rawSha256": "1b20849daf52d92c8da483c2907349667e78dfb805ec28897365ee981959a514"
+        },
+        {
+          "start": "0x807b0",
+          "end": "0x808f0",
+          "rawSha256": "e2a3124721bfe64cbd8aa905f9bd6223fa408da280591586a8ab0a79758e595e"
+        },
+        {
+          "start": "0x808f0",
+          "end": "0x808fa",
+          "rawSha256": "9b5455c9bd198660e75581d0718ec0b7c72c67bcf4617a9bd1c9d37b011d72c7"
+        },
+        {
+          "start": "0x80b8c",
+          "end": "0x80d90",
+          "rawSha256": "cd533024a900a5c927f75f79284e426a49ac00d37f72c8f43cb737ff1f1d3d6e"
+        },
+        {
+          "start": "0x8d958",
+          "end": "0x8dcf4",
+          "rawSha256": "7872f9be270e85ecc82a28e523916b8802ba1adba99f0deed0c1642ed45dd8bf"
+        },
+        {
+          "start": "0x8eb06",
+          "end": "0x8eece",
+          "rawSha256": "789eb4e3501429da32a8a9b5a5d8990c29f944e2a1e8d6ea2f5dd77d49671be4"
+        },
+        {
+          "start": "0x933a8",
+          "end": "0x93690",
+          "rawSha256": "c4c535f0cc0e676bdfa8f726f636ea4ea8fda69c27692f92b526352a21e864f9"
+        },
+        {
+          "start": "0x93b08",
+          "end": "0x93b32",
+          "rawSha256": "32ee6e6fab1000264dc3751a142720c2330dbc0c6ba4d25d9bce60f655db5ccb"
+        },
+        {
+          "start": "0x93b32",
+          "end": "0x9446a",
+          "rawSha256": "0f27d0643fe6a972604766d70c3f7e276a74dd6ae94d8d1232abe898b864193e"
+        },
+        {
+          "start": "0x9acc6",
+          "end": "0x9acda",
+          "rawSha256": "08a4ea3384efa1c672b63cd13a4bec2421704657a359771d644b327d09d409ee"
+        },
+        {
+          "start": "0x9acda",
+          "end": "0x9ada0",
+          "rawSha256": "04ea96315fdf5287d48a9fe2469f611a7a840aa897c00c9f5c8067a562fb6473"
+        },
+        {
+          "start": "0x9ada0",
+          "end": "0x9add0",
+          "rawSha256": "f438789cb03d087230c31397c154e1a8bee1830b71da90f19d7260114ce2d707"
+        },
+        {
+          "start": "0x9adfe",
+          "end": "0x9ae3d",
+          "rawSha256": "7dfffb900b8c772bd0ed4a6706fdf2150ab8a6d1b5802e964bf678e8ab643633"
+        },
+        {
+          "start": "0x9ae3d",
+          "end": "0x9aec4",
+          "rawSha256": "05660299d283da28c9affb5250b76286ec9e107bb1bd055b92e3c5c1a417c8e8"
+        },
+        {
+          "start": "0x9c712",
+          "end": "0x9c7d6",
+          "rawSha256": "1780df68c1f417725acdcdc24d49acdeeca022dedccd3b2cc586f58b58f3ee2d"
+        },
+        {
+          "start": "0xaf250",
+          "end": "0xaf866",
+          "rawSha256": "77ed17b307c566d66849f9b8b1c3930d95914ae5afa8bc59c052e81312afc9dd"
+        },
+        {
+          "start": "0xaf985",
+          "end": "0xaf9aa",
+          "rawSha256": "68a5cdf0d93d46b855ecf7d91c915bb62ab6252f2a8b68526bbfac4504b32ce7"
+        },
+        {
+          "start": "0xafa9b",
+          "end": "0xafb1c",
+          "rawSha256": "efbab0cf2b7a4c4153f14ffcb276fe77e42941cb54f04a6d8c6ad19c925c9dac"
+        },
+        {
+          "start": "0xafb1c",
+          "end": "0xafb58",
+          "rawSha256": "2fc3c40efa59e75f6117d09063d3d6cf25fb68818fea76f9aa967b3f9e6130ee"
+        },
+        {
+          "start": "0xafb98",
+          "end": "0xafc08",
+          "rawSha256": "f684a971111b3ba04779b9de4b9dae1b663809b86db30450fe4e23ce2566284c"
+        },
+        {
+          "start": "0xafc08",
+          "end": "0xafc58",
+          "rawSha256": "dff5e81bdd3581addebeca84b08d8f0d297d49d2ea85bb0c6240007c69d3a377"
+        },
+        {
+          "start": "0xafc7e",
+          "end": "0xafddc",
+          "rawSha256": "998c9fde5830bf879a1cb361497369cbb48d3ebb1b9869aa1d954b1d255e476d"
+        },
+        {
+          "start": "0x4b6944",
+          "end": "0x4b696c",
+          "rawSha256": "fbc430b47f65113678f09d4d8a33e079df918c4671c89c03a83a243b59c4e9fa"
+        },
+        {
+          "start": "0x744b6c",
+          "end": "0x744cd0",
+          "rawSha256": "1bc4a60494f4007c08db95e2709b01f1d7271cfda920f881e6a30a2052144861"
+        },
+        {
+          "start": "0x744d28",
+          "end": "0x744d52",
+          "rawSha256": "9f91492ad5e4cfa3e5668991385fe5e2a611b1d0b19fc19d14ededa07938a6c0"
+        },
+        {
+          "start": "0x744d52",
+          "end": "0x744dc4",
+          "rawSha256": "fea00fcaaeb73a85943f6b712d83dff81a1b1954297400a662c9cf53d404535d"
+        },
+        {
+          "start": "0x744dc4",
+          "end": "0x744dd0",
+          "rawSha256": "059a5750e82d37c9e7bba7b3a093a6463914ad2dee99d42d2296b10377a33950"
+        },
+        {
+          "start": "0x744dd0",
+          "end": "0x744e30",
+          "rawSha256": "f364ec1d9e8c060d7eb9ad87d80274056a6a2f7eceb23ad76f352aaea7c50082"
+        },
+        {
+          "start": "0x744ec4",
+          "end": "0x744f2c",
+          "rawSha256": "9688dd7a8358fffd990a9494ff11ec1076f7557c6ee61fd65a9bfc681b8fbf27"
+        },
+        {
+          "start": "0x744f2c",
+          "end": "0x744fe8",
+          "rawSha256": "880f600f2c792c8c7df1b8c883a3cbdce07b4b69cd550c82db23ab2a26cc22fe"
+        },
+        {
+          "start": "0x744fe8",
+          "end": "0x744ffa",
+          "rawSha256": "927702332c88ef1699e27cce38e525a46c96773e229cc51611c50e5f1f112e47"
+        },
+        {
+          "start": "0x744ffa",
+          "end": "0x745208",
+          "rawSha256": "f7409aa784b6695c484f42fc68dbb47d894f41e7ce9825b86e9dd0a7e36517fb"
+        },
+        {
+          "start": "0x745208",
+          "end": "0x7453dc",
+          "rawSha256": "e920f1cbf084c5c7961a8548660b1b2d22588a2a8b322a73026c1e55ec693d32"
+        },
+        {
+          "start": "0x74546c",
+          "end": "0x74547a",
+          "rawSha256": "f4ced261a2d8839e8369db59f4976e7bf4e0e9b5b42574f03d43464ae85b0213"
+        },
+        {
+          "start": "0x74547a",
+          "end": "0x7454f0",
+          "rawSha256": "b8bd79fdf17037b2bee46585c2cd3e72a6347567eb4d6db167ee01df2d9c937d"
+        },
+        {
+          "start": "0x895b36",
+          "end": "0x895b58",
+          "rawSha256": "4ff6d08678dc6a9d3e95a9ff2a13fdda4b812d5003cd287deae4c8c9e2df9470"
+        },
+        {
+          "start": "0x908d86",
+          "end": "0x908fc6",
+          "rawSha256": "b43a3a17f2f98b98bff7cdd4d212eab4649eab8d465dd0c60200d372b50370ac"
+        },
+        {
+          "start": "0x90d1e2",
+          "end": "0x90d452",
+          "rawSha256": "535cc33df92aa6901bcca16caf43837e932c8bc2ff07cb3056aee01c04cd4d32"
+        },
+        {
+          "start": "0x90d452",
+          "end": "0x90d474",
+          "rawSha256": "f23a77ed61ca25eadebca77591bda0519105ede76f261d2253c82ed055f08b48"
+        },
+        {
+          "start": "0x90dab4",
+          "end": "0x90dc0c",
+          "rawSha256": "33e1defaa429001a2840e4b891db8f99f09d5818505a7aa2a41963eb200452ae"
+        },
+        {
+          "start": "0x9104c3",
+          "end": "0x91054e",
+          "rawSha256": "90d23ac69df5b30cc4822d4996b14ebb77af575f118f2248b06eacc2a5b7e517"
+        },
+        {
+          "start": "0x922fba",
+          "end": "0x923047",
+          "rawSha256": "25fa57a943faf21f27c11023a73b04158f365eb303e4bd979c2cde355840403b"
+        },
+        {
+          "start": "0xbef2a0",
+          "end": "0xbef3ce",
+          "rawSha256": "1b4c2e2d6ba08ab0c72db7ce72352b11e4437237c18bc61c422ac26fb25223c8"
+        },
+        {
+          "start": "0xbef3fe",
+          "end": "0xbef466",
+          "rawSha256": "02dbab44c291a8c7edeae19aba54da47891f6ef0ae27621bf8a8421e0c02e273"
+        },
+        {
+          "start": "0xbef524",
+          "end": "0xbef536",
+          "rawSha256": "669f1095f8a32373cbd4d998eeda07da20a5d71d8adf70993a51e3f35e001df9"
+        },
+        {
+          "start": "0xbef536",
+          "end": "0xbef6b0",
+          "rawSha256": "e3a85df8317b07cf96c9c4ddb793cb42645a0ad9dc2296724a59aa89aa6ffb7d"
+        },
+        {
+          "start": "0xbef740",
+          "end": "0xbef74e",
+          "rawSha256": "0bfe92915006ffbb6c2cce2ca809932888a4e324c78ee4473b509c22c0f1bc42"
+        },
+        {
+          "start": "0xbef74e",
+          "end": "0xbef798",
+          "rawSha256": "9c16cc3bd9f2f34c3720ef00b499bbde9b87263420aa6f633b93a4b8d6fbd97a"
+        },
+        {
+          "start": "0xc1f5da",
+          "end": "0xc1f70a",
+          "rawSha256": "098e38d8a53c04c13e5713e9b25be12495160fc3a314ebef3385c6a25cdcee7e"
+        },
+        {
+          "start": "0x133ddf4",
+          "end": "0x133de90",
+          "rawSha256": "40aa5c5005662620b9fb8f1024f5e163e9a46b08ca69a7ddad17f7d19e44726b"
+        },
+        {
+          "start": "0x1348e64",
+          "end": "0x1349014",
+          "rawSha256": "0073f4ef5cdc192b38c3f640b35b849fa0e205919847954c51e260bedb2bb3ba"
+        },
+        {
+          "start": "0x13490b4",
+          "end": "0x13490be",
+          "rawSha256": "0923035f92d1e8150a4b80cd4fdea4315707f6f85c560e02638901f59317cc12"
+        },
+        {
+          "start": "0x134973c",
+          "end": "0x13497ea",
+          "rawSha256": "91d90816004def9c60bfcd845b3cb4dbf174106c17cf6fc6852e23002bb0d115"
+        },
+        {
+          "start": "0x134c51c",
+          "end": "0x134c74c",
+          "rawSha256": "8ae321a86ab103b0bd0175abb706af9074a062c16c131f201facbf103bf28b0a"
+        },
+        {
+          "start": "0x134c75a",
+          "end": "0x134c98a",
+          "rawSha256": "09cc29fb28df8e3adacdca2d7ce85f988a67f541ec0b66a030f6d4f59c836388"
+        },
+        {
+          "start": "0x134c9b8",
+          "end": "0x134cbf2",
+          "rawSha256": "18f794e8b6d91123ff3bc02db1d1efcab393892d765b039cec25a911a62b5dea"
+        },
+        {
+          "start": "0x134cbf2",
+          "end": "0x134cc00",
+          "rawSha256": "79e478304e6c585d5fe89394b72bf916f4c5e6e8a13fc376a43c66129a31ca5c"
+        },
+        {
+          "start": "0x13542be",
+          "end": "0x13542de",
+          "rawSha256": "e21be04544269e8743840964d2c1a6191c9051a5f3420e06f72eaa609ffc332d"
+        },
+        {
+          "start": "0x13542de",
+          "end": "0x13543ba",
+          "rawSha256": "33c3dfd15d024f3ee6816eb8252210594d26cc814d378c37daf187c380473350"
+        },
+        {
+          "start": "0x13543ba",
+          "end": "0x13543d6",
+          "rawSha256": "798f010f1f0f6404c6a29565b1123ca95fb8ffc3e7bfcd91e75918f927079dd6"
+        },
+        {
+          "start": "0x1354546",
+          "end": "0x1354622",
+          "rawSha256": "4a63f6fb125544e0fb3e23cecb6387b42e5e05405aeed2a8875e54484c7b231b"
+        },
+        {
+          "start": "0x137432c",
+          "end": "0x137439d",
+          "rawSha256": "a01a2ada37f7df49d5da23e7247a1401f28020cbc198b804d95af7c2784dd489"
+        },
+        {
+          "start": "0x138033a",
+          "end": "0x138059a",
+          "rawSha256": "2dc10349cfcd24ddd5e11b99d940ac5914e616964636a8a67f81a89a1fbf8aba"
+        },
+        {
+          "start": "0x138059a",
+          "end": "0x13805bc",
+          "rawSha256": "d09bf87825e78fce395ec27e23a82d3835c2ce5db9c861c8dce8db6224a5b86f"
+        },
+        {
+          "start": "0x13839b1",
+          "end": "0x1383a2e",
+          "rawSha256": "ab5a9e3b76b399d2e8ea47c89c2ca39459fe10589daac66cefbc087cb1f552f9"
+        },
+        {
+          "start": "0x1383a2e",
+          "end": "0x1383a6a",
+          "rawSha256": "20b0f199d5b95c4f79bc7d575be3fad6dae94d4e37c7cb353737377ff56c0e5e"
+        },
+        {
+          "start": "0x1383aaa",
+          "end": "0x1383afe",
+          "rawSha256": "9a156956ae90ffd3882b8a0c615b4fbd41ef11d45c545ca0ba541d47ec489aa2"
+        },
+        {
+          "start": "0x1383c08",
+          "end": "0x1383f36",
+          "rawSha256": "0a1acbbe81ab73189167024a7f9620c2a07715bf63941413f08993e807a1d238"
+        },
+        {
+          "start": "0x138a936",
+          "end": "0x138a994",
+          "rawSha256": "e4771a3df77c3bd6e45a7cfb2881300731bf83995ba65cf4c54a607c4887952a"
+        },
+        {
+          "start": "0x138a994",
+          "end": "0x138a99e",
+          "rawSha256": "ec27ba144acda7f5f8019619533973ee8a86f32a241f966f230fbb4ed1fe993d"
+        },
+        {
+          "start": "0x138a99e",
+          "end": "0x138aa5a",
+          "rawSha256": "2ea4fa60cc359408d0eb95b858a4b910243c7fce2a03959ab358fd6bbfd5a045"
+        },
+        {
+          "start": "0x1af0bce",
+          "end": "0x1af0c04",
+          "rawSha256": "adfa358fd567be748591f322f3336255b0c01bb52437b931a9f80c5b60ee9e7c"
+        },
+        {
+          "start": "0x1af0c18",
+          "end": "0x1af0f50",
+          "rawSha256": "6c15b5b9a4f466b4f598bb7468259680490c6c0ac8d55b774a39a42ca20bae36"
+        },
+        {
+          "start": "0x1af1ac8",
+          "end": "0x1af1cb4",
+          "rawSha256": "c90acf1f2faa0e97fec71bf0644f40b03fa380ab07e9e60b1ac867c03b58f39a"
+        },
+        {
+          "start": "0x309b117",
+          "end": "0x309b1bb",
+          "rawSha256": "359b91d5c34c52d8494b981ef6dfc64378bbed3846bc74f5e4a927772a98f774"
+        },
+        {
+          "start": "0x309b1bb",
+          "end": "0x309b29e",
+          "rawSha256": "42f4c41e9862ad5230e9e1365c3e3a13d433c0bb39f021cdce310235306b756b"
+        },
+        {
+          "start": "0x309b344",
+          "end": "0x309b3ea",
+          "rawSha256": "10d85f4a4779d1d16ce214e7b2898a81ecd4ca14213cdfb1a9e2b2ad1871f767"
+        },
+        {
+          "start": "0x309b8d2",
+          "end": "0x309b960",
+          "rawSha256": "84e97ead922f1e104d4ad0bc8507ac25a928f53bb160ba9117d3e809b0f24b5f"
+        },
+        {
+          "start": "0x412ac7a",
+          "end": "0x412acbd",
+          "rawSha256": "890d5d44aed3500b57a7d92d8bd309b44354b937259d8e4cd15f66eafbedfff0"
+        }
+      ],
+      "rawReplay": {
+        "uniqueRanges": 100,
+        "rawBytes": 38664,
+        "wholeLcFunctionStarts": 100,
+        "actualIndependentExit": 0
+      },
+      "limits": [
+        "First refresh cache producer not independently parsed; successful refresh returns through same cached namespace, without a category existence claim.",
+        "Concrete final supplier virtualc0 target remains unresolved; exact original request tuple/body is bound.",
+        "One normal host installation and freshcore selfweak path proved, not every lifecycle/replacement.",
+        "No native runtime, account, signing authenticity, server acceptance or remote membership effect proof."
+      ]
     }
   ],
   "relocations": {
@@ -1223,6 +1786,54 @@
     {
       "path": "architecture-refactor/category-assignment-windows-x64-next/continuation-20261012/binding/admission-review/login-contract-receipt.json",
       "sha256": "f9e54f5f7ea129983003d3941cd26194dd8016366d346dadea57d54d5619c058"
+    },
+    {
+      "path": "architecture-refactor/category-assignment-darwin-x64-next/continuation-20261012/binding/login-contract-receipt.json",
+      "sha256": "50d1a51c824fb42841e1763af58e13a9b7b1415b22e7f047e1f18e7faa58320b"
+    },
+    {
+      "path": "architecture-refactor/category-assignment-darwin-x64-next/continuation-20261012/protocol/protocol-stage.json",
+      "sha256": "1c1784b179635c89410b206acd114a39cae351cc09ccd27f00d4d59236636f68"
+    },
+    {
+      "path": "architecture-refactor/category-assignment-darwin-x64-next/continuation-20261012/protocol/receiver-followup/receiver-chain-receipt.json",
+      "sha256": "5d9dd4c8a247b6232660c7224b869a5a2bc146e2ac5df859e1cc04ea5feb1f5b"
+    },
+    {
+      "path": "architecture-refactor/category-assignment-darwin-x64-next/continuation-20261012/namespace/namespace-stage2.json",
+      "sha256": "94ded8da2f816932186d6be3fb2000ee9d9530a5e9c9b25000df4eab10e01207"
+    },
+    {
+      "path": "architecture-refactor/category-assignment-darwin-x64-next/continuation-20261012/admission-review/login-contract-receipt.json",
+      "sha256": "5a84d745e08de07147136cd4462611ada7d318c91f4ec5e30adeee7bd7ccf1f6"
+    },
+    {
+      "path": "architecture-refactor/category-assignment-darwin-x64-next/continuation-20261012/root/primary-protocol-recheck.json",
+      "sha256": "978ed362217efcf33c316f99eb92ee0528a317e1e5a01ef92730440ed6b7149d"
+    },
+    {
+      "path": "architecture-refactor/category-assignment-darwin-x64-next/continuation-20261012/root/ack-napi-stub-recheck.json",
+      "sha256": "ce15f4816360590d4ebf1b8a3d8b8fc7398459de91f39459a70db3c7e354f9de"
+    },
+    {
+      "path": "architecture-refactor/category-assignment-darwin-x64-next/continuation-20261012/root/binding-independent-recheck.json",
+      "sha256": "3b11a48f8679bf56cc75881d0c6857cfc0e194def4b3ddf07d0fbbd4f224bba6"
+    },
+    {
+      "path": "architecture-refactor/category-assignment-darwin-x64-next/continuation-20261012/root/protocol-independent-recheck.json",
+      "sha256": "74d145c04c7ab41e319519976438865d4c75209f6afc00f7570d88906873e4b3"
+    },
+    {
+      "path": "architecture-refactor/category-assignment-darwin-x64-next/continuation-20261012/root/receiver-independent-recheck.json",
+      "sha256": "6d9ae929e9d86ec4640fa3918dcd3fcc5280d2afd0db97060365edf0aba6833c"
+    },
+    {
+      "path": "architecture-refactor/category-assignment-darwin-x64-next/continuation-20261012/root/namespace-stage2-independent-recheck.json",
+      "sha256": "d386d229538bf42fd093e15807187c7b02451abd59805290ab66571f66b94b30"
+    },
+    {
+      "path": "architecture-refactor/category-assignment-darwin-x64-next/continuation-20261012/root/current-proof-function-inventory.json",
+      "sha256": "7ef7f4c17242f0ff9d0efce89ea3e5b56f005c1c6e313a43cb4d7575b604270a"
     }
   ],
   "acceptancePolicy": "Only own-data finite int32 result strictly numeric0 yields void native ACK; nonzero safe numeric code rejects without errMsg disclosure. This is SDK acceptance, not remote effect evidence.",
@@ -1230,7 +1841,7 @@
   "invariants": [
     "Validate and capture public userId/categoryId primitives before acquiring services; reuse existing ID resolution policy rather than invent UID/UIN parsing.",
     "Resolve public userId to captured native UID once; do not pass original UIN to native string slot.",
-    "Capability match must precede first native acquisition/dispatch and be exact profile/version/wrapper hash; only the listed Linux x64/ARM64, macOS ARM64 and Windows x64 exact binary scopes are enabled.",
+    "Capability match must precede first native acquisition/dispatch and be exact profile/version/wrapper hash; only the listed Linux x64/ARM64, macOS x64/ARM64 and Windows x64 exact binary scopes are enabled.",
     "Acquire nullable service and capture method once, check alive after each fallible/reentrant getter, Reflect.apply with original receiver and exactly2 arguments.",
     "No mutation before validation/UID resolution completion; close or abort before dispatch preserves original cancellation and issues no write.",
     "One native dispatch, no retry/replay/readback; deadline5000 and postdispatch cancellation report remote effect unknown.",
@@ -1239,12 +1850,13 @@
   ],
   "limits": [
     "No real account/server mutation outcome; native ACK does not establish membership effect.",
-    "Other2 platform identity dataflows not independently bound here; do not extend gate.",
+    "Windows ARM64 identity dataflow not independently bound here; do not extend gate.",
     "No proof of protected/default-category admissibility or category existence; uint32 including0 alone cannot establish those policies.",
     "Batch setBatchBuddyCategory identity/semantics remain a separate unproved capability.",
     "Protocol field numbers and concrete codec identity establish static routing only, not server acceptance or membership change.",
-    "macOS, Linux ARM64 and Windows x64 UID semantics are inferred from exact native command/body matching to a pinned independent protocol implementation; this does not establish signing authenticity or server acceptance.",
-    "Linux ARM64 and Windows x64 proofs end at an actual supplier virtualb8 call carrying the matched command/body. Concrete transport implementation remains unresolved; no server or signing proof follows."
+    "Both macOS architectures, Linux ARM64 and Windows x64 UID semantics are inferred from exact native command/body matching to a pinned independent protocol implementation; this does not establish signing authenticity or server acceptance.",
+    "Linux ARM64 and Windows x64 proofs end at an actual supplier virtualb8 call carrying the matched command/body. Concrete transport implementation remains unresolved; no server or signing proof follows.",
+    "macOS x64 proof ends at actual supplier virtualc0; its concrete target and first refresh cache producer remain unparsed. Cached namespace and refresh-success reissue are bound without a remote existence claim."
   ],
   "nativeExecuted": false,
   "accountUsed": false

@@ -798,7 +798,7 @@ mutation owners to import this completion module, and prevents it from acquiring
 native services or identity modules. Public facade and CLI reuse pure category
 capture; adding a feature does not grant them native execution dependencies.
 
-Assignment is enabled only for the measured Linux x64/ARM64, macOS ARM64 and Windows x64 profiles recorded in
+Assignment is enabled only for the measured Linux x64/ARM64, macOS x64/ARM64 and Windows x64 profiles recorded in
 `evidence/friend-category-assignment-contract.json`. Controlled installed-consumer
 checks exercise the public method, worker routing, CLI planning and native adapter
 with substituted services. These checks do not establish remote category changes
@@ -824,8 +824,13 @@ Session host installation, the original Buddy receiver, request field mapping,
 V2 cached category namespace and normal ACK. Its exact `0x10eb / 1` body uses
 the same explicit protocol inference, with the concrete supplier target still
 unresolved. No extra adapter, composition dependency or public API is introduced.
+macOS x64 follows its own normal Session installation, child secondary receiver,
+fresh core selfweak and cached row namespace. Its original scalar request reaches
+the same `0x10eb / 1` encoded body at actual supplier virtual `0xc0`. The explicit
+UID inference and unresolved supplier/first refresh producer limits stay in the
+profile evidence; the same domain and composition owners are reused.
 The installed worker/CLI contract exercises each enabled profile with substituted
-services and rejects the two remaining exact profiles before acquisition.
+services and rejects the remaining Windows ARM64 exact profile before acquisition.
 
 `features/groups/group-files` owns file-count, folder and listing dispatch policy.
 Composition injects lazy method-specific ports and measured-profile decisions,

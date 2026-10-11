@@ -38,9 +38,15 @@ const expected: NativeContractProfile[] = [
     clientVersion: '9.9.33-52230',
     wrapperSha256: '63112ab9161e127f5f7e17998a7196e143808923fb54cbbf7b4e21426187a5f0',
   },
+  {
+    platform: 'darwin',
+    arch: 'x64',
+    clientVersion: '7.0.2-53644',
+    wrapperSha256: 'e91c58872d3d498f2d3ac1c304ab3ae4602d016274cf3e0f0cb651ad765f1f54',
+  },
 ];
 
-test('assignment grants only the four independently bound exact binary profiles', () => {
+test('assignment grants only the five independently bound exact binary profiles', () => {
   assert.deepEqual(
     evidence.profiles.map(({ platform, arch, clientVersion, wrapperSha256 }) => ({
       platform,
@@ -51,12 +57,6 @@ test('assignment grants only the four independently bound exact binary profiles'
     expected,
   );
   const unsupported: NativeContractProfile[] = [
-    {
-      platform: 'darwin',
-      arch: 'x64',
-      clientVersion: '7.0.2-53644',
-      wrapperSha256: 'e91c58872d3d498f2d3ac1c304ab3ae4602d016274cf3e0f0cb651ad765f1f54',
-    },
     {
       platform: 'win32',
       arch: 'arm64',
@@ -78,10 +78,7 @@ test('assignment grants only the four independently bound exact binary profiles'
     }
     assert.equal(supportsCategoryAssignment(profile, 'unverified'), false);
     assert.equal(supportsCategoryAssignment(undefined, profile.clientVersion), false);
-    for (const [platform, arch] of [
-      ['darwin', 'x64'],
-      ['win32', 'arm64'],
-    ]) {
+    for (const [platform, arch] of [['win32', 'arm64']]) {
       assert.equal(
         supportsCategoryAssignment(
           { ...profile, platform: platform!, arch: arch! },
