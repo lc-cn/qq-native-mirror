@@ -17,6 +17,25 @@ consumer. The package consumer uses fake services and an isolated replacement
 kernel; this command does not log into an account. Codec dependencies are packed
 from npm's populated cache for the offline consumer installation.
 
+The npm `pretest` and `preverify:package` hooks first run
+`check:consumer-modules`. This static preflight shares
+`consumer-module-policy.ts` with the CI module-path gate. It permits the
+consumer directory and exact orchestration files, with no directory-wide access
+to account acceptance or publication executors. It checks syntax and relative
+module roles without executing helpers. Before a build it does not require `dist`;
+the post-build CI gate additionally requires every referenced compiled module.
+
+| Tool scope                               | Static coverage                                                                                                             |
+| ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| SDK source and TypeScript scripts        | Formatting, lint and strict type checking; source and governed scripts also use typed Promise lint.                         |
+| `scripts/consumers/` JavaScript helpers  | All have formatting/basic lint and participate in the consumer-role graph. Eleven have strict types and typed Promise lint. |
+| CI/version orchestration                 | Exact files in the consumer graph have syntax/reference checks. The SDK lint/type project does not cover every CI tool.     |
+| Account acceptance and publication tools | Explicit execution entry points; outside the reusable consumer directory and consumer-role permissions.                     |
+
+These role checks constrain visible module imports, not arbitrary JavaScript
+execution. Remaining JavaScript type coverage is tracked separately from the
+source and installed-consumer results.
+
 `npm run check:architecture` exposes the source architecture checks separately
 for module placement and dependency changes. They still run in the full `test`
 gate. Kernel method capture has exactly three permitted owners: kernel

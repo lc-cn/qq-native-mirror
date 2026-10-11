@@ -9,15 +9,15 @@ import { pathToFileURL } from 'node:url';
  * @param {string} packageRoot
  */
 export async function verifyGroupEssenceConsumer(packageRoot) {
-  /** @type {Promise<typeof import('../src/features/groups/group-essence-list.ts')>} */
+  /** @type {Promise<typeof import('../../src/features/groups/group-essence-list.ts')>} */
   const essenceModule = import(
     pathToFileURL(join(packageRoot, 'dist/features/groups/group-essence-list.js')).href
   );
-  /** @type {Promise<typeof import('../src/cli.ts')>} */
+  /** @type {Promise<typeof import('../../src/cli.ts')>} */
   const cliModule = import(pathToFileURL(join(packageRoot, 'dist/cli.js')).href);
-  /** @type {Promise<typeof import('../src/index.ts')>} */
+  /** @type {Promise<typeof import('../../src/index.ts')>} */
   const clientModule = import(pathToFileURL(join(packageRoot, 'dist/index.js')).href);
-  /** @type {Promise<typeof import('../src/runtime/worker-termination.ts')>} */
+  /** @type {Promise<typeof import('../../src/runtime/worker-termination.ts')>} */
   const terminationModule = import(
     pathToFileURL(join(packageRoot, 'dist/runtime/worker-termination.js')).href
   );
@@ -54,7 +54,7 @@ export async function verifyGroupEssenceConsumer(packageRoot) {
     /** @type {Record<string,string>[]} */
     const queries = [];
     let ticketCalls = 0;
-    /** @type {import('../src/features/groups/qun-web-read.ts').QunWebReadContext} */
+    /** @type {import('../../src/features/groups/qun-web-read.ts').QunWebReadContext} */
     const context = {
       accountId: '789',
       signal: new AbortController().signal,
@@ -88,7 +88,7 @@ export async function verifyGroupEssenceConsumer(packageRoot) {
     };
     return { context, queries, tickets: () => ticketCalls };
   }
-  /** @satisfies {import('../src/contracts/groups.ts').GroupEssenceMessage} */
+  /** @satisfies {import('../../src/contracts/groups.ts').GroupEssenceMessage} */
   const expected = {
     groupId: '123',
     sequence: 9,
@@ -148,7 +148,7 @@ export async function verifyGroupEssenceConsumer(packageRoot) {
     'max-pages': '2',
   });
   const directory = await mkdtemp(join(tmpdir(), 'qq-essence-worker-'));
-  /** @type {import('../src/index.ts').QQClient|undefined} */
+  /** @type {import('../../src/index.ts').QQClient|undefined} */
   let client;
   /** @type {import('node:child_process').ChildProcess|undefined} */
   let child;

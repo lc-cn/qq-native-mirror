@@ -355,6 +355,24 @@ client to `any`. Compiler/lint negative fixtures must reject broken verification
 code without executing it. Use the checked face, group-search, group-essence, element-preparation and mirror consumers as examples;
 the remaining JavaScript helpers are not yet all covered by this stricter project.
 
+Keep reusable consumer contracts in `scripts/consumers/`. The root verifier,
+CI orchestrators, build/release tools and account acceptance executors have separate
+roles. Moving a helper must preserve installedRoot-derived paths; update its
+source-type imports and `import.meta.url` fixture paths for the new location.
+Historical evidence and approved account plans retain their original bindings.
+
+`scripts/consumer-module-policy.ts` owns the shared permitted directory, exact
+orchestration files and computed-import exceptions. New consumers do not inherit
+access to neighboring account or publication executors. Both local npm hooks and
+the CI path gate use this policy. `pretest` and `preverify:package` run
+`check:consumer-modules` before executing consumer code, including standalone
+`npm test` and `npm run verify:package` commands. This preflight reads syntax;
+it does not import helpers or claim compiled modules already exist.
+
+Use these npm commands for local verification. Invoking the verifier directly
+with `node`, or passing `--ignore-scripts`, skips the npm preflight hook. CI runs
+the module-path gate explicitly before its consumer entry points.
+
 Keep static consumer references in forms accepted by
 `scripts/consumer-module-references.ts`. A computed fixture path requires an exact
 reviewed exception with a reason and its compiled module inventory. The collector

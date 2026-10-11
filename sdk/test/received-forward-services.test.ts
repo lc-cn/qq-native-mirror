@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createNativeServices } from '../src/native-services.ts';
 import { buildMergedForwardCard } from '../src/features/forward/merged-forward-card.ts';
-import { checkReceivedForwardServices } from '../scripts/received-forward-consumer-contract.mjs';
+import { checkReceivedForwardServices } from '../scripts/consumers/received-forward-consumer-contract.mjs';
 
 test('received merged forwards preserve mixed query/live order, raw identity and queued snapshots without extra queries', async () => {
   await checkReceivedForwardServices({ createNativeServices, buildMergedForwardCard });

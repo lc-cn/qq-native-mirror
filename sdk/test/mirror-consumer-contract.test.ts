@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto';
 import { mkdir, writeFile, access } from 'node:fs/promises';
 import { join } from 'node:path';
 import test from 'node:test';
-import { verifyMirrorConsumer } from '../scripts/mirror-consumer-contract.mjs';
+import { verifyMirrorConsumer } from '../scripts/consumers/mirror-consumer-contract.mjs';
 import type { NativeManifest } from '../src/contracts/native.ts';
 import type { ClientOptions } from '../src/contracts/client.ts';
 

@@ -7,9 +7,9 @@ import { dirname, join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { createHash } from 'node:crypto';
 
-/** @typedef {import('../src/index.ts').QQClient} Client */
-/** @typedef {import('../src/index.ts').ClientOptions} ClientOptions */
-/** @typedef {import('../src/contracts/native.ts').QQVersion} QQVersion */
+/** @typedef {import('../../src/index.ts').QQClient} Client */
+/** @typedef {import('../../src/index.ts').ClientOptions} ClientOptions */
+/** @typedef {import('../../src/contracts/native.ts').QQVersion} QQVersion */
 /** @typedef {{wrapperPath:unknown, version:unknown, bridgePath:unknown, videoCodecPath:unknown}} CapturedInitialization */
 
 /** @param {unknown} value @returns {Record<string,unknown>} */
@@ -114,10 +114,10 @@ export async function verifyClientFactoryConsumer(installedRoot, { source = fals
     };
     syncBuiltinESMExports();
     process.env.ELECTRON_RUN_AS_NODE = '1';
-    /** @type {Promise<typeof import('../src/index.ts')>} */
+    /** @type {Promise<typeof import('../../src/index.ts')>} */
     const installedModule = import(pathToFileURL(entry).href);
     const { createClient, QQClient } = await installedModule;
-    /** @type {Promise<typeof import('../src/client/qq-client.ts')>} */
+    /** @type {Promise<typeof import('../../src/client/qq-client.ts')>} */
     const internalModule = import(
       pathToFileURL(join(packageRoot, tree, `client/qq-client.${extension}`)).href
     );
@@ -213,7 +213,7 @@ export async function verifyClientFactoryConsumer(installedRoot, { source = fals
 
 /** Cross the same public factory from source and a freshly installed archive.
  * Metadata/payload responses and addon loading are fixtures; no account is used.
- * @param {typeof import('../src/index.ts').createClient} createClient
+ * @param {typeof import('../../src/index.ts').createClient} createClient
  * @param {string} directory
  * @param {string} bridgePath
  */
@@ -226,7 +226,7 @@ async function verifyNativeSourceSelection(createClient, directory, bridgePath) 
   const auxiliary = join(directory, 'node_modules', name);
   const bytes = Buffer.from('synthetic selected wrapper');
   const version = { clientVersion: '1.0.0', appId: '1', qua: 'fixture' };
-  /** @type {import('../src/contracts/native.ts').NativeManifest} */
+  /** @type {import('../../src/contracts/native.ts').NativeManifest} */
   const manifest = {
     schemaVersion: 1,
     id: 'consumer-source-fixture',

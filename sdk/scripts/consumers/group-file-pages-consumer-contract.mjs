@@ -11,27 +11,27 @@ import { pathToFileURL } from 'node:url';
  */
 export async function verifyGroupFilePagesConsumer(packageRoot, options = {}) {
   const source = options.source === true;
-  /** @type {Promise<typeof import('../src/features/groups/group-file-pages.ts')>} */
+  /** @type {Promise<typeof import('../../src/features/groups/group-file-pages.ts')>} */
   const pagesImport = source
     ? import(pathToFileURL(join(packageRoot, 'src/features/groups/group-file-pages.ts')).href)
     : import(pathToFileURL(join(packageRoot, 'dist/features/groups/group-file-pages.js')).href);
-  /** @type {Promise<typeof import('../src/features/groups/group-file-input.ts')>} */
+  /** @type {Promise<typeof import('../../src/features/groups/group-file-input.ts')>} */
   const inputImport = source
     ? import(pathToFileURL(join(packageRoot, 'src/features/groups/group-file-input.ts')).href)
     : import(pathToFileURL(join(packageRoot, 'dist/features/groups/group-file-input.js')).href);
-  /** @type {Promise<typeof import('../src/native-services.ts')>} */
+  /** @type {Promise<typeof import('../../src/native-services.ts')>} */
   const serviceImport = source
     ? import(pathToFileURL(join(packageRoot, 'src/native-services.ts')).href)
     : import(pathToFileURL(join(packageRoot, 'dist/native-services.js')).href);
-  /** @type {Promise<typeof import('../src/index.ts')>} */
+  /** @type {Promise<typeof import('../../src/index.ts')>} */
   const clientImport = source
     ? import(pathToFileURL(join(packageRoot, 'src/index.ts')).href)
     : import(pathToFileURL(join(packageRoot, 'dist/index.js')).href);
-  /** @type {Promise<typeof import('../src/cli.ts')>} */
+  /** @type {Promise<typeof import('../../src/cli.ts')>} */
   const cliImport = source
     ? import(pathToFileURL(join(packageRoot, 'src/cli.ts')).href)
     : import(pathToFileURL(join(packageRoot, 'dist/cli.js')).href);
-  /** @type {Promise<typeof import('../src/runtime/worker-termination.ts')>} */
+  /** @type {Promise<typeof import('../../src/runtime/worker-termination.ts')>} */
   const terminationImport = source
     ? import(pathToFileURL(join(packageRoot, 'src/runtime/worker-termination.ts')).href)
     : import(pathToFileURL(join(packageRoot, 'dist/runtime/worker-termination.js')).href);
@@ -44,7 +44,7 @@ export async function verifyGroupFilePagesConsumer(packageRoot, options = {}) {
     { prepareCommand },
   ] = await Promise.all([pagesImport, inputImport, serviceImport, clientImport, cliImport]);
   const groupId = '00123';
-  /** @satisfies {import('../src/contracts/groups.ts').GroupFileFolder} */
+  /** @satisfies {import('../../src/contracts/groups.ts').GroupFileFolder} */
   const folder = {
     folderId: 'opaque-folder',
     parentFolderId: '',
@@ -58,7 +58,7 @@ export async function verifyGroupFilePagesConsumer(packageRoot, options = {}) {
     modifyName: 'modifier',
     usedSpace: '18446744073709551615',
   };
-  /** @satisfies {import('../src/contracts/groups.ts').GroupFile} */
+  /** @satisfies {import('../../src/contracts/groups.ts').GroupFile} */
   const file = {
     fileModelId: '0',
     fileId: 'opaque-file',
@@ -110,7 +110,7 @@ export async function verifyGroupFilePagesConsumer(packageRoot, options = {}) {
   const history = new GroupFilePageHistory();
   let calls = 0;
   const port = {
-    /** @param {string} group @param {import('../src/features/groups/group-file-input.ts').GroupFileListParams} params */
+    /** @param {string} group @param {import('../../src/features/groups/group-file-input.ts').GroupFileListParams} params */
     getGroupFileList(group, params) {
       assert.equal(this, port);
       assert.equal(group, groupId);
@@ -136,7 +136,7 @@ export async function verifyGroupFilePagesConsumer(packageRoot, options = {}) {
   }
   let nextToken = 100;
   const listPort = {
-    /** @param {string} group @param {import('../src/features/groups/group-file-input.ts').GroupFileListParams} params */
+    /** @param {string} group @param {import('../../src/features/groups/group-file-input.ts').GroupFileListParams} params */
     getGroupFileList(group, params) {
       assert.equal(this, listPort);
       assert.equal(group, groupId);
@@ -245,7 +245,7 @@ export async function verifyGroupFilePagesConsumer(packageRoot, options = {}) {
   // Controlled replacements share the real worker-lifetime token ledger.
   // Their token producer must keep advancing across account compositions too.
   let nextCompositionToken = 1000;
-  /** @param {import('../src/native/native-contracts.ts').NativeContractProfile|undefined} binaryProfile
+  /** @param {import('../../src/native/native-contracts.ts').NativeContractProfile|undefined} binaryProfile
    * @param {string} [version]
    */
   function composition(
@@ -255,7 +255,7 @@ export async function verifyGroupFilePagesConsumer(packageRoot, options = {}) {
     /** @type {{onGroupFileInfoUpdate(raw:unknown):void}|undefined} */ let listener;
     let acquired = 0;
     const rich = {
-      /** @param {string} group @param {import('../src/features/groups/group-file-input.ts').GroupFileListParams} params */
+      /** @param {string} group @param {import('../../src/features/groups/group-file-input.ts').GroupFileListParams} params */
       getGroupFileList(group, params) {
         assert.equal(this, rich);
         assert.equal(group, groupId);

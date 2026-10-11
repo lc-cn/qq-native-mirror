@@ -73,7 +73,9 @@ The diagrams are navigation aids; the exact permissions live in
 | `src/contracts/`                                 | Public DTOs owned by client, contacts, groups, messages, forward, native and event domains.              |
 | `src/types.ts`, `src/errors.ts`                  | Compatibility type exports and public errors. Contracts do not import implementation modules.            |
 | `test/`                                          | Deterministic regression fixtures, including worker substitution.                                        |
-| `scripts/`                                       | Build tools, installed-consumer checks and separately authorized acceptance executors.                   |
+| `scripts/`                                       | Build/release entry points and separately authorized account acceptance executors.                       |
+| `scripts/consumers/`                             | Shared consumer contracts used by local and CI verification; no account executor imports.                |
+| `scripts/consumer-module-policy.ts`              | The single reviewed consumer directory, exact glue files and computed-import exceptions.                 |
 
 The parent facade and CLI import pure input modules (`query-input`,
 `download-input`, `merged-forward-input`, `send-input`, `face-input`, and

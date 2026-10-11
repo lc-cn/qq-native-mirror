@@ -7,7 +7,7 @@ import { pathToFileURL } from 'node:url';
 export async function verifyPublicContracts(packageRoot, compilerRoot, typeRoots) {
   const { default: ts } = await import(pathToFileURL(join(compilerRoot, 'lib/typescript.js')).href);
   const expected = JSON.parse(
-    await readFile(new URL('../test/fixtures/public-type-names.json', import.meta.url), 'utf8'),
+    await readFile(new URL('../../test/fixtures/public-type-names.json', import.meta.url), 'utf8'),
   );
   const options = {
     strict: true,

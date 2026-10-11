@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync, symlinkSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { collectConsumerModuleReferences } from '../scripts/consumer-module-references.ts';
@@ -163,3 +163,152 @@ test('syntax-invalid helper cannot silently pass a reference-free AST', () => {
     f.close();
   }
 });
+
+test('exact entry and glue permissions do not authorize neighboring executors', () => {
+  const f = fixture();
+  try {
+    const safe = join(f.root, 'safe');
+    mkdirSync(safe);
+    const entry = f.write('entry.mjs', `import './safe/helper.mjs';`);
+    writeFileSync(join(safe, 'helper.mjs'), `import '../glue.mjs';`);
+    const glue = f.write(
+      'glue.mjs',
+      `await import(pathToFileURL(join(root,'dist/index.js')).href);`,
+    );
+    const marker = join(f.root, 'executed');
+    f.write('acceptance.mjs', `writeFileSync(${JSON.stringify(marker)}, 'executed');`);
+    const options = {
+      entries: [entry],
+      distRoot: f.dist,
+      helperRoots: [safe],
+      helperFiles: [entry, glue],
+    };
+    const collect = () => collectConsumerModuleReferences(options);
+    assert.equal(collect().helpers.length, 3);
+    for (const statement of [
+      `import {run} from './acceptance.mjs';`,
+      `import './acceptance.mjs';`,
+      `export * from './acceptance.mjs';`,
+      `await import('./acceptance.mjs');`,
+    ]) {
+      f.write('glue.mjs', statement);
+      assert.throws(collect, /Helper import escapes reviewed roots/);
+    }
+    f.write('glue.mjs', `import './neighbor.mjs';`);
+    f.write('neighbor.mjs', `import './acceptance.mjs';`);
+    assert.throws(collect, /Helper import escapes reviewed roots/);
+    assert.throws(
+      () =>
+        collectConsumerModuleReferences({ ...options, entries: [join(f.root, 'acceptance.mjs')] }),
+      /Entry escapes reviewed roots/,
+    );
+    assert.throws(
+      () => collectConsumerModuleReferences({ ...options, helperFiles: [safe] }),
+      /canonical regular file/,
+    );
+    assert.equal(existsSync(marker), false);
+  } finally {
+    f.close();
+  }
+});
+
+test(
+  'exact-file permissions reject symlink aliases',
+  { skip: process.platform === 'win32' },
+  () => {
+    const f = fixture();
+    try {
+      const safe = join(f.root, 'safe');
+      mkdirSync(safe);
+      const glue = f.write('glue.mjs', '');
+      const alias = join(f.root, 'alias.mjs');
+      symlinkSync(glue, alias);
+      const entry = f.write('entry.mjs', `import './alias.mjs';`);
+      const options = {
+        entries: [entry],
+        distRoot: f.dist,
+        helperRoots: [safe],
+        helperFiles: [entry, glue],
+      };
+      assert.throws(
+        () => collectConsumerModuleReferences(options),
+        /Helper import escapes reviewed roots/,
+      );
+      assert.throws(
+        () => collectConsumerModuleReferences({ ...options, helperFiles: [entry, alias] }),
+        /canonical regular file/,
+      );
+    } finally {
+      f.close();
+    }
+  },
+);
+
+test(
+  'relative SDK dist references cannot authorize neighboring dist executors or symlink escapes',
+  { skip: process.platform === 'win32' },
+  () => {
+    const f = fixture();
+    try {
+      const safe = join(f.root, 'safe');
+      mkdirSync(safe);
+      const outside = join(f.root, 'acceptance/dist');
+      mkdirSync(outside, { recursive: true });
+      writeFileSync(join(outside, 'index.js'), 'throw new Error("must not execute");');
+      const entry = join(safe, 'entry.mjs');
+      const collect = () =>
+        collectConsumerModuleReferences({
+          entries: [entry],
+          distRoot: f.dist,
+          helperRoots: [safe],
+        });
+      writeFileSync(join(f.dist, 'index.js'), '');
+      writeFileSync(entry, `import '../dist/index.js';import '../dist/missing.js';`);
+      assert.deepEqual(
+        collect().references.map((value) => value.path),
+        ['index.js', 'missing.js'],
+      );
+      assert.deepEqual(collect().missing, ['missing.js']);
+      writeFileSync(entry, `import '../acceptance/dist/index.js';`);
+      assert.throws(collect, /Helper import escapes reviewed roots/);
+      symlinkSync(join(outside, 'index.js'), join(f.dist, 'alias.js'));
+      writeFileSync(entry, `import '../dist/alias.js';`);
+      assert.throws(collect, /Helper import escapes reviewed roots/);
+      symlinkSync(outside, join(f.dist, 'linked'));
+      writeFileSync(entry, `import '../dist/linked/missing.js';`);
+      assert.throws(collect, /Helper import escapes reviewed roots|ENOENT/);
+    } finally {
+      f.close();
+    }
+  },
+);
+
+test(
+  'installed join and finite loader references reject dist symlinks escaping the SDK',
+  { skip: process.platform === 'win32' },
+  () => {
+    const f = fixture();
+    try {
+      const outside = join(f.root, 'outside');
+      mkdirSync(outside);
+      writeFileSync(join(outside, 'executor.js'), 'throw new Error("must not execute");');
+      symlinkSync(join(outside, 'executor.js'), join(f.dist, 'alias.js'));
+      symlinkSync(outside, join(f.dist, 'linked'));
+      for (const source of [
+        `await import(pathToFileURL(join(root,'dist/alias.js')).href);`,
+        `const load=(name)=>import(pathToFileURL(join(root,'dist',name)).href);await load('alias.js');`,
+        `await import(pathToFileURL(join(root,'dist/linked/missing.js')).href);`,
+      ]) {
+        const entry = f.write('entry.mjs', source);
+        assert.throws(() => f.collect(entry), /Invalid installed module path/);
+      }
+      const entry = f.write(
+        'entry.mjs',
+        `await import(pathToFileURL(join(root,'dist/missing.js')).href);`,
+      );
+      assert.deepEqual(f.collect(entry).missing, ['missing.js']);
+    } finally {
+      f.close();
+    }
+  },
+);

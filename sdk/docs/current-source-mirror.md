@@ -49,7 +49,7 @@ Neither proves account login, contact/message interoperability, proprietary
 signature authenticity or the effectiveness of any account mutation.
 
 The reusable verification owner is
-`scripts/mirror-consumer-contract.mjs`. It keeps the public factory contract typed,
+`scripts/consumers/mirror-consumer-contract.mjs`. It keeps the public factory contract typed,
 owns its temporary cache and client retirement, and runs in a dedicated consumer
 process because HTTP observation temporarily replaces that process's `fetch`.
 The workflow driver owns archive acquisition/installation and evidence output.

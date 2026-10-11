@@ -7,11 +7,11 @@ import { pathToFileURL } from 'node:url';
  * @param {string} packageRoot
  */
 export async function verifyRequestResultConsumer(packageRoot) {
-  /** @type {Promise<typeof import('../src/features/contacts/friend-requests.ts')>} */
+  /** @type {Promise<typeof import('../../src/features/contacts/friend-requests.ts')>} */
   const contacts = import(
     pathToFileURL(join(packageRoot, 'dist/features/contacts/friend-requests.js')).href
   );
-  /** @type {Promise<typeof import('../src/features/groups/group-requests.ts')>} */
+  /** @type {Promise<typeof import('../../src/features/groups/group-requests.ts')>} */
   const groups = import(
     pathToFileURL(join(packageRoot, 'dist/features/groups/group-requests.js')).href
   );
@@ -22,7 +22,7 @@ export async function verifyRequestResultConsumer(packageRoot) {
       let calls = 0;
       let reads = 0;
       let removed = 0;
-      /** @type {import('../src/features/contacts/friend-requests.ts').FriendBuddyListener | undefined} */
+      /** @type {import('../../src/features/contacts/friend-requests.ts').FriendBuddyListener | undefined} */
       let listener;
       const result = {
         get result() {
@@ -85,7 +85,7 @@ export async function verifyRequestResultConsumer(packageRoot) {
       let calls = 0;
       let reads = 0;
       let removed = 0;
-      /** @type {import('../src/features/groups/group-requests.ts').GroupRequestListener | undefined} */
+      /** @type {import('../../src/features/groups/group-requests.ts').GroupRequestListener | undefined} */
       let listener;
       const result = {
         get result() {

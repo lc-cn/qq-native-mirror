@@ -7,11 +7,11 @@ import { pathToFileURL } from 'node:url';
  * @param {string} packageRoot
  */
 export async function verifyContactGroupSnapshots(packageRoot) {
-  /** @type {Promise<typeof import('../src/features/contacts/contact-operations.ts')>} */
+  /** @type {Promise<typeof import('../../src/features/contacts/contact-operations.ts')>} */
   const contacts = import(
     pathToFileURL(join(packageRoot, 'dist/features/contacts/contact-operations.js')).href
   );
-  /** @type {Promise<typeof import('../src/features/groups/group-operations.ts')>} */
+  /** @type {Promise<typeof import('../../src/features/groups/group-operations.ts')>} */
   const groups = import(
     pathToFileURL(join(packageRoot, 'dist/features/groups/group-operations.js')).href
   );
@@ -228,9 +228,9 @@ export async function verifyContactGroupSnapshots(packageRoot) {
  * @param {string} packageRoot
  */
 async function verifyPublicOperationInputs(packageRoot) {
-  /** @type {Promise<typeof import('../src/index.ts')>} */
+  /** @type {Promise<typeof import('../../src/index.ts')>} */
   const entry = import(pathToFileURL(join(packageRoot, 'dist/index.js')).href);
-  /** @type {Promise<typeof import('../src/cli.ts')>} */
+  /** @type {Promise<typeof import('../../src/cli.ts')>} */
   const cli = import(pathToFileURL(join(packageRoot, 'dist/cli.js')).href);
   const [{ QQClient }, { prepareCommand }] = await Promise.all([entry, cli]);
   class ControlledWorker extends EventEmitter {

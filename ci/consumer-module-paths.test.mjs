@@ -12,59 +12,12 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import test from 'node:test';
 import { collectConsumerModuleReferences } from '../sdk/scripts/consumer-module-references.ts';
+import { consumerModulePolicy } from '../sdk/scripts/consumer-module-policy.ts';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
-const script = (name) => fileURLToPath(new URL(`../sdk/scripts/${name}`, import.meta.url));
-const exceptions = [
-  {
-    file: script('worker-bootstrap-consumer-contract.mjs'),
-    expression: "import(pathToFileURL(join(dist, 'index.js')).href)",
-    modules: ['index.js'],
-    reason: 'Fixture dist variable is installedRoot/dist; child hook text is separately exercised.',
-  },
-  {
-    file: script('client-factory-consumer-contract.mjs'),
-    expression: 'import(pathToFileURL(entry).href)',
-    modules: ['index.js'],
-    reason: 'Fixture generated entry reexports the public package; source mode also exists.',
-  },
-  {
-    file: script('client-factory-consumer-contract.mjs'),
-    expression:
-      'import(pathToFileURL(join(packageRoot, tree, `client/qq-client.${extension}`)).href)',
-    modules: ['client/qq-client.js'],
-    reason: 'Finite source/compiled fixture mode, compiled module checked here.',
-  },
-  {
-    file: script('public-contract-consumer.mjs'),
-    expression: "import(pathToFileURL(join(compilerRoot, 'lib/typescript.js')).href)",
-    modules: [],
-    reason: 'Explicit external compiler path, not SDK module.',
-  },
-  ...[
-    ['features/groups/group-file-pages', 'features/groups/group-file-pages.js'],
-    ['features/groups/group-file-input', 'features/groups/group-file-input.js'],
-    ['native-services', 'native-services.js'],
-    ['runtime/worker-termination', 'runtime/worker-termination.js'],
-    ['index', 'index.js'],
-    ['cli', 'cli.js'],
-  ].map(([source, compiled]) => ({
-    file: script('group-file-pages-consumer-contract.mjs'),
-    expression: `import(pathToFileURL(join(packageRoot, 'src/${source}.ts')).href)`,
-    modules: [compiled],
-    reason: 'Finite source-only fixture branch; its exact compiled counterpart is checked here.',
-  })),
-];
-const options = {
-  entries: [
-    `${root}ci/verify-consumer.mjs`,
-    `${root}ci/current-source-mirror.mjs`,
-    script('verify-package-consumer.mjs'),
-  ],
-  distRoot: `${root}sdk/dist`,
-  helperRoots: [`${root}sdk/scripts`, `${root}ci`, `${root}version-ci`],
-  exceptions,
-};
+const script = (name) =>
+  fileURLToPath(new URL(`../sdk/scripts/consumers/${name}`, import.meta.url));
+const options = consumerModulePolicy(root);
 test('native CI and local packed verifier helper closures reference the clean SDK build', () => {
   const result = collectConsumerModuleReferences(options);
   assert.deepEqual(result.missing, []);

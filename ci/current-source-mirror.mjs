@@ -8,7 +8,7 @@ import { pathToFileURL } from 'node:url';
 import { npm } from './npm.mjs';
 import { readMainArtifact } from '../version-ci/main-artifact.mjs';
 import { readSourceCatalog } from '../version-ci/build-main-contract.mjs';
-import { verifyMirrorConsumer } from '../sdk/scripts/mirror-consumer-contract.mjs';
+import { verifyMirrorConsumer } from '../sdk/scripts/consumers/mirror-consumer-contract.mjs';
 
 const directory = await mkdtemp(join(tmpdir(), 'qq-current-main-installed-'));
 const output = resolve('out/current-source-mirror.json');

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { QQClient } from '../src/index.ts';
-import { verifyWorkerErrorRoutes } from '../scripts/worker-error-consumer-contract.mjs';
+import { verifyWorkerErrorRoutes } from '../scripts/consumers/worker-error-consumer-contract.mjs';
 
 test('actual worker replies to opaque failures and the same worker serves the next query', async () => {
   await verifyWorkerErrorRoutes({

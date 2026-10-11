@@ -9,15 +9,15 @@ import { pathToFileURL } from 'node:url';
  * @param {string} packageRoot
  */
 export async function verifyFaceConsumer(packageRoot) {
-  /** @type {Promise<typeof import('../src/cli.ts')>} */
+  /** @type {Promise<typeof import('../../src/cli.ts')>} */
   const cliModule = import(pathToFileURL(join(packageRoot, 'dist/cli.js')).href);
   const { normalizeMessage, prepareCommand } = await cliModule;
-  /** @type {Promise<typeof import('../src/features/messages/face-input.ts')>} */
+  /** @type {Promise<typeof import('../../src/features/messages/face-input.ts')>} */
   const faceModule = import(
     pathToFileURL(join(packageRoot, 'dist/features/messages/face-input.js')).href
   );
   const { faceElement } = await faceModule;
-  /** @type {Promise<typeof import('../src/index.ts')>} */
+  /** @type {Promise<typeof import('../../src/index.ts')>} */
   const clientModule = import(pathToFileURL(join(packageRoot, 'dist/index.js')).href);
   const { QQClient } = await clientModule;
   const worker = new ChildProcess();
@@ -45,7 +45,7 @@ export async function verifyFaceConsumer(packageRoot) {
   const root = await mkdtemp(join(tmpdir(), 'qq-face-consumer-'));
   const client = new QQClient(worker, 5000);
   try {
-    /** @type {import('../src/contracts/messages.ts').SendableMessageElement[]} */
+    /** @type {import('../../src/contracts/messages.ts').SendableMessageElement[]} */
     const mixed = [{ type: 'text', text: 'fixture' }, ...[14, 333, 428].map((id) => faceInput(id))];
     assert.deepEqual(normalizeMessage(mixed), mixed);
     assert.deepEqual(faceElement(428), {
@@ -69,7 +69,7 @@ export async function verifyFaceConsumer(packageRoot) {
       target: '123',
       'message-file': path,
     });
-    /** @type {Parameters<import('../src/index.ts').QQClient['sendGroupMessage']>[]} */
+    /** @type {Parameters<import('../../src/index.ts').QQClient['sendGroupMessage']>[]} */
     const calls = [];
     client.sendGroupMessage = async (...args) => {
       calls.push(args);
@@ -87,7 +87,7 @@ export async function verifyFaceConsumer(packageRoot) {
   }
 }
 
-/** @param {number} id @returns {import('../src/contracts/messages.ts').SendableMessageElement} */
+/** @param {number} id @returns {import('../../src/contracts/messages.ts').SendableMessageElement} */
 function faceInput(id) {
   return { type: 'face', id };
 }

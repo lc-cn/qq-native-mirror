@@ -10,11 +10,11 @@ import { ESLint } from 'eslint';
 import { collectConsumerModuleReferences } from '../scripts/consumer-module-references.ts';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const helper = resolve(root, 'scripts/face-consumer-contract.mjs');
+const helper = resolve(root, 'scripts/consumers/face-consumer-contract.mjs');
 const source = readFileSync(helper, 'utf8');
 
 test('group-query owner consumer rejects an invalid port and an unobserved assertion without execution', async () => {
-  const queryHelper = resolve(root, 'scripts/group-query-owner-consumer-contract.mjs');
+  const queryHelper = resolve(root, 'scripts/consumers/group-query-owner-consumer-contract.mjs');
   const querySource = readFileSync(queryHelper, 'utf8');
   assert.deepEqual(diagnostics(querySource, queryHelper), []);
   const invalid = replaceOnce(querySource, 'getAllMemberList: request', 'getAllMemberList: 42');
@@ -44,7 +44,7 @@ function replaceOnce(value, before, after) {
 }
 
 test('request-result consumer retains typed ports and awaited assertions without execution', async () => {
-  const file = resolve(root, 'scripts/request-result-consumer-contract.mjs');
+  const file = resolve(root, 'scripts/consumers/request-result-consumer-contract.mjs');
   const actual = readFileSync(file, 'utf8');
   assert.deepEqual(diagnostics(actual, file), []);
   assert.ok(
@@ -79,7 +79,7 @@ test('request-result consumer retains typed ports and awaited assertions without
 });
 
 test('contact/group snapshot consumer rejects an invalid native port and unobserved mutation without execution', async () => {
-  const file = resolve(root, 'scripts/contact-group-snapshot-consumer-contract.mjs');
+  const file = resolve(root, 'scripts/consumers/contact-group-snapshot-consumer-contract.mjs');
   const actual = readFileSync(file, 'utf8');
   assert.deepEqual(diagnostics(actual, file), []);
   assert.ok(
@@ -146,7 +146,7 @@ test('consumer compiler gate rejects missing preparation await and fabricated se
   );
 });
 
-const factoryHelper = resolve(root, 'scripts/client-factory-consumer-contract.mjs');
+const factoryHelper = resolve(root, 'scripts/consumers/client-factory-consumer-contract.mjs');
 const factorySource = readFileSync(factoryHelper, 'utf8');
 test('client factory compiler rejects unawaited construction and invalid options without running its worker', () => {
   assert.deepEqual(diagnostics(factorySource, factoryHelper), []);
@@ -167,7 +167,7 @@ test('client factory compiler rejects unawaited construction and invalid options
   }
 });
 
-const groupSearchHelper = resolve(root, 'scripts/group-search-consumer-contract.mjs');
+const groupSearchHelper = resolve(root, 'scripts/consumers/group-search-consumer-contract.mjs');
 const groupSearchSource = readFileSync(groupSearchHelper, 'utf8');
 
 test('group-search consumer compiler rejects missing preparation await and invalid match DTO without running its worker', () => {
@@ -192,7 +192,7 @@ test('group-search consumer compiler rejects missing preparation await and inval
   );
 });
 
-const groupEssenceHelper = resolve(root, 'scripts/group-essence-consumer-contract.mjs');
+const groupEssenceHelper = resolve(root, 'scripts/consumers/group-essence-consumer-contract.mjs');
 const groupEssenceSource = readFileSync(groupEssenceHelper, 'utf8');
 
 test('group-essence compiler rejects unawaited CLI preparation and incomplete public DTOs without running tickets or IPC', () => {
@@ -228,7 +228,7 @@ test('group-essence compiler rejects unawaited CLI preparation and incomplete pu
   );
 });
 
-const filePagesHelper = resolve(root, 'scripts/group-file-pages-consumer-contract.mjs');
+const filePagesHelper = resolve(root, 'scripts/consumers/group-file-pages-consumer-contract.mjs');
 const filePagesSource = readFileSync(filePagesHelper, 'utf8');
 test('group file consumer rejects missing metadata, rounded uint64 and unawaited CLI preparation without executing native code', () => {
   assert.deepEqual(diagnostics(filePagesSource, filePagesHelper), []);
@@ -246,7 +246,7 @@ test('group file consumer rejects missing metadata, rounded uint64 and unawaited
   }
 });
 
-const elementHelper = resolve(root, 'scripts/element-preparation-consumer-contract.mjs');
+const elementHelper = resolve(root, 'scripts/consumers/element-preparation-consumer-contract.mjs');
 const elementSource = readFileSync(elementHelper, 'utf8');
 test('element preparation compiler rejects unawaited results, wrong variants and unchecked thumbnail paths without running adapters', () => {
   assert.deepEqual(diagnostics(elementSource, elementHelper), []);

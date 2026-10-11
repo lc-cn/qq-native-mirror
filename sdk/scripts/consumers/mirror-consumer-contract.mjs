@@ -4,9 +4,9 @@ import { mkdtemp, readFile, realpath, lstat, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, sep } from 'node:path';
 
-/** @typedef {Pick<import('../src/index.ts').QQClient, 'close'|'state'|'account'|'nativeExports'>} MirrorClient */
-/** @typedef {import('../src/contracts/client.ts').ClientOptions} ClientOptions */
-/** @typedef {import('../src/native/native-catalog.ts').NativeCatalog['packages'][number]} CatalogEntry */
+/** @typedef {Pick<import('../../src/index.ts').QQClient, 'close'|'state'|'account'|'nativeExports'>} MirrorClient */
+/** @typedef {import('../../src/contracts/client.ts').ClientOptions} ClientOptions */
+/** @typedef {import('../../src/native/native-catalog.ts').NativeCatalog['packages'][number]} CatalogEntry */
 /** @typedef {{requests:number, payloadRequests:number, bytes:number, payloadBytes:number}} TransferCounts */
 const hash = (/** @type {Uint8Array} */ bytes) => createHash('sha256').update(bytes).digest('hex');
 const catalogUrl = 'https://raw.githubusercontent.com/lc-cn/qq-native-mirror/main/catalog.json';
@@ -34,7 +34,7 @@ export async function verifyMirrorConsumer(context) {
   const fetchImpl = context.fetchImpl ?? originalFetch;
   const root = await mkdtemp(join(tmpdir(), 'qq-current-mirror-'));
   const cacheDir = join(root, 'cache');
-  /** @type {import('../src/contracts/native.ts').NativeManifest|undefined} */
+  /** @type {import('../../src/contracts/native.ts').NativeManifest|undefined} */
   let manifest;
   /** @type {MirrorClient|undefined} */
   let client;
@@ -75,7 +75,7 @@ export async function verifyMirrorConsumer(context) {
           url === catalogUrl ? context.catalogSha256 : selected.manifestSha256,
         );
         if (url === selected.manifestUrl) {
-          const value = /** @type {import('../src/contracts/native.ts').NativeManifest} */ (
+          const value = /** @type {import('../../src/contracts/native.ts').NativeManifest} */ (
             JSON.parse(bytes.toString('utf8'))
           );
           assert.equal(value.platform, process.platform);

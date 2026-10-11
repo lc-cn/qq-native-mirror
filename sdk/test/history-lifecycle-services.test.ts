@@ -3,7 +3,7 @@ import { QQClient } from '../src/index.ts';
 import { createNativeServices } from '../src/native-services.ts';
 import { observeWatchFailures, prepareCommand } from '../src/cli.ts';
 // Shared JS consumer contract is also run against installed compiled code.
-import { checkHistoryLifecycle } from '../scripts/history-lifecycle-consumer-contract.mjs';
+import { checkHistoryLifecycle } from '../scripts/consumers/history-lifecycle-consumer-contract.mjs';
 
 test('public login, asynchronous history input and watch policy share the compiled-consumer contract', async () => {
   await checkHistoryLifecycle({

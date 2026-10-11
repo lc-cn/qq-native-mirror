@@ -1,6 +1,6 @@
 import ts from 'typescript';
-import { readFileSync, statSync, realpathSync } from 'node:fs';
-import { dirname, resolve, relative, isAbsolute } from 'node:path';
+import { readFileSync, statSync, realpathSync, lstatSync } from 'node:fs';
+import { dirname, resolve, relative, isAbsolute, basename } from 'node:path';
 
 export interface ConsumerModuleException {
   file: string;
@@ -12,6 +12,7 @@ export interface ConsumerModuleReferencesOptions {
   entries: readonly string[];
   distRoot: string;
   helperRoots: readonly string[];
+  helperFiles?: readonly string[];
   exceptions?: readonly ConsumerModuleException[];
 }
 export interface ConsumerModuleReference {
@@ -28,6 +29,14 @@ export interface ConsumerModuleExceptionUse {
 /** Static syntax gate only. It never imports or executes a consumer or installed SDK. */
 export function collectConsumerModuleReferences(options: ConsumerModuleReferencesOptions) {
   const roots = options.helperRoots.map((root) => realpathSync(root));
+  const files = new Set(
+    (options.helperFiles ?? []).map((input) => {
+      const file = realpathSync(input);
+      if (!lstatSync(input).isFile())
+        throw new Error(`${file}: Exact helper must be a canonical regular file`);
+      return file;
+    }),
+  );
   const usedExceptions = new Set<ConsumerModuleException>();
   const visited = new Set<string>();
   const references: ConsumerModuleReference[] = [];
@@ -36,14 +45,38 @@ export function collectConsumerModuleReferences(options: ConsumerModuleReference
     const path = relative(resolve(root), file).replaceAll('\\', '/');
     return !isAbsolute(path) && path !== '..' && !path.startsWith('../');
   };
+  const isReviewed = (input: string) => {
+    const file = realpathSync(input);
+    return (
+      roots.some((root) => inside(file, root)) || (files.has(file) && lstatSync(input).isFile())
+    );
+  };
+  // Resolve existing ancestors as well: missing compiled modules remain references,
+  // but a symlinked parent cannot escape the selected SDK dist namespace.
+  const canonicalTarget = (input: string): string => {
+    let current = resolve(input);
+    const suffix: string[] = [];
+    while (true) {
+      try {
+        return resolve(realpathSync(current), ...suffix);
+      } catch (error) {
+        if (!error || typeof error !== 'object' || !('code' in error) || error.code !== 'ENOENT')
+          throw error;
+        const parent = dirname(current);
+        if (parent === current) throw error;
+        suffix.unshift(basename(current));
+        current = parent;
+      }
+    }
+  };
+  const dist = canonicalTarget(options.distRoot);
   const literal = (node: ts.Node | undefined): string | undefined =>
     node && (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node))
       ? node.text
       : undefined;
   const walk = (input: string) => {
     const file = realpathSync(input);
-    if (!roots.some((root) => inside(file, root)))
-      throw new Error(`${file}: Entry escapes reviewed roots`);
+    if (!isReviewed(input)) throw new Error(`${file}: Entry escapes reviewed roots`);
     if (visited.has(file)) return;
     visited.add(file);
     const tree = ts.createSourceFile(
@@ -69,7 +102,11 @@ export function collectConsumerModuleReferences(options: ConsumerModuleReference
     const add = (node: ts.Node, path: string) => {
       const normalized = path.replaceAll('\\', '/');
       const target = resolve(options.distRoot, normalized);
-      if (!inside(target, options.distRoot) || !normalized.endsWith('.js'))
+      if (
+        !inside(target, options.distRoot) ||
+        !inside(canonicalTarget(target), dist) ||
+        !normalized.endsWith('.js')
+      )
         fail(node, 'Invalid installed module path');
       references.push({
         path: normalized,
@@ -249,13 +286,13 @@ export function collectConsumerModuleReferences(options: ConsumerModuleReference
       )
         fail(node, 'Unreviewed absolute helper import');
       if (specifier.startsWith('.')) {
-        if (specifier.includes('/dist/')) {
-          add(node, specifier.slice(specifier.indexOf('/dist/') + 6));
+        const target = resolve(dirname(file), specifier);
+        const canonical = canonicalTarget(target);
+        if (inside(canonical, dist)) {
+          add(node, relative(dist, canonical));
           return;
         }
-        const target = realpathSync(resolve(dirname(file), specifier));
-        if (!roots.some((root) => inside(target, root)))
-          fail(node, 'Helper import escapes reviewed roots');
+        if (!isReviewed(target)) fail(node, 'Helper import escapes reviewed roots');
         walk(target);
       }
     };

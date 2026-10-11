@@ -9,20 +9,20 @@ import { pathToFileURL } from 'node:url';
  * @param {string} packageRoot
  */
 export async function verifyGroupSearchConsumer(packageRoot) {
-  /** @type {Promise<typeof import('../src/native-services.ts')>} */
+  /** @type {Promise<typeof import('../../src/native-services.ts')>} */
   const servicesModule = import(pathToFileURL(join(packageRoot, 'dist/native-services.js')).href);
-  /** @type {Promise<typeof import('../src/native/native-contracts.ts')>} */
+  /** @type {Promise<typeof import('../../src/native/native-contracts.ts')>} */
   const contractsModule = import(
     pathToFileURL(join(packageRoot, 'dist/native/native-contracts.js')).href
   );
-  /** @type {Promise<typeof import('../src/cli.ts')>} */
+  /** @type {Promise<typeof import('../../src/cli.ts')>} */
   const cliModule = import(pathToFileURL(join(packageRoot, 'dist/cli.js')).href);
-  /** @type {Promise<typeof import('../src/index.ts')>} */
+  /** @type {Promise<typeof import('../../src/index.ts')>} */
   const clientModule = import(pathToFileURL(join(packageRoot, 'dist/index.js')).href);
   const [{ createNativeServices }, { supportsGroupSearch }, { prepareCommand }, { QQClient }] =
     await Promise.all([servicesModule, contractsModule, cliModule, clientModule]);
   const version = '7.0.2-53644';
-  /** @satisfies {import('../src/native/native-contracts.ts').NativeContractProfile} */
+  /** @satisfies {import('../../src/native/native-contracts.ts').NativeContractProfile} */
   const profile = {
     platform: 'darwin',
     arch: 'arm64',
@@ -50,7 +50,7 @@ export async function verifyGroupSearchConsumer(packageRoot) {
       },
     ],
   };
-  /** @satisfies {import('../src/contracts/groups.ts').GroupSearchMatch} */
+  /** @satisfies {import('../../src/contracts/groups.ts').GroupSearchMatch} */
   const expected = {
     groupId: '123',
     name: 'fixture',
@@ -61,14 +61,14 @@ export async function verifyGroupSearchConsumer(packageRoot) {
   };
   /**
    * @param {unknown} response
-   * @param {import('../src/native/native-contracts.ts').NativeContractProfile} nativeContracts
+   * @param {import('../../src/native/native-contracts.ts').NativeContractProfile} nativeContracts
    */
   function fixture(response = result, nativeContracts = profile, pending = false) {
     /** @type {{onSearchGroupResult(value:unknown):void}|undefined} */
     let listener;
     let calls = 0,
       registrations = 0;
-    /** @type {import('../src/features/groups/group-search.ts').GroupSearchPort & {
+    /** @type {import('../../src/features/groups/group-search.ts').GroupSearchPort & {
      * addKernelSearchListener(value:{onSearchGroupResult(response:unknown):void}):void
      * }} */
     const search = {
@@ -165,7 +165,7 @@ export async function verifyGroupSearchConsumer(packageRoot) {
   );
   assert.equal(typeof QQClient.prototype.searchGroup, 'function');
   const directory = await mkdtemp(join(tmpdir(), 'qq-search-worker-'));
-  /** @type {import('../src/index.ts').QQClient|undefined} */
+  /** @type {import('../../src/index.ts').QQClient|undefined} */
   let client;
   /** @type {import('node:child_process').ChildProcess|undefined} */
   let child;

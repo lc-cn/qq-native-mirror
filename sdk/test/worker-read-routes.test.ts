@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fileURLToPath } from 'node:url';
 import { QQClient } from '../src/index.ts';
-import { verifyWorkerReadCancellation } from '../scripts/worker-read-consumer-contract.mjs';
+import { verifyWorkerReadCancellation } from '../scripts/consumers/worker-read-consumer-contract.mjs';
 
 test(
   'actual worker cancellation reaches HTTP reads without closing its Session',

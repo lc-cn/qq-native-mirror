@@ -11,16 +11,16 @@
   "include": [
     "src/**/*.ts",
     "scripts/**/*.ts",
-    "scripts/client-factory-consumer-contract.mjs",
-    "scripts/face-consumer-contract.mjs",
-    "scripts/group-search-consumer-contract.mjs",
-    "scripts/group-query-owner-consumer-contract.mjs",
-    "scripts/contact-group-snapshot-consumer-contract.mjs",
-    "scripts/request-result-consumer-contract.mjs",
-    "scripts/element-preparation-consumer-contract.mjs",
-    "scripts/mirror-consumer-contract.mjs",
-    "scripts/group-essence-consumer-contract.mjs",
-    "scripts/group-file-pages-consumer-contract.mjs",
-    "scripts/worker-delivery-consumer-contract.mjs"
+    "scripts/consumers/client-factory-consumer-contract.mjs",
+    "scripts/consumers/face-consumer-contract.mjs",
+    "scripts/consumers/group-search-consumer-contract.mjs",
+    "scripts/consumers/group-query-owner-consumer-contract.mjs",
+    "scripts/consumers/contact-group-snapshot-consumer-contract.mjs",
+    "scripts/consumers/request-result-consumer-contract.mjs",
+    "scripts/consumers/element-preparation-consumer-contract.mjs",
+    "scripts/consumers/mirror-consumer-contract.mjs",
+    "scripts/consumers/group-essence-consumer-contract.mjs",
+    "scripts/consumers/group-file-pages-consumer-contract.mjs",
+    "scripts/consumers/worker-delivery-consumer-contract.mjs"
   ]
 }

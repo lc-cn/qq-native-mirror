@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { verifyGroupFilePagesConsumer } from '../scripts/group-file-pages-consumer-contract.mjs';
+import { verifyGroupFilePagesConsumer } from '../scripts/consumers/group-file-pages-consumer-contract.mjs';
 
 test('group-file consumer uses source modules and a real controlled worker with complete DTOs', async () => {
   const result = await verifyGroupFilePagesConsumer(

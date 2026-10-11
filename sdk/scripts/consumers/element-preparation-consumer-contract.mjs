@@ -9,12 +9,12 @@ import { createHash } from 'node:crypto';
  * @param {string} packageRoot
  */
 export async function verifyElementPreparationConsumer(packageRoot) {
-  /** @type {Promise<typeof import('../src/features/messages/inbound-elements.ts')>} */
+  /** @type {Promise<typeof import('../../src/features/messages/inbound-elements.ts')>} */
   const inboundModule = import(
     pathToFileURL(join(packageRoot, 'dist/features/messages/inbound-elements.js')).href
   );
   const { decodeElements } = await inboundModule;
-  /** @type {Promise<typeof import('../src/features/messages/outbound-elements.ts')>} */
+  /** @type {Promise<typeof import('../../src/features/messages/outbound-elements.ts')>} */
   const outboundModule = import(
     pathToFileURL(join(packageRoot, 'dist/features/messages/outbound-elements.js')).href
   );
@@ -31,7 +31,7 @@ export async function verifyElementPreparationConsumer(packageRoot) {
     await writeFile(image, bytes);
     await writeFile(attachment, 'original attachment');
     let allocations = 0;
-    /** @type {import('../src/runtime/media-contracts.ts').MediaStagingPort} */
+    /** @type {import('../../src/runtime/media-contracts.ts').MediaStagingPort} */
     const allocator = {
       getRichMediaFilePathForGuild(request) {
         assert.equal(this, allocator);
@@ -70,11 +70,11 @@ export async function verifyElementPreparationConsumer(packageRoot) {
     });
     assert.equal(await readFile(attachment, 'utf8'), 'original attachment');
     await assert.rejects(createFileElement(attachment, '../invalid'));
-    /** @type {import('../src/native/message-contracts.ts').NativePeer} */
+    /** @type {import('../../src/native/message-contracts.ts').NativePeer} */
     const peer = { chatType: 2, peerUid: '123' };
     const messageId = '18446744073709551615';
     let queries = 0;
-    /** @type {import('../src/features/messages/message-query.ts').MessageIdQueryPort} */
+    /** @type {import('../../src/features/messages/message-query.ts').MessageIdQueryPort} */
     const service = {
       getMsgsByMsgId(actualPeer, ids) {
         assert.equal(this, service);
@@ -126,12 +126,12 @@ export async function verifyElementPreparationConsumer(packageRoot) {
     assert.ok(unknownElement?.type === 'unknown');
     assert.equal(unknownElement.data, opaque);
     assert.deepEqual(opaque.privateField, { preserved: true });
-    /** @type {Promise<typeof import('../src/features/media/media-record.ts')>} */
+    /** @type {Promise<typeof import('../../src/features/media/media-record.ts')>} */
     const recordModule = import(
       pathToFileURL(join(packageRoot, 'dist/features/media/media-record.js')).href
     );
     const { createRecordElement } = await recordModule;
-    /** @type {Promise<typeof import('../src/features/media/media-send.ts')>} */
+    /** @type {Promise<typeof import('../../src/features/media/media-send.ts')>} */
     const videoModule = import(
       pathToFileURL(join(packageRoot, 'dist/features/media/media-send.js')).href
     );
@@ -161,12 +161,12 @@ export async function verifyElementPreparationConsumer(packageRoot) {
           let getters = 0,
             calls = 0,
             measurements = 0;
-          /** @type {import('../src/runtime/media-contracts.ts').MediaStagingPort} */
+          /** @type {import('../../src/runtime/media-contracts.ts').MediaStagingPort} */
           const service = {
             get getRichMediaFilePathForGuild() {
               getters++;
-              /** @this {import('../src/runtime/media-contracts.ts').MediaStagingPort}
-               * @param {Parameters<NonNullable<import('../src/runtime/media-contracts.ts').MediaStagingPort['getRichMediaFilePathForGuild']>>[0]} request
+              /** @this {import('../../src/runtime/media-contracts.ts').MediaStagingPort}
+               * @param {Parameters<NonNullable<import('../../src/runtime/media-contracts.ts').MediaStagingPort['getRichMediaFilePathForGuild']>>[0]} request
                */
               return function (request) {
                 assert.equal(this, service);

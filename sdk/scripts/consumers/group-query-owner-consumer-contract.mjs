@@ -7,11 +7,11 @@ import { pathToFileURL } from 'node:url';
  * @param {string} packageRoot
  */
 export async function verifyGroupQueryOwnerConsumer(packageRoot) {
-  /** @type {Promise<typeof import('../src/features/groups/group-queries.ts')>} */
+  /** @type {Promise<typeof import('../../src/features/groups/group-queries.ts')>} */
   const queryModule = import(
     pathToFileURL(join(packageRoot, 'dist/features/groups/group-queries.js')).href
   );
-  /** @type {Promise<typeof import('../src/runtime/native-event-channel.ts')>} */
+  /** @type {Promise<typeof import('../../src/runtime/native-event-channel.ts')>} */
   const channelModule = import(
     pathToFileURL(join(packageRoot, 'dist/runtime/native-event-channel.js')).href
   );

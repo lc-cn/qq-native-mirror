@@ -27,7 +27,10 @@
     "typecheck": "tsc --noEmit && tsc -p tsconfig.test.json && tsc -p tsconfig.scripts.json",
     "verify:package": "node scripts/verify-package-consumer.mjs",
     "check": "npm run format:check && npm run lint && npm run typecheck && npm test && npm run build && npm run verify:package",
-    "clean": "node scripts/clean-dist.mjs"
+    "clean": "node scripts/clean-dist.mjs",
+    "check:consumer-modules": "node scripts/check-consumer-modules.ts",
+    "pretest": "npm run check:consumer-modules",
+    "preverify:package": "npm run check:consumer-modules"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
