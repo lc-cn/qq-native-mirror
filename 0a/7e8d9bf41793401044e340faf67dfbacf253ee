@@ -1,0 +1,49 @@
+sdk/docs/architecture/encapsulation.md
+  s_2104cc474f1ce5::t_8164694416d70b 446-462
+sdk/docs/attachment-download.md
+  s_2104cc474f1ce5::t_12230c72b00660 5,11,13
+sdk/docs/development.md
+  s_2104cc474f1ce5::t_94e293c4848dd6 30
+sdk/scripts/download-consumer-contract.mjs
+  s_2104cc474f1ce5::t_6058c8982c5a62 340-519
+sdk/scripts/verify-package-consumer.mjs
+  s_2104cc474f1ce5::t_fa1bfa60ddc29e 52-53
+sdk/scripts/worker-read-consumer-contract.mjs
+  s_2104cc474f1ce5::t_1d202d045e02ae 3,23,25,34-36,122-146,149-151
+sdk/src/features/media/attachment-downloads.ts
+  s_2104cc474f1ce5::t_0b19ba59231249 1-2,11-12,40,57-59,69-70,98-112,115-116,138-142,144-146,148-188
+sdk/src/native-services.ts
+  s_2104cc474f1ce5::t_6a026fa4e45d08 36,143-151,414-415
+sdk/src/runtime/operations.ts
+  s_2104cc474f1ce5::t_d757edb7452638 70,78-79
+sdk/test/architecture.test.ts
+  s_2104cc474f1ce5::t_58e78a58c58f43 235-237,732,824-854
+sdk/test/attachment-download-port.test.ts
+  s_2104cc474f1ce5::t_34043a32aac81e 7,35-36,123
+sdk/test/attachment-downloads-owner.test.ts
+  s_2104cc474f1ce5::t_eeb9bbb40da06b 1-566
+sdk/test/attachment-downloads.test.ts
+  s_2104cc474f1ce5::t_7e941c31d5bb15 20
+sdk/test/fixtures/domain-port-types.ts
+  s_2104cc474f1ce5::t_7abb044a328196 376-377,482-492
+sdk/test/helpers/dependency-policy.ts
+  s_2104cc474f1ce5::t_fabaeb2e0bac5e 245-246,313-322
+sdk/test/helpers/external-dependencies.ts
+  s_2104cc474f1ce5::t_0c391bb3689dd8 26
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "0a7e8d9bf41793401044e340faf67dfbacf253ee",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
