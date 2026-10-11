@@ -3,7 +3,9 @@
  */
 export const externalRuntimeDependencies: Readonly<Record<string, readonly string[]>> = {
   'src/cli.ts': ['node:fs', 'node:fs/promises', 'node:path', 'node:url'],
-  'src/cli/command-plan.ts': ['node:fs/promises', 'node:path'],
+  'src/cli/commands/contacts.ts': ['node:fs/promises', 'node:path'],
+  'src/cli/commands/groups.ts': ['node:path'],
+  'src/cli/commands/messages.ts': ['node:fs/promises', 'node:path'],
   'src/client/create-client.ts': [
     'node:child_process',
     'node:fs',

@@ -30,6 +30,18 @@ test('actual source CLI canonical entry runs help and preflight errors without c
   help(cli);
   missingResource(cli);
 });
+test('inherited command and option names reject before configuration access', () => {
+  for (const command of ['constructor', 'toString', '__proto__']) {
+    const result = invoke(cli, [command, '--config', '/does-not-exist.json']);
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /Unknown command/);
+    assert.doesNotMatch(result.stderr, /ENOENT|Duplicate option|TypeError/);
+  }
+  const invalid = invoke(cli, ['contacts', '--__proto__', 'fixture']);
+  assert.equal(invalid.status, 1);
+  assert.match(invalid.stderr, /Unknown option for contacts: --__proto__/);
+  assert.doesNotMatch(invalid.stderr, /ENOENT|Duplicate option|TypeError/);
+});
 test('essence CLI validates intent before reading config or starting native code', () => {
   const result = invoke(cli, [
     'group-essence',

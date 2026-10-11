@@ -55,6 +55,26 @@ function dependencies(path: string): Dependency[] {
 const graph = new Map(files.map((path) => [path, dependencies(path)]));
 const runtimeEdges = (path: string) => graph.get(path)!.filter((edge) => !edge.typeOnly);
 
+test('domain CLI plans cannot depend back on entry, registry or client acquisition', () => {
+  for (const from of [
+    'src/cli/commands/contacts.ts',
+    'src/cli/commands/groups.ts',
+    'src/cli/commands/messages.ts',
+    'src/cli/command-input.ts',
+  ]) {
+    for (const to of [
+      'src/cli.ts',
+      'src/cli/command-plan.ts',
+      'src/cli/client-command.ts',
+      'src/client/create-client.ts',
+      'src/native/native-package.ts',
+    ]) {
+      for (const typeOnly of [false, true])
+        assert.ok(dependencyViolation({ from, to, typeOnly }), `${from} must not import ${to}`);
+    }
+  }
+});
+
 test('service composition delegates message-update ingress without projecting recall records', () => {
   const source = ts.createSourceFile(
     'native-services.ts',

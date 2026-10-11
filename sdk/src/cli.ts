@@ -8,7 +8,13 @@ import { validateDownloadMirrors, validateNativeSourceOptions } from './native/n
 import { KernelRequestError, MergedForwardError } from './errors.ts';
 import type { ClientOptions, LoginRequest } from './contracts/client.ts';
 
-import { parse, prepareCommand, required, validateCommandFlags } from './cli/command-plan.ts';
+import {
+  isEntryCommand,
+  parse,
+  prepareCommand,
+  required,
+  validateCommandFlags,
+} from './cli/command-plan.ts';
 import { runClientCommand, watchReconnectEnabled, watchEventMode } from './cli/client-command.ts';
 export { parse, prepareCommand, normalizeMessage } from './cli/command-plan.ts';
 export { observeWatchEvents, observeWatchFailures } from './cli/client-command.ts';
@@ -90,9 +96,7 @@ async function main() {
   }
   validateCommandFlags(command, flags);
   const watchMode = command === 'watch' ? watchEventMode(flags.events) : undefined;
-  const action = ['init', 'config', 'login', 'watch'].includes(command)
-    ? undefined
-    : await prepareCommand(command, flags);
+  const action = isEntryCommand(command) ? undefined : await prepareCommand(command, flags);
   const configPath = resolve(required(flags, 'config'));
   if (command === 'init') {
     const options: ClientOptions = { dataDir: resolve(required(flags, 'data-dir')) };

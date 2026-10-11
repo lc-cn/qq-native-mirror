@@ -36,7 +36,8 @@ script or weaken a historical plan to make it pass against newer artifacts.
 | Bind Node addon loading, codecs and account-directory locking                      | `src/worker/bootstrap.ts`; `worker.ts` remains the IPC entry                              |
 | Prepare local engine/login configuration                                           | `src/runtime/kernel-environment.ts`; no connection or authentication                      |
 | Compose an authenticated Session and feature adapters                              | `kernel.ts` and `native-services.ts`                                                      |
-| CLI flags and client execution                                                     | `src/cli/`; executable entry remains `cli.ts`                                             |
+| CLI command flags and action planning                                              | `src/cli/commands/` by domain; `command-plan.ts` composes definitions and captures flags  |
+| CLI argument parsing and client execution                                          | `src/cli/command-input.ts` and `client-command.ts`; executable entry remains `cli.ts`     |
 
 Follow the change through its owners:
 
@@ -47,6 +48,15 @@ and initialization use the same rules as `createClient`; do not duplicate versio
 or source checks in another entry point. Preflight does not choose source precedence
 or replace directory verification. Existing local wrappers, trusted manifests,
 fixed-version offline selection and default latest selection keep their own policies.
+
+A business CLI command has one domain definition containing both accepted flags
+and its preparation function. The registry rejects duplicate names and owns lookup;
+domain planners cannot import the registry, executable entry or client-acquisition
+modules. Shared argument parsing lives below those definitions. Preparation captures
+caller flags before asynchronous file reads and returns an action that uses the
+public client only when invoked. Configuration, login and watch ownership stays in
+the existing entry/execution modules. Add a command to its domain definition instead
+of maintaining a second flag table or command switch.
 
 - A new operation starts in its domain contract and pure input capture. Add the
   facade method and closed operation name, then the domain adapter and exhaustive

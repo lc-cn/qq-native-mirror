@@ -320,6 +320,24 @@ export function dependencyViolation({ from, to, typeOnly }: SourceDependency): s
       to === 'src/native/login-request.ts'
       ? undefined
       : 'Client creation selects its native bundle and constructs the public facade.';
+  if (from === 'src/cli/command-contracts.ts')
+    return typeOnly && to === 'src/index.ts'
+      ? undefined
+      : 'CLI action contracts reference only the public client type.';
+  if (from === 'src/cli/command-input.ts')
+    return 'CLI flag parsing cannot depend on command composition or client acquisition.';
+  if (from === 'src/cli/command-plan.ts')
+    return to === 'src/cli/command-contracts.ts' ||
+      to === 'src/cli/command-input.ts' ||
+      to.startsWith('src/cli/commands/')
+      ? undefined
+      : 'Command composition only combines domain definitions and shared flag input.';
+  if (from.startsWith('src/cli/commands/'))
+    return to === 'src/cli/command-input.ts' ||
+      (typeOnly && to === 'src/cli/command-contracts.ts') ||
+      facadeInputs.has(to)
+      ? undefined
+      : 'Domain command plans use public actions and pure inputs, never entry/lifecycle composition.';
   if (from === 'src/cli.ts' || from.startsWith('src/cli/'))
     return to === 'src/index.ts' ||
       to.startsWith('src/cli/') ||

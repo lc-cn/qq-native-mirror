@@ -30,6 +30,44 @@ test('allowed flags reject before planning I/O and preserve command-specific err
     /--message-id is required/,
   );
 });
+test('inherited object names are neither commands nor duplicate options', async () => {
+  for (const command of ['constructor', 'toString', '__proto__']) {
+    assert.throws(() => validateCommandFlags(command, {}), /Unknown command/);
+    await assert.rejects(prepareCommand(command, {}), /Unknown command/);
+  }
+  for (const flag of ['constructor', 'toString', '__proto__']) {
+    const { flags } = parse(['contacts', `--${flag}`, 'fixture']);
+    assert.equal(Object.getPrototypeOf(flags), Object.prototype);
+    assert.equal(Object.hasOwn(flags, flag), true);
+    assert.equal(flags[flag], 'fixture');
+    assert.throws(() => validateCommandFlags('contacts', flags), /Unknown option for contacts/);
+    assert.throws(
+      () => parse(['contacts', `--${flag}`, 'one', `--${flag}`, 'two']),
+      /Duplicate option/,
+    );
+  }
+});
+test('group request captures optional reason before execution', async () => {
+  const flags = {
+    'group-id': '123',
+    sequence: '456',
+    type: '1',
+    accept: 'false',
+    reason: 'original reason',
+  };
+  const action = await prepareCommand('group-request', flags);
+  flags.reason = 'later change';
+  const calls: unknown[][] = [];
+  await action({
+    handleGroupRequest(...args: unknown[]) {
+      calls.push(args);
+      return Promise.resolve();
+    },
+  } as unknown as QQClient);
+  assert.deepEqual(calls, [
+    [{ groupId: '123', sequence: '456', type: 1, doubt: false }, false, 'original reason'],
+  ]);
+});
 test('prepared mutation action performs no dispatch until called and snapshots flags including empty clear', async () => {
   const flags = { target: '123', remark: '' };
   const action = await prepareCommand('friend-remark', flags);

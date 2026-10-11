@@ -2,7 +2,7 @@ import { mkdtemp, writeFile, mkdir, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import { verifyForwardConsumer } from './forward-consumer-contract.mjs';
 import { verifyRecallConsumer } from './recall-consumer-contract.mjs';
 import { verifyMentionConsumer } from './mention-consumer-contract.mjs';
@@ -365,6 +365,33 @@ const help = run(process.execPath, ['node_modules/qq-native-client/dist/cli.js',
 if (!help.includes('group-kick') || !help.includes('--message-file'))
   throw new Error('Installed CLI lacks commands');
 const cliEntry = 'node_modules/qq-native-client/dist/cli.js';
+for (const name of ['constructor', 'toString', '__proto__']) {
+  const result = spawnSync(process.execPath, [cliEntry, name, '--config', 'absent-config.json'], {
+    cwd: destination,
+    encoding: 'utf8',
+    timeout: 5000,
+  });
+  if (
+    result.status !== 1 ||
+    !result.stderr.includes(`Unknown command: ${name}`) ||
+    /ENOENT|TypeError|Duplicate option/.test(result.stderr)
+  )
+    throw new Error('Installed CLI accepted an inherited command name');
+}
+const inheritedOption = spawnSync(
+  process.execPath,
+  [cliEntry, 'contacts', '--__proto__', 'fixture'],
+  {
+    cwd: destination,
+    encoding: 'utf8',
+    timeout: 5000,
+  },
+);
+if (
+  inheritedOption.status !== 1 ||
+  !inheritedOption.stderr.includes('Unknown option for contacts: --__proto__')
+)
+  throw new Error('Installed CLI did not validate an own unknown option');
 if (!help.includes('signature')) throw new Error('Installed CLI lacks signature command');
 if (!help.includes('--events message|all|normalized'))
   throw new Error('Installed CLI lacks business event watch mode');
@@ -580,6 +607,7 @@ const receipt = {
     privateFilesExcluded: true,
     installedImport: true,
     cliHelp: true,
+    cliCommandNamespaceContract: true,
     cliDefaultConfig: true,
     ...faceChecks,
     messageQueryContract: true,

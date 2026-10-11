@@ -55,6 +55,9 @@ The diagrams are navigation aids; the exact permissions live in
 | `src/client/create-client.ts`                    | Native bundle selection, worker bootstrap and transactional initialization.                              |
 | `src/cli.ts`, `src/worker.ts`                    | Executable entry points. Their emitted URLs are runtime contracts.                                       |
 | `src/cli/`                                       | Command planning and ownership of client execution, QR output, watches and process signals.              |
+| `src/cli/commands/`                              | Domain definitions pairing accepted flags with a captured public-client action plan.                     |
+| `src/cli/command-plan.ts`                        | Compose the single command registry, reject duplicate names and capture flags before planning.           |
+| `src/cli/command-input.ts`                       | Shared argument parsing and primitive flags; no command or client acquisition dependencies.              |
 | `src/kernel.ts`, `src/native-services.ts`        | Compose one native session and domain adapters. They are composition roots, not public extension points. |
 | `src/worker/`                                    | Native initialization ownership and the Node acquisition binding; no business DTO or IPC presentation.   |
 | `src/runtime/`                                   | Account/worker ownership, request/callback lifetimes and composition dependencies.                       |
