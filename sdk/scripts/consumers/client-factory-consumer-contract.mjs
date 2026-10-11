@@ -92,7 +92,7 @@ export async function verifyClientFactoryConsumer(installedRoot, { source = fals
       `export async function inspectNativeContracts(){return {};}`,
     );
     const hook = join(directory, 'hook.mjs');
-    await writeFile(hook, `process.dlopen=()=>{};`);
+    await writeFile(hook, `process.dlopen=module=>{module.exports={fixtureNativeExport:true};};`);
     const entry = join(packageRoot, 'entry.mjs');
     await writeFile(entry, `export {createClient,QQClient} from 'qq-native-client';`);
     childProcess.fork = (...args) => {
@@ -169,6 +169,12 @@ export async function verifyClientFactoryConsumer(installedRoot, { source = fals
         });
         assert.ok(client instanceof QQClient);
         assert.equal(client.account, undefined);
+        const initialExports = client.nativeExports;
+        assert.deepEqual(initialExports, ['fixtureNativeExport']);
+        initialExports.push('consumer-only');
+        Object.freeze(initialExports);
+        assert.deepEqual(client.nativeExports, ['fixtureNativeExport']);
+        assert.notStrictEqual(client.nativeExports, initialExports);
         assert.ok(init);
         assert.equal(init.bridgePath, fixture.expected);
         const modulePath = calls[index].modulePath;
@@ -194,6 +200,7 @@ export async function verifyClientFactoryConsumer(installedRoot, { source = fals
     return {
       ...sourceSelectionChecks,
       clientFactoryInstalledContract: true,
+      clientFactoryNativeExportsSnapshotContract: true,
       workerUrlExecuted: true,
       bridgePrecedenceContract: true,
       forkEnvironmentContract: true,

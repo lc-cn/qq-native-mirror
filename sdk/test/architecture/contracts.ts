@@ -4,7 +4,14 @@ import { join } from 'node:path';
 import test from 'node:test';
 import ts from 'typescript';
 import { dependencyViolation } from '../helpers/dependency-policy.ts';
-import { projectRoot, sourceRoot, files, label, graph } from '../helpers/source-graph.ts';
+import {
+  projectRoot,
+  sourceRoot,
+  files,
+  label,
+  graph,
+  relativeTarget,
+} from '../helpers/source-graph.ts';
 
 test('group-file compatibility exports cannot reacquire protocol execution', () => {
   const path = join(sourceRoot, 'features/groups/group-file-operations.ts');
@@ -175,4 +182,121 @@ test('validated message query envelope does not inherit an unbounded native obje
   assert.ok(envelope);
   assert.equal(envelope.heritageClauses, undefined);
   assert.equal(envelope.members.some(ts.isIndexSignatureDeclaration), false);
+});
+
+// The creation root may initialize the private inventory, but consumers must not
+// acquire that publisher through a namespace or a public reexport.
+function nativeExportPublisherViolations(path: string, source: string): string[] {
+  const publisher = 'initializeClientNativeExports';
+  const creator = join(sourceRoot, 'client/create-client.ts');
+  const client = join(sourceRoot, 'client/qq-client.ts');
+  const tree = ts.createSourceFile(path, source, ts.ScriptTarget.Latest, true);
+  const violations: string[] = [];
+  const localPublishers = new Set<string>();
+  const targetsClient = (node: ts.Expression) =>
+    ts.isStringLiteral(node) && relativeTarget(path, node.text) === client;
+  for (const statement of tree.statements) {
+    if (ts.isImportDeclaration(statement) && targetsClient(statement.moduleSpecifier)) {
+      const clause = statement.importClause;
+      const bindings = clause?.namedBindings;
+      if (bindings && ts.isNamespaceImport(bindings) && !clause?.isTypeOnly)
+        violations.push('Client runtime namespace exposes the private publisher');
+      if (bindings && ts.isNamedImports(bindings))
+        for (const element of bindings.elements)
+          if ((element.propertyName?.text ?? element.name.text) === publisher) {
+            localPublishers.add(element.name.text);
+            if (path !== creator || clause?.isTypeOnly || element.isTypeOnly)
+              violations.push('Only the creation root may import the runtime publisher');
+          }
+    }
+    if (
+      ts.isExportDeclaration(statement) &&
+      statement.moduleSpecifier &&
+      targetsClient(statement.moduleSpecifier)
+    ) {
+      const clause = statement.exportClause;
+      if (!clause || !ts.isNamedExports(clause))
+        violations.push('Client namespace/star reexports expose the private publisher');
+      else if (
+        clause.elements.some(
+          (element) => (element.propertyName?.text ?? element.name.text) === publisher,
+        )
+      )
+        violations.push('The private publisher cannot be reexported');
+    }
+  }
+  function referencesPublisher(node: ts.Node): boolean {
+    if (ts.isIdentifier(node) && localPublishers.has(node.text)) return true;
+    return ts.forEachChild(node, referencesPublisher) ?? false;
+  }
+  function visit(node: ts.Node) {
+    if (
+      ts.isCallExpression(node) &&
+      node.expression.kind === ts.SyntaxKind.ImportKeyword &&
+      node.arguments[0] &&
+      targetsClient(node.arguments[0])
+    )
+      violations.push('Dynamic client namespace exposes the private publisher');
+    if (
+      ts.isExportDeclaration(node) &&
+      !node.moduleSpecifier &&
+      node.exportClause &&
+      ts.isNamedExports(node.exportClause) &&
+      node.exportClause.elements.some((element) =>
+        localPublishers.has(element.propertyName?.text ?? element.name.text),
+      )
+    )
+      violations.push('The imported private publisher cannot be exported locally');
+    if (ts.isExportAssignment(node) && referencesPublisher(node.expression))
+      violations.push('The imported private publisher cannot become a default export');
+    if (
+      ts.isVariableStatement(node) &&
+      node.modifiers?.some((modifier) => modifier.kind === ts.SyntaxKind.ExportKeyword) &&
+      referencesPublisher(node.declarationList)
+    )
+      violations.push('The imported private publisher cannot become an exported value');
+    ts.forEachChild(node, visit);
+  }
+  visit(tree);
+  return violations;
+}
+
+test('native export inventory publisher is restricted to the named creation-root import', () => {
+  for (const path of files)
+    assert.deepEqual(
+      nativeExportPublisherViolations(path, readFileSync(path, 'utf8')),
+      [],
+      label(path),
+    );
+});
+
+test('native export publisher gate rejects namespace and public reexport bypasses', () => {
+  const creator = join(sourceRoot, 'client/create-client.ts');
+  const entry = join(sourceRoot, 'index.ts');
+  assert.deepEqual(
+    nativeExportPublisherViolations(
+      creator,
+      "import { initializeClientNativeExports as publish, QQClient } from './qq-client.ts';",
+    ),
+    [],
+  );
+  assert.deepEqual(
+    nativeExportPublisherViolations(entry, "export { QQClient } from './client/qq-client.ts';"),
+    [],
+  );
+  for (const source of [
+    "import { initializeClientNativeExports as publish } from './client/qq-client.ts';",
+    "import * as client from './client/qq-client.js';",
+    "export { initializeClientNativeExports as publish } from './client/qq-client.ts';",
+    "export * from './client/qq-client.ts';",
+    "export * as client from './client/qq-client.ts';",
+    "const client = import('./client/qq-client.ts');",
+  ])
+    assert.ok(nativeExportPublisherViolations(entry, source).length > 0, source);
+  assert.ok(
+    nativeExportPublisherViolations(
+      creator,
+      "import { initializeClientNativeExports as publish } from './qq-client.ts'; export { publish as initialize }; ",
+    ).length > 0,
+  );
 });

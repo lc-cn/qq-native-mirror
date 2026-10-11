@@ -414,12 +414,19 @@ if (
 await writeFile(
   join(destination, 'consumer.ts'),
   `import {createClient, type ClientOptions, type QQClient, type MessageRecall, type VideoCodec, type VideoInfo, type Message, type FriendCategory, type CreatedFriendCategory} from 'qq-native-client';
+// @ts-expect-error Initialization publication belongs to the internal creation root.
+import {initializeClientNativeExports} from 'qq-native-client';
+void initializeClientNativeExports;
 const options: ClientOptions = {dataDir:'/account',videoCodecPath:'/codec.node',downloadMirrors:['https://gh-proxy.com/'],autoReconnect:false};
 const videoInfo: VideoInfo = {width:1280,height:720,duration:2.75,format:'png',image:Buffer.alloc(0)};
 const videoCodec: VideoCodec = {getVideoInfo:async (_filePath:string):Promise<VideoInfo>=>videoInfo};
 void videoCodec;
 const factory: (options: ClientOptions) => Promise<QQClient> = createClient;
 function subscribe(client: QQClient) {
+ const exportNames: string[] = client.nativeExports;
+ void exportNames;
+ // @ts-expect-error The snapshot property cannot be assigned another view.
+ client.nativeExports = [];
  client.on('message.recalled', (recall: MessageRecall) => { const fields: string[] = [recall.messageId,recall.sequence,recall.recallTime]; return [recall.peer,fields]; });
  client.on('native-callback', diagnostic => diagnostic.argumentTypes.join(','));
  client.on('kicked', info => info.args.length);

@@ -41,6 +41,19 @@ coalesced callers retain the same Promise identity. Close reserves its shared
 Promise before notifying synchronous state observers; a reentrant close therefore
 joins the same transaction and cannot finish before worker retirement.
 
+`QQClient` owns its native export inventory privately. Each `nativeExports` read
+returns a detached `string[]` snapshot; freezing or editing that array cannot
+alter the inventory or stop a later reconnect. Older arrays do not update in
+place, so callers reread the property after replacement. The public constructor
+and array type remain compatible; the former live-reference behavior changes.
+The creation root publishes once through an internal named function backed by
+weakly held client publishers. It is absent from the package entry and cannot be
+imported by other source owners. Reconnect publishes directly through the same
+private replacement method. Low-level `request('init')` has no new publication
+side effect. Both paths first capture the complete initialization reply through
+own-data descriptors, without calling getters or array iterators. Malformed data
+cannot partially replace the last inventory, and retirement prevents publication.
+
 A synchronous `closing` observer failure is retained while the same owner still
 submits shutdown and retires the worker. A successful shutdown reaches `closed`
 before rejecting close with that original value. If worker cleanup also fails,

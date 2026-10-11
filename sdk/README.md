@@ -56,6 +56,9 @@ Omit `uin` only with exactly one eligible record. Explicit quick login uses
 `authenticated` precedes account Session startup; `login`, `ready` and the login
 Promise indicate readiness. Each client owns one account/data directory. Close
 preserves authorization files. Use explicit `reconnect` after a failure.
+In the working source, `client.nativeExports` returns a fresh `string[]` snapshot.
+Editing or freezing it does not change the client. Reread the property after
+reconnect; previously read arrays retain their original contents.
 A mutation timeout does not prove that the server did nothing: the SDK never
 replays a timed-out send or management operation automatically.
 See [lifecycle and errors](docs/architecture.md#lifecycle-and-error-contracts).

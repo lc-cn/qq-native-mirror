@@ -13,7 +13,7 @@ import {
   captureGroupFilePage,
   captureGroupFileList,
 } from '../features/groups/group-file-input.ts';
-import { ClientLifecycle } from '../runtime/client-lifecycle.ts';
+import { ClientLifecycle, captureWorkerExports } from '../runtime/client-lifecycle.ts';
 import type { OperationCall, OperationResult } from '../runtime/operation-contracts.ts';
 import {
   friendCategoryName,
@@ -91,8 +91,20 @@ import type {
 } from '../contracts/forward.ts';
 import type { NativeCallbackAudit } from '../contracts/native.ts';
 
+// The creation root can publish once without exposing a setter on the client.
+// Weak keys do not keep manually constructed or failed clients alive.
+const initialExportPublishers = new WeakMap<QQClient, (exports: string[]) => void>();
+
+/** Internal creation seam; deliberately absent from the package entry. */
+export function initializeClientNativeExports(client: QQClient, reply: unknown): void {
+  const publish = initialExportPublishers.get(client);
+  if (!publish) throw new Error('QQ client export initialization is unavailable');
+  publish(captureWorkerExports(reply));
+  initialExportPublishers.delete(client);
+}
+
 export class QQClient extends EventEmitter<ClientEvents> {
-  readonly nativeExports: string[] = [];
+  #nativeExports: string[] = [];
   readonly #lifecycle: ClientLifecycle;
   readonly #events: ReturnType<typeof createClientEventPresentation>;
   constructor(
@@ -130,9 +142,18 @@ export class QQClient extends EventEmitter<ClientEvents> {
         }
       },
       forward: this.#events.forward,
-      exportsUpdated: (exports) =>
-        this.nativeExports.splice(0, this.nativeExports.length, ...exports),
+      exportsUpdated: (exports) => this.#replaceNativeExports(exports),
     });
+    initialExportPublishers.set(this, (exports) => this.#replaceNativeExports(exports));
+  }
+  #replaceNativeExports(exports: string[]): void {
+    if (['closing', 'closed', 'failed'].includes(this.#lifecycle.state))
+      throw new Error('QQ client closed or failed during export publication');
+    this.#nativeExports = [...exports];
+  }
+  /** A detached view of the most recently initialized worker's export names. */
+  get nativeExports(): string[] {
+    return [...this.#nativeExports];
   }
   get state(): ClientState {
     return this.#lifecycle.state;

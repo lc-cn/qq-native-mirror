@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { EventEmitter } from 'node:events';
 import type { ChildProcess } from 'node:child_process';
 import { QQClient } from '../src/index.ts';
+import { initializeClientNativeExports } from '../src/client/qq-client.ts';
 
 class Worker extends EventEmitter {
   connected = true;
@@ -1155,6 +1156,195 @@ test('public recall captures the exact peer and ID before IPC and rejects malfor
     worker.emit('message', { id: request.id, result: undefined });
     assert.equal(await pending, undefined);
     assert.equal(worker.requests.length, 1);
+  } finally {
+    await client.close();
+  }
+});
+
+test('native exports reads are detached mutable string arrays', async () => {
+  const worker = new Worker();
+  const client = new QQClient(
+    worker as unknown as ChildProcess,
+    500,
+    { method: 'qr' },
+    undefined,
+    false,
+  );
+  try {
+    const first: string[] = client.nativeExports,
+      second: string[] = client.nativeExports;
+    assert.notEqual(first, second);
+    first.push('caller-only');
+    second.splice(0, second.length, 'replacement-only');
+    assert.deepEqual(client.nativeExports, []);
+  } finally {
+    await client.close();
+  }
+});
+
+test('freezing an old native exports view cannot break reconnect publication or make it live', async () => {
+  const previous = new Worker();
+  class Replacement extends Worker {
+    override send(value: { id: number; method: string }, callback: (error: Error | null) => void) {
+      super.send(value, callback);
+      if (value.method === 'init')
+        queueMicrotask(() =>
+          this.emit('message', { id: value.id, result: { exports: ['new-export'] } }),
+        );
+      if (value.method === 'login')
+        queueMicrotask(() => {
+          const account = { uin: '123', uid: 'u_replacement' };
+          this.emit('message', { event: 'ready', payload: account });
+          this.emit('message', { id: value.id, result: account });
+        });
+    }
+  }
+  const replacement = new Replacement();
+  let previousKills = 0,
+    replacementKills = 0;
+  const oldKill = previous.kill.bind(previous),
+    nextKill = replacement.kill.bind(replacement);
+  previous.kill = () => {
+    previousKills++;
+    return oldKill();
+  };
+  replacement.kill = () => {
+    replacementKills++;
+    return nextKill();
+  };
+  const client = new QQClient(
+    previous as unknown as ChildProcess,
+    500,
+    { method: 'restore' },
+    { spawn: () => replacement as unknown as ChildProcess, payload: {} },
+    false,
+  );
+  const oldView = client.nativeExports;
+  Object.freeze(oldView);
+  try {
+    assert.deepEqual(await client.reconnect({ method: 'quick', uin: '123' }), {
+      uin: '123',
+      uid: 'u_replacement',
+    });
+    assert.deepEqual(oldView, []);
+    assert.deepEqual(client.nativeExports, ['new-export']);
+    assert.notEqual(client.nativeExports, oldView);
+    assert.equal(previousKills, 1);
+    assert.equal(replacementKills, 0);
+    assert.deepEqual(
+      replacement.requests.map((request: { method: string }) => request.method),
+      ['init', 'login'],
+    );
+  } finally {
+    await client.close();
+  }
+});
+
+for (const kind of ['field-accessor', 'slot-accessor', 'invalid-slot'] as const) {
+  test(`malformed reconnect exports ${kind} is rejected atomically without executing getters`, async () => {
+    const previous = new Worker();
+    let reads = 0;
+    const exports: unknown[] = ['verified', 42];
+    if (kind === 'slot-accessor')
+      Object.defineProperty(exports, '1', {
+        get() {
+          reads++;
+          return 'bad getter';
+        },
+      });
+    const response: object =
+      kind === 'field-accessor'
+        ? Object.defineProperty({}, 'exports', {
+            get() {
+              reads++;
+              return ['bad getter'];
+            },
+          })
+        : { exports };
+    class Replacement extends Worker {
+      override send(
+        value: { id: number; method: string },
+        callback: (error: Error | null) => void,
+      ) {
+        super.send(value, callback);
+        if (value.method === 'init')
+          queueMicrotask(() => this.emit('message', { id: value.id, result: response }));
+      }
+    }
+    const replacement = new Replacement();
+    const client = new QQClient(
+      previous as unknown as ChildProcess,
+      500,
+      { method: 'restore' },
+      { spawn: () => replacement as unknown as ChildProcess, payload: {} },
+      false,
+    );
+    const before = client.nativeExports;
+    try {
+      await assert.rejects(client.reconnect({ method: 'quick', uin: '123' }));
+      assert.equal(reads, 0);
+      assert.deepEqual(before, []);
+      assert.deepEqual(client.nativeExports, []);
+      assert.equal(
+        replacement.requests.filter((request: { method: string }) => request.method === 'login')
+          .length,
+        0,
+      );
+    } finally {
+      await client.close();
+    }
+  });
+}
+
+test('internal initial export publication is atomic, detached and one-shot; low-level init is not publication', async () => {
+  const worker = new Worker(),
+    client = new QQClient(worker as unknown as ChildProcess, 500);
+  let reads = 0,
+    iterations = 0;
+  try {
+    const invalid = ['valid', 42];
+    assert.throws(
+      () => initializeClientNativeExports(client, { exports: invalid }),
+      /Invalid worker initialization exports/,
+    );
+    assert.throws(
+      () =>
+        initializeClientNativeExports(
+          client,
+          Object.defineProperty({}, 'exports', {
+            get() {
+              reads++;
+              return ['bad'];
+            },
+          }),
+        ),
+      /Invalid worker initialization exports/,
+    );
+    assert.equal(reads, 0);
+    assert.deepEqual(client.nativeExports, []);
+    const names = ['one', '', 'one'];
+    Object.defineProperty(names, Symbol.iterator, {
+      value() {
+        iterations++;
+        throw new Error('caller iterator must not execute');
+      },
+    });
+    initializeClientNativeExports(client, { exports: names });
+    assert.equal(iterations, 0);
+    names[0] = 'changed';
+    const view: string[] = client.nativeExports;
+    view.splice(0, view.length, 'caller-only');
+    assert.deepEqual(client.nativeExports, ['one', '', 'one']);
+    assert.throws(
+      () => initializeClientNativeExports(client, { exports: ['second'] }),
+      /initialization is unavailable/,
+    );
+    const request = client.request('init', {});
+    const sent = worker.requests.at(-1) as { id: number; method: string };
+    assert.equal(sent.method, 'init');
+    worker.emit('message', { id: sent.id, result: { exports: ['low-level'] } });
+    assert.deepEqual(await request, { exports: ['low-level'] });
+    assert.deepEqual(client.nativeExports, ['one', '', 'one']);
   } finally {
     await client.close();
   }

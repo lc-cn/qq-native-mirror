@@ -8,6 +8,7 @@ test('source root factory executes its worker with captured bridge precedence an
     source: true,
   });
   assert.equal(result.clientFactoryInstalledContract, true);
+  assert.equal(result.clientFactoryNativeExportsSnapshotContract, true);
   assert.equal(result.workerUrlExecuted, true);
   assert.equal(result.nativeSourceSelectionContract, true);
   assert.equal(result.nativeSourcePreflightContract, true);

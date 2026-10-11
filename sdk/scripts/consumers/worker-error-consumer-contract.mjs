@@ -27,6 +27,7 @@ export async function verifyWorkerErrorRoutes({
   await verifyClientReconnectSpawnFailure(QQClient);
   await verifyClientCloseFailureNotification(QQClient);
   await verifyClientLoginFailureNotification(QQClient);
+  await verifyClientNativeExportsSnapshot(QQClient);
   const directory = await realpath(await mkdtemp(join(tmpdir(), 'qq-worker-error-')));
   /** @type {import("../../src/client/qq-client.ts").QQClient | undefined} */
   let client;
@@ -164,6 +165,7 @@ export function createKernel(_native,_options,emit){return {
       clientReconnectSpawnFailureContract: true,
       clientCloseFailureNotificationContract: true,
       clientLoginFailureNotificationContract: true,
+      clientNativeExportsSnapshotContract: true,
       clientEventPresentationInstalledContract: true,
       workerOpaqueErrorContract: true,
       workerErrorRecoveryContract: true,
@@ -188,6 +190,105 @@ export function createKernel(_native,_options,emit){return {
       }
       await rm(directory, { recursive: true, force: true });
     }
+  }
+}
+
+/** @param {typeof import('../../src/client/qq-client.ts').QQClient} QQClient */
+async function verifyClientNativeExportsSnapshot(QQClient) {
+  for (const malformed of [false, true]) {
+    const previous = new ChildProcess(),
+      replacement = new ChildProcess();
+    let oldKills = 0,
+      newKills = 0,
+      loginCalls = 0;
+    for (const child of [previous, replacement]) {
+      Object.defineProperty(child, 'connected', { value: true, configurable: true });
+      Object.defineProperty(child, 'kill', {
+        value() {
+          if (child === previous) oldKills++;
+          else newKills++;
+          Object.defineProperty(child, 'exitCode', { value: 0, configurable: true });
+          queueMicrotask(() => child.emit('exit', 0, null));
+          return true;
+        },
+      });
+    }
+    Object.defineProperty(replacement, 'send', {
+      value(
+        /** @type {{id:number,method?:string}} */ message,
+        /** @type {(error:Error|null)=>void} */ callback,
+      ) {
+        callback(null);
+        queueMicrotask(() => {
+          if (message.method === 'login') {
+            loginCalls++;
+            replacement.emit('message', { event: 'ready', payload: { uin: '42', uid: 'fixture' } });
+          }
+          replacement.emit('message', {
+            id: message.id,
+            result:
+              message.method === 'init'
+                ? { exports: malformed ? ['valid', null] : ['first', 'second'] }
+                : { uin: '42', uid: 'fixture' },
+          });
+        });
+        return true;
+      },
+    });
+    const client = new QQClient(
+      previous,
+      1000,
+      { method: 'qr' },
+      { spawn: () => replacement, payload: {} },
+    );
+    const oldView = client.nativeExports;
+    oldView.push('caller-owned');
+    Object.freeze(oldView);
+    /** @type {{error:unknown}|undefined} */
+    let failure;
+    try {
+      const outcome = client.reconnect({ method: 'qr' }).then(
+        (value) => ({ value }),
+        (/** @type {unknown} */ error) => ({ error }),
+      );
+      const result = await outcome;
+      if (malformed) {
+        assert.ok('error' in result);
+        assert.deepEqual(client.nativeExports, []);
+        assert.equal(loginCalls, 0);
+        assert.equal(newKills, 1);
+      } else {
+        assert.deepEqual(result, { value: { uin: '42', uid: 'fixture' } });
+        assert.deepEqual(client.nativeExports, ['first', 'second']);
+        assert.equal(loginCalls, 1);
+        assert.equal(newKills, 0);
+        const changed = client.nativeExports;
+        changed.splice(0, changed.length, 'tampered');
+        assert.deepEqual(client.nativeExports, ['first', 'second']);
+      }
+      assert.deepEqual(oldView, ['caller-owned']);
+      assert.equal(oldKills, 1);
+    } catch (error) {
+      failure = { error };
+    }
+    try {
+      for (const child of [previous, replacement]) {
+        Object.defineProperty(child, 'exitCode', { value: 0, configurable: true });
+        child.emit('exit', 0, null);
+      }
+      await client.close();
+    } catch (error) {
+      if (failure)
+        throw new AggregateError(
+          [failure.error, error],
+          'Native exports verification and teardown failed',
+          { cause: error },
+        );
+      throw error;
+    } finally {
+      client.removeAllListeners();
+    }
+    if (failure) throw failure.error;
   }
 }
 

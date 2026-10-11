@@ -3,6 +3,11 @@
 - One worker owns one account data directory. Locks prevent concurrent owners.
 - Every pending IPC request settles once; timeout, reply, send failure, offline,
   exit and close all retire their corresponding map entries and timers.
+- Initial and replacement worker export inventories are captured in full before
+  publication. Malformed or accessor-backed replies reject without partial
+  publication. Public `nativeExports` reads are detached snapshots, so consumer
+  mutation or freezing cannot interrupt reconnect or change the internal list.
+  Replacement and shutdown checks precede publication to a retired client.
   Batch retirement detaches all selected entries before calling cancellation
   transports, so a reentrant sibling reply cannot turn retirement into success.
 - Offline notifications retire the old account, restore policy and pending RPCs

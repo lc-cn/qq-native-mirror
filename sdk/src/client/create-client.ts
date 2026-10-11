@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 import type { ClientOptions } from '../contracts/client.ts';
 import { normalizeLoginRequest } from '../native/login-request.ts';
 import { prepareNative } from '../native/native-package.ts';
-import { QQClient } from './qq-client.ts';
+import { QQClient, initializeClientNativeExports } from './qq-client.ts';
 
 /** Resolve one native bundle and initialize its isolated worker before exposing a client. */
 export async function createClient(options: ClientOptions): Promise<QQClient> {
@@ -83,8 +83,8 @@ export async function createClient(options: ClientOptions): Promise<QQClient> {
     options.autoReconnect,
   );
   try {
-    const result = await client.request<{ exports: string[] }>('init', payload);
-    client.nativeExports.push(...result.exports);
+    const result = await client.request<unknown>('init', payload);
+    initializeClientNativeExports(client, result);
     if (options.login)
       setImmediate(() => {
         void client.login(options.login).catch((error) => client.emit('loginError', error));

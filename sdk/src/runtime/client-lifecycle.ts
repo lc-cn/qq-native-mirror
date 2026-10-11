@@ -23,6 +23,37 @@ export interface ClientLifecycleContext {
   exportsUpdated(exports: string[]): void;
 }
 
+/** Inspect initialization metadata without evaluating getters or iterators. */
+function inspectWorkerExports(value: unknown): string[] | undefined {
+  try {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return;
+    const field = Object.getOwnPropertyDescriptor(value, 'exports');
+    const exports: unknown = field && 'value' in field ? field.value : undefined;
+    if (!Array.isArray(exports)) return;
+    const lengthField = Object.getOwnPropertyDescriptor(exports, 'length');
+    const length: unknown = lengthField && 'value' in lengthField ? lengthField.value : undefined;
+    if (typeof length !== 'number' || !Number.isSafeInteger(length) || length < 0) return;
+    const captured: string[] = [];
+    for (let index = 0; index < length; index++) {
+      const item = Object.getOwnPropertyDescriptor(exports, String(index));
+      const name: unknown = item && 'value' in item ? item.value : undefined;
+      if (typeof name !== 'string') return;
+      captured.push(name);
+    }
+    return captured;
+  } catch {
+    // Opaque descriptor failures cannot leak through this metadata boundary.
+    return;
+  }
+}
+
+/** Capture the complete init reply before either owner publishes its export view. */
+export function captureWorkerExports(value: unknown): string[] {
+  const exports = inspectWorkerExports(value);
+  if (!exports) throw new Error('Invalid worker initialization exports');
+  return exports;
+}
+
 /** Capture only the identity fields produced by the worker. No numeric
  * conversion, UID prefix assumption or native ABI assertion belongs here.
  * Fallible descriptor inspection may retire the client in controlled transports;
@@ -553,8 +584,11 @@ export class ClientLifecycle {
     this.#attach(this.#worker);
     const replacement = this.#worker;
     try {
-      const result = await this.request<{ exports: string[] }>('init', this.#restart!.payload);
-      this.#context.exportsUpdated(result.exports);
+      const result = await this.request<unknown>('init', this.#restart!.payload);
+      const exports = captureWorkerExports(result);
+      if (this.#worker !== replacement || this.#closed || this.#closing)
+        throw new Error('QQ client closed or replaced during initialization');
+      this.#context.exportsUpdated(exports);
       return await this.login(login);
     } catch (error) {
       await this.#retireFailedWorker(replacement, error, 'reconnect');
