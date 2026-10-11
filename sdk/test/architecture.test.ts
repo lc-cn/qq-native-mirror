@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import ts from 'typescript';
 import { getFileInfo } from 'prettier';
 import { extractSourceDependencies } from './helpers/source-dependencies.ts';
+import { findAmbientFetchReferences } from './helpers/ambient-network.ts';
 import {
   crossFeatureDependencies,
   dynamicNativeOwners,
@@ -15,6 +16,7 @@ import {
 import {
   externalRuntimeDependencies,
   externalTypeDependencies,
+  ambientNetworkOwners,
 } from './helpers/external-dependencies.ts';
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -54,6 +56,32 @@ function dependencies(path: string): Dependency[] {
 
 const graph = new Map(files.map((path) => [path, dependencies(path)]));
 const runtimeEdges = (path: string) => graph.get(path)!.filter((edge) => !edge.typeOnly);
+
+test('ambient network acquisition requires an exact transport owner', () => {
+  const config = ts.readConfigFile(join(projectRoot, 'tsconfig.json'), ts.sys.readFile);
+  assert.equal(config.error, undefined);
+  const parsed = ts.parseJsonConfigFileContent(config.config, ts.sys, projectRoot);
+  assert.deepEqual(parsed.errors, []);
+  const program = ts.createProgram(files, { ...parsed.options, noEmit: true });
+  const checker = program.getTypeChecker();
+  const observed = new Set<string>();
+  for (const path of files) {
+    const source = program.getSourceFile(path);
+    assert.ok(source, `Missing source in ambient network analysis: ${label(path)}`);
+    const references = findAmbientFetchReferences(source, checker);
+    if (references.length === 0) continue;
+    const owner = label(path);
+    assert.ok(
+      ambientNetworkOwners[owner],
+      `${owner}:${references[0]!.line}: ambient fetch acquisition requires an exact transport owner`,
+    );
+    observed.add(owner);
+  }
+  for (const [owner, reason] of Object.entries(ambientNetworkOwners)) {
+    assert.ok(reason.length > 0, `Missing ambient network ownership reason: ${owner}`);
+    assert.ok(observed.has(owner), `Remove obsolete ambient network permission: ${owner}`);
+  }
+});
 
 test('domain CLI plans cannot depend back on entry, registry or client acquisition', () => {
   for (const from of [

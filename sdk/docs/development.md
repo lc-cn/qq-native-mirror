@@ -202,6 +202,9 @@ All source dependencies, including erased type imports, must remain acyclic.
 External IO and third-party imports require an exact source owner and import kind
 in `test/helpers/external-dependencies.ts`; removing an import also removes its
 permission. Computed `createRequire` namespace access does not bypass review.
+Global `fetch` acquisition has its own exact transport owners in the same policy;
+an import-free module is not necessarily pure. Inject a narrow transport port
+into a consumer instead of acquiring HTTP capability in an input or DTO module.
 
 ## Design a small interface with explicit lifetime
 

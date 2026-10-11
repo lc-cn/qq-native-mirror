@@ -17,6 +17,14 @@ consumer. The package consumer uses fake services and an isolated replacement
 kernel; this command does not log into an account. Codec dependencies are packed
 from npm's populated cache for the offline consumer installation.
 
+Architecture checks cover ambient `fetch` acquisition as well as import edges.
+Only the catalog, manifest download and group HTTP transport owners may acquire
+the global implementation. TypeScript symbol resolution detects direct access,
+literal property access (including constant keys), destructuring and alias capture; local methods named
+`fetch` and type-only transport declarations do not count as network access.
+The check prevents this visible responsibility drift; it is not a sandbox or a
+proof against arbitrary JavaScript evaluation or computed runtime property names.
+
 The installed-consumer gate also checks the complete compatibility type inventory and
 every relative dependency in the actual packed declaration graph. Positive and
 negative consumers preserve peer/login discrimination, event payload types,

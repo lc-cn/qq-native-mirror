@@ -87,6 +87,15 @@ export const externalTypeDependencies: Readonly<Record<string, readonly string[]
   'src/runtime/worker-termination.ts': ['node:child_process'],
 };
 
+/** Ambient HTTP access has no import edge. Only these owners acquire fetch;
+ * consumers of an injected transport do not inherit network access permission.
+ */
+export const ambientNetworkOwners: Readonly<Record<string, string>> = {
+  'src/native/native-package.ts': 'Download a selected manifest with redirect validation.',
+  'src/native/native-catalog.ts': 'Read the native mirror catalog.',
+  'src/features/groups/qun-web-read.ts': 'Bind the account-scoped group HTTP transport.',
+};
+
 export function externalDependencyViolation(from: string, to: string, typeOnly: boolean) {
   const allowed = typeOnly ? externalTypeDependencies : externalRuntimeDependencies;
   return allowed[from]?.includes(to)
