@@ -1,0 +1,32 @@
+sdk/docs/architecture/encapsulation.md
+  s_2104cc474f1ce5::t_7659dc5f5e0f8e 3-9
+sdk/src/features/groups/group-files.ts
+  s_2104cc474f1ce5::t_7659dc5f5e0f8e 26,52-79,119,121,126,128-132,138,140-144,151,153-157
+sdk/scripts/consumers/group-file-action-consumer-contract.mjs
+  s_2104cc474f1ce5::t_c1bff5a35535a4 1-65
+  s_2104cc474f1ce5::t_cf6f40693ede15 66-80
+ci/verify-consumer.mjs
+  s_2104cc474f1ce5::t_63d0e982efdb11 38,231,345
+sdk/scripts/verify-package-consumer.mjs
+  s_2104cc474f1ce5::t_64205ef51fcc5e 37,215-217,627
+sdk/src/features/groups/group-file-operations.ts
+  s_2104cc474f1ce5::t_e0ffc7b850e461 122-124,126,166-170
+sdk/test/group-file-action-lifetime.test.ts
+  s_2104cc474f1ce5::t_492baf4c477366 1-144
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "1959702ad1211becdbb99f3b92faa3f5e67b6bb7",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
