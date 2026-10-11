@@ -592,4 +592,13 @@ version fallback before runtime checks, explicit catalog/manifest precedence,
 legacy wrappers and local codec inventory discovery. No account or real addon
 interoperability is claimed by those fixtures.
 
+Category reordering extends the existing `friend-category-mutations` owner.
+It shares rename/delete acquisition, exact receiver, deadline, shutdown and ACK
+validation; native field translation remains private to dispatch. Pure category
+input capture is shared by facade, worker and CLI. The operation vocabulary binds
+its payload and result, and the existing native composition injects the exact
+binary capability. No additional listener, retry channel or transaction owner is
+introduced. The installed mutation consumer is named for all category mutations
+and separately tests each measured capability and unsupported profile.
+
 [Architecture overview](../architecture.md) · [Development guide](../development.md)

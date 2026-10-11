@@ -27,6 +27,9 @@ export interface CreatedFriendCategory {
   name: string;
 }
 
+/** Explicit category snapshot in the requested order; native sorting also carries each name. */
+export type FriendCategoryOrderEntry = Pick<FriendCategory, 'categoryId' | 'name'>;
+
 /** Projected Buddy metadata; optional remarks remain absent when not supplied. */
 export interface FriendChange {
   userId: string;

@@ -13,6 +13,7 @@ import {
   supportsCategoryCreation,
   supportsCategoryRenaming,
   supportsCategoryDeletion,
+  supportsCategoryReordering,
   supportsGroupFileCount,
   supportsGroupFilePages,
   supportsGroupFolderDeletion,
@@ -103,6 +104,7 @@ export function createNativeServices(context: NativeServiceContext) {
         canCreate: () => supportsCategoryCreation(nativeContracts, version),
         canRename: () => supportsCategoryRenaming(nativeContracts, version),
         canDelete: () => supportsCategoryDeletion(nativeContracts, version),
+        canReorder: () => supportsCategoryReordering(nativeContracts, version),
       }),
     );
     const directory = own(
@@ -355,6 +357,8 @@ export function createNativeServices(context: NativeServiceContext) {
           }
           case 'deleteFriendCategory':
             return categoryMutations.delete(payload.categoryId);
+          case 'reorderFriendCategories':
+            return categoryMutations.reorder(payload.categories);
           case 'addFriendCategory':
             return categoryMutations.create(payload.name);
           case 'listGroupMutedMembers':

@@ -51,6 +51,7 @@ test('actual internal dispatch links every command to its payload and result wit
       "this.#operation(enabled ? 'setGroupMute' : 'setGroupName', { groupId, enabled })",
     ],
     ['options: captured.params,', 'options: { folderId: captured.params.folderId },'],
+    ["this.#operation('reorderFriendCategories', {", "this.#operation('deleteFriendCategory', {"],
     [
       'options: { pageStart: query.pageStart, pageLimit: query.pageLimit },',
       'options: { pageStart: query.pageStart },',

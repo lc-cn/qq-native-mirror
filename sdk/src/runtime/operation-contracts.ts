@@ -3,6 +3,7 @@ import type {
   DeleteFriendOptions,
   Friend,
   FriendCategory,
+  FriendCategoryOrderEntry,
   FriendRequest,
   UserProfile,
 } from '../contracts/contacts.ts';
@@ -63,6 +64,7 @@ export interface ServiceOperationContracts {
   addFriendCategory: Operation<{ name: string }, CreatedFriendCategory>;
   renameFriendCategory: Operation<{ categoryId: number; name: string }, void>;
   deleteFriendCategory: Operation<{ categoryId: number }, void>;
+  reorderFriendCategories: Operation<{ categories: readonly FriendCategoryOrderEntry[] }, void>;
   listFriends: Operation<undefined, Friend[]>;
   listFriendCategories: Operation<undefined, FriendCategory[]>;
   getUserProfile: Operation<{ userId: string }, UserProfile>;

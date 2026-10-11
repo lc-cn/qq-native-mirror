@@ -12,6 +12,7 @@ import {
   friendCategoryName,
   captureRenameFriendCategory,
   captureFriendCategoryId,
+  captureFriendCategoryOrder,
 } from '../features/contacts/friend-categories.ts';
 import { captureMergedForward } from '../features/forward/merged-forward-input.ts';
 import { normalizeForwardResourceId } from '../features/forward/forward-resource-wire.ts';
@@ -34,6 +35,7 @@ import type { ClientEvents } from '../contracts/events.ts';
 import type {
   Friend,
   FriendCategory,
+  FriendCategoryOrderEntry,
   CreatedFriendCategory,
   UserProfile,
   DeleteFriendOptions,
@@ -179,6 +181,12 @@ export class QQClient extends EventEmitter<ClientEvents> {
   async deleteFriendCategory(categoryId: number): Promise<void> {
     return this.#operation('deleteFriendCategory', {
       categoryId: captureFriendCategoryId(categoryId),
+    });
+  }
+  /** Submit explicit names/order once. Native ACK does not certify the remote category state. */
+  async reorderFriendCategories(categories: readonly FriendCategoryOrderEntry[]): Promise<void> {
+    return this.#operation('reorderFriendCategories', {
+      categories: captureFriendCategoryOrder(categories),
     });
   }
   listFriendCategories(): Promise<FriendCategory[]> {

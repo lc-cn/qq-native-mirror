@@ -1,5 +1,6 @@
 import {
   captureFriendCategoryId,
+  captureFriendCategoryOrder,
   captureRenameFriendCategory,
   friendCategoryName,
 } from './friend-categories.ts';
@@ -11,6 +12,7 @@ export interface FriendCategoryMutationsPort {
   addCategoryV2?(name: string, members: undefined): unknown;
   renameCategory?(categoryId: number, name: string): unknown;
   delCategory?(categoryId: number): unknown;
+  resortCategory?(categories: Array<{ categoryId: number; categroyName: string }>): unknown;
 }
 export interface FriendCategoryMutationsContext {
   getBuddyService(): FriendCategoryMutationsPort | null | undefined;
@@ -18,6 +20,7 @@ export interface FriendCategoryMutationsContext {
   canCreate(): boolean;
   canRename(): boolean;
   canDelete(): boolean;
+  canReorder(): boolean;
 }
 
 /** Exact supported selectors are statically bound to list categoryId.
@@ -29,11 +32,19 @@ export function createFriendCategoryMutations(context: FriendCategoryMutationsCo
   const signal = AbortSignal.any([context.signal, local.signal]);
   const alive = () => signal.throwIfAborted();
   async function mutate(
-    request: { action: 'rename'; args: [number, string] } | { action: 'delete'; args: [number] },
+    request:
+      | { action: 'rename'; args: [number, string] }
+      | { action: 'delete'; args: [number] }
+      | { action: 'reorder'; args: [Array<{ categoryId: number; categroyName: string }>] },
   ): Promise<void> {
     const { action, args } = request;
     alive();
-    const supported = action === 'rename' ? context.canRename() : context.canDelete();
+    const supported =
+      action === 'rename'
+        ? context.canRename()
+        : action === 'delete'
+          ? context.canDelete()
+          : context.canReorder();
     alive();
     if (!supported)
       throw Object.assign(
@@ -42,12 +53,15 @@ export function createFriendCategoryMutations(context: FriendCategoryMutationsCo
       );
     const service = context.getBuddyService();
     alive();
-    const method = action === 'rename' ? service?.renameCategory : service?.delCategory;
+    const methodName =
+      action === 'rename'
+        ? 'renameCategory'
+        : action === 'delete'
+          ? 'delCategory'
+          : 'resortCategory';
+    const method = service?.[methodName];
     alive();
-    if (typeof method !== 'function')
-      throw new Error(
-        `Missing native method ${action === 'rename' ? 'renameCategory' : 'delCategory'}`,
-      );
+    if (typeof method !== 'function') throw new Error(`Missing native method ${methodName}`);
     let dispatched = false;
     const completionAlive = () => {
       if (signal.aborted)
@@ -130,6 +144,14 @@ export function createFriendCategoryMutations(context: FriendCategoryMutationsCo
     },
     async delete(categoryId: unknown): Promise<void> {
       return mutate({ action: 'delete', args: [captureFriendCategoryId(categoryId)] });
+    },
+    async reorder(categories: unknown): Promise<void> {
+      const captured = captureFriendCategoryOrder(categories);
+      // Keep the measured upstream typo private; the native vector includes names and array ordinals.
+      return mutate({
+        action: 'reorder',
+        args: [captured.map(({ categoryId, name }) => ({ categoryId, categroyName: name }))],
+      });
     },
     close(): void {
       if (!local.signal.aborted)

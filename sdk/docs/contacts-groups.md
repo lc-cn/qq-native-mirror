@@ -80,7 +80,7 @@ still requires its own evidence. The pinned source call path is
 
 Relationship events require native notifications/system messages with target, subject, operator, cause, correlation and deduplication rules. Generic metadata changes cannot establish whether someone left voluntarily or was kicked. Unknown callback arguments remain unprojected.
 
-Independent inspection of all six default binaries shows category delete takes one uint32 argument and rename takes uint32 plus a string, despite older source declarations accepting category strings. The normal rename callback carries result/errMsg. The two Linux 3.2.32-52194 binaries, macOS ARM64 7.0.2-53644 and Windows x64 9.9.33-52230 additionally connect SDK V2 list categoryId to the core rename selector, including refresh-success and the SDK source=0 path. `renameFriendCategory(categoryId, name): Promise<void>` is enabled only for those four exact measured hashes. macOS x64, Windows ARM64 and unrecognized binaries reject with `unsupported-native-contract` before native rename acquisition. Reorder and friend moves retain separate incomplete contracts.
+Independent inspection of all six default binaries shows category delete takes one uint32 argument and rename takes uint32 plus a string, despite older source declarations accepting category strings. The normal rename callback carries result/errMsg. The two Linux 3.2.32-52194 binaries, macOS ARM64 7.0.2-53644 and Windows x64 9.9.33-52230 additionally connect SDK V2 list categoryId to the core rename selector, including refresh-success and the SDK source=0 path. `renameFriendCategory(categoryId, name): Promise<void>` is enabled only for those four exact measured hashes. macOS x64, Windows ARM64 and unrecognized binaries reject with `unsupported-native-contract` before native rename acquisition. Reordering has a separately verified Linux x64 contract below; friend moves retain incomplete UID/UIN contracts.
 
 The adapter dispatches `renameCategory` once with exactly two arguments and preserves the native receiver. A finite int32 result of zero completes the Promise; this is native ACK, not a server-confirmed name or a read-after-write receipt. The name spelling is preserved; selectors must be numeric uint32 values. Accepting selector zero does not claim the default category is mutable. Five-second timeout or shutdown after dispatch leaves the remote effect unknown; writes are never retried. Static binary evidence and controlled package tests do not establish real account effect. CLI: `friend-category-rename --config ./qq.json --category-id 123 --name TEXT`.
 
@@ -219,6 +219,38 @@ The existing `group-essence-list` command still reads exactly one explicit page.
 SDK/worker routing, terminal/error behavior and actual installed declarations/CLI
 are covered by controlled tests. A real account/server pagination run is pending;
 these checks do not verify signing authenticity or add/remove essence events.
+
+## Reordering friend categories
+
+```ts
+await client.reorderFriendCategories([
+  { categoryId: 123, name: 'Existing work category' },
+  { categoryId: 0, name: 'Existing default category' },
+]);
+```
+
+Supply an explicit category snapshot in the desired order, retaining its existing
+names. The SDK requires a nonempty dense array, unique uint32 IDs and string
+names; it captures every row before acquiring native services. Empty names are
+preserved. It does not fetch or invent names, fill missing categories or retry.
+The measured `Buddy.resortCategory` takes **one** array argument with native row
+fields `categoryId` and `categroyName`; the upstream typo stays private. The core
+uses array ordinals for sorting and also carries each supplied name. This is not
+an ID-only protocol, and complete-versus-subset acceptance, protected categories,
+name effects and atomic remote ordering remain unverified.
+
+The [binary contract](evidence/friend-category-reorder-contract.json) binds the
+list-derived numeric ID namespace, original row order, Session/Buddy receiver and
+normal int32 result callback for exact Linux x64 `3.2.32-52194`, wrapper SHA-256
+`7882b8e3055cd38584861042befacd8be9939896f5cbbca6fa4a230926b48526`.
+Other binary/device profiles reject before acquiring Buddy. Native result zero
+is ACK only; nonzero/malformed results reject. Five-second deadline or close after
+dispatch leaves remote effects unknown. No real account reordering has run.
+
+CLI: `friend-category-reorder --config ./qq.json --categories-file ./categories.json`.
+The file is a JSON array with the same public row fields. Planning reads and
+captures it before configuration/native/account work; later file edits cannot
+change an already prepared command.
 
 ## Creating an empty friend category
 

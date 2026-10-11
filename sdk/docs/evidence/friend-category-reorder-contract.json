@@ -1,0 +1,238 @@
+{
+  "schemaVersion": 1,
+  "profiles": [
+    {
+      "platform": "linux",
+      "arch": "x64",
+      "clientVersion": "3.2.32-52194",
+      "wrapperSha256": "7882b8e3055cd38584861042befacd8be9939896f5cbbca6fa4a230926b48526",
+      "manifestSha256": "8a7b8f44327fa8408dfee2885c0e23d94b4152ff1e70ce0ee735669803066a87",
+      "method": "resortCategory",
+      "argumentCount": 1,
+      "rowFields": {
+        "categoryId": "uint32, core selector 0x61af",
+        "categroyName": "string, core selector 0x61b0"
+      },
+      "order": "Original array index from zero, core selector 0x61b1",
+      "listCategoryIdNamespaceVerified": true,
+      "normalResult": "Promise resolves {result:int32,errMsg:string}; nonzero result is not a native Promise rejection",
+      "receiver": "Session Buddy carrier first word -> measured KernelBuddyService vtable slot 0xf0 -> core 0x29b3130",
+      "binding": "0x36b2c20",
+      "rowDecoder": "0x36ba500",
+      "callbackSerializer": "0x3585330",
+      "functions": [
+        {
+          "start": "0x36b2c20",
+          "end": "0x36b3020",
+          "rawSha256": "6926e4a550d711eb560daced13867c3bb419add01128bb96c05d533780862ce2"
+        },
+        {
+          "start": "0x36ba500",
+          "end": "0x36ba5f0",
+          "rawSha256": "4c2d993a192a783a8ca84bd7bd26f17a21055bbb250efe5cacab0ce0bdef9762"
+        },
+        {
+          "start": "0x6c45ee0",
+          "end": "0x6c45fb0",
+          "rawSha256": "55c2df40c32082d9e3784ae6556011febbb84d71e3404a8488958b5cc8ae3440"
+        },
+        {
+          "start": "0x6c45d20",
+          "end": "0x6c45e10",
+          "rawSha256": "66fb34a948d98221f6be5cbe151cc95e6d2c0decdc5e0559742705961fa3a58e"
+        },
+        {
+          "start": "0x6c45c20",
+          "end": "0x6c45d20",
+          "rawSha256": "7305281152fb99d2c348c83f97efad91a5dfc6db89c9d7bd2bf104fdf170e1f1"
+        },
+        {
+          "start": "0x29b3130",
+          "end": "0x29b37d0",
+          "rawSha256": "9fd28dd7cf95c34829569bb7fdd2a1d61f899d9b899129b6f22643c092a8bc3c"
+        },
+        {
+          "start": "0x3584d60",
+          "end": "0x3585040",
+          "rawSha256": "9e889627be365bcddb780fb052904340154d821e05c3595b5e0243e91c88d20b"
+        },
+        {
+          "start": "0x3585090",
+          "end": "0x3585180",
+          "rawSha256": "bfad1ade4675ab7807ee72fdd350ea03e116dfde6753ce10d65f62dfe5823536"
+        },
+        {
+          "start": "0x35852f0",
+          "end": "0x3585330",
+          "rawSha256": "cba131271e76be8903c6e44d17aa9522661548a35a810cd266394659ad214198"
+        },
+        {
+          "start": "0x3585330",
+          "end": "0x35854a0",
+          "rawSha256": "af00843b0a3c16ceb7a33402397abdb4fb9643c0b4910c3ca6aa67d9754bb89a"
+        }
+      ],
+      "namespaceAndCarrierRanges": [
+        {
+          "start": "0x29124f0",
+          "end": "0x2912539",
+          "sha256": "2a97257e774323380eb2feae3e2e78dd11e322b27b44fc924561f8cf57f8d372"
+        },
+        {
+          "start": "0x29124f0",
+          "end": "0x2913360",
+          "sha256": "bcead817478e3c9770f86a953b06d7da88da63a6010a2fe755b592b65eb11a44"
+        },
+        {
+          "start": "0x291b5d0",
+          "end": "0x291b8b0",
+          "sha256": "e4f0f6aaff1bcf639dc2308e24689f5cdb23303b77b56f95124576e4f3b2a6e1"
+        },
+        {
+          "start": "0x2939dc0",
+          "end": "0x2939eb0",
+          "sha256": "a11ec762a2b41aadb857342a5c3475506b45f866cc504d3c788adf33b45d268e"
+        },
+        {
+          "start": "0x29641c0",
+          "end": "0x29641e0",
+          "sha256": "9b10f5195e1e2e7f8d4686e9f70cf650d07237c38073a6f630fedcc5581071f1"
+        },
+        {
+          "start": "0x2964790",
+          "end": "0x2964810",
+          "sha256": "6e4a07f59265bbacaad727b4b6d6117835c63a6d8d947aa9d82ec8c65f99ce0c"
+        },
+        {
+          "start": "0x29b1d30",
+          "end": "0x29b2440",
+          "sha256": "7b9b9a0a62f2d948d0675adbe93493cc61dd438b04b261b2b18aac157218ad3f"
+        },
+        {
+          "start": "0x29b24d0",
+          "end": "0x29b29c0",
+          "sha256": "93cc4daec981e6e9b668ff3c6072e66840b3dbae6637f050b067974b7b23c26f"
+        },
+        {
+          "start": "0x29b2a30",
+          "end": "0x29b30c0",
+          "sha256": "29089f5b88b4dc904401fdd7042ecf6121b69436a2a57b22ddb43977f397baa9"
+        },
+        {
+          "start": "0x29b9950",
+          "end": "0x29b9cc0",
+          "sha256": "9bc8227350fffa373c21eb81edb2e3c29e88c2ed483ed79fda5a7bbcd3f8823a"
+        },
+        {
+          "start": "0x29ba1b0",
+          "end": "0x29bb2d0",
+          "sha256": "95accbb84a04e4e0c7c792edcb2789f70a264bd011062a724974dfaf42786f60"
+        },
+        {
+          "start": "0x29bb7f0",
+          "end": "0x29bba50",
+          "sha256": "e98020e0d3ec989369dd042b4e7be02e3442a48c27933aa483b16157ca5fb7f6"
+        },
+        {
+          "start": "0x29ca5e0",
+          "end": "0x29ca840",
+          "sha256": "a94a2d8dc005c39cbdf93bbf642cb9187c51b6be1958843013a32b9c5c1cc2bf"
+        },
+        {
+          "start": "0x29ccf40",
+          "end": "0x29cdab0",
+          "sha256": "884a77228907de515c3be75d84c370b7f10932b5f63e5cc2a5be79ec65414b0f"
+        },
+        {
+          "start": "0x29f3980",
+          "end": "0x29f3be0",
+          "sha256": "6f121f5c663d4f7aa94f370c755c1d81f361b0e53de0918e78ec482e174ad1c8"
+        },
+        {
+          "start": "0x29f42b0",
+          "end": "0x29f4390",
+          "sha256": "567e5f677ca846a505070f18cfb0f7d39f05af8ab0a2e33223835bb6827a9824"
+        },
+        {
+          "start": "0x29f44a0",
+          "end": "0x29f4690",
+          "sha256": "831627e0818d0ef1bbce93eb7cacbda45d5bf71eaeec94e5615e23f28d9742f4"
+        },
+        {
+          "start": "0x2a1eba0",
+          "end": "0x2a1ef00",
+          "sha256": "043b3697e4f3ac591c693849e453e76ca2b64982ddc49af367e0f630575faf07"
+        },
+        {
+          "start": "0x2a3c3e0",
+          "end": "0x2a3c560",
+          "sha256": "063461f150c32bc0f7f252586d77f87990be01f33f8e07ddc428c520dbc2fc5e"
+        },
+        {
+          "start": "0x2a742f0",
+          "end": "0x2a74450",
+          "sha256": "619a07128727283b51f8e44236fae377492755aff2b8b5541d9c6f6018b2a5c9"
+        },
+        {
+          "start": "0x2a74560",
+          "end": "0x2a745d0",
+          "sha256": "ec30c09c1b4e3ae3ea162e36adc75817ac3388c1ed00efb73448baea2b5d3688"
+        },
+        {
+          "start": "0x3516a10",
+          "end": "0x3516b60",
+          "sha256": "1a2b3b11af74372c4b1f10ec796d28e1b8e3b7f1d185c084153206fbf82d7c65"
+        },
+        {
+          "start": "0x36b6ef0",
+          "end": "0x36b7200",
+          "sha256": "6a1a41aefd19cbc820f71698be5c7421b3222db49b911f21b9582578d019c23e"
+        },
+        {
+          "start": "0x36b79c0",
+          "end": "0x36b7af0",
+          "sha256": "33ee3ae798c0093788639603e81ba678588d486840a23af9b2019af624569507"
+        },
+        {
+          "start": "0x36bb0b0",
+          "end": "0x36bb2d0",
+          "sha256": "b7711e12b4a5a237229bbef39c90e97b359168f1f73d09b8eef1156a6c910d29"
+        },
+        {
+          "start": "0x36be270",
+          "end": "0x36be8a0",
+          "sha256": "cec4162fa5a0b8adbc32626e07922c6a17eaeae4132aecad85d62befa0b4bc78"
+        },
+        {
+          "start": "0x36be980",
+          "end": "0x36beac0",
+          "sha256": "7ebc149f277df10a0a0a36ed21d5119caecad14c3896a5e18ab73d296156a831"
+        },
+        {
+          "start": "0x36bebf0",
+          "end": "0x36bef20",
+          "sha256": "1d2964f1da40dbeeb5759283ef84e1b5d70bacc5328a24659ef0ee7de1f8da78"
+        },
+        {
+          "start": "0x36c2540",
+          "end": "0x36c28e0",
+          "sha256": "a920ce7b0f86780102f46335472b2809206ef3f44f08da67ed57f12fad23bbc4"
+        },
+        {
+          "start": "0x36c2b40",
+          "end": "0x36c2d60",
+          "sha256": "c13883318d22123bc6048164e6cb2a39f82b930fdd45b4726f61436d7f57a9dd"
+        }
+      ]
+    }
+  ],
+  "sdkInputPolicy": "Nonempty dense explicit rows, unique uint32 category IDs and original string names; preserve order; no inferred names or native coercion. Translate public name to native categroyName only at dispatch.",
+  "completionPolicy": "Native ACK only. One dispatch, no write retry. Close/deadline after dispatch leave remote effect unknown.",
+  "limits": [
+    "No account operation, remote ordering, atomicity, protected-category behavior, complete-versus-subset acceptance or name effects verified.",
+    "Only this exact measured Linux x64 profile is enabled; other versions/devices need independent contracts.",
+    "Membership UID-versus-UIN is separate and remains unverified."
+  ],
+  "nativeExecuted": false,
+  "accountUsed": false
+}

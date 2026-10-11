@@ -13,6 +13,7 @@ type NativeCapability =
   | 'categoryCreation'
   | 'categoryRenaming'
   | 'categoryDeletion'
+  | 'categoryReordering'
   | 'groupFileCount'
   | 'groupFilePages'
   | 'groupSearch'
@@ -33,6 +34,7 @@ type BinaryContract = readonly [
 // group-folder contract records under docs/evidence/. Category renaming has its
 // own platform-specific namespace evidence in friend-category-rename-contract.json;
 // deletion uses its separate friend-category-delete-contract.json evidence.
+// Reordering binds explicit rows and ordinals in friend-category-reorder-contract.json.
 const binaryProfiles: readonly BinaryContract[] = [
   [
     'linux',
@@ -43,6 +45,7 @@ const binaryProfiles: readonly BinaryContract[] = [
       'categoryCreation',
       'categoryRenaming',
       'categoryDeletion',
+      'categoryReordering',
       'groupFileCount',
       'groupFilePages',
       'groupSearch',
@@ -188,6 +191,13 @@ export function supportsCategoryDeletion(
   version: string,
 ): boolean {
   return matchesContract(profile, version, 'categoryDeletion');
+}
+
+export function supportsCategoryReordering(
+  profile: NativeContractProfile | undefined,
+  version: string,
+): boolean {
+  return matchesContract(profile, version, 'categoryReordering');
 }
 
 export function supportsGroupFileCount(

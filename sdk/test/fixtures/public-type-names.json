@@ -15,6 +15,7 @@
   "FriendAdded",
   "FriendCategory",
   "FriendCategoryChange",
+  "FriendCategoryOrderEntry",
   "FriendChange",
   "FriendListUpdate",
   "FriendRequest",

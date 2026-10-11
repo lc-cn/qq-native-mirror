@@ -20,6 +20,7 @@ test('creation captures method once, keeps receiver and explicit undefined argum
     canCreate: () => true,
     canRename: () => false,
     canDelete: () => false,
+    canReorder: () => false,
     getBuddyService: () => service,
   });
   assert.deepEqual(await owner.create(' supplied '), { categoryId: 12, name: 'native' });
@@ -35,6 +36,7 @@ test('creation validates input and capability before acquisition', async () => {
     canCreate: () => false,
     canRename: () => false,
     canDelete: () => false,
+    canReorder: () => false,
     getBuddyService: () => {
       acquisitions++;
       return {};
@@ -54,6 +56,7 @@ test('creation getter close prevents dispatch after one capture', async () => {
     canCreate: () => true,
     canRename: () => false,
     canDelete: () => false,
+    canReorder: () => false,
     getBuddyService: () => ({
       get addCategoryV2() {
         reads++;
@@ -77,6 +80,7 @@ test('creation pending close observes late rejection without retry', async () =>
     canCreate: () => true,
     canRename: () => false,
     canDelete: () => false,
+    canReorder: () => false,
     getBuddyService: () => ({
       addCategoryV2() {
         calls++;
@@ -111,6 +115,7 @@ test('creation receipt projection close cannot publish DTO, including descriptor
       canCreate: () => true,
       canRename: () => false,
       canDelete: () => false,
+      canReorder: () => false,
       getBuddyService: () => ({ addCategoryV2: () => result }),
     });
     await assert.rejects(owner.create('name'), /creation; remote effect unknown/);

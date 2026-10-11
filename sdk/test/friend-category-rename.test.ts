@@ -15,6 +15,7 @@ test('exact two arguments and receiver; uint32 zero accepted without assuming bu
     canCreate: () => false,
     canRename: () => true,
     canDelete: () => true,
+    canReorder: () => false,
     signal: new AbortController().signal,
     getBuddyService: () => service,
   });
@@ -34,6 +35,7 @@ test('invalid input and service getter retirement prevent native dispatch', asyn
     canCreate: () => false,
     canRename: () => true,
     canDelete: () => true,
+    canReorder: () => false,
     signal: new AbortController().signal,
     getBuddyService: () => {
       getters++;
@@ -68,6 +70,7 @@ test('method getter abort prevents dispatch and original native rejection is pre
     canCreate: () => false,
     canRename: () => true,
     canDelete: () => true,
+    canReorder: () => false,
     signal: controller.signal,
     getBuddyService: () => service,
   });
@@ -78,6 +81,7 @@ test('method getter abort prevents dispatch and original native rejection is pre
     canCreate: () => false,
     canRename: () => true,
     canDelete: () => true,
+    canReorder: () => false,
     signal: new AbortController().signal,
     getBuddyService: () => ({
       renameCategory() {
@@ -98,6 +102,7 @@ test('close settles pending write unknown and observes late rejection without re
     canCreate: () => false,
     canRename: () => true,
     canDelete: () => true,
+    canReorder: () => false,
     signal: new AbortController().signal,
     getBuddyService: () => ({
       renameCategory() {
@@ -133,6 +138,7 @@ test('malformed and nonzero ACK never disclose native wording', async () => {
       canCreate: () => false,
       canRename: () => true,
       canDelete: () => true,
+      canReorder: () => false,
       signal: new AbortController().signal,
       getBuddyService: () => ({ renameCategory: () => result }),
     });
@@ -150,6 +156,7 @@ test('synchronous close during dispatch with resolved ACK retains unknown effect
     canCreate: () => false,
     canRename: () => true,
     canDelete: () => true,
+    canReorder: () => false,
     signal: new AbortController().signal,
     getBuddyService: () => ({
       renameCategory() {
@@ -178,6 +185,7 @@ test('close during result descriptor projection retains unknown effect', async (
     canCreate: () => false,
     canRename: () => true,
     canDelete: () => true,
+    canReorder: () => false,
     signal: new AbortController().signal,
     getBuddyService: () => ({
       renameCategory() {
@@ -198,6 +206,7 @@ test('five second deadline settles once without replay and observes late rejecti
     canCreate: () => false,
     canRename: () => true,
     canDelete: () => true,
+    canReorder: () => false,
     signal: new AbortController().signal,
     getBuddyService: () => ({
       renameCategory() {

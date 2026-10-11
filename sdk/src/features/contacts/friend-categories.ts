@@ -1,5 +1,5 @@
 import { nativeResultError } from '../../errors.ts';
-import type { Friend, FriendCategory } from '../../contracts/contacts.ts';
+import type { Friend, FriendCategory, FriendCategoryOrderEntry } from '../../contracts/contacts.ts';
 
 interface CapturedCategory {
   categoryId: number;
@@ -128,4 +128,26 @@ export function captureFriendCategoryId(categoryId: unknown): number {
 
 export function captureRenameFriendCategory(categoryId: unknown, name: unknown) {
   return { categoryId: captureFriendCategoryId(categoryId), name: friendCategoryName(name) };
+}
+
+/** Capture every explicit row before acquisition. Names are preserved, never inferred or refreshed. */
+export function captureFriendCategoryOrder(value: unknown): readonly FriendCategoryOrderEntry[] {
+  if (!Array.isArray(value) || value.length === 0)
+    throw new Error('Friend category order must be a nonempty array');
+  const ids = new Set<number>();
+  const rows: FriendCategoryOrderEntry[] = [];
+  const length = value.length;
+  for (let index = 0; index < length; index++) {
+    const descriptor = Object.getOwnPropertyDescriptor(value, String(index));
+    if (!descriptor || !('value' in descriptor))
+      throw new Error('Friend category order requires dense data rows');
+    const row: unknown = descriptor.value;
+    const categoryId = captureFriendCategoryId(field(row, 'categoryId'));
+    const name = field(row, 'name');
+    if (typeof name !== 'string') throw new Error('Friend category order requires string names');
+    if (ids.has(categoryId)) throw new Error('Friend category order contains duplicate IDs');
+    ids.add(categoryId);
+    rows.push(Object.freeze({ categoryId, name }));
+  }
+  return Object.freeze(rows);
 }

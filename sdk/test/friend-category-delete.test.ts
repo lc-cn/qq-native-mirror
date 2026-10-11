@@ -16,6 +16,7 @@ test('delete sends one uint32 argument with original receiver and zero/max ACK o
     canCreate: () => false,
     canRename: () => true,
     canDelete: () => true,
+    canReorder: () => false,
     getBuddyService: () => service,
   });
   await owner.delete(0);
@@ -31,6 +32,7 @@ test('invalid input and unsupported capability reject before acquisition', async
     canCreate: () => false,
     canRename: () => false,
     canDelete: () => false,
+    canReorder: () => false,
     getBuddyService: () => {
       acquisitions++;
       return {};
@@ -55,6 +57,7 @@ test('delete getter closes before dispatch and missing method has fixed wording'
     canCreate: () => false,
     canRename: () => true,
     canDelete: () => true,
+    canReorder: () => false,
     getBuddyService: () => ({
       get delCategory() {
         owner.close();
@@ -71,6 +74,7 @@ test('delete getter closes before dispatch and missing method has fixed wording'
     canCreate: () => false,
     canRename: () => true,
     canDelete: () => true,
+    canReorder: () => false,
     getBuddyService: () => null,
   });
   await assert.rejects(missing.delete(1), /Missing native method delCategory/);
@@ -90,6 +94,7 @@ test('delete requires int32 zero status; native rejection identity and no retry'
       canCreate: () => false,
       canRename: () => true,
       canDelete: () => true,
+      canReorder: () => false,
       getBuddyService: () => ({
         delCategory() {
           calls++;
@@ -110,6 +115,7 @@ test('delete requires int32 zero status; native rejection identity and no retry'
     canCreate: () => false,
     canRename: () => true,
     canDelete: () => true,
+    canReorder: () => false,
     getBuddyService: () => ({ delCategory: () => Promise.reject(original) }),
   });
   await assert.rejects(owner.delete(1), (error) => error === original);
@@ -123,6 +129,7 @@ test('delete close observes late failure and cannot publish resolved ACK after d
     canCreate: () => false,
     canRename: () => true,
     canDelete: () => true,
+    canReorder: () => false,
     getBuddyService: () => ({
       delCategory: () =>
         new Promise((_, fail) => {
@@ -140,6 +147,7 @@ test('delete close observes late failure and cannot publish resolved ACK after d
     canCreate: () => false,
     canRename: () => true,
     canDelete: () => true,
+    canReorder: () => false,
     getBuddyService: () => ({
       delCategory() {
         reentrant.close();
@@ -159,6 +167,7 @@ test('delete deadline observes late rejection and never retries', async (t) => {
     canCreate: () => false,
     canRename: () => true,
     canDelete: () => true,
+    canReorder: () => false,
     getBuddyService: () => ({
       delCategory() {
         calls++;
@@ -192,6 +201,7 @@ test('delete result descriptor retirement prevents success', async () => {
     canCreate: () => false,
     canRename: () => true,
     canDelete: () => true,
+    canReorder: () => false,
     getBuddyService: () => ({ delCategory: () => result }),
   });
   await assert.rejects(owner.delete(1), /delete; remote effect unknown/);

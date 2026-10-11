@@ -23,6 +23,7 @@ registerHooks({load(url,context,next){
    if(method==='getGroupEssencePage'){if(payload.groupId!=='123'||payload.options.pageStart!==17||payload.options.pageLimit!==2)throw Error('Invalid essence page IPC');return {...payload.options,groupId:payload.groupId,messages:[],isEnd:false,groupRole:2};}
    if(method==='listGroupEssenceMessages'){if(payload.groupId!=='123'||payload.options.maxPages!==2)throw Error('Invalid full essence IPC');return [];}
    if(method==='setGroupEssenceMessage'){if(payload.groupId!=='123'||payload.messageId!=='9876543210123456789'||typeof payload.enabled!=='boolean')throw Error('Invalid essence IPC intent');return;}
+   if(method==='reorderFriendCategories'){if(JSON.stringify(payload.categories)!==JSON.stringify([{categoryId:4294967295,name:' exact 中文 '},{categoryId:0,name:''}]))throw Error('Invalid category order IPC');return;}
    if(method==='createGroupFolder'){if(payload.groupId!=='18446744073709551615'||payload.name!==' fixture folder ')throw Error('Invalid create folder IPC');return {groupId:payload.groupId,folderId:'opaque-new',parentFolderId:'',name:payload.name};}
    if(method==='deleteGroupFolder'){if(payload.groupId!=='18446744073709551615'||payload.folderId!==' opaque/文件夹 ')throw Error('Invalid folder IPC');return;}
    if(method==='getGroupFileCount'){if(payload.groupId!=='18446744073709551615')throw Error('Invalid file count IPC');return 4294967295;}
@@ -64,6 +65,13 @@ registerHooks({load(url,context,next){
       categoryId: 8,
       name: ' 新分组 ',
     });
+    assert.equal(
+      await client.reorderFriendCategories([
+        { categoryId: 0xffff_ffff, name: ' exact 中文 ' },
+        { categoryId: 0, name: '' },
+      ]),
+      undefined,
+    );
     assert.equal(
       await client.deleteGroupFolder('18446744073709551615', ' opaque/文件夹 '),
       undefined,

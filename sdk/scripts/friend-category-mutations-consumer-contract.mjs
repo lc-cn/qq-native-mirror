@@ -1,11 +1,12 @@
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { mkdtemp, readFile, writeFile, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 import { EventEmitter } from 'node:events';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 /** Compiled package contracts with controlled services; no QQ operation. */
-export async function verifyFriendCategoryRenameConsumer(packageRoot) {
+export async function verifyFriendCategoryMutationsConsumer(packageRoot) {
   const load = (path) => import(pathToFileURL(join(packageRoot, 'dist', path)).href);
   const { createNativeServices } = await load('native-services.js');
   const { QQClient } = await load('index.js');
@@ -27,6 +28,15 @@ export async function verifyFriendCategoryRenameConsumer(packageRoot) {
     await readFile(join(packageRoot, 'docs/evidence/friend-category-delete-contract.json'), 'utf8'),
   );
   assert.equal(deleteProfiles.length, 3);
+  const { profiles: reorderProfiles } = JSON.parse(
+    await readFile(
+      join(packageRoot, 'docs/evidence/friend-category-reorder-contract.json'),
+      'utf8',
+    ),
+  );
+  assert.equal(reorderProfiles.length, 1);
+  assert.equal(reorderProfiles[0].platform, 'linux');
+  assert.equal(reorderProfiles[0].arch, 'x64');
   assert.deepEqual(deleteProfiles.map(({ platform, arch }) => `${platform}-${arch}`).sort(), [
     'darwin-arm64',
     'linux-arm64',
@@ -139,6 +149,66 @@ export async function verifyFriendCategoryRenameConsumer(packageRoot) {
       services.close();
     }
   }
+  const order = [
+    { categoryId: 0xffff_ffff, name: ' exact 中文 ' },
+    { categoryId: 0, name: '' },
+  ];
+  const reorderCases = [
+    ...profiles.map((profile) => [profile, profile.clientVersion]),
+    [undefined, 'unknown'],
+    [reorderProfiles[0], 'wrong-version'],
+    ...['platform', 'arch', 'clientVersion', 'wrapperSha256'].map((key) => [
+      { ...reorderProfiles[0], [key]: 'unverified' },
+      reorderProfiles[0].clientVersion,
+    ]),
+  ];
+  for (const [profile, version] of reorderCases) {
+    let acquisitions = 0;
+    const calls = [];
+    const buddy = {
+      addKernelBuddyListener() {},
+      resortCategory(...args) {
+        assert.equal(this, buddy);
+        calls.push(args);
+        return { result: 0 };
+      },
+    };
+    const services = createNativeServices({
+      session: {
+        getBuddyService() {
+          acquisitions++;
+          return buddy;
+        },
+        getMsgService: () => ({ addKernelMsgListener() {} }),
+        getGroupService: () => ({ addKernelGroupListener() {} }),
+      },
+      version,
+      binaryProfile: profile,
+      events: { emit() {} },
+    });
+    acquisitions = 0;
+    try {
+      if (
+        profile?.clientVersion === version &&
+        reorderProfiles.some((verified) => matches(verified, profile))
+      ) {
+        await services.invokeOperation('reorderFriendCategories', { categories: order });
+        assert.deepEqual(calls, [
+          [order.map(({ categoryId, name }) => ({ categoryId, categroyName: name }))],
+        ]);
+      } else {
+        await assert.rejects(
+          services.invokeOperation('reorderFriendCategories', { categories: order }),
+          { code: 'unsupported-native-contract' },
+        );
+        assert.equal(acquisitions, 0);
+        assert.deepEqual(calls, []);
+      }
+    } finally {
+      services.close();
+    }
+  }
+  const directory = await mkdtemp(join(tmpdir(), 'qq-category-order-consumer-'));
   const worker = new EventEmitter(),
     calls = [];
   Object.assign(worker, {
@@ -187,10 +257,27 @@ export async function verifyFriendCategoryRenameConsumer(packageRoot) {
     for (const id of ['-1', '1.5', '4294967296', 'abc'])
       await assert.rejects(prepareCommand('friend-category-delete', { 'category-id': id }));
     assert.equal(calls.length, 4);
+    await client.reorderFriendCategories(order);
+    const file = join(directory, 'categories.json');
+    await writeFile(file, JSON.stringify(order));
+    const reorder = await prepareCommand('friend-category-reorder', { 'categories-file': file });
+    await writeFile(file, 'invalid after preparation');
+    await reorder(client);
+    assert.deepEqual(
+      calls.slice(4).map(({ method, categories }) => ({ method, categories })),
+      [
+        { method: 'reorderFriendCategories', categories: order },
+        { method: 'reorderFriendCategories', categories: order },
+      ],
+    );
+    await assert.rejects(prepareCommand('friend-category-reorder', { 'categories-file': file }));
+    await assert.rejects(client.reorderFriendCategories([{ categoryId: '1', name: 'invalid' }]));
+    assert.equal(calls.length, 6);
   } finally {
     Object.assign(worker, { connected: false, exitCode: 0 });
     worker.emit('exit', 0, null);
     await client.close();
+    await rm(directory, { recursive: true, force: true });
   }
   return {
     friendCategoryRenameBinaryGateContract: true,
@@ -204,6 +291,11 @@ export async function verifyFriendCategoryRenameConsumer(packageRoot) {
     friendCategoryDeleteFacadeContract: true,
     friendCategoryDeleteCliContract: true,
     nativeFriendCategoryDeleteAttempted: false,
+    friendCategoryReorderBinaryGateContract: true,
+    friendCategoryReorderCompositionContract: true,
+    friendCategoryReorderFacadeContract: true,
+    friendCategoryReorderCliContract: true,
+    nativeFriendCategoryReorderAttempted: false,
     accountUsed: false,
   };
 }

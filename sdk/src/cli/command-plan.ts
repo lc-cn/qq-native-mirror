@@ -1,5 +1,6 @@
 import {
   captureFriendCategoryId,
+  captureFriendCategoryOrder,
   captureRenameFriendCategory,
 } from '../features/contacts/friend-categories.ts';
 import { captureGroupSearch } from '../features/groups/group-search-input.ts';
@@ -50,6 +51,7 @@ export function validateCommandFlags(command: string, flags: Record<string, stri
     'friend-category-add': ['config', 'uin', 'name'],
     'friend-category-rename': ['config', 'uin', 'category-id', 'name'],
     'friend-category-delete': ['config', 'uin', 'category-id'],
+    'friend-category-reorder': ['config', 'uin', 'categories-file'],
     groups: ['config', 'uin'],
     send: ['config', 'kind', 'target', 'text', 'message-file', 'uin'],
     nickname: ['config', 'uin', 'name'],
@@ -399,6 +401,12 @@ export async function prepareCommand(
       if (!/^\d+$/.test(rawId)) throw new Error('--category-id must be a uint32 decimal integer');
       const categoryId = captureFriendCategoryId(Number(rawId));
       return (client) => client.deleteFriendCategory(categoryId);
+    }
+    case 'friend-category-reorder': {
+      const categories = captureFriendCategoryOrder(
+        JSON.parse(await readFile(resolve(required(flags, 'categories-file')), 'utf8')),
+      );
+      return (client) => client.reorderFriendCategories(categories);
     }
     case 'friend-categories':
       return (client) => client.listFriendCategories();

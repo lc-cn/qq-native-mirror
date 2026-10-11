@@ -33,7 +33,7 @@ import { verifyGroupNoticeConsumer } from './group-notice-consumer-contract.mjs'
 import { verifyGroupSearchConsumer } from './group-search-consumer-contract.mjs';
 import { verifyGroupFilePagesConsumer } from './group-file-pages-consumer-contract.mjs';
 import { verifyQunWebConsumer } from './qun-web-consumer-contract.mjs';
-import { verifyFriendCategoryRenameConsumer } from './friend-category-rename-consumer-contract.mjs';
+import { verifyFriendCategoryMutationsConsumer } from './friend-category-mutations-consumer-contract.mjs';
 
 // Offline packaging check: controlled services and actual worker routing with a replacement kernel; no QQ native binaries or accounts.
 const root = fileURLToPath(new URL('../', import.meta.url));
@@ -200,7 +200,7 @@ const groupSearchChecks = await verifyGroupSearchConsumer(
 const groupFilePagesChecks = await verifyGroupFilePagesConsumer(
   join(destination, 'node_modules/qq-native-client'),
 );
-const friendCategoryRenameChecks = await verifyFriendCategoryRenameConsumer(
+const friendCategoryMutationChecks = await verifyFriendCategoryMutationsConsumer(
   join(destination, 'node_modules/qq-native-client'),
 );
 const groupWebChecks = await verifyQunWebConsumer(
@@ -486,6 +486,12 @@ function subscribe(client: QQClient) {
  void deletedCategory;
  // @ts-expect-error Deletion also requires numeric category selectors.
  client.deleteFriendCategory('123');
+ const orderedCategories: Promise<void> = client.reorderFriendCategories([{categoryId:123,name:'original'}] as const);
+ void orderedCategories;
+ // @ts-expect-error Reordering requires explicit names as well as numeric category IDs.
+ client.reorderFriendCategories([{categoryId:123}]);
+ // @ts-expect-error Reordering does not expose native numeric coercion.
+ client.reorderFriendCategories([{categoryId:'123',name:'original'}]);
  const categories: Promise<FriendCategory[]> = client.listFriendCategories();
  const fileCount: Promise<number> = client.getGroupFileCount('123');
  void fileCount;
@@ -567,7 +573,7 @@ const receipt = {
     ...groupRequestChecks,
     ...groupNoticeChecks,
     ...groupWebChecks,
-    ...friendCategoryRenameChecks,
+    ...friendCategoryMutationChecks,
     groupSearchChecks,
     groupFilePagesChecks,
     ...publicContractChecks,
