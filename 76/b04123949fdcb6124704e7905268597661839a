@@ -1,0 +1,55 @@
+sdk/scripts/native-fallbacks.mjs
+  s_2104cc474f1ce5::t_700092c49ff94d 1-145
+  s_2104cc474f1ce5::t_933500460e1ed4 146-187
+sdk/scripts/local-first-publish.mjs
+  s_2104cc474f1ce5::t_95cf62e95efa16 7,195
+ci/native-package-distribution.mjs
+  s_2104cc474f1ce5::t_dad6a3a51f5871 1-131
+  s_2104cc474f1ce5::t_cd8fcf770f8729 132-178
+.github/workflows/native-npm.yml
+  s_2104cc474f1ce5::t_82c6d871e29ba2 5-9,23,77,118-119,155,204-211
+.github/workflows/sdk-quality.yml
+  s_2104cc474f1ce5::t_d8e31b313e0771 19,34
+ci/aggregate-release.mjs
+  s_2104cc474f1ce5::t_c923fbd10b5adc 1-191,194-208,211-246
+ci/build-platform.mjs
+  s_2104cc474f1ce5::t_24b43a154893d3 1-74,76-226
+ci/native-package-distribution.test.mjs
+  s_2104cc474f1ce5::t_2c66f6ef2df249 1-131
+sdk/docs/architecture.md
+  s_2104cc474f1ce5::t_000a8472a972e6 152-165
+sdk/docs/architecture/quality-gates.md
+  s_2104cc474f1ce5::t_44c2bb834379e5 288-296
+sdk/docs/evidence/object-ci-distribution-09fe46d-local.json
+  s_2104cc474f1ce5::t_27161a0834322a 1-237
+sdk/docs/native-size-reduction.md
+  s_2104cc474f1ce5::t_86de02596db20f 286-321
+sdk/scripts/download-npm-candidate.mjs
+  s_2104cc474f1ce5::t_18f565f49e7e46 7,31-107,213-220,340-343,383-384
+sdk/test/native-fallback-download.test.ts
+  s_2104cc474f1ce5::t_388e5d4b23655a 1-112
+sdk/test/native-fallbacks.test.ts
+  s_2104cc474f1ce5::t_9c2537de897e6b 1-102
+sdk/test/release-native-storage.test.ts
+  s_2104cc474f1ce5::t_ca3dc92190739c 135,138-146,150-151,199-228,267-284,301,308-358
+tools/check-native-storage.mjs
+  s_2104cc474f1ce5::t_7d5916a325377b 7,20-27,30,36,43,49-53
+tools/eslint.config.mjs
+  s_2104cc474f1ce5::t_2acf3d54ee90b7 11
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "76b04123949fdcb6124704e7905268597661839a",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
