@@ -277,6 +277,82 @@ export async function verifyContactGroupSnapshots(packageRoot) {
       assert.deepEqual([reads, dispatches], [1, 1]);
     }
   }
+  // Active getter failures retain identity; retirement during a throwing getter
+  // wins instead. Both cases use the installed domain owner, not a copied validator.
+  for (const kind of ['contact', 'group']) {
+    for (const close of [false, true]) {
+      const controller = new AbortController();
+      const stopped = new Error('controlled ACK account closed');
+      const original = new Error('controlled ACK getter failure');
+      let reads = 0;
+      let calls = 0;
+      const invoke = () => {
+        calls++;
+        return {
+          get result() {
+            reads++;
+            if (close) controller.abort(stopped);
+            throw original;
+          },
+        };
+      };
+      const context = { ...common, signal: controller.signal };
+      const pending =
+        kind === 'contact'
+          ? createContactOperations({
+              ...context,
+              getBuddyService: () => ({ delBuddy: invoke }),
+              getProfileService: () => undefined,
+            }).invokeOperation('deleteFriend', { userId: '123' })
+          : createGroupOperations({
+              ...context,
+              getGroupService: () => ({ modifyGroupName: invoke }),
+            }).invokeOperation('setGroupName', { groupId: '123', name: 'fixture' });
+      await assert.rejects(pending, (error) => error === (close ? stopped : original));
+      assert.deepEqual([reads, calls], [1, 1]);
+    }
+  }
+  for (const hasResult of [false, true]) {
+    for (const throws of [false, true]) {
+      const controller = new AbortController();
+      const stopped = new Error('controlled ACK has closed');
+      let hasReads = 0;
+      let resultReads = 0;
+      let calls = 0;
+      const receipt = new Proxy(
+        { result: 0 },
+        {
+          has(target, key) {
+            if (key !== 'result') return Reflect.has(target, key);
+            hasReads++;
+            controller.abort(stopped);
+            if (throws) throw new Error('controlled has failure after close');
+            return hasResult;
+          },
+          get(target, key, receiver) {
+            if (key === 'result') resultReads++;
+            return Reflect.get(target, key, receiver);
+          },
+        },
+      );
+      const owner = createContactOperations({
+        ...common,
+        signal: controller.signal,
+        getProfileService: () => undefined,
+        getBuddyService: () => ({
+          delBuddy() {
+            calls++;
+            return receipt;
+          },
+        }),
+      });
+      await assert.rejects(
+        owner.invokeOperation('deleteFriend', { userId: '123' }),
+        (error) => error === stopped,
+      );
+      assert.deepEqual([hasReads, resultReads, calls], [1, 0, 1]);
+    }
+  }
   const closing = new AbortController();
   const stopped = new Error('fixture profile closed');
   const closingProfile = createContactOperations({
@@ -340,6 +416,8 @@ export async function verifyContactGroupSnapshots(packageRoot) {
     installedUserProfileQueryGetterPriorityContract: true,
     installedUserProfileQueryReceiverAndRawIdentity: true,
     contactGroupReceiptSnapshotContract: true,
+    contactGroupAckThrowRetirementPriority: true,
+    contactAckHasRetirementPreventsRead: true,
     contactGroupProjectionRetirementContract: true,
     contactProfileLookupRetirementContract: true,
     nativeContactMutationAttempted: false,

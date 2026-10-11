@@ -91,7 +91,10 @@ queries and continued sibling operations. Its native services are controlled;
 these results do not prove account queries or native interoperability.
 The contact/group snapshot consumer imports the installed domain owners and
 checks single-read mutation options, profile projection, captured error codes and
-retirement during result access. Both local and platform verifiers await it and
+retirement during result access, including accessors that close and throw and
+contact Proxy presence checks that retire before value access. Active thrown
+errors keep their identity, and receipt reads and dispatches remain single-shot.
+Both local and platform verifiers await it and
 record `contactGroupSnapshotChecks`. Strict compiler and lint negative fixtures
 reject invalid native ports and ignored mutation Promises without running them.
 The same helper imports the installed facade and CLI to verify eleven management

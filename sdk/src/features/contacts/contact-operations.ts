@@ -27,9 +27,18 @@ function checkResult(result: unknown, method: string, alive: () => void): void {
   // Upstream setBuddyRemark returns void, delBuddy Promise<unknown>. A void
   // return confirms dispatch only, not server acceptance of the mutation.
   if (result === undefined) return;
-  const code =
-    result && typeof result === 'object' && 'result' in result ? result.result : undefined;
-  alive();
+  let code: unknown;
+  try {
+    if (result && typeof result === 'object' && 'result' in result) {
+      // A Proxy presence check can synchronously retire the account.
+      alive();
+      code = result.result;
+    }
+  } finally {
+    // Retirement wins even when an opaque receipt getter throws. Active getter
+    // failures retain their original error; no receipt is read a second time.
+    alive();
+  }
   if (code !== 0) {
     throw nativeResultError(`Native contact ${method} failed`, { result: code });
   }

@@ -468,8 +468,14 @@ their existing receiver and behavior. Retirement is checked before and after eac
 read, including a thrown getter or Map lookup; the exact close reason wins and no
 subsequent native field is inspected. While active, thrown reads retain their
 original error identity. Both domains capture the completion status
-once and recheck retirement before accepting it. Rejection codes come from that
-captured status, rather than a second read of the opaque native response.
+once and recheck retirement even when its getter throws. The exact close reason
+wins over a thrown accessor, while active failures retain their original identity.
+Contact receipts keep their presence-check semantics, checking lifetime between
+that check and value access; group receipts keep their direct property access.
+Closing during a Proxy presence check prevents a subsequent getter call. Rejection
+codes come from the captured status, rather than a second read of the opaque
+native response. Void completion retains each method's existing submission-only
+policy; these checks do not infer remote mutation success.
 
 The checked `contact-group-snapshot-consumer-contract.mjs` runs these contracts
 against the installed compiled owners in local and platform consumers. It also

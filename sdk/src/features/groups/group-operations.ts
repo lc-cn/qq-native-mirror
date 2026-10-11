@@ -117,9 +117,15 @@ export function createGroupOperations(context: GroupOperationsContext) {
     if (result === undefined && voidOperations.has(method)) return;
     // GeneralCallResult methods require result zero; explicit failure or malformed
     // returns also reject for void methods. No mutation is retried.
-    const code =
-      result && typeof result === 'object' ? (result as { result?: unknown }).result : undefined;
-    alive();
+    let code: unknown;
+    try {
+      code =
+        result && typeof result === 'object' ? (result as { result?: unknown }).result : undefined;
+    } finally {
+      // A native accessor may both retire the account and throw. Check lifetime
+      // before interpreting its status, while preserving active getter failures.
+      alive();
+    }
     if (code !== 0) {
       throw nativeResultError(`Native group ${method} failed`, { result: code });
     }
