@@ -59,7 +59,7 @@ cannot partially replace the last inventory, and retirement prevents publication
 The configured login task belongs to the lifecycle, together with its immediate
 handle and worker generation. The creation root owns no deferred callback and
 passes no mutable options into later authentication. Closing, an admitted reconnect,
-a normalized explicit login or an offline account transition cancels its pending
+an admitted explicit login or an offline account transition cancels its pending
 handle and removes its notification ownership. An in-flight request still settles
 through the existing RPC/login owner; cancellation does not undo submitted native
 work. An obsolete rejection cannot notify a replacement or closed client. An active
@@ -71,7 +71,7 @@ No scheduler, initialization hook or task token enters the package-root interfac
 Automatic restoration has one private task identity containing its captured
 restore request and optional timer. Queued and in-flight work therefore share
 notification/retry authority instead of leaving a detached failure continuation.
-Close, normalized explicit login, admitted manual reconnect and account retirement
+Close, admitted explicit login, admitted manual reconnect and account retirement
 remove that authority synchronously. A same-request manual reconnect joins the
 reserved Promise and takes over error observation; malformed or conflicting
 requests do not steal the admitted task. The public reconnect entry and automatic
@@ -137,6 +137,20 @@ If a connecting observer throws, the reserved login Promise rejects with that
 value and the attempt is released; joined callers cannot remain pending. This
 failure is now a Promise rejection rather than a synchronous exception from
 `login`. Closing from the observer prevents login dispatch.
+
+Public login admission belongs to the same lifecycle owner. It normalizes and
+captures the request, then checks the current reconnect before canceling task
+authority. A matching method/account joins its exact Promise and takes manual
+error ownership; conflicting or invalid requests neither dispatch nor cancel
+automatic reporting. The closed flag of an old failed worker cannot block an
+admitted recovery, but explicit shutdown rejects. Application getters during
+normalization can close or replace the transaction, so admission rechecks state
+after capture. A conflicting pending standalone login or online account also
+rejects before canceling the configured login's notification authority. The
+private conflict policy is shared with internal login, and one module-private
+comparison keeps standalone login and both reconnect entries consistent.
+Replacement authorization uses `#startLogin` only
+after initialization, without reentering public admission.
 
 `waitForLogin` observes the lifecycle's admitted transaction. Explicit shutdown
 rejects first; an already reserved reconnect then takes precedence over the

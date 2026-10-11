@@ -64,10 +64,14 @@ Omit `uin` only with exactly one eligible record. Explicit quick login uses
 `authenticated` precedes account Session startup; `login`, `ready` and the login
 Promise indicate readiness. Each client owns one account/data directory. Close
 preserves authorization files. Use explicit `reconnect` after a failure. With `autoReconnect` enabled, only a
-retryable disconnect schedules restoration. Close or a manual login cancels its
-pending task and obsolete error notifications. A same-request manual `reconnect`
+retryable disconnect schedules restoration. Close or an admitted manual login cancels its
+pending task and obsolete error notifications. A same-request manual `login` or `reconnect`
 joins the shared result and takes over error observation; invalid or conflicting
 requests leave the admitted restore in charge. Submitted work is not undone.
+During reconnect, `login(request)` joins only the same normalized method and
+account; another request rejects before IPC. Initialization still precedes the
+replacement login. Input validation completes before ownership changes, and a
+reentrant close or reconnect during validation is checked before admission.
 `waitForLogin()` joins an admitted reconnect through worker retirement,
 initialization and authorization, sharing its Promise and outcome without
 starting another login or taking over automatic error observation. Explicit

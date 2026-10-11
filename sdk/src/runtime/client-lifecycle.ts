@@ -102,6 +102,12 @@ interface AutomaticRestoreTask {
   timer?: NodeJS.Timeout;
 }
 
+/** Compare captured authorization intent consistently across both public entries. */
+function sameLoginRequest(first: LoginRequest, second: LoginRequest | undefined): boolean {
+  if (!second || first.method !== second.method) return false;
+  return ('uin' in first ? first.uin : undefined) === ('uin' in second ? second.uin : undefined);
+}
+
 /** Owns a client's worker generations, authorization state and shutdown.
  * Requests are never replayed. Callback presentation belongs to the public facade.
  * Only explicitly retryable disconnections can schedule automatic restoration.
@@ -480,34 +486,34 @@ export class ClientLifecycle {
     if (task?.handle) clearImmediate(task.handle);
   }
   login(request: LoginRequest = this.#defaultLogin): Promise<Account> {
-    if (this.#closing || this.#closed) return Promise.reject(new Error('QQ client is closed'));
+    if (this.#closing || (this.#closed && !this.#reconnecting))
+      return Promise.reject(new Error('QQ client is closed'));
     try {
       request = normalizeLoginRequest(request);
     } catch (error) {
       return Promise.reject(error);
     }
+    // Input getters can synchronously close or replace the admitted transaction.
+    if (this.#closing || (this.#closed && !this.#reconnecting))
+      return Promise.reject(new Error('QQ client is closed'));
+    if (this.#reconnecting) {
+      if (!sameLoginRequest(request, this.#reconnectRequest))
+        return Promise.reject(new Error('A different reconnect request is already in progress'));
+      this.#cancelConfiguredLogin();
+      this.#cancelAutomaticRestore();
+      return this.#reconnecting;
+    }
+    const conflict = this.#loginConflict(request);
+    if (conflict) return Promise.reject(conflict);
     this.#cancelConfiguredLogin();
     this.#cancelAutomaticRestore();
     return this.#startLogin(request);
   }
   #startLogin(request: LoginRequest): Promise<Account> {
     if (this.#closing || this.#closed) return Promise.reject(new Error('QQ client is closed'));
-    if (this.#account) {
-      if ('uin' in request && request.uin !== undefined && request.uin !== this.#account.uin)
-        return Promise.reject(
-          new Error('A different account is online; use reconnect() to change accounts'),
-        );
-      return Promise.resolve({ ...this.#account });
-    }
-    if (
-      this.#login &&
-      this.#loginRequest &&
-      (request.method !== this.#loginRequest.method ||
-        ('uin' in request ? request.uin : undefined) !==
-          ('uin' in this.#loginRequest ? this.#loginRequest.uin : undefined))
-    ) {
-      return Promise.reject(new Error('A different login request is already in progress'));
-    }
+    const conflict = this.#loginConflict(request);
+    if (conflict) return Promise.reject(conflict);
+    if (this.#account) return Promise.resolve({ ...this.#account });
     if (this.#login) return this.#login;
     let resolve!: (account: Account) => void;
     let reject!: (reason: unknown) => void;
@@ -546,6 +552,17 @@ export class ClientLifecycle {
       .then(resolve, reject);
     return loginPromise;
   }
+  /** Rejected intent must not retire the task that still owns authorization. */
+  #loginConflict(request: LoginRequest): Error | undefined {
+    if (this.#account) {
+      if ('uin' in request && request.uin !== undefined && request.uin !== this.#account.uin)
+        return new Error('A different account is online; use reconnect() to change accounts');
+      return;
+    }
+    if (this.#login && this.#loginRequest && !sameLoginRequest(request, this.#loginRequest)) {
+      return new Error('A different login request is already in progress');
+    }
+  }
 
   waitForLogin(): Promise<Account> {
     if (this.#closing) return Promise.reject(new Error('QQ client is closed'));
@@ -567,26 +584,24 @@ export class ClientLifecycle {
   ): Promise<Account> {
     return this.#beginReconnect(login);
   }
+  /** Reevaluate explicit shutdown across fallible input and observer callbacks. */
+  #shutdownRequested(): boolean {
+    return this.#closing || this.#state === 'closed';
+  }
   #beginReconnect(login: LoginRequest, automatic?: AutomaticRestoreTask): Promise<Account> {
     if (automatic && this.#automaticRestore !== automatic)
       return Promise.reject(new Error('QQ automatic restore was superseded'));
-    if (this.#closing || this.#state === 'closed')
-      return Promise.reject(new Error('QQ client is closed'));
+    if (this.#shutdownRequested()) return Promise.reject(new Error('QQ client is closed'));
     try {
       login = normalizeLoginRequest(login);
     } catch (error) {
       return Promise.reject(error);
     }
+    if (this.#shutdownRequested()) return Promise.reject(new Error('QQ client is closed'));
     if (!this.#restart)
       return Promise.reject(new Error('Worker restart is unavailable for this client'));
     if (this.#reconnecting) {
-      if (
-        login.method !== this.#reconnectRequest?.method ||
-        ('uin' in login ? login.uin : undefined) !==
-          (this.#reconnectRequest && 'uin' in this.#reconnectRequest
-            ? this.#reconnectRequest.uin
-            : undefined)
-      ) {
+      if (!sameLoginRequest(login, this.#reconnectRequest)) {
         return Promise.reject(new Error('A different reconnect request is already in progress'));
       }
       if (!automatic) this.#cancelAutomaticRestore();
@@ -615,8 +630,7 @@ export class ClientLifecycle {
     let submitted: Promise<Account>;
     try {
       this.#setState('connecting');
-      if (this.#closing || this.state === 'closed')
-        throw new Error('QQ client closed during reconnect');
+      if (this.#shutdownRequested()) throw new Error('QQ client closed during reconnect');
       submitted = Promise.resolve()
         .then(() => this.#restartAndLogin(login))
         .catch((error) => {

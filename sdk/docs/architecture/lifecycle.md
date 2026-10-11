@@ -29,7 +29,7 @@
   its original value is preserved, alongside any notification failure. Reentrant
   close or a newer offline notification suppresses the obsolete event.
 - One automatic restore task owns its captured account request, timer, failure
-  notification and retry decision. Explicit close, normalized manual login,
+  notification and retry decision. Explicit close, admitted manual login,
   admitted manual reconnect and a new offline transition retire that task.
   A manual reconnect joining the same request keeps the exact shared Promise and
   takes over its failure; invalid or conflicting admission leaves the automatic
@@ -44,6 +44,17 @@
   exception contract. In-flight initialization or authorization is not undone,
   and no request is replayed. Each new eligible offline decision schedules its
   own bounded delay with the account captured at that decision.
+- Public `login` validates its input and then checks the current reconnect
+  reservation before changing task ownership or submitting IPC. Matching
+  normalized method/account joins that exact Promise and takes manual error
+  ownership; a conflict or invalid input leaves automatic reporting in charge.
+  A failed old worker does not block joining admitted recovery, while explicit
+  shutdown still rejects. Normalization may call application getters, so
+  admission rechecks lifecycle state after validation. One private request
+  comparison also governs standalone login and reconnect coalescing. Pending
+  standalone and online-account conflicts reject before canceling configured
+  login authority, using the same private conflict policy as internal login. Internal
+  replacement login bypasses public admission after initialization.
 - `waitForLogin` rejects explicit shutdown first, then joins an already reserved
   reconnect through old-worker retirement, replacement initialization and login.
   The reconnect owns the result even when the previous account is still stored

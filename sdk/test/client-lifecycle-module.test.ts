@@ -1521,7 +1521,11 @@ for (const action of ['close', 'disconnect'] as const) {
 }
 
 for (const action of ['login', 'ready'] as const) {
-  test(`reconnect entry failure preserves observer ${action} state instead of restoring idle`, async () => {
+  const title =
+    action === 'login'
+      ? 'reconnect entry failure rejects conflicting observer login without IPC and restores idle'
+      : 'reconnect entry failure preserves observer ready online state';
+  test(title, async () => {
     const f = workerFixture();
     const original = { presentation: action };
     const account = { uin: '123', uid: 'u_nested' };
@@ -1541,7 +1545,11 @@ for (const action of ['login', 'ready'] as const) {
       emit(event, state) {
         if (!armed || event !== 'state' || state !== 'connecting') return;
         armed = false;
-        if (action === 'login') nestedLogin = lifecycle.login({ method: 'quick', uin: '123' });
+        if (action === 'login')
+          nestedLogin = lifecycle.login({ method: 'quick', uin: '123' }).then(
+            (value) => value,
+            (error) => error,
+          );
         else f.events.emit('message', { event: 'ready', payload: account });
         throw original;
       },
@@ -1554,15 +1562,12 @@ for (const action of ['login', 'ready'] as const) {
         (error: unknown) => error === original,
       );
       assert.equal(spawns, 0);
-      assert.equal(lifecycle.state, action === 'login' ? 'connecting' : 'online');
+      assert.equal(lifecycle.state, action === 'login' ? 'idle' : 'online');
       if (action === 'login') {
-        const sent = f.sent.find((sent) => sent.method === 'login');
-        assert.ok(sent);
-        f.events.emit('message', { event: 'ready', payload: account });
-        f.events.emit('message', { id: sent.id, result: account });
-        assert.deepEqual(await nestedLogin, account);
+        assert.deepEqual(f.sent, []);
+        assert.match(String(await nestedLogin), /different reconnect/);
       }
-      assert.deepEqual(lifecycle.account, account);
+      assert.deepEqual(lifecycle.account, action === 'login' ? undefined : account);
     } finally {
       await lifecycle.close();
       await nestedLogin;
@@ -3094,5 +3099,312 @@ test('waitForLogin joins reconnect reservation before exposing an old ready acco
     await lifecycle.close();
     await observed;
     await waited;
+  }
+});
+
+for (const phase of ['observer', 'termination', 'init', 'login', 'failed'] as const) {
+  test(`public login joins reconnect and rejects conflict before IPC during ${phase}`, async () => {
+    const old = workerFixture(),
+      next = pendingRestoreWorker();
+    if (phase === 'termination') old.worker.kill = () => true;
+    let same: Promise<unknown> | undefined;
+    let sameResult: Promise<unknown> | undefined;
+    let conflict: Promise<unknown> | undefined;
+    const lifecycle: ClientLifecycle = new ClientLifecycle({
+      worker: old.worker,
+      timeout: 1000,
+      restart: { spawn: () => next.worker, payload: {} },
+      emit(event, state) {
+        if (phase === 'observer' && event === 'state' && state === 'connecting' && !same) {
+          same = lifecycle.login({ method: 'quick', uin: '123' });
+          sameResult = same.then(
+            (value) => value,
+            (error) => error,
+          );
+          conflict = lifecycle.login({ method: 'quick', uin: '456' }).then(
+            (value) => value,
+            (error) => error,
+          );
+        }
+      },
+      forward() {},
+      exportsUpdated() {},
+    });
+    if (phase === 'failed') {
+      Object.assign(old.worker, { exitCode: 1 });
+      old.events.emit('exit', 1, null);
+    }
+    const reconnect = lifecycle.reconnect({ method: 'quick', uin: '123' });
+    const observed = reconnect.then(
+      (value) => value,
+      (error) => error,
+    );
+    try {
+      if (phase !== 'observer') {
+        if (phase !== 'termination') await new Promise<void>((resolve) => setImmediate(resolve));
+        if (phase === 'login') {
+          next.events.emit('message', { id: next.sent[0].id, result: { exports: [] } });
+          await new Promise<void>((resolve) => setImmediate(resolve));
+        }
+        same = lifecycle.login({ method: 'quick', uin: '123' });
+        sameResult = same.then(
+          (value) => value,
+          (error) => error,
+        );
+        conflict = lifecycle.login({ method: 'quick', uin: '456' }).then(
+          (value) => value,
+          (error) => error,
+        );
+      }
+      assert.equal(same, reconnect);
+      assert.match(String(await conflict), /different reconnect/);
+      assert.equal(old.sent.filter((value) => value.method === 'login').length, 0);
+      if (phase === 'termination') {
+        Object.assign(old.worker, { exitCode: 0 });
+        old.events.emit('exit', 0, null);
+      }
+      await new Promise<void>((resolve) => setImmediate(resolve));
+      if (phase !== 'login') {
+        next.events.emit('message', { id: next.sent[0].id, result: { exports: [] } });
+        await new Promise<void>((resolve) => setImmediate(resolve));
+      }
+      assert.deepEqual(
+        next.sent.map((value) => value.method),
+        ['init', 'login'],
+      );
+      const account = { uin: '123', uid: 'u_join' };
+      next.events.emit('message', { event: 'ready', payload: account });
+      next.events.emit('message', { id: next.sent[1].id, result: account });
+      assert.deepEqual(await observed, account);
+      assert.equal(await sameResult, await observed);
+    } finally {
+      Object.assign(old.worker, { exitCode: 0 });
+      old.events.emit('exit', 0, null);
+      await lifecycle.close();
+      await observed;
+      await sameResult;
+      await conflict;
+    }
+  });
+}
+
+for (const takeover of [false, true]) {
+  test(`public login automatic admission preserves failure authority unless matching: ${takeover}`, async (context) => {
+    const next = pendingRestoreWorker(),
+      primary = new Error('automatic login join fixture');
+    const f = await automaticRestoreFixture(context, () => next.worker);
+    try {
+      await f.start();
+      await assert.rejects(
+        f.lifecycle.login({ method: 'quick', uin: 'invalid' }),
+        /account number/,
+      );
+      const conflicting = f.lifecycle.login({ method: 'quick', uin: '456' }).then(
+        (value) => value,
+        (error) => error,
+      );
+      const conflictResult = await Promise.race([
+        conflicting,
+        new Promise<string>((resolve) => setImmediate(() => resolve('still pending'))),
+      ]);
+      assert.match(String(conflictResult), /different reconnect/);
+      let joined: Promise<unknown> | undefined;
+      if (takeover) {
+        const login = f.lifecycle.login({ method: 'restore', uin: '123' });
+        assert.equal(login, f.lifecycle.waitForLogin());
+        joined = login.then(
+          (value) => value,
+          (error) => error,
+        );
+      }
+      assert.deepEqual(
+        next.sent.map((value) => value.method),
+        ['init'],
+      );
+      next.fail(primary);
+      if (joined) assert.equal(await joined, primary);
+      await new Promise<void>((resolve) => setImmediate(resolve));
+      assert.deepEqual(f.errors, takeover ? [] : [primary]);
+    } finally {
+      await f.lifecycle.close();
+    }
+  });
+}
+
+for (const action of ['close', 'reconnect', 'worker-failure'] as const) {
+  test(`public login rechecks ${action} caused by normalization getter before dispatch`, async () => {
+    const old = workerFixture(),
+      next = pendingRestoreWorker();
+    const lifecycle = new ClientLifecycle({
+      worker: old.worker,
+      timeout: 1000,
+      restart: { spawn: () => next.worker, payload: {} },
+      emit() {},
+      forward() {},
+      exportsUpdated() {},
+    });
+    let nested: Promise<unknown> | undefined;
+    const request = {
+      get method() {
+        if (action === 'close') nested = lifecycle.close();
+        else if (action === 'reconnect')
+          nested = lifecycle.reconnect({ method: 'quick', uin: '123' });
+        else {
+          Object.assign(old.worker, { exitCode: 1 });
+          old.events.emit('exit', 1, null);
+        }
+        return 'quick' as const;
+      },
+      uin: '123',
+    };
+    const result = lifecycle.login(request);
+    const observed = result.then(
+      (value) => value,
+      (error) => error,
+    );
+    const nestedObserved = nested?.then(
+      (value) => value,
+      (error) => error,
+    );
+    try {
+      assert.equal(old.sent.filter((value) => value.method === 'login').length, 0);
+      if (action === 'reconnect') {
+        assert.equal(result, nested);
+        await new Promise<void>((resolve) => setImmediate(resolve));
+        next.fail(new Error('getter recovery fixture'));
+        assert.equal(await observed, await nestedObserved);
+      } else assert.match(String(await observed), /closed/);
+    } finally {
+      await lifecycle.close();
+      await observed;
+      await nestedObserved;
+    }
+  });
+}
+
+for (const original of [new Error('connecting login join fixture'), undefined]) {
+  test(`public login joining throwing reconnect observer shares original failure ${original === undefined ? 'undefined' : 'Error'}`, async () => {
+    const old = workerFixture();
+    let joined: Promise<unknown> | undefined, joinedResult: Promise<unknown> | undefined;
+    const lifecycle: ClientLifecycle = new ClientLifecycle({
+      worker: old.worker,
+      timeout: 1000,
+      restart: { spawn: () => workerFixture().worker, payload: {} },
+      emit(event, state) {
+        if (event === 'state' && state === 'connecting') {
+          joined = lifecycle.login({ method: 'quick', uin: '123' });
+          joinedResult = joined.then(
+            (value) => value,
+            (error) => error,
+          );
+          throw original;
+        }
+      },
+      forward() {},
+      exportsUpdated() {},
+    });
+    const reconnect = lifecycle.reconnect({ method: 'quick', uin: '123' });
+    const observed = reconnect.then(
+      (value) => ({ value }),
+      (error) => ({ error }),
+    );
+    try {
+      assert.equal(joined, reconnect);
+      assert.deepEqual(await observed, { error: original });
+      assert.equal(await joinedResult, original);
+      assert.deepEqual(old.sent, []);
+    } finally {
+      await lifecycle.close();
+      await observed;
+      await joinedResult;
+    }
+  });
+}
+
+test('public reconnect rechecks explicit close from normalization before joining reservation', async () => {
+  const old = workerFixture(),
+    next = pendingRestoreWorker();
+  const lifecycle = new ClientLifecycle({
+    worker: old.worker,
+    timeout: 1000,
+    restart: { spawn: () => next.worker, payload: {} },
+    emit() {},
+    forward() {},
+    exportsUpdated() {},
+  });
+  const reconnect = lifecycle.reconnect({ method: 'quick', uin: '123' });
+  const observed = reconnect.then(
+    (value) => value,
+    (error) => error,
+  );
+  let closing: Promise<void> | undefined;
+  try {
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    const request = {
+      get method() {
+        closing = lifecycle.close();
+        return 'quick' as const;
+      },
+      uin: '123',
+    };
+    const admission = lifecycle.reconnect(request);
+    const rejected = admission.then(
+      (value) => value,
+      (error) => error,
+    );
+    assert.notEqual(admission, reconnect);
+    assert.match(String(await rejected), /closed/);
+    assert.deepEqual(
+      next.sent.map((value) => value.method),
+      ['init', 'close'],
+    );
+  } finally {
+    await closing;
+    await lifecycle.close();
+    await observed;
+  }
+});
+
+test('conflicting public login does not consume active configured failure notification', async () => {
+  const f = workerFixture(),
+    primary = new Error('configured conflict fixture');
+  const errors: unknown[] = [];
+  let fail: ((error: Error | null) => void) | undefined;
+  const send = f.worker.send.bind(f.worker);
+  f.worker.send = ((
+    message: { id: number; method: string },
+    callback: (error: Error | null) => void,
+  ) => {
+    if (message.method === 'login') {
+      f.sent.push(message);
+      fail = callback;
+      return true;
+    }
+    return send(message, callback);
+  }) as typeof f.worker.send;
+  const lifecycle = new ClientLifecycle({
+    worker: f.worker,
+    timeout: 1000,
+    defaultLogin: { method: 'quick', uin: '123' },
+    emit() {},
+    forward(event, error) {
+      if (event === 'loginError') errors.push(error);
+    },
+    exportsUpdated() {},
+  });
+  try {
+    lifecycle.scheduleDefaultLogin();
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    await assert.rejects(lifecycle.login({ method: 'quick', uin: '456' }), /different login/);
+    assert.deepEqual(
+      f.sent.map((value) => value.method),
+      ['login'],
+    );
+    assert.ok(fail);
+    fail(primary);
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    assert.deepEqual(errors, [primary]);
+  } finally {
+    await lifecycle.close();
   }
 });
