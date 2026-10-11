@@ -6,18 +6,73 @@ import { pathToFileURL } from 'node:url';
  * services and the real Session lifetime. This never loads a QQ addon. */
 export async function verifyActionPortConsumer(installedRoot) {
   const load = (path) => import(pathToFileURL(join(installedRoot, 'dist', path)).href);
-  const [contacts, groups, runtime, cli, client, composition] = await Promise.all([
+  const [contacts, groups, runtime, cli, client, composition, listeners] = await Promise.all([
     load('features/contacts/contact-operations.js'),
     load('features/groups/group-operations.js'),
     load('runtime/native-service-lifetime.js'),
     load('cli.js'),
     load('index.js'),
     load('native-services.js'),
+    load('runtime/native-listener-owner.js'),
   ]);
   const { createContactOperations } = contacts;
   const { createGroupOperations } = groups;
   const { NativeServiceLifetime } = runtime;
   const { createNativeServices } = composition;
+  const { NativeListenerOwner } = listeners;
+
+  for (const known of [true, false]) {
+    let reads = 0;
+    let calls = 0;
+    let closed = false;
+    const payload = {};
+    const overrides = {
+      metadata: 1,
+      get onValue() {
+        reads++;
+        if (reads !== 1) throw new Error('Installed callback getter reacquired');
+        return known
+          ? function (value) {
+              assert.equal(this, overrides);
+              assert.equal(value, payload);
+              calls++;
+            }
+          : undefined;
+      },
+    };
+    const owner = new NativeListenerOwner({
+      isClosed: () => closed,
+      dispatch: (channel, args) => {
+        assert.equal(known, false);
+        assert.equal(channel, 'Msg/onValue');
+        assert.deepEqual(args, [payload]);
+        calls++;
+      },
+    });
+    owner.register({
+      family: 'Msg',
+      overrides,
+      add: (listener) => {
+        const captured = listener.onValue;
+        assert.equal(listener.onValue, captured);
+        listener.onValue(payload);
+        Object.defineProperty(overrides, 'onValue', { value: 7 });
+        assert.equal(listener.onValue, captured);
+        overrides.metadata = 2;
+        assert.equal(listener.metadata, 2);
+        closed = true;
+        assert.equal(listener.onValue(payload), undefined);
+        Object.defineProperty(overrides, 'onValue', {
+          value: 7,
+          configurable: false,
+          writable: false,
+        });
+        assert.equal(listener.onValue, 7);
+      },
+    });
+    assert.equal(reads, 1);
+    assert.equal(calls, 1);
+  }
 
   // Exercise the dispatch owner and actual composition from the archive. A
   // changing accessor exposes a check-then-read implementation without an addon.
@@ -319,6 +374,7 @@ export async function verifyActionPortConsumer(installedRoot) {
   return {
     groupOperationContract: true,
     nativeInvocationCaptureContract: true,
+    nativeListenerCaptureContract: true,
     actionPortRetirementContract: true,
     actionPortPendingCloseContract: true,
     actionPortLateFailureObserved: true,

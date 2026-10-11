@@ -59,6 +59,141 @@ test('unknown callbacks retain arguments and stable wrapper, with shape-only aud
   ]);
 });
 
+test('cached callbacks never reacquire a changing native override', () => {
+  const trace: unknown[] = [];
+  let reads = 0;
+  const overrides = {
+    get onValue() {
+      reads++;
+      if (reads !== 1) throw new Error('Callback getter reacquired');
+      return function (this: unknown, value: unknown) {
+        assert.equal(this, overrides);
+        trace.push(value);
+        return 'captured';
+      };
+    },
+  };
+  const owner = new NativeListenerOwner({
+    isClosed: () => false,
+    dispatch: () => assert.fail('unexpected dispatch'),
+  });
+  owner.register({
+    family: 'Msg',
+    overrides,
+    add: (listener) => {
+      const captured = listener.onValue;
+      assert.equal(listener.onValue, captured);
+      assert.equal(captured('first'), 'captured');
+      assert.equal(listener.onValue('second'), 'captured');
+    },
+  });
+  assert.equal(reads, 1);
+  assert.deepEqual(trace, ['first', 'second']);
+});
+
+test('unknown callback cache and ordinary metadata have distinct ownership', () => {
+  let reads = 0;
+  const channels: string[] = [];
+  const overrides = {
+    metadata: 1,
+    get onUnknown() {
+      reads++;
+      if (reads !== 1) throw new Error('Unknown callback getter reacquired');
+      return undefined;
+    },
+  };
+  const owner = new NativeListenerOwner({
+    isClosed: () => false,
+    dispatch: (channel) => channels.push(channel),
+  });
+  owner.register({
+    family: 'Search',
+    overrides,
+    add: (listener) => {
+      const callback = listener.onUnknown;
+      assert.equal(listener.onUnknown, callback);
+      callback();
+      listener.onUnknown();
+      assert.equal(listener.metadata, 1);
+      overrides.metadata = 2;
+      assert.equal(listener.metadata, 2);
+    },
+  });
+  assert.equal(reads, 1);
+  assert.deepEqual(channels, ['Search/onUnknown', 'Search/onUnknown']);
+});
+
+test('a captured callback remains callable after its override slot becomes metadata', () => {
+  let calls = 0;
+  const overrides = {
+    onValue() {
+      assert.equal(this, overrides);
+      calls++;
+    },
+  };
+  const owner = new NativeListenerOwner({
+    isClosed: () => false,
+    dispatch: () => assert.fail('unexpected dispatch'),
+  });
+  owner.register({
+    family: 'Msg',
+    overrides,
+    add: (listener) => {
+      const captured = listener.onValue;
+      Object.defineProperty(overrides, 'onValue', { value: 7 });
+      assert.equal(listener.onValue, captured);
+      listener.onValue();
+    },
+  });
+  assert.equal(calls, 1);
+});
+
+test('a captured callback slot respects locked metadata Proxy invariants', () => {
+  for (const value of [7, undefined, { metadata: true }]) {
+    const overrides = { onValue() {} };
+    const owner = new NativeListenerOwner({
+      isClosed: () => false,
+      dispatch: () => assert.fail('unexpected dispatch'),
+    });
+    owner.register({
+      family: 'Msg',
+      overrides,
+      add: (listener) => {
+        assert.equal(typeof listener.onValue, 'function');
+        Object.defineProperty(overrides, 'onValue', {
+          value,
+          configurable: false,
+          writable: false,
+        });
+        assert.equal(listener.onValue, value);
+      },
+    });
+  }
+});
+
+test('locking a function slot does not expose an unguarded callback', () => {
+  let closed = false;
+  let calls = 0;
+  const overrides = { onValue: () => calls++ };
+  const owner = new NativeListenerOwner({
+    isClosed: () => closed,
+    dispatch: () => assert.fail('unexpected dispatch'),
+  });
+  owner.register({
+    family: 'Msg',
+    overrides,
+    add: (listener) => {
+      const captured = listener.onValue;
+      Object.freeze(overrides);
+      assert.throws(() => listener.onValue, TypeError);
+      captured();
+      closed = true;
+      captured();
+    },
+  });
+  assert.equal(calls, 1);
+});
+
 test('late cached callback performs neither member nor audit reads or dispatch', () => {
   let closed = false,
     reads = 0,

@@ -110,6 +110,15 @@ callback definitions and registration order belong to composition. Supply a
 captured registration function instead of a Session or service locator. Keep
 listener references for the worker lifetime until a removal ABI is verified;
 account close is not proof that the native kernel released a callback pointer.
+Each callback slot captures its override once. Subsequent property acquisition
+returns the same wrapper without evaluating its getter, including unknown callback
+slots. Ordinary non-function metadata remains uncached; if a captured slot becomes
+non-configurable, non-writable data, its exact metadata value is returned to satisfy
+Proxy invariants. Callback descriptors must remain configurable for wrapping;
+frozen function slots retain the existing TypeError instead of exposing an unguarded
+callback. Wrapper caching does not
+change audit-before-handler ordering, registration retention or the invocation's
+existing close guard.
 
 Friend request notifications stay unknown until their carrier, row identities,
 texts and flags have been captured and validated. Read each field once; checking
