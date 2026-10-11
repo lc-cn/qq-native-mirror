@@ -1,0 +1,23 @@
+sdk/docs/contacts-groups.md
+  s_2104cc474f1ce5::t_7d7a1095d10221 537-544
+sdk/docs/architecture/encapsulation.md
+  s_2104cc474f1ce5::t_7d7a1095d10221 751-758
+sdk/docs/evidence/friend-category-assignment-darwin-analysis.json
+  s_2104cc474f1ce5::t_75e1e7deade404 1-167
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ddf1f08d5d9dad5a669da294dc98c70060e4bb4e",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
