@@ -1,0 +1,49 @@
+sdk/test/feature-lifetime.test.ts
+  s_2104cc474f1ce5::t_47f587796f9b00 7-21
+  s_2104cc474f1ce5::t_bc29d524d1108c 22-24
+sdk/src/features/groups/group-requests.ts
+  s_2104cc474f1ce5::t_54fda653f6262c 2,85,90-94,108,305
+sdk/test/feature-wait-retirement.test.ts
+  s_2104cc474f1ce5::t_47f587796f9b00 153,158-159,161,164
+  s_2104cc474f1ce5::t_0aabdaddbb82d1 1-23,27-32,43-108,111-122,125-129,132-152,154-157,160,162-163,165-166
+  s_2104cc474f1ce5::t_8eb45f143c3f3d 24-26,33-42,109-110,123-124,130-131
+  s_2104cc474f1ce5::t_a7ca6b62ee6e16 167-170
+ci/verify-consumer.mjs
+  s_2104cc474f1ce5::t_0c73eac4392c48 39,234
+  s_2104cc474f1ce5::t_8a2ccc78636250 349
+sdk/test/helpers/dependency-policy.ts
+  s_2104cc474f1ce5::t_54fda653f6262c 177,179
+sdk/src/features/contacts/self-profile.ts
+  s_2104cc474f1ce5::t_54fda653f6262c 35,70
+sdk/src/runtime/feature-lifetime.ts
+  s_2104cc474f1ce5::t_54fda653f6262c 51-52,54
+sdk/test/architecture.test.ts
+  s_2104cc474f1ce5::t_54fda653f6262c 66,68
+sdk/scripts/verify-package-consumer.mjs
+  s_2104cc474f1ce5::t_0c73eac4392c48 37,220-222,634
+sdk/src/features/contacts/friend-requests.ts
+  s_2104cc474f1ce5::t_54fda653f6262c 2,77,82-87,261
+sdk/docs/architecture/encapsulation.md
+  s_2104cc474f1ce5::t_0c73eac4392c48 12-19
+sdk/src/features/groups/group-queries.ts
+  s_2104cc474f1ce5::t_54fda653f6262c 25,54
+sdk/scripts/consumers/feature-wait-retirement-consumer-contract.mjs
+  s_2104cc474f1ce5::t_0c73eac4392c48 1-116
+  s_2104cc474f1ce5::t_4218af718599d3 117-157
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "9d459b23f8546509d74f74339cdce381c8ebef70",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
