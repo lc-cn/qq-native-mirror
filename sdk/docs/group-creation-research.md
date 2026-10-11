@@ -13,10 +13,35 @@ instruction words, literals, import stubs and the callback pointer. Thirty compl
 functions cover 7044 bytes; a separate replay matched all 18 function ranges
 and 1629 instruction words in the two older receipts. No addon was loaded.
 
-| Entry                         | Verified input structure                                                                                                                      | Core slot |
-| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
-| `createGroup` at `0x92e70c`   | One array argument; record conversion at `0x92e90c` reads `uid`, `nick` and `groupCode`.                                                      | `0x180`   |
-| `createGroupV2` at `0x92ed0c` | Two arguments: an object plus the same record array. The object reads `createOption`, `createGroupInfo`, `selectGroupCodeInfo` and `extInfo`. | `0x190`   |
+| Entry                                  | Verified input structure                                                                                                                      | Core slot |
+| -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
+| `createGroup` at `0x92e70c`            | One array argument; record conversion at `0x92e90c` reads `uid`, `nick` and `groupCode`.                                                      | `0x180`   |
+| `createGroupWithMembers` at `0x92eb04` | Two arguments: a native string carrier and an array converted element by element into a native string vector.                                 | `0x188`   |
+| `createGroupV2` at `0x92ed0c`          | Two arguments: an object plus the same record array. The object reads `createOption`, `createGroupInfo`, `selectGroupCodeInfo` and `extInfo`. | `0x190`   |
+
+The third entry is a distinct registered binding, not an alias inferred from its
+name. Its NAPI property descriptor at `0x51257b0` points to `0x92eb04`; argument
+count is two, and this branch does not use the classic member-record converter.
+It shares the existing Promise callback factory. A fresh independent replay
+checks 14 complete functions and 948 bytes for this binding and its helpers.
+
+The ordinary Session constructor installs address point `0x5098838`; its group
+getter slot `0x178` points to `0x353e0`. The cold path constructs the Group
+address point `0x50b9530` and caches the object/control pair at Session offsets
+`0x5d0`/`0x5d8`; the warm path returns that same pair. Group slots
+`0x180`/`0x188`/`0x190` point to `0x205288`/`0x203fc8`/`0x2044e4`.
+Eighteen complete supplier functions cover 5852 bytes. These bind the normal
+receiver path, while complete JS class-registration and carrier-lifetime
+semantics remain outside that proof.
+
+For `createGroupWithMembers`, twelve further complete functions cover 1476
+bytes. The first string goes through an acquired interface's `0xa0` slot with
+the value `60007`. The original string vector and callback pair are captured
+in a concrete closure before the final acquired service's `0xd8` call. The
+provider of that slot and invocation of the closure at address point `0x50bd860`
+remain unclosed. Neither the intermediate value nor a local callback on a weak
+lock failure establishes a remotely created group. Independent byte replay
+matches all 44 distinct function ranges and 8276 bytes across these three stages.
 
 The entries share a callback factory. The callback table points to `0x70b254`;
 its normal serializer constructs `errCode`, `errMsg` and `result`. The latter
@@ -56,6 +81,29 @@ payload were independently checked. Nearby constants include
 candidate for function/constant analysis; their presence alone does not prove
 which function calls the method or how it constructs arguments.
 
+A strict static decoder now consumes the complete original payload, including
+deferred objects, synchronization and padding, without skipping unknown tokens.
+The resulting graph places the creation names in a service-description object
+within a real function's constant-pool descendants. Its SharedFunctionInfo and
+ScopeInfo field chain identifies the function name `27218`; the description lists
+`createGroupWithMembers` beside `groupName`/`membersUid`, and `createGroupV2`
+beside `req`/`membersInfo`. These are parameter-name metadata, not reconstructed
+business calls, request defaults or verified UID selection rules.
+
+The installed framework identifies Electron 40.0.0 and V8
+`14.4.258.16-electron.0`. Independently applying the fixed upstream version hash
+algorithm produces `0x893b947f12819a30`, whose uint32 value matches the original
+cache's `0x12819a30`. This establishes version-hash compatibility only. The
+actual framework's two symbol tables contain no retained Bytecodes table or
+`ToString` anchor; vendor opcode equivalence is still unproved.
+
+Using the fixed upstream
+[bytecode definitions](https://github.com/v8/v8/blob/14.4.258.16/src/interpreter/bytecodes.h)
+and operand widths interprets the owner’s 74 bytes as 27 instructions, ending
+exactly at Return. That conditional interpretation constructs context, closures
+and description objects; it is not promoted to an actual native creation call.
+The original cache was never loaded, evaluated or patched.
+
 A fixed-source check of NapCat commit
 `7471e3ecd648189a9e80530b00348a17a4528906` scanned 886 source-language files.
 Literal matches for the two entry names were service declarations and a message
@@ -68,8 +116,10 @@ Computed dispatch remains outside that literal-search claim.
 
 Before adding the public action, establish the actual caller's variant selection,
 member identity/source semantics, required fields and defaults. Close relevant V2
-nested carriers, the Session-to-group-service receiver binding and queued callback
-dispatch. Determine how the caller distinguishes a created group from a security
+nested carriers if that variant is selected. The ordinary Session supplier and
+three distinct entry shapes are now bound; complete the with-members core
+service and response-closure edges, the JS registration/lifetime path and queued
+callback dispatch. Determine how the caller distinguishes a created group from a security
 challenge or rejection, including handling of `securityInfo` and `sign`. Other
 binary profiles require independent evidence.
 
