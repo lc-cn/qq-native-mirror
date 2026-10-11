@@ -25,16 +25,21 @@ to account acceptance or publication executors. It checks syntax and relative
 module roles without executing helpers. Before a build it does not require `dist`;
 the post-build CI gate additionally requires every referenced compiled module.
 
-| Tool scope                               | Static coverage                                                                                                              |
-| ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| SDK source and TypeScript scripts        | Formatting, lint and strict type checking; source and governed scripts also use typed Promise lint.                          |
-| `scripts/consumers/` JavaScript helpers  | All have formatting/basic lint and participate in the consumer-role graph. Fifteen have strict types and typed Promise lint. |
-| CI/version orchestration                 | Exact files in the consumer graph have syntax/reference checks. The SDK lint/type project does not cover every CI tool.      |
-| Account acceptance and publication tools | Explicit execution entry points; outside the reusable consumer directory and consumer-role permissions.                      |
+| Tool scope                               | Static coverage                                                                                                           |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| SDK source and TypeScript scripts        | Formatting, lint and strict type checking; source and governed scripts also use typed Promise lint.                       |
+| `scripts/consumers/` JavaScript helpers  | All have formatting, strict types, typed Promise lint and consumer-role graph checks. New helpers inherit the same gates. |
+| CI/version orchestration                 | Exact files in the consumer graph have syntax/reference checks. The SDK lint/type project does not cover every CI tool.   |
+| Account acceptance and publication tools | Explicit execution entry points; outside the reusable consumer directory and consumer-role permissions.                   |
 
 These role checks constrain visible module imports, not arbitrary JavaScript
-execution. Remaining JavaScript type coverage is tracked separately from the
-source and installed-consumer results.
+execution. JavaScript orchestration and account executors outside the consumer
+directory have their separately documented coverage.
+
+Generated worker hooks remain string data to this strict project. Their runtime
+behavior is covered by the controlled worker checks; generated public-type
+consumers are compiled by their declaration-contract checks. Directory-wide
+checking does not establish static type coverage for every generated hook body.
 
 `npm run check:architecture` exposes the source architecture checks separately
 for module placement and dependency changes. They still run in the full `test`
@@ -123,8 +128,8 @@ acknowledged close. They do not initialize a native addon or prove real lock rel
 bootstrap lock ownership has its separate controlled acquisition tests.
 Negative gate fixtures prove that missing preparation/action awaits, invalid
 receipts and missing video thumbnail guards fail without executing those
-fixtures. Other JavaScript acceptance helpers still receive syntax lint; strict
-JavaScript checking remains an explicit migration.
+fixtures. JavaScript release and account executors outside the consumer directory
+still receive basic lint; they do not inherit the consumer directory's strict project.
 
 History/account-session and worker read/error consumers also retain their actual
 SDK constructor, operation and lifecycle types. Compiler fixtures reject invalid

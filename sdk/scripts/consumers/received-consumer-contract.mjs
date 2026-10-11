@@ -1,9 +1,13 @@
+/** @typedef {{'features/messages/inbound-messages.js':typeof import('../../src/features/messages/inbound-messages.ts'),
+'native-services.js':typeof import('../../src/native-services.ts')}} InstalledModules */
 import assert from 'node:assert/strict';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 // Installed compiled modules and fake callbacks only, without native/client/account initialization.
+/** @param {string} packagePath */
 export async function verifyReceivedConsumer(packagePath) {
+  /** @template {keyof InstalledModules} Name @param {Name} name @returns {Promise<InstalledModules[Name]>} */
   const load = (name) => import(pathToFileURL(join(packagePath, 'dist', name)).href);
   const { createNativeServices } = await load('native-services.js');
   const { decodeNativeMessages } = await load('features/messages/inbound-messages.js');
@@ -13,6 +17,7 @@ export async function verifyReceivedConsumer(packagePath) {
     elementType: 1,
     textElement: { atType: 2, atUid: '0', atNtUid: 'u_sender', content: '@fixture' },
   });
+  /** @param {Record<string,unknown>} change @returns {Record<string,unknown>} */
   const raw = (change = {}) => ({
     chatType: 1,
     peerUid: 'u_peer',
@@ -31,13 +36,18 @@ export async function verifyReceivedConsumer(packagePath) {
       ['u_sender', exact],
     ]),
   });
+  /** @param {unknown[]} records @param {(ids:string[])=>unknown} resolver */
   function fixture(records, resolver = async () => resolved()) {
+    /** @type {{onRecvMsg(value:unknown):void}|undefined} */
     let listener;
-    const calls = [],
-      events = [];
+    /** @type {string[][]} */
+    const calls = [];
+    /** @type {[string,unknown][]} */
+    const events = [];
     const services = createNativeServices({
       session: {
         getMsgService: () => ({
+          /** @param {{onRecvMsg(value:unknown):void}} value */
           addKernelMsgListener(value) {
             listener = value;
           },
@@ -49,6 +59,7 @@ export async function verifyReceivedConsumer(packagePath) {
         getGroupService: () => ({ addKernelGroupListener() {} }),
         getUixConvertService: () => ({
           getUid: () => ({ uidInfo: new Map([['456', 'u_peer']]) }),
+          /** @param {string[]} ids */
           getUin(ids) {
             calls.push(ids);
             return resolver(ids);
@@ -58,7 +69,15 @@ export async function verifyReceivedConsumer(packagePath) {
       version: '7.0.2-53644',
       events: { emit: (event, value) => events.push([event, value]) },
     });
-    return { services, calls, events, listener: () => listener };
+    return {
+      services,
+      calls,
+      events,
+      listener: () => {
+        assert.ok(listener);
+        return listener;
+      },
+    };
   }
   const payload = {
     peer,
@@ -67,12 +86,13 @@ export async function verifyReceivedConsumer(packagePath) {
     parentMessageId: '20',
     options: {},
   };
-  for (const method of ['getMessage', 'getHistory', 'getForwardMessages']) {
+  for (const method of /** @type {const} */ (['getMessage', 'getHistory', 'getForwardMessages'])) {
     const native = raw(),
       f = fixture([native]);
     try {
       const value = await f.services.invokeOperation(method, payload),
         message = Array.isArray(value) ? value[0] : value;
+      assertMessage(message);
       assert.deepEqual(message.peer, { type: 'private', userId: '000456' });
       assert.deepEqual(message.sender, { userId: exact, uid: 'u_sender', nickname: '' });
       assert.equal(message.messageId, '0001');
@@ -90,10 +110,12 @@ export async function verifyReceivedConsumer(packagePath) {
     for (const response of [
       { uinInfo: new Map() },
       {
-        uinInfo: new Map([
-          ['u_peer', '0'],
-          ['u_sender', 456],
-        ]),
+        uinInfo: new Map(
+          /** @type {[string,unknown][]} */ ([
+            ['u_peer', '0'],
+            ['u_sender', 456],
+          ]),
+        ),
       },
       { uinInfo: {} },
     ]) {
@@ -138,6 +160,7 @@ export async function verifyReceivedConsumer(packagePath) {
   ]);
   try {
     const message = await known.services.invokeOperation('getMessage', payload);
+    assertMessage(message);
     assert.deepEqual(message.sender, { userId: exact, uid: '', nickname: '' });
     assert.equal(known.calls.length, 0);
   } finally {
@@ -153,20 +176,28 @@ export async function verifyReceivedConsumer(packagePath) {
       .onRecvMsg([raw(), raw({ msgId: '2', peerUin: '456', senderUin: exact, elements: [] })]);
     await flush();
     assert.deepEqual(
-      mixed.events.filter(([event]) => event === 'message').map(([, message]) => message.messageId),
+      mixed.events
+        .filter(([event]) => event === 'message')
+        .map(([, message]) => {
+          assertMessage(message);
+          return message.messageId;
+        }),
       ['2'],
     );
     assert.ok(
       mixed.events.some(
         ([event, value]) =>
-          event === 'diagnostic' && value.stage === 'unresolved-native-message-identity',
+          event === 'diagnostic' &&
+          isRecord(value) &&
+          value.stage === 'unresolved-native-message-identity',
       ),
     );
   } finally {
     mixed.services.close();
   }
-  let release,
-    n = 0;
+  /** @type {(value:unknown)=>void} */
+  let release = () => assert.fail('Lookup not started');
+  let n = 0;
   const queued = fixture([], () =>
     ++n === 1
       ? new Promise((resolve) => {
@@ -181,20 +212,25 @@ export async function verifyReceivedConsumer(packagePath) {
     second.msgId = '999';
     second.peerUid = 'u_changed';
     second.senderUid = 'u_changed';
-    second.elements[0].textElement.content = 'changed';
+    nativeMember(second, 'textElement').content = 'changed';
     await flush();
     release(resolved());
     await flush();
     const delivered = queued.events
       .filter(([event]) => event === 'message')
-      .map(([, message]) => message);
+      .map(([, message]) => {
+        assertMessage(message);
+        return message;
+      });
     assert.deepEqual(
       delivered.map((message) => message.messageId),
       ['0001', '2'],
     );
     for (const message of delivered) {
+      assertMessage(message);
       assert.deepEqual(message.peer, { type: 'private', userId: '000456' });
       assert.equal(message.sender.userId, exact);
+      assert.ok(message.elements[0].type === 'at');
       assert.equal(message.elements[0].text, '@fixture');
     }
     assert.equal(delivered[1].raw, second);
@@ -226,7 +262,10 @@ export async function verifyReceivedConsumer(packagePath) {
     await flush();
     const messages = uinOnly.events
       .filter(([event]) => event === 'message')
-      .map(([, message]) => message);
+      .map(([, message]) => {
+        assertMessage(message);
+        return message;
+      });
     assert.deepEqual(
       messages.map((message) => message.peer),
       [
@@ -240,7 +279,8 @@ export async function verifyReceivedConsumer(packagePath) {
     uinOnly.services.close();
   }
   // Query DTO fields are captured before an identity lookup can yield control.
-  let finishPicture;
+  /** @type {(value:unknown)=>void} */
+  let finishPicture = () => assert.fail('Lookup not started');
   const pictureRaw = raw({
     elements: [{ elementType: 2, picElement: { filePath: '/fixture/original.png' } }],
   });
@@ -257,9 +297,10 @@ export async function verifyReceivedConsumer(packagePath) {
     pictureRaw.msgId = '999';
     pictureRaw.peerUid = 'u_changed';
     pictureRaw.senderUid = 'u_changed';
-    pictureRaw.elements[0].picElement.filePath = '/fixture/changed.png';
+    nativeMember(pictureRaw, 'picElement').filePath = '/fixture/changed.png';
     finishPicture(resolved());
     const message = await pending;
+    assertMessage(message);
     assert.equal(message.messageId, '0001');
     assert.deepEqual(message.peer, { type: 'private', userId: '000456' });
     assert.equal(message.sender.uid, 'u_sender');
@@ -292,6 +333,7 @@ export async function verifyReceivedConsumer(packagePath) {
     checked = assert.rejects(pending, /abort|closed/i);
   await flush();
   canceled.services.close();
+  /** @type {ReturnType<typeof setTimeout>|undefined} */
   let timer;
   try {
     await Promise.race([
@@ -310,14 +352,17 @@ export async function verifyReceivedConsumer(packagePath) {
   const unknown = fixture([nativeUnknown]);
   try {
     const message = await unknown.services.invokeOperation('getMessage', payload);
+    assertMessage(message);
+    assert.ok(message.elements[0].type === 'unknown');
     assert.equal(message.elements[0].data, unknownElement);
     assert.equal(message.raw, nativeUnknown);
     unknown.listener().onRecvMsg([nativeUnknown]);
     await flush();
-    assert.equal(
-      unknown.events.find(([event]) => event === 'message')[1].elements[0].data,
-      unknownElement,
-    );
+    const delivered = unknown.events.find(([event]) => event === 'message');
+    assert.ok(delivered);
+    assertMessage(delivered[1]);
+    assert.ok(delivered[1].elements[0].type === 'unknown');
+    assert.equal(delivered[1].elements[0].data, unknownElement);
   } finally {
     unknown.services.close();
   }
@@ -346,13 +391,17 @@ export async function verifyReceivedConsumer(packagePath) {
     await flush();
     const delivered = snapshots.events
       .filter(([event]) => event === 'message')
-      .map(([, message]) => message);
+      .map(([, message]) => {
+        assertMessage(message);
+        return message;
+      });
     assert.deepEqual(
       delivered.map((message) => message.messageId),
       ['1', '2'],
     );
     assert.equal(delivered[0].raw, record);
     assert.equal(unrelatedReads, 0, 'No unrelated raw getter is acquired');
+    /** @type {Map<string,number>} */
     const counters = new Map();
     const once = raw({ msgId: '3', peerUin: '456', senderUin: exact, elements: [] });
     for (const name of [
@@ -390,7 +439,10 @@ export async function verifyReceivedConsumer(packagePath) {
     });
     snapshots.listener().onRecvMsg([changing]);
     assert.equal(conversationReads, 1);
-    assert.equal(snapshots.events.at(-1)[1].raw, changing);
+    const lastChanging = snapshots.events.at(-1);
+    assert.ok(lastChanging);
+    assertMessage(lastChanging[1]);
+    assert.equal(lastChanging[1].raw, changing);
     const broken = raw({ msgId: '5', peerUin: '456', senderUin: exact, elements: [] });
     Object.defineProperty(broken, 'chatType', {
       get() {
@@ -410,7 +462,10 @@ export async function verifyReceivedConsumer(packagePath) {
       snapshots.events.filter(([event]) => event === 'diagnostic').length,
       diagnosticCount + 1,
     );
-    assert.equal(snapshots.events.at(-1)[1].raw, next);
+    const lastNext = snapshots.events.at(-1);
+    assert.ok(lastNext);
+    assertMessage(lastNext[1]);
+    assert.equal(lastNext[1].raw, next);
     assert.equal(snapshots.events.filter(([event]) => event === 'message').length, 5);
     assert.equal(snapshots.calls.length, 0);
   } finally {
@@ -422,4 +477,29 @@ export async function verifyReceivedConsumer(packagePath) {
     receivedConversationCaptureContract: true,
     nativeReceivedIdentityLookupAttempted: false,
   };
+}
+
+/** @param {unknown} value @returns {value is Record<string,unknown>} */
+function isRecord(value) {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+/** @param {unknown} value @returns {asserts value is Record<string,unknown>} */
+function assertRecord(value) {
+  assert.ok(isRecord(value));
+}
+/** @param {unknown} value @returns {asserts value is import('../../src/types.ts').Message} */
+function assertMessage(value) {
+  assertRecord(value);
+  assert.equal(typeof value.messageId, 'string');
+  assert.ok(Array.isArray(value.elements));
+  assert.ok('raw' in value);
+}
+/** @param {Record<string,unknown>} message @param {string} field */
+function nativeMember(message, field) {
+  assert.ok(Array.isArray(message.elements));
+  const entry = message.elements[0];
+  assertRecord(entry);
+  const member = entry[field];
+  assertRecord(member);
+  return member;
 }

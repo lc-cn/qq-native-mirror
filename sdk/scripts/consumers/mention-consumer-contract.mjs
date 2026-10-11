@@ -1,25 +1,30 @@
+/** @typedef {{'features/messages/inbound-elements.js':typeof import('../../src/features/messages/inbound-elements.ts'),
+'features/messages/inbound-mentions.js':typeof import('../../src/features/messages/inbound-mentions.ts'),
+'native-services.js':typeof import('../../src/native-services.ts')}} InstalledModules */
 import assert from 'node:assert/strict';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 // Compiled installed SDK, synthetic services only. No native client or account.
+/** @param {string} packagePath */
 export async function verifyMentionConsumer(packagePath) {
+  /** @template {keyof InstalledModules} Name @param {Name} name @returns {Promise<InstalledModules[Name]>} */
   const load = (name) => import(pathToFileURL(join(packagePath, 'dist', name)).href);
   const { decodeElements } = await load('features/messages/inbound-elements.js');
   const { decodeResolvedElementBatches } = await load('features/messages/inbound-mentions.js');
   const { createNativeServices } = await load('native-services.js');
-  const element = (text = {}) => ({
+  const element = (/** @type {Record<string,unknown>} */ text = {}) => ({
     elementType: 1,
     textElement: { content: '@fixture', atType: 2, atUid: '0', atNtUid: 'u_target', ...text },
   });
   const exact = '900719925474099312345';
-  for (const [text, expected] of [
+  for (const [text, expected] of /** @type {[Record<string,unknown>,string][]} */ ([
     [{ atType: 1 }, 'all'],
     [{ atUid: exact }, exact],
     [{ atType: 4, atUid: '00123' }, '00123'],
     [{ atUid: '-1' }, '4294967295'],
     [{ atUid: '-2147483648' }, '2147483648'],
-  ])
+  ]))
     assert.deepEqual(decodeElements([element(text)]), [
       { type: 'at', userId: expected, text: '@fixture' },
     ]);
@@ -32,10 +37,11 @@ export async function verifyMentionConsumer(packagePath) {
     const raw = element(text),
       decoded = decodeElements([raw]);
     assert.equal(decoded[0].type, 'unknown');
+    assert.ok(decoded[0].type === 'unknown');
     assert.equal(decoded[0].data, raw);
   }
-  const controller = new AbortController(),
-    diagnostic = [];
+  const controller = new AbortController();
+  /** @type {string[]} */ const diagnostic = [];
   let lookups = 0;
   const resolved = await decodeResolvedElementBatches(
     [[element()], [element({ atType: 4 })]],
@@ -63,19 +69,20 @@ export async function verifyMentionConsumer(packagePath) {
     async () => new Map([['u_target', 123]]),
   ]) {
     let attempts = 0;
-    const stages = [],
-      raw = element();
-    const values = await decodeResolvedElementBatches(
+    /** @type {string[]} */ const stages = [];
+    const raw = element();
+    const values = await Reflect.apply(decodeResolvedElementBatches, undefined, [
       [[raw]],
-      async (ids) => {
+      async (/** @type {string[]} */ ids) => {
         attempts++;
         assert.deepEqual(ids, ['u_target']);
         return resolver();
       },
       controller.signal,
-      (stage) => stages.push(stage),
-    );
+      (/** @type {string} */ stage) => stages.push(stage),
+    ]);
     assert.equal(values[0][0].type, 'unknown');
+    assert.ok(values[0][0].type === 'unknown');
     assert.equal(values[0][0].data, raw);
     assert.equal(attempts, 1);
     assert.equal(stages.length, 1);
@@ -83,10 +90,12 @@ export async function verifyMentionConsumer(packagePath) {
   }
   // Cancellation must settle even when the resolver never completes.
   const stopped = new AbortController();
-  let started;
-  const began = new Promise((resolve) => {
-    started = resolve;
-  });
+  /** @type {()=>void} */ let started = () => assert.fail('start not installed');
+  const began = /** @type {Promise<void>} */ (
+    new Promise((resolve) => {
+      started = resolve;
+    })
+  );
   const canceled = decodeResolvedElementBatches(
     [[element()]],
     async () => {
@@ -102,7 +111,7 @@ export async function verifyMentionConsumer(packagePath) {
   stopped.abort();
   await assert.rejects(canceled, /abort/i);
 
-  const raw = (id, elements = [element()]) => ({
+  const raw = (/** @type {string} */ id, /** @type {unknown[]} */ elements = [element()]) => ({
     msgId: id,
     msgSeq: '9',
     msgTime: '100',
@@ -113,14 +122,15 @@ export async function verifyMentionConsumer(packagePath) {
     senderUin: '456',
     elements,
   });
+  /** @param {(ids:string[])=>unknown} resolve */
   function fixture(resolve) {
-    let callback;
-    const events = [],
-      requests = [];
+    /** @type {{onRecvMsg(value:unknown):void}|undefined} */ let callback;
+    /** @type {[string,unknown][]} */ const events = [];
+    /** @type {string[][]} */ const requests = [];
     const services = createNativeServices({
       session: {
         getMsgService: () => ({
-          addKernelMsgListener(value) {
+          addKernelMsgListener(/** @type {NonNullable<typeof callback>} */ value) {
             callback = value;
           },
           getMsgsByMsgId: () => ({ result: 0, msgList: [raw('1')] }),
@@ -133,7 +143,7 @@ export async function verifyMentionConsumer(packagePath) {
         getGroupService: () => ({ addKernelGroupListener() {} }),
         getBuddyService: () => ({ addKernelBuddyListener() {} }),
         getUixConvertService: () => ({
-          getUin(ids) {
+          getUin(/** @type {string[]} */ ids) {
             requests.push(ids);
             return resolve(ids);
           },
@@ -142,10 +152,18 @@ export async function verifyMentionConsumer(packagePath) {
       version: '7.0.2-53644',
       events: { emit: (event, payload) => events.push([event, payload]) },
     });
-    return { services, events, requests, callback: () => callback };
+    return {
+      services,
+      events,
+      requests,
+      callback: () => {
+        assert.ok(callback);
+        return callback;
+      },
+    };
   }
   const peer = { type: 'group', groupId: '123' };
-  for (const method of ['getMessage', 'getHistory', 'getForwardMessages']) {
+  for (const method of /** @type {const} */ (['getMessage', 'getHistory', 'getForwardMessages'])) {
     const f = fixture(async () => ({ uinInfo: new Map([['u_target', exact]]) }));
     try {
       const value = await f.services.invokeOperation(method, {
@@ -155,8 +173,10 @@ export async function verifyMentionConsumer(packagePath) {
         parentMessageId: '20',
         options: { limit: 2 },
       });
-      for (const message of Array.isArray(value) ? value : [value])
+      for (const message of Array.isArray(value) ? value : [value]) {
+        assertMessage(message);
         assert.deepEqual(message.elements, [{ type: 'at', userId: exact, text: '@fixture' }]);
+      }
       assert.deepEqual(f.requests, [['u_target']]);
     } finally {
       f.services.close();
@@ -186,7 +206,7 @@ export async function verifyMentionConsumer(packagePath) {
   const flush = async () => {
     for (let n = 0; n < 4; n++) await new Promise((resolve) => setImmediate(resolve));
   };
-  let finish;
+  /** @type {(value:unknown)=>void} */ let finish = () => assert.fail('finish not installed');
   const f = fixture(
     () =>
       new Promise((resolve) => {
@@ -203,7 +223,12 @@ export async function verifyMentionConsumer(packagePath) {
     finish({ uinInfo: new Map([['u_target', exact]]) });
     await flush();
     assert.deepEqual(
-      f.events.filter(([event]) => event === 'message').map(([, message]) => message.messageId),
+      f.events
+        .filter(([event]) => event === 'message')
+        .map(([, message]) => {
+          assertMessage(message);
+          return message.messageId;
+        }),
       ['1', '2', '3'],
     );
     f.callback().onRecvMsg([raw('1'), raw('2')]);
@@ -213,8 +238,8 @@ export async function verifyMentionConsumer(packagePath) {
     f.services.close();
   }
   // Native callback records may be reused before queued identity work starts.
-  let releaseFirst,
-    lookupCount = 0;
+  /** @type {(value:unknown)=>void} */ let releaseFirst = () => assert.fail('resolver missing');
+  let lookupCount = 0;
   const captured = fixture(() =>
     ++lookupCount === 1
       ? new Promise((resolve) => {
@@ -229,15 +254,18 @@ export async function verifyMentionConsumer(packagePath) {
     captured.callback().onRecvMsg([second]);
     second.msgId = '999';
     second.peerUid = '999';
-    second.elements[0].textElement.atNtUid = 'u_mutated';
-    second.elements[0].textElement.content = 'mutated callback object';
+    textElement(second.elements[0]).atNtUid = 'u_mutated';
+    textElement(second.elements[0]).content = 'mutated callback object';
     await flush();
     assert.deepEqual(captured.requests, [['u_target']]);
     releaseFirst({ uinInfo: new Map([['u_target', exact]]) });
     await flush();
     const messages = captured.events
       .filter(([event]) => event === 'message')
-      .map(([, message]) => message);
+      .map(([, message]) => {
+        assertMessage(message);
+        return message;
+      });
     assert.deepEqual(
       messages.map((message) => message.messageId),
       ['1', '2'],
@@ -262,4 +290,38 @@ export async function verifyMentionConsumer(packagePath) {
   await flush();
   assert.equal(closed.events.filter(([event]) => event === 'message').length, 0);
   return { inboundMentionContract: true, nativeMentionLookupAttempted: false };
+}
+
+/** @param {unknown} value @returns {asserts value is import('../../src/contracts/messages.ts').Message} */
+function assertMessage(value) {
+  assert.ok(
+    value &&
+      typeof value === 'object' &&
+      'messageId' in value &&
+      typeof value.messageId === 'string' &&
+      'sequence' in value &&
+      typeof value.sequence === 'string' &&
+      'time' in value &&
+      typeof value.time === 'number' &&
+      'peer' in value &&
+      value.peer &&
+      typeof value.peer === 'object' &&
+      'sender' in value &&
+      value.sender &&
+      typeof value.sender === 'object' &&
+      'elements' in value &&
+      Array.isArray(value.elements) &&
+      'raw' in value,
+  );
+}
+
+/** @param {unknown} value @returns {Record<string,unknown>} */
+function textElement(value) {
+  assertRecord(value);
+  assertRecord(value.textElement);
+  return value.textElement;
+}
+/** @param {unknown} value @returns {asserts value is Record<string,unknown>} */
+function assertRecord(value) {
+  assert.ok(value && typeof value === 'object' && !Array.isArray(value));
 }

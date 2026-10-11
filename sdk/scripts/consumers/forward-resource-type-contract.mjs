@@ -48,7 +48,11 @@ const elementsInput: MessageInput = record.elements;
 void [compatibleText,compatibleFace,resource];
 `;
 
-/** Compile only the actual package's public declaration entry; never import its runtime. */
+/** Compile only the actual package's public declaration entry; never import its runtime.
+ * @param {string} packagePath
+ * @param {string} typescriptRoot
+ * @param {string[]} typeRoots
+ */
 export async function verifyForwardResourceTypes(packagePath, typescriptRoot, typeRoots) {
   if (
     !isAbsolute(packagePath) ||
@@ -61,9 +65,22 @@ export async function verifyForwardResourceTypes(packagePath, typescriptRoot, ty
   }
   const root = await realpath(packagePath);
   const metadataBytes = await readFile(join(root, 'package.json'));
-  const metadata = JSON.parse(metadataBytes);
-  const entry = metadata.exports?.['.']?.types;
+  /** @type {unknown} */
+  const metadata = JSON.parse(metadataBytes.toString('utf8'));
+  const exports =
+    metadata && typeof metadata === 'object' && 'exports' in metadata
+      ? metadata.exports
+      : undefined;
+  const rootExport =
+    exports && typeof exports === 'object' && '.' in exports ? exports['.'] : undefined;
+  const entry =
+    rootExport && typeof rootExport === 'object' && 'types' in rootExport
+      ? rootExport.types
+      : undefined;
   if (
+    !metadata ||
+    typeof metadata !== 'object' ||
+    !('name' in metadata) ||
     metadata.name !== 'qq-native-client' ||
     typeof entry !== 'string' ||
     !entry.startsWith('./')
@@ -112,17 +129,22 @@ export async function verifyForwardResourceTypes(packagePath, typescriptRoot, ty
         maxBuffer: 1024 * 1024,
       });
     } catch (error) {
+      let diagnostic = error instanceof Error ? error.message : 'Unknown compiler failure';
+      if (error && typeof error === 'object') {
+        if ('stdout' in error && typeof error.stdout === 'string' && error.stdout)
+          diagnostic = error.stdout;
+        else if ('stderr' in error && typeof error.stderr === 'string' && error.stderr)
+          diagnostic = error.stderr;
+      }
       // eslint-disable-next-line preserve-caught-error -- Keep the existing bounded diagnostic boundary without exposing arbitrary causes.
-      throw new Error(
-        `Forward resource public type contract failed: ${error.stdout || error.stderr || error.message}`,
-      );
+      throw new Error(`Forward resource public type contract failed: ${diagnostic}`);
     }
     return {
       success: true,
       noEmit: true,
       runtimeImported: false,
       publicPackage: metadata.name,
-      version: metadata.version,
+      version: 'version' in metadata ? metadata.version : undefined,
       publicDeclaration: entry,
       packageJsonSha256: createHash('sha256').update(metadataBytes).digest('hex'),
       declarationSha256: createHash('sha256')

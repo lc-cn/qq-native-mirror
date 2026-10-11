@@ -6,25 +6,33 @@ import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 /** Actual installed worker IPC and filesystem locks with only acquisition ports
- * replaced. No native addon, account, or HTTP operation is dispatched. */
+ * replaced. No native addon, account, or HTTP operation is dispatched.
+ * @param {string} packageRoot
+ */
 export async function verifyWorkerBootstrapConsumer(packageRoot) {
   const directory = await mkdtemp(join(tmpdir(), 'qq-worker-bootstrap-'));
   const dist = await realpath(join(packageRoot, 'dist'));
   const worker = join(dist, 'worker.js');
-  const { QQClient } = await import(pathToFileURL(join(dist, 'index.js')).href);
+  /** @type {Promise<typeof import('../../src/index.ts')>} */
+  const clientModule = import(pathToFileURL(join(dist, 'index.js')).href);
+  const { QQClient } = await clientModule;
   const workerUrls = [worker, join(dist, 'worker/bootstrap.js')].map((p) => pathToFileURL(p).href);
   const kernelUrl = pathToFileURL(join(dist, 'kernel.js')).href;
   const contractsUrl = pathToFileURL(join(dist, 'native/native-contracts.js')).href;
+  /** @typedef {{code:number|null,signal:NodeJS.Signals|null}} WorkerExit */
+  /** @type {{child:import('node:child_process').ChildProcess,exited:Promise<WorkerExit>}[]} */
   const children = [];
+  /** @param {string} p */
   const exists = async (p) => {
     try {
       await stat(join(p, '.qq-native-client.lock'));
       return true;
     } catch (e) {
-      if (e.code === 'ENOENT') return false;
+      if (e && typeof e === 'object' && 'code' in e && e.code === 'ENOENT') return false;
       throw e;
     }
   };
+  /** @param {string} mode */
   async function spawn(mode) {
     const hook = join(directory, `hook-${children.length}.mjs`);
     await writeFile(
@@ -42,9 +50,14 @@ if(url===${JSON.stringify(kernelUrl)})return {format:'module',shortCircuit:true,
       serialization: 'advanced',
       stdio: ['ignore', 'ignore', 'ignore', 'ipc'],
     });
+    /** @type {{id?:unknown,fixture?:unknown,error?:unknown,result?:unknown,bridge?:unknown,argc?:unknown}[]} */
     const events = [];
-    child.on('message', (m) => events.push(m));
+    child.on('message', (/** @type {unknown} */ m) => {
+      if (m && typeof m === 'object') events.push(m);
+    });
+    /** @type {WorkerExit|undefined} */
     let exitResult;
+    /** @type {Promise<WorkerExit>} */
     const exited = new Promise((resolve) =>
       child.once('exit', (code, signal) => {
         exitResult = { code, signal };
@@ -52,6 +65,7 @@ if(url===${JSON.stringify(kernelUrl)})return {format:'module',shortCircuit:true,
       }),
     );
     children.push({ child, exited });
+    /** @param {()=>boolean} predicate */
     const until = async (predicate) => {
       const deadline = Date.now() + 5000;
       while (!predicate()) {
@@ -60,7 +74,9 @@ if(url===${JSON.stringify(kernelUrl)})return {format:'module',shortCircuit:true,
         await new Promise((r) => setTimeout(r, 10));
       }
     };
+    /** @param {number} id @param {string} method @param {Record<string,unknown>} [extra] */
     const send = (id, method, extra = {}) => child.send({ id, method, ...extra });
+    /** @param {number} id @param {string} dataDir */
     const init = (id, dataDir) =>
       send(id, 'init', {
         options: {
@@ -71,10 +87,13 @@ if(url===${JSON.stringify(kernelUrl)})return {format:'module',shortCircuit:true,
           ...(mode === 'bridge' ? { bridgePath: join(directory, 'unused-bridge.node') } : {}),
         },
       });
+    /** @param {number} id */
     const reply = async (id) => {
       await until(() => events.some((e) => e.id === id));
       assert.equal(events.filter((e) => e.id === id).length, 1, 'One response per RPC');
-      return events.find((e) => e.id === id);
+      const result = events.find((e) => e.id === id);
+      assert.ok(result);
+      return result;
     };
     const verifyExit = async () => {
       const result = await bounded(exited);
@@ -92,15 +111,16 @@ if(url===${JSON.stringify(kernelUrl)})return {format:'module',shortCircuit:true,
     };
     return { child, events, until, send, init, reply, close, exited, verifyExit };
   }
+  /** @template T @param {Promise<T>} promise @returns {Promise<T>} */
   async function bounded(promise) {
+    /** @type {ReturnType<typeof setTimeout>|undefined} */
     let timer;
     try {
-      return await Promise.race([
-        promise,
-        new Promise((_, reject) => {
-          timer = setTimeout(() => reject(Error('Worker exit deadline')), 5000);
-        }),
-      ]);
+      /** @type {Promise<never>} */
+      const timeout = new Promise((_, reject) => {
+        timer = setTimeout(() => reject(Error('Worker exit deadline')), 5000);
+      });
+      return await Promise.race([promise, timeout]);
     } finally {
       clearTimeout(timer);
     }

@@ -1,3 +1,6 @@
+/** @typedef {{'features/media/media-send.js':typeof import('../../src/features/media/media-send.ts'),
+'features/media/video-codec-loader.js':typeof import('../../src/features/media/video-codec-loader.ts'),
+'native-services.js':typeof import('../../src/native-services.ts')}} InstalledModules */
 import assert from 'node:assert/strict';
 import { mkdtemp, writeFile, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -5,7 +8,9 @@ import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 /** Compiled SDK with fake JS codecs and cache service; never loads QQ/native codec or sends. */
+/** @param {string} packagePath */
 export async function verifyVideoConsumerContract(packagePath) {
+  /** @template {keyof InstalledModules} Name @param {Name} name @returns {Promise<InstalledModules[Name]>} */
   const load = (name) => import(pathToFileURL(join(packagePath, 'dist', name)).href);
   const { loadVideoCodec } = await load('features/media/video-codec-loader.js');
   const { createVideoElement } = await load('features/media/media-send.js');
@@ -22,6 +27,7 @@ export async function verifyVideoConsumerContract(packagePath) {
       'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aX1cAAAAASUVORK5CYII=',
       'base64',
     );
+    /** @type {import('../../src/runtime/media-contracts.ts').VideoInfo} */
     const metadata = { width: 1, height: 1, duration: 2.75, format: 'png', image };
     for (const [name, source] of [
       [
@@ -59,7 +65,7 @@ export async function verifyVideoConsumerContract(packagePath) {
       assert.equal(element.videoElement.thumbWidth, 1);
       assert.equal(element.videoElement.thumbHeight, 1);
       assert.ok(element.videoElement.thumbPath instanceof Map);
-      assert.deepEqual(await readFile(element.videoElement.thumbPath.get(0)), image);
+      assert.deepEqual(await readFile(assertThumb(element.videoElement.thumbPath)), image);
       assert.deepEqual(await readFile(cache), bytes);
       assert.deepEqual(await readFile(file), bytes);
     }
@@ -76,7 +82,7 @@ export async function verifyVideoConsumerContract(packagePath) {
     );
     assert.equal(scaled.videoElement.thumbWidth, 1280);
     assert.equal(scaled.videoElement.thumbHeight, 720);
-    assert.deepEqual(await readFile(scaled.videoElement.thumbPath.get(0)), image);
+    assert.deepEqual(await readFile(assertThumb(scaled.videoElement.thumbPath)), image);
     assert.equal('videoWidth' in scaled.videoElement, false);
     assert.equal('videoHeight' in scaled.videoElement, false);
     await assert.rejects(loadVideoCodec('relative-codec.mjs'), /absolute/i);
@@ -93,7 +99,7 @@ export async function verifyVideoConsumerContract(packagePath) {
     ]) {
       let staged = 0;
       await assert.rejects(
-        createVideoElement(
+        Reflect.apply(createVideoElement, undefined, [
           file,
           {
             getRichMediaFilePathForGuild() {
@@ -103,7 +109,7 @@ export async function verifyVideoConsumerContract(packagePath) {
           },
           undefined,
           { getVideoInfo: async () => ({ ...metadata, ...change }) },
-        ),
+        ]),
       );
       assert.equal(staged, 0);
       assert.deepEqual(await readFile(file), bytes);
@@ -128,10 +134,13 @@ export async function verifyVideoConsumerContract(packagePath) {
     );
     assert.equal(staged, 0);
     const controller = new AbortController();
-    let started;
-    const began = new Promise((resolve) => {
-      started = resolve;
-    });
+    /** @type {()=>void} */
+    let started = () => assert.fail('codec start not installed');
+    const began = /** @type {Promise<void>} */ (
+      new Promise((resolve) => {
+        started = resolve;
+      })
+    );
     const pending = createVideoElement(
       file,
       {
@@ -163,12 +172,15 @@ export async function verifyVideoConsumerContract(packagePath) {
       clearTimeout(timer);
     }
     assert.equal(staged, 0);
-    let codecStarted,
-      cacheCalls = 0,
+    /** @type {()=>void} */
+    let codecStarted = () => assert.fail('codec start not installed');
+    let cacheCalls = 0,
       sendCalls = 0;
-    const codecBegan = new Promise((resolve) => {
-      codecStarted = resolve;
-    });
+    const codecBegan = /** @type {Promise<void>} */ (
+      new Promise((resolve) => {
+        codecStarted = resolve;
+      })
+    );
     const services = createNativeServices({
       session: {
         getMsgService: () => ({
@@ -225,4 +237,11 @@ export async function verifyVideoConsumerContract(packagePath) {
   } finally {
     await rm(root, { recursive: true, force: true });
   }
+}
+
+/** @param {Map<number,string>} paths @returns {string} */
+function assertThumb(paths) {
+  const path = paths.get(0);
+  assert.ok(path);
+  return path;
 }

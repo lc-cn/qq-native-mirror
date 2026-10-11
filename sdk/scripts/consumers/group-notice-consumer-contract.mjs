@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { ChildProcess } from 'node:child_process';
 import { mkdtemp, writeFile, readFile, realpath, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -6,25 +7,39 @@ import { pathToFileURL } from 'node:url';
 
 /** Exercise installed compiled composition with fake ticket/notice services.
  * This verifies adapter acknowledgement semantics, never remote publication. */
+/** @param {string} installedRoot */
 export async function verifyGroupNoticeConsumer(installedRoot) {
-  const load = (path) => import(pathToFileURL(join(installedRoot, 'dist', path)).href);
   const [{ createNativeServices }, { prepareCommand }, { QQClient }] = await Promise.all([
-    load('native-services.js'),
-    load('cli.js'),
-    load('index.js'),
+    /** @type {Promise<typeof import('../../src/native-services.ts')>} */ (
+      import(pathToFileURL(join(installedRoot, 'dist/native-services.js')).href)
+    ),
+    /** @type {Promise<typeof import('../../src/cli.ts')>} */ (
+      import(pathToFileURL(join(installedRoot, 'dist/cli.js')).href)
+    ),
+    /** @type {Promise<typeof import('../../src/index.ts')>} */ (
+      import(pathToFileURL(join(installedRoot, 'dist/index.js')).href)
+    ),
   ]);
-  for (const name of ['publishGroupNotice', 'deleteGroupNotice'])
+  for (const name of /** @type {const} */ (['publishGroupNotice', 'deleteGroupNotice']))
     assert.equal(typeof QQClient.prototype[name], 'function');
   const turn = () => new Promise((resolve) => setImmediate(resolve));
   const deferred = () => {
-    let resolve, reject;
+    /** @type {(value:unknown)=>void} */
+    let resolve = () => assert.fail('Deferred resolver not initialized');
+    /** @type {(reason:unknown)=>void} */
+    let reject = () => assert.fail('Deferred rejecter not initialized');
+    /** @type {Promise<unknown>} */
     const promise = new Promise((done, fail) => {
       resolve = done;
       reject = fail;
     });
     return { promise, resolve, reject };
   };
+  /** @template T
+   * @param {Promise<T>} promise
+   * @returns {Promise<T>} */
   const settleWithin = async (promise) => {
+    /** @type {ReturnType<typeof setTimeout>|undefined} */
     let timer;
     try {
       return await Promise.race([
@@ -39,7 +54,9 @@ export async function verifyGroupNoticeConsumer(installedRoot) {
   };
   const ticket = () => ({ result: 0, domainPskeyMap: new Map([['qun.qq.com', 'synthetic-key']]) });
   const fixture = () => {
+    /** @type {unknown[][]} */
     const calls = [];
+    /** @type {Required<import('../../src/features/groups/group-notices.ts').GroupNoticeTicketPort>} */
     const tip = {
       getPskey(...args) {
         assert.equal(this, tip);
@@ -47,6 +64,7 @@ export async function verifyGroupNoticeConsumer(installedRoot) {
         return ticket();
       },
     };
+    /** @type {Required<import('../../src/features/groups/group-notices.ts').GroupNoticePort>&{addKernelGroupListener():void}} */
     const group = {
       addKernelGroupListener() {},
       uploadGroupBulletinPic(...args) {
@@ -80,35 +98,43 @@ export async function verifyGroupNoticeConsumer(installedRoot) {
   };
   const cli = fixture();
   try {
-    const facade = {
-      publishGroupNotice: (groupId, text, options) =>
-        cli.services.invokeOperation('publishGroupNotice', { groupId, text, options }),
-      deleteGroupNotice: (groupId, noticeId) =>
-        cli.services.invokeOperation('deleteGroupNotice', { groupId, noticeId }),
-    };
-    await (
-      await prepareCommand('group-notice-publish', { 'group-id': '123', text: 'a b/中文' })
-    )(facade);
-    await (
-      await prepareCommand('group-notice-delete', { 'group-id': '123', 'notice-id': 'notice' })
-    )(facade);
-    assert.deepEqual(cli.calls, [
-      ['ticket', ['qun.qq.com'], true],
-      [
-        'publish',
-        '123',
-        'synthetic-key',
-        {
-          text: encodeURI('a b/中文'),
-          picInfo: undefined,
-          oldFeedsId: '',
-          pinned: 0,
-          confirmRequired: 0,
-        },
-      ],
-      ['ticket', ['qun.qq.com'], true],
-      ['delete', '123', 'synthetic-key', 'notice'],
-    ]);
+    const facadeWorker = new ChildProcess();
+    Object.defineProperty(facadeWorker, 'exitCode', { value: 0, configurable: true });
+    const facade = new QQClient(facadeWorker, 5000);
+    facadeWorker.emit('exit', 0, null);
+    try {
+      facade.publishGroupNotice = async (groupId, text, options) => {
+        await cli.services.invokeOperation('publishGroupNotice', { groupId, text, options });
+      };
+      facade.deleteGroupNotice = async (groupId, noticeId) => {
+        await cli.services.invokeOperation('deleteGroupNotice', { groupId, noticeId });
+      };
+      await (
+        await prepareCommand('group-notice-publish', { 'group-id': '123', text: 'a b/中文' })
+      )(facade);
+      await (
+        await prepareCommand('group-notice-delete', { 'group-id': '123', 'notice-id': 'notice' })
+      )(facade);
+      assert.deepEqual(cli.calls, [
+        ['ticket', ['qun.qq.com'], true],
+        [
+          'publish',
+          '123',
+          'synthetic-key',
+          {
+            text: encodeURI('a b/中文'),
+            picInfo: undefined,
+            oldFeedsId: '',
+            pinned: 0,
+            confirmRequired: 0,
+          },
+        ],
+        ['ticket', ['qun.qq.com'], true],
+        ['delete', '123', 'synthetic-key', 'notice'],
+      ]);
+    } finally {
+      await facade.close();
+    }
   } finally {
     cli.services.close();
   }
@@ -127,9 +153,17 @@ export async function verifyGroupNoticeConsumer(installedRoot) {
     options.confirmRequired = true;
     pendingTicket.resolve(ticket());
     await pending;
-    assert.equal(frozen.calls[1][3].text, 'captured');
-    assert.equal(frozen.calls[1][3].pinned, 1);
-    assert.equal(frozen.calls[1][3].confirmRequired, 0);
+    const publication = frozen.calls[1][3];
+    assert.ok(
+      publication &&
+        typeof publication === 'object' &&
+        'text' in publication &&
+        'pinned' in publication &&
+        'confirmRequired' in publication,
+    );
+    assert.equal(publication.text, 'captured');
+    assert.equal(publication.pinned, 1);
+    assert.equal(publication.confirmRequired, 0);
   } finally {
     frozen.services.close();
   }
@@ -174,7 +208,9 @@ export async function verifyGroupNoticeConsumer(installedRoot) {
         options: { imagePath: path, pinned: true, confirmRequired: true },
       });
       assert.deepEqual(image.calls[1], ['upload', '123', 'synthetic-key', path]);
-      assert.deepEqual(image.calls[2][3].picInfo, { id: 'synthetic-picture', width: 2, height: 3 });
+      const publication = image.calls[2][3];
+      assert.ok(publication && typeof publication === 'object' && 'picInfo' in publication);
+      assert.deepEqual(publication.picInfo, { id: 'synthetic-picture', width: 2, height: 3 });
       assert.deepEqual(await readFile(path), bytes);
     } finally {
       image.services.close();
@@ -185,13 +221,13 @@ export async function verifyGroupNoticeConsumer(installedRoot) {
         began = deferred();
       if (stage === 'ticket')
         f.tip.getPskey = () => {
-          began.resolve();
+          began.resolve(undefined);
           return response.promise;
         };
       else
         f.group.uploadGroupBulletinPic = (...args) => {
           f.calls.push(['upload', ...args]);
-          began.resolve();
+          began.resolve(undefined);
           return response.promise;
         };
       const pending = f.services.invokeOperation('publishGroupNotice', {

@@ -1,18 +1,29 @@
 import assert from 'node:assert/strict';
+import { ChildProcess } from 'node:child_process';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 /** Installed compiled composition with controlled group notifications. No addon
  * is loaded and no account is restored or request approved remotely. */
+/** @param {string} installedRoot */
 export async function verifyGroupRequestConsumer(installedRoot) {
-  const load = (path) => import(pathToFileURL(join(installedRoot, 'dist', path)).href);
   const [{ createNativeServices }, { prepareCommand }, { QQClient }] = await Promise.all([
-    load('native-services.js'),
-    load('cli.js'),
-    load('index.js'),
+    /** @type {Promise<typeof import('../../src/native-services.ts')>} */ (
+      import(pathToFileURL(join(installedRoot, 'dist/native-services.js')).href)
+    ),
+    /** @type {Promise<typeof import('../../src/cli.ts')>} */ (
+      import(pathToFileURL(join(installedRoot, 'dist/cli.js')).href)
+    ),
+    /** @type {Promise<typeof import('../../src/index.ts')>} */ (
+      import(pathToFileURL(join(installedRoot, 'dist/index.js')).href)
+    ),
   ]);
   const turn = () => new Promise((resolve) => setImmediate(resolve));
+  /** @template T
+   * @param {Promise<T>} promise
+   * @returns {Promise<T>} */
   const settleWithin = async (promise) => {
+    /** @type {ReturnType<typeof setTimeout>|undefined} */
     let timer;
     try {
       return await Promise.race([
@@ -29,7 +40,11 @@ export async function verifyGroupRequestConsumer(installedRoot) {
     }
   };
   const deferred = () => {
-    let resolve, reject;
+    /** @type {(value:unknown)=>void} */
+    let resolve = () => assert.fail('Deferred resolver not initialized');
+    /** @type {(reason:unknown)=>void} */
+    let reject = () => assert.fail('Deferred rejecter not initialized');
+    /** @type {Promise<unknown>} */
     const promise = new Promise((done, fail) => {
       resolve = done;
       reject = fail;
@@ -43,11 +58,17 @@ export async function verifyGroupRequestConsumer(installedRoot) {
     group: { groupCode: '123' },
     postscript: 'controlled request',
   });
+  /** @param {(name:string,payload:unknown)=>void} [onEvent] */
   const fixture = (onEvent = () => {}) => {
+    /** @type {Map<unknown,import('../../src/features/groups/group-requests.ts').GroupRequestListener>} */
     const listeners = new Map();
+    /** @type {unknown[]} */
     const removed = [];
+    /** @type {unknown[][]} */
     const calls = [];
+    /** @type {[string,unknown][]} */
     const events = [];
+    /** @type {Required<import('../../src/features/groups/group-requests.ts').GroupRequestPort>} */
     const group = {
       addKernelGroupListener(listener) {
         const id = Object.freeze({ registration: listeners.size + 1 });
@@ -74,7 +95,7 @@ export async function verifyGroupRequestConsumer(installedRoot) {
       },
       version: '7.0.2-53644',
       events: {
-        emit(name, payload) {
+        emit(/** @type {string} */ name, /** @type {unknown} */ payload) {
           events.push([name, payload]);
           onEvent(name, payload);
         },
@@ -87,7 +108,7 @@ export async function verifyGroupRequestConsumer(installedRoot) {
     const [listenerId, listener] = application;
     return { services, group, calls, events, removed, listenerId, listener };
   };
-  for (const method of ['listGroupRequests', 'handleGroupRequest'])
+  for (const method of /** @type {const} */ (['listGroupRequests', 'handleGroupRequest']))
     assert.equal(typeof QQClient.prototype[method], 'function');
 
   // An early page is insufficient: the native acknowledgement also must succeed.
@@ -104,22 +125,36 @@ export async function verifyGroupRequestConsumer(installedRoot) {
       before: '10',
       limit: '3',
     });
-    const first = action({
-      listGroupRequests: (options) =>
-        serial.services.invokeOperation('listGroupRequests', { options }),
-    });
-    const options = { doubt: false, before: '20', limit: 2 };
-    const second = serial.services.invokeOperation('listGroupRequests', { options });
-    options.before = '999';
-    await turn();
-    assert.deepEqual(serial.calls, [['get', true, '10', 3]]);
-    acknowledgement.resolve({ result: 0 });
-    const page = await first;
-    assert.equal(page.next, '20');
-    assert.equal(page.requests[0].kind, 'join');
-    assert.equal(page.requests[0].doubt, true);
-    await second;
-    assert.deepEqual(serial.calls[1], ['get', false, '20', 2]);
+    const facadeWorker = new ChildProcess();
+    Object.defineProperty(facadeWorker, 'exitCode', { value: 0, configurable: true });
+    const facade = new QQClient(facadeWorker, 5000);
+    facadeWorker.emit('exit', 0, null);
+    try {
+      facade.listGroupRequests = async (options) => {
+        const value = await serial.services.invokeOperation('listGroupRequests', { options });
+        assert.ok(value && typeof value === 'object' && 'requests' in value && 'next' in value);
+        assert.ok(Array.isArray(value.requests) && typeof value.next === 'string');
+        // Composition was exercised above; retain its actual page through the public port.
+        return /** @type {import('../../src/contracts/groups.ts').GroupRequestPage} */ (value);
+      };
+      const first = action(facade);
+      const options = { doubt: false, before: '20', limit: 2 };
+      const second = serial.services.invokeOperation('listGroupRequests', { options });
+      options.before = '999';
+      await turn();
+      assert.deepEqual(serial.calls, [['get', true, '10', 3]]);
+      acknowledgement.resolve({ result: 0 });
+      const page = await first;
+      assert.ok(page && typeof page === 'object' && 'next' in page && 'requests' in page);
+      assert.ok(Array.isArray(page.requests));
+      assert.equal(page.next, '20');
+      assert.equal(page.requests[0].kind, 'join');
+      assert.equal(page.requests[0].doubt, true);
+      await second;
+      assert.deepEqual(serial.calls[1], ['get', false, '20', 2]);
+    } finally {
+      await facade.close();
+    }
   } finally {
     serial.services.close();
   }
@@ -154,20 +189,28 @@ export async function verifyGroupRequestConsumer(installedRoot) {
       doubt: 'true',
       reason: '',
     });
-    await action({
-      handleGroupRequest: (request, accept, reason) =>
-        decision.services.invokeOperation('handleGroupRequest', { request, accept, reason }),
-    });
-    assert.deepEqual(decision.calls, [
-      [
-        'operate',
-        true,
-        {
-          operateType: 2,
-          targetMsg: { seq: '11', type: 7, groupCode: '123', postscript: '' },
-        },
-      ],
-    ]);
+    const facadeWorker = new ChildProcess();
+    Object.defineProperty(facadeWorker, 'exitCode', { value: 0, configurable: true });
+    const facade = new QQClient(facadeWorker, 5000);
+    facadeWorker.emit('exit', 0, null);
+    try {
+      facade.handleGroupRequest = async (request, accept, reason) => {
+        await decision.services.invokeOperation('handleGroupRequest', { request, accept, reason });
+      };
+      await action(facade);
+      assert.deepEqual(decision.calls, [
+        [
+          'operate',
+          true,
+          {
+            operateType: 2,
+            targetMsg: { seq: '11', type: 7, groupCode: '123', postscript: '' },
+          },
+        ],
+      ]);
+    } finally {
+      await facade.close();
+    }
   } finally {
     decision.services.close();
   }

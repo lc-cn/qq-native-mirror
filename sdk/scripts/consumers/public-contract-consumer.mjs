@@ -3,12 +3,21 @@ import { readdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-/** Verify the actual installed declaration graph and package-root type interface. */
+/** Verify the actual installed declaration graph and package-root type interface.
+ * @param {string} packageRoot
+ * @param {string} compilerRoot
+ * @param {string[]} typeRoots
+ */
 export async function verifyPublicContracts(packageRoot, compilerRoot, typeRoots) {
-  const { default: ts } = await import(pathToFileURL(join(compilerRoot, 'lib/typescript.js')).href);
+  /** @type {Promise<{default: typeof import('typescript')}>} */
+  const compiler = import(pathToFileURL(join(compilerRoot, 'lib/typescript.js')).href);
+  const { default: ts } = await compiler;
+  /** @type {unknown} */
   const expected = JSON.parse(
     await readFile(new URL('../../test/fixtures/public-type-names.json', import.meta.url), 'utf8'),
   );
+  assert.ok(Array.isArray(expected) && expected.every((name) => typeof name === 'string'));
+  /** @type {import('typescript').CompilerOptions} */
   const options = {
     strict: true,
     noEmit: true,
@@ -19,10 +28,11 @@ export async function verifyPublicContracts(packageRoot, compilerRoot, typeRoots
     types: ['node'],
   };
   const dist = join(packageRoot, 'dist');
+  /** @param {string} directory @returns {Promise<string[]>} */
   async function declarations(directory) {
     const entries = await readdir(directory, { withFileTypes: true });
     const nested = await Promise.all(
-      entries.map((entry) => {
+      entries.map(async (entry) => {
         const path = join(directory, entry.name);
         return entry.isDirectory()
           ? declarations(path)
@@ -42,7 +52,9 @@ export async function verifyPublicContracts(packageRoot, compilerRoot, typeRoots
       ts.ScriptTarget.Latest,
       true,
     );
+    /** @param {import('typescript').Node} node */
     function verify(node) {
+      /** @type {import('typescript').Node | undefined} */
       let specifier;
       if ((ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) && node.moduleSpecifier)
         specifier = node.moduleSpecifier;
@@ -123,8 +135,11 @@ void [request, sent, webNotices, searchGroup, ownerUid, searchResult, folderResu
     diagnostics.map((error) => ts.flattenDiagnosticMessageText(error.messageText, '\n')).join('\n'),
   );
   const compatibility = program.getSourceFile(join(dist, 'types.d.ts'));
+  assert.ok(compatibility);
   const checker = program.getTypeChecker();
-  const exports = checker.getExportsOfModule(checker.getSymbolAtLocation(compatibility));
+  const symbol = checker.getSymbolAtLocation(compatibility);
+  assert.ok(symbol);
+  const exports = checker.getExportsOfModule(symbol);
   assert.deepEqual(exports.map((symbol) => symbol.name).sort(), [...expected].sort());
   return { publicTypeExports: expected.length, installedDeclarationFiles: files.length };
 }

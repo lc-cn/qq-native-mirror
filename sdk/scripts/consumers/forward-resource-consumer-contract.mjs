@@ -1,11 +1,15 @@
+/** @typedef {{'cli.js':typeof import('../../src/cli.ts'),
+'index.js':typeof import('../../src/index.ts'),
+'native-services.js':typeof import('../../src/native-services.ts')}} InstalledModules */
 import assert from 'node:assert/strict';
 import { gzipSync } from 'node:zlib';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { spawnSync } from 'node:child_process';
+import { ChildProcess, spawnSync } from 'node:child_process';
 // Hand-authored fixed-field fixture, not a native/server response.
 const recordHex =
   '0a1808c8031208755f617574686f723a09320766697874757265120230641a0d0a0b12090a070a0568656c6c6f';
+/** @param {number} value */
 const vi = (value) => {
   const a = [];
   do {
@@ -15,9 +19,13 @@ const vi = (value) => {
   } while (value);
   return Buffer.from(a);
 };
+/** @param {number} n @param {Buffer} data */
 const bytes = (n, data) => Buffer.concat([vi(n * 8 + 2), vi(data.length), data]);
+/** @param {number} n @param {number} value */
 const scalar = (n, value) => Buffer.concat([vi(n * 8), vi(value)]);
+/** @param {number} n @param {string} value */
 const string = (n, value) => bytes(n, Buffer.from(value));
+/** @param {Buffer[]} [elements] */
 export function resourceFixture(elements) {
   const record =
     elements === undefined
@@ -37,8 +45,10 @@ export function resourceFixture(elements) {
     response: bytes(1, Buffer.concat([bytes(3, Buffer.from('r')), bytes(4, gzipSync(raw))])),
   };
 }
+/** @param {{createNativeServices:InstalledModules['native-services.js']['createNativeServices']}} dependencies */
 export async function checkForwardResourceTypedElements({ createNativeServices }) {
   // Independent hand-authored field fixtures, not native/account observations.
+  /** @param {number} kind @param {number} [uin] @param {string} [uid] */
   const at = (kind, uin, uid) =>
     bytes(
       1,
@@ -54,6 +64,7 @@ export async function checkForwardResourceTypedElements({ createNativeServices }
         ),
       ]),
     );
+  /** @param {number} service @param {Buffer} inner */
   const face = (service, inner) =>
     bytes(53, Buffer.concat([scalar(1, service), bytes(2, inner), scalar(3, 1)]));
   const all = at(1, 0, ''),
@@ -76,13 +87,16 @@ export async function checkForwardResourceTypedElements({ createNativeServices }
     legacy,
     extendedUnknown,
   ]);
-  const calls = [],
-    effects = [];
+  /** @type {unknown[][]} */
+  const calls = [];
+  /** @type {string[]} */
+  const effects = [];
   let reply = data.response;
   const services = createNativeServices({
     session: {
       getMsgService: () => ({
         addKernelMsgListener() {},
+        /** @param {unknown[]} args */
         sendSsoCmdReqByContend(...args) {
           calls.push(args);
           return { rspbuffer: reply };
@@ -111,6 +125,7 @@ export async function checkForwardResourceTypedElements({ createNativeServices }
   });
   try {
     const value = await services.invokeOperation('getForwardResource', { resourceId: 'r' });
+    assertResource(value);
     assert.deepEqual(value.records[0].elements, [
       { type: 'text', text: 'hello' },
       { type: 'at', text: '@fixture', userId: 'all', raw: all },
@@ -136,6 +151,7 @@ export async function checkForwardResourceTypedElements({ createNativeServices }
     value.raw.fill(0);
     value.records[0].raw.fill(0);
     assert.deepEqual(value.records[0].elements[1].raw, all);
+    assert.ok('raw' in value.records[0].elements[1]);
     value.records[0].elements[1].raw.fill(0);
     assert.deepEqual(value.records[0].elements[2].raw, uid);
     // One malformed projected element rejects the entire batch; no replay or lookup.
@@ -154,11 +170,15 @@ export async function checkForwardResourceTypedElements({ createNativeServices }
     services.close();
   }
 }
+/** @param {{createNativeServices:InstalledModules['native-services.js']['createNativeServices']}} dependencies */
 export async function checkForwardResourceServices({ createNativeServices }) {
   const data = resourceFixture();
-  const calls = [],
-    sideEffects = [];
+  /** @type {unknown[][]} */
+  const calls = [];
+  /** @type {string[]} */
+  const sideEffects = [];
   let msgAccesses = 0;
+  /** @param {string} uid @param {(...args:unknown[])=>unknown} sso */
   const create = (uid = 'u_self', sso = () => ({ rspbuffer: data.response })) =>
     createNativeServices({
       session: {
@@ -166,6 +186,7 @@ export async function checkForwardResourceServices({ createNativeServices }) {
           msgAccesses++;
           return {
             addKernelMsgListener() {},
+            /** @param {unknown[]} args */
             sendSsoCmdReqByContend(...args) {
               calls.push(args);
               return sso(...args);
@@ -205,8 +226,10 @@ export async function checkForwardResourceServices({ createNativeServices }) {
     assert.equal(msgAccesses, before);
     assert.equal(calls.length, 0);
     const value = await services.invokeOperation('getForwardResource', { resourceId: 'r' });
+    assertResource(value);
     assert.equal(calls.length, 1);
     assert.equal(calls[0][0], 'trpc.group.long_msg_interface.MsgService.SsoRecvLongMsg');
+    assert.ok(Buffer.isBuffer(calls[0][1]));
     assert.equal(
       calls[0][1].toString('hex'),
       '0a0f0a081206755f73656c6612017218017a080802100018002000',
@@ -236,7 +259,8 @@ export async function checkForwardResourceServices({ createNativeServices }) {
   } finally {
     missingUid.close();
   }
-  let rejectLate;
+  /** @type {(reason:unknown)=>void} */
+  let rejectLate = () => assert.fail('Read not started');
   const stalled = create(
     'u_self',
     () =>
@@ -247,6 +271,7 @@ export async function checkForwardResourceServices({ createNativeServices }) {
   const request = stalled.invokeOperation('getForwardResource', { resourceId: 'r' });
   const checked = assert.rejects(request, /closed|canceled/);
   stalled.close();
+  /** @type {ReturnType<typeof setTimeout>|undefined} */
   let timer;
   try {
     await Promise.race([
@@ -268,35 +293,40 @@ export async function checkForwardResourceServices({ createNativeServices }) {
   );
   assert.equal(calls.length, 2);
 }
+/** @param {string} packagePath */
 export async function verifyForwardResourceConsumer(packagePath) {
+  /** @template {keyof InstalledModules} Name @param {Name} name @returns {Promise<InstalledModules[Name]>} */
   const load = (name) => import(pathToFileURL(join(packagePath, 'dist', name)).href);
   const { createNativeServices } = await load('native-services.js');
   await checkForwardResourceServices({ createNativeServices });
   await checkForwardResourceTypedElements({ createNativeServices });
   const { QQClient } = await load('index.js');
-  const { EventEmitter } = await import('node:events');
+  /** @type {Record<string,unknown>[]} */
   const requests = [];
-  const worker = new EventEmitter();
+  const worker = new ChildProcess();
   Object.assign(worker, {
     connected: true,
     exitCode: null,
-    stdout: new EventEmitter(),
-    stderr: new EventEmitter(),
+    /** @param {unknown} value @param {(error:Error|null)=>void} callback */
     send(value, callback) {
+      assertRecord(value);
       requests.push(value);
       callback(null);
       if (value.method === 'close')
         queueMicrotask(() => {
           worker.emit('message', { id: value.id, result: null });
           setImmediate(() => {
-            worker.connected = false;
-            worker.exitCode = 0;
+            Object.defineProperties(worker, {
+              connected: { value: false, configurable: true },
+              exitCode: { value: 0, configurable: true },
+            });
             worker.emit('exit', 0, null);
           });
         });
     },
+    /** @this {ChildProcess} */
     kill() {
-      this.connected = false;
+      Object.defineProperty(this, 'connected', { value: false, configurable: true });
       queueMicrotask(() => this.emit('exit', 0, null));
       return true;
     },
@@ -307,10 +337,11 @@ export async function verifyForwardResourceConsumer(packagePath) {
     assert.equal(requests.length, 0);
     worker.emit('message', { event: 'ready', payload: { uin: '789', uid: 'u_self' } });
     for (const invalid of ['', 42, {}, '\ud800', 'x'.repeat(4097)])
-      await assert.rejects(client.getForwardResource(invalid));
+      await assert.rejects(Reflect.apply(client.getForwardResource, client, [invalid]));
     assert.equal(requests.length, 0);
     const pending = client.getForwardResource('r');
     const request = requests.at(-1);
+    assert.ok(request);
     assert.equal(request.method, 'getForwardResource');
     assert.equal(request.resourceId, 'r');
     worker.emit('message', {
@@ -322,14 +353,20 @@ export async function verifyForwardResourceConsumer(packagePath) {
     await client.close();
   }
   const { prepareCommand } = await load('cli.js');
+  /** @type {string[]} */
   const cliCalls = [];
   const action = await prepareCommand('forward-resource', { 'resource-id': 'r' });
-  await action({
-    getForwardResource(id) {
-      cliCalls.push(id);
-      return Promise.resolve({ resourceId: id, records: [], raw: Buffer.alloc(0) });
-    },
-  });
+  const cliWorker = controlledCloseWorker();
+  const cliClient = new QQClient(cliWorker, 500);
+  cliClient.getForwardResource = async (id) => {
+    cliCalls.push(id);
+    return { resourceId: id, records: [], raw: Buffer.alloc(0) };
+  };
+  try {
+    await action(cliClient);
+  } finally {
+    await cliClient.close();
+  }
   assert.deepEqual(cliCalls, ['r']);
   await assert.rejects(prepareCommand('forward-resource', {}));
   await assert.rejects(prepareCommand('forward-resource', { 'resource-id': 'x'.repeat(4097) }));
@@ -381,4 +418,41 @@ export async function verifyForwardResourceConsumer(packagePath) {
     forwardResourceTypedElementsContract: true,
     nativeForwardResourceAttempted: false,
   };
+}
+
+/** @param {unknown} value @returns {asserts value is Record<string,unknown>} */
+function assertRecord(value) {
+  assert.ok(value !== null && typeof value === 'object' && !Array.isArray(value));
+}
+/** @param {unknown} value @returns {asserts value is import('../../src/types.ts').ForwardResource} */
+function assertResource(value) {
+  assertRecord(value);
+  assert.equal(typeof value.resourceId, 'string');
+  assert.ok(Array.isArray(value.records));
+  assert.ok(Buffer.isBuffer(value.raw));
+}
+
+/** Genuine ChildProcess with synthetic close ACK/exit only; never spawns a process. */
+function controlledCloseWorker() {
+  const worker = new ChildProcess();
+  Object.defineProperty(worker, 'connected', { value: true, configurable: true });
+  Object.defineProperty(worker, 'send', {
+    value(/** @type {unknown} */ value, /** @type {(error:Error|null)=>void} */ callback) {
+      assert.ok(value !== null && typeof value === 'object' && 'id' in value && 'method' in value);
+      assert.equal(value.method, 'close');
+      callback(null);
+      queueMicrotask(() => {
+        worker.emit('message', { id: value.id, result: null });
+        setImmediate(() => {
+          Object.defineProperties(worker, {
+            connected: { value: false, configurable: true },
+            exitCode: { value: 0, configurable: true },
+          });
+          worker.emit('exit', 0, null);
+        });
+      });
+      return true;
+    },
+  });
+  return worker;
 }

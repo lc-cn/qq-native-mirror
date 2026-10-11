@@ -1,19 +1,36 @@
 import assert from 'node:assert/strict';
+import { ChildProcess } from 'node:child_process';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 /** Verify compiled action adapters from the installed archive, with controlled
  * services and the real Session lifetime. This never loads a QQ addon. */
+/** @param {string} installedRoot */
 export async function verifyActionPortConsumer(installedRoot) {
-  const load = (path) => import(pathToFileURL(join(installedRoot, 'dist', path)).href);
   const [contacts, groups, runtime, cli, client, composition, listeners] = await Promise.all([
-    load('features/contacts/contact-operations.js'),
-    load('features/groups/group-operations.js'),
-    load('runtime/native-service-lifetime.js'),
-    load('cli.js'),
-    load('index.js'),
-    load('native-services.js'),
-    load('runtime/native-listener-owner.js'),
+    /** @type {Promise<typeof import('../../src/features/contacts/contact-operations.ts')>} */ (
+      import(
+        pathToFileURL(join(installedRoot, 'dist/features/contacts/contact-operations.js')).href
+      )
+    ),
+    /** @type {Promise<typeof import('../../src/features/groups/group-operations.ts')>} */ (
+      import(pathToFileURL(join(installedRoot, 'dist/features/groups/group-operations.js')).href)
+    ),
+    /** @type {Promise<typeof import('../../src/runtime/native-service-lifetime.ts')>} */ (
+      import(pathToFileURL(join(installedRoot, 'dist/runtime/native-service-lifetime.js')).href)
+    ),
+    /** @type {Promise<typeof import('../../src/cli.ts')>} */ (
+      import(pathToFileURL(join(installedRoot, 'dist/cli.js')).href)
+    ),
+    /** @type {Promise<typeof import('../../src/index.ts')>} */ (
+      import(pathToFileURL(join(installedRoot, 'dist/index.js')).href)
+    ),
+    /** @type {Promise<typeof import('../../src/native-services.ts')>} */ (
+      import(pathToFileURL(join(installedRoot, 'dist/native-services.js')).href)
+    ),
+    /** @type {Promise<typeof import('../../src/runtime/native-listener-owner.ts')>} */ (
+      import(pathToFileURL(join(installedRoot, 'dist/runtime/native-listener-owner.js')).href)
+    ),
   ]);
   const { createContactOperations } = contacts;
   const { createGroupOperations } = groups;
@@ -32,7 +49,7 @@ export async function verifyActionPortConsumer(installedRoot) {
         reads++;
         if (reads !== 1) throw new Error('Installed callback getter reacquired');
         return known
-          ? function (value) {
+          ? /** @this {object} @param {unknown} value */ function (value) {
               assert.equal(this, overrides);
               assert.equal(value, payload);
               calls++;
@@ -83,7 +100,7 @@ export async function verifyActionPortConsumer(installedRoot) {
     const service = {
       get nativeMethod() {
         reads++;
-        return function (...args) {
+        return /** @this {object} @param {unknown[]} args */ function (...args) {
           assert.equal(this, service);
           assert.deepEqual(args, ['captured']);
           return receipt;
@@ -113,11 +130,12 @@ export async function verifyActionPortConsumer(installedRoot) {
   }
   {
     let reads = 0;
+    /** @type {number[]} */
     const capturedCalls = [];
     const msg = {
       get addKernelMsgListener() {
         const captured = ++reads;
-        return function () {
+        return /** @this {object} */ function () {
           assert.equal(this, msg);
           capturedCalls.push(captured);
         };
@@ -140,17 +158,43 @@ export async function verifyActionPortConsumer(installedRoot) {
     }
   }
 
+  /** @param {typeof createContactOperations|typeof createGroupOperations} factory
+   * @param {Partial<Pick<import('../../src/features/contacts/contact-operations.ts').ContactOperationsContext,'getBuddyService'|'getProfileService'>&Pick<import('../../src/features/groups/group-operations.ts').GroupOperationsContext,'getGroupService'>>} ports
+   * @param {(id:string)=>Promise<string>} [resolveUid] */
   const fixture = (factory, ports, resolveUid = async () => 'u_fixture') => {
     const lifetime = new NativeServiceLifetime();
-    const operations = factory({
+    const context = {
+      getBuddyService: () => undefined,
+      getProfileService: () => undefined,
+      getGroupService: () => undefined,
       ...ports,
       resolveUid,
       signal: lifetime.signal,
       awaitAlive: lifetime.awaitAlive,
-    });
-    return { operations, lifetime };
+    };
+    const contact =
+      factory === createContactOperations ? createContactOperations(context) : undefined;
+    const group = factory === createGroupOperations ? createGroupOperations(context) : undefined;
+    /** @param {import('../../src/features/contacts/contact-operation-input.ts').ContactOperation|import('../../src/features/groups/group-operation-input.ts').GroupOperation} method
+     * @param {Record<string,unknown>} payload */
+    const invokeOperation = (method, payload) => {
+      if (
+        contact &&
+        (method === 'setFriendRemark' || method === 'deleteFriend' || method === 'getUserProfile')
+      )
+        return contact.invokeOperation(method, payload);
+      if (
+        group &&
+        method !== 'setFriendRemark' &&
+        method !== 'deleteFriend' &&
+        method !== 'getUserProfile'
+      )
+        return group.invokeOperation(method, payload);
+      throw Error('Fixture domain/operation mismatch');
+    };
+    return { operations: { invokeOperation }, lifetime };
   };
-  const cases = [
+  const cases = /** @type {const} */ ([
     [
       createContactOperations,
       'setFriendRemark',
@@ -180,7 +224,7 @@ export async function verifyActionPortConsumer(installedRoot) {
       'getGroupService',
       'modifyMemberRole',
     ],
-  ];
+  ]);
   // A service/method accessor may synchronously retire the Session. None of the
   // actions may call a function acquired from that retired generation.
   for (const [factory, operation, payload, getter, method] of cases) {
@@ -214,9 +258,12 @@ export async function verifyActionPortConsumer(installedRoot) {
   for (const [factory, operation, payload, getter, method] of cases.filter(
     (c) => c[1] !== 'getUserProfile',
   )) {
-    let started;
-    let rejectNative;
+    /** @type {()=>void} */
+    let started = () => assert.fail('Begin resolver missing');
+    /** @type {(reason:unknown)=>void} */
+    let rejectNative = () => assert.fail('Late rejecter missing');
     let calls = 0;
+    /** @type {Promise<void>} */
     const began = new Promise((resolve) => {
       started = resolve;
     });
@@ -235,6 +282,7 @@ export async function verifyActionPortConsumer(installedRoot) {
     const pending = f.operations.invokeOperation(operation, payload);
     await began;
     f.lifetime.close();
+    /** @type {ReturnType<typeof setTimeout>|undefined} */
     let deadline;
     try {
       await assert.rejects(
@@ -254,7 +302,9 @@ export async function verifyActionPortConsumer(installedRoot) {
     assert.equal(calls, 1, 'a retired mutation is observed without replay');
   }
 
+  /** @type {unknown[][]} */
   const calls = [];
+  /** @type {import('../../src/features/groups/group-operations.ts').GroupMutationPort} */
   const service = {
     modifyMemberRole: (...args) => {
       calls.push(['role', args]);
@@ -270,45 +320,57 @@ export async function verifyActionPortConsumer(installedRoot) {
     },
   };
   const f = fixture(createGroupOperations, { getGroupService: () => service });
-  const publicClient = {
-    setGroupAdmin: (groupId, userId, enabled) =>
-      f.operations.invokeOperation('setGroupAdmin', { groupId, userId, enabled }),
-    setGroupMemberCard: (groupId, userId, card) =>
-      f.operations.invokeOperation('setGroupMemberCard', { groupId, userId, card }),
-    kickGroupMember: (groupId, userId, options) =>
-      f.operations.invokeOperation('kickGroupMember', { groupId, userId, options }),
-    leaveGroup: (groupId) => f.operations.invokeOperation('leaveGroup', { groupId }),
-  };
+  const facadeWorker = new ChildProcess();
+  Object.defineProperty(facadeWorker, 'exitCode', { value: 0, configurable: true });
+  const publicClient = new client.QQClient(facadeWorker, 5000);
+  facadeWorker.emit('exit', 0, null);
   try {
-    for (const method of Object.keys(publicClient))
-      assert.equal(typeof client.QQClient.prototype[method], 'function');
-    for (const [command, flags] of [
-      ['member-admin', { 'user-id': '456', enabled: 'true' }],
-      ['member-card', { 'user-id': '456', card: '' }],
-      ['group-kick', { 'user-id': '456' }],
-      ['group-leave', {}],
-    ])
-      await (
-        await cli.prepareCommand(command, { 'group-id': '123', ...flags })
-      )(publicClient);
-    assert.deepEqual(calls, [
-      ['role', ['123', 'u_fixture', 3]],
-      ['card', ['123', 'u_fixture', '']],
-      ['kick', ['123', ['u_fixture'], false, '']],
-      ['quit', ['123']],
-    ]);
+    publicClient.setGroupAdmin = (groupId, userId, enabled) =>
+      f.operations.invokeOperation('setGroupAdmin', { groupId, userId, enabled }).then(() => {});
+    publicClient.setGroupMemberCard = (groupId, userId, card) =>
+      f.operations.invokeOperation('setGroupMemberCard', { groupId, userId, card }).then(() => {});
+    publicClient.kickGroupMember = (groupId, userId, options) =>
+      f.operations.invokeOperation('kickGroupMember', { groupId, userId, options }).then(() => {});
+    publicClient.leaveGroup = (groupId) =>
+      f.operations.invokeOperation('leaveGroup', { groupId }).then(() => {});
+    try {
+      for (const method of /** @type {const} */ ([
+        'setGroupAdmin',
+        'setGroupMemberCard',
+        'kickGroupMember',
+        'leaveGroup',
+      ]))
+        assert.equal(typeof client.QQClient.prototype[method], 'function');
+      for (const [command, flags] of /** @type {const} */ ([
+        ['member-admin', { 'user-id': '456', enabled: 'true' }],
+        ['member-card', { 'user-id': '456', card: '' }],
+        ['group-kick', { 'user-id': '456' }],
+        ['group-leave', {}],
+      ]))
+        await (
+          await cli.prepareCommand(command, { 'group-id': '123', ...flags })
+        )(publicClient);
+      assert.deepEqual(calls, [
+        ['role', ['123', 'u_fixture', 3]],
+        ['card', ['123', 'u_fixture', '']],
+        ['kick', ['123', ['u_fixture'], false, '']],
+        ['quit', ['123']],
+      ]);
+    } finally {
+      f.lifetime.close();
+    }
   } finally {
-    f.lifetime.close();
+    await publicClient.close();
   }
   const strict = fixture(createGroupOperations, {
     getGroupService: () => ({ modifyGroupName() {}, setGroupShutUp() {}, setMemberShutUp() {} }),
   });
   try {
-    for (const [method, payload] of [
+    for (const [method, payload] of /** @type {const} */ ([
       ['setGroupName', { name: 'name' }],
       ['setGroupMute', { enabled: true }],
       ['setGroupMemberMute', { userId: '456', seconds: 0 }],
-    ])
+    ]))
       await assert.rejects(
         strict.operations.invokeOperation(method, { groupId: '123', ...payload }),
         { code: 'invalid-result' },
@@ -318,7 +380,7 @@ export async function verifyActionPortConsumer(installedRoot) {
   }
   // Keep the full multi-platform void-acknowledgement matrix in the same owner
   // used by local and CI installed consumers; neither caller duplicates ports.
-  for (const [method, native, payload, expected] of [
+  for (const [method, native, payload, expected] of /** @type {const} */ ([
     [
       'setGroupMemberCard',
       'modifyMemberCardName',
@@ -338,7 +400,7 @@ export async function verifyActionPortConsumer(installedRoot) {
       ['123', ['u_fixture'], true, 'fixture'],
     ],
     ['leaveGroup', 'quitGroup', { groupId: '123' }, ['123']],
-  ]) {
+  ])) {
     for (const [result, code] of [
       [undefined, undefined],
       ['0', 'invalid-result'],
@@ -354,7 +416,7 @@ export async function verifyActionPortConsumer(installedRoot) {
       let attempts = 0;
       const f = fixture(createGroupOperations, {
         getGroupService: () => ({
-          [native](...args) {
+          [native](/** @type {unknown[]} */ ...args) {
             attempts++;
             assert.deepEqual(args, expected);
             return native === 'kickMember' ? Promise.resolve(result) : result;

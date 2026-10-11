@@ -1,15 +1,20 @@
+/** @typedef {Parameters<NonNullable<import('../../src/features/messages/native-message-sender.ts').MessageSendPort['sendMsg']>>} SendArgs */
+/** @typedef {{onMsgInfoListUpdate(value:unknown):void}} SendListener */
 import assert from 'node:assert/strict';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { EventEmitter } from 'node:events';
+import { ChildProcess } from 'node:child_process';
 
 // Synthetic services exercise installed compiled code, never a native client/account.
+/** @param {string} packagePath */
 export async function verifySendConsumer(packagePath) {
-  const { createNativeServices } = await import(
-    pathToFileURL(join(packagePath, 'dist/native-services.js')).href
-  );
+  /** @type {Promise<typeof import('../../src/native-services.ts')>} */
+  const servicesModule = import(pathToFileURL(join(packagePath, 'dist/native-services.js')).href);
+  const { createNativeServices } = await servicesModule;
   const tick = () => new Promise((resolve) => setImmediate(resolve));
+  /** @param {Promise<unknown>} promise */
   async function bounded(promise) {
+    /** @type {ReturnType<typeof setTimeout>|undefined} */
     let timer;
     try {
       await Promise.race([
@@ -25,14 +30,19 @@ export async function verifySendConsumer(packagePath) {
       clearTimeout(timer);
     }
   }
+  /** @param {{unique?:()=>unknown,uid?:(ids:string[])=>unknown,send?:(listener:SendListener,args:SendArgs)=>unknown}} options */
   function fixture(options = {}) {
-    let listener,
-      generated = 0;
-    const calls = [],
-      conversions = [];
+    /** @type {SendListener|undefined} */
+    let listener;
+    let generated = 0;
+    /** @type {SendArgs[]} */
+    const calls = [];
+    /** @type {string[][]} */
+    const conversions = [];
     const services = createNativeServices({
       session: {
         getMsgService: () => ({
+          /** @param {SendListener} value */
           addKernelMsgListener(value) {
             listener = value;
           },
@@ -40,7 +50,9 @@ export async function verifySendConsumer(packagePath) {
             generated++;
             return options.unique?.() ?? `fixture-${generated}`;
           },
+          /** @param {SendArgs} args */
           sendMsg(...args) {
+            assert.ok(listener);
             calls.push(args);
             if (options.send) return options.send(listener, args);
             listener.onMsgInfoListUpdate([
@@ -52,6 +64,7 @@ export async function verifySendConsumer(packagePath) {
         getGroupService: () => ({ addKernelGroupListener() {} }),
         getBuddyService: () => ({ addKernelBuddyListener() {} }),
         getUixConvertService: () => ({
+          /** @param {string[]} ids */
           getUid(ids) {
             conversions.push(ids);
             return options.uid?.(ids) ?? { uidInfo: new Map(ids.map((id) => [id, `u_${id}`])) };
@@ -62,10 +75,21 @@ export async function verifySendConsumer(packagePath) {
       version: '7.0.2-53644',
       events: { emit: () => {} },
     });
-    return { services, calls, conversions, generated: () => generated, callback: () => listener };
+    return {
+      services,
+      calls,
+      conversions,
+      generated: () => generated,
+      callback: () => {
+        assert.ok(listener);
+        return listener;
+      },
+    };
   }
+  /** @param {unknown} message */
   const group = (message = 'synthetic fixture') => ({ groupId: '123', message });
-  for (const [method, payload] of [
+  /** @type {['sendPrivateMessage'|'sendGroupMessage',Record<string,unknown>][]} */
+  const invalidInputs = [
     ['sendPrivateMessage', { userId: '456', message: Array(1) }],
     [
       'sendPrivateMessage',
@@ -86,7 +110,8 @@ export async function verifySendConsumer(packagePath) {
     ],
     ['sendGroupMessage', group([{ type: 'reply', messageId: '42' }, { type: 'unknown' }])],
     ['sendGroupMessage', group([{ type: 'at', userId: '0' }])],
-  ]) {
+  ];
+  for (const [method, payload] of invalidInputs) {
     const f = fixture();
     try {
       await assert.rejects(
@@ -100,7 +125,8 @@ export async function verifySendConsumer(packagePath) {
       f.services.close();
     }
   }
-  let resolveUid;
+  /** @type {(value:unknown)=>void} */
+  let resolveUid = () => assert.fail('UID wait not started');
   const snapshot = fixture({
     uid: () =>
       new Promise((resolve) => {
@@ -110,6 +136,7 @@ export async function verifySendConsumer(packagePath) {
   try {
     const element = { type: 'text', text: 'original' },
       input = [element];
+    /** @type {{userId:string,message:unknown}} */
     const payload = { userId: '456', message: input };
     const pending = snapshot.services.invokeOperation('sendPrivateMessage', payload);
     await tick();
@@ -123,7 +150,9 @@ export async function verifySendConsumer(packagePath) {
     assert.equal(snapshot.calls[0][1].chatType, 1);
     assert.equal(snapshot.calls[0][1].peerUid, 'u_456');
     assert.equal(snapshot.calls[0][2].length, 1);
-    assert.equal(snapshot.calls[0][2][0].textElement.content, 'original');
+    const captured = snapshot.calls[0][2][0];
+    assert.ok(captured.elementType === 1);
+    assert.equal(captured.textElement.content, 'original');
   } finally {
     snapshot.services.close();
   }
@@ -278,7 +307,8 @@ export async function verifySendConsumer(packagePath) {
     callbackBeforeSubmission.services.close();
   }
   for (const uidPending of [false, true]) {
-    let release;
+    /** @type {(value:unknown)=>void} */
+    let release = () => assert.fail('UID wait not started');
     const f = fixture(
       uidPending
         ? {
@@ -308,15 +338,21 @@ export async function verifySendConsumer(packagePath) {
   return { ...publicChecks, sendMessageContract: true, nativeSendAttempted: false };
 }
 
-/** Public installed facade input capture before any controlled IPC is dispatched. */
+/** Public installed facade input capture before any controlled IPC is dispatched. @param {string} packagePath */
 async function verifyPublicSendCapture(packagePath) {
-  const { QQClient } = await import(pathToFileURL(join(packagePath, 'dist/index.js')).href);
-  const worker = new EventEmitter();
+  const clientModule = /** @type {Promise<typeof import('../../src/index.ts')>} */ (
+    import(pathToFileURL(join(packagePath, 'dist/index.js')).href)
+  );
+  const { QQClient } = await clientModule;
+  const worker = new ChildProcess();
+  /** @type {Record<string,unknown>[]} */
   const calls = [];
   Object.assign(worker, {
     connected: true,
     exitCode: null,
+    /** @param {unknown} value @param {(error:Error|null)=>void} callback */
     send(value, callback) {
+      assertRecord(value);
       calls.push(value);
       callback(null);
       queueMicrotask(() =>
@@ -334,24 +370,31 @@ async function verifyPublicSendCapture(packagePath) {
       () => client.sendPrivateMessage('0', 'text'),
       () => client.sendGroupMessage('123', Array(1)),
       () =>
-        client.sendPrivateMessage('456', [
-          { type: 'text', text: 'valid' },
-          { type: 'text', text: {} },
+        Reflect.apply(client.sendPrivateMessage, client, [
+          '456',
+          [
+            { type: 'text', text: 'valid' },
+            { type: 'text', text: {} },
+          ],
         ]),
       () =>
-        client.sendGroupMessage('123', [
-          { type: 'at', userId: '456' },
-          { type: 'text', text: {} },
+        Reflect.apply(client.sendGroupMessage, client, [
+          '123',
+          [
+            { type: 'at', userId: '456' },
+            { type: 'text', text: {} },
+          ],
         ]),
     ])
       await assert.rejects(Promise.resolve().then(action));
-    assert.deepEqual(calls, []);
-    for (const [method, id] of [
+    assert.equal(calls.length, 0);
+    for (const [method, id] of /** @type {const} */ ([
       ['sendPrivateMessage', '000456'],
       ['sendGroupMessage', '000123'],
-    ]) {
-      const element = { type: 'text', text: 'captured' },
+    ])) {
+      const element = { type: /** @type {const} */ ('text'), text: 'captured' },
         input = [element];
+      /** @type {number} */
       const before = calls.length;
       const pending = client[method](id, input);
       element.text = 'changed';
@@ -373,4 +416,9 @@ async function verifyPublicSendCapture(packagePath) {
     worker.emit('exit', 0, null);
     await client.close();
   }
+}
+
+/** @param {unknown} value @returns {asserts value is Record<string,unknown>} */
+function assertRecord(value) {
+  assert.ok(value !== null && typeof value === 'object' && !Array.isArray(value));
 }

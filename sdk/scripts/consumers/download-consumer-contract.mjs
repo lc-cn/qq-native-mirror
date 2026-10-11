@@ -1,22 +1,29 @@
 import assert from 'node:assert/strict';
-import { EventEmitter } from 'node:events';
+import { ChildProcess } from 'node:child_process';
 import { mkdtemp, writeFile, readFile, readdir, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-/** Synthetic services and real temporary filesystem only; no native addon/account. */
+/** Synthetic services and real temporary filesystem only; no native addon/account.
+ * @param {{QQClient:typeof import('../../src/index.ts').QQClient,createNativeServices:typeof import('../../src/native-services.ts').createNativeServices,prepareCommand:typeof import('../../src/cli.ts').prepareCommand}} context */
 export async function checkDownloadContract({ QQClient, createNativeServices, prepareCommand }) {
   const directory = await mkdtemp(join(tmpdir(), 'qq-download-contract-'));
+  /** @param {(request:Parameters<NonNullable<import('../../src/runtime/media-contracts.ts').AttachmentDownloadPort['downloadRichMedia']>>[0],listener:{onRichMediaDownloadComplete(value:unknown):void})=>unknown} download
+   * @param {(ids:string[])=>unknown} [lookup] */
   const make = (download, lookup) => {
+    /** @type {{onRichMediaDownloadComplete(value:unknown):void}|undefined} */
     let listener;
     const services = createNativeServices({
       session: {
         getMsgService: () => ({
-          addKernelMsgListener(value) {
+          addKernelMsgListener(/** @type {NonNullable<typeof listener>} */ value) {
             listener = value;
           },
-          downloadRichMedia(request) {
+          downloadRichMedia(
+            /** @type {Parameters<NonNullable<import('../../src/runtime/media-contracts.ts').AttachmentDownloadPort['downloadRichMedia']>>[0]} */ request,
+          ) {
+            assert.ok(listener);
             return download(request, listener);
           },
         }),
@@ -38,8 +45,9 @@ export async function checkDownloadContract({ QQClient, createNativeServices, pr
   try {
     const destination = join(directory, 'captured'),
       mutated = join(directory, 'mutated');
-    let releaseUid,
-      uidCalls = 0,
+    /** @type {(value:unknown)=>void} */
+    let releaseUid = () => assert.fail('UID resolver missing');
+    let uidCalls = 0,
       downloads = 0;
     const uid = new Promise((resolve) => {
       releaseUid = resolve;
@@ -167,6 +175,7 @@ export async function checkDownloadContract({ QQClient, createNativeServices, pr
             destination: join(directory, 'rejected'),
           }),
           (error) => {
+            assert.ok(error instanceof Error && 'code' in error);
             assert.equal(error.code, code);
             assert.doesNotMatch(error.message, /native-private-missing|private|native-cache/);
             return true;
@@ -222,9 +231,13 @@ export async function checkDownloadContract({ QQClient, createNativeServices, pr
       collision.close();
     }
 
-    let entered,
-      rejectLate,
-      stalledCalls = 0;
+    /** @type {()=>void} */
+    let entered = () => assert.fail('Begin resolver missing');
+    /** @type {(reason:unknown)=>void} */
+    let rejectLate = () => assert.fail('Late rejecter missing');
+    let stalledCalls = 0;
+    /** @type {Promise<void>} */
+    /** @type {Promise<void>} */
     const began = new Promise((resolve) => {
       entered = resolve;
     });
@@ -236,6 +249,7 @@ export async function checkDownloadContract({ QQClient, createNativeServices, pr
       entered();
       return late;
     });
+    /** @type {ReturnType<typeof setTimeout>|undefined} */
     let timer;
     try {
       const pending = stopped.invokeOperation('downloadAttachment', {
@@ -266,29 +280,33 @@ export async function checkDownloadContract({ QQClient, createNativeServices, pr
     );
 
     // Public preflight captures peer before sending any IPC.
-    const requests = [],
-      worker = new EventEmitter();
-    Object.assign(worker, {
-      connected: true,
-      exitCode: null,
-      stdout: new EventEmitter(),
-      stderr: new EventEmitter(),
-      send(request, done) {
+    /** @type {(Record<string,unknown>&{id:number,method:string})[]} */
+    const requests = [];
+    const worker = new ChildProcess();
+    Object.defineProperty(worker, 'connected', { value: true, configurable: true });
+    Object.defineProperty(worker, 'send', {
+      value: (
+        /** @type {Record<string,unknown>&{id:number,method:string}} */ request,
+        /** @type {(error:Error|null)=>void} */ done,
+      ) => {
         requests.push(request);
         done(null);
         if (request.method === 'close')
           queueMicrotask(() => {
             worker.emit('message', { id: request.id, result: null });
             setImmediate(() => {
-              worker.connected = false;
-              worker.exitCode = 0;
+              Object.defineProperty(worker, 'connected', { value: false, configurable: true });
+              Object.defineProperty(worker, 'exitCode', { value: 0, configurable: true });
               worker.emit('exit', 0, null);
             });
           });
+        return true;
       },
-      kill() {
-        this.connected = false;
-        queueMicrotask(() => this.emit('exit', 0, null));
+    });
+    Object.defineProperty(worker, 'kill', {
+      value: () => {
+        Object.defineProperty(worker, 'connected', { value: false, configurable: true });
+        queueMicrotask(() => worker.emit('exit', 0, null));
         return true;
       },
     });
@@ -299,10 +317,12 @@ export async function checkDownloadContract({ QQClient, createNativeServices, pr
         client.downloadAttachment({ type: 'group', groupId: '123' }, 'bad', '2', destination),
       );
       assert.equal(requests.length, 0);
+      /** @type {Extract<import('../../src/contracts/messages.ts').Peer,{type:'group'}>} */
       const peer = { type: 'group', groupId: '123' };
       const promise = client.downloadAttachment(peer, '0009', '02', destination);
       peer.groupId = '999';
       const request = requests.at(-1);
+      assert.ok(request);
       assert.equal(request.method, 'downloadAttachment');
       assert.deepEqual(request.peer, { type: 'group', groupId: '123' });
       assert.equal(request.messageId, '0009');
@@ -311,33 +331,48 @@ export async function checkDownloadContract({ QQClient, createNativeServices, pr
     } finally {
       await client.close();
     }
+    /** @type {Parameters<import('../../src/index.ts').QQClient['downloadAttachment']>[]} */
     const calls = [];
-    await (
-      await prepareCommand('download', {
-        kind: 'group',
-        target: '123',
-        'message-id': '0009',
-        'element-id': '02',
-        destination,
-      })
-    )({
-      downloadAttachment(...args) {
+    const facadeWorker = new ChildProcess();
+    Object.defineProperty(facadeWorker, 'exitCode', { value: 0, configurable: true });
+    const facade = new QQClient(facadeWorker, 5000);
+    facadeWorker.emit('exit', 0, null);
+    try {
+      facade.downloadAttachment = async (...args) => {
         calls.push(args);
         return { file: destination };
-      },
-    });
-    assert.deepEqual(calls, [[{ type: 'group', groupId: '123' }, '0009', '02', destination]]);
+      };
+      await (
+        await prepareCommand('download', {
+          kind: 'group',
+          target: '123',
+          'message-id': '0009',
+          'element-id': '02',
+          destination,
+        })
+      )(facade);
+      assert.deepEqual(calls, [[{ type: 'group', groupId: '123' }, '0009', '02', destination]]);
+    } finally {
+      await facade.close();
+    }
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
 }
+/** @param {string} packageRoot */
 export async function verifyDownloadConsumer(packageRoot) {
-  const load = (file) => import(pathToFileURL(join(packageRoot, 'dist', file)).href);
-  const { QQClient } = await load('index.js'),
-    { createNativeServices } = await load('native-services.js'),
-    { prepareCommand } = await load('cli.js');
+  const { QQClient } = await /** @type {Promise<typeof import('../../src/index.ts')>} */ (
+      import(pathToFileURL(join(packageRoot, 'dist/index.js')).href)
+    ),
+    { createNativeServices } =
+      await /** @type {Promise<typeof import('../../src/native-services.ts')>} */ (
+        import(pathToFileURL(join(packageRoot, 'dist/native-services.js')).href)
+      ),
+    { prepareCommand } = await /** @type {Promise<typeof import('../../src/cli.ts')>} */ (
+      import(pathToFileURL(join(packageRoot, 'dist/cli.js')).href)
+    );
   await checkDownloadContract({ QQClient, createNativeServices, prepareCommand });
-  const ownerChecks = await verifyDownloadOwner(load);
+  const ownerChecks = await verifyDownloadOwner(packageRoot);
   return {
     ...ownerChecks,
     attachmentDownloadContract: true,
@@ -346,31 +381,48 @@ export async function verifyDownloadConsumer(packageRoot) {
 }
 
 /** Local owner cancellation uses the installed shared channel without closing sibling waits. */
-async function verifyDownloadOwner(load) {
-  const { createAttachmentDownloads } = await load('features/media/attachment-downloads.js');
-  const { createNativeEventChannel } = await load('runtime/native-event-channel.js');
+/** @param {string} packageRoot */
+async function verifyDownloadOwner(packageRoot) {
+  const { createAttachmentDownloads } =
+    await /** @type {Promise<typeof import('../../src/features/media/attachment-downloads.ts')>} */ (
+      import(pathToFileURL(join(packageRoot, 'dist/features/media/attachment-downloads.js')).href)
+    );
+  const { createNativeEventChannel } =
+    await /** @type {Promise<typeof import('../../src/runtime/native-event-channel.ts')>} */ (
+      import(pathToFileURL(join(packageRoot, 'dist/runtime/native-event-channel.js')).href)
+    );
   const directory = await mkdtemp(join(tmpdir(), 'qq-download-owner-'));
   const account = new AbortController();
   const channel = createNativeEventChannel(account.signal);
   const tick = () => new Promise((resolve) => setImmediate(resolve));
+  /** @template T
+   * @param {T|PromiseLike<T>} value
+   * @param {AbortSignal} signal
+   * @returns {Promise<T>} */
   const awaitAlive = (value, signal) =>
     new Promise((resolve, reject) => {
       const abort = () => reject(signal.reason);
       const pending = Promise.resolve(value);
-      pending.then(
-        (result) => {
-          signal.removeEventListener('abort', abort);
-          resolve(result);
-        },
-        (error) => {
-          signal.removeEventListener('abort', abort);
-          reject(error);
-        },
-      );
+      pending
+        .then(
+          (result) => {
+            signal.removeEventListener('abort', abort);
+            resolve(result);
+          },
+          (error) => {
+            signal.removeEventListener('abort', abort);
+            reject(error);
+          },
+        )
+        .catch(reject);
       if (signal.aborted) abort();
       else signal.addEventListener('abort', abort, { once: true });
     });
+  /** @template T
+   * @param {Promise<T>} promise
+   * @returns {Promise<void>} */
   const bounded = async (promise) => {
+    /** @type {ReturnType<typeof setTimeout>|undefined} */
     let timer;
     try {
       await Promise.race([
@@ -383,14 +435,17 @@ async function verifyDownloadOwner(load) {
       clearTimeout(timer);
     }
   };
+  /** @param {string} name
+   * @returns {{peer:Extract<import('../../src/contracts/messages.ts').Peer,{type:'private'}>,messageId:string,elementId:string,destination:string}} */
   const payload = (name) => ({
     peer: { type: 'private', userId: '456' },
     messageId: '9',
     elementId: '2',
     destination: join(directory, name),
   });
-  let releasePeer,
-    acquisitions = 0,
+  /** @type {(value:import('../../src/native/message-contracts.ts').NativePeer)=>void} */
+  let releasePeer = () => assert.fail('Peer resolver missing');
+  let acquisitions = 0,
     writes = 0,
     resolutions = 0;
   const peerOwner = createAttachmentDownloads({
@@ -413,7 +468,11 @@ async function verifyDownloadOwner(load) {
     },
     eventCall: channel.call,
   });
-  let releaseNative, entered;
+  /** @type {(value:unknown)=>void} */
+  let releaseNative = () => assert.fail('Native resolver missing');
+  /** @type {()=>void} */
+  let entered = () => assert.fail('Begin resolver missing');
+  /** @type {Promise<void>} */
   const began = new Promise((resolve) => {
     entered = resolve;
   });
@@ -438,7 +497,9 @@ async function verifyDownloadOwner(load) {
     awaitAlive,
     getMessageService() {
       const service = {
-        async downloadRichMedia(request) {
+        async downloadRichMedia(
+          /** @type {Parameters<NonNullable<import('../../src/runtime/media-contracts.ts').AttachmentDownloadPort['downloadRichMedia']>>[0]} */ request,
+        ) {
           assert.equal(this, service);
           await writeFile(request.filePath, 'sibling bytes');
           channel.dispatch('Msg/onRichMediaDownloadComplete', [

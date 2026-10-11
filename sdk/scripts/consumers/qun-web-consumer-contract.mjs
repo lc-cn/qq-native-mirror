@@ -1,31 +1,50 @@
 import assert from 'node:assert/strict';
+import { ChildProcess } from 'node:child_process';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 /** Installed compiled transports and composition, controlled native/HTTP ports only. */
+/** @param {string} installedRoot */
 export async function verifyQunWebConsumer(installedRoot) {
-  const load = (name) => import(pathToFileURL(join(installedRoot, 'dist', name)).href);
   const [
     { requestQunPage },
     { listWebGroupNotices },
     { createNativeServices },
     { prepareCommand },
   ] = await Promise.all([
-    load('features/groups/qun-web-read.js'),
-    load('features/groups/web-group-notices.js'),
-    load('native-services.js'),
-    load('cli.js'),
+    /** @type {Promise<typeof import('../../src/features/groups/qun-web-read.ts')>} */ (
+      import(pathToFileURL(join(installedRoot, 'dist/features/groups/qun-web-read.js')).href)
+    ),
+    /** @type {Promise<typeof import('../../src/features/groups/web-group-notices.ts')>} */ (
+      import(pathToFileURL(join(installedRoot, 'dist/features/groups/web-group-notices.js')).href)
+    ),
+    /** @type {Promise<typeof import('../../src/native-services.ts')>} */ (
+      import(pathToFileURL(join(installedRoot, 'dist/native-services.js')).href)
+    ),
+    /** @type {Promise<typeof import('../../src/cli.ts')>} */ (
+      import(pathToFileURL(join(installedRoot, 'dist/cli.js')).href)
+    ),
   ]);
+  /** @template [T=unknown]
+   * @returns {{promise:Promise<T>,resolve(value?:T):void,reject(reason:unknown):void}} */
   const deferred = () => {
-    let resolve, reject;
+    /** @type {(value?:T)=>void} */
+    let resolve = () => assert.fail('Deferred resolver not initialized');
+    /** @type {(reason:unknown)=>void} */
+    let reject = () => assert.fail('Deferred rejecter not initialized');
+    /** @type {Promise<T>} */
     const promise = new Promise((a, b) => {
-      resolve = a;
+      resolve = (value) => a(/** @type {T} */ (value));
       reject = b;
     });
     return { promise, resolve, reject };
   };
   const turn = () => new Promise((resolve) => setImmediate(resolve));
+  /** @template T
+   * @param {Promise<T>} promise
+   * @returns {Promise<T>} */
   const bounded = async (promise) => {
+    /** @type {ReturnType<typeof setTimeout>|undefined} */
     let timer;
     try {
       return await Promise.race([
@@ -38,8 +57,10 @@ export async function verifyQunWebConsumer(installedRoot) {
       clearTimeout(timer);
     }
   };
+  /** @param {Promise<unknown>} promise */
   const safeFailure = async (promise) =>
     assert.rejects(bounded(promise), (error) => {
+      assert.ok(error instanceof Error);
       assert.equal(typeof error.message, 'string');
       assert.notEqual(error.message, 'Qun settlement deadline exceeded');
       assert.ok(!error.message.includes('synthetic-sensitive'));
@@ -49,9 +70,13 @@ export async function verifyQunWebConsumer(installedRoot) {
     ec: 0,
     feeds: [{ fid: 'notice', u: 456, pubt: 100, msg: { text: 'fixture', pics: [] } }],
   };
+  /** @param {PropertyDescriptorMap} properties */
+  const responseWith = (properties) => Object.defineProperties(new Response(null), properties);
   const fixture = () => {
-    const controller = new AbortController(),
-      calls = [];
+    const controller = new AbortController();
+    /** @type {[string,...unknown[]][]} */
+    const calls = [];
+    /** @type {Required<import('../../src/features/groups/qun-web-read.ts').QunTicketPort>} */
     const ticket = {
       forceFetchClientKey(value) {
         assert.equal(this, ticket);
@@ -59,6 +84,7 @@ export async function verifyQunWebConsumer(installedRoot) {
         return { result: 0, clientKey: 'synthetic-sensitive-client' };
       },
     };
+    /** @type {Required<import('../../src/features/groups/qun-web-read.ts').QunDomainKeyPort>} */
     const tip = {
       getPskey(...args) {
         assert.equal(this, tip);
@@ -69,6 +95,7 @@ export async function verifyQunWebConsumer(installedRoot) {
         };
       },
     };
+    /** @type {{-readonly [K in keyof import('../../src/features/groups/qun-web-read.ts').QunWebReadContext]:import('../../src/features/groups/qun-web-read.ts').QunWebReadContext[K]} & {fetchImpl:typeof fetch}} */
     const context = {
       accountId: '789',
       signal: controller.signal,
@@ -76,8 +103,8 @@ export async function verifyQunWebConsumer(installedRoot) {
       getTicketService: () => ticket,
       getTipOffService: () => tip,
       fetchImpl: async (url, init) => {
-        assert.equal(init.redirect, 'manual');
-        const parsed = new URL(url);
+        assert.equal(init?.redirect, 'manual');
+        const parsed = new URL(url instanceof Request ? url.url : url);
         calls.push(['http', parsed]);
         if (parsed.hostname === 'ssl.ptlogin2.qq.com')
           return new Response(null, { headers: { 'set-cookie': 'skey=abc; Path=/' } });
@@ -87,6 +114,7 @@ export async function verifyQunWebConsumer(installedRoot) {
     return { controller, calls, ticket, tip, context };
   };
   const normal = fixture();
+  /** @type {URLSearchParams|undefined} */
   let capturedQuery;
   const notices = await listWebGroupNotices(
     {
@@ -101,7 +129,7 @@ export async function verifyQunWebConsumer(installedRoot) {
   );
   assert.equal(notices.notices[0].noticeId, 'notice');
   assert.deepEqual(
-    [...capturedQuery],
+    [...(assert.ok(capturedQuery), capturedQuery)],
     [
       ['qid', '123'],
       ['ft', '23'],
@@ -122,6 +150,7 @@ export async function verifyQunWebConsumer(installedRoot) {
     ],
   );
   const listUrl = normal.calls.filter(([name]) => name === 'http')[1][1];
+  assert.ok(listUrl instanceof URL);
   assert.equal(
     listUrl.origin + listUrl.pathname,
     'https://web.qun.qq.com/cgi-bin/announce/get_t_list',
@@ -133,9 +162,10 @@ export async function verifyQunWebConsumer(installedRoot) {
     'essence',
     new URLSearchParams({ group_code: '123', page_start: '0', page_limit: '50' }),
   );
+  const essenceUrl = essence.calls.filter(([name]) => name === 'http')[1][1];
+  assert.ok(essenceUrl instanceof URL);
   assert.equal(
-    essence.calls.filter(([name]) => name === 'http')[1][1].origin +
-      essence.calls.filter(([name]) => name === 'http')[1][1].pathname,
+    essenceUrl.origin + essenceUrl.pathname,
     'https://qun.qq.com/cgi-bin/group_digest/digest_list',
   );
   const snapshot = fixture(),
@@ -148,6 +178,7 @@ export async function verifyQunWebConsumer(installedRoot) {
   ticketWait.resolve({ result: 0, clientKey: 'synthetic-sensitive-client' });
   await snapshotPromise;
   const frozenUrl = snapshot.calls.filter(([name]) => name === 'http')[1][1];
+  assert.ok(frozenUrl instanceof URL);
   assert.equal(frozenUrl.searchParams.get('qid'), '123');
   assert.deepEqual(frozenUrl.searchParams.getAll('n'), ['1', '20']);
   for (const stage of ['ticket', 'pskey', 'http', 'json']) {
@@ -167,20 +198,28 @@ export async function verifyQunWebConsumer(installedRoot) {
     if (stage === 'http')
       f.context.fetchImpl = () => {
         began.resolve();
-        return pending.promise;
+        return pending.promise.then((value) => {
+          assert.ok(value instanceof Response);
+          return value;
+        });
       };
     if (stage === 'json') {
       const prior = f.context.fetchImpl;
       f.context.fetchImpl = async (...args) => {
         const response = await prior(...args);
-        if (new URL(args[0]).hostname === 'ssl.ptlogin2.qq.com') return response;
-        return {
-          ok: true,
-          json() {
-            began.resolve();
-            return pending.promise;
+        if (
+          new URL(args[0] instanceof Request ? args[0].url : args[0]).hostname ===
+          'ssl.ptlogin2.qq.com'
+        )
+          return response;
+        return responseWith({
+          json: {
+            value: () => {
+              began.resolve();
+              return pending.promise;
+            },
           },
-        };
+        });
       };
     }
     const read = requestQunPage(f.context, 'notices', new URLSearchParams('qid=123'));
@@ -269,20 +308,27 @@ export async function verifyQunWebConsumer(installedRoot) {
   let cancelledBodies = 0;
   late.context.fetchImpl = () => {
     lateBegan.resolve();
-    return lateResponse.promise;
+    return lateResponse.promise.then((value) => {
+      assert.ok(value instanceof Response);
+      return value;
+    });
   };
   const lateRead = requestQunPage(late.context, 'notices', new URLSearchParams('qid=123'));
   await bounded(lateBegan.promise);
   late.controller.abort(Error('Synthetic cancelled'));
   await safeFailure(lateRead);
-  lateResponse.resolve({
-    body: {
-      cancel() {
-        cancelledBodies++;
-        return cancellation.promise;
+  lateResponse.resolve(
+    responseWith({
+      body: {
+        value: {
+          cancel() {
+            cancelledBodies++;
+            return cancellation.promise;
+          },
+        },
       },
-    },
-  });
+    }),
+  );
   await turn();
   assert.equal(cancelledBodies, 1);
   cancellation.reject(Error('synthetic-sensitive late body cancellation'));
@@ -292,28 +338,26 @@ export async function verifyQunWebConsumer(installedRoot) {
     const f = fixture();
     f.context.fetchImpl = async () => {
       if (field === 'headers')
-        return {
-          get headers() {
-            throw Error('synthetic-sensitive headers');
+        return responseWith({
+          headers: {
+            get() {
+              throw Error('synthetic-sensitive headers');
+            },
           },
-        };
+        });
       if (field === 'ok')
-        return {
-          headers: { getSetCookie: () => [] },
-          status: 200,
-          get ok() {
-            throw Error('synthetic-sensitive ok');
+        return responseWith({
+          ok: {
+            get() {
+              throw Error('synthetic-sensitive ok');
+            },
           },
-        };
-      return {
-        headers: {
-          getSetCookie: () => [],
-          get() {
-            throw Error('synthetic-sensitive location');
-          },
-        },
-        status: 302,
+        });
+      const headers = new Headers();
+      headers.get = () => {
+        throw Error('synthetic-sensitive location');
       };
+      return responseWith({ headers: { value: headers }, status: { value: 302 } });
     };
     await safeFailure(requestQunPage(f.context, 'notices', new URLSearchParams('qid=123')));
   }
@@ -328,32 +372,40 @@ export async function verifyQunWebConsumer(installedRoot) {
       if (stage === 'fetch')
         f.context.fetchImpl = () => {
           began.resolve();
-          return stalled.promise;
+          return stalled.promise.then((value) => {
+            assert.ok(value instanceof Response);
+            return value;
+          });
         };
       if (stage === 'body')
-        f.context.fetchImpl = async () => ({
-          headers: { getSetCookie: () => [] },
-          status: 200,
-          ok: true,
-          body: {
-            cancel() {
-              began.resolve();
-              return stalled.promise;
+        f.context.fetchImpl = async () =>
+          responseWith({
+            body: {
+              value: {
+                cancel() {
+                  began.resolve();
+                  return stalled.promise;
+                },
+              },
             },
-          },
-        });
+          });
       if (stage === 'json') {
         const originalFetch = f.context.fetchImpl;
         f.context.fetchImpl = async (...args) => {
           const response = await originalFetch(...args);
-          if (new URL(args[0]).hostname === 'ssl.ptlogin2.qq.com') return response;
-          return {
-            ok: true,
-            json() {
-              began.resolve();
-              return stalled.promise;
+          if (
+            new URL(args[0] instanceof Request ? args[0].url : args[0]).hostname ===
+            'ssl.ptlogin2.qq.com'
+          )
+            return response;
+          return responseWith({
+            json: {
+              value: () => {
+                began.resolve();
+                return stalled.promise;
+              },
             },
-          };
+          });
         };
       }
       const pending = requestQunPage(f.context, 'notices', new URLSearchParams('qid=123'));
@@ -387,12 +439,22 @@ export async function verifyQunWebConsumer(installedRoot) {
     await assert.rejects(services.invokeOperation('listGroupNotices', { groupId: 123 }));
     assert.equal(composition.calls.length, 0);
     const projected = await services.invokeOperation('listGroupNotices', { groupId: '123' });
+    assert.ok(
+      projected &&
+        typeof projected === 'object' &&
+        'notices' in projected &&
+        Array.isArray(projected.notices),
+    );
     assert.equal(projected.notices[0].noticeId, 'notice');
     assert.equal(composition.calls.filter(([name]) => name === 'http').length, 2);
     const cancelled = new AbortController();
     const reason = Error('Synthetic request retired before dispatch');
     cancelled.abort(reason);
-    for (const method of ['listGroupNotices', 'getGroupEssencePage', 'listGroupEssenceMessages'])
+    for (const method of /** @type {const} */ ([
+      'listGroupNotices',
+      'getGroupEssencePage',
+      'listGroupEssenceMessages',
+    ]))
       await assert.rejects(
         services.invokeOperation(method, { groupId: '123' }, cancelled.signal),
         (error) => error === reason,
@@ -400,7 +462,8 @@ export async function verifyQunWebConsumer(installedRoot) {
     assert.equal(composition.calls.filter(([name]) => name === 'http').length, 2);
     globalThis.fetch = async (...args) => {
       const response = await composition.context.fetchImpl(...args);
-      return new URL(args[0]).pathname === '/cgi-bin/group_digest/digest_list'
+      return new URL(args[0] instanceof Request ? args[0].url : args[0]).pathname ===
+        '/cgi-bin/group_digest/digest_list'
         ? Response.json({
             retcode: 0,
             data: { msg_list: [], is_end: true, group_role: 2, config_page_url: 'synthetic' },
@@ -408,6 +471,7 @@ export async function verifyQunWebConsumer(installedRoot) {
         : response;
     };
     const page = await services.invokeOperation('getGroupEssencePage', { groupId: '123' });
+    assert.ok(page && typeof page === 'object' && 'messages' in page && 'isEnd' in page);
     assert.deepEqual(page.messages, []);
     assert.equal(page.isEnd, true);
     assert.deepEqual(
@@ -420,14 +484,24 @@ export async function verifyQunWebConsumer(installedRoot) {
   }
   const command = await prepareCommand('group-notices', { 'group-id': '123' });
   let cliCalls = 0;
-  await command({
-    listGroupNotices: async (group) => {
+  /** @type {Promise<typeof import('../../src/index.ts')>} */
+  const clientModule = import(pathToFileURL(join(installedRoot, 'dist/index.js')).href);
+  const { QQClient } = await clientModule;
+  const facadeWorker = new ChildProcess();
+  Object.defineProperty(facadeWorker, 'exitCode', { value: 0, configurable: true });
+  const facade = new QQClient(facadeWorker, 5000);
+  facadeWorker.emit('exit', 0, null);
+  try {
+    facade.listGroupNotices = async (group) => {
       assert.equal(group, '123');
       cliCalls++;
       return notices;
-    },
-  });
-  assert.equal(cliCalls, 1);
+    };
+    await command(facade);
+    assert.equal(cliCalls, 1);
+  } finally {
+    await facade.close();
+  }
   return {
     groupWebNarrowPortContract: true,
     groupWebFixedQueryContract: true,

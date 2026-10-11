@@ -1,10 +1,11 @@
 import assert from 'node:assert/strict';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { execFileSync } from 'node:child_process';
+import { ChildProcess, execFileSync } from 'node:child_process';
 
 /** An isolated Node process makes GC counts independent of the other package
  * checks. Bound growth, not an absolute VM-specific baseline. */
+/** @param {string} installedRoot */
 function verifyRequestWaitRetention(installedRoot) {
   const probe = `
 import {queryObjects} from 'node:v8';
@@ -12,7 +13,7 @@ import {pathToFileURL} from 'node:url';
 const {createFriendRequests}=await import(pathToFileURL(process.argv[1]).href);
 let listener;
 const service={
- addKernelBuddyListener(value){listener=value;return 7;},removeKernelBuddyListener(){},
+ addKernelBuddyListener(/** @type {import('../../src/features/contacts/friend-requests.ts').FriendBuddyListener} */ value){listener=value;return 7;},removeKernelBuddyListener(){},
  getBuddyReq(){listener.onBuddyReqChange({buddyReqs:[]});return {result:0};}
 };
 const module=createFriendRequests({getBuddyService:()=>service,signal:new AbortController().signal,emit(){},awaitAlive:async value=>value});
@@ -25,6 +26,7 @@ module.close();await new Promise(resolve=>setImmediate(resolve));
 const closed=queryObjects(Promise,{format:'count'});
 console.log(JSON.stringify({baseline,active,closed}));
 `;
+  /** @type {unknown} */
   const result = JSON.parse(
     execFileSync(
       process.execPath,
@@ -37,7 +39,20 @@ console.log(JSON.stringify({baseline,active,closed}));
       { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], timeout: 15000 },
     ),
   );
-  for (const count of Object.values(result)) assert.ok(Number.isSafeInteger(count) && count >= 0);
+  assert.ok(
+    result &&
+      typeof result === 'object' &&
+      'baseline' in result &&
+      'active' in result &&
+      'closed' in result,
+  );
+  assert.ok(
+    typeof result.baseline === 'number' &&
+      typeof result.active === 'number' &&
+      typeof result.closed === 'number',
+  );
+  for (const count of Object.values(result))
+    assert.ok(typeof count === 'number' && Number.isSafeInteger(count) && count >= 0);
   assert.ok(
     result.active <= result.baseline + 20,
     'completed request waits must not accumulate per query',
@@ -47,29 +62,47 @@ console.log(JSON.stringify({baseline,active,closed}));
 
 /** Exercise installed composition and callbacks using controlled Profile/Buddy
  * services. Success here establishes SDK behavior, not remote account changes. */
+/** @param {string} installedRoot */
 export async function verifyProfileRequestConsumer(installedRoot) {
-  const load = (path) => import(pathToFileURL(join(installedRoot, 'dist', path)).href);
   const [{ createNativeServices }, { prepareCommand }, { QQClient }] = await Promise.all([
-    load('native-services.js'),
-    load('cli.js'),
-    load('index.js'),
+    /** @type {Promise<typeof import('../../src/native-services.ts')>} */ (
+      import(pathToFileURL(join(installedRoot, 'dist/native-services.js')).href)
+    ),
+    /** @type {Promise<typeof import('../../src/cli.ts')>} */ (
+      import(pathToFileURL(join(installedRoot, 'dist/cli.js')).href)
+    ),
+    /** @type {Promise<typeof import('../../src/index.ts')>} */ (
+      import(pathToFileURL(join(installedRoot, 'dist/index.js')).href)
+    ),
   ]);
   for (const text of ['', '  spaced signature  ']) {
+    /** @type {string|undefined} */
     let actual;
-    await (
-      await prepareCommand('signature', { text })
-    )({
-      setSignature: async (value) => {
+    const facadeWorker = new ChildProcess();
+    Object.defineProperty(facadeWorker, 'exitCode', { value: 0, configurable: true });
+    const facade = new QQClient(facadeWorker, 5000);
+    facadeWorker.emit('exit', 0, null);
+    try {
+      facade.setSignature = async (value) => {
         actual = value;
-      },
-    });
-    assert.equal(actual, text);
+      };
+      await (
+        await prepareCommand('signature', { text })
+      )(facade);
+      assert.equal(actual, text);
+    } finally {
+      await facade.close();
+    }
   }
   assert.equal(typeof QQClient.prototype.setSignature, 'function');
   const profileFixture = (nickname = 'original nickname', missing = false) => {
+    /** @type {import('../../src/features/contacts/self-profile.ts').SelfProfileListener|undefined} */
     let listener;
+    /** @type {import('../../src/features/contacts/self-profile.ts').MiniProfileRequest[]} */
     const writes = [];
+    /** @type {unknown[]} */
     const removed = [];
+    /** @type {Required<import('../../src/features/contacts/self-profile.ts').SelfProfilePort>} */
     const profile = {
       addKernelProfileListener(value) {
         listener = value;
@@ -80,6 +113,7 @@ export async function verifyProfileRequestConsumer(installedRoot) {
       },
       fetchUserDetailInfo(trace, uids, source, biz) {
         assert.deepEqual([trace, uids, source, biz], ['BuddyProfileStore', ['self'], 1, [0]]);
+        assert.ok(listener);
         listener.onUserDetailInfoChanged({
           uid: 'self',
           simpleInfo: {
@@ -153,7 +187,9 @@ export async function verifyProfileRequestConsumer(installedRoot) {
   }
 
   const frozen = profileFixture();
-  let finish;
+  /** @type {(value:unknown)=>void} */
+  let finish = () => assert.fail('Resolver not installed');
+  /** @type {Promise<unknown>} */
   const response = new Promise((resolve) => {
     finish = resolve;
   });
@@ -205,13 +241,19 @@ export async function verifyProfileRequestConsumer(installedRoot) {
     isDecide: false,
     isUnread: true,
   };
+  /** @param {unknown} [result]
+   * @param {()=>unknown} [approve]
+   * @param {()=>unknown} [notification] */
   const requestFixture = (
     result = { result: 0 },
     approve = () => undefined,
     notification = () => ({ buddyReqs: [incoming] }),
   ) => {
+    /** @type {import('../../src/features/contacts/friend-requests.ts').FriendBuddyListener|undefined} */
     let listener;
+    /** @type {[string,unknown][]} */
     const events = [];
+    /** @type {unknown[]} */
     const removed = [];
     let gets = 0;
     let approvals = 0;
@@ -220,19 +262,24 @@ export async function verifyProfileRequestConsumer(installedRoot) {
         getMsgService: () => ({ addKernelMsgListener() {} }),
         getGroupService: () => ({ addKernelGroupListener() {} }),
         getBuddyService: () => ({
-          addKernelBuddyListener(value) {
+          addKernelBuddyListener(
+            /** @type {import('../../src/features/contacts/friend-requests.ts').FriendBuddyListener} */ value,
+          ) {
             listener = value;
             return 7;
           },
-          removeKernelBuddyListener(id) {
+          removeKernelBuddyListener(/** @type {unknown} */ id) {
             removed.push(id);
           },
           getBuddyReq() {
             gets++;
+            assert.ok(listener);
             listener.onBuddyReqChange(notification());
             return result;
           },
-          approvalFriendRequest(payload) {
+          approvalFriendRequest(
+            /** @type {Parameters<NonNullable<import('../../src/features/contacts/friend-requests.ts').FriendBuddyPort['approvalFriendRequest']>>[0]} */ payload,
+          ) {
             approvals++;
             assert.deepEqual(payload, { friendUid: 'u_request', reqTime: '123', accept: false });
             return approve();
@@ -240,13 +287,17 @@ export async function verifyProfileRequestConsumer(installedRoot) {
         }),
       },
       version: '7.0.2-53644',
-      events: { emit: (name, payload) => events.push([name, payload]) },
+      events: {
+        emit: (/** @type {string} */ name, /** @type {unknown} */ payload) =>
+          events.push([name, payload]),
+      },
     });
     return { services, events, removed, gets: () => gets, approvals: () => approvals };
   };
   const requests = requestFixture();
   try {
     const listed = await requests.services.invokeOperation('listFriendRequests');
+    assert.ok(Array.isArray(listed));
     assert.equal(listed.length, 1);
     assert.equal(listed[0].uid, 'u_request');
     assert.equal(requests.events[0][0], 'friend-request');
@@ -303,8 +354,10 @@ export async function verifyProfileRequestConsumer(installedRoot) {
       [...reads.values()],
       Object.keys(originalFields).map(() => 1),
     );
-    assert.equal(captured.events[0][1].raw, changingRequest);
-    assert.equal(captured.events[0][1].nickname, 'nick');
+    const emitted = captured.events[0][1];
+    assert.ok(emitted && typeof emitted === 'object' && 'raw' in emitted && 'nickname' in emitted);
+    assert.equal(emitted.raw, changingRequest);
+    assert.equal(emitted.nickname, 'nick');
   } finally {
     captured.services.close();
   }
@@ -320,8 +373,11 @@ export async function verifyProfileRequestConsumer(installedRoot) {
     failed.services.close();
   }
 
-  let rejectNative;
-  let started;
+  /** @type {(reason:unknown)=>void} */
+  let rejectNative = () => assert.fail('Rejecter not installed');
+  /** @type {()=>void} */
+  let started = () => assert.fail('Resolver not installed');
+  /** @type {Promise<void>} */
   const began = new Promise((resolve) => {
     started = resolve;
   });
@@ -338,6 +394,7 @@ export async function verifyProfileRequestConsumer(installedRoot) {
   });
   await began;
   closing.services.close();
+  /** @type {ReturnType<typeof setTimeout>|undefined} */
   let deadline;
   try {
     await assert.rejects(

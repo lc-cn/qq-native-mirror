@@ -125,6 +125,55 @@ function diagnostics(replacement, checkedFile = helper) {
 
 for (const fixture of [
   {
+    name: 'public-contract-consumer',
+    before: 'target: ts.ScriptTarget.ES2023,',
+    invalid: "target: 'ES2023',",
+    invocation: 'const files = await declarations(dist);',
+    ignored: 'declarations(dist); const files = [];',
+  },
+  {
+    name: 'forward-resource-type-contract',
+    before: "await run(process.execPath, [cli, '--project', join(directory, 'tsconfig.json')], {",
+    invalid: "await run(42, [cli, '--project', join(directory, 'tsconfig.json')], {",
+    invocation:
+      "await run(process.execPath, [cli, '--project', join(directory, 'tsconfig.json')], {",
+    ignored: "run(process.execPath, [cli, '--project', join(directory, 'tsconfig.json')], {",
+  },
+  {
+    name: 'worker-bootstrap-consumer-contract',
+    before: 'const client = new QQClient(delayed.child, 5000);',
+    invalid: "const client = new QQClient(delayed.child, '5000');",
+    invocation: 'await delayed.verifyExit();',
+    ignored: 'delayed.verifyExit();',
+  },
+]) {
+  test(`${fixture.name} retains compiler/process types and observes asynchronous completion`, async () => {
+    const file = resolve(root, `scripts/consumers/${fixture.name}.mjs`);
+    const actual = readFileSync(file, 'utf8');
+    assert.deepEqual(diagnostics(actual, file), []);
+    assert.ok(diagnostics(replaceOnce(actual, fixture.before, fixture.invalid), file).length > 0);
+    const eslint = new ESLint({
+      cwd: root,
+      overrideConfig: {
+        languageOptions: { parserOptions: { disallowAutomaticSingleRunInference: true } },
+      },
+    });
+    const good = await eslint.lintText(actual, { filePath: file });
+    assert.equal(good[0].errorCount, 0);
+    for (const prefix of ['', 'void ']) {
+      const broken = replaceOnce(actual, fixture.invocation, `${prefix}${fixture.ignored}`);
+      const reports = await eslint.lintText(broken, { filePath: file });
+      assert.ok(
+        reports
+          .flatMap((report) => report.messages)
+          .some((message) => message.ruleId === '@typescript-eslint/no-floating-promises'),
+      );
+    }
+  });
+}
+
+for (const fixture of [
+  {
     name: 'worker-read',
     before: "await client.login({ method: 'restore', uin: '789' });",
     invalid: "await client.login({ method: 'restore', uin: 789 });",

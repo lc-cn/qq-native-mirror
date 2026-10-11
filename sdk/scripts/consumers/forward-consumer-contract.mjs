@@ -1,14 +1,23 @@
+/** @typedef {{'cli.js':typeof import('../../src/cli.ts'),
+'features/forward/forward-messages.js':typeof import('../../src/features/forward/forward-messages.ts'),
+'index.js':typeof import('../../src/index.ts'),
+'native-services.js':typeof import('../../src/native-services.ts')}} InstalledModules */
+import { ChildProcess } from 'node:child_process';
 import assert from 'node:assert/strict';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 // Only installed compiled code and synthetic services; never initialize a native client.
+/** @param {string} packageRoot */
 export async function verifyForwardConsumer(packageRoot) {
+  /** @template {keyof InstalledModules} Name @param {Name} name @returns {Promise<InstalledModules[Name]>} */
   const load = (name) => import(pathToFileURL(join(packageRoot, 'dist', name)).href);
   const { createForwardMessages: createInstalledForwardMessages } = await load(
     'features/forward/forward-messages.js',
   );
+  /** @type {ReturnType<InstalledModules['features/forward/forward-messages.js']['createForwardMessages']>[]} */
   const owners = [];
+  /** @type {InstalledModules['features/forward/forward-messages.js']['createForwardMessages']} */
   const createForwardMessages = (context) => {
     const owner = createInstalledForwardMessages(context);
     owners.push(owner);
@@ -17,8 +26,11 @@ export async function verifyForwardConsumer(packageRoot) {
   try {
     const { createNativeServices } = await load('native-services.js');
     const { prepareCommand } = await load('cli.js');
-    const peer = { type: 'group', groupId: '123' },
-      destination = { type: 'private', userId: '456' };
+    /** @type {Extract<import('../../src/types.ts').Peer,{type:'group'}>} */
+    const peer = { type: 'group', groupId: '123' };
+    /** @type {Extract<import('../../src/types.ts').Peer,{type:'private'}>} */
+    const destination = { type: 'private', userId: '456' };
+    /** @param {import('../../src/types.ts').Peer} value @returns {Promise<import('../../src/native/message-contracts.ts').NativePeer>} */
     const resolvePeer = async (value) =>
       value.type === 'group'
         ? { chatType: 2, peerUid: value.groupId }
@@ -67,7 +79,7 @@ export async function verifyForwardConsumer(packageRoot) {
         resolvePeer: resolvePeer,
         decodeMessage: (message) => {
           decoded++;
-          return { messageId: message.msgId };
+          return decodedMessage(message);
         },
         signal: new AbortController().signal,
         awaitAlive: async (value) => value,
@@ -79,14 +91,14 @@ export async function verifyForwardConsumer(packageRoot) {
       const operation = createForwardMessages({
         getMessageService: () => ({ getMultiMsg: () => ({ result: 0, msgList }) }),
         resolvePeer: resolvePeer,
-        decodeMessage: (message) => ({ messageId: message.msgId }),
+        decodeMessage: decodedMessage,
         signal: new AbortController().signal,
         awaitAlive: async (value) => value,
       });
+      const messages = await operation.invokeOperation('getForwardMessages', payload);
+      assert.ok(Array.isArray(messages));
       assert.deepEqual(
-        (await operation.invokeOperation('getForwardMessages', payload)).map(
-          (message) => message.messageId,
-        ),
+        messages.map((message) => message.messageId),
         msgList.map((message) => message.msgId),
       );
     }
@@ -101,6 +113,7 @@ export async function verifyForwardConsumer(packageRoot) {
         awaitAlive: async (value) => value,
       });
       await assert.rejects(operation.invokeOperation('getForwardMessages', payload), (error) => {
+        assert.ok(error instanceof Error && 'code' in error);
         assert.equal(
           error.code,
           (typeof result === 'number' && !Number.isFinite(result)) || result === undefined
@@ -111,9 +124,11 @@ export async function verifyForwardConsumer(packageRoot) {
         return true;
       });
     }
+    /** @type {unknown[][]} */
     const args = [];
     const forwarding = createForwardMessages({
       getMessageService: () => ({
+        /** @param {unknown[]} values */
         forwardMsg(...values) {
           args.push(values);
           return { result: 0 };
@@ -131,10 +146,21 @@ export async function verifyForwardConsumer(packageRoot) {
       target: '456',
       'message-ids': `${longId},2`,
     });
-    await action({
-      forwardMessages: (source, dest, messageIds) =>
-        forwarding.invokeOperation('forwardMessages', { source, destination: dest, messageIds }),
-    });
+    const { QQClient } = await load('index.js');
+    const cliWorker = controlledCloseWorker();
+    const cliClient = new QQClient(cliWorker, 500);
+    cliClient.forwardMessages = async (source, dest, messageIds) => {
+      await forwarding.invokeOperation('forwardMessages', {
+        source,
+        destination: dest,
+        messageIds,
+      });
+    };
+    try {
+      await action(cliClient);
+    } finally {
+      await cliClient.close();
+    }
     assert.deepEqual(args, [
       [
         [longId, '2'],
@@ -143,13 +169,17 @@ export async function verifyForwardConsumer(packageRoot) {
         new Map(),
       ],
     ]);
-    for (const method of ['getForwardMessages', 'forwardMessages']) {
-      let finish,
-        begin,
-        nativeCalls = 0;
-      const started = new Promise((resolve) => {
-          begin = resolve;
-        }),
+    for (const method of /** @type {const} */ (['getForwardMessages', 'forwardMessages'])) {
+      /** @type {(value:unknown)=>void} */
+      let finish = () => assert.fail('Native wait not started');
+      /** @type {()=>void} */
+      let begin = () => assert.fail('Native wait not started');
+      let nativeCalls = 0;
+      const started = /** @type {Promise<void>} */ (
+          new Promise((resolve) => {
+            begin = resolve;
+          })
+        ),
         result = new Promise((resolve) => {
           finish = resolve;
         });
@@ -179,6 +209,8 @@ export async function verifyForwardConsumer(packageRoot) {
         const pending = services.invokeOperation(method, input);
         await started;
         services.close();
+        /** @type {ReturnType<typeof setTimeout>|undefined} */
+        /** @type {ReturnType<typeof setTimeout>|undefined} */
         let deadline;
         try {
           await Promise.race([
@@ -201,14 +233,19 @@ export async function verifyForwardConsumer(packageRoot) {
     }
     const turn = () => new Promise((resolve) => setImmediate(resolve));
     const deferred = () => {
-      let resolve, reject;
+      /** @type {(value?:unknown)=>void} */
+      let resolve = () => assert.fail('Wait not started');
+      /** @type {(reason:unknown)=>void} */
+      let reject = () => assert.fail('Wait not started');
       const promise = new Promise((done, fail) => {
         resolve = done;
         reject = fail;
       });
       return { promise, resolve, reject };
     };
+    /** @template T @param {Promise<T>} promise @returns {Promise<T>} */
     const settleWithin = async (promise) => {
+      /** @type {ReturnType<typeof setTimeout>|undefined} */
       let deadline;
       try {
         return await Promise.race([
@@ -225,7 +262,7 @@ export async function verifyForwardConsumer(packageRoot) {
       }
     };
     const forwardInput = { source: peer, destination, messageIds: [longId] };
-    for (const method of ['getForwardMessages', 'forwardMessages']) {
+    for (const method of /** @type {const} */ (['getForwardMessages', 'forwardMessages'])) {
       for (const stage of ['service', 'method', 'ack']) {
         let nativeCalls = 0,
           getterReads = 0;
@@ -235,7 +272,7 @@ export async function verifyForwardConsumer(packageRoot) {
           get() {
             getterReads++;
             if (stage === 'method') owner.close();
-            return function () {
+            return /** @this {object} */ function () {
               assert.equal(this, service);
               nativeCalls++;
               return {
@@ -284,7 +321,9 @@ export async function verifyForwardConsumer(packageRoot) {
           resolutions++;
           if (resolutions === (stage === 'source' ? 1 : 2)) {
             began.resolve();
-            return pendingPeer.promise;
+            return pendingPeer.promise.then(() => {
+              throw Error('Unexpected peer completion');
+            });
           }
           return resolvePeer(value);
         },
@@ -316,7 +355,9 @@ export async function verifyForwardConsumer(packageRoot) {
           assert.equal(records.length, 1);
           batches++;
           began.resolve();
-          return decoding.promise;
+          return decoding.promise.then(() => {
+            throw Error('Unexpected decoder completion');
+          });
         },
         signal: controller.signal,
         awaitAlive: async (value) => value,
@@ -330,29 +371,43 @@ export async function verifyForwardConsumer(packageRoot) {
       await turn();
       assert.equal(batches, 1);
     }
-    const { QQClient } = await load('index.js'),
-      { EventEmitter } = await import('node:events');
-    class Worker extends EventEmitter {
-      connected = true;
-      exitCode = null;
-      stdout = new EventEmitter();
-      stderr = new EventEmitter();
+    class Worker extends ChildProcess {
+      /** @type {Record<string,unknown>[]} */
       requests = [];
-      send(request, callback) {
-        this.requests.push(request);
-        callback(null);
-        queueMicrotask(() => {
-          this.emit('message', { id: request.id, result: request.method === 'close' ? null : [] });
-          if (request.method === 'close')
-            setImmediate(() => {
-              this.connected = false;
-              this.exitCode = 0;
-              this.emit('exit', 0, null);
-            });
+      constructor() {
+        super();
+        Object.defineProperties(this, {
+          connected: { value: true, configurable: true },
+          exitCode: { value: null, configurable: true },
+          send: {
+            value: (
+              /** @type {unknown} */ request,
+              /** @type {(error:Error|null)=>void} */ callback,
+            ) => {
+              assertRecord(request);
+              this.requests.push(request);
+              callback(null);
+              queueMicrotask(() => {
+                this.emit('message', {
+                  id: request.id,
+                  result: request.method === 'close' ? null : [],
+                });
+                if (request.method === 'close')
+                  setImmediate(() => {
+                    Object.defineProperties(this, {
+                      connected: { value: false, configurable: true },
+                      exitCode: { value: 0, configurable: true },
+                    });
+                    this.emit('exit', 0, null);
+                  });
+              });
+            },
+            configurable: true,
+          },
         });
       }
       kill() {
-        this.connected = false;
+        Object.defineProperty(this, 'connected', { value: false, configurable: true });
         queueMicrotask(() => this.emit('exit', 0, null));
         return true;
       }
@@ -376,12 +431,18 @@ export async function verifyForwardConsumer(packageRoot) {
         target: '123',
         'root-message-id': longId,
       });
+      /** @type {Parameters<typeof client.getForwardMessages>|undefined} */
       let values;
-      await first({
-        getForwardMessages: async (...args) => {
-          values = args;
-        },
-      });
+      const original = client.getForwardMessages;
+      client.getForwardMessages = async (...args) => {
+        values = args;
+        return [];
+      };
+      try {
+        await first(client);
+      } finally {
+        client.getForwardMessages = original;
+      }
       assert.deepEqual(values, [peer, longId, longId]);
     } finally {
       await client.close();
@@ -399,4 +460,48 @@ export async function verifyForwardConsumer(packageRoot) {
   } finally {
     for (const owner of owners) owner.close();
   }
+}
+
+/** @param {unknown} value @returns {asserts value is Record<string,unknown>} */
+function assertRecord(value) {
+  assert.ok(value !== null && typeof value === 'object' && !Array.isArray(value));
+}
+/** @param {Record<string,unknown>} raw @returns {import('../../src/types.ts').Message} */
+function decodedMessage(raw) {
+  assert.equal(typeof raw.msgId, 'string');
+  assert.ok(typeof raw.msgId === 'string');
+  return {
+    messageId: raw.msgId,
+    sequence: '9',
+    time: 100,
+    peer: { type: 'group', groupId: '123' },
+    sender: { userId: '456', uid: 'u_fixture', nickname: 'fixture' },
+    elements: [],
+    raw,
+  };
+}
+
+/** Genuine ChildProcess with synthetic close ACK/exit only; never spawns a process. */
+function controlledCloseWorker() {
+  const worker = new ChildProcess();
+  Object.defineProperty(worker, 'connected', { value: true, configurable: true });
+  Object.defineProperty(worker, 'send', {
+    value(/** @type {unknown} */ value, /** @type {(error:Error|null)=>void} */ callback) {
+      assert.ok(value !== null && typeof value === 'object' && 'id' in value && 'method' in value);
+      assert.equal(value.method, 'close');
+      callback(null);
+      queueMicrotask(() => {
+        worker.emit('message', { id: value.id, result: null });
+        setImmediate(() => {
+          Object.defineProperties(worker, {
+            connected: { value: false, configurable: true },
+            exitCode: { value: 0, configurable: true },
+          });
+          worker.emit('exit', 0, null);
+        });
+      });
+      return true;
+    },
+  });
+  return worker;
 }

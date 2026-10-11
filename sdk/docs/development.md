@@ -347,13 +347,17 @@ the platform consumer orchestrator trigger SDK quality as well as native CI.
 Always rebuild from clean `dist`; source tests cannot detect obsolete
 emitted modules left in a package.
 
-All TypeScript scripts and the fifteen checked JavaScript consumers listed in
-`tsconfig.scripts.json` share its strict project. When migrating a JavaScript helper, give dynamic installed imports the corresponding module
+All TypeScript scripts and every JavaScript helper in `scripts/consumers/` share
+the strict `tsconfig.scripts.json` project. Its directory glob and ESLint's matching
+glob make new consumer helpers subject to the same checks automatically.
+Give dynamic installed imports the corresponding module
 types, retain faithful DTOs in controlled adapters and add type-aware Promise
 lint. Do not silence errors by assigning the whole installed module or fake
 client to `any`. Compiler/lint negative fixtures must reject broken verification
-code without executing it. Use the checked face, group-search, group-essence, element-preparation and mirror consumers as examples;
-the remaining JavaScript helpers are not yet all covered by this stricter project.
+code without executing it. Use the face, group-search, group-essence,
+element-preparation and mirror consumers as examples. Keep intentionally invalid
+runtime inputs separate from faithful typed adapters; a whole-module assertion
+must not conceal a broken fixture contract.
 
 Keep reusable consumer contracts in `scripts/consumers/`. The root verifier,
 CI orchestrators, build/release tools and account acceptance executors have separate
