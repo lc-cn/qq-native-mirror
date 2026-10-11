@@ -47,7 +47,6 @@ import { createMessageRecalls } from './features/messages/recall-operation.ts';
 import { createIncomingMessageDelivery } from './features/messages/incoming-message-delivery.ts';
 
 import type { NativeObject as Native } from './native/native-object.ts';
-import type { NativeMessage } from './native/message-contracts.ts';
 export type { NativePeer, NativeMessage } from './native/message-contracts.ts';
 import type { ServiceOperation } from './runtime/operations.ts';
 export type { ServiceOperation } from './runtime/operations.ts';
@@ -159,6 +158,16 @@ export function createNativeServices(context: NativeServiceContext) {
     );
     const incomingMessages = own(
       createIncomingMessageDelivery({
+        getSystemMessageHandlers: () => [
+          {
+            hasCandidate: (batch) => groupSystemEvents.hasMuteCandidate(batch),
+            receive: (batch) => groupSystemEvents.onRecvMsg(batch),
+          },
+          {
+            hasCandidate: (batch) => friendSystemEvents.hasAddedCandidate(batch),
+            receive: (batch) => friendSystemEvents.onRecvMsg(batch),
+          },
+        ],
         resolveMessages: (messages, rawMessages, signal) =>
           resolvedMessages(messages, rawMessages, true, signal),
         project: messageResolution.projectImmediate,
@@ -194,18 +203,7 @@ export function createNativeServices(context: NativeServiceContext) {
         dispatch('Msg/onGroupFileInfoUpdate', [value]);
       },
       onRecvSysMsg: groupSystemEvents.onRecvSysMsg,
-      onRecvMsg: (messages: NativeMessage[]) => {
-        if (lifetime.closed) return;
-        if (!Array.isArray(messages)) {
-          emit('diagnostic', { stage: 'invalid-native-message-batch' });
-          return;
-        }
-        if (groupSystemEvents.hasMuteCandidate(messages)) groupSystemEvents.onRecvMsg(messages);
-        if (lifetime.closed) return;
-        if (friendSystemEvents.hasAddedCandidate(messages)) friendSystemEvents.onRecvMsg(messages);
-        if (lifetime.closed) return;
-        incomingMessages.receive(messages);
-      },
+      onRecvMsg: incomingMessages.receive,
       onMsgInfoListUpdate: messageUpdateEvents.onMessageUpdates,
       onKickedOffLine: (...args: unknown[]) => {
         if (!lifetime.closed) emit('kicked', { info: args[0], args });

@@ -6,7 +6,16 @@ import {
 import { needsMentionLookup } from './inbound-mentions.ts';
 import type { Message } from '../../contracts/messages.ts';
 
+/** A system-message projector inspects the shared raw batch without acquiring
+ * account services or participating in ordinary message lookup and delivery.
+ */
+export interface IncomingSystemMessagePort {
+  hasCandidate(rawMessages: unknown[]): boolean;
+  receive(rawMessages: unknown[]): void;
+}
+
 export interface IncomingMessageDeliveryContext {
+  getSystemMessageHandlers?(): readonly IncomingSystemMessagePort[];
   resolveMessages(
     messages: CapturedNativeMessage[],
     rawMessages: unknown[],
@@ -17,7 +26,7 @@ export interface IncomingMessageDeliveryContext {
   diagnostic(stage: string): void;
   dispatch(rawMessages: unknown[]): void;
 }
-/** Owns callback snapshots, ordering and bounded deduplication for one Session.
+/** Owns raw-batch ingress, callback snapshots, ordering and bounded deduplication.
  * Closing prevents new lookups and delivery, without pretending to cancel native work.
  * Projection retains the original raw object independently of the captured fields.
  */
@@ -79,6 +88,25 @@ export function createIncomingMessageDelivery(context: IncomingMessageDeliveryCo
       if (!Array.isArray(input)) {
         diagnostic('invalid-native-message-batch');
         return;
+      }
+      // System projectors consume the original batch before ordinary snapshots.
+      // Their lazy binding preserves construction and cleanup order in the
+      // composition root without giving it input or callback-dispatch policy.
+      const getHandlers = context.getSystemMessageHandlers;
+      if (closed) return;
+      const handlers = getHandlers?.call(context) ?? [];
+      if (closed) return;
+      for (const handler of handlers) {
+        if (closed) return;
+        const matches = handler.hasCandidate;
+        if (closed) return;
+        const candidate = matches.call(handler, input);
+        if (closed) return;
+        if (!candidate) continue;
+        const receive = handler.receive;
+        if (closed) return;
+        receive.call(handler, input);
+        if (closed) return;
       }
       const messages: Received[] = [];
       for (const raw of Array.from(input)) {

@@ -172,6 +172,14 @@ capture. Do not add an outer `chatType` property read: native accessors must be
 captured once inside the error boundary. Queries use the strict capture path;
 unsupported live conversations are skipped without reading their bodies.
 
+`incoming-message-delivery.ts` owns the raw Msg batch entry, including batch
+validation and ordered system-message fanout before ordinary snapshots. Supply
+lazy narrow predicate/receive ports for the existing group and friend projectors;
+do not put candidate checks or duplicate batch validation back into composition.
+Lazy binding retains their current construction/cleanup order. Closing at any
+projection step stops later projectors and message lookup, while active projector
+exceptions retain their identity. System DTO parsing remains with its domain.
+
 `features/forward/forward-resource-owner.ts` owns lazy resource upload/read
 transports and merged card orchestration. Supply its narrow SSO, peer resolution
 and prepared card ports; keep wire schemas inside the forward domain. Register

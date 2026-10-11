@@ -34,6 +34,30 @@ test('service composition delegates message-update ingress without projecting re
   assert.ok(!imported.includes('createRecallEvents'));
 });
 
+test('service composition wires received batches without acquiring ingress policy', () => {
+  const source = ts.createSourceFile(
+    'native-services.ts',
+    readFileSync(join(sourceRoot, 'native-services.ts'), 'utf8'),
+    ts.ScriptTarget.Latest,
+    true,
+  );
+  const hooks: ts.PropertyAssignment[] = [];
+  function visit(node: ts.Node): void {
+    if (ts.isPropertyAssignment(node) && node.name.getText(source) === 'onRecvMsg')
+      hooks.push(node);
+    assert.ok(
+      !ts.isStringLiteral(node) || node.text !== 'invalid-native-message-batch',
+      'Received batch validation belongs to the incoming delivery owner.',
+    );
+    ts.forEachChild(node, visit);
+  }
+  visit(source);
+  assert.equal(hooks.length, 1);
+  const hook = hooks[0]!.initializer;
+  assert.ok(ts.isPropertyAccessExpression(hook), 'Composition must wire the owned ingress.');
+  assert.equal(hook.name.text, 'receive');
+});
+
 test('public input runtime closures cannot load forward-resource response decoding or transport', () => {
   const privateImplementations = new Set([
     'src/features/forward/forward-resource-wire.ts',

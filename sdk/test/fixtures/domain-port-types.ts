@@ -301,6 +301,17 @@ function verifyWorkerOwnership(owner: NativeWorkerBootstrap, kernel: WorkerKerne
 void verifyWorkerOwnership;
 
 import type { CapturedNativeMessage } from '../../src/features/messages/inbound-messages.ts';
+import type { IncomingSystemMessagePort } from '../../src/features/messages/incoming-message-delivery.ts';
+function verifyIncomingSystemPort(port: IncomingSystemMessagePort) {
+  port.hasCandidate([]);
+  port.receive([]);
+  // @ts-expect-error A system projector cannot acquire an account service.
+  port.getMsgService();
+  // @ts-expect-error Closing the account is outside this projection port.
+  port.close();
+}
+void verifyIncomingSystemPort;
+
 function verifyCapturedMessage(message: CapturedNativeMessage) {
   // @ts-expect-error Queue consumers cannot replace the captured receipt identity.
   message.msgId = '42';

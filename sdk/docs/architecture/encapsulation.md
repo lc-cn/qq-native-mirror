@@ -225,13 +225,23 @@ delivery. Normalized replay suppression does not suppress legacy notifications;
 close retires the account's replay window. The existing single-record projector
 remains available to internal consumers without an optional batch configuration.
 
-`IncomingMessageDelivery` owns callback snapshots, ordered delivery, the bounded
+`IncomingMessageDelivery` owns raw-batch validation, system-message fanout,
+callback snapshots, ordered delivery, the bounded
 message deduplication cache and cancellation. Its interface is `receive` and
 `close`; native lookup and projection are injected ports. Closing interrupts its
 own wait, signals the resolver, and suppresses late messages and callbacks without
-claiming to cancel a dispatched native operation. The session composition keeps
-system-message processing and native callback registration in their original
-order. Queried history does not share live-delivery deduplication state.
+claiming to cancel a dispatched native operation. An optional lazy provider
+supplies narrow system-message ports in order: group mute, then friend added,
+before ordinary message snapshots. The owner checks local retirement after
+provider acquisition, predicate/method capture and each invocation, preventing
+another projector or identity lookup after reentrant close. Active projector
+exceptions retain their identity. Invalid batches never acquire these ports.
+Composition only wires the existing Msg callback directly to `receive`; the
+lazy provider preserves the original feature construction and cleanup order.
+System projectors retain their own DTO validation and replay caches; delivery
+does not import another feature domain or register a listener. Consumers without
+system ports retain ordinary delivery. Queried history does not share
+live-delivery deduplication state.
 
 `captureIncomingNativeMessage` supplies the live delivery ports with a typed receipt
 snapshot. Its single discriminator read is part of the same guarded capture as

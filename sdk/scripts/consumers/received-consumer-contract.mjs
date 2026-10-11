@@ -36,8 +36,10 @@ export async function verifyReceivedConsumer(packagePath) {
       ['u_sender', exact],
     ]),
   });
-  /** @param {unknown[]} records @param {(ids:string[])=>unknown} resolver */
-  function fixture(records, resolver = async () => resolved()) {
+  /** @param {unknown[]} records @param {(ids:string[])=>unknown} resolver
+   * @param {(event:string,payload:unknown)=>void} onEvent
+   */
+  function fixture(records, resolver = async () => resolved(), onEvent = () => {}) {
     /** @type {{onRecvMsg(value:unknown):void}|undefined} */
     let listener;
     /** @type {string[][]} */
@@ -67,7 +69,12 @@ export async function verifyReceivedConsumer(packagePath) {
         }),
       },
       version: '7.0.2-53644',
-      events: { emit: (event, value) => events.push([event, value]) },
+      events: {
+        emit(event, value) {
+          events.push([event, value]);
+          onEvent(event, value);
+        },
+      },
     });
     return {
       services,
@@ -471,10 +478,80 @@ export async function verifyReceivedConsumer(packagePath) {
   } finally {
     snapshots.services.close();
   }
+  const systemBatch = () => [
+    {
+      msgId: '10',
+      chatType: 2,
+      msgType: 5,
+      peerUid: '123',
+      elements: [
+        {
+          grayTipElement: {
+            subElementType: 4,
+            groupElement: {
+              type: 8,
+              shutUp: { duration: '600', admin: { uid: 'u_admin' }, member: { uid: 'u_member' } },
+            },
+          },
+        },
+      ],
+    },
+    {
+      msgId: '20',
+      chatType: 1,
+      msgType: 5,
+      peerUid: 'u_friend',
+      peerUin: exact,
+      elements: [
+        { grayTipElement: { subElementType: 17, jsonGrayTipElement: { busiId: '19324' } } },
+      ],
+    },
+    raw({ msgId: '30', peerUin: '123', senderUin: '456', elements: [] }),
+  ];
+  const ingress = fixture([]);
+  try {
+    ingress.listener().onRecvMsg(systemBatch());
+    assert.deepEqual(
+      ingress.events
+        .filter(
+          ([name, value]) =>
+            name === 'group-mute' ||
+            name === 'friend-added' ||
+            (name === 'message' && isRecord(value) && value.messageId === '30'),
+        )
+        .map(([name]) => name),
+      ['group-mute', 'friend-added', 'message'],
+    );
+    const before = ingress.events.length;
+    ingress.listener().onRecvMsg(null);
+    assert.deepEqual(ingress.events.slice(before), [
+      ['diagnostic', { stage: 'invalid-native-message-batch' }],
+    ]);
+  } finally {
+    ingress.services.close();
+  }
+  const retiredIngress = fixture(
+    [],
+    async () => resolved(),
+    (name) => {
+      if (name === 'group-mute') retiredIngress.services.close();
+    },
+  );
+  try {
+    retiredIngress.listener().onRecvMsg(systemBatch());
+    assert.deepEqual(
+      retiredIngress.events.map(([name]) => name),
+      ['group-mute'],
+    );
+    assert.equal(retiredIngress.calls.length, 0);
+  } finally {
+    retiredIngress.services.close();
+  }
   return {
     receivedMessageContract: true,
     receivedMessageSnapshotContract: true,
     receivedConversationCaptureContract: true,
+    receivedSystemIngressContract: true,
     nativeReceivedIdentityLookupAttempted: false,
   };
 }
