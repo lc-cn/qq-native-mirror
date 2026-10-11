@@ -1,0 +1,50 @@
+sdk/src/runtime/kernel-method.ts
+  s_2104cc474f1ce5::t_0546ff82219c9c 1-49
+sdk/package.json
+  s_2104cc474f1ce5::t_99a1480e439c85 21
+sdk/test/helpers/dependency-policy.ts
+  s_2104cc474f1ce5::t_0546ff82219c9c 80
+  s_2104cc474f1ce5::t_377ce868cddc6d 170,176-177,305-307
+  s_2104cc474f1ce5::t_99a1480e439c85 168-169,171-175
+sdk/src/runtime/account-session-lifecycle.ts
+  s_2104cc474f1ce5::t_0546ff82219c9c 6,220-221,223
+  s_2104cc474f1ce5::t_6bbdd47ce85e65 224-232,234-264,266-279
+sdk/test/architecture.test.ts
+  s_2104cc474f1ce5::t_99a1480e439c85 60-72
+  s_2104cc474f1ce5::t_d28df92c160357 73-81,618,637
+sdk/docs/development.md
+  s_2104cc474f1ce5::t_99a1480e439c85 9-13,45,84-90
+  s_2104cc474f1ce5::t_7d28fd2198a437 91
+sdk/src/kernel.ts
+  s_2104cc474f1ce5::t_0546ff82219c9c 14,135-137,142,145-146
+sdk/test/kernel-environment.test.ts
+  s_2104cc474f1ce5::t_377ce868cddc6d 8-115
+  s_2104cc474f1ce5::t_73268a5fdc4f5f 116-134
+sdk/docs/architecture.md
+  s_2104cc474f1ce5::t_99a1480e439c85 64
+sdk/src/runtime/kernel-environment.ts
+  s_2104cc474f1ce5::t_0546ff82219c9c 6,42-43,54-59,61-66,73-77,79,81-85,87-88,102,105-119,122-124,127
+  s_2104cc474f1ce5::t_8e3f97d10a998e 125-126,128-137,141-146,151
+sdk/docs/architecture/quality-gates.md
+  s_2104cc474f1ce5::t_99a1480e439c85 20-27
+sdk/test/account-session-lifecycle.test.ts
+  s_2104cc474f1ce5::t_2934b631ad3232 356-393
+sdk/test/kernel-session-strategy.test.ts
+  s_2104cc474f1ce5::t_dc14e3063a9dd7 49,298-352
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "edfcfba87506e8a42e1add55dbff6a48969f21fc",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
