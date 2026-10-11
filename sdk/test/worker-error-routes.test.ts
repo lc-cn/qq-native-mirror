@@ -29,4 +29,13 @@ test('actual worker replies to opaque failures and the same worker serves the ne
   assert.equal(checks.clientOfflineObserverRetirementContract, true);
   assert.equal(checks.clientOfflineBatchCancellationContract, true);
   assert.equal(checks.clientNestedOfflineRestoreContract, true);
+  assert.equal(checks.clientBackgroundNotificationFailureContract, true);
+  assert.equal(checks.workerOpaqueErrorContract, true);
+  assert.equal(checks.workerErrorRecoveryContract, true);
+  assert.equal(checks.workerErrorNoRetryContract, true);
+  assert.equal(checks.workerMergedForwardErrorContract, true);
+  assert.equal(checks.workerMessageOnlyErrorEventContract, true);
+  assert.equal(checks.nativeExecuted, false);
+  assert.equal(checks.accountUsed, false);
+  assert.equal(checks.realHttp, false);
 });

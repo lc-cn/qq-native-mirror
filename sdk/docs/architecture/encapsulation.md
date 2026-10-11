@@ -363,6 +363,21 @@ threads still require worker exit: this module does not invent a Session destruc
 
 ## Verification orchestration
 
+Controlled parent-client lifecycle verification has a separate owner,
+`client-lifecycle-consumer-contract.mjs`. Its only input is the actual source or
+installed `QQClient` constructor. It owns unspawned worker fixtures and preserves
+the client scenarios' ordering, assertions, timers and cleanup. Its receipt is
+returned only after every scenario finishes.
+
+`worker-error-consumer-contract.mjs` awaits that owner and retains its existing
+entry and combined receipt. It owns actual worker forks, synthetic kernel hooks,
+IPC error/recovery checks, fatal subprocess observation and temporary files.
+Those process checks remain distinct from the controlled parent fixtures.
+The static helper import stays in the reviewed consumers directory and follows
+the existing strict typing, Promise and module-reference checks; it adds no
+loader exception or adjacent-script permission. Both owners verify source and
+fresh installed constructors without establishing real native or account proof.
+
 The local packed verifier and platform consumer share the checked friend/list and
 history query helpers in `scripts/consumers/`. Each helper imports the actual
 installed composition and CLI through a package-root argument, owns its controlled

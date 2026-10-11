@@ -521,3 +521,36 @@ await test('installed package orchestrator and worker test entry observe their a
     ).length > 0,
   );
 });
+
+await test('client lifecycle consumer preserves actual constructor types and observes its verification entry without execution', async () => {
+  const file = resolve(root, 'scripts/consumers/client-lifecycle-consumer-contract.mjs');
+  const actual = readFileSync(file, 'utf8');
+  assert.deepEqual(diagnostics(actual, file), []);
+  const invalid = replaceOnce(
+    actual,
+    'const client = new QQClient(child, 20);',
+    "const client = new QQClient(child, '20');",
+  );
+  assert.ok(diagnostics(invalid, file).length > 0);
+  const eslint = new ESLint({
+    cwd: root,
+    overrideConfig: {
+      languageOptions: { parserOptions: { disallowAutomaticSingleRunInference: true } },
+    },
+  });
+  const [good] = await eslint.lintText(actual, { filePath: file });
+  assert.equal(good.errorCount, 0);
+  for (const prefix of ['', 'void ']) {
+    const abandoned = replaceOnce(
+      actual,
+      'await verifyClientIdentity(QQClient);',
+      `${prefix}verifyClientIdentity(QQClient);`,
+    );
+    const reports = await eslint.lintText(abandoned, { filePath: file });
+    assert.ok(
+      reports
+        .flatMap((report) => report.messages)
+        .some((message) => message.ruleId === '@typescript-eslint/no-floating-promises'),
+    );
+  }
+});
