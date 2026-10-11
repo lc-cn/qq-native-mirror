@@ -1,0 +1,29 @@
+sdk/docs/evidence/default-installed-gzip-2433928-macos-arm64.json
+  s_2104cc474f1ce5::t_f9ea0561279705 1-100
+sdk/docs/multi-version-and-mirror.md
+  s_2104cc474f1ce5::t_8f6b7c6e7293a4 226-242
+sdk/docs/native-size-reduction.md
+  s_2104cc474f1ce5::t_d379c19112b481 193-219
+sdk/docs/sdk-acceptance.md
+  s_2104cc474f1ce5::t_1010168b9fa599 102-111
+sdk/scripts/consumers/mirror-consumer-contract.mjs
+  s_2104cc474f1ce5::t_ecf6c654dbb1b0 24-25,29,31-37,41,43-44,58-64,75,81-84,94,135,139,147-170,173-174,179-182,187-189,193-194,200
+sdk/test/mirror-consumer-contract.test.ts
+  s_2104cc474f1ce5::t_c0d60f22e4bb5c 13-23,44,69-82,108-110,192-238
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "14919dfdfde901216f837857da022b22a0fd808f",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
