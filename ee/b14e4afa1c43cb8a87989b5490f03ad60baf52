@@ -1,0 +1,25 @@
+sdk/docs/architecture/encapsulation.md
+  s_2104cc474f1ce5::t_56ccbfc2f1f126 418-428
+sdk/scripts/consumers/forward-resource-consumer-contract.mjs
+  s_2104cc474f1ce5::t_4bf363dad6256b 1-2,302-303,421,463-616
+sdk/src/features/forward/forward-resource-owner.ts
+  s_2104cc474f1ce5::t_417dfec7a4a7fb 8-11,35-38,41-103,106-120,124-136,140,144-151
+sdk/test/forward-resource-retirement.test.ts
+  s_2104cc474f1ce5::t_55d3589f25978f 1-301
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "eeb14e4afa1c43cb8a87989b5490f03ad60baf52",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
