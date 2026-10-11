@@ -57,6 +57,30 @@ function dependencies(path: string): Dependency[] {
 const graph = new Map(files.map((path) => [path, dependencies(path)]));
 const runtimeEdges = (path: string) => graph.get(path)!.filter((edge) => !edge.typeOnly);
 
+test('feature lifetime has no dependencies and only reviewed local owners can acquire it', () => {
+  const lifetime = 'src/runtime/feature-lifetime.ts';
+  assert.deepEqual(graph.get(join(projectRoot, lifetime)), []);
+  for (const typeOnly of [false, true]) {
+    for (const from of [
+      'src/features/contacts/contact-directory.ts',
+      'src/features/groups/group-files.ts',
+    ])
+      assert.equal(dependencyViolation({ from, to: lifetime, typeOnly }), undefined);
+    for (const from of [
+      'src/native-services.ts',
+      'src/runtime/new-owner.ts',
+      'src/client/qq-client.ts',
+    ])
+      assert.ok(dependencyViolation({ from, to: lifetime, typeOnly }));
+    for (const to of [
+      'src/runtime/native-service-lifetime.ts',
+      'src/features/groups/group-files.ts',
+      'node:fs',
+    ])
+      assert.ok(dependencyViolation({ from: lifetime, to, typeOnly }));
+  }
+});
+
 test('group query composition cannot own identifier rules', () => {
   for (const typeOnly of [false, true]) {
     assert.ok(

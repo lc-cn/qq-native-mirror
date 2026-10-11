@@ -33,6 +33,7 @@ import { verifyGroupNoticeConsumer } from './consumers/group-notice-consumer-con
 import { verifyGroupSearchConsumer } from './consumers/group-search-consumer-contract.mjs';
 import { verifyGroupQueryOwnerConsumer } from './consumers/group-query-owner-consumer-contract.mjs';
 import { verifyContactGroupSnapshots } from './consumers/contact-group-snapshot-consumer-contract.mjs';
+import { verifyContactDirectoryLifetimeConsumer } from './consumers/contact-directory-lifetime-consumer-contract.mjs';
 import { verifyRequestResultConsumer } from './consumers/request-result-consumer-contract.mjs';
 import { verifyGroupFileActionLifetimeConsumer } from './consumers/group-file-action-consumer-contract.mjs';
 import { verifyGroupFilePagesConsumer } from './consumers/group-file-pages-consumer-contract.mjs';
@@ -210,6 +211,9 @@ const contactGroupSnapshotChecks = await verifyContactGroupSnapshots(
   join(destination, 'node_modules/qq-native-client'),
 );
 const requestResultChecks = await verifyRequestResultConsumer(
+  join(destination, 'node_modules/qq-native-client'),
+);
+const contactDirectoryLifetimeChecks = await verifyContactDirectoryLifetimeConsumer(
   join(destination, 'node_modules/qq-native-client'),
 );
 const groupFileActionChecks = await verifyGroupFileActionLifetimeConsumer(
@@ -622,6 +626,7 @@ const receipt = {
     groupSearchChecks,
     groupQueryOwnerChecks,
     contactGroupSnapshotChecks,
+    contactDirectoryLifetimeChecks,
     requestResultChecks,
     groupFilePagesChecks,
     groupFileActionChecks,

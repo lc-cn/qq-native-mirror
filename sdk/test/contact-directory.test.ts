@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createContactDirectory } from '../src/features/contacts/contact-directory.ts';
+import { NativeServiceLifetime } from '../src/runtime/native-service-lifetime.ts';
 const profile = (uid = 'u_a', uin = '123') => ({
   coreInfo: { uid, uin, nick: 'fixture', remark: '' },
 });
@@ -13,6 +14,66 @@ const category = () => ({
   buddyUids: ['u_a', 'u_a'],
 });
 const tick = () => new Promise((resolve) => setImmediate(resolve));
+
+for (const stage of ['buddy', 'profile', 'uid'] as const)
+  for (const completion of ['resolve', 'reject'] as const)
+    test(`local close settles stalled ${stage} before late ${completion}, retaining sibling account`, async () => {
+      const account = new NativeServiceLifetime();
+      let complete!: (value: unknown) => void;
+      const late = new Promise((resolve, reject) => {
+        complete = completion === 'resolve' ? resolve : reject;
+      });
+      const calls: string[] = [];
+      const directory = createContactDirectory({
+        signal: account.signal,
+        version: '7.0.2-53644',
+        awaitAlive: account.awaitAlive,
+        getBuddyService: () => ({
+          getBuddyListV2() {
+            calls.push('buddy');
+            return stage === 'buddy' ? late : { result: 0, data: [{ buddyUids: ['u_a'] }] };
+          },
+        }),
+        getProfileService: () => ({
+          getCoreAndBaseInfo() {
+            calls.push('profile');
+            return late;
+          },
+        }),
+        getUidService: () => ({
+          getUid() {
+            calls.push('uid');
+            return late;
+          },
+        }),
+      });
+      const result = stage === 'uid' ? directory.uidFor('123') : directory.listFriends();
+      let settled = false;
+      const stopped = assert
+        .rejects(result, { message: 'Contact directory is closed' })
+        .then(() => {
+          settled = true;
+        });
+      void stopped.catch(() => {});
+      try {
+        await tick();
+        directory.close();
+        directory.close();
+        await tick();
+        assert.equal(settled, true, 'Local closure must settle before native completion');
+        await stopped;
+        assert.deepEqual(calls, stage === 'profile' ? ['buddy', 'profile'] : [stage]);
+        assert.equal(await account.awaitAlive(Promise.resolve('sibling')), 'sibling');
+        await assert.rejects(directory.uidFor('123'), /closed/);
+        assert.throws(() => directory.rememberMembers([]), /closed/);
+      } finally {
+        complete(completion === 'resolve' ? {} : new Error('Controlled late failure'));
+        directory.close();
+        account.close();
+        await stopped;
+      }
+      await tick();
+    });
 function fixture(version = '7.0.2-53644') {
   const calls: { method: string; args: unknown[] }[] = [];
   let buddy: unknown = { result: 0, data: [{ buddyUids: ['u_a'] }] };

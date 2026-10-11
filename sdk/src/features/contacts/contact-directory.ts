@@ -6,6 +6,7 @@ import {
   projectFriends,
 } from './friend-categories.ts';
 import { nativeResultError } from '../../errors.ts';
+import { FeatureLifetime } from '../../runtime/feature-lifetime.ts';
 export interface BuddyDirectoryPort {
   getBuddyListV2?: (category: string, refresh: boolean, source: number) => unknown;
 }
@@ -21,7 +22,7 @@ export interface ContactDirectoryContext {
   getBuddyService(): BuddyDirectoryPort | null | undefined;
   getProfileService(): ProfileDirectoryPort | null | undefined;
   getUidService(): UidDirectoryPort | null | undefined;
-  awaitAlive<T>(value: T | PromiseLike<T>): Promise<T>;
+  awaitAlive<T>(value: T | PromiseLike<T>, requestSignal?: AbortSignal): Promise<T>;
 }
 function field(value: unknown, key: string): unknown {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
@@ -33,14 +34,14 @@ function field(value: unknown, key: string): unknown {
  * partial entries, and converted identifiers are intentionally not cached.
  */
 export function createContactDirectory(context: ContactDirectoryContext) {
-  const { signal, version, getBuddyService, getProfileService, getUidService, awaitAlive } =
-    context;
-  let closed = false;
+  const { version, getBuddyService, getProfileService, getUidService } = context;
+  const lifetime = new FeatureLifetime({
+    signal: context.signal,
+    awaitAlive: context.awaitAlive,
+    closedMessage: 'Contact directory is closed',
+  });
+  const { assertOpen: alive, wait: awaitAlive } = lifetime;
   const uidCache = new Map<string, string>();
-  const alive = () => {
-    signal.throwIfAborted();
-    if (closed) throw new Error('Contact directory is closed');
-  };
   const buddyList = () => {
     alive();
     const service = getBuddyService();
@@ -137,7 +138,7 @@ export function createContactDirectory(context: ContactDirectoryContext) {
       for (const member of members) uidCache.set(member.userId, member.uid);
     },
     close() {
-      closed = true;
+      lifetime.close();
       uidCache.clear();
     },
   };

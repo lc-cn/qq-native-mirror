@@ -1,4 +1,5 @@
 import { createGroupFilePages, type GroupFilePagesContext } from './group-file-pages.ts';
+import { FeatureLifetime } from '../../runtime/feature-lifetime.ts';
 import type { GroupFolder } from '../../contracts/groups.ts';
 import {
   captureCreateGroupFolder,
@@ -49,28 +50,12 @@ function requireContract(supported: boolean, operation: string): void {
 export function createGroupFiles(context: GroupFilesContext) {
   const { signal, awaitAlive } = context;
   let closed = false;
-  const actionController = new AbortController();
-  const actionSignal = AbortSignal.any([signal, actionController.signal]);
-  // The account wait port owns native completion. This owner separately retires
-  // its actions so closing it does not have to close the whole account Session.
-  const waitForAction = async <T>(value: T | PromiseLike<T>): Promise<T> => {
-    const pending = Promise.resolve(value);
-    void pending.catch(() => {});
-    actionSignal.throwIfAborted();
-    let abort!: () => void;
-    const stopped = new Promise<never>((_, reject) => {
-      abort = () => reject(actionController.signal.reason);
-      actionController.signal.addEventListener('abort', abort, { once: true });
-    });
-    void stopped.catch(() => {});
-    try {
-      const result = await Promise.race([awaitAlive(pending, actionController.signal), stopped]);
-      actionSignal.throwIfAborted();
-      return result;
-    } finally {
-      actionController.signal.removeEventListener('abort', abort);
-    }
-  };
+  const actions = new FeatureLifetime({
+    signal,
+    awaitAlive,
+    closedMessage: 'Group file actions are closed',
+  });
+  const { signal: actionSignal, wait: waitForAction } = actions;
   const requireActionContract = (support: () => boolean, operation: string) => {
     actionSignal.throwIfAborted();
     const supported = support.call(context);
@@ -118,7 +103,7 @@ export function createGroupFiles(context: GroupFilesContext) {
     close() {
       if (closed) return;
       closed = true;
-      actionController.abort(new Error('Group file actions are closed'));
+      actions.close();
       pages?.close();
     },
     async getGroupFileCount(groupId: unknown): Promise<number> {

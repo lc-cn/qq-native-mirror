@@ -1,5 +1,14 @@
 # Encapsulation and variation points
 
+`FeatureLifetime` owns cancellation and pending completion for one local feature.
+Contact directory reads and group-file actions share this implementation through
+named `assertOpen`, `wait`, `signal` and `close` operations. The account wait port
+receives local cancellation and retains account-level errors; a local fallback
+also retires waits when a substituted port only observes account closure. Late
+completion remains observed and local listeners are released on every exit.
+This module cannot acquire native services, domain implementations or IO. Cache
+clearing, page history and mutation acknowledgements stay with their domain owners.
+
 The group-file owner retires its count, creation and deletion actions separately
 from the account lifetime. Its action signal guards capability checks, service
 acquisition and captured methods; the account wait also receives that local

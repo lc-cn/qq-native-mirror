@@ -169,6 +169,15 @@ export const crossFeatureDependencies = [
 ] as const;
 
 export function dependencyViolation({ from, to, typeOnly }: SourceDependency): string | undefined {
+  if (from === 'src/runtime/feature-lifetime.ts')
+    return 'Feature lifetime owns only local cancellation and an injected account wait port.';
+  if (to === 'src/runtime/feature-lifetime.ts')
+    return [
+      'src/features/contacts/contact-directory.ts',
+      'src/features/groups/group-files.ts',
+    ].includes(from)
+      ? undefined
+      : 'Feature lifetime requires an exact reviewed local operation owner.';
   if (from === 'src/features/forward/forward-resource-input.ts')
     return 'Forward-resource input has no dependencies; protocol decoding and resource acquisition belong to their owners.';
   const domainInputContracts = {

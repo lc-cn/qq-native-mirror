@@ -193,13 +193,28 @@ export function createLongMessageResponseTransport(service: LongMessageResponseS
             ),
           timeout,
         );
-        dispatched = true;
         let returned: unknown;
         try {
-          returned = service.sendSsoCmdReqByContend(command, request);
+          const method = service.sendSsoCmdReqByContend;
+          if (closed || signal?.aborted) {
+            cancel();
+            return;
+          }
+          if (typeof method !== 'function') {
+            finish(
+              new LongMessageResponseError('native', 'Native long-message dispatch failed', false),
+            );
+            return;
+          }
+          dispatched = true;
+          returned = Reflect.apply(method, service, [command, request]);
         } catch {
           finish(
-            new LongMessageResponseError('native', 'Native long-message dispatch failed', true),
+            new LongMessageResponseError(
+              'native',
+              'Native long-message dispatch failed',
+              dispatched,
+            ),
           );
           return;
         }

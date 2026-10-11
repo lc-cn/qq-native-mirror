@@ -250,6 +250,68 @@ test('close during synchronous dispatch cannot resolve or retry; native late rej
   assert.equal(calls, 1);
 });
 
+for (const retirement of ['close', 'abort'] as const)
+  test(`method getter ${retirement} prevents long-message native dispatch`, async () => {
+    const controller = new AbortController();
+    let reads = 0,
+      calls = 0;
+    const owner: { transport?: ReturnType<typeof createLongMessageResponseTransport> } = {};
+    const service = {
+      get sendSsoCmdReqByContend() {
+        reads++;
+        if (owner.transport) {
+          if (retirement === 'close') owner.transport.close();
+          else controller.abort(new Error('Controlled account retirement'));
+        }
+        return function (this: object) {
+          assert.equal(this, service);
+          calls++;
+          return { rspbuffer: response };
+        };
+      },
+    };
+    const transport = createLongMessageResponseTransport(service);
+    owner.transport = transport;
+    try {
+      assert.equal(reads, 1, 'constructor validation retains its original read');
+      await assert.rejects(
+        transport.send(LONG_MESSAGE_COMMAND, request, { signal: controller.signal }),
+        failure('lifecycle', false, 'not-dispatched'),
+      );
+      assert.equal(reads, 2, 'dispatch captures its method once');
+      assert.equal(calls, 0);
+      assert.equal(getEventListeners(controller.signal, 'abort').length, 0);
+    } finally {
+      transport.close();
+    }
+  });
+
+for (const changed of ['missing', 'throw'] as const)
+  test(`dispatch method ${changed} remains a native failure before dispatch`, async () => {
+    let reads = 0;
+    const service = {
+      get sendSsoCmdReqByContend() {
+        reads++;
+        if (reads === 1) return () => ({ rspbuffer: response });
+        if (changed === 'throw') throw new Error('Sensitive method getter');
+        return undefined;
+      },
+    };
+    // Model a proprietary method changing after successful construction.
+    const transport = createLongMessageResponseTransport(
+      service as { sendSsoCmdReqByContend(command: string, data: Buffer): unknown },
+    );
+    try {
+      await assert.rejects(
+        transport.send(LONG_MESSAGE_COMMAND, request),
+        failure('native', false, 'not-dispatched'),
+      );
+      assert.equal(reads, 2);
+    } finally {
+      transport.close();
+    }
+  });
+
 test('normal settlement removes abort listener and malformed options fail before dispatch', async () => {
   let calls = 0;
   const controller = new AbortController();
