@@ -276,7 +276,7 @@ the platform consumer orchestrator trigger SDK quality as well as native CI.
 Always rebuild from clean `dist`; source tests cannot detect obsolete
 emitted modules left in a package.
 
-All TypeScript scripts and the checked face, group-search, group-essence, element-preparation and mirror JavaScript consumers share
+All TypeScript scripts and the checked client-factory, face, group-search, group-essence, element-preparation and mirror JavaScript consumers share
 `tsconfig.scripts.json`. When migrating a JavaScript helper, give dynamic installed imports the corresponding module
 types, retain faithful DTOs in controlled adapters and add type-aware Promise
 lint. Do not silence errors by assigning the whole installed module or fake

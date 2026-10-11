@@ -50,6 +50,7 @@ export default defineConfig([
   {
     files: [
       'scripts/**/*.ts',
+      'scripts/client-factory-consumer-contract.mjs',
       'scripts/face-consumer-contract.mjs',
       'scripts/group-search-consumer-contract.mjs',
       'scripts/element-preparation-consumer-contract.mjs',
@@ -69,6 +70,7 @@ export default defineConfig([
   },
   {
     files: [
+      'scripts/client-factory-consumer-contract.mjs',
       'scripts/face-consumer-contract.mjs',
       'scripts/group-search-consumer-contract.mjs',
       'scripts/element-preparation-consumer-contract.mjs',

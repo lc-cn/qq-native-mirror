@@ -7,20 +7,76 @@ import { dirname, join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { createHash } from 'node:crypto';
 
-/** Actual compiled factory/worker; only addon loading and kernel are synthetic. */
+/** @typedef {import('../src/index.ts').QQClient} Client */
+/** @typedef {import('../src/index.ts').ClientOptions} ClientOptions */
+/** @typedef {import('../src/contracts/native.ts').QQVersion} QQVersion */
+/** @typedef {{wrapperPath:unknown, version:unknown, bridgePath:unknown, videoCodecPath:unknown}} CapturedInitialization */
+
+/** @param {unknown} value @returns {Record<string,unknown>} */
+function record(value) {
+  assert.ok(value && typeof value === 'object' && !Array.isArray(value));
+  return /** @type {Record<string,unknown>} */ (value);
+}
+/** Capture only fields inspected by this controlled IPC observation.
+ * @param {unknown} message @returns {CapturedInitialization|undefined}
+ */
+function captureInitialization(message) {
+  if (!message || typeof message !== 'object' || Array.isArray(message)) return undefined;
+  const raw = record(message);
+  if (raw.method !== 'init') return undefined;
+  const options = record(raw.options);
+  return {
+    wrapperPath: options.wrapperPath,
+    version: options.version,
+    bridgePath: options.bridgePath,
+    videoCodecPath: options.videoCodecPath,
+  };
+}
+
+/** Forward Node's overloaded child-process boundary without changing argument order.
+ * @param {typeof childProcess.fork} fork
+ * @param {unknown[]} args
+ * @returns {import('node:child_process').ChildProcess}
+ */
+function forwardFork(fork, args) {
+  const result = /** @type {unknown} */ (Reflect.apply(fork, childProcess, args));
+  assert.ok(result instanceof childProcess.ChildProcess);
+  return result;
+}
+/** @param {import('node:child_process').ChildProcess} worker
+ * @param {(value:CapturedInitialization)=>void} capture
+ */
+function captureWorkerInitialization(worker, capture) {
+  const send = worker.send;
+  worker.send = (...args) => {
+    const captured = captureInitialization(args[0]);
+    if (captured) capture(captured);
+    const result = /** @type {unknown} */ (Reflect.apply(send, worker, args));
+    assert.ok(typeof result === 'boolean');
+    return result;
+  };
+}
+
+/** Actual compiled factory/worker; only addon loading and kernel are synthetic.
+ * @param {string} installedRoot
+ * @param {{source?:boolean}} [options]
+ */
 export async function verifyClientFactoryConsumer(installedRoot, { source = false } = {}) {
   const directory = await realpath(await mkdtemp(join(tmpdir(), 'qq-factory-consumer-')));
   const packageRoot = join(directory, 'package');
   const originalFork = childProcess.fork;
   const oldElectron = process.env.ELECTRON_RUN_AS_NODE;
+  /** @type {{modulePath:string|URL,envElectron:unknown,execArgv:unknown}[]} */
   const calls = [];
   const tree = source ? 'src' : 'dist';
   const extension = source ? 'ts' : 'js';
   try {
     await mkdir(packageRoot, { recursive: true });
     await cp(join(installedRoot, tree), join(packageRoot, tree), { recursive: true });
-    const metadata = JSON.parse(await readFile(join(installedRoot, 'package.json'), 'utf8'));
-    if (source) metadata.exports['.'] = { import: './src/index.ts' };
+    const metadata = record(
+      JSON.parse(await readFile(join(installedRoot, 'package.json'), 'utf8')),
+    );
+    if (source) record(metadata.exports)['.'] = { import: './src/index.ts' };
     await writeFile(join(packageRoot, 'package.json'), JSON.stringify(metadata));
     const silkSource = dirname(
       createRequire(join(installedRoot, 'package.json')).resolve('silk-wasm/package.json'),
@@ -39,19 +95,33 @@ export async function verifyClientFactoryConsumer(installedRoot, { source = fals
     await writeFile(hook, `process.dlopen=()=>{};`);
     const entry = join(packageRoot, 'entry.mjs');
     await writeFile(entry, `export {createClient,QQClient} from 'qq-native-client';`);
-    childProcess.fork = (modulePath, args, options) => {
-      calls.push({ modulePath, options });
-      return originalFork(modulePath, args, {
-        ...options,
-        execArgv: ['--import', pathToFileURL(hook).href],
+    childProcess.fork = (...args) => {
+      const modulePath = args[0];
+      const options = record(args[2] ?? (Array.isArray(args[1]) ? {} : args[1]) ?? {});
+      calls.push({
+        modulePath,
+        envElectron: record(options.env ?? {}).ELECTRON_RUN_AS_NODE,
+        execArgv: options.execArgv,
       });
+      return forwardFork(originalFork, [
+        modulePath,
+        Array.isArray(args[1]) ? args[1] : undefined,
+        {
+          ...options,
+          execArgv: ['--import', pathToFileURL(hook).href],
+        },
+      ]);
     };
     syncBuiltinESMExports();
     process.env.ELECTRON_RUN_AS_NODE = '1';
-    const { createClient, QQClient } = await import(pathToFileURL(entry).href);
-    const internal = await import(
+    /** @type {Promise<typeof import('../src/index.ts')>} */
+    const installedModule = import(pathToFileURL(entry).href);
+    const { createClient, QQClient } = await installedModule;
+    /** @type {Promise<typeof import('../src/client/qq-client.ts')>} */
+    const internalModule = import(
       pathToFileURL(join(packageRoot, tree, `client/qq-client.${extension}`)).href
     );
+    const internal = await internalModule;
     assert.equal(QQClient, internal.QQClient);
     const wrapper = join(directory, 'bundle/wrapper.node');
     await mkdir(dirname(wrapper), { recursive: true });
@@ -74,18 +144,18 @@ export async function verifyClientFactoryConsumer(installedRoot, { source = fals
     // Capture the actual init payload without replacing worker execution.
     for (const [index, fixture] of fixtures.entries()) {
       if (fixture.adjacent) await writeFile(adjacent, 'synthetic adjacent');
+      /** @type {CapturedInitialization|undefined} */
       let init;
       const captureFork = childProcess.fork;
       childProcess.fork = (...args) => {
-        const worker = captureFork(...args);
-        const send = worker.send.bind(worker);
-        worker.send = (message, ...rest) => {
-          if (message?.method === 'init') init = message.options;
-          return send(message, ...rest);
-        };
+        const worker = forwardFork(captureFork, args);
+        captureWorkerInitialization(worker, (value) => {
+          init = value;
+        });
         return worker;
       };
       syncBuiltinESMExports();
+      /** @type {Client|undefined} */
       let client;
       try {
         client = await createClient({
@@ -99,13 +169,14 @@ export async function verifyClientFactoryConsumer(installedRoot, { source = fals
         });
         assert.ok(client instanceof QQClient);
         assert.equal(client.account, undefined);
+        assert.ok(init);
         assert.equal(init.bridgePath, fixture.expected);
-        assert.equal(
-          resolve(calls[index].modulePath),
-          join(packageRoot, tree, `worker.${extension}`),
-        );
-        assert.equal(calls[index].options.env.ELECTRON_RUN_AS_NODE, undefined);
-        assert.deepEqual(calls[index].options.execArgv, []);
+        const modulePath = calls[index].modulePath;
+        assert.equal(typeof modulePath, 'string');
+        assert.ok(typeof modulePath === 'string');
+        assert.equal(resolve(modulePath), join(packageRoot, tree, `worker.${extension}`));
+        assert.equal(calls[index]?.envElectron, undefined);
+        assert.deepEqual(calls[index]?.execArgv, []);
         const closing = client.close();
         assert.equal(client.close(), closing);
         await closing;
@@ -142,15 +213,20 @@ export async function verifyClientFactoryConsumer(installedRoot, { source = fals
 
 /** Cross the same public factory from source and a freshly installed archive.
  * Metadata/payload responses and addon loading are fixtures; no account is used.
+ * @param {typeof import('../src/index.ts').createClient} createClient
+ * @param {string} directory
+ * @param {string} bridgePath
  */
 async function verifyNativeSourceSelection(createClient, directory, bridgePath) {
   const originalFetch = globalThis.fetch;
   const originalFork = childProcess.fork;
+  /** @param {import('node:crypto').BinaryLike} bytes */
   const hash = (bytes) => createHash('sha256').update(bytes).digest('hex');
   const name = `qq-native-client-${process.platform}-${process.arch}`;
   const auxiliary = join(directory, 'node_modules', name);
   const bytes = Buffer.from('synthetic selected wrapper');
   const version = { clientVersion: '1.0.0', appId: '1', qua: 'fixture' };
+  /** @type {import('../src/contracts/native.ts').NativeManifest} */
   const manifest = {
     schemaVersion: 1,
     id: 'consumer-source-fixture',
@@ -169,13 +245,22 @@ async function verifyNativeSourceSelection(createClient, directory, bridgePath) 
   const payloads = new Map([['https://fixture.example/wrapper.node', bytes]]);
   /** @type {'catalog' | 'manifest' | undefined} */
   let rejectedMetadata;
+  /** @type {string[]} */
   const requests = [];
+  /** @type {CapturedInitialization|undefined} */
   let init;
+  const readInitialization = () => {
+    assert.ok(init, 'Worker did not dispatch initialization');
+    return init;
+  };
   let index = 0;
   let workerStarts = 0;
+  /** @param {unknown} value */
   const save = async (value) => writeFile(join(auxiliary, 'manifest.json'), JSON.stringify(value));
+  /** @param {Partial<ClientOptions>} options @param {string} expectedWrapper @param {QQVersion} expectedVersion */
   const openAndClose = async (options, expectedWrapper, expectedVersion) => {
     init = undefined;
+    /** @type {Client|undefined} */
     let client;
     try {
       client = await createClient({
@@ -187,8 +272,9 @@ async function verifyNativeSourceSelection(createClient, directory, bridgePath) 
         timeoutMs: 5000,
         ...options,
       });
-      assert.equal(init.options.wrapperPath, expectedWrapper);
-      assert.deepEqual(init.options.version, expectedVersion);
+      const capturedInit = readInitialization();
+      assert.equal(capturedInit.wrapperPath, expectedWrapper);
+      assert.deepEqual(capturedInit.version, expectedVersion);
       assert.equal(client.account, undefined);
     } finally {
       await client?.close();
@@ -208,12 +294,10 @@ async function verifyNativeSourceSelection(createClient, directory, bridgePath) 
     await save(manifest);
     childProcess.fork = (...args) => {
       workerStarts++;
-      const worker = originalFork(...args);
-      const send = worker.send.bind(worker);
-      worker.send = (message, ...rest) => {
-        if (message?.method === 'init') init = message;
-        return send(message, ...rest);
-      };
+      const worker = forwardFork(originalFork, args);
+      captureWorkerInitialization(worker, (value) => {
+        init = value;
+      });
       return worker;
     };
     syncBuiltinESMExports();
@@ -250,7 +334,9 @@ async function verifyNativeSourceSelection(createClient, directory, bridgePath) 
     for (const key of ['wrapperPath', 'manifestUrl', 'catalogUrl', 'version']) {
       for (const value of [null, false, 0, '', [], {}]) {
         await assert.rejects(
-          createClient({ dataDir: directory, [key]: value }),
+          Promise.resolve(
+            Reflect.apply(createClient, undefined, [{ dataDir: directory, [key]: value }]),
+          ),
           key === 'version' ? /requires clientVersion/ : /nonempty string/,
         );
       }
@@ -381,7 +467,7 @@ async function verifyNativeSourceSelection(createClient, directory, bridgePath) 
       }),
     );
     await openAndClose({ wrapperPath: local }, local, version);
-    assert.equal(init.options.videoCodecPath, join(dirname(local), 'codec.mjs'));
+    assert.equal(readInitialization().videoCodecPath, join(dirname(local), 'codec.mjs'));
     assert.deepEqual(requests, []);
     return {
       nativeSourceSelectionContract: true,

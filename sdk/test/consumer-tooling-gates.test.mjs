@@ -54,6 +54,27 @@ test('consumer compiler gate rejects missing preparation await and fabricated se
   );
 });
 
+const factoryHelper = resolve(root, 'scripts/client-factory-consumer-contract.mjs');
+const factorySource = readFileSync(factoryHelper, 'utf8');
+test('client factory compiler rejects unawaited construction and invalid options without running its worker', () => {
+  assert.deepEqual(diagnostics(factorySource, factoryHelper), []);
+  for (const [before, after, code] of [
+    [
+      'client = await createClient({\n          wrapperPath: wrapper,',
+      'client = createClient({\n          wrapperPath: wrapper,',
+      2740,
+    ],
+    ['bridgePath: fixture.explicit ? explicit : undefined,', 'bridgePath: 123,', 2322],
+  ]) {
+    assert.ok(
+      diagnostics(replaceOnce(factorySource, before, after), factoryHelper).some(
+        (item) => item.code === code,
+      ),
+      `Factory verification must reject ${after}`,
+    );
+  }
+});
+
 const groupSearchHelper = resolve(root, 'scripts/group-search-consumer-contract.mjs');
 const groupSearchSource = readFileSync(groupSearchHelper, 'utf8');
 
@@ -156,6 +177,13 @@ test('element preparation compiler rejects unawaited results, wrong variants and
 });
 
 for (const fixture of [
+  {
+    name: 'client-factory',
+    file: factoryHelper,
+    source: factorySource,
+    invocation: "await openAndClose({ version }, join(auxiliary, 'wrapper.node'), version);",
+    ignored: "openAndClose({ version }, join(auxiliary, 'wrapper.node'), version);",
+  },
   {
     name: 'face',
     file: helper,
