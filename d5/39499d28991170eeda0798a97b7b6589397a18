@@ -1,0 +1,41 @@
+ci/verify-consumer.mjs
+  s_2104cc474f1ce5::t_5987133feb56cf 36,214,327
+sdk/docs/architecture/quality-gates.md
+  s_2104cc474f1ce5::t_25d64e3a1727a6 187-194
+sdk/docs/development.md
+  s_2104cc474f1ce5::t_7a658d408ee0e7 203-206
+sdk/eslint.config.mjs
+  s_2104cc474f1ce5::t_b30442eace3490 58,81
+sdk/scripts/kernel-session-consumer-contract.mjs
+  s_2104cc474f1ce5::t_71e8e66ebddf54 257-261
+sdk/scripts/request-result-consumer-contract.mjs
+  s_2104cc474f1ce5::t_cd2d597814f5ab 1-154
+sdk/scripts/verify-package-consumer.mjs
+  s_2104cc474f1ce5::t_9a02e8488869bd 36,211-213,621
+sdk/src/features/contacts/friend-requests.ts
+  s_2104cc474f1ce5::t_84b133324db395 103-111,218,266-267
+sdk/src/features/groups/group-requests.ts
+  s_2104cc474f1ce5::t_eec4c548c46eab 94-102,254-257,312
+sdk/test/consumer-tooling-gates.test.mjs
+  s_2104cc474f1ce5::t_06aaeef4c0c072 46-80
+sdk/test/request-native-results.test.ts
+  s_2104cc474f1ce5::t_58659e92de6957 1-143
+sdk/tsconfig.scripts.json
+  s_2104cc474f1ce5::t_4fcb43524c1452 19
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "d539499d28991170eeda0798a97b7b6589397a18",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
