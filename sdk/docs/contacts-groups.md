@@ -9,6 +9,10 @@ These are working-source additions for the next candidate, not published `0.0.1`
 | Group queries     | Lists/members/`getGroupInfo`/`listGroupMutedMembers`, `group-list-updated`, `group-members-updated`, `group-info-updated`, `group-membership`, `group-admin`, `group-mute`                                                                                                                                                                                     | Complete join classification and real event/query acceptance                                                                                   |
 | Group actions     | Name/remark, all/member mute, member card/admin/kick, leave, notices, requests, essence add/remove folder deletion acknowledgement and single-group file count                                                                                                                                                                                                 | Create/join/invite, member titles, live essence pagination and add/remove events, remaining group file operations and real mutation acceptance |
 
+The [group creation investigation](group-creation-research.md) records the current
+fixed-profile binary evidence and the caller/input/security contracts still needed
+before adding the missing action. Static structure does not enable the capability.
+
 ## Categorized friends
 
 ```ts
