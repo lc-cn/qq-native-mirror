@@ -37,6 +37,13 @@ coalesced callers retain the same Promise identity. Close reserves its shared
 Promise before notifying synchronous state observers; a reentrant close therefore
 joins the same transaction and cannot finish before worker retirement.
 
+A synchronous `closing` observer failure is retained while the same owner still
+submits shutdown and retires the worker. A successful shutdown reaches `closed`
+before rejecting close with that original value. If worker cleanup also fails,
+close retains both failures. Source and installed public-client fixtures check
+the shared Promise, event-before-IPC order and actual exit gate. This rule covers
+the closing notification; it does not suppress arbitrary application observers.
+
 Login also reserves its shared Promise and captured request before the synchronous
 `connecting` event. An observer calling the same login or `waitForLogin` joins
 that transaction; a different request rejects instead of dispatching another
@@ -138,6 +145,14 @@ selection occurs before invocation, never by catching a failure and trying
 another signature. Login failure notifications treat arbitrary native arguments
 as opaque and use a fixed public error, so serialization cannot interrupt pending
 settlement or disclose the payload.
+
+Authentication's private invocation captures its service and callable once and
+rechecks the attempt after each acquisition, preserving the original receiver.
+A getter that retires the attempt cannot dispatch a stale native call; an active
+acquisition error keeps its original identity. This stays in the existing
+authentication owner because its inactive behavior and narrow login methods
+differ from preparation/startup lookup. No general native dispatcher or extra
+service lifetime is introduced.
 
 `kernel.ts` owns one account-retirement transaction. It advances the generation,
 detaches the Session, clears the identity and invalidates/detaches the pending

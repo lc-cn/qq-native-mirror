@@ -15,4 +15,5 @@ test('actual worker replies to opaque failures and the same worker serves the ne
     ),
   });
   assert.equal(checks.clientLoginReentrancyContract, true);
+  assert.equal(checks.clientClosingObserverCleanupContract, true);
 });

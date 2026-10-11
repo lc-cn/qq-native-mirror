@@ -1,10 +1,17 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { AuthenticationAttempt } from '../src/runtime/authentication-attempt.ts';
+import {
+  AuthenticationAttempt,
+  type AuthenticationLoginPort,
+} from '../src/runtime/authentication-attempt.ts';
 import type { LoginRequest } from '../src/contracts/client.ts';
 import type { NativeObject } from '../src/native/native-object.ts';
 
-function fixture(request: LoginRequest = { method: 'qr' }, service: NativeObject = {}) {
+function fixture(
+  request: LoginRequest = { method: 'qr' },
+  service: NativeObject = {},
+  acquire: () => AuthenticationLoginPort | undefined = () => service,
+) {
   let current = true;
   const failures: Error[] = [];
   const events: string[] = [];
@@ -12,7 +19,7 @@ function fixture(request: LoginRequest = { method: 'qr' }, service: NativeObject
     request,
     timeoutMs: 1000,
     prepare: async () => {},
-    loginService: () => service,
+    loginService: acquire,
     isCurrent: () => current,
     notify: (event) => {
       events.push(event);
@@ -33,6 +40,123 @@ function fixture(request: LoginRequest = { method: 'qr' }, service: NativeObject
     },
   };
 }
+
+const invocationCases: readonly {
+  method: keyof AuthenticationLoginPort;
+  request: LoginRequest;
+  result: unknown;
+  args: readonly unknown[];
+}[] = [
+  { method: 'connect', request: { method: 'qr' }, result: undefined, args: [] },
+  { method: 'getMsfStatus', request: { method: 'qr' }, result: 0, args: [] },
+  { method: 'getQRCodePicture', request: { method: 'qr' }, result: true, args: [] },
+  {
+    method: 'getLoginList',
+    request: { method: 'restore' },
+    result: { LocalLoginInfoList: [{ uin: '123', isQuickLogin: true }] },
+    args: [],
+  },
+  {
+    method: 'quickLoginWithUin',
+    request: { method: 'quick', uin: '123' },
+    result: { result: '0' },
+    args: ['123'],
+  },
+];
+
+for (const { method, request, result, args } of invocationCases) {
+  test(`${method} captures one callable and retains its native receiver and arguments`, async () => {
+    let reads = 0;
+    const calls: { receiver: unknown; args: unknown[] }[] = [];
+    const service: AuthenticationLoginPort = {
+      getMsfStatus: () => 0,
+      getQRCodePicture: () => true,
+      quickLoginWithUin: () => ({ result: '0' }),
+    };
+    Object.defineProperty(service, method, {
+      get() {
+        reads++;
+        if (reads > 1) throw new Error('Native method was acquired twice');
+        return function (this: unknown, ...actual: unknown[]) {
+          calls.push({ receiver: this, args: actual });
+          return result;
+        };
+      },
+    });
+    const f = fixture(request, service);
+    try {
+      await (method === 'connect' ? f.attempt.begin() : f.attempt.onConnected());
+      assert.equal(reads, 1);
+      assert.equal(calls.length, 1);
+      assert.equal(calls[0]!.receiver, service);
+      assert.deepEqual(calls[0]!.args, args);
+      assert.deepEqual(f.failures, []);
+    } finally {
+      f.retire();
+    }
+  });
+
+  for (const throws of [false, true]) {
+    test(`${method} acquisition retirement${throws ? ' followed by a throw' : ''} prevents dispatch`, async () => {
+      let calls = 0;
+      let reads = 0;
+      const service: AuthenticationLoginPort = { getMsfStatus: () => 0 };
+      Object.defineProperty(service, method, {
+        get() {
+          reads++;
+          f.retire();
+          if (throws) throw new Error('Retired native acquisition');
+          return () => {
+            calls++;
+            return result;
+          };
+        },
+      });
+      const f = fixture(request, service);
+      try {
+        await (method === 'connect' ? f.attempt.begin() : f.attempt.onConnected());
+        assert.equal(reads, 1);
+        assert.equal(calls, 0);
+        assert.deepEqual(f.failures, []);
+      } finally {
+        f.retire();
+      }
+    });
+  }
+}
+
+test('service acquisition retirement prevents method lookup and native dispatch', async () => {
+  let reads = 0;
+  const service = Object.defineProperty({}, 'connect', {
+    get() {
+      reads++;
+      throw new Error('Retired service was inspected');
+    },
+  });
+  const f = fixture(undefined, {}, () => {
+    f.retire();
+    return service;
+  });
+  await f.attempt.begin();
+  assert.equal(reads, 0);
+  assert.deepEqual(f.failures, []);
+});
+
+test('an active native acquisition error keeps its original identity without retry', async () => {
+  const failure = new Error('Native connect acquisition failed');
+  let reads = 0;
+  const service = Object.defineProperty({}, 'connect', {
+    get() {
+      reads++;
+      throw failure;
+    },
+  });
+  const f = fixture(undefined, service);
+  await f.attempt.begin();
+  await assert.rejects(f.attempt.result, (error) => error === failure);
+  assert.deepEqual(f.failures, [failure]);
+  assert.equal(reads, 1);
+});
 
 test('authentication only validates identity; Session readiness owns result settlement', async () => {
   const f = fixture(undefined, { getMsfStatus: () => 0, getQRCodePicture: () => true });

@@ -19,6 +19,7 @@ export async function verifyWorkerErrorRoutes({
 }) {
   await verifyClientIdentity(QQClient);
   await verifyClientPresentation(QQClient);
+  await verifyClientClosing(QQClient);
   const directory = await realpath(await mkdtemp(join(tmpdir(), 'qq-worker-error-')));
   /** @type {import("../../src/client/qq-client.ts").QQClient | undefined} */
   let client;
@@ -146,6 +147,7 @@ export function createKernel(_native,_options,emit){return {
     return {
       clientIdentityInstalledContract: true,
       clientLoginReentrancyContract: true,
+      clientClosingObserverCleanupContract: true,
       clientEventPresentationInstalledContract: true,
       workerOpaqueErrorContract: true,
       workerErrorRecoveryContract: true,
@@ -169,6 +171,86 @@ export function createKernel(_native,_options,emit){return {
         await exited;
       }
       await rm(directory, { recursive: true, force: true });
+    }
+  }
+}
+
+/** Synchronous presentation failures cannot bypass the actual public owner's shutdown.
+ * @param {typeof import('../../src/client/qq-client.ts').QQClient} QQClient */
+async function verifyClientClosing(QQClient) {
+  for (const cleanupFails of [false, true]) {
+    const child = new ChildProcess();
+    Object.defineProperty(child, 'connected', { value: true, configurable: true });
+    const original = Object.freeze({ observer: 'controlled closing failure' });
+    const cleanup = new Error('controlled worker kill failure');
+    /** @type {string[]} */
+    const order = [];
+    let kills = 0;
+    Object.defineProperty(child, 'send', {
+      value(
+        /** @type {{id:number,method:string}} */ message,
+        /** @type {(error:Error|null)=>void} */ callback,
+      ) {
+        order.push(message.method);
+        callback(cleanupFails ? new Error('controlled close IPC failure') : null);
+        if (!cleanupFails)
+          queueMicrotask(() => child.emit('message', { id: message.id, result: null }));
+        return true;
+      },
+    });
+    Object.defineProperty(child, 'kill', {
+      value() {
+        kills++;
+        throw cleanup;
+      },
+    });
+    const client = new QQClient(child, 1000);
+    /** @type {Promise<void>|undefined} */
+    let nested;
+    client.on('state', (state) => {
+      if (state !== 'closing') return;
+      order.push('closing');
+      nested = client.close();
+      throw original;
+    });
+    const closing = client.close();
+    const outcome = closing.then(
+      () => undefined,
+      (/** @type {unknown} */ error) => error,
+    );
+    assert.strictEqual(nested, closing);
+    assert.deepEqual(order, ['closing', 'close']);
+    try {
+      if (cleanupFails) {
+        const failure = await outcome;
+        assert.ok(failure instanceof AggregateError);
+        assert.deepEqual(failure.errors, [original, cleanup]);
+        assert.equal(kills, 1);
+        assert.equal(client.state, 'failed');
+      } else {
+        let settled = false;
+        outcome.then(
+          () => {
+            settled = true;
+          },
+          () => {
+            settled = true;
+          },
+        );
+        await new Promise((resolve) => setImmediate(resolve));
+        assert.equal(settled, false, 'Shutdown still waits for the worker exit');
+        Object.defineProperty(child, 'exitCode', { value: 0, configurable: true });
+        child.emit('exit', 0, null);
+        assert.strictEqual(await outcome, original);
+        assert.equal(kills, 0);
+        assert.equal(client.state, 'closed');
+      }
+      assert.strictEqual(client.close(), closing);
+    } finally {
+      Object.defineProperty(child, 'exitCode', { value: 0, configurable: true });
+      child.emit('exit', 0, null);
+      await outcome;
+      client.removeAllListeners();
     }
   }
 }

@@ -11,6 +11,13 @@
   affects no sibling read, does not close the account, and cannot undo a native
   invocation or remote mutation. Delivery failure preserves the original error.
 - Login timeout retires the worker generation before a replacement is allowed.
+- Parent close reserves its shared Promise before synchronous `closing` events.
+  An observer failure cannot skip shutdown or the worker-exit gate. Successful
+  cleanup reaches `closed` before close rejects with the original observer value;
+  simultaneous cleanup failure retains both values in an `AggregateError`.
+- Authentication captures each selected service and native callable once,
+  preserving its receiver. Reentrant retirement during acquisition stops dispatch;
+  active acquisition errors retain their identity without a fallback or retry.
 - Capture and validate a complete public operation before an asynchronous lookup
   or native mutation. Recheck session lifetime after asynchronous work.
 - Native callbacks without a request nonce use coalescing or invalidation where

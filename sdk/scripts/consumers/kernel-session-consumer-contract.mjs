@@ -274,7 +274,12 @@ export async function verifyKernelSessionConsumer(packageRoot) {
       await f.close();
     }
   }
-  for (const stage of ['login-connect', 'msf-status']) {
+  for (const stage of [
+    'login-connect',
+    'msf-status',
+    'connect-acquisition',
+    'connect-acquisition-throw',
+  ]) {
     /** @type {Promise<void>|undefined} */
     let closing;
     const close = () => {
@@ -298,6 +303,14 @@ export async function verifyKernelSessionConsumer(packageRoot) {
         close();
         return 0;
       };
+    if (stage.startsWith('connect-acquisition'))
+      Object.defineProperty(f.service, 'connect', {
+        get() {
+          close();
+          if (stage === 'connect-acquisition-throw') throw new Error('Retired acquisition');
+          return () => f.dispatches.push('retired-connect');
+        },
+      });
     try {
       // Isolate reentrant retirement from cold directory/environment preparation.
       // The login deadline intentionally includes prepare in production; this
@@ -307,7 +320,7 @@ export async function verifyKernelSessionConsumer(packageRoot) {
       await assert.rejects(f.kernel.login({ method: 'qr' }), /Client closed during login/);
       assert.deepEqual(
         f.dispatches,
-        stage === 'login-connect' ? [] : ['connect'],
+        stage === 'msf-status' ? ['connect'] : [],
         `Reentrant retirement at ${stage} must prevent subsequent native dispatch`,
       );
       assert.equal(f.events.includes('authenticated'), false);
@@ -321,6 +334,7 @@ export async function verifyKernelSessionConsumer(packageRoot) {
     sessionStrategyContract: true,
     opaqueLoginFailureContract: true,
     authenticationRetirementContract: true,
+    authenticationAcquisitionRetirementContract: true,
     nativeSessionStrategyLoginAttempted: false,
   };
 }

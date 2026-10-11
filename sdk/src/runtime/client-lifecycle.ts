@@ -1,6 +1,7 @@
 import type { ChildProcess } from 'node:child_process';
 import { WorkerRpcChannel } from './worker-rpc-channel.ts';
 import { terminateWorker } from './worker-termination.ts';
+import { withCleanupFailure } from './cleanup.ts';
 import { deserializeKernelError, KernelRequestError } from '../errors.ts';
 import { normalizeLoginRequest } from '../native/login-request.ts';
 import type { Account, ClientOptions, ClientState, LoginRequest } from '../contracts/client.ts';
@@ -446,14 +447,21 @@ export class ClientLifecycle {
       this.#closing = true;
       this.#closed = true;
       this.#account = undefined;
-      this.#setState('closing');
+      let notificationFailure: { error: unknown } | undefined;
+      try {
+        this.#setState('closing');
+      } catch (error) {
+        notificationFailure = { error };
+      }
       try {
         await this.#stopWorker();
         this.#setState('closed');
       } catch (error) {
         this.#setState('failed');
+        if (notificationFailure) throw withCleanupFailure(notificationFailure.error, error);
         throw error;
       }
+      if (notificationFailure) throw notificationFailure.error;
       return;
     }
     if (this.#closed) {
@@ -463,7 +471,22 @@ export class ClientLifecycle {
       return;
     }
     this.#closing = true;
-    this.#setState('closing');
+    let notificationFailure: { error: unknown } | undefined;
+    try {
+      this.#setState('closing');
+    } catch (error) {
+      notificationFailure = { error };
+    }
+    // Presentation cannot prevent the owner's shutdown transaction from running.
+    try {
+      await this.#closeWorker();
+    } catch (error) {
+      if (notificationFailure) throw withCleanupFailure(notificationFailure.error, error);
+      throw error;
+    }
+    if (notificationFailure) throw notificationFailure.error;
+  }
+  async #closeWorker(): Promise<void> {
     let acknowledged = false;
     try {
       await this.request('close', {}, 2000);

@@ -134,6 +134,13 @@ independent source identity, asynchronous input capture, compressed/original
 digests, path/reference closure, packed SDK identity, complete fallback retention
 and candidate restoration. Synthetic native bytes are never executed.
 
+The same reviewed inventory feeds formatting, lint and offline test selection.
+Its syntax-only regression follows production relative imports and rejects
+missing tool owners; SDK imports stop at the SDK's existing static gates.
+The verified download owner and controlled fetch regressions therefore run in
+local `check` as well as platform CI. Production CI and account entry points are
+inspected as source; only explicitly inventoried `.test.mjs` files execute here.
+
 Release receipts bind the exact main and auxiliary artifacts, manifest digests,
 source cohort and platform consumer results. A rehashed receipt cannot replace
 missing installation or restoration evidence. Codec byte identity does not

@@ -395,3 +395,90 @@ test('synchronous worker login reply settles the already reserved shared promise
   );
   await lifecycle.close();
 });
+
+test('throwing closing observer cannot skip shutdown or settle before actual exit', async () => {
+  const f = workerFixture();
+  const original = { failure: 'Opaque closing observer' };
+  let nested: Promise<void> | undefined;
+  const order: string[] = [];
+  f.worker.send = ((
+    message: { id: number; method: string },
+    callback: (error: Error | null) => void,
+  ) => {
+    order.push(message.method);
+    f.sent.push(message);
+    callback(null);
+    return true;
+  }) as typeof f.worker.send;
+  const lifecycle = new ClientLifecycle({
+    worker: f.worker,
+    timeout: 1000,
+    emit(event, state) {
+      if (event === 'state' && state === 'closing') {
+        order.push('closing');
+        nested = lifecycle.close();
+        throw original;
+      }
+    },
+    forward() {},
+    exportsUpdated() {},
+  });
+  const pending = lifecycle.request('listFriends');
+  const observedPending = pending.then(
+    () => undefined,
+    (error: unknown) => error,
+  );
+  const closing = lifecycle.close();
+  const observedClose = closing.then(
+    () => undefined,
+    (error: unknown) => error,
+  );
+  assert.equal(nested, closing);
+  assert.deepEqual(order, ['listFriends', 'closing', 'close']);
+  let settled = false;
+  void observedClose.then(() => {
+    settled = true;
+  });
+  f.events.emit('message', { id: f.sent[1].id, result: null });
+  await new Promise<void>((resolve) => setImmediate(resolve));
+  assert.equal(settled, false);
+  assert.match(String(await observedPending), /closed/);
+  Object.assign(f.worker, { exitCode: 0, connected: false });
+  f.events.emit('exit', 0, null);
+  assert.equal(await observedClose, original);
+  assert.equal(lifecycle.state, 'closed');
+  assert.equal(lifecycle.close(), closing);
+});
+
+test('closing observer failure retains cleanup failure and never retries shutdown', async () => {
+  const f = workerFixture();
+  const original = undefined;
+  const cleanup = new Error('Controlled worker kill failure');
+  let kills = 0;
+  f.worker.send = ((_message: unknown, callback: (error: Error | null) => void) => {
+    callback(new Error('Controlled close IPC failure'));
+    return true;
+  }) as typeof f.worker.send;
+  f.worker.kill = () => {
+    kills++;
+    throw cleanup;
+  };
+  const lifecycle = new ClientLifecycle({
+    worker: f.worker,
+    timeout: 1000,
+    emit(event, state) {
+      if (event === 'state' && state === 'closing') throw original;
+    },
+    forward() {},
+    exportsUpdated() {},
+  });
+  const closing = lifecycle.close();
+  await assert.rejects(closing, (error: unknown) => {
+    assert.ok(error instanceof AggregateError);
+    assert.deepEqual(error.errors, [original, cleanup]);
+    return true;
+  });
+  assert.equal(kills, 1);
+  assert.equal(lifecycle.state, 'failed');
+  assert.equal(lifecycle.close(), closing);
+});

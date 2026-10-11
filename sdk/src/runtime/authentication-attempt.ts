@@ -62,10 +62,15 @@ export class AuthenticationAttempt {
     return !this.#invalidated && this.#context.isCurrent();
   }
   #invoke(method: keyof AuthenticationLoginPort, ...args: [string | undefined] | []) {
+    if (!this.#active()) return;
     const service = this.#context.loginService();
-    if (typeof service?.[method] !== 'function')
-      throw new Error(`Native kernel is missing ${method}`);
-    return Reflect.apply(service[method], service, args) as unknown;
+    if (!this.#active()) return;
+    // Service and method acquisition can synchronously retire this attempt.
+    // Capture once so a second getter cannot replace the selected callable.
+    const callable = service?.[method];
+    if (!this.#active()) return;
+    if (typeof callable !== 'function') throw new Error(`Native kernel is missing ${method}`);
+    return Reflect.apply(callable, service, args) as unknown;
   }
   async begin(): Promise<void> {
     try {

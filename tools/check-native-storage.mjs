@@ -6,37 +6,40 @@ import { fileURLToPath } from 'node:url';
 const directory = dirname(fileURLToPath(import.meta.url));
 const root = dirname(directory);
 const require = createRequire(new URL('../sdk/package.json', import.meta.url));
+// Reviewed static tooling and offline tests only; production entries are never imported here.
 const sources = [
-  'dedup-native-npm.mjs',
-  'dedup-native-npm.test.mjs',
-  'native-storage-plan.mjs',
-  'native-storage-plan.test.mjs',
-  'native-source-identity.mjs',
-  'native-source-identity.test.mjs',
-  'verify-dedup-consumer.mjs',
-  'verify-dedup-consumer.test.mjs',
-  'check-native-storage.mjs',
-  'eslint.config.mjs',
-  'tsconfig.consumer-ci.json',
-  'consumer-ci-gates.test.mjs',
-]
-  .map((path) => 'tools/' + path)
-  .concat([
-    'ci/build-platform.mjs',
-    'ci/aggregate-release.mjs',
-    'ci/native-package-distribution.mjs',
-    'ci/native-package-distribution.test.mjs',
-    'ci/verify-consumer.mjs',
-    'ci/current-source-mirror.mjs',
-    'ci/consumer-resources.mjs',
-    'ci/consumer-resources.test.mjs',
-    'ci/consumer-acquisition.test.mjs',
-    'ci/npm.mjs',
-    'version-ci/main-artifact.mjs',
-    'version-ci/build-main-contract.mjs',
-    'version-ci/main-artifact.test.mjs',
-    'version-ci/build-main-contract.test.mjs',
-  ]);
+  'tools/dedup-native-npm.mjs',
+  'tools/dedup-native-npm.test.mjs',
+  'tools/native-storage-plan.mjs',
+  'tools/native-storage-plan.test.mjs',
+  'tools/native-source-identity.mjs',
+  'tools/native-source-identity.test.mjs',
+  'tools/verify-dedup-consumer.mjs',
+  'tools/verify-dedup-consumer.test.mjs',
+  'tools/check-native-storage.mjs',
+  'tools/eslint.config.mjs',
+  'tools/tsconfig.consumer-ci.json',
+  'tools/consumer-ci-gates.test.mjs',
+  'ci/build-platform.mjs',
+  'ci/aggregate-release.mjs',
+  'ci/native-package-distribution.mjs',
+  'ci/native-package-distribution.test.mjs',
+  'ci/verify-consumer.mjs',
+  'ci/current-source-mirror.mjs',
+  'ci/consumer-resources.mjs',
+  'ci/consumer-resources.test.mjs',
+  'ci/consumer-acquisition.test.mjs',
+  'ci/npm.mjs',
+  'version-ci/main-artifact.mjs',
+  'version-ci/build-main-contract.mjs',
+  'version-ci/main-artifact.test.mjs',
+  'version-ci/build-main-contract.test.mjs',
+  'ci/verified-download.mjs',
+  'ci/verified-download.test.mjs',
+  'ci/bundle-video-codec.mjs',
+  'tools/native-storage-inventory.test.mjs',
+];
+const offlineTests = sources.filter((path) => path.endsWith('.test.mjs'));
 
 function run(arguments_) {
   execFileSync(process.execPath, arguments_, { cwd: root, stdio: 'inherit' });
@@ -62,16 +65,4 @@ run([
   '--max-warnings=0',
   ...sources.filter((path) => path.endsWith('.mjs')),
 ]);
-run([
-  '--test',
-  'tools/dedup-native-npm.test.mjs',
-  'tools/native-storage-plan.test.mjs',
-  'tools/native-source-identity.test.mjs',
-  'tools/verify-dedup-consumer.test.mjs',
-  'ci/native-package-distribution.test.mjs',
-  'ci/consumer-resources.test.mjs',
-  'ci/consumer-acquisition.test.mjs',
-  'tools/consumer-ci-gates.test.mjs',
-  'version-ci/main-artifact.test.mjs',
-  'version-ci/build-main-contract.test.mjs',
-]);
+run(['--test', ...offlineTests]);
