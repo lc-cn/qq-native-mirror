@@ -23,6 +23,7 @@ test('actual worker replies to opaque failures and the same worker serves the ne
   assert.equal(checks.clientLoginFailureNotificationContract, true);
   assert.equal(checks.clientNativeExportsSnapshotContract, true);
   assert.equal(checks.clientAutomaticRestoreRetirementContract, true);
+  assert.equal(checks.clientWaitForReconnectContract, true);
   assert.equal(checks.clientClosingObserverCleanupContract, true);
   assert.equal(checks.clientOfflineObserverRetirementContract, true);
   assert.equal(checks.clientOfflineBatchCancellationContract, true);

@@ -2899,3 +2899,200 @@ test('active automatic retryable getter throw remains fatal in warn mode with or
   });
   assert.equal(child.stderr.includes('UnhandledPromiseRejectionWarning'), false);
 });
+
+for (const outcome of ['success', 'init-failure', 'malformed-init', 'close'] as const) {
+  test(`waitForLogin joins reserved reconnect through termination, init and login: ${outcome}`, async () => {
+    const old = workerFixture(),
+      next = pendingRestoreWorker();
+    old.worker.kill = () => true;
+    let joined: Promise<unknown> | undefined;
+    let joinedResult: Promise<unknown> | undefined;
+    const lifecycle: ClientLifecycle = new ClientLifecycle({
+      worker: old.worker,
+      timeout: 1000,
+      restart: { spawn: () => next.worker, payload: {} },
+      emit(event, state) {
+        if (event === 'state' && state === 'connecting' && !joined) {
+          joined = lifecycle.waitForLogin();
+          joinedResult = joined.then(
+            (value) => value,
+            (error) => error,
+          );
+        }
+      },
+      forward() {},
+      exportsUpdated() {},
+    });
+    const primary = new Error('replacement init fixture');
+    const reconnect = lifecycle.reconnect({ method: 'quick', uin: '123' });
+    const observed = reconnect.then(
+      (value) => value,
+      (error) => error,
+    );
+    try {
+      assert.equal(joined, reconnect);
+      assert.equal(lifecycle.waitForLogin(), reconnect);
+      assert.deepEqual(old.sent, []);
+      await new Promise<void>((resolve) => setImmediate(resolve));
+      assert.equal(next.sent.length, 0);
+      Object.assign(old.worker, { exitCode: 0 });
+      old.events.emit('exit', 0, null);
+      await new Promise<void>((resolve) => setImmediate(resolve));
+      assert.equal(lifecycle.waitForLogin(), reconnect);
+      assert.deepEqual(
+        next.sent.map((value) => value.method),
+        ['init'],
+      );
+      if (outcome === 'init-failure') next.fail(primary);
+      else if (outcome === 'close') await lifecycle.close();
+      else {
+        const init = next.sent[0];
+        next.events.emit('message', {
+          id: init.id,
+          result: outcome === 'malformed-init' ? { exports: [42] } : { exports: [] },
+        });
+        await new Promise<void>((resolve) => setImmediate(resolve));
+        if (outcome === 'success') {
+          assert.equal(lifecycle.waitForLogin(), reconnect);
+          assert.deepEqual(
+            next.sent.map((value) => value.method),
+            ['init', 'login'],
+          );
+          const account = { uin: '123', uid: 'u_wait' };
+          next.events.emit('message', { event: 'ready', payload: account });
+          next.events.emit('message', { id: next.sent[1].id, result: account });
+        }
+      }
+      const result = await observed;
+      assert.equal(await joinedResult, result);
+      if (outcome === 'init-failure') assert.equal(result, primary);
+      else if (outcome === 'success') assert.deepEqual(result, { uin: '123', uid: 'u_wait' });
+      else assert.ok(result instanceof Error);
+    } finally {
+      Object.assign(old.worker, { exitCode: 0 });
+      old.events.emit('exit', 0, null);
+      await lifecycle.close();
+      await observed;
+      await joinedResult;
+    }
+  });
+}
+
+test('waitForLogin joins automatic reconnect without taking over its failure notification', async (context) => {
+  const next = pendingRestoreWorker();
+  const primary = new Error('automatic init failure');
+  const f = await automaticRestoreFixture(context, () => next.worker);
+  try {
+    await f.start();
+    const reconnect = f.lifecycle.waitForLogin();
+    const observed = reconnect.then(
+      (value) => value,
+      (error) => error,
+    );
+    assert.deepEqual(
+      next.sent.map((value) => value.method),
+      ['init'],
+    );
+    next.fail(primary);
+    assert.equal(await observed, primary);
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    assert.deepEqual(f.errors, [primary]);
+    assert.deepEqual(
+      next.sent.map((value) => value.method),
+      ['init'],
+    );
+  } finally {
+    await f.lifecycle.close();
+  }
+});
+
+test('waitForLogin rejects failed worker without reconnect but joins admitted recovery', async () => {
+  const old = workerFixture(),
+    next = pendingRestoreWorker();
+  const lifecycle = new ClientLifecycle({
+    worker: old.worker,
+    timeout: 1000,
+    restart: { spawn: () => next.worker, payload: {} },
+    emit() {},
+    forward() {},
+    exportsUpdated() {},
+  });
+  Object.assign(old.worker, { exitCode: 1 });
+  old.events.emit('exit', 1, null);
+  await assert.rejects(lifecycle.waitForLogin(), /closed/);
+  const reconnect = lifecycle.reconnect({ method: 'quick', uin: '123' });
+  const observed = reconnect.then(
+    (value) => value,
+    (error) => error,
+  );
+  const waiting = lifecycle.waitForLogin();
+  const waited = waiting.then(
+    (value) => value,
+    (error) => error,
+  );
+  try {
+    assert.equal(waiting, reconnect);
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    const primary = new Error('recovery init fixture');
+    next.fail(primary);
+    assert.equal(await observed, primary);
+    assert.equal(await waited, primary);
+  } finally {
+    await lifecycle.close();
+    await observed;
+    await waited;
+  }
+});
+
+test('waitForLogin joins reconnect reservation before exposing an old ready account', async () => {
+  const old = workerFixture(),
+    next = workerFixture();
+  let waiting: Promise<unknown> | undefined;
+  let waited: Promise<unknown> | undefined;
+  let reconnecting = false;
+  const lifecycle: ClientLifecycle = new ClientLifecycle({
+    worker: old.worker,
+    timeout: 1000,
+    restart: { spawn: () => next.worker, payload: {} },
+    emit(event, state) {
+      if (reconnecting && event === 'state' && state === 'connecting') {
+        waiting = lifecycle.waitForLogin();
+        waited = waiting.then(
+          (value) => value,
+          (error) => error,
+        );
+      }
+    },
+    forward() {},
+    exportsUpdated() {},
+  });
+  const account = { uin: '123', uid: 'u_old' };
+  const login = lifecycle.login({ method: 'quick', uin: '123' });
+  old.events.emit('message', { event: 'ready', payload: account });
+  old.events.emit('message', { id: old.sent[0].id, result: account });
+  await login;
+  const snapshot = await lifecycle.waitForLogin();
+  assert.deepEqual(snapshot, account);
+  assert.notEqual(snapshot, lifecycle.account);
+  reconnecting = true;
+  const reconnect = lifecycle.reconnect({ method: 'quick', uin: '456' });
+  const observed = reconnect.then(
+    (value) => value,
+    (error) => error,
+  );
+  try {
+    assert.equal(waiting, reconnect);
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    const sent = next.sent.find((value) => value.method === 'login');
+    assert.ok(sent);
+    const replacement = { uin: '456', uid: 'u_new' };
+    next.events.emit('message', { event: 'ready', payload: replacement });
+    next.events.emit('message', { id: sent.id, result: replacement });
+    assert.deepEqual(await observed, replacement);
+    assert.deepEqual(await waited, replacement);
+  } finally {
+    await lifecycle.close();
+    await observed;
+    await waited;
+  }
+});

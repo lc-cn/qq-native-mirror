@@ -548,7 +548,11 @@ export class ClientLifecycle {
   }
 
   waitForLogin(): Promise<Account> {
-    if (this.#closing || this.#closed) return Promise.reject(new Error('QQ client is closed'));
+    if (this.#closing) return Promise.reject(new Error('QQ client is closed'));
+    // The reserved replacement owns readiness even while the old account is
+    // stored or its worker is closed. Waiting does not take over restoration.
+    if (this.#reconnecting) return this.#reconnecting;
+    if (this.#closed) return Promise.reject(new Error('QQ client is closed'));
     // A completed login Promise exposes its mutable result to its caller.
     // Return the current stored identity, while still joining a pending login.
     if (this.#account) return Promise.resolve({ ...this.#account });

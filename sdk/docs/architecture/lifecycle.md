@@ -44,6 +44,13 @@
   exception contract. In-flight initialization or authorization is not undone,
   and no request is replayed. Each new eligible offline decision schedules its
   own bounded delay with the account captured at that decision.
+- `waitForLogin` rejects explicit shutdown first, then joins an already reserved
+  reconnect through old-worker retirement, replacement initialization and login.
+  The reconnect owns the result even when the previous account is still stored
+  or its failed worker is closed. Waiting keeps the exact shared Promise and
+  failure value and does not take over automatic notification authority. With
+  no reconnect, a failed/closed worker still rejects, an online account returns
+  a detached snapshot and a standalone login keeps its existing coalescing.
 - The channel captures the sending transport per request. The three reviewed HTTP
   reads use best-effort per-request cancellation on timeout, send failure and
   offline; it never targets a replacement worker. `WorkerReadRequests` owns their

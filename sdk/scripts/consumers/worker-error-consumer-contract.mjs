@@ -29,6 +29,7 @@ export async function verifyWorkerErrorRoutes({
   await verifyClientLoginFailureNotification(QQClient);
   await verifyClientNativeExportsSnapshot(QQClient);
   await verifyClientAutomaticRestore(QQClient);
+  await verifyClientWaitForReconnect(QQClient);
   const directory = await realpath(await mkdtemp(join(tmpdir(), 'qq-worker-error-')));
   /** @type {import("../../src/client/qq-client.ts").QQClient | undefined} */
   let client;
@@ -170,6 +171,7 @@ export function createKernel(_native,_options,emit){return {
       clientNativeExportsSnapshotContract: true,
       clientBackgroundNotificationFailureContract: true,
       clientAutomaticRestoreRetirementContract: true,
+      clientWaitForReconnectContract: true,
       clientEventPresentationInstalledContract: true,
       workerOpaqueErrorContract: true,
       workerErrorRecoveryContract: true,
@@ -348,6 +350,139 @@ async function verifyClientAutomaticRestore(QQClient) {
         throw new AggregateError(
           [primary.error, error],
           'Automatic restore verification and teardown failed',
+          { cause: error },
+        );
+      throw error;
+    } finally {
+      client.removeAllListeners();
+    }
+    if (primary) throw primary.error;
+  }
+}
+
+/** @param {typeof import('../../src/client/qq-client.ts').QQClient} QQClient */
+async function verifyClientWaitForReconnect(QQClient) {
+  for (const mode of ['success', 'error', 'close', 'automatic']) {
+    const previous = new ChildProcess(),
+      replacement = new ChildProcess();
+    /** @type {{id:number,method:string,login:unknown}[]} */
+    const requests = [];
+    /** @type {unknown[]} */
+    const notifications = [];
+    for (const child of [previous, replacement]) {
+      Object.defineProperty(child, 'connected', { value: true, configurable: true });
+      Object.defineProperty(child, 'kill', {
+        value() {
+          Object.defineProperty(child, 'exitCode', { value: 0, configurable: true });
+          queueMicrotask(() => child.emit('exit', 0, null));
+          return true;
+        },
+      });
+      Object.defineProperty(child, 'send', {
+        value(
+          /** @type {{id:number,method?:string,login?:unknown}} */ message,
+          /** @type {(error:Error|null)=>void} */ callback,
+        ) {
+          callback(null);
+          if (child === replacement && message.method)
+            requests.push({ id: message.id, method: message.method, login: message.login });
+          if (message.method === 'close')
+            queueMicrotask(() => {
+              Object.defineProperty(child, 'exitCode', { value: 0, configurable: true });
+              child.emit('message', { id: message.id, result: null });
+              child.emit('exit', 0, null);
+            });
+          return true;
+        },
+      });
+    }
+    const client = new QQClient(
+      previous,
+      1000,
+      { method: 'qr' },
+      { spawn: () => replacement, payload: {} },
+      { delayMs: 1, maxAttempts: 1 },
+    );
+    client.on('reconnect-error', (error) => notifications.push(error));
+    previous.emit('message', { event: 'ready', payload: { uin: '123', uid: 'old' } });
+    const reconnect =
+      mode === 'automatic' ? undefined : client.reconnect({ method: 'restore', uin: '123' });
+    const reconnectObserved = reconnect?.then(
+      (value) => ({ value }),
+      (/** @type {unknown} */ error) => ({ error }),
+    );
+    if (mode === 'automatic')
+      previous.emit('message', { event: 'disconnected', payload: { retryable: true } });
+    /** @type {{error:unknown}|undefined} */ let primary;
+    /** @type {Promise<{value:unknown}|{error:unknown}>|undefined} */ let waited;
+    try {
+      for (let i = 0; i < 100 && !requests.some((r) => r.method === 'init'); i++)
+        await new Promise((resolve) => setTimeout(resolve, 1));
+      const init = requests.find((r) => r.method === 'init');
+      assert.ok(init);
+      const wait = client.waitForLogin();
+      waited = wait.then(
+        (value) => ({ value }),
+        (/** @type {unknown} */ error) => ({ error }),
+      );
+      if (reconnect) assert.strictEqual(wait, reconnect);
+      assert.strictEqual(client.waitForLogin(), wait);
+      assert.equal(requests.filter((r) => r.method === 'login').length, 0);
+      if (mode === 'close') {
+        await client.close();
+        const result = await waited;
+        assert.ok('error' in result);
+        const joined = await reconnectObserved;
+        assert.ok(joined && 'error' in joined);
+        assert.strictEqual(result.error, joined.error);
+      } else if (mode === 'error' || mode === 'automatic') {
+        replacement.emit('message', {
+          id: init.id,
+          error: { message: 'controlled reconnect initialization failure', code: 7 },
+        });
+        const result = await waited;
+        assert.ok('error' in result && result.error instanceof Error);
+        assert.equal(result.error.message, 'controlled reconnect initialization failure');
+        if (reconnectObserved) {
+          const joined = await reconnectObserved;
+          assert.ok('error' in joined);
+          assert.strictEqual(joined.error, result.error);
+        }
+        await new Promise((resolve) => setImmediate(resolve));
+        assert.equal(notifications.length, mode === 'automatic' ? 1 : 0);
+        if (mode === 'automatic') assert.strictEqual(notifications[0], result.error);
+      } else {
+        replacement.emit('message', { id: init.id, result: { exports: [] } });
+        for (let i = 0; i < 100 && !requests.some((r) => r.method === 'login'); i++)
+          await new Promise((resolve) => setTimeout(resolve, 1));
+        const login = requests.find((r) => r.method === 'login');
+        assert.ok(login);
+        assert.deepEqual(login.login, { method: 'restore', uin: '123' });
+        assert.strictEqual(client.waitForLogin(), reconnect);
+        replacement.emit('message', { id: login.id, result: { uin: '123', uid: 'new' } });
+        const result = await waited;
+        const joined = await reconnectObserved;
+        assert.ok('value' in result && joined && 'value' in joined);
+        assert.strictEqual(result.value, joined.value);
+        assert.deepEqual(result.value, { uin: '123', uid: 'new' });
+        assert.equal(requests.filter((r) => r.method === 'login').length, 1);
+      }
+    } catch (error) {
+      primary = { error };
+    }
+    try {
+      for (const child of [previous, replacement]) {
+        Object.defineProperty(child, 'exitCode', { value: 0, configurable: true });
+        child.emit('exit', 0, null);
+      }
+      await client.close();
+      await waited;
+      await reconnectObserved;
+    } catch (error) {
+      if (primary)
+        throw new AggregateError(
+          [primary.error, error],
+          'Wait reconnect verification and cleanup failed',
           { cause: error },
         );
       throw error;

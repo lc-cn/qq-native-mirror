@@ -68,6 +68,11 @@ retryable disconnect schedules restoration. Close or a manual login cancels its
 pending task and obsolete error notifications. A same-request manual `reconnect`
 joins the shared result and takes over error observation; invalid or conflicting
 requests leave the admitted restore in charge. Submitted work is not undone.
+`waitForLogin()` joins an admitted reconnect through worker retirement,
+initialization and authorization, sharing its Promise and outcome without
+starting another login or taking over automatic error observation. Explicit
+close still rejects waiting; without a reconnect, an online account is returned
+as a detached snapshot.
 In the working source, `client.nativeExports` returns a fresh `string[]` snapshot.
 Editing or freezing it does not change the client. Reread the property after
 reconnect; previously read arrays retain their original contents.

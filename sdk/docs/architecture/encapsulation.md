@@ -138,6 +138,16 @@ value and the attempt is released; joined callers cannot remain pending. This
 failure is now a Promise rejection rather than a synchronous exception from
 `login`. Closing from the observer prevents login dispatch.
 
+`waitForLogin` observes the lifecycle's admitted transaction. Explicit shutdown
+rejects first; an already reserved reconnect then takes precedence over the
+old worker's closed flag, its stored account and the replacement's internal
+login Promise. Waiting therefore shares one result through retirement,
+initialization and authorization, including a synchronous connecting observer,
+without dispatching another login or acquiring automatic failure authority.
+Without reconnect, the existing closed rejection, detached online identity and
+standalone login coalescing remain. This ordering belongs to `ClientLifecycle`;
+the public facade returns its Promise directly and gains no scheduling logic.
+
 A failed login releases only its own reserved attempt before returning to `idle`.
 If that notification also throws, the same private helper retains the login
 failure and notification value in that order. With successful notification, the
