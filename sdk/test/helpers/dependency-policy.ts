@@ -245,6 +245,8 @@ export function dependencyViolation({ from, to, typeOnly }: SourceDependency): s
     ].includes(to)
   )
     return 'Group-file capture and operation orchestration belong to the group-files owner.';
+  if (from === 'src/native-services.ts' && to === 'src/features/groups/group-search-input.ts')
+    return 'Search input capture and capability enforcement belong to the group-search owner.';
   if (
     from === 'src/native-services.ts' &&
     [

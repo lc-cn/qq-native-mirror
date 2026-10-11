@@ -285,9 +285,11 @@ a verified join/kick action or successful native query.
 
 `createGroupSearch` owns the group-number search queue, same-keyword coalescing,
 whole-batch projection and failed-channel quarantine. Its narrow lazy port exposes
-only `searchGroup`, returning unknown data. The facade and CLI share a pure uint64
-input capture module; composition checks the measured binary contract before
-acquiring Search or registering its one retained listener. Native callback objects
+only `searchGroup`, returning unknown data. It captures the target and checks the
+injected exact-binary capability before entering its queue or acquiring Search.
+The facade and CLI share its pure uint64 input capture module. Composition binds
+the capability predicate and registers one retained listener; input validation and
+unsupported-contract policy stay with the search owner. Native callback objects
 remain retained until worker exit. The shared callback channel accepts a local
 abort signal, so feature close retires its waiter without closing sibling reads.
 The callback has no nonce: a matching unsolicited snapshot may satisfy a read;

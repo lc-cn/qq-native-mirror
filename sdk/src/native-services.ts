@@ -1,5 +1,4 @@
 import { createFriendCategoryMutations } from './features/contacts/friend-category-mutations.ts';
-import { captureGroupSearch } from './features/groups/group-search-input.ts';
 import { createGroupSearch } from './features/groups/group-search.ts';
 import { createGroupFiles } from './features/groups/group-files.ts';
 import { GroupFilePageHistory } from './features/groups/group-file-pages.ts';
@@ -214,6 +213,7 @@ export function createNativeServices(context: NativeServiceContext) {
     let searchHandle: Native | undefined;
     const groupSearch = own(
       createGroupSearch({
+        supportsSearch: () => supportsGroupSearch(nativeContracts, version),
         signal: lifetime.signal,
         awaitAlive,
         eventCall,
@@ -438,15 +438,8 @@ export function createNativeServices(context: NativeServiceContext) {
           case 'publishGroupNotice':
           case 'deleteGroupNotice':
             return groupNotices.invokeOperation(method, payload);
-          case 'searchGroup': {
-            const group = captureGroupSearch(payload.groupId);
-            if (!supportsGroupSearch(nativeContracts, version))
-              throw Object.assign(
-                new Error('Group search contract is not verified for this native binary'),
-                { code: 'unsupported-native-contract' },
-              );
-            return groupSearch.searchGroup(group);
-          }
+          case 'searchGroup':
+            return groupSearch.searchGroup(payload.groupId);
           case 'getGroupFileCount':
             return groupFiles.getGroupFileCount(payload.groupId);
           case 'getGroupFilePage':

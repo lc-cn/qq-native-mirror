@@ -13,6 +13,7 @@ export interface GroupSearchPort {
 }
 export interface GroupSearchContext {
   signal: AbortSignal;
+  supportsSearch(): boolean;
   getSearchService(): GroupSearchPort | null | undefined;
   eventCall: NativeEventChannel['call'];
   awaitAlive<T>(value: T | PromiseLike<T>): Promise<T>;
@@ -165,6 +166,13 @@ export function createGroupSearch(context: GroupSearchContext) {
     searchGroup(groupId: unknown): Promise<GroupSearchMatch | undefined> {
       const target = captureGroupSearch(groupId);
       alive();
+      const supported = context.supportsSearch();
+      alive();
+      if (!supported)
+        throw Object.assign(
+          new Error('Group search contract is not verified for this native binary'),
+          { code: 'unsupported-native-contract' },
+        );
       let shared = pending.get(target);
       if (!shared) {
         shared = queue.then(() => perform(target));

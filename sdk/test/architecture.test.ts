@@ -430,6 +430,26 @@ test('message composition delegates projection and identity orchestration to its
   }
 });
 
+test('search composition binds its domain owner without importing input policy', () => {
+  for (const typeOnly of [false, true]) {
+    assert.ok(
+      dependencyViolation({
+        from: 'src/native-services.ts',
+        to: 'src/features/groups/group-search-input.ts',
+        typeOnly,
+      }),
+    );
+    assert.equal(
+      dependencyViolation({
+        from: 'src/native-services.ts',
+        to: 'src/features/groups/group-search.ts',
+        typeOnly,
+      }),
+      undefined,
+    );
+  }
+});
+
 test('package entry contains only public reexports', () => {
   const entry = join(sourceRoot, 'index.ts');
   const tree = ts.createSourceFile(

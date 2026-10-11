@@ -65,6 +65,11 @@ function fixture(verified = true) {
 }
 test('Search is gated before acquisition and registered lazily once', async () => {
   const bad = fixture(false);
+  await assert.rejects(
+    bad.api.invokeOperation('searchGroup', { groupId: '18446744073709551616' }),
+    /uint64/,
+  );
+  assert.equal(bad.acquired(), 0);
   await assert.rejects(bad.api.invokeOperation('searchGroup', { groupId: '123' }), {
     code: 'unsupported-native-contract',
   });

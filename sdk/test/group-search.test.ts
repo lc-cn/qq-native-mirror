@@ -39,6 +39,7 @@ function fixture() {
     },
   };
   const api = createGroupSearch({
+    supportsSearch: () => true,
     signal: life.signal,
     awaitAlive: life.awaitAlive,
     eventCall: channel.call,
@@ -175,6 +176,7 @@ test('service or method acquisition close prevents native dispatch', async () =>
       },
     };
     const api = createGroupSearch({
+      supportsSearch: () => true,
       signal: life.signal,
       awaitAlive: life.awaitAlive,
       eventCall: channel.call,
@@ -209,6 +211,7 @@ test('different targets serialize and an incomplete empty callback is not absenc
     channel = createNativeEventChannel(life.signal);
   const calls: string[] = [];
   const api = createGroupSearch({
+    supportsSearch: () => true,
     signal: life.signal,
     awaitAlive: life.awaitAlive,
     eventCall: channel.call,
@@ -251,4 +254,82 @@ test('failed first request quarantines queued target without a second dispatch',
   assert.equal(f.calls(), 1);
   f.api.close();
   f.life.close();
+});
+
+test('capability refusal precedes service acquisition without poisoning subsequent supported search', async () => {
+  const life = new NativeServiceLifetime(),
+    channel = createNativeEventChannel(life.signal);
+  let supported = false,
+    acquisitions = 0,
+    checks = 0;
+  const api = createGroupSearch({
+    signal: life.signal,
+    awaitAlive: life.awaitAlive,
+    eventCall: channel.call,
+    supportsSearch() {
+      checks++;
+      return supported;
+    },
+    getSearchService() {
+      acquisitions++;
+      return {
+        searchGroup() {
+          channel.dispatch('Search/onSearchGroupResult', [
+            { keyWord: '123', errorode: 0, isEnd: true, groupInfos: [] },
+          ]);
+          return { result: 0 };
+        },
+      };
+    },
+  });
+  try {
+    assert.throws(() => api.searchGroup('bad'));
+    assert.equal(checks, 0);
+    assert.throws(() => api.searchGroup('123'), {
+      message: 'Group search contract is not verified for this native binary',
+      code: 'unsupported-native-contract',
+    });
+    assert.equal(acquisitions, 0);
+    supported = true;
+    assert.equal(await api.searchGroup('123'), undefined);
+    assert.equal(acquisitions, 1);
+  } finally {
+    api.close();
+    life.close();
+  }
+});
+
+test('capability predicate reentrant retirement prevents acquisition even when returning true', () => {
+  for (const closeOwner of [false, true]) {
+    const life = new NativeServiceLifetime(),
+      channel = createNativeEventChannel(life.signal);
+    let acquisitions = 0;
+    const api = createGroupSearch({
+      signal: life.signal,
+      awaitAlive: life.awaitAlive,
+      eventCall: channel.call,
+      supportsSearch() {
+        if (closeOwner) api.close();
+        else life.close();
+        return true;
+      },
+      getSearchService() {
+        acquisitions++;
+        return {};
+      },
+    });
+    try {
+      assert.throws(
+        () => api.searchGroup('123'),
+        (error: unknown) =>
+          closeOwner
+            ? error instanceof Error && error.message === 'Group search is closed'
+            : error === life.signal.reason,
+      );
+      assert.equal(acquisitions, 0);
+    } finally {
+      api.close();
+      life.close();
+    }
+  }
 });
