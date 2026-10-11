@@ -444,6 +444,15 @@ so this owner has no dependency on ordinary message-send input. Existing wire
 and card formatters retain bounded UTF-8, uint32 and aggregate-size validation
 on the owned snapshot, before destination resolution or upload.
 
+`forward-input` owns existing-message peer and ID capture. The public forwarding
+facade and operation owner share its submission snapshot before IPC or asynchronous
+resolution. Peer and payload getters keep their existing single-read semantics;
+ID arrays are copied from dense own data slots without executing accessors or a
+custom iterator. The nonempty forwarding policy preserves repeated IDs, native
+order and numeric spelling; it does not inherit the query's 100-ID ceiling. The
+input module imports only the public peer type and cannot acquire a Session,
+transport or lifetime. It owns no state or cleanup.
+
 `createForwardMessages` owns existing-message forwarding and merged-content reads.
 Its narrow message port exposes only `getMultiMsg` and `forwardMsg`; peer resolution
 and single/batch decoding are injected separately. It captures validated inputs

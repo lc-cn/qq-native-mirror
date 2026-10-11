@@ -116,6 +116,7 @@ const facadeInputs = new Set([
   'src/features/groups/group-operation-input.ts',
   'src/features/contacts/friend-categories.ts',
   'src/features/forward/merged-forward-input.ts',
+  'src/features/forward/forward-input.ts',
   'src/features/forward/forward-resource-input.ts',
   'src/features/messages/send-input.ts',
   'src/features/messages/query-input.ts',
@@ -174,6 +175,10 @@ export function dependencyViolation({ from, to, typeOnly }: SourceDependency): s
     ].includes(from)
       ? undefined
       : 'Feature lifetime requires an exact reviewed local operation owner.';
+  if (from === 'src/features/forward/forward-input.ts')
+    return typeOnly && to === 'src/contracts/messages.ts'
+      ? undefined
+      : 'Existing-forward input owns only peer and ID capture, without execution or lifecycle dependencies.';
   if (from === 'src/features/forward/forward-resource-input.ts')
     return 'Forward-resource input has no dependencies; protocol decoding and resource acquisition belong to their owners.';
   const domainInputContracts = {

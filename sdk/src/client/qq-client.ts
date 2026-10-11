@@ -1,3 +1,4 @@
+import { captureForwardSubmission } from '../features/forward/forward-input.ts';
 import { captureFriendRequest } from '../features/contacts/friend-request-input.ts';
 import { captureGroupRequestOperation } from '../features/groups/group-request-input.ts';
 import { captureGroupSearch } from '../features/groups/group-search-input.ts';
@@ -266,8 +267,11 @@ export class QQClient extends EventEmitter<ClientEvents> {
     });
   }
   /** Native submission only; this does not confirm destination receipt. */
-  forwardMessages(source: Peer, destination: Peer, messageIds: string[]): Promise<void> {
-    return this.#operation('forwardMessages', { source, destination, messageIds });
+  async forwardMessages(source: Peer, destination: Peer, messageIds: string[]): Promise<void> {
+    return this.#operation(
+      'forwardMessages',
+      captureForwardSubmission({ source, destination, messageIds }),
+    );
   }
   /** Text-only composition; upload and card dispatch are never automatically retried. */
   async sendMergedForward(

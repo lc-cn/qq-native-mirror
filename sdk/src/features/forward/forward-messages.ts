@@ -1,3 +1,4 @@
+import { captureForwardPeer, forwardMessageId, captureForwardSubmission } from './forward-input.ts';
 import { nativeResultError } from '../../errors.ts';
 /** Pinned NapCatQQ 26d7533e0f5800fdff865ab2f2ad7692917e1076:
  * https://github.com/NapNeko/NapCatQQ/blob/26d7533e0f5800fdff865ab2f2ad7692917e1076/packages/napcat-core/apis/msg.ts#L45-L48
@@ -9,19 +10,6 @@ import type { Message, Peer } from '../../contracts/messages.ts';
 
 export type NativeForwardPeer = { chatType: 1 | 2; peerUid: string; guildId?: string };
 export type ForwardOperation = 'getForwardMessages' | 'forwardMessages';
-function id(value: unknown, name: string): string {
-  if (typeof value !== 'string' || !/^\d+$/.test(value))
-    throw new Error(`${name} must be a numeric string`);
-  return value;
-}
-function peer(value: unknown, name: string): Peer {
-  if (!value || typeof value !== 'object') throw new Error(`${name} must be a peer`);
-  const p = value as Record<string, unknown>;
-  const type = p.type;
-  if (type === 'private') return { type: 'private', userId: id(p.userId, `${name}.userId`) };
-  if (type === 'group') return { type: 'group', groupId: id(p.groupId, `${name}.groupId`) };
-  throw new Error(`${name}.type must be private or group`);
-}
 function check(result: unknown, method: string): asserts result is Record<string, unknown> {
   const status =
     result && typeof result === 'object' ? (result as Record<string, unknown>).result : undefined;
@@ -103,9 +91,9 @@ export function createForwardMessages(context: ForwardMessagesContext) {
   ): Promise<Message[] | void> {
     checkAlive();
     if (method === 'getForwardMessages') {
-      const source = peer(payload.peer, 'peer');
-      const root = id(payload.rootMessageId, 'rootMessageId');
-      const parent = id(payload.parentMessageId, 'parentMessageId');
+      const source = captureForwardPeer(payload.peer, 'peer');
+      const root = forwardMessageId(payload.rootMessageId, 'rootMessageId');
+      const parent = forwardMessageId(payload.parentMessageId, 'parentMessageId');
       const resolved = await alive(() => resolvePeer(source));
       const result = await alive(() => call('getMultiMsg', [resolved, root, parent]));
       checkAlive();
@@ -162,12 +150,7 @@ export function createForwardMessages(context: ForwardMessagesContext) {
       return projected;
     }
     if (method !== 'forwardMessages') throw new Error(`Unsupported forward operation: ${method}`);
-    const source = peer(payload.source, 'source');
-    const destination = peer(payload.destination, 'destination');
-    const capturedIds = payload.messageIds;
-    if (!Array.isArray(capturedIds) || !capturedIds.length)
-      throw new Error('messageIds must be a nonempty array');
-    const messageIds = Array.from(capturedIds, (value) => id(value, 'messageId'));
+    const { source, destination, messageIds } = captureForwardSubmission(payload);
     const sourcePeer = await alive(() => resolvePeer(source));
     checkAlive();
     const destinationPeer = await alive(() => resolvePeer(destination));

@@ -51,11 +51,28 @@ export async function verifyForwardConsumer(packageRoot) {
       signal: new AbortController().signal,
       awaitAlive: async (value) => value,
     });
-    for (const messageIds of [Array(1), [longId, undefined]])
+    let idReads = 0,
+      iteratorCalls = 0;
+    const accessorIds = Object.defineProperty(new Array(1), '0', {
+      get() {
+        idReads++;
+        return longId;
+      },
+    });
+    const hiddenIds = [longId, null];
+    Object.defineProperty(hiddenIds, Symbol.iterator, {
+      value() {
+        iteratorCalls++;
+        return [longId][Symbol.iterator]();
+      },
+    });
+    for (const messageIds of [Array(1), [longId, undefined], accessorIds, hiddenIds])
       await assert.rejects(
         invalidIds.invokeOperation('forwardMessages', { source: peer, destination, messageIds }),
       );
     assert.equal(calls, 0);
+    assert.equal(idReads, 0);
+    assert.equal(iteratorCalls, 0);
     const raw = {
       msgId: longId,
       msgSeq: '9',
@@ -393,9 +410,11 @@ export async function verifyForwardConsumer(packageRoot) {
                   result:
                     request.method === 'close'
                       ? null
-                      : request.method === 'sendMergedForward'
-                        ? { messageId: '42', sequence: '9', time: 100, resourceId: 'r' }
-                        : [],
+                      : request.method === 'forwardMessages'
+                        ? undefined
+                        : request.method === 'sendMergedForward'
+                          ? { messageId: '42', sequence: '9', time: 100, resourceId: 'r' }
+                          : [],
                 });
                 if (request.method === 'close')
                   setImmediate(() => {
@@ -416,6 +435,59 @@ export async function verifyForwardConsumer(packageRoot) {
         queueMicrotask(() => this.emit('exit', 0, null));
         return true;
       }
+    }
+    const inputWorker = new Worker(),
+      inputClient = new QQClient(inputWorker, 500);
+    inputWorker.emit('message', { event: 'ready', payload: { uin: '456', uid: 'u_self' } });
+    try {
+      for (const messageIds of [accessorIds, hiddenIds])
+        await assert.rejects(
+          Reflect.apply(inputClient.forwardMessages, inputClient, [peer, destination, messageIds]),
+        );
+      await assert.rejects(
+        Reflect.apply(inputClient.forwardMessages, inputClient, [
+          { type: 'group', groupId: 42 },
+          destination,
+          ['42'],
+        ]),
+      );
+      assert.equal(inputWorker.requests.length, 0);
+      assert.equal(idReads, 0);
+      assert.equal(iteratorCalls, 0);
+      let peerReads = 0;
+      const source = {
+        get type() {
+          peerReads++;
+          return 'group';
+        },
+        groupId: '000123',
+      };
+      const ids = Array.from({ length: 101 }, () => '00042');
+      Object.defineProperty(ids, Symbol.iterator, {
+        value() {
+          iteratorCalls++;
+          return ['99'][Symbol.iterator]();
+        },
+      });
+      const pending = Reflect.apply(inputClient.forwardMessages, inputClient, [
+        source,
+        destination,
+        ids,
+      ]);
+      source.groupId = '999';
+      ids[0] = '99';
+      assert.equal(await pending, undefined);
+      assert.equal(peerReads, 1);
+      assert.equal(iteratorCalls, 0);
+      const request = inputWorker.requests[0];
+      assert.equal(request.method, 'forwardMessages');
+      assert.deepEqual(request.source, { type: 'group', groupId: '000123' });
+      assert.deepEqual(
+        request.messageIds,
+        Array.from({ length: 101 }, () => '00042'),
+      );
+    } finally {
+      await inputClient.close();
     }
     const worker = new Worker(),
       client = new QQClient(worker, 500);
@@ -528,6 +600,8 @@ export async function verifyForwardConsumer(packageRoot) {
       await client.close();
     }
     return {
+      forwardInputSnapshotContract: true,
+      forwardInputBeforeIpcContract: true,
       forwardMessageContract: true,
       mergedForwardOwnedInputContract: true,
       forwardNamedPortsContract: true,

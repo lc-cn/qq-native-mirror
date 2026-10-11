@@ -81,6 +81,7 @@ test('native composition delegates forward resource orchestration to its domain 
   for (const to of [
     'src/features/forward/merged-forward.ts',
     'src/features/forward/merged-forward-input.ts',
+    'src/features/forward/forward-input.ts',
     'src/features/forward/forward-resource-transport.ts',
     'src/features/forward/forward-resource-wire.ts',
     'src/features/forward/new-resource.ts',
@@ -288,4 +289,28 @@ test('recall composition delegates input capture and recipient orchestration to 
       }),
     );
   }
+});
+
+test('existing-forward input exposes pure capture without execution or lifecycle dependencies', () => {
+  const from = 'src/features/forward/forward-input.ts';
+  assert.equal(
+    dependencyViolation({ from, to: 'src/contracts/messages.ts', typeOnly: true }),
+    undefined,
+  );
+  for (const to of [
+    'src/features/forward/forward-messages.ts',
+    'src/features/messages/query-input.ts',
+    'src/native/native-object.ts',
+    'src/runtime/feature-lifetime.ts',
+    'node:fs',
+    'src/contracts/messages.ts',
+  ])
+    for (const typeOnly of [false, true]) {
+      if (to === 'src/contracts/messages.ts' && typeOnly) continue;
+      assert.ok(dependencyViolation({ from, to, typeOnly }));
+    }
+  assert.equal(
+    dependencyViolation({ from: 'src/client/qq-client.ts', to: from, typeOnly: false }),
+    undefined,
+  );
 });
