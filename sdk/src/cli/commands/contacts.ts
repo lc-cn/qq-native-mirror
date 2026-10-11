@@ -7,7 +7,7 @@ import {
   captureFriendCategoryId,
   captureFriendCategoryOrder,
   captureRenameFriendCategory,
-} from '../../features/contacts/friend-categories.ts';
+} from '../../features/contacts/friend-category-input.ts';
 import { required, numeric, bool } from '../command-input.ts';
 import type { ClientCommandDefinition } from '../command-contracts.ts';
 

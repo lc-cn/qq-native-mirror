@@ -26,6 +26,12 @@ actual variation point. Reuse an existing owner when those facts have not change
 A file move, thin forwarding wrapper or new base class alone does not improve the
 architecture. A generic module must remove repeated knowledge from real callers.
 
+For example, category names and ordered selectors live in
+`features/contacts/friend-category-input.ts`, shared by public and native callers.
+Native buddy results belong to `friend-categories.ts`, imported only by the
+contact directory. Keep those separate even though both are pure: they interpret
+different contracts and change for different reasons.
+
 The source inventory is closed to regular `.ts` files. Every file needs a reviewed
 layer or domain, including modules without imports. Dependency permissions include
 type-only imports and must stay acyclic. Exact cross-domain pairs and composition

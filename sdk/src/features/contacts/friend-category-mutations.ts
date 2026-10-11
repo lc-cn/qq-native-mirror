@@ -3,7 +3,7 @@ import {
   captureFriendCategoryOrder,
   captureRenameFriendCategory,
   friendCategoryName,
-} from './friend-categories.ts';
+} from './friend-category-input.ts';
 import { createFriendCategory } from './friend-category-create.ts';
 import type { CreatedFriendCategory } from '../../contracts/contacts.ts';
 import { completeFriendCategoryMutation } from './friend-category-completion.ts';

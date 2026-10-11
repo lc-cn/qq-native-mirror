@@ -102,7 +102,7 @@ and real callers; similar method names alone do not establish that need.
 
 The parent facade and CLI import pure input modules (`query-input`,
 `download-input`, `merged-forward-input`, `send-input`, `face-input`, and
-contact-category projection/validation, `friend-request-input` and
+`friend-category-input`, `friend-request-input` and
 `group-request-input`, `contact-operation-input`, `group-operation-input`, and
 `forward-resource-input`).
 Native operation modules reuse that implementation and retain internal reexports
@@ -111,6 +111,13 @@ parent to depend on native querying, media-file writes, forward submission or
 forward-resource protocol decoding. Resource-ID validation owns the exact UTF-8
 byte and surrogate rules; the wire module imports those rules and keeps its
 compression and schema implementation inside the worker domain.
+
+`friend-category-input` owns category names, uint32 selectors, ordered row capture
+and account/category assignment input shared by the facade, CLI and mutation
+adapters. `friend-categories` owns native buddy-query validation and public friend
+and category projection, and only the contact directory imports it. Neither owner
+imports the other. Adding a query field therefore does not change the public
+input dependency closure; mutation completion stays with its operation owner.
 
 `src/runtime/operations.ts` owns the closed business-operation vocabulary. The
 public facade constrains its private operation dispatcher to that union, the

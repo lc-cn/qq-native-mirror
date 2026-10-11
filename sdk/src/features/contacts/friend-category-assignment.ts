@@ -1,4 +1,4 @@
-import { captureFriendCategoryAssignment } from './friend-categories.ts';
+import { captureFriendCategoryAssignment } from './friend-category-input.ts';
 import { completeFriendCategoryMutation } from './friend-category-completion.ts';
 
 export interface FriendCategoryAssignmentPort {

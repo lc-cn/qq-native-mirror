@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { createFriendCategoryMutations } from '../src/features/contacts/friend-category-mutations.ts';
-import { captureFriendCategoryOrder } from '../src/features/contacts/friend-categories.ts';
+import { captureFriendCategoryOrder } from '../src/features/contacts/friend-category-input.ts';
 
 const rows = () => [
   { categoryId: 0xffff_ffff, name: ' exact 中文 ' },

@@ -163,7 +163,7 @@ const facadeInputs = new Set([
   'src/features/groups/group-request-input.ts',
   'src/features/contacts/contact-operation-input.ts',
   'src/features/groups/group-operation-input.ts',
-  'src/features/contacts/friend-categories.ts',
+  'src/features/contacts/friend-category-input.ts',
   'src/features/forward/merged-forward-input.ts',
   'src/features/forward/forward-input.ts',
   'src/features/forward/forward-resource-input.ts',
@@ -246,6 +246,19 @@ export function dependencyViolation({ from, to, typeOnly }: SourceDependency): s
       : 'Existing-forward input owns only peer and ID capture, without execution or lifecycle dependencies.';
   if (from === 'src/features/forward/forward-resource-input.ts')
     return 'Forward-resource input has no dependencies; protocol decoding and resource acquisition belong to their owners.';
+  if (from === 'src/features/contacts/friend-category-input.ts')
+    return (!typeOnly && to === 'src/validation/identifiers.ts') ||
+      (typeOnly && to === 'src/contracts/contacts.ts')
+      ? undefined
+      : 'Category input captures only public identifiers and ordered rows; query projection and mutation execution are separate owners.';
+  if (from === 'src/features/contacts/friend-categories.ts')
+    return (!typeOnly && to === 'src/errors.ts') || (typeOnly && to === 'src/contracts/contacts.ts')
+      ? undefined
+      : 'Category query projection only interprets native receipts into public DTOs; it cannot acquire input, lifecycle or native execution.';
+  if (to === 'src/features/contacts/friend-categories.ts')
+    return !typeOnly && from === 'src/features/contacts/contact-directory.ts'
+      ? undefined
+      : 'Only the contact directory projects a captured native category query; public input callers cannot acquire its result interpreter.';
   const domainInputContracts = {
     'src/features/contacts/friend-request-input.ts': 'src/contracts/contacts.ts',
     'src/features/groups/group-request-input.ts': 'src/contracts/groups.ts',

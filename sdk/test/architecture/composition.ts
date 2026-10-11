@@ -164,6 +164,7 @@ test('category composition cannot regain input or creation completion policy', (
   for (const typeOnly of [false, true]) {
     for (const to of [
       'src/features/contacts/friend-categories.ts',
+      'src/features/contacts/friend-category-input.ts',
       'src/features/contacts/friend-category-create.ts',
       'src/features/contacts/friend-category-completion.ts',
     ])

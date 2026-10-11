@@ -1,5 +1,5 @@
-import { friendCategoryName } from './friend-categories.ts';
-export { friendCategoryName } from './friend-categories.ts';
+import { friendCategoryName } from './friend-category-input.ts';
+export { friendCategoryName } from './friend-category-input.ts';
 import { nativeResultError } from '../../errors.ts';
 import type { CreatedFriendCategory } from '../../contracts/contacts.ts';
 

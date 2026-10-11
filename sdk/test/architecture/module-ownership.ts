@@ -4,6 +4,49 @@ import test from 'node:test';
 import { dependencyViolation } from '../helpers/dependency-policy.ts';
 import { projectRoot, graph } from '../helpers/source-graph.ts';
 
+test('category input callers cannot acquire query projection or mutation execution', () => {
+  const input = 'src/features/contacts/friend-category-input.ts';
+  const projection = 'src/features/contacts/friend-categories.ts';
+  const callers = [
+    'src/client/qq-client.ts',
+    'src/cli/commands/contacts.ts',
+    'src/features/contacts/friend-category-create.ts',
+    'src/features/contacts/friend-category-mutations.ts',
+    'src/features/contacts/friend-category-assignment.ts',
+  ];
+  for (const from of callers) {
+    assert.ok(
+      graph
+        .get(join(projectRoot, from))!
+        .some((edge) => !edge.typeOnly && edge.target === join(projectRoot, input)),
+      `${from} must use the shared input owner directly`,
+    );
+    for (const typeOnly of [false, true]) {
+      assert.equal(dependencyViolation({ from, to: input, typeOnly }), undefined);
+      assert.ok(dependencyViolation({ from, to: projection, typeOnly }));
+    }
+  }
+  assert.equal(
+    dependencyViolation({
+      from: 'src/features/contacts/contact-directory.ts',
+      to: projection,
+      typeOnly: false,
+    }),
+    undefined,
+  );
+  for (const from of [input, projection])
+    for (const to of [
+      from === input ? projection : input,
+      'src/features/contacts/friend-category-mutations.ts',
+      'src/features/contacts/contact-directory.ts',
+      'src/runtime/native-service-lifetime.ts',
+      'src/native/native-object.ts',
+      'node:fs',
+    ])
+      for (const typeOnly of [false, true])
+        assert.ok(dependencyViolation({ from, to, typeOnly }), `${from} acquired ${to}`);
+});
+
 test('group-file field capture stays private to count and folder protocols', () => {
   const reader = 'src/features/groups/group-file-result.ts';
   assert.deepEqual(graph.get(join(projectRoot, reader)), []);

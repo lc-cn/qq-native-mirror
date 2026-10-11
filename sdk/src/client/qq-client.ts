@@ -21,7 +21,7 @@ import {
   captureRenameFriendCategory,
   captureFriendCategoryId,
   captureFriendCategoryOrder,
-} from '../features/contacts/friend-categories.ts';
+} from '../features/contacts/friend-category-input.ts';
 import { captureMergedForward } from '../features/forward/merged-forward-input.ts';
 import { normalizeForwardResourceId } from '../features/forward/forward-resource-input.ts';
 import {
