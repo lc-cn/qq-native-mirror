@@ -555,6 +555,13 @@ Video thumbnail lookup remains a typed Map lookup, including the possibility
 that a requested key is absent. This internal model does not assert a complete
 callback ABI: raw received elements retain their existing projection contracts.
 
+`native/native-contracts` owns only the pure capability registry and matching.
+`native/native-contract-inspection` owns file hashing and actual host identity;
+only the Node bootstrap imports that acquisition module. Service composition
+imports the pure registry, so capability checks cannot acquire wrapper files.
+Unknown versions still return without opening a file; known-version read failures
+propagate, and callers cannot replace the measured digest with metadata.
+
 The native contract registry stores each measured binary identity once, with an
 explicit list of independently inspected capabilities. Matching requires OS,
 architecture, client version and SHA-256 together; capability predicates never

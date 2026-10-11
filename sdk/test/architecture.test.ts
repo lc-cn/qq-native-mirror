@@ -173,6 +173,38 @@ test('service composition delegates message-update ingress without projecting re
   assert.ok(!imported.includes('createRecallEvents'));
 });
 
+test('capability policy stays pure and only the Node bootstrap can acquire binary provenance', () => {
+  const policy = 'src/native/native-contracts.ts';
+  const inspection = 'src/native/native-contract-inspection.ts';
+  for (const typeOnly of [false, true]) {
+    for (const to of [
+      'node:fs',
+      'node:crypto',
+      inspection,
+      'src/native/native-package.ts',
+      'src/storage/process-lock.ts',
+    ])
+      assert.ok(dependencyViolation({ from: policy, to, typeOnly }));
+    for (const from of [
+      'src/native-services.ts',
+      'src/worker/native-bootstrap.ts',
+      'src/native/new-source.ts',
+      'src/runtime/account-session-lifecycle.ts',
+      'src/features/contacts/friend-category-assignment.ts',
+    ])
+      assert.ok(dependencyViolation({ from, to: inspection, typeOnly }));
+    assert.equal(dependencyViolation({ from: inspection, to: policy, typeOnly }), undefined);
+    assert.ok(
+      dependencyViolation({ from: inspection, to: 'src/native/native-package.ts', typeOnly }),
+    );
+  }
+  assert.equal(
+    dependencyViolation({ from: 'src/worker/bootstrap.ts', to: inspection, typeOnly: false }),
+    undefined,
+  );
+  assert.ok(dependencyViolation({ from: 'src/worker/bootstrap.ts', to: policy, typeOnly: false }));
+});
+
 test('manifest preflight and directory verification cannot acquire source selection or installation', () => {
   for (const from of [
     'src/native/native-manifest.ts',
@@ -673,6 +705,7 @@ const pureModules = new Set([
   'src/features/contacts/contact-operation-input.ts',
   'src/features/groups/group-operation-input.ts',
   'src/native/native-manifest.ts',
+  'src/native/native-contracts.ts',
   'src/types.ts',
   'src/errors.ts',
   'src/validation/identifiers.ts',
@@ -700,6 +733,7 @@ const pureRoots = [
   'features/contacts/contact-operation-input.ts',
   'features/groups/group-operation-input.ts',
   'native/native-manifest.ts',
+  'native/native-contracts.ts',
   'features/contacts/friend-categories.ts',
   'features/messages/query-input.ts',
   'features/messages/recall-input.ts',

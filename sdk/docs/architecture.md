@@ -66,6 +66,8 @@ The diagrams are navigation aids; the exact permissions live in
 | `src/features/messages/`                         | Message input capture, native projection, querying and recall.                                           |
 | `src/features/media/`, `src/features/forward/`   | Media codecs and forward-resource transports.                                                            |
 | `src/native/`                                    | Bundle resolution, provenance, storage and native contract checks.                                       |
+| `src/native/native-contracts.ts`                 | Pure binary capability registry and matching; no file or host acquisition.                               |
+| `src/native/native-contract-inspection.ts`       | Worker-owned hashing of the selected wrapper and capture of actual host provenance.                      |
 | `src/native/native-manifest.ts`                  | Pure source-option and manifest rules shared by CLI preflight and preparation.                           |
 | `src/native/native-directory-verification.ts`    | Read-only integrity verification of an already selected local/npm inventory.                             |
 | `src/storage/`                                   | Process/account-directory ownership and locking.                                                         |

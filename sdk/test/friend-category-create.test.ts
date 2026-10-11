@@ -10,10 +10,10 @@ import {
   projectCreatedFriendCategory,
 } from '../src/features/contacts/friend-category-create.ts';
 import {
-  inspectNativeContracts,
   supportsCategoryCreation,
   type NativeContractProfile,
 } from '../src/native/native-contracts.ts';
+import { inspectNativeContracts } from '../src/native/native-contract-inspection.ts';
 import { createNativeServices } from '../src/native-services.ts';
 
 const profiles: NativeContractProfile[] = [

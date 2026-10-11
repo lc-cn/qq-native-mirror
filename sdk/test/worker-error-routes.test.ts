@@ -10,7 +10,7 @@ test('actual worker replies to opaque failures and the same worker serves the ne
     kernelPath: fileURLToPath(new URL('../src/kernel.ts', import.meta.url)),
     errorsPath: fileURLToPath(new URL('../src/errors.ts', import.meta.url)),
     nativeContractsPath: fileURLToPath(
-      new URL('../src/native/native-contracts.ts', import.meta.url),
+      new URL('../src/native/native-contract-inspection.ts', import.meta.url),
     ),
   });
 });

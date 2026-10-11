@@ -163,7 +163,7 @@ const workerErrorChecks = await verifyWorkerErrorRoutes({
   kernelPath: join(destination, 'node_modules/qq-native-client/dist/kernel.js'),
   nativeContractsPath: join(
     destination,
-    'node_modules/qq-native-client/dist/native/native-contracts.js',
+    'node_modules/qq-native-client/dist/native/native-contract-inspection.js',
   ),
 });
 const historyLifecycleChecks = await verifyHistoryLifecycleConsumer(

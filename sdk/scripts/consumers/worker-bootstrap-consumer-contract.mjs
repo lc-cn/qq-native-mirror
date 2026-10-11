@@ -18,7 +18,7 @@ export async function verifyWorkerBootstrapConsumer(packageRoot) {
   const { QQClient } = await clientModule;
   const workerUrls = [worker, join(dist, 'worker/bootstrap.js')].map((p) => pathToFileURL(p).href);
   const kernelUrl = pathToFileURL(join(dist, 'kernel.js')).href;
-  const contractsUrl = pathToFileURL(join(dist, 'native/native-contracts.js')).href;
+  const contractsUrl = pathToFileURL(join(dist, 'native/native-contract-inspection.js')).href;
   /** @typedef {{code:number|null,signal:NodeJS.Signals|null}} WorkerExit */
   /** @type {{child:import('node:child_process').ChildProcess,exited:Promise<WorkerExit>}[]} */
   const children = [];

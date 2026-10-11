@@ -1,6 +1,3 @@
-import { createHash } from 'node:crypto';
-import { createReadStream } from 'node:fs';
-
 /** Internal worker provenance computed from the binary, never ClientOptions. */
 export interface NativeContractProfile {
   readonly platform: string;
@@ -131,30 +128,17 @@ const binaryProfiles: readonly BinaryContract[] = [
   ],
 ];
 
-export async function inspectNativeContracts(
-  wrapperPath: string,
-  version: unknown,
-): Promise<NativeContractProfile | undefined> {
-  const clientVersion =
-    version && typeof version === 'object'
-      ? (version as { clientVersion?: unknown }).clientVersion
-      : undefined;
-  if (
-    typeof clientVersion !== 'string' ||
-    !binaryProfiles.some(
-      ([platform, arch, tag]) =>
-        platform === process.platform && arch === process.arch && tag === clientVersion,
-    )
-  )
-    return;
-  const hash = createHash('sha256');
-  for await (const chunk of createReadStream(wrapperPath)) hash.update(chunk);
-  return Object.freeze({
-    platform: process.platform,
-    arch: process.arch,
-    clientVersion,
-    wrapperSha256: hash.digest('hex'),
-  });
+/** Pure lookup used before the worker acquires binary bytes. A version alone
+ * never grants a capability; operation matching also requires the measured hash. */
+export function hasNativeContractVersion(
+  platform: string,
+  arch: string,
+  clientVersion: string,
+): boolean {
+  return binaryProfiles.some(
+    ([os, architecture, version]) =>
+      os === platform && architecture === arch && version === clientVersion,
+  );
 }
 
 function matchesContract(

@@ -99,7 +99,7 @@ try {
   QQClient: sdk.QQClient,
   workerPath: join(installedRoot, 'dist/worker.js'),
   kernelPath: join(installedRoot, 'dist/kernel.js'),
-  nativeContractsPath: join(installedRoot, 'dist/native/native-contracts.js'),
+  nativeContractsPath: join(installedRoot, 'dist/native/native-contract-inspection.js'),
   errorsPath: join(installedRoot, 'dist/errors.js'),
  });
  const {prepareNative}=await import(pathToFileURL(join(installedRoot,'dist/native/native-package.js')).href);

@@ -164,6 +164,13 @@ only the exact local codec loaders and installed-manifest resolver have reviewed
 exceptions. Renamed simple loaders remain checked. This gate protects source
 organization, not arbitrary JavaScript evaluation.
 
+The capability registry participates in the pure runtime-closure check. Exact
+resource ownership gives hashing/file access only to the worker's binary
+inspector, and dependency fixtures reject service, feature and newly added
+native modules importing it. Controlled file tests preserve unknown-version
+preflight, host/digest provenance and original read failures without loading an
+addon or interpreting a new binary's capabilities.
+
 The dependency policy in `test/helpers/dependency-policy.ts` checks type imports
 as well as runtime imports. Storage depends on storage and public primitives;
 native bundle management additionally depends on storage. Runtime depends on its

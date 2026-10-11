@@ -66,7 +66,7 @@ const bootstrapDependencies = new Set([
   'src/features/media/record-codec-loader.ts',
   'src/features/media/video-codec-loader.ts',
   'src/features/media/builtin-record-codec.ts',
-  'src/native/native-contracts.ts',
+  'src/native/native-contract-inspection.ts',
   'src/worker/native-bootstrap.ts',
 ]);
 const bootstrapTypeDependencies = new Set([
@@ -211,6 +211,14 @@ export function dependencyViolation({ from, to, typeOnly }: SourceDependency): s
     return to === 'src/errors.ts'
       ? undefined
       : 'Category ACK completion interprets receipts without acquiring native services or domain owners.';
+  if (from === 'src/native/native-contracts.ts')
+    return 'Native capability policy owns only measured profile data and pure matching rules.';
+  if (from === 'src/native/native-contract-inspection.ts')
+    return to === 'src/native/native-contracts.ts'
+      ? undefined
+      : 'Binary inspection only measures the selected file against the pure contract registry.';
+  if (to === 'src/native/native-contract-inspection.ts' && from !== 'src/worker/bootstrap.ts')
+    return 'Only the Node bootstrap may acquire measured binary provenance.';
   if (from === 'src/native/native-manifest.ts')
     return typeOnly && to === 'src/contracts/native.ts'
       ? undefined

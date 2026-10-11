@@ -88,7 +88,7 @@ export async function verifyClientFactoryConsumer(installedRoot, { source = fals
       `export function createKernel(){return {async prepare(){},async close(){}};}`,
     );
     await writeFile(
-      join(packageRoot, tree, `native/native-contracts.${extension}`),
+      join(packageRoot, tree, `native/native-contract-inspection.${extension}`),
       `export async function inspectNativeContracts(){return {};}`,
     );
     const hook = join(directory, 'hook.mjs');

@@ -5,7 +5,7 @@ import { lockDataDirectory } from '../storage/data-directory-lock.ts';
 import { loadRecordCodec } from '../features/media/record-codec-loader.ts';
 import { loadVideoCodec } from '../features/media/video-codec-loader.ts';
 import { builtinRecordCodec } from '../features/media/builtin-record-codec.ts';
-import { inspectNativeContracts } from '../native/native-contracts.ts';
+import { inspectNativeContracts } from '../native/native-contract-inspection.ts';
 import { NativeWorkerBootstrap } from './native-bootstrap.ts';
 
 /** Bind Node acquisition ports once; the IPC entry never loads native addons. */

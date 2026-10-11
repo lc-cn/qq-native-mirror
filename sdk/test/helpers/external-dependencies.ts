@@ -56,7 +56,7 @@ export const externalRuntimeDependencies: Readonly<Record<string, readonly strin
     'node:path',
     'node:zlib',
   ],
-  'src/native/native-contracts.ts': ['node:crypto', 'node:fs'],
+  'src/native/native-contract-inspection.ts': ['node:crypto', 'node:fs'],
   'src/native/native-manifest.ts': ['node:path'],
   'src/native/native-directory-verification.ts': ['node:crypto', 'node:fs/promises', 'node:path'],
   'src/native/native-installed-storage.ts': [
