@@ -14,6 +14,7 @@
     "scripts/client-factory-consumer-contract.mjs",
     "scripts/face-consumer-contract.mjs",
     "scripts/group-search-consumer-contract.mjs",
+    "scripts/group-query-owner-consumer-contract.mjs",
     "scripts/element-preparation-consumer-contract.mjs",
     "scripts/mirror-consumer-contract.mjs",
     "scripts/group-essence-consumer-contract.mjs",

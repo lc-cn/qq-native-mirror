@@ -45,9 +45,13 @@ bundle and video-native CI. Runtime output is recreated from a clean `dist`
 directory so obsolete emitted modules cannot make a packaging check pass.
 
 `tsconfig.scripts.json` governs all TypeScript scripts, the client-factory, shared worker-delivery, face,
-group-search, group-essence, group-file page, element-preparation and mirror consumers, and the module-reference
+group-search, group-query owner, group-essence, group-file page, element-preparation and mirror consumers, and the module-reference
 collector. Checked consumers bind dynamic installed imports to their source
-contracts. The client-factory consumer types its public
+contracts. The group-query owner consumer uses the installed query module and
+shared callback channel to check input rejection, local cancellation of stalled
+queries and continued sibling operations. Its native services are controlled;
+these results do not prove account queries or native interoperability.
+The client-factory consumer types its public
 factory, captured worker options and initialization payloads while running the
 actual worker with a replacement kernel and addon loader. Invalid source-option
 fixtures cross an explicitly opaque input seam; ordinary calls keep the real

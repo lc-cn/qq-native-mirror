@@ -12,6 +12,25 @@ import { collectConsumerModuleReferences } from '../scripts/consumer-module-refe
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const helper = resolve(root, 'scripts/face-consumer-contract.mjs');
 const source = readFileSync(helper, 'utf8');
+
+test('group-query owner consumer rejects an invalid port and an unobserved assertion without execution', async () => {
+  const queryHelper = resolve(root, 'scripts/group-query-owner-consumer-contract.mjs');
+  const querySource = readFileSync(queryHelper, 'utf8');
+  assert.deepEqual(diagnostics(querySource, queryHelper), []);
+  const invalid = replaceOnce(querySource, 'getAllMemberList: request', 'getAllMemberList: 42');
+  assert.ok(diagnostics(invalid, queryHelper).length > 0);
+  const floating = replaceOnce(
+    querySource,
+    'await assert.rejects(preflight[method](id)',
+    'assert.rejects(preflight[method](id)',
+  );
+  const reports = await new ESLint({ cwd: root }).lintText(floating, { filePath: queryHelper });
+  assert.ok(
+    reports
+      .flatMap((report) => report.messages)
+      .some((message) => message.ruleId === '@typescript-eslint/no-floating-promises'),
+  );
+});
 function replaceOnce(value, before, after) {
   assert.equal(value.split(before).length - 1, 1, `Fixture anchor must occur once: ${before}`);
   return value.replace(before, after);

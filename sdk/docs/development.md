@@ -177,6 +177,13 @@ Use intrinsic Map operations for native membership maps, and commit the complete
 validated member batch only after checking Session retirement. Keep this policy
 inside the group query owner rather than in service composition or the UID cache.
 
+The group query owner also captures IDs and refresh defaults before native
+acquisition or callback registration. Its local close aborts pending callback and
+member waits without closing the account channel; preserve sibling operations and
+observe late native failures. Composition only forwards payload fields. Retain
+the existing opaque list refresh and boolean member refresh contracts rather than
+introducing a new shared validation rule.
+
 Metadata events retain their partial-field semantics. Capture optional fields
 once, validate the whole batch and guard projection failures with a fixed
 diagnostic. Keep the application emit call outside that guard so an application

@@ -469,3 +469,115 @@ test('member failure code is captured once without changing native error policy'
   f.queries.close();
   f.channel.close();
 });
+
+for (const method of ['getGroupInfo', 'listGroupMutedMembers', 'getGroupMembers'] as const) {
+  test(`${method}: direct invalid group IDs reject before acquisition, callback or cache`, async () => {
+    const controller = new AbortController();
+    let acquisitions = 0;
+    let callbacks = 0;
+    let commits = 0;
+    const queries = createGroupQueries({
+      signal: controller.signal,
+      getGroupService() {
+        acquisitions++;
+        throw new Error('unexpected service acquisition');
+      },
+      eventCall() {
+        callbacks++;
+        throw new Error('unexpected callback request');
+      },
+      awaitAlive: async (value) => value,
+      commitMembers() {
+        commits++;
+      },
+    });
+    try {
+      for (const id of ['', '0', '0000', ' ', '-1', '1.5', 'abc', '1*']) {
+        await assert.rejects(queries[method](id), { message: 'Invalid send group identifier' });
+      }
+      assert.equal(acquisitions, 0);
+      assert.equal(callbacks, 0);
+      assert.equal(commits, 0);
+    } finally {
+      queries.close();
+    }
+  });
+}
+
+test('direct query IDs preserve leading zero spelling and legacy refresh defaults', async () => {
+  const f = fixture();
+  try {
+    const info = f.queries.getGroupInfo('0001');
+    f.channel.dispatch('Group/onGroupDetailInfoChange', [detail('0001')]);
+    assert.equal((await info).groupId, '0001');
+    const mute = f.queries.listGroupMutedMembers('0001');
+    f.channel.dispatch('Group/onShutUpMemberListChanged', ['0001', []]);
+    assert.deepEqual(await mute, []);
+    f.setResult({ errCode: 0, result: { finish: true, infos: new Map() } });
+    for (const refresh of [null, undefined]) await f.queries.getGroupMembers('0001', refresh);
+    assert.deepEqual(
+      f.calls.map((call) => call.args),
+      [['0001', 2], ['0001'], ['0001', false], ['0001', false]],
+    );
+    await f.queries.getGroupMembers('18446744073709551616');
+    assert.deepEqual(f.calls.at(-1)?.args, ['18446744073709551616', false]);
+    f.setResult({ result: 0 });
+    const list = f.queries.listGroups({ legacy: true });
+    f.channel.dispatch('Group/onGroupListUpdate', [0, []]);
+    await list;
+    assert.deepEqual(f.calls.at(-1)?.args, [{ legacy: true }]);
+  } finally {
+    f.queries.close();
+    f.channel.close();
+  }
+});
+
+for (const entry of queryCases) {
+  test(`${entry.method}: local close settles stalled query without retiring shared channel`, async () => {
+    const f = fixture();
+    let rejectNative!: (reason: unknown) => void;
+    f.setResult(
+      new Promise((_, reject) => {
+        rejectNative = reject;
+      }),
+    );
+    const pending = entry.run(f.queries);
+    const observed = pending.then(
+      () => ({ kind: 'fulfilled' as const }),
+      (error: unknown) => ({ kind: 'rejected' as const, error }),
+    );
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    try {
+      f.queries.close();
+      const outcome = await Promise.race([
+        observed,
+        new Promise<{ kind: 'deadline' }>((resolve) => {
+          timer = setTimeout(() => resolve({ kind: 'deadline' }), 100);
+        }),
+      ]);
+      assert.equal(outcome.kind, 'rejected', 'local close must settle before native completion');
+      if (outcome.kind === 'rejected') assert.match(String(outcome.error), /closed/i);
+      assert.equal(f.controller.signal.aborted, false);
+      const sibling = f.channel.call(
+        'fixture/sibling',
+        (value: unknown) => (value === 'ready' ? 'ready' : undefined),
+        () => {
+          f.channel.dispatch('fixture/sibling', ['ready']);
+          return { result: 0 };
+        },
+        100,
+        (value) => !!value && typeof value === 'object' && 'result' in value && value.result === 0,
+      );
+      assert.equal(await sibling, 'ready');
+      rejectNative(new Error('late provider failure'));
+      await new Promise<void>((resolve) => setImmediate(resolve));
+      assert.equal(f.commits.length, 0);
+      assert.equal(f.calls.length, 1);
+    } finally {
+      if (timer) clearTimeout(timer);
+      rejectNative(new Error('late provider cleanup'));
+      f.channel.close();
+      await observed;
+    }
+  });
+}

@@ -45,7 +45,6 @@ import { createGroupSystemEvents } from './features/groups/group-system-events.t
 import { createMessageUpdateEvents } from './features/messages/recall-events.ts';
 import { createMessageRecalls } from './features/messages/recall-operation.ts';
 import { createIncomingMessageDelivery } from './features/messages/incoming-message-delivery.ts';
-import { sendGroupId } from './validation/identifiers.ts';
 
 import type { NativeObject as Native } from './native/native-object.ts';
 import type { NativeMessage } from './native/message-contracts.ts';
@@ -392,20 +391,17 @@ export function createNativeServices(context: NativeServiceContext) {
           case 'addFriendCategory':
             return categoryMutations.create(payload.name);
           case 'listGroupMutedMembers':
-            return groupQueries.listGroupMutedMembers(sendGroupId(payload.groupId));
+            return groupQueries.listGroupMutedMembers(payload.groupId);
           case 'getGroupInfo':
-            return groupQueries.getGroupInfo(sendGroupId(payload.groupId));
+            return groupQueries.getGroupInfo(payload.groupId);
           case 'listFriendCategories':
             return directory.listFriendCategories();
           case 'listFriends':
             return directory.listFriends();
           case 'listGroups':
-            return groupQueries.listGroups(payload.refresh ?? true);
+            return groupQueries.listGroups(payload.refresh);
           case 'getGroupMembers':
-            return groupQueries.getGroupMembers(
-              sendGroupId(payload.groupId),
-              payload.refresh ?? false,
-            );
+            return groupQueries.getGroupMembers(payload.groupId, payload.refresh);
           case 'sendPrivateMessage':
             return sender.sendPrivateMessage(payload.userId, payload.message);
           case 'sendGroupMessage':

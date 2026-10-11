@@ -6,6 +6,7 @@ import type {
 } from '../../contracts/groups.ts';
 import type { NativeEventChannel } from '../../runtime/native-event-channel.ts';
 import { nativeResultError } from '../../errors.ts';
+import { sendGroupId } from '../../validation/identifiers.ts';
 import { projectGroupInfo } from './group-events.ts';
 import { projectGroupMuteList } from './group-mute-list.ts';
 function record(value: unknown): Record<string, unknown> | undefined {
@@ -24,16 +25,38 @@ export interface GroupQueriesContext {
   awaitAlive<T>(value: T | PromiseLike<T>): Promise<T>;
   commitMembers(members: readonly GroupMember[]): void;
 }
-/** Owns query coalescing and quarantine for callbacks without request nonces.
- * Validated member batches commit atomically; no native calls occur during construction.
- * The composition aborts its Session signal before closing this module.
+/** Owns input validation, query coalescing and callback quarantine.
+ * Closing retires this module's waits without closing the shared account channel.
+ * Validated member batches commit atomically; construction makes no native calls.
  */
 export function createGroupQueries(context: GroupQueriesContext) {
   const { signal, getGroupService, eventCall, awaitAlive, commitMembers } = context;
+  const controller = new AbortController();
+  const querySignal = AbortSignal.any([signal, controller.signal]);
   let closed = false;
   const alive = () => {
-    signal.throwIfAborted();
+    querySignal.throwIfAborted();
     if (closed) throw new Error('Group queries are closed');
+  };
+  // The account wait port still observes native completion. This local race
+  // lets the query owner retire even if that completion never arrives.
+  const waitForMembers = async <T>(value: T | PromiseLike<T>): Promise<T> => {
+    const pending = Promise.resolve(value);
+    void pending.catch(() => {});
+    alive();
+    let abort!: () => void;
+    const stopped = new Promise<never>((_, reject) => {
+      abort = () => reject(querySignal.reason);
+      querySignal.addEventListener('abort', abort, { once: true });
+    });
+    void stopped.catch(() => {});
+    try {
+      const result = await Promise.race([awaitAlive(pending), stopped]);
+      alive();
+      return result;
+    } finally {
+      querySignal.removeEventListener('abort', abort);
+    }
   };
   const groupService = () => {
     alive();
@@ -76,8 +99,9 @@ export function createGroupQueries(context: GroupQueriesContext) {
   let groupListInvalidated = false;
   const groupInfoQueries = new Map<string, Promise<GroupInfoUpdate>>();
   const invalidGroupInfoQueries = new Set<string>();
-  const getGroupInfo = async (id: string): Promise<GroupInfoUpdate> => {
+  const getGroupInfo = async (groupId: unknown): Promise<GroupInfoUpdate> => {
     alive();
+    const id = sendGroupId(groupId);
     if (invalidGroupInfoQueries.has(id))
       throw new Error('Group detail query channel is invalid; recreate the Session');
     let pending = groupInfoQueries.get(id);
@@ -96,9 +120,10 @@ export function createGroupQueries(context: GroupQueriesContext) {
         () => requestDetail(id),
         5000,
         nativeCallSucceeded,
+        querySignal,
       )
         .catch((error) => {
-          invalidGroupInfoQueries.add(id);
+          if (!querySignal.aborted) invalidGroupInfoQueries.add(id);
           throw error;
         })
         .finally(() => {
@@ -112,8 +137,9 @@ export function createGroupQueries(context: GroupQueriesContext) {
   };
   const groupMuteQueries = new Map<string, Promise<GroupMutedMember[]>>();
   const invalidGroupMuteQueries = new Set<string>();
-  const listGroupMutedMembers = async (id: string): Promise<GroupMutedMember[]> => {
+  const listGroupMutedMembers = async (groupId: unknown): Promise<GroupMutedMember[]> => {
     alive();
+    const id = sendGroupId(groupId);
     if (invalidGroupMuteQueries.has(id))
       throw new Error('Group mute-list query channel is invalid; recreate the Session');
     let pending = groupMuteQueries.get(id);
@@ -127,9 +153,10 @@ export function createGroupQueries(context: GroupQueriesContext) {
         () => requestMuteList(id),
         5000,
         nativeCallSucceeded,
+        querySignal,
       )
         .catch((error) => {
-          invalidGroupMuteQueries.add(id);
+          if (!querySignal.aborted) invalidGroupMuteQueries.add(id);
           throw error;
         })
         .finally(() => {
@@ -184,6 +211,7 @@ export function createGroupQueries(context: GroupQueriesContext) {
       () => requestGroupList(refresh ?? true),
       10_000,
       nativeCallSucceeded,
+      querySignal,
     );
     groupListRequest = request;
     try {
@@ -191,20 +219,21 @@ export function createGroupQueries(context: GroupQueriesContext) {
       alive();
       return value;
     } catch (error) {
-      groupListInvalidated = true;
+      if (!querySignal.aborted) groupListInvalidated = true;
       throw error;
     } finally {
       if (groupListRequest === request) groupListRequest = undefined;
     }
   };
   const getGroupMembers = async (
-    groupId: string,
+    groupId: unknown,
     refresh: unknown = false,
   ): Promise<GroupMember[]> => {
     alive();
+    const id = sendGroupId(groupId);
     refresh = refresh ?? false;
     if (typeof refresh !== 'boolean') throw new Error('refresh must be a boolean');
-    const result: unknown = await awaitAlive(requestMembers(groupId, refresh));
+    const result: unknown = await waitForMembers(requestMembers(id, refresh));
     // Pinned NodeIKernelGroupService.getAllMemberList reports errCode and
     // finish:true. A Map alone does not establish a successful full list.
     const errCode = record(result)?.errCode;
@@ -255,6 +284,7 @@ export function createGroupQueries(context: GroupQueriesContext) {
     // Commit only a complete validated query; failures leave no partial cache.
     alive();
     commitMembers(members);
+    alive();
     return members;
   };
   return {
@@ -263,7 +293,9 @@ export function createGroupQueries(context: GroupQueriesContext) {
     listGroupMutedMembers,
     getGroupMembers,
     close() {
+      if (closed) return;
       closed = true;
+      controller.abort(new Error('Group queries are closed'));
       groupListRequest = undefined;
       groupInfoQueries.clear();
       invalidGroupInfoQueries.clear();

@@ -165,6 +165,8 @@ export const crossFeatureDependencies = [
 ] as const;
 
 export function dependencyViolation({ from, to, typeOnly }: SourceDependency): string | undefined {
+  if (from === 'src/native-services.ts' && to === 'src/validation/identifiers.ts')
+    return 'Group query input rules belong to the query owner; composition only routes payloads.';
   if (from === 'src/runtime/kernel-method.ts')
     return 'Kernel method capture has no resource or lifecycle dependencies; its caller supplies the active-owner check.';
   if (to === 'src/runtime/kernel-method.ts')

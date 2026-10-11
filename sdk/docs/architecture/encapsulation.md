@@ -257,7 +257,7 @@ promises remain observed and completed waits remove their abort subscriptions.
 This module registers no native listeners. A successful forward result confirms
 native acceptance only, with no new message IDs or destination delivery receipt.
 
-`GroupQueries` owns full-list selection, per-group query coalescing, failed-channel
+`GroupQueries` owns group-ID capture, refresh defaults, full-list selection, per-group query coalescing, failed-channel
 quarantine and complete member-result validation. The query port exposes only the four verified Group read methods; native method
 returns stay `unknown` until their receiving validator checks them. Service and
 method acquisition remain lazy, methods are captured once, and their original
@@ -271,8 +271,20 @@ The callback reads use the Session's shared channel and do not register listener
 callers receive separate DTO copies; full-list callers retain the existing shared
 result semantics. Member results update the account's UID cache through one
 commit hook only after the whole batch validates and the Session remains alive.
-Closing invalidates the module and clears its query bookkeeping; the owning
-Session first aborts pending callbacks and native waits.
+The three ID-based entries validate before acquiring services, registering a
+callback wait or consulting query state. Identifier spelling and existing refresh
+semantics are preserved: list refresh remains opaque; member refresh is boolean
+with a nullish default of false. Composition forwards input without revalidating
+or supplying defaults.
+
+Closing invalidates the module, aborts its local signal and clears bookkeeping.
+Callback waits receive the combined account/local signal; member waits also race
+local retirement, even when native completion is stalled. The shared channel and
+account remain available to sibling owners. Already issued native failures stay
+observed, and retired waits cannot publish results or repopulate quarantine state.
+Member commit remains preceded by a lifetime check; a commit hook that retires the
+owner prevents final result publication. Cancellation cannot undo an issued query
+or roll back an external commit hook.
 
 `createGroupEvents` owns partial group/member metadata projection. Each optional
 field is captured once before validation; native role states and update kinds

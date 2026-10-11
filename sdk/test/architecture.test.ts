@@ -57,6 +57,26 @@ function dependencies(path: string): Dependency[] {
 const graph = new Map(files.map((path) => [path, dependencies(path)]));
 const runtimeEdges = (path: string) => graph.get(path)!.filter((edge) => !edge.typeOnly);
 
+test('group query composition cannot own identifier rules', () => {
+  for (const typeOnly of [false, true]) {
+    assert.ok(
+      dependencyViolation({
+        from: 'src/native-services.ts',
+        to: 'src/validation/identifiers.ts',
+        typeOnly,
+      }),
+    );
+    assert.equal(
+      dependencyViolation({
+        from: 'src/features/groups/group-queries.ts',
+        to: 'src/validation/identifiers.ts',
+        typeOnly,
+      }),
+      undefined,
+    );
+  }
+});
+
 test('kernel method capture is private to preparation and account startup', () => {
   const capture = 'src/runtime/kernel-method.ts';
   assert.deepEqual(graph.get(join(projectRoot, capture)), []);
