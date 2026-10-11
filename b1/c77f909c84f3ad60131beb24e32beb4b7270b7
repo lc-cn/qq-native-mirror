@@ -1,0 +1,45 @@
+sdk/test/architecture.test.ts
+  s_2104cc474f1ce5::t_136b6e7aad252f 1,6-28
+sdk/docs/architecture.md
+  s_2104cc474f1ce5::t_1bdc749dc13fac 85-86,99-100
+sdk/docs/architecture/encapsulation.md
+  s_2104cc474f1ce5::t_deed05eff5df12 3,5,56-70,105,107-171,192-226,271-279,281-376,382-386,388-394,396-403,405-414,527-545,547-554,556-563,565-577,579-592,594-601,603-609,611-617,619-623,645,647-661,663-667,669-683,685-715,764,766-777,779
+sdk/docs/architecture/quality-gates.md
+  s_2104cc474f1ce5::t_48c1180ea97c4f 52-65
+sdk/test/ambient-module-loading.test.ts
+  s_2104cc474f1ce5::t_897d701d02b280 1-71
+sdk/test/architecture/composition.ts
+  s_2104cc474f1ce5::t_4bd33b926fe441 1-236
+sdk/test/architecture/contracts.ts
+  s_2104cc474f1ce5::t_dcc2d74af24cc9 1-109
+sdk/test/architecture/dependency-direction.ts
+  s_2104cc474f1ce5::t_f194dc45c662f7 1-246
+sdk/test/architecture/module-ownership.ts
+  s_2104cc474f1ce5::t_d691144c39a7eb 1-295
+sdk/test/architecture/resources.ts
+  s_2104cc474f1ce5::t_f84ee7bf8eac71 1-196
+sdk/test/helpers/ambient-module-loading.ts
+  s_2104cc474f1ce5::t_c84ac83959c093 1-19
+sdk/test/helpers/ambient-network.ts
+  s_2104cc474f1ce5::t_80b73868624733 2-4,11
+sdk/test/helpers/ambient-references.ts
+  s_2104cc474f1ce5::t_76afe1409deb33 1-62
+sdk/test/helpers/source-graph.ts
+  s_2104cc474f1ce5::t_616880e88b484b 1-44
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b1c77f909c84f3ad60131beb24e32beb4b7270b7",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
