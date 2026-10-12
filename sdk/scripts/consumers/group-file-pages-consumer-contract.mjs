@@ -11,14 +11,18 @@ import { pathToFileURL } from 'node:url';
  */
 export async function verifyGroupFilePagesConsumer(packageRoot, options = {}) {
   const source = options.source === true;
-  /** @type {Promise<typeof import('../../src/features/groups/group-file-pages.ts')>} */
+  /** @type {Promise<typeof import('../../src/features/groups/files/group-file-pages.ts')>} */
   const pagesImport = source
-    ? import(pathToFileURL(join(packageRoot, 'src/features/groups/group-file-pages.ts')).href)
-    : import(pathToFileURL(join(packageRoot, 'dist/features/groups/group-file-pages.js')).href);
-  /** @type {Promise<typeof import('../../src/features/groups/group-file-input.ts')>} */
+    ? import(pathToFileURL(join(packageRoot, 'src/features/groups/files/group-file-pages.ts')).href)
+    : import(
+        pathToFileURL(join(packageRoot, 'dist/features/groups/files/group-file-pages.js')).href
+      );
+  /** @type {Promise<typeof import('../../src/features/groups/files/group-file-input.ts')>} */
   const inputImport = source
-    ? import(pathToFileURL(join(packageRoot, 'src/features/groups/group-file-input.ts')).href)
-    : import(pathToFileURL(join(packageRoot, 'dist/features/groups/group-file-input.js')).href);
+    ? import(pathToFileURL(join(packageRoot, 'src/features/groups/files/group-file-input.ts')).href)
+    : import(
+        pathToFileURL(join(packageRoot, 'dist/features/groups/files/group-file-input.js')).href
+      );
   /** @type {Promise<typeof import('../../src/native-services.ts')>} */
   const serviceImport = source
     ? import(pathToFileURL(join(packageRoot, 'src/native-services.ts')).href)
@@ -110,7 +114,7 @@ export async function verifyGroupFilePagesConsumer(packageRoot, options = {}) {
   const history = new GroupFilePageHistory();
   let calls = 0;
   const port = {
-    /** @param {string} group @param {import('../../src/features/groups/group-file-input.ts').GroupFileListParams} params */
+    /** @param {string} group @param {import('../../src/features/groups/files/group-file-input.ts').GroupFileListParams} params */
     getGroupFileList(group, params) {
       assert.equal(this, port);
       assert.equal(group, groupId);
@@ -136,7 +140,7 @@ export async function verifyGroupFilePagesConsumer(packageRoot, options = {}) {
   }
   let nextToken = 100;
   const listPort = {
-    /** @param {string} group @param {import('../../src/features/groups/group-file-input.ts').GroupFileListParams} params */
+    /** @param {string} group @param {import('../../src/features/groups/files/group-file-input.ts').GroupFileListParams} params */
     getGroupFileList(group, params) {
       assert.equal(this, listPort);
       assert.equal(group, groupId);
@@ -255,7 +259,7 @@ export async function verifyGroupFilePagesConsumer(packageRoot, options = {}) {
     /** @type {{onGroupFileInfoUpdate(raw:unknown):void}|undefined} */ let listener;
     let acquired = 0;
     const rich = {
-      /** @param {string} group @param {import('../../src/features/groups/group-file-input.ts').GroupFileListParams} params */
+      /** @param {string} group @param {import('../../src/features/groups/files/group-file-input.ts').GroupFileListParams} params */
       getGroupFileList(group, params) {
         assert.equal(this, rich);
         assert.equal(group, groupId);

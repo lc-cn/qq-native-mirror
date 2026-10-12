@@ -4,7 +4,7 @@ import {
   createGroupOperations as createWithContext,
   type GroupMutationPort,
   type GroupOperation,
-} from '../src/features/groups/group-operations.ts';
+} from '../../../src/features/groups/group-operations.ts';
 
 function createGroupOperations(
   session: { getGroupService?: () => GroupMutationPort },

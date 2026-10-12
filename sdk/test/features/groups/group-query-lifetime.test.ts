@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { createGroupQueries } from '../src/features/groups/group-queries.ts';
-import type { GroupQueriesContext } from '../src/features/groups/group-queries.ts';
+import { createGroupQueries } from '../../../src/features/groups/group-queries.ts';
+import type { GroupQueriesContext } from '../../../src/features/groups/group-queries.ts';
 
 test('a member commit that retires its owner cannot publish the batch', async () => {
   const account = new AbortController();

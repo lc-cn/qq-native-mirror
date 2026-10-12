@@ -3,7 +3,7 @@ import test from 'node:test';
 import {
   captureGroupFilePage,
   captureGroupFileList,
-} from '../src/features/groups/group-file-input.ts';
+} from '../../../src/features/groups/files/group-file-input.ts';
 
 test('group file inputs capture native defaults and decimal identity without coercion', () => {
   assert.deepEqual(captureGroupFilePage('000123'), {

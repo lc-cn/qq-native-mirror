@@ -3,7 +3,7 @@ import test from 'node:test';
 import {
   deleteGroupFolder,
   type GroupFileContext,
-} from '../src/features/groups/group-file-operations.ts';
+} from '../src/features/groups/files/group-file-operations.ts';
 import { NativeServiceLifetime } from '../src/runtime/native-service-lifetime.ts';
 function fixture(response: unknown = { result: 0, groupFileCommonResult: { retCode: 0 } }) {
   const lifetime = new NativeServiceLifetime();

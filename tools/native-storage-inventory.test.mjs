@@ -32,22 +32,68 @@ function inventory() {
 }
 // Inspect syntax only. Importing a production entry would prepare native artifacts.
 // SDK dependencies stop at its existing directory-wide format/lint/type gates.
+// These exact installed-SDK edges are checked by the dedicated consumer module gate.
+// They are not relative tooling dependencies; no computed expression inherits this exception.
+const installedSdkImports = new Map([
+  [
+    'ci/verify-consumer.mjs',
+    new Set([
+      "pathToFileURL(join(temp, 'node_modules/qq-native-client/dist/index.js')).href",
+      "pathToFileURL(join(installedRoot, 'dist/native/native-package.js')).href",
+      "pathToFileURL(join(temp, 'node_modules/qq-native-client/dist/native-services.js')).href",
+      "pathToFileURL(join(temp, 'node_modules/qq-native-client/dist/errors.js')).href",
+      "pathToFileURL(join(temp, 'node_modules/qq-native-client/dist/cli.js')).href",
+      "pathToFileURL(join(temp, 'node_modules/qq-native-client/dist/features/messages/message-query.js')).href",
+      "pathToFileURL(join(temp, 'node_modules/qq-native-client/dist/features/groups/group-events.js')).href",
+      "pathToFileURL(join(temp, 'node_modules/qq-native-client/dist/features/contacts/friend-events.js')).href",
+    ]),
+  ],
+  [
+    'ci/current-source-mirror.mjs',
+    new Set([
+      "pathToFileURL(join(installedRoot, 'dist/index.js')).href",
+      "pathToFileURL(join(installedRoot, 'dist/native/native-catalog.js')).href",
+      "pathToFileURL(join(installedRoot, 'dist/native/native-package.js')).href",
+    ]),
+  ],
+]);
 function missingDependencies(paths, replacement = new Map()) {
   const covered = new Set(paths);
   const missing = [];
   for (const from of paths.filter((path) => path.endsWith('.mjs'))) {
     const source = replacement.get(from) ?? readFileSync(resolve(root, from), 'utf8');
     const program = parse(from, source);
-    for (const statement of program.statements) {
-      if (!ts.isImportDeclaration(statement) && !ts.isExportDeclaration(statement)) continue;
-      const specifier = statement.moduleSpecifier;
-      if (!specifier || !ts.isStringLiteral(specifier) || !specifier.text.startsWith('.')) continue;
+    const printer = ts.createPrinter();
+    function inspect(specifier) {
+      if (
+        !specifier ||
+        !(ts.isStringLiteral(specifier) || ts.isNoSubstitutionTemplateLiteral(specifier))
+      ) {
+        const expression =
+          specifier && printer.printNode(ts.EmitHint.Unspecified, specifier, program);
+        if (!installedSdkImports.get(from)?.has(expression))
+          missing.push({ from, to: '<unreviewed computed import>', expression });
+        return;
+      }
+      if (!specifier.text.startsWith('.')) return;
       const to = relative(root, resolve(root, dirname(from), specifier.text))
         .split(sep)
         .join('/');
-      if (to.startsWith('sdk/')) continue;
+      if (to.startsWith('sdk/')) return;
       if (!covered.has(to)) missing.push({ from, to });
     }
+    function visit(node) {
+      if (ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) {
+        if (node.moduleSpecifier) inspect(node.moduleSpecifier);
+      } else if (
+        ts.isCallExpression(node) &&
+        node.expression.kind === ts.SyntaxKind.ImportKeyword
+      ) {
+        inspect(node.arguments[0]);
+      }
+      ts.forEachChild(node, visit);
+    }
+    visit(program);
   }
   return missing;
 }
@@ -106,4 +152,39 @@ await test('a new production dependency cannot silently inherit storage gate cov
       (edge) => edge.to === 'ci/unreviewed-build-helper.mjs',
     ),
   );
+});
+
+await test('nested dynamic literal and template imports require actual inventory coverage', () => {
+  const from = 'ci/build-platform.mjs';
+  const base = readFileSync(resolve(root, from), 'utf8');
+  const source =
+    base +
+    "\nasync function added() { await import('./unreviewed-build-helper.mjs'); await import(`./verified-download.mjs`); }";
+  assert.deepEqual(missingDependencies(inventory(), new Map([[from, source]])), [
+    { from, to: 'ci/unreviewed-build-helper.mjs' },
+  ]);
+  const covered =
+    base +
+    "\nasync function added() { await import('./verified-download.mjs'); await import(`./verified-download.mjs`); }";
+  assert.deepEqual(missingDependencies(inventory(), new Map([[from, covered]])), []);
+});
+await test('computed dynamic imports have no implicit coverage permission', () => {
+  const from = 'ci/build-platform.mjs';
+  for (const expression of ["'./' + name", '`./${name}.mjs`', 'dependency']) {
+    const source =
+      readFileSync(resolve(root, from), 'utf8') +
+      `\nasync function added() { return import(${expression}); }`;
+    assert.ok(
+      missingDependencies(inventory(), new Map([[from, source]])).some(
+        (edge) => edge.from === from && edge.to === '<unreviewed computed import>',
+      ),
+    );
+  }
+});
+await test('import-looking strings comments and import types are not runtime dependencies', () => {
+  const from = 'ci/build-platform.mjs';
+  const source =
+    readFileSync(resolve(root, from), 'utf8') +
+    `\nconst text = "import('./unreviewed.mjs')"; // import('./another-unreviewed.mjs')\n/** @type {import('./type-only-unreviewed.mjs').Value} */ let opaque;`;
+  assert.deepEqual(missingDependencies(inventory(), new Map([[from, source]])), []);
 });

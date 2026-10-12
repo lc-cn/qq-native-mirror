@@ -4,7 +4,7 @@ import {
   createGroupRequests as createWithContext,
   type GroupRequestPort,
   type GroupRequestListener,
-} from '../src/features/groups/group-requests.ts';
+} from '../../../src/features/groups/group-requests.ts';
 function createGroupRequests(
   session: { getGroupService(): GroupRequestPort },
   emit: (event: string, payload: unknown) => void,

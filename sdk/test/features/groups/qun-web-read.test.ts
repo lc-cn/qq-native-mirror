@@ -1,7 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { getEventListeners } from 'node:events';
-import { requestQunPage, type QunWebReadContext } from '../src/features/groups/qun-web-read.ts';
+import {
+  requestQunPage,
+  type QunWebReadContext,
+} from '../../../src/features/groups/qun-web-read.ts';
 const key = { result: 0, clientKey: 'synthetic' };
 function fixture() {
   const controller = new AbortController();

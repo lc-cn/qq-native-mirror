@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { createGroupSystemEvents } from '../src/features/groups/group-system-events.ts';
+import { createGroupSystemEvents } from '../../../src/features/groups/group-system-events.ts';
 const vi = (n: number) => {
   const a: number[] = [];
   do {

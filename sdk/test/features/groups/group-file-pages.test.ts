@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { createGroupFiles } from '../src/features/groups/group-files.ts';
+import { createGroupFiles } from '../../../src/features/groups/files/group-files.ts';
 import {
   createGroupFilePages,
   GroupFilePageHistory,
-} from '../src/features/groups/group-file-pages.ts';
+} from '../../../src/features/groups/files/group-file-pages.ts';
 
 function callback(reqId: number, overrides: Record<string, unknown> = {}) {
   return {

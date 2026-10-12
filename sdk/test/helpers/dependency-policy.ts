@@ -99,8 +99,8 @@ export const serviceFeatureRuntimeDependencies = [
   'src/features/contacts/friend-category-assignment.ts',
   'src/features/contacts/friend-category-mutations.ts',
   'src/features/groups/group-search.ts',
-  'src/features/groups/group-files.ts',
-  'src/features/groups/group-file-pages.ts',
+  'src/features/groups/files/group-files.ts',
+  'src/features/groups/files/group-file-pages.ts',
   'src/features/messages/message-queries.ts',
   'src/features/contacts/friend-system-events.ts',
   'src/features/contacts/contact-directory.ts',
@@ -128,7 +128,7 @@ export const serviceFeatureTypeDependencies = [
   'src/features/contacts/friend-category-assignment.ts',
   'src/features/contacts/friend-category-mutations.ts',
   'src/features/groups/group-search.ts',
-  'src/features/groups/group-files.ts',
+  'src/features/groups/files/group-files.ts',
   'src/features/messages/message-queries.ts',
   'src/features/contacts/contact-directory.ts',
   'src/features/forward/long-message-response.ts',
@@ -173,7 +173,7 @@ const facadeInputs = new Set([
   'src/features/messages/face-input.ts',
   'src/features/media/download-input.ts',
   'src/features/groups/group-essence-input.ts',
-  'src/features/groups/group-file-input.ts',
+  'src/features/groups/files/group-file-input.ts',
   'src/features/groups/group-search-input.ts',
 ]);
 
@@ -235,7 +235,7 @@ export function dependencyViolation({ from, to, typeOnly }: SourceDependency): s
     return [
       'src/features/contacts/contact-directory.ts',
       'src/features/contacts/friend-requests.ts',
-      'src/features/groups/group-files.ts',
+      'src/features/groups/files/group-files.ts',
       'src/features/groups/group-requests.ts',
     ].includes(from)
       ? undefined
@@ -281,15 +281,15 @@ export function dependencyViolation({ from, to, typeOnly }: SourceDependency): s
     return from === 'src/features/contacts/contact-operations.ts'
       ? undefined
       : 'Contact operation dispatch is the sole source caller of the resolved profile query.';
-  if (to === 'src/features/groups/group-file-operations.ts')
+  if (to === 'src/features/groups/files/group-file-operations.ts')
     return 'The compatibility barrel preserves old consumers; source owners import their protocol directly.';
-  if (from === 'src/features/groups/group-file-result.ts')
+  if (from === 'src/features/groups/files/group-file-result.ts')
     return 'Group-file field capture cannot acquire protocol, lifecycle or resource implementations.';
-  if (to === 'src/features/groups/group-file-result.ts')
+  if (to === 'src/features/groups/files/group-file-result.ts')
     return [
-      'src/features/groups/group-file-count.ts',
-      'src/features/groups/group-folder-operations.ts',
-      'src/features/groups/group-file-deletion.ts',
+      'src/features/groups/files/group-file-count.ts',
+      'src/features/groups/files/group-folder-operations.ts',
+      'src/features/groups/files/group-file-deletion.ts',
     ].includes(from)
       ? undefined
       : 'Group-file field capture belongs only to the reviewed count and folder protocols.';
@@ -358,9 +358,14 @@ export function dependencyViolation({ from, to, typeOnly }: SourceDependency): s
       : 'Manifest rules have exact reviewed input consumers.';
   if (from === 'src/native/native-bundle-installer.ts')
     return to === 'src/storage/native-package-lock.ts' ||
+      (!typeOnly && to === 'src/runtime/cleanup.ts') ||
       (typeOnly && to === 'src/contracts/native.ts')
       ? undefined
       : 'The installer cannot depend on bundle source selection or account composition.';
+  if (from === 'src/native/native-installed-storage.ts' && to === 'src/runtime/cleanup.ts')
+    return !typeOnly
+      ? undefined
+      : 'Installed storage uses the pure cleanup policy without acquiring account runtime.';
   if (to === 'src/native/native-bundle-installer.ts' && from !== 'src/native/native-package.ts')
     return 'Only verified bundle preparation may dispatch an installation.';
   if (from === 'src/storage/native-package-lock.ts')

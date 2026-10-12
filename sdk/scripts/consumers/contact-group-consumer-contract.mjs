@@ -466,9 +466,10 @@ export async function verifyContactGroupConsumer(packageRoot) {
       /nonempty|required/,
     );
     const { deleteGroupFolder } =
-      await /** @type {Promise<typeof import('../../src/features/groups/group-file-operations.ts')>} */ (
+      await /** @type {Promise<typeof import('../../src/features/groups/files/group-file-operations.ts')>} */ (
         import(
-          pathToFileURL(join(packageRoot, 'dist/features/groups/group-file-operations.js')).href
+          pathToFileURL(join(packageRoot, 'dist/features/groups/files/group-file-operations.js'))
+            .href
         )
       );
     for (const [response, code] of [
@@ -740,7 +741,7 @@ export async function verifyContactGroupConsumer(packageRoot) {
         let gets = 0,
           creates = 0,
           deletes = 0;
-        /** @type {NonNullable<ReturnType<import('../../src/features/groups/group-file-operations.ts').GroupFileContext['getRichMediaService']>> & NonNullable<ReturnType<import('../../src/features/groups/group-file-operations.ts').GroupFolderCreationContext['getRichMediaService']>>} */
+        /** @type {NonNullable<ReturnType<import('../../src/features/groups/files/group-file-operations.ts').GroupFileContext['getRichMediaService']>> & NonNullable<ReturnType<import('../../src/features/groups/files/group-file-operations.ts').GroupFolderCreationContext['getRichMediaService']>>} */
         const media = {
           createGroupFolder(group, name) {
             assert.equal(this, media);
@@ -805,9 +806,10 @@ export async function verifyContactGroupConsumer(packageRoot) {
       }
     }
     const { createGroupFolder } =
-      await /** @type {Promise<typeof import('../../src/features/groups/group-file-operations.ts')>} */ (
+      await /** @type {Promise<typeof import('../../src/features/groups/files/group-file-operations.ts')>} */ (
         import(
-          pathToFileURL(join(packageRoot, 'dist/features/groups/group-file-operations.js')).href
+          pathToFileURL(join(packageRoot, 'dist/features/groups/files/group-file-operations.js'))
+            .href
         )
       );
     for (const response of [

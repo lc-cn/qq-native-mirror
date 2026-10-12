@@ -1070,7 +1070,7 @@ profile evidence; the same domain and composition owners are reused.
 The installed worker/CLI contract exercises each enabled profile with substituted
 services and rejects the remaining Windows ARM64 exact profile before acquisition.
 
-`features/groups/group-files` owns file-count, folder and listing dispatch policy.
+`features/groups/files/group-files` owns file-count, folder and listing dispatch policy.
 Composition injects lazy method-specific ports and measured-profile decisions,
 then delegates named operations. The domain owner rejects unsupported contracts
 before acquiring native methods; existing mutation/count adapters retain their

@@ -1,3 +1,4 @@
+import { runWithCleanup } from '../runtime/cleanup.ts';
 import { createHash, randomUUID } from 'node:crypto';
 import { gunzipSync } from 'node:zlib';
 import { constants } from 'node:fs';
@@ -148,7 +149,7 @@ export async function restoreInstalledNativeStorage(
   if (prior) return prior;
   const work = (async () => {
     const release = await acquireLock(target);
-    try {
+    return runWithCleanup(async () => {
       // A symlink at the cache root is rejected, never recursively removed.
       try {
         const stat = await lstat(target);
@@ -169,36 +170,36 @@ export async function restoreInstalledNativeStorage(
       if (await valid()) return target;
       const temporary = join(base, '.npm-' + randomUUID());
       await mkdir(temporary);
-      try {
-        for (const object of objects.values()) {
-          const compressed = await regular(root, object.path, object.downloadSize);
-          check(
-            compressed.length === object.downloadSize && sha(compressed) === object.downloadSha256,
-            'Installed storage compressed checksum mismatch',
-          );
-          const raw = gunzipSync(compressed, { maxOutputLength: Math.max(1, object.size) });
-          check(
-            raw.length === object.size && sha(raw) === object.sha256,
-            'Installed storage raw checksum mismatch',
-          );
-          for (const file of manifest.files.filter((f) => f.sha256 === object.sha256)) {
-            const output = join(temporary, file.path);
-            await directory(dirname(output), true);
-            await writeFile(output, raw, { flag: 'wx' });
+      return runWithCleanup(
+        async () => {
+          for (const object of objects.values()) {
+            const compressed = await regular(root, object.path, object.downloadSize);
+            check(
+              compressed.length === object.downloadSize &&
+                sha(compressed) === object.downloadSha256,
+              'Installed storage compressed checksum mismatch',
+            );
+            const raw = gunzipSync(compressed, { maxOutputLength: Math.max(1, object.size) });
+            check(
+              raw.length === object.size && sha(raw) === object.sha256,
+              'Installed storage raw checksum mismatch',
+            );
+            for (const file of manifest.files.filter((f) => f.sha256 === object.sha256)) {
+              const output = join(temporary, file.path);
+              await directory(dirname(output), true);
+              await writeFile(output, raw, { flag: 'wx' });
+            }
           }
-        }
-        if (!(await valid())) {
-          await rm(target, { recursive: true, force: true });
-          await rename(temporary, target);
-        }
-        check(await valid(), 'Installed storage hydration failed');
-        return target;
-      } finally {
-        await rm(temporary, { recursive: true, force: true });
-      }
-    } finally {
-      await release();
-    }
+          if (!(await valid())) {
+            await rm(target, { recursive: true, force: true });
+            await rename(temporary, target);
+          }
+          check(await valid(), 'Installed storage hydration failed');
+          return target;
+        },
+        () => rm(temporary, { recursive: true, force: true }),
+      );
+    }, release);
   })();
   pending.set(target, work);
   try {

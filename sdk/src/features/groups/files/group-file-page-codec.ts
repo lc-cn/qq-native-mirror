@@ -1,4 +1,4 @@
-import type { GroupFile, GroupFileEntry, GroupFileFolder } from '../../contracts/groups.ts';
+import type { GroupFile, GroupFileEntry, GroupFileFolder } from '../../../contracts/groups.ts';
 
 export interface CapturedGroupFileBody {
   items: GroupFileEntry[];

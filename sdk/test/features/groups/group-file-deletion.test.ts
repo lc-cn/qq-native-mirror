@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { deleteGroupFile } from '../src/features/groups/group-file-deletion.ts';
-import { NativeServiceLifetime } from '../src/runtime/native-service-lifetime.ts';
+import { deleteGroupFile } from '../../../src/features/groups/files/group-file-deletion.ts';
+import { NativeServiceLifetime } from '../../../src/runtime/native-service-lifetime.ts';
 function ack() {
   return {
     result: 0,

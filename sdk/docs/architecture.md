@@ -119,6 +119,12 @@ and category projection, and only the contact directory imports it. Neither owne
 imports the other. Adding a query field therefore does not change the public
 input dependency closure; mutation completion stays with its operation owner.
 
+`features/groups/files/` groups the collaborating group-file owners. `group-files`
+binds capability and action lifetime; `group-file-pages` owns correlation and
+paging; input and codec modules remain pure; count, deletion and folder protocols
+retain their individual acknowledgement rules. Their compatibility barrel remains
+reexports only. Public DTOs and account composition stay in their existing layers.
+
 `src/runtime/operations.ts` owns the closed business-operation vocabulary. The
 public facade constrains its private operation dispatcher to that union, the
 worker derives its classifier from it, and native dispatch handles the same union

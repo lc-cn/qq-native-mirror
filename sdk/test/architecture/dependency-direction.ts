@@ -114,7 +114,7 @@ test('dependency policy rejects reverse, type-only and new cross-domain coupling
   for (const [from, to] of [
     ['src/validation/identifiers.ts', 'src/features/messages/send-input.ts'],
     ['src/validation/identifiers.ts', 'src/runtime/client-lifecycle.ts'],
-    ['src/features/groups/group-file-input.ts', 'src/features/messages/send-input.ts'],
+    ['src/features/groups/files/group-file-input.ts', 'src/features/messages/send-input.ts'],
     ['src/features/forward/merged-forward-input.ts', 'src/features/messages/send-input.ts'],
     ['src/features/groups/group-essence-input.ts', 'src/features/messages/send-input.ts'],
     ['src/features/groups/new-action.ts', 'src/index.ts'],

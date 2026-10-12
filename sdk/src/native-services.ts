@@ -7,8 +7,8 @@ import {
   type FriendCategoryMutationsContext,
 } from './features/contacts/friend-category-mutations.ts';
 import { createGroupSearch, type GroupSearchContext } from './features/groups/group-search.ts';
-import { createGroupFiles, type GroupFilesContext } from './features/groups/group-files.ts';
-import { GroupFilePageHistory } from './features/groups/group-file-pages.ts';
+import { createGroupFiles, type GroupFilesContext } from './features/groups/files/group-files.ts';
+import { GroupFilePageHistory } from './features/groups/files/group-file-pages.ts';
 import {
   createMessageQueries,
   type MessageQueriesContext,

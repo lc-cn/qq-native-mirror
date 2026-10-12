@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createGroupFolder } from '../src/features/groups/group-file-operations.ts';
-import { captureCreateGroupFolder } from '../src/features/groups/group-file-input.ts';
-import { NativeServiceLifetime } from '../src/runtime/native-service-lifetime.ts';
+import { createGroupFolder } from '../../../src/features/groups/files/group-file-operations.ts';
+import { captureCreateGroupFolder } from '../../../src/features/groups/files/group-file-input.ts';
+import { NativeServiceLifetime } from '../../../src/runtime/native-service-lifetime.ts';
 function result() {
   return {
     result: 0,

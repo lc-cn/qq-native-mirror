@@ -1,4 +1,4 @@
-import { nativeResultError } from '../../errors.ts';
+import { nativeResultError } from '../../../errors.ts';
 import { captureGroupFileCount } from './group-file-input.ts';
 import { groupFileField } from './group-file-result.ts';
 

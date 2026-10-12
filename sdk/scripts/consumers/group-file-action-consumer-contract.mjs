@@ -7,25 +7,30 @@ import { pathToFileURL } from 'node:url';
  */
 export async function verifyGroupFileActionLifetimeConsumer(packageRoot) {
   const { createGroupFiles } =
-    await /** @type {Promise<typeof import('../../src/features/groups/group-files.ts')>} */ (
-      import(pathToFileURL(join(packageRoot, 'dist/features/groups/group-files.js')).href)
+    await /** @type {Promise<typeof import('../../src/features/groups/files/group-files.ts')>} */ (
+      import(pathToFileURL(join(packageRoot, 'dist/features/groups/files/group-files.js')).href)
     );
   const { NativeServiceLifetime } =
     await /** @type {Promise<typeof import('../../src/runtime/native-service-lifetime.ts')>} */ (
       import(pathToFileURL(join(packageRoot, 'dist/runtime/native-service-lifetime.js')).href)
     );
   const compatibility =
-    await /** @type {Promise<typeof import('../../src/features/groups/group-file-operations.ts')>} */ (
-      import(pathToFileURL(join(packageRoot, 'dist/features/groups/group-file-operations.js')).href)
+    await /** @type {Promise<typeof import('../../src/features/groups/files/group-file-operations.ts')>} */ (
+      import(
+        pathToFileURL(join(packageRoot, 'dist/features/groups/files/group-file-operations.js')).href
+      )
     );
   const countProtocol =
-    await /** @type {Promise<typeof import('../../src/features/groups/group-file-count.ts')>} */ (
-      import(pathToFileURL(join(packageRoot, 'dist/features/groups/group-file-count.js')).href)
+    await /** @type {Promise<typeof import('../../src/features/groups/files/group-file-count.ts')>} */ (
+      import(
+        pathToFileURL(join(packageRoot, 'dist/features/groups/files/group-file-count.js')).href
+      )
     );
   const folderProtocol =
-    await /** @type {Promise<typeof import('../../src/features/groups/group-folder-operations.ts')>} */ (
+    await /** @type {Promise<typeof import('../../src/features/groups/files/group-folder-operations.ts')>} */ (
       import(
-        pathToFileURL(join(packageRoot, 'dist/features/groups/group-folder-operations.js')).href
+        pathToFileURL(join(packageRoot, 'dist/features/groups/files/group-folder-operations.js'))
+          .href
       )
     );
   assert.equal(compatibility.getGroupFileCount, countProtocol.getGroupFileCount);

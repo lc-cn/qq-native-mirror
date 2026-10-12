@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createGroupSearch } from '../src/features/groups/group-search.ts';
-import { createNativeEventChannel } from '../src/runtime/native-event-channel.ts';
-import { NativeServiceLifetime } from '../src/runtime/native-service-lifetime.ts';
+import { createGroupSearch } from '../../../src/features/groups/group-search.ts';
+import { createNativeEventChannel } from '../../../src/runtime/native-event-channel.ts';
+import { NativeServiceLifetime } from '../../../src/runtime/native-service-lifetime.ts';
 function fixture() {
   const life = new NativeServiceLifetime(),
     channel = createNativeEventChannel(life.signal);

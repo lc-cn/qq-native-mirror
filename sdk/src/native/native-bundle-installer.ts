@@ -1,3 +1,4 @@
+import { runWithCleanup } from '../runtime/cleanup.ts';
 import { createHash, randomUUID } from 'node:crypto';
 import { gunzipSync } from 'node:zlib';
 import { constants as fsConstants } from 'node:fs';
@@ -66,109 +67,112 @@ export async function installVerifiedBundle({
     .then(async () => {
       if (await validate()) return;
       const release = await acquirePackageLock(target);
-      try {
+      await runWithCleanup(async () => {
         if (!(await validate())) {
           await mkdir(base, { recursive: true });
           const temporary = join(base, `.download-${randomUUID()}`);
-          try {
-            let next = 0;
-            let failed = false;
-            const contentGroups = new Map<string, NativeManifest['files']>();
-            for (const file of manifest.files) {
-              const key = file.sha256.toLowerCase();
-              const group = contentGroups.get(key) ?? [];
-              group.push(file);
-              contentGroups.set(key, group);
-            }
-            const groups = [...contentGroups.values()];
-            const contentCache = join(base, '.contents');
-            await mkdir(contentCache, { recursive: true });
-            if (
-              !(await lstat(contentCache)).isDirectory() ||
-              (await realpath(contentCache)) !== contentCache
-            )
-              throw new Error('Native content cache must stay inside cache root');
-            // Bound memory/network use while avoiding one round trip per small
-            // framework resource. Await every worker before cleaning staging.
-            const results = await Promise.allSettled(
-              Array.from({ length: Math.min(4, groups.length) }, async () => {
-                while (!failed && next < groups.length) {
-                  const group = groups[next++]!;
-                  const file = group[0]!;
-                  try {
-                    const contentPath = join(contentCache, file.sha256.toLowerCase());
-                    let data: Buffer | undefined = await readFile(contentPath).catch(
-                      () => undefined,
-                    );
-                    const cached = !!data && digest(data) === file.sha256.toLowerCase();
-                    if (!cached) {
-                      const original = new URL(file.url, manifestUrl).href;
-                      let lastError: unknown;
-                      for (const url of [...mirrors.map((prefix) => prefix + original), original]) {
-                        try {
-                          let candidate = await download(url, 512 * 1024 * 1024);
-                          if (file.encoding === 'gzip') {
-                            if (digest(candidate) !== file.downloadSha256!.toLowerCase())
-                              throw new Error(`Compressed native SHA-256 mismatch: ${file.path}`);
-                            candidate = gunzipSync(candidate, {
-                              maxOutputLength: 512 * 1024 * 1024,
-                            });
+          await runWithCleanup(
+            async () => {
+              let next = 0;
+              let failed = false;
+              const contentGroups = new Map<string, NativeManifest['files']>();
+              for (const file of manifest.files) {
+                const key = file.sha256.toLowerCase();
+                const group = contentGroups.get(key) ?? [];
+                group.push(file);
+                contentGroups.set(key, group);
+              }
+              const groups = [...contentGroups.values()];
+              const contentCache = join(base, '.contents');
+              await mkdir(contentCache, { recursive: true });
+              if (
+                !(await lstat(contentCache)).isDirectory() ||
+                (await realpath(contentCache)) !== contentCache
+              )
+                throw new Error('Native content cache must stay inside cache root');
+              // Bound memory/network use while avoiding one round trip per small
+              // framework resource. Await every worker before cleaning staging.
+              const results = await Promise.allSettled(
+                Array.from({ length: Math.min(4, groups.length) }, async () => {
+                  while (!failed && next < groups.length) {
+                    const group = groups[next++]!;
+                    const file = group[0]!;
+                    try {
+                      const contentPath = join(contentCache, file.sha256.toLowerCase());
+                      let data: Buffer | undefined = await readFile(contentPath).catch(
+                        () => undefined,
+                      );
+                      const cached = !!data && digest(data) === file.sha256.toLowerCase();
+                      if (!cached) {
+                        const original = new URL(file.url, manifestUrl).href;
+                        let lastError: unknown;
+                        for (const url of [
+                          ...mirrors.map((prefix) => prefix + original),
+                          original,
+                        ]) {
+                          try {
+                            let candidate = await download(url, 512 * 1024 * 1024);
+                            if (file.encoding === 'gzip') {
+                              if (digest(candidate) !== file.downloadSha256!.toLowerCase())
+                                throw new Error(`Compressed native SHA-256 mismatch: ${file.path}`);
+                              candidate = gunzipSync(candidate, {
+                                maxOutputLength: 512 * 1024 * 1024,
+                              });
+                            }
+                            if (digest(candidate) !== file.sha256.toLowerCase())
+                              throw new Error(`Native file SHA-256 mismatch: ${file.path}`);
+                            data = candidate;
+                            break;
+                          } catch (error) {
+                            lastError = error;
                           }
-                          if (digest(candidate) !== file.sha256.toLowerCase())
-                            throw new Error(`Native file SHA-256 mismatch: ${file.path}`);
-                          data = candidate;
-                          break;
-                        } catch (error) {
-                          lastError = error;
                         }
+                        if (!data || digest(data) !== file.sha256.toLowerCase()) throw lastError;
                       }
-                      if (!data || digest(data) !== file.sha256.toLowerCase()) throw lastError;
-                    }
-                    if (!data || digest(data) !== file.sha256.toLowerCase())
-                      throw new Error(`Native file SHA-256 mismatch: ${file.path}`);
-                    if (!cached) {
-                      const contentTemporary = join(contentCache, `.content-${randomUUID()}`);
-                      try {
-                        await writeFile(contentTemporary, data, { mode: 0o600 });
-                        await rename(contentTemporary, contentPath);
-                      } finally {
-                        await rm(contentTemporary, { force: true });
+                      if (!data || digest(data) !== file.sha256.toLowerCase())
+                        throw new Error(`Native file SHA-256 mismatch: ${file.path}`);
+                      if (!cached) {
+                        const contentTemporary = join(contentCache, `.content-${randomUUID()}`);
+                        await runWithCleanup(
+                          async () => {
+                            await writeFile(contentTemporary, data, { mode: 0o600 });
+                            await rename(contentTemporary, contentPath);
+                          },
+                          () => rm(contentTemporary, { force: true }),
+                        );
                       }
+                      const destination = join(temporary, file.path);
+                      await mkdir(dirname(destination), { recursive: true });
+                      // Reflinks preserve independent mutable files; unsupported
+                      // filesystems fall back to ordinary copies, never cache hardlinks.
+                      await copyFile(contentPath, destination, fsConstants.COPYFILE_FICLONE);
+                      if (digest(await readFile(destination)) !== file.sha256.toLowerCase())
+                        throw new Error(`Copied native SHA-256 mismatch: ${file.path}`);
+                      for (const duplicate of group.slice(1)) {
+                        const duplicatePath = join(temporary, duplicate.path);
+                        await mkdir(dirname(duplicatePath), { recursive: true });
+                        await link(destination, duplicatePath);
+                      }
+                    } catch (error) {
+                      failed = true;
+                      throw error;
                     }
-                    const destination = join(temporary, file.path);
-                    await mkdir(dirname(destination), { recursive: true });
-                    // Reflinks preserve independent mutable files; unsupported
-                    // filesystems fall back to ordinary copies, never cache hardlinks.
-                    await copyFile(contentPath, destination, fsConstants.COPYFILE_FICLONE);
-                    if (digest(await readFile(destination)) !== file.sha256.toLowerCase())
-                      throw new Error(`Copied native SHA-256 mismatch: ${file.path}`);
-                    for (const duplicate of group.slice(1)) {
-                      const duplicatePath = join(temporary, duplicate.path);
-                      await mkdir(dirname(duplicatePath), { recursive: true });
-                      await link(destination, duplicatePath);
-                    }
-                  } catch (error) {
-                    failed = true;
-                    throw error;
                   }
-                }
-              }),
-            );
-            const failure = results.find((result) => result.status === 'rejected');
-            if (failure?.status === 'rejected') throw failure.reason;
-            // Another client may have completed the same immutable package meanwhile.
-            if (await validate()) await rm(temporary, { recursive: true });
-            else {
-              await rm(target, { recursive: true, force: true });
-              await rename(temporary, target);
-            }
-          } finally {
-            await rm(temporary, { recursive: true, force: true });
-          }
+                }),
+              );
+              const failure = results.find((result) => result.status === 'rejected');
+              if (failure?.status === 'rejected') throw failure.reason;
+              // Another client may have completed the same immutable package meanwhile.
+              if (await validate()) await rm(temporary, { recursive: true });
+              else {
+                await rm(target, { recursive: true, force: true });
+                await rename(temporary, target);
+              }
+            },
+            () => rm(temporary, { recursive: true, force: true }),
+          );
         }
-      } finally {
-        await release();
-      }
+      }, release);
     });
   installations.set(target, installation);
   try {

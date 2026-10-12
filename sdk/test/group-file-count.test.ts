@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { getGroupFileCount } from '../src/features/groups/group-file-operations.ts';
+import { getGroupFileCount } from '../src/features/groups/files/group-file-operations.ts';
 import { NativeServiceLifetime } from '../src/runtime/native-service-lifetime.ts';
 function fixture(response: unknown = { result: 0, groupCodes: ['123'], groupFileCounts: [0] }) {
   const lifetime = new NativeServiceLifetime();

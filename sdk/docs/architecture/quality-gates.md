@@ -100,8 +100,9 @@ to Node, covering root and nested domain tests with the same process isolation.
 Test discovery has a controlled subprocess regression for both formats and an
 inventory check against duplicates or executable fixtures. Helper and fixture
 directories do not contain automatic test entries; the architecture runner alone
-registers its focused suites. Contact-only regressions mirror their domain under
-`test/features/contacts/`, while shared regressions retain their common entry.
+registers its focused suites. Contact-only and group-only regressions mirror their
+domains under `test/features/contacts/` and `test/features/groups/`, while shared
+and composition regressions retain their integration entry.
 
 Tests cross the existing owner interfaces using controlled adapters. They cover
 input snapshots and rejection before acquisition, original method receivers,
@@ -143,8 +144,12 @@ digests, path/reference closure, packed SDK identity, complete fallback retentio
 and candidate restoration. Synthetic native bytes are never executed.
 
 The same reviewed inventory feeds formatting, lint and offline test selection.
-Its syntax-only regression follows production relative imports and rejects
-missing tool owners; SDK imports stop at the SDK's existing static gates.
+Its syntax-only regression follows static imports/exports and nested literal
+dynamic imports, including template literals without substitutions. Missing tool
+owners and unreviewed computed imports reject. Existing installed-SDK computed
+imports have exact file/expression permissions and remain subject to the SDK's
+separate consumer-module gate. Strings, comments and type references cannot grant
+runtime dependency coverage.
 The verified download owner and controlled fetch regressions therefore run in
 local `check` as well as platform CI. Production CI and account entry points are
 inspected as source; only explicitly inventoried `.test.mjs` files execute here.

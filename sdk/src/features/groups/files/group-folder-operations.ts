@@ -1,6 +1,6 @@
-import { nativeResultError } from '../../errors.ts';
+import { nativeResultError } from '../../../errors.ts';
 import { groupFileField } from './group-file-result.ts';
-import type { GroupFolder } from '../../contracts/groups.ts';
+import type { GroupFolder } from '../../../contracts/groups.ts';
 import { captureCreateGroupFolder, captureDeleteGroupFolder } from './group-file-input.ts';
 
 export interface GroupFolderDeletionContext {

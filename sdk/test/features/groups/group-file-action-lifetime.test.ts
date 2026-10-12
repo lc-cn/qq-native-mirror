@@ -1,7 +1,10 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { createGroupFiles, type GroupFilesContext } from '../src/features/groups/group-files.ts';
-import { NativeServiceLifetime } from '../src/runtime/native-service-lifetime.ts';
+import {
+  createGroupFiles,
+  type GroupFilesContext,
+} from '../../../src/features/groups/files/group-files.ts';
+import { NativeServiceLifetime } from '../../../src/runtime/native-service-lifetime.ts';
 
 type Files = ReturnType<typeof createGroupFiles>;
 const actions = {

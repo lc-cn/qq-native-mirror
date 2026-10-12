@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { createGroupWebReads } from '../src/features/groups/group-web-reads.ts';
-import { NativeServiceLifetime } from '../src/runtime/native-service-lifetime.ts';
+import { createGroupWebReads } from '../../../src/features/groups/group-web-reads.ts';
+import { NativeServiceLifetime } from '../../../src/runtime/native-service-lifetime.ts';
 
 function fixture(accountId: string | undefined = '123') {
   const lifetime = new NativeServiceLifetime();

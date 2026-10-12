@@ -258,7 +258,7 @@ function verifyGroupSearchPort(context: GroupSearchContext) {
 }
 void verifyGroupSearchPort;
 
-import type { GroupFolderCreationContext } from '../../src/features/groups/group-file-operations.ts';
+import type { GroupFolderCreationContext } from '../../src/features/groups/files/group-file-operations.ts';
 function verifyGroupFolderCreationPort(context: GroupFolderCreationContext) {
   const service = context.getRichMediaService();
   // @ts-expect-error Folder creation cannot delete files through its port.

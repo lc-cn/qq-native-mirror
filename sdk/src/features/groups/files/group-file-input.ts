@@ -1,4 +1,4 @@
-import { sendGroupId } from '../../validation/identifiers.ts';
+import { sendGroupId } from '../../../validation/identifiers.ts';
 
 /** Native request fields; optional folder identity remains omitted at the root. */
 export interface GroupFileListParams {

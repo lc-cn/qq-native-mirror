@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import { createNativeServices } from '../src/native-services.ts';
 import type { NativeContractProfile } from '../src/native/native-contracts.ts';
-import type { GroupFileListParams } from '../src/features/groups/group-file-input.ts';
+import type { GroupFileListParams } from '../src/features/groups/files/group-file-input.ts';
 
 const evidence = JSON.parse(
   readFileSync(new URL('../docs/evidence/group-file-page-contract.json', import.meta.url), 'utf8'),

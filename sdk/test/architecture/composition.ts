@@ -113,19 +113,19 @@ test('native composition delegates forward resource orchestration to its domain 
 test('group-file composition cannot regain operation policy through input or adapter imports', () => {
   for (const typeOnly of [false, true]) {
     for (const to of [
-      'src/features/groups/group-file-input.ts',
-      'src/features/groups/group-file-operations.ts',
-      'src/features/groups/group-file-count.ts',
-      'src/features/groups/group-folder-operations.ts',
-      'src/features/groups/group-file-deletion.ts',
-      'src/features/groups/group-file-result.ts',
-      'src/features/groups/group-file-page-codec.ts',
+      'src/features/groups/files/group-file-input.ts',
+      'src/features/groups/files/group-file-operations.ts',
+      'src/features/groups/files/group-file-count.ts',
+      'src/features/groups/files/group-folder-operations.ts',
+      'src/features/groups/files/group-file-deletion.ts',
+      'src/features/groups/files/group-file-result.ts',
+      'src/features/groups/files/group-file-page-codec.ts',
     ])
       assert.ok(dependencyViolation({ from: 'src/native-services.ts', to, typeOnly }));
     assert.equal(
       dependencyViolation({
         from: 'src/native-services.ts',
-        to: 'src/features/groups/group-files.ts',
+        to: 'src/features/groups/files/group-files.ts',
         typeOnly,
       }),
       undefined,

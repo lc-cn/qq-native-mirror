@@ -12,7 +12,7 @@ import {
   captureGroupFileCount,
   captureGroupFilePage,
   captureGroupFileList,
-} from '../features/groups/group-file-input.ts';
+} from '../features/groups/files/group-file-input.ts';
 import { ClientLifecycle, captureWorkerExports } from '../runtime/client-lifecycle.ts';
 import type { OperationCall, OperationResult } from '../runtime/operation-contracts.ts';
 import {

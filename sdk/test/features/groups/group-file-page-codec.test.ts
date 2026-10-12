@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { captureGroupFileCallback } from '../src/features/groups/group-file-page-codec.ts';
+import { captureGroupFileCallback } from '../../../src/features/groups/files/group-file-page-codec.ts';
 
 const folder = () => ({
   folderId: 'folder',

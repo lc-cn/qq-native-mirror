@@ -1,9 +1,12 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { createGroupQueries, type GroupQueryPort } from '../src/features/groups/group-queries.ts';
-import { createNativeEventChannel } from '../src/runtime/native-event-channel.ts';
-import type { GroupMember } from '../src/types.ts';
-import type { NativeObject } from '../src/native/native-object.ts';
+import {
+  createGroupQueries,
+  type GroupQueryPort,
+} from '../../../src/features/groups/group-queries.ts';
+import { createNativeEventChannel } from '../../../src/runtime/native-event-channel.ts';
+import type { GroupMember } from '../../../src/types.ts';
+import type { NativeObject } from '../../../src/native/native-object.ts';
 const detail = (id: string) => ({
   groupCode: id,
   groupName: 'fixture',

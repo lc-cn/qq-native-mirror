@@ -46,3 +46,28 @@ export function withCleanupFailure(original: unknown, cleanup: unknown): Error {
     'Operation and cleanup failed',
   );
 }
+
+/** Wait for an owned operation before releasing its resource exactly once.
+ * A lone failure keeps its original identity, including undefined throws.
+ * Nested owners release inner resources before outer resources; a failed inner
+ * release cannot prevent the outer release or hide the operation's failure.
+ */
+export async function runWithCleanup<T>(
+  operation: () => T | PromiseLike<T>,
+  cleanup: () => void | PromiseLike<void>,
+): Promise<T> {
+  let outcome: { ok: true; value: T } | { ok: false; error: unknown };
+  try {
+    outcome = { ok: true, value: await operation() };
+  } catch (error) {
+    outcome = { ok: false, error };
+  }
+  try {
+    await cleanup();
+  } catch (error) {
+    if (!outcome.ok) throw withCleanupFailure(outcome.error, error);
+    throw error;
+  }
+  if (!outcome.ok) throw outcome.error;
+  return outcome.value;
+}

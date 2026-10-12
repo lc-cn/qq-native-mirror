@@ -1,7 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { listWebGroupNotices as listWithContext } from '../src/features/groups/web-group-notices.ts';
-import { requestQunPage, type QunWebReadContext } from '../src/features/groups/qun-web-read.ts';
+import { listWebGroupNotices as listWithContext } from '../../../src/features/groups/web-group-notices.ts';
+import {
+  requestQunPage,
+  type QunWebReadContext,
+} from '../../../src/features/groups/qun-web-read.ts';
 function listWebGroupNotices(
   session: Pick<QunWebReadContext, 'getTicketService'> &
     Partial<Pick<QunWebReadContext, 'getTipOffService'>>,

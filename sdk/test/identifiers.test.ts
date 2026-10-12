@@ -5,7 +5,7 @@ import {
   sendUserId as legacyUser,
   sendGroupId as legacyGroup,
 } from '../src/features/messages/send-input.ts';
-import { captureDeleteGroupFolder } from '../src/features/groups/group-file-input.ts';
+import { captureDeleteGroupFolder } from '../src/features/groups/files/group-file-input.ts';
 import { captureGroupEssenceRequest } from '../src/features/groups/group-essence-input.ts';
 
 test('shared identifier owner preserves identity and exact accepted strings', () => {

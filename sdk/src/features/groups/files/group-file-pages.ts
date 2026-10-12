@@ -1,4 +1,4 @@
-import type { GroupFileEntry, GroupFilePage } from '../../contracts/groups.ts';
+import type { GroupFileEntry, GroupFilePage } from '../../../contracts/groups.ts';
 import {
   captureGroupFilePage,
   captureGroupFileList,

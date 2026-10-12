@@ -14,7 +14,7 @@ import {
 } from '../helpers/source-graph.ts';
 
 test('group-file compatibility exports cannot reacquire protocol execution', () => {
-  const path = join(sourceRoot, 'features/groups/group-file-operations.ts');
+  const path = join(sourceRoot, 'features/groups/files/group-file-operations.ts');
   const tree = ts.createSourceFile(path, readFileSync(path, 'utf8'), ts.ScriptTarget.Latest, true);
   assert.ok(tree.statements.length > 0);
   for (const statement of tree.statements) {

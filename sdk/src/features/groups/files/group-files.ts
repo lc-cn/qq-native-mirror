@@ -1,6 +1,6 @@
 import { createGroupFilePages, type GroupFilePagesContext } from './group-file-pages.ts';
-import { FeatureLifetime } from '../../runtime/feature-lifetime.ts';
-import type { GroupFolder } from '../../contracts/groups.ts';
+import { FeatureLifetime } from '../../../runtime/feature-lifetime.ts';
+import type { GroupFolder } from '../../../contracts/groups.ts';
 import {
   captureCreateGroupFolder,
   captureDeleteGroupFolder,

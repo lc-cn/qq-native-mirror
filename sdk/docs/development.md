@@ -44,8 +44,10 @@ Run `npm run check:architecture` while changing ownership. It reads source synta
 without importing the SDK. Passing it does not replace the full package gate.
 
 Domain tests follow their implementation owner: contact-only regressions live in
-`test/features/contacts/`. Tests spanning contacts and groups retain their shared
-entry. Keep helpers in `test/helpers/` and data or generated worker fixtures in
+`test/features/contacts/` and group-only regressions in `test/features/groups/`.
+Composition, CLI, platform-profile and installed-consumer regressions keep their
+integration entry, even when their names include a domain. Tests spanning contacts
+and groups retain their shared entry. Keep helpers in `test/helpers/` and data or generated worker fixtures in
 `test/fixtures/`; these directories do not own automatic `.test.ts` or `.test.mjs`
 entries. Architecture suites remain registered by `test/architecture.test.ts`.
 
@@ -54,6 +56,13 @@ tests participate without shell-dependent expansion. `test/test-discovery.test.t
 checks actual nested TS/MJS execution and the file inventory. Run a domain alone
 with `node --test "test/features/contacts/*.test.ts"` while editing it, then run
 the complete gate before delivery.
+
+The group-file capability lives in `features/groups/files/`: input capture,
+page correlation, codec, action dispatch and protocol result owners are located
+together. Its compatibility barrel retains the existing export names and function
+identities; internal import paths follow the new directory. Keep public group DTOs
+in `contracts/groups.ts` and composition in `native-services.ts`. A directory
+groups collaborating owners; it does not require merging distinct native protocols.
 
 ## Design the interface and lifetime together
 
@@ -84,6 +93,13 @@ work and observes late completion. Preserve local-feature, request, account and
 worker retirement as distinct lifetimes. Propagate cancellation across IPC through
 its existing owner. Never replay a dispatched mutation, guess a native destructor
 or clear callback references before their native release contract is known.
+
+Native bundle download and installed-object restoration use `runWithCleanup`
+for asynchronous temporary-file, staging-directory and lock ownership. Each owner
+waits for its operation and release; nested owners release from inside out. A lone
+failure retains identity, and simultaneous operation/release failures retain both.
+An inner cleanup failure cannot skip the outer lock release. Keep this error rule
+in `runtime/cleanup.ts`, rather than copying it into each installer.
 
 See the relevant [module contracts](architecture/encapsulation.md) for exact
 callback correlation, ACK, cache commit, projection and ordering rules. Keep those

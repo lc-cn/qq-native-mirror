@@ -1,6 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { createGroupEvents, createGroupEventIngress } from '../src/features/groups/group-events.ts';
+import {
+  createGroupEvents,
+  createGroupEventIngress,
+} from '../../../src/features/groups/group-events.ts';
 
 test('group detail synchronization projects only declared metadata and preserves exact IDs', () => {
   const events: [string, any][] = [];

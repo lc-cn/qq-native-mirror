@@ -36,8 +36,8 @@ export function consumerModulePolicy(repositoryRoot: string): ConsumerModuleRefe
       reason: 'Explicit external compiler path, not SDK module.',
     },
     ...[
-      ['features/groups/group-file-pages', 'features/groups/group-file-pages.js'],
-      ['features/groups/group-file-input', 'features/groups/group-file-input.js'],
+      ['features/groups/files/group-file-pages', 'features/groups/files/group-file-pages.js'],
+      ['features/groups/files/group-file-input', 'features/groups/files/group-file-input.js'],
       ['native-services', 'native-services.js'],
       ['runtime/worker-termination', 'runtime/worker-termination.js'],
       ['index', 'index.js'],
