@@ -1,0 +1,129 @@
+sdk/docs/development.md
+  s_2104cc474f1ce5::t_8dbc5c21890dcf 47-50,60-66,97-102
+  s_2104cc474f1ce5::t_a8261ea46c790c 103
+sdk/test/helpers/dependency-policy.ts
+  s_2104cc474f1ce5::t_ff15af1879b9c5 361,365-368
+  s_2104cc474f1ce5::t_aaa9f30407edcf 102-103,131,176,238,284,286,288,290-292
+sdk/test/async-cleanup.test.ts
+  s_2104cc474f1ce5::t_b6f82922e61479 1-12,16-18,22-24,29-43,51,56-58,72-77,83-86,89-96,114,123-124
+  s_2104cc474f1ce5::t_6384ee938bf952 13-15,19-21,25-28,44-50,52-55,59-71,78-82,87-88,97-113,115-122
+sdk/src/runtime/cleanup.ts
+  s_2104cc474f1ce5::t_56140e1493435d 70
+  s_2104cc474f1ce5::t_463aa047ec6576 49-58,62,69
+  s_2104cc474f1ce5::t_08081316ef643d 59-61,63-68,71-72
+  s_2104cc474f1ce5::t_5f1014530f2373 73
+sdk/docs/architecture.md
+  s_2104cc474f1ce5::t_8dbc5c21890dcf 122-127
+sdk/docs/architecture/encapsulation.md
+  s_2104cc474f1ce5::t_a75c7bf7a21dab 1073
+sdk/docs/architecture/quality-gates.md
+  s_2104cc474f1ce5::t_8dbc5c21890dcf 103-105,147-152
+sdk/scripts/consumer-module-policy.ts
+  s_2104cc474f1ce5::t_a3ed3298f7b3be 39-40
+sdk/scripts/consumers/contact-group-consumer-contract.mjs
+  s_2104cc474f1ce5::t_1f2ce94601ced9 469,471-472,744,809,811-812
+sdk/scripts/consumers/group-file-action-consumer-contract.mjs
+  s_2104cc474f1ce5::t_14659596cbc86c 10-11,18-21,24-27,30,32-33
+sdk/scripts/consumers/group-file-pages-consumer-contract.mjs
+  s_2104cc474f1ce5::t_167571dd16c7b8 14,16-20,22-25,117,143,262
+sdk/src/cli/commands/groups.ts
+  s_2104cc474f1ce5::t_a62e3c25b299df 12
+sdk/src/client/qq-client.ts
+  s_2104cc474f1ce5::t_183725684771bd 15
+sdk/src/features/groups/files/group-file-count.ts
+  s_2104cc474f1ce5::t_4f005a4611a2bb 1
+sdk/src/features/groups/files/group-file-deletion.ts
+  s_2104cc474f1ce5::t_67b2364d833143 1
+sdk/src/features/groups/files/group-file-input.ts
+  s_2104cc474f1ce5::t_4032d4c6d5455a 1
+sdk/src/features/groups/files/group-file-page-codec.ts
+  s_2104cc474f1ce5::t_45530ad8d31efb 1
+sdk/src/features/groups/files/group-file-pages.ts
+  s_2104cc474f1ce5::t_27af717fccbd15 1
+sdk/src/features/groups/files/group-files.ts
+  s_2104cc474f1ce5::t_495a064f51e802 2-3
+sdk/src/features/groups/files/group-folder-operations.ts
+  s_2104cc474f1ce5::t_0b5168f484ef96 1,3
+sdk/src/native-services.ts
+  s_2104cc474f1ce5::t_7224b2ba2e261f 10-11
+sdk/src/native/native-bundle-installer.ts
+  s_2104cc474f1ce5::t_c30189a5190a4e 1,70,74-127,130,132-142,144-158,161-173,175
+sdk/src/native/native-installed-storage.ts
+  s_2104cc474f1ce5::t_65a534773f37d1 1,152,173-191,193-202
+sdk/test/architecture/composition.ts
+  s_2104cc474f1ce5::t_a3a06e79a18bc0 116-122,128
+sdk/test/architecture/contracts.ts
+  s_2104cc474f1ce5::t_f8485190941d95 17
+sdk/test/architecture/dependency-direction.ts
+  s_2104cc474f1ce5::t_ffa4b0b9dec001 117
+sdk/test/architecture/module-ownership.ts
+  s_2104cc474f1ce5::t_0048ed79bd1363 51,55-56,61,69,76,90,102,265,292
+sdk/test/architecture/resources.ts
+  s_2104cc474f1ce5::t_f2e1f286b83cd1 40,68
+sdk/test/features/groups/group-events.test.ts
+  s_2104cc474f1ce5::t_d5873bb40accaf 3-6
+sdk/test/features/groups/group-file-action-lifetime.test.ts
+  s_2104cc474f1ce5::t_e84aacae725a20 3-7
+sdk/test/features/groups/group-file-deletion.test.ts
+  s_2104cc474f1ce5::t_54c547faedf41e 3-4
+sdk/test/features/groups/group-file-input.test.ts
+  s_2104cc474f1ce5::t_cd7b9062e462f7 6
+sdk/test/features/groups/group-file-page-codec.test.ts
+  s_2104cc474f1ce5::t_62d509af8985e7 3
+sdk/test/features/groups/group-file-pages.test.ts
+  s_2104cc474f1ce5::t_4f14c55c0beec6 3,7
+sdk/test/features/groups/group-file-result-lifetime.test.ts
+  s_2104cc474f1ce5::t_5cd850ea69beef 3-4
+sdk/test/features/groups/group-folder-create.test.ts
+  s_2104cc474f1ce5::t_1218d76a7356b1 3-5
+sdk/test/features/groups/group-operations.test.ts
+  s_2104cc474f1ce5::t_97dee30581955d 7
+sdk/test/features/groups/group-queries.test.ts
+  s_2104cc474f1ce5::t_5bf28c2d061d42 3-9
+sdk/test/features/groups/group-query-lifetime.test.ts
+  s_2104cc474f1ce5::t_3a446bf8c0aaf3 3-4
+sdk/test/features/groups/group-requests.test.ts
+  s_2104cc474f1ce5::t_639dfaaaa4859c 7
+sdk/test/features/groups/group-search-registration.test.ts
+  s_2104cc474f1ce5::t_23309789f450e8 3-8
+sdk/test/features/groups/group-search.test.ts
+  s_2104cc474f1ce5::t_22fa48ff42a7df 3-5
+sdk/test/features/groups/group-system-events.test.ts
+  s_2104cc474f1ce5::t_80ad8a4997de57 3
+sdk/test/features/groups/group-web-reads.test.ts
+  s_2104cc474f1ce5::t_6b8f65e79ece94 3-4
+sdk/test/features/groups/qun-web-read.test.ts
+  s_2104cc474f1ce5::t_f4c7fbe1944079 4-7
+sdk/test/features/groups/web-group-notices.test.ts
+  s_2104cc474f1ce5::t_6bf4763c902e48 3-7
+sdk/test/fixtures/domain-port-types.ts
+  s_2104cc474f1ce5::t_3a607b599feb5c 261
+sdk/test/group-file-count.test.ts
+  s_2104cc474f1ce5::t_690ecd31e12c9e 3
+sdk/test/group-file-operations.test.ts
+  s_2104cc474f1ce5::t_2c323043ab84ec 6
+sdk/test/group-file-page-profiles.test.ts
+  s_2104cc474f1ce5::t_588fdc0bf11f7c 6
+sdk/test/identifiers.test.ts
+  s_2104cc474f1ce5::t_92280ee77947d5 8
+sdk/test/native-installation-cleanup.test.ts
+  s_2104cc474f1ce5::t_742557398913ff 1-234
+tools/native-storage-inventory.test.mjs
+  s_2104cc474f1ce5::t_208e63d830760f 35-59,66-78,82,85-96,156-190
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "1e83658356f9ed3b13776ac819c09f30e29f18be",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
