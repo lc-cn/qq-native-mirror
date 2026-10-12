@@ -1,3 +1,4 @@
+import type { GroupRequest, GroupRequestPage } from '../../contracts/groups.ts';
 import { nativeResultError } from '../../errors.ts';
 import { FeatureLifetime } from '../../runtime/feature-lifetime.ts';
 import { captureGroupRequestOperation, type GroupRequestOperation } from './group-request-input.ts';
@@ -9,20 +10,9 @@ export type { GroupRequestOperation } from './group-request-input.ts';
  * 7 join application; status 1 unhandled; operation 1 agree / 2 refuse.
  * Locally retained native service/listener contracts: .local/research/NodeIKernelGroup{Service,Listener}.ts.
  */
-export interface NativeGroupRequest {
-  groupId: string;
-  sequence: string;
-  type: 1 | 5 | 7;
-  kind: 'invite' | 'invite-approval' | 'join';
-  doubt: boolean;
-  status: number;
-  message: string;
-  raw: unknown;
-}
-export interface NativeGroupRequestPage {
-  requests: NativeGroupRequest[];
-  next: string;
-}
+/** Compatibility names for SDK projections, not declarations of native notification carriers. */
+export type NativeGroupRequest = GroupRequest;
+export type NativeGroupRequestPage = GroupRequestPage;
 function numeric(value: unknown, name: string): string {
   if (typeof value !== 'string' || !/^\d+$/.test(value))
     throw new Error(`${name} must be a numeric string`);
@@ -92,25 +82,21 @@ export function createGroupRequests(context: GroupRequestsContext) {
     awaitAlive,
     closedMessage: 'Group request service is closed',
   });
-  const alive = () => {
-    signal.throwIfAborted();
-    if (closed) throw new Error('Group request service is closed');
-  };
+  const alive = lifetime.assertOpen;
+  const inspect = lifetime.inspect;
   const checkResult = (result: unknown, message: string, allowVoid = false) => {
     alive();
     // Approval may acknowledge dispatch with void. Lists always require result zero.
     if (allowVoid && result === undefined) return;
-    const code =
-      result && typeof result === 'object' ? (result as { result?: unknown }).result : undefined;
-    alive();
+    const code = inspect(() =>
+      result && typeof result === 'object' ? (result as { result?: unknown }).result : undefined,
+    );
     if (code !== 0) throw nativeResultError(message, { result: code });
   };
   const awaitValue = lifetime.wait;
   alive();
-  const service = context.getGroupService();
-  alive();
-  const add = service?.addKernelGroupListener;
-  alive();
+  const service = inspect(() => context.getGroupService());
+  const add = inspect(() => service?.addKernelGroupListener);
   if (typeof add !== 'function')
     throw new Error('Native Group service is missing addKernelGroupListener');
   const emit = (event: string, payload: unknown) => {
@@ -186,16 +172,14 @@ export function createGroupRequests(context: GroupRequestsContext) {
   };
   const callList = (doubt: boolean, before: string, limit: number) => {
     alive();
-    const method = service?.getSingleScreenNotifies;
-    alive();
+    const method = inspect(() => service?.getSingleScreenNotifies);
     if (typeof method !== 'function')
       throw new Error('Native Group service is missing getSingleScreenNotifies');
     return Reflect.apply(method, service, [doubt, before, limit]) as unknown;
   };
   const callOperation = (doubt: boolean, request: GroupNotificationOperation) => {
     alive();
-    const method = service?.operateSysNotify;
-    alive();
+    const method = inspect(() => service?.operateSysNotify);
     if (typeof method !== 'function')
       throw new Error('Native Group service is missing operateSysNotify');
     return Reflect.apply(method, service, [doubt, request]) as unknown;
@@ -306,7 +290,7 @@ export function createGroupRequests(context: GroupRequestsContext) {
     const current = pending;
     pending = undefined;
     seen.clear();
-    current?.reject(new Error('Group request service is closed'));
+    current?.reject(lifetime.signal.reason);
   }
   function close() {
     retire();

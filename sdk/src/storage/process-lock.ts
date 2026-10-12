@@ -18,20 +18,47 @@ export function publishProcessLock(path: string, owner: string): void {
   const temporary = `${path}.owner-${randomUUID()}`;
   let fd: number | undefined;
   let created = false;
+  let published = false;
+  const failures: unknown[] = [];
+  const closeOnce = () => {
+    if (fd === undefined) return;
+    const owned = fd;
+    // A failed close can still have closed the descriptor. Never retry its number.
+    fd = undefined;
+    closeSync(owned);
+  };
   try {
     fd = openSync(temporary, 'wx', 0o600);
     created = true;
     writeFileSync(fd, owner, 'utf8');
-    closeSync(fd);
-    fd = undefined;
+    closeOnce();
     linkSync(temporary, path);
-  } finally {
-    try {
-      if (fd !== undefined) closeSync(fd);
-    } finally {
-      if (created) unlinkSync(temporary);
-    }
+    published = true;
+  } catch (error) {
+    failures.push(error);
   }
+  try {
+    closeOnce();
+  } catch (error) {
+    failures.push(error);
+  }
+  if (created)
+    try {
+      unlinkSync(temporary);
+    } catch (error) {
+      failures.push(error);
+    }
+  if (failures.length && published)
+    try {
+      // Failed acquisition must not leave its published owner without a release.
+      // This preserves the existing owner-aware check, not a cross-process CAS.
+      removeOwnedProcessLock(path, owner);
+    } catch (error) {
+      failures.push(error);
+    }
+  if (failures.length === 1) throw failures[0];
+  if (failures.length > 1)
+    throw new AggregateError(failures, 'Process lock publication and cleanup failed');
 }
 /** Legacy links are read as tokens, never followed. Regular files are bounded and identity checked. */
 export function readProcessLock(path: string): string | undefined {

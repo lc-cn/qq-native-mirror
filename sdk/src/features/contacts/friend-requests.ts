@@ -1,3 +1,4 @@
+import type { FriendRequest } from '../../contracts/contacts.ts';
 import { nativeResultError } from '../../errors.ts';
 import { FeatureLifetime } from '../../runtime/feature-lifetime.ts';
 import { createFriendEvents } from './friend-events.ts';
@@ -8,16 +9,8 @@ export type { FriendRequestOperation } from './friend-request-input.ts';
  * https://github.com/NapNeko/NapCatQQ/blob/26d7533e0f5800fdff865ab2f2ad7692917e1076/packages/napcat-core/apis/friend.ts#L87-L103
  * Buddy service declares getBuddyReq Promise<GeneralCallResult>, approvalFriendRequest Promise<void>.
  */
-export interface NativeFriendRequestDTO {
-  uid: string;
-  time: string;
-  nickname: string;
-  message: string;
-  decided: boolean;
-  unread: boolean;
-  initiator: boolean;
-  raw: unknown;
-}
+/** Compatibility name for the SDK projection; proprietary native fields remain raw/unknown. */
+export type NativeFriendRequestDTO = FriendRequest;
 function nonempty(value: unknown, name: string): string {
   if (typeof value !== 'string' || !value.trim())
     throw new Error(`${name} must be a nonempty string`);
@@ -85,24 +78,20 @@ export function createFriendRequests(context: FriendRequestsContext) {
     closedMessage: 'Friend request service is closed',
   });
   const awaitValue = lifetime.wait;
-  const alive = () => {
-    signal.throwIfAborted();
-    if (closed) throw new Error('Friend request service is closed');
-  };
+  const alive = lifetime.assertOpen;
+  const inspect = lifetime.inspect;
   const checkResult = (result: unknown, message: string, allowVoid = false) => {
     alive();
     // Approval may acknowledge dispatch with void. Lists always require result zero.
     if (allowVoid && result === undefined) return;
-    const code =
-      result && typeof result === 'object' ? (result as { result?: unknown }).result : undefined;
-    alive();
+    const code = inspect(() =>
+      result && typeof result === 'object' ? (result as { result?: unknown }).result : undefined,
+    );
     if (code !== 0) throw nativeResultError(message, { result: code });
   };
   alive();
-  const service = context.getBuddyService();
-  alive();
-  const add = service?.addKernelBuddyListener;
-  alive();
+  const service = inspect(() => context.getBuddyService());
+  const add = inspect(() => service?.addKernelBuddyListener);
   if (typeof add !== 'function')
     throw new Error('Native Buddy service is missing addKernelBuddyListener');
   const emit = (event: string, payload: unknown) => {
@@ -156,16 +145,14 @@ export function createFriendRequests(context: FriendRequestsContext) {
   };
   const callList = () => {
     alive();
-    const method = service?.getBuddyReq;
-    alive();
+    const method = inspect(() => service?.getBuddyReq);
     if (typeof method !== 'function')
       throw new Error('Native Buddy service is missing getBuddyReq');
     return Reflect.apply(method, service, []) as unknown;
   };
   const callApproval = (request: { friendUid: string; reqTime: string; accept: boolean }) => {
     alive();
-    const method = service?.approvalFriendRequest;
-    alive();
+    const method = inspect(() => service?.approvalFriendRequest);
     if (typeof method !== 'function')
       throw new Error('Native Buddy service is missing approvalFriendRequest');
     return Reflect.apply(method, service, [request]) as unknown;
@@ -260,7 +247,7 @@ export function createFriendRequests(context: FriendRequestsContext) {
     closed = true;
     lifetime.close(signal.aborted ? signal.reason : undefined);
     signal.removeEventListener('abort', retire);
-    for (const waiter of waiters) waiter.reject(new Error('Friend request service is closed'));
+    for (const waiter of waiters) waiter.reject(lifetime.signal.reason);
     waiters.clear();
     seen.clear();
   }

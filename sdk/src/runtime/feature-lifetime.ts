@@ -27,6 +27,20 @@ export class FeatureLifetime {
 
   readonly assertOpen = (): void => this.#signal.throwIfAborted();
 
+  /** Read a synchronous field once under this owner's retirement policy.
+   * An accessor may close the feature and then throw; the established retirement
+   * reason wins. While active, the original accessor error remains unchanged.
+   * Native dispatch and asynchronous work still belong to the operation and wait.
+   */
+  readonly inspect = <T>(read: () => T): T => {
+    this.assertOpen();
+    try {
+      return read();
+    } finally {
+      this.assertOpen();
+    }
+  };
+
   readonly wait = async <T>(value: T | PromiseLike<T>): Promise<T> => {
     // Calling a native method can synchronously close its owner before wait.
     const pending = Promise.resolve(value);

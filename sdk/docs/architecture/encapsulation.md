@@ -451,10 +451,18 @@ completion remains observed and local listeners are released on every exit.
 This module cannot acquire native services, domain implementations or IO. Cache
 clearing, page history and mutation acknowledgements stay with their domain owners.
 
+Request owners also use `inspect` for synchronous service, method and receipt
+field acquisition. It checks retirement before and after the single read,
+including a throwing accessor. An established local or account cancellation reason
+takes precedence; active accessor failures retain their original identity. It does
+not dispatch a native operation or await its result. The existing `wait` owner
+continues observing issued work, including completion after close.
+
 Friend and group request owners also use `FeatureLifetime` for native completion;
 their account-abort retirement passes through the original cancellation reason.
 Listener removal, callback quarantine, request correlation and pending list
-rejection remain domain-owned. Group member queries and self-profile lookup retain
+rejection remain domain-owned. Pending list rejection uses that lifetime's selected
+reason, so a notification race cannot substitute another close error. Group member queries and self-profile lookup retain
 their distinct parent-cancellation policies and pass local signals into the account
 wait. Local close therefore releases both waits before native completion; it does
 not leave an account abort listener retaining a retired feature.
@@ -913,6 +921,11 @@ validated before projection. Accessors cannot replace a checked value with a
 different type during event publication. The original `raw` object remains opaque
 and retains its identity for existing consumers; typed fields never reread it.
 This owner has no dynamic native-object permission.
+Friend and group request projection types reuse the public domain contracts.
+The former internal `NativeFriendRequestDTO`, `NativeGroupRequest` and
+`NativeGroupRequestPage` names remain type aliases; they describe normalized SDK
+data rather than a second native ABI. Native service ports remain domain-owned and
+native values remain unknown until the existing projection validates them.
 Native success alone cannot complete a list; a failed query invalidates listing while
 unsolicited requests and explicit decisions remain available. Local close and
 Session abort retire pending waits and callback publication before attempting
@@ -1158,6 +1171,15 @@ installation releases its lock and cannot remove a later queue entry. Installed
 npm object hydration retains its own format and verification policy. Both paths
 use the storage-owned package lock; bundle storage does not depend on source
 selection or business modules.
+
+`storage/process-lock` owns synchronous owner-file publication for both package
+and account locks. It writes and closes the temporary owner before linking the
+complete lock, and attempts each descriptor close once. Failed acquisition retains
+the operation and independent cleanup failures. If publication succeeded before
+cleanup failed, it attempts rollback through the existing owner-aware removal
+primitive; an existing or replaced owner is preserved. Rollback failure remains
+part of the reported error. This ownership check is not a cross-process atomic
+compare-and-delete guarantee.
 
 `native/native-contracts` owns only the pure capability registry and matching.
 `native/native-contract-inspection` owns file hashing and actual host identity;
