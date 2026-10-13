@@ -150,7 +150,7 @@ test('factory owns configured login across preparation and deferred automatic lo
     import assert from 'node:assert/strict';
     import { mock } from 'node:test';
     import { EventEmitter } from 'node:events';
-    import { mkdtemp, rm } from 'node:fs/promises';
+    import { mkdtemp, rm, writeFile } from 'node:fs/promises';
     import { join } from 'node:path';
     import { tmpdir } from 'node:os';
     let resume;
@@ -172,11 +172,14 @@ test('factory owns configured login across preparation and deferred automatic lo
     const root = await mkdtemp(join(tmpdir(), 'qq-factory-login-'));
     let client;
     try {
+      const bridgePath = join(root, 'fake-registration-bridge.node');
+      await writeFile(bridgePath, 'fake regular registration bridge; never loaded');
       const request = { method: 'quick', uin: '123' };
-      const options = { dataDir: root, login: request };
+      const options = { dataDir: root, bridgePath, login: request };
       const creating = createClient(options);
       request.uin = '456'; options.login = { method: 'quick', uin: '789' };
       resume(); client = await creating;
+      assert.equal(worker.requests.find(value => value.method === 'init').options.bridgePath, bridgePath);
       options.login = { method: 'quick', uin: '999' };
       await new Promise(resolve => setImmediate(resolve));
       assert.deepEqual(worker.requests.find(value => value.method === 'login').login, { method: 'quick', uin: '123' });

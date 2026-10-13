@@ -157,6 +157,11 @@ export async function verifyKernelSessionConsumer(packageRoot) {
         : undefined,
     );
     try {
+      // This case owns Session start semantics, not the cold filesystem deadline.
+      const preparation = f.kernel.prepare();
+      await preparation;
+      assert.deepEqual(f.dispatches, []);
+      assert.deepEqual(starts, []);
       await assert.rejects(f.kernel.login({ method: 'qr' }), (error) => error === failure);
       assert.deepEqual(starts, strategy === 'startup' ? [['startup']] : [['direct', 0]]);
       assert.equal(f.events.includes('ready'), false);
@@ -193,6 +198,10 @@ export async function verifyKernelSessionConsumer(packageRoot) {
         strategy === 'startup' ? { create: () => ({ start }) } : undefined,
       );
       try {
+        const preparation = f.kernel.prepare();
+        await preparation;
+        assert.deepEqual(f.dispatches, []);
+        assert.equal(starts, 0);
         const result = f.kernel.login({ method: 'qr' });
         if (rejects) {
           await assert.rejects(result, (error) => error === failure);

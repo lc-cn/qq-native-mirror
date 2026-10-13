@@ -49,10 +49,12 @@ test('createClient preserves explicit codec/tools precedence over bundled codec 
   const root = await realpath(await mkdtemp(join(tmpdir(), 'qq-video-client-')));
   t.after(() => rm(root, { recursive: true, force: true }));
   const wrapperPath = join(root, 'wrapper.node'),
+    bridgePath = join(root, 'fake-registration-bridge.node'),
     discovered = join(root, 'discovered.node'),
     explicit = join(root, 'explicit-codec.mjs');
   const hash = (bytes: string) => createHash('sha256').update(bytes).digest('hex');
   await writeFile(wrapperPath, 'fake-wrapper');
+  await writeFile(bridgePath, 'fake regular registration bridge; never loaded');
   await writeFile(discovered, 'fake-discovered');
   await writeFile(explicit, 'export const getVideoInfo=()=>{};');
   await writeFile(
@@ -95,6 +97,7 @@ test('createClient preserves explicit codec/tools precedence over bundled codec 
     const before = workers.length;
     const client = await createClient({
       wrapperPath,
+      bridgePath,
       dataDir: join(root, 'unused-' + before),
       videoCodecPath,
       mediaTools,
@@ -103,6 +106,10 @@ test('createClient preserves explicit codec/tools precedence over bundled codec 
     });
     try {
       const expected = videoCodecPath ?? (mediaTools === undefined ? discovered : undefined);
+      assert.equal(
+        workers[before].requests.find((request) => request.method === 'init').options.bridgePath,
+        bridgePath,
+      );
       assert.equal(
         workers[before].requests.find((request) => request.method === 'init').options
           .videoCodecPath,
@@ -115,6 +122,11 @@ test('createClient preserves explicit codec/tools precedence over bundled codec 
       assert.equal(client.account, undefined);
       // A synthetic worker answers reconnect; no real authorization/native call occurs.
       await client.reconnect({ method: 'restore', uin: '456' });
+      assert.equal(
+        workers[before + 1].requests.find((request) => request.method === 'init').options
+          .bridgePath,
+        bridgePath,
+      );
       assert.equal(
         workers[before + 1].requests.find((request) => request.method === 'init').options
           .videoCodecPath,

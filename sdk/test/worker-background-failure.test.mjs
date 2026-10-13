@@ -8,6 +8,11 @@ import test from 'node:test';
 const kernelUrl = new URL('../src/kernel.ts', import.meta.url).href;
 const authenticationUrl = new URL('../src/runtime/authentication-attempt.ts', import.meta.url).href;
 
+const childTimeoutMs = 5000;
+// These cases test observer failures, not login timeout. The outer watchdog wins
+// if resource preparation stalls, rather than producing an unrelated fatal event.
+const fixtureLoginTimeoutMs = childTimeoutMs * 2;
+
 /** @param {string} source @param {string} [rejectionMode] */
 function runChild(source, rejectionMode = 'throw') {
   const result = spawnSync(
@@ -15,7 +20,7 @@ function runChild(source, rejectionMode = 'throw') {
     ['--unhandled-rejections=' + rejectionMode, '--input-type=module', '--eval', source],
     {
       encoding: 'utf8',
-      timeout: 5000,
+      timeout: childTimeoutMs,
     },
   );
   assert.equal(result.error, undefined);
@@ -33,11 +38,13 @@ const monitor = `
   });
 `;
 
-for (const [phase, rejectionMode] of [
-  ['connected', 'throw'],
-  ['session-start', 'throw'],
-  ['connected', 'warn'],
-]) {
+/** @type {[string, string, number][]} */
+const observerCases = [
+  ['connected', 'throw', 1300],
+  ['session-start', 'throw', 0],
+  ['connected', 'warn', 0],
+];
+for (const [phase, rejectionMode, preparationDelay] of observerCases) {
   await test(`${phase} observer failure is fatal with rejection mode ${rejectionMode} after primary settlement`, async () => {
     const dataDir = await mkdtemp(join(tmpdir(), 'qq-background-failure-'));
     try {
@@ -45,6 +52,20 @@ for (const [phase, rejectionMode] of [
         `
         import { createKernel } from ${JSON.stringify(kernelUrl)};
         ${monitor}
+        import filesystem from 'node:fs/promises';
+        import { syncBuiltinESMExports } from 'node:module';
+        const originalMkdir = filesystem.mkdir;
+        // Exercise preparation slower than the former 1-second login budget.
+        // This child owns its module override; no production code is patched.
+        let preparationDelayed = false;
+        filesystem.mkdir = async (...args) => {
+          if (!preparationDelayed) {
+            preparationDelayed = true;
+            await new Promise(resolve => setTimeout(resolve, ${preparationDelay}));
+          }
+          return originalMkdir(...args);
+        };
+        syncBuiltinESMExports();
         let listener;
         const session = {
           init(_config, _depends, _dispatcher, callback) {
@@ -73,7 +94,7 @@ for (const [phase, rejectionMode] of [
           }) },
         }, {
           dataDir: ${JSON.stringify(dataDir)},
-          loginTimeoutMs: 1000,
+          loginTimeoutMs: ${fixtureLoginTimeoutMs},
           version: { clientVersion: 'fixture', appId: '1', qua: 'fixture' },
         }, (event) => {
           if (event === 'login-error') throw Error('observer failure');
@@ -101,7 +122,7 @@ await test('authentication poll owns a secondary rejection without replaying the
     ${monitor}
     let attempt;
     attempt = new AuthenticationAttempt({
-      request: { method: 'qr' }, timeoutMs: 1500,
+      request: { method: 'qr' }, timeoutMs: ${fixtureLoginTimeoutMs},
       prepare: async () => {}, isCurrent: () => true, notify() {},
       loginService: () => ({ getMsfStatus() {
         dispatches++;
