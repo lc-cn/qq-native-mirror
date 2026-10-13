@@ -213,6 +213,15 @@ export const crossFeatureDependencies = [
 ] as const;
 
 export function dependencyViolation({ from, to, typeOnly }: SourceDependency): string | undefined {
+  if (from === 'src/runtime/packet-transport.ts')
+    return 'Packet transport owns byte request lifetime only; it cannot acquire domain, native loader or account implementations.';
+  if (to === 'src/runtime/packet-transport.ts')
+    return [
+      'src/features/forward/long-message-response.ts',
+      'src/features/forward/forward-resource-transport.ts',
+    ].includes(from)
+      ? undefined
+      : 'Only the two reviewed forward byte adapters use the packet transport.';
   if (from === 'src/runtime/cleanup.ts')
     return 'Cleanup policy is a pure primitive; it cannot acquire resources or compose runtime owners.';
   if (

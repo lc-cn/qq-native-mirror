@@ -133,6 +133,12 @@ checking; the worker no longer maintains a second handwritten allowlist.
 `src/runtime/operation-contracts.ts` owns the type-only correlated SDK payload and
 result tuples used by the facade; it does not validate native ABI or responses.
 
+`runtime/packet-transport` owns byte-request observation for the two forward
+protocol adapters. Command admission, schema decoding and domain errors remain
+with those callers. Its injected service is an SDK port, not an asserted raw QQ
+ABI. See [Packet transport and native evidence](packet-transport.md) for the
+measured string-carrier incompatibility and the remaining admission work.
+
 Shared account/group identifier rules belong to `validation/identifiers`, not
 to message sending. Group inputs import that pure owner directly; the original
 message input exports remain compatible. Transport-specific uint64 limits stay

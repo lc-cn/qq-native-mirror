@@ -29,6 +29,7 @@ import {
   supportsGroupFileDeletion,
   supportsGroupFolderCreation,
   supportsGroupSearch,
+  hasStringSsoCarrier,
 } from './native/native-contracts.ts';
 import { createFriendSystemEvents } from './features/contacts/friend-system-events.ts';
 import {
@@ -432,7 +433,14 @@ export function createNativeServices(context: NativeServiceContext) {
       selfUid: accountUid ?? '',
       signal: lifetime.signal,
       resolvePeer,
-      getMessageService: () => service('Msg'),
+      getMessageService: () => {
+        if (hasStringSsoCarrier(nativeContracts, version))
+          throw Object.assign(
+            new Error('Native SSO string carrier is incompatible with the Buffer packet adapter'),
+            { code: 'unsupported-native-contract' },
+          );
+        return service('Msg');
+      },
       sendPrepared: (peer, elements, onDispatch) => sender.sendPrepared(peer, elements, onDispatch),
       defer: (cleanup) => lifetime.defer(cleanup),
     });

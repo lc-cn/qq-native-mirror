@@ -7,6 +7,7 @@ export interface NativeContractProfile {
 }
 
 type NativeCapability =
+  | 'stringSsoCarrier'
   | 'categoryCreation'
   | 'categoryRenaming'
   | 'categoryDeletion'
@@ -84,6 +85,9 @@ const binaryProfiles: readonly BinaryContract[] = [
     '7.0.2-53644',
     'fbc8ad9b328d05e16784d76b0181dda894c17001179dbf8c0d5dd00dc6271358',
     [
+      // Carrier shape only: two strings -> result/errMsg/rsp. Wire encoding
+      // is unresolved; this fact rejects the incompatible Buffer adapter.
+      'stringSsoCarrier',
       'categoryCreation',
       'categoryRenaming',
       'categoryDeletion',
@@ -250,4 +254,15 @@ export function supportsGroupFolderCreation(
   version: string,
 ): boolean {
   return matchesContract(profile, version, 'groupFolderCreation');
+}
+
+/** A measured incompatibility, not permission to send arbitrary SSO commands.
+ * The exact wrapper's binding consumes strings and resolves a string `rsp`;
+ * its wire encoding is not yet established. Other profiles remain unproven.
+ */
+export function hasStringSsoCarrier(
+  profile: NativeContractProfile | undefined,
+  version: string,
+): boolean {
+  return matchesContract(profile, version, 'stringSsoCarrier');
 }

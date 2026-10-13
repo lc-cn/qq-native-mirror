@@ -1,4 +1,9 @@
 import {
+  createPacketTransport,
+  PacketTransportError,
+  type PacketService,
+} from '../../runtime/packet-transport.ts';
+import {
   buildForwardResourceRequest,
   parseForwardResourceResponse,
 } from './forward-resource-wire.ts';
@@ -17,9 +22,7 @@ export class ForwardResourceError extends Error {
     this.dispatched = dispatched;
   }
 }
-export interface ForwardResourceService {
-  sendSsoCmdReqByContend(command: string, data: Buffer): unknown;
-}
+export type ForwardResourceService = PacketService;
 export interface ForwardResourceReadOptions {
   signal?: AbortSignal;
   timeoutMs?: number;
@@ -28,8 +31,6 @@ const MAX_RESPONSE = 8 * 1024 * 1024;
 const aborted = Object.getOwnPropertyDescriptor(AbortSignal.prototype, 'aborted')!.get!;
 const isAborted = (signal?: AbortSignal): boolean =>
   signal === undefined ? false : aborted.call(signal);
-const regularBuffer = (value: unknown): value is Buffer =>
-  Buffer.isBuffer(value) && Object.getPrototypeOf(value) === Buffer.prototype;
 function captureOptions(value: unknown): ForwardResourceReadOptions {
   if (
     !value ||
@@ -58,172 +59,109 @@ function captureOptions(value: unknown): ForwardResourceReadOptions {
   }
   return captured;
 }
-/** Internal read-only single-dispatch adapter. Cancellation retires observation,
- * not the native operation; late native results/rejections remain observed. */
+function packetFailure(
+  error: PacketTransportError,
+  dispatched = error.dispatched,
+): ForwardResourceError {
+  switch (error.kind) {
+    case 'canceled':
+      return new ForwardResourceError(
+        'lifecycle',
+        'Forward-resource request canceled or transport closed',
+        dispatched,
+      );
+    case 'timeout':
+      return new ForwardResourceError(
+        'lifecycle',
+        'Forward-resource response timed out',
+        dispatched,
+      );
+    case 'missing':
+      return new ForwardResourceError('input', 'Missing forward-resource transport', dispatched);
+    case 'envelope':
+      return new ForwardResourceError(
+        'response',
+        'Invalid forward-resource response envelope',
+        dispatched,
+      );
+    case 'inspection':
+      return new ForwardResourceError(
+        'response',
+        'Forward-resource response inspection failed',
+        dispatched,
+      );
+    case 'rejected':
+      return new ForwardResourceError(
+        'native',
+        'Native forward-resource response rejected',
+        dispatched,
+      );
+    default:
+      return new ForwardResourceError(
+        'native',
+        'Native forward-resource dispatch failed',
+        dispatched,
+      );
+  }
+}
+
+/** Protocol input and resource-ID validation remain domain owned. The byte
+ * transport performs one native dispatch and observes completion after cancel.
+ */
 export function createForwardResourceTransport(service: ForwardResourceService) {
-  let closed = false;
-  const outstanding = new Set<() => void>();
+  const packets = createPacketTransport(service);
   return {
     read(
       selfUid: string,
       resourceId: string,
       options: ForwardResourceReadOptions = {},
     ): Promise<ForwardResource> {
-      let command: string,
-        request: Buffer,
+      let captured: ForwardResourceReadOptions,
         expectedResourceId: string,
-        signal: AbortSignal | undefined,
-        timeout: number;
+        built: ReturnType<typeof buildForwardResourceRequest>;
       try {
-        const captured = captureOptions(options);
-        signal = captured.signal;
-        timeout = captured.timeoutMs ?? 5000;
+        captured = captureOptions(options);
         expectedResourceId = normalizeForwardResourceId(resourceId);
-        const built = buildForwardResourceRequest(selfUid, expectedResourceId);
-        command = built.command;
-        request = Buffer.from(built.data);
+        built = buildForwardResourceRequest(selfUid, expectedResourceId);
       } catch {
         return Promise.reject(
           new ForwardResourceError('input', 'Invalid forward-resource request'),
         );
       }
-      if (closed || isAborted(signal))
+      const signal = captured.signal;
+      try {
+        packets.assertOpen(signal);
+      } catch {
         return Promise.reject(
           new ForwardResourceError('lifecycle', 'Forward-resource transport is closed or canceled'),
         );
-      return new Promise((resolve, reject) => {
-        let settled = false,
-          dispatched = false;
-        const timer: { handle?: ReturnType<typeof setTimeout> } = {};
-        const finish = (error?: ForwardResourceError, result?: ForwardResource) => {
-          if (settled) return;
-          settled = true;
-          if (timer.handle !== undefined) clearTimeout(timer.handle);
-          if (signal) EventTarget.prototype.removeEventListener.call(signal, 'abort', cancel);
-          outstanding.delete(cancel);
-          if (error) reject(error);
-          else resolve(result!);
-        };
-        const cancel = () =>
-          finish(
-            new ForwardResourceError(
-              'lifecycle',
-              'Forward-resource request canceled or transport closed',
-              dispatched,
-            ),
-          );
-        outstanding.add(cancel);
-        if (signal)
-          EventTarget.prototype.addEventListener.call(signal, 'abort', cancel, { once: true });
-        if (closed || isAborted(signal)) {
-          cancel();
-          return;
-        }
-        timer.handle = setTimeout(
-          () =>
-            finish(
-              new ForwardResourceError(
-                'lifecycle',
-                'Forward-resource response timed out',
-                dispatched,
-              ),
-            ),
-          timeout,
-        );
-        let returned: unknown;
-        try {
-          // Inspect this property only at dispatch; never access arbitrary native error fields.
-          const method = service?.sendSsoCmdReqByContend;
-          if (typeof method !== 'function') {
-            finish(new ForwardResourceError('input', 'Missing forward-resource transport'));
-            return;
+      }
+      return packets
+        .request(built.command, built.data, {
+          signal,
+          timeoutMs: captured.timeoutMs ?? 5000,
+          maxResponseBytes: MAX_RESPONSE,
+        })
+        .then((bytes) => {
+          try {
+            packets.assertOpen(signal);
+            const resource = parseForwardResourceResponse(bytes, expectedResourceId);
+            packets.assertOpen(signal);
+            return resource;
+          } catch (error) {
+            if (error instanceof PacketTransportError) throw packetFailure(error, true);
+            throw new ForwardResourceError(
+              'protobuf',
+              'Invalid forward-resource protobuf response',
+              true,
+            );
           }
-          if (closed || isAborted(signal)) {
-            cancel();
-            return;
-          }
-          dispatched = true;
-          returned = method.call(service, command, request);
-        } catch {
-          finish(
-            new ForwardResourceError(
-              'native',
-              'Native forward-resource dispatch failed',
-              dispatched,
-            ),
-          );
-          return;
-        }
-        Promise.resolve(returned)
-          .then(
-            (value) => {
-              if (settled) return;
-              if (closed || isAborted(signal)) {
-                cancel();
-                return;
-              }
-              const object =
-                value &&
-                typeof value === 'object' &&
-                [null, Object.prototype].includes(Object.getPrototypeOf(value))
-                  ? value
-                  : undefined;
-              const descriptor = object
-                ? Object.getOwnPropertyDescriptor(object, 'rspbuffer')
-                : undefined;
-              if (
-                !descriptor ||
-                !('value' in descriptor) ||
-                !regularBuffer(descriptor.value) ||
-                descriptor.value.length === 0 ||
-                descriptor.value.length > MAX_RESPONSE
-              ) {
-                finish(
-                  new ForwardResourceError(
-                    'response',
-                    'Invalid forward-resource response envelope',
-                    true,
-                  ),
-                );
-                return;
-              }
-              const response = Buffer.from(descriptor.value);
-              try {
-                finish(undefined, parseForwardResourceResponse(response, expectedResourceId));
-              } catch {
-                finish(
-                  new ForwardResourceError(
-                    'protobuf',
-                    'Invalid forward-resource protobuf response',
-                    true,
-                  ),
-                );
-              }
-            },
-            () =>
-              finish(
-                new ForwardResourceError(
-                  'native',
-                  'Native forward-resource response rejected',
-                  true,
-                ),
-              ),
-          )
-          .catch(() =>
-            finish(
-              new ForwardResourceError(
-                'response',
-                'Forward-resource response inspection failed',
-                true,
-              ),
-            ),
-          );
-      });
+        })
+        .catch((error: unknown) => {
+          if (error instanceof PacketTransportError) throw packetFailure(error);
+          throw error;
+        });
     },
-    close() {
-      if (closed) return;
-      closed = true;
-      for (const cancel of [...outstanding]) cancel();
-    },
+    close: () => packets.close(),
   };
 }

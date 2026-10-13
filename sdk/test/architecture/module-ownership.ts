@@ -4,6 +4,32 @@ import test from 'node:test';
 import { dependencyViolation } from '../helpers/dependency-policy.ts';
 import { projectRoot, graph } from '../helpers/source-graph.ts';
 
+test('packet lifetime stays behind the two reviewed protocol adapters', () => {
+  const transport = 'src/runtime/packet-transport.ts';
+  for (const from of [
+    'src/features/forward/long-message-response.ts',
+    'src/features/forward/forward-resource-transport.ts',
+  ])
+    for (const typeOnly of [false, true])
+      assert.equal(dependencyViolation({ from, to: transport, typeOnly }), undefined);
+  for (const from of [
+    'src/client/qq-client.ts',
+    'src/native-services.ts',
+    'src/features/forward/forward-resource-input.ts',
+    'src/features/groups/new-packet-action.ts',
+  ])
+    for (const typeOnly of [false, true])
+      assert.ok(dependencyViolation({ from, to: transport, typeOnly }));
+  for (const to of [
+    'src/native/native-object.ts',
+    'src/features/forward/forward-resource-wire.ts',
+    'src/runtime/account-session-lifecycle.ts',
+    'node:net',
+  ])
+    for (const typeOnly of [false, true])
+      assert.ok(dependencyViolation({ from: transport, to, typeOnly }));
+});
+
 test('lock owners share only the pure cleanup primitive without acquiring runtime owners', () => {
   for (const from of [
     'src/storage/process-lock.ts',

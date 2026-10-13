@@ -1,3 +1,8 @@
+import {
+  createPacketTransport,
+  PacketTransportError,
+  type PacketService,
+} from '../../runtime/packet-transport.ts';
 import { TextDecoder } from 'node:util';
 
 // Fixed NapCatQQ 26d7533e0f5800fdff865ab2f2ad7692917e1076:
@@ -107,19 +112,65 @@ export function parseLongMessageResponse(input: Buffer): { resId: string } {
   }
   return { resId: scan(0, bytes.length, 'response', 0).resId! };
 }
-export interface LongMessageResponseService {
-  sendSsoCmdReqByContend(command: string, data: Buffer): unknown;
-}
+export type LongMessageResponseService = PacketService;
 export interface LongMessageTransportOptions {
   signal?: AbortSignal;
   timeoutMs?: number;
 }
-/** Internal only: one native dispatch, no retries, no upload/account acceptance claim. */
+function packetFailure(
+  error: PacketTransportError,
+  dispatched = error.dispatched,
+): LongMessageResponseError {
+  switch (error.kind) {
+    case 'canceled':
+      return new LongMessageResponseError(
+        'lifecycle',
+        'Long-message request canceled or transport closed',
+        dispatched,
+      );
+    case 'timeout':
+      return new LongMessageResponseError(
+        'lifecycle',
+        'Long-message response timed out',
+        dispatched,
+      );
+    case 'envelope':
+      return new LongMessageResponseError(
+        'response',
+        'Native long-message response has no valid rspbuffer',
+        dispatched,
+        'response-received',
+      );
+    case 'inspection':
+      return new LongMessageResponseError(
+        'response',
+        'Native long-message response inspection failed',
+        dispatched,
+        'response-received',
+      );
+    case 'rejected':
+      return new LongMessageResponseError(
+        'native',
+        'Native long-message response rejected',
+        dispatched,
+      );
+    default:
+      return new LongMessageResponseError(
+        'native',
+        'Native long-message dispatch failed',
+        dispatched,
+      );
+  }
+}
+
+/** The domain owns command admission and schema decoding; the packet owner
+ * handles one byte request, native envelope, retirement and late completion.
+ * This does not establish native upload or account acceptance.
+ */
 export function createLongMessageResponseTransport(service: LongMessageResponseService) {
   if (!service || typeof service.sendSsoCmdReqByContend !== 'function')
     throw new LongMessageResponseError('input', 'Missing native long-message transport');
-  let closed = false;
-  const outstanding = new Set<() => void>();
+  const packets = createPacketTransport(service);
   return {
     send(
       command: string,
@@ -144,153 +195,44 @@ export function createLongMessageResponseTransport(service: LongMessageResponseS
         return Promise.reject(
           new LongMessageResponseError('input', 'Invalid long-message transport options'),
         );
-      const timeout = options.timeoutMs ?? 5000;
-      if (!Number.isSafeInteger(timeout) || timeout < 1 || timeout > 60000)
+      const timeoutMs = options.timeoutMs ?? 5000;
+      if (!Number.isSafeInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > 60000)
         return Promise.reject(
           new LongMessageResponseError('input', 'Invalid long-message timeout'),
         );
-      const request = Buffer.from(input),
-        signal = options.signal;
-      if (closed || signal?.aborted)
+      const signal = options.signal;
+      try {
+        packets.assertOpen(signal);
+      } catch {
         return Promise.reject(
           new LongMessageResponseError('lifecycle', 'Long-message transport is closed or canceled'),
         );
-      return new Promise((resolve, reject) => {
-        let settled = false,
-          dispatched = false;
-        const timer: { handle?: ReturnType<typeof setTimeout> } = {};
-        const finish = (error: unknown, value?: { resId: string }) => {
-          if (settled) return;
-          settled = true;
-          if (timer.handle !== undefined) clearTimeout(timer.handle);
-          signal?.removeEventListener('abort', cancel);
-          outstanding.delete(cancel);
-          if (error) reject(error);
-          else resolve(value!);
-        };
-        const cancel = () =>
-          finish(
-            new LongMessageResponseError(
-              'lifecycle',
-              'Long-message request canceled or transport closed',
-              dispatched,
-            ),
-          );
-        outstanding.add(cancel);
-        signal?.addEventListener('abort', cancel, { once: true });
-        if (closed || signal?.aborted) {
-          cancel();
-          return;
-        }
-        timer.handle = setTimeout(
-          () =>
-            finish(
-              new LongMessageResponseError(
-                'lifecycle',
-                'Long-message response timed out',
-                dispatched,
-              ),
-            ),
-          timeout,
-        );
-        let returned: unknown;
-        try {
-          const method = service.sendSsoCmdReqByContend;
-          if (closed || signal?.aborted) {
-            cancel();
-            return;
-          }
-          if (typeof method !== 'function') {
-            finish(
-              new LongMessageResponseError('native', 'Native long-message dispatch failed', false),
+      }
+      return packets
+        .request(command, input, { signal, timeoutMs, maxResponseBytes: MAX_WIRE })
+        .then((bytes) => {
+          try {
+            packets.assertOpen(signal);
+            const response = parseLongMessageResponse(bytes);
+            packets.assertOpen(signal);
+            return response;
+          } catch (error) {
+            if (error instanceof PacketTransportError) throw packetFailure(error, true);
+            throw new LongMessageResponseError(
+              'protobuf',
+              error instanceof LongMessageResponseError
+                ? error.message
+                : 'Invalid long-message protobuf response',
+              true,
+              'response-received',
             );
-            return;
           }
-          dispatched = true;
-          returned = Reflect.apply(method, service, [command, request]);
-        } catch {
-          finish(
-            new LongMessageResponseError(
-              'native',
-              'Native long-message dispatch failed',
-              dispatched,
-            ),
-          );
-          return;
-        }
-        Promise.resolve(returned)
-          .then(
-            (value) => {
-              if (settled) return;
-              if (closed || signal?.aborted) {
-                cancel();
-                return;
-              }
-              const object = value as Record<string, unknown> | null;
-              const descriptor =
-                object &&
-                typeof object === 'object' &&
-                (Object.getPrototypeOf(object) === Object.prototype ||
-                  Object.getPrototypeOf(object) === null)
-                  ? Object.getOwnPropertyDescriptor(object, 'rspbuffer')
-                  : undefined;
-              if (
-                !descriptor ||
-                !('value' in descriptor) ||
-                !regularBuffer(descriptor.value) ||
-                descriptor.value.length === 0 ||
-                descriptor.value.length > MAX_WIRE
-              ) {
-                finish(
-                  new LongMessageResponseError(
-                    'response',
-                    'Native long-message response has no valid rspbuffer',
-                    true,
-                    'response-received',
-                  ),
-                );
-                return;
-              }
-              try {
-                finish(undefined, parseLongMessageResponse(Buffer.from(descriptor.value)));
-              } catch (error) {
-                finish(
-                  new LongMessageResponseError(
-                    'protobuf',
-                    error instanceof LongMessageResponseError
-                      ? error.message
-                      : 'Invalid long-message protobuf response',
-                    true,
-                    'response-received',
-                  ),
-                );
-              }
-            },
-            () =>
-              finish(
-                new LongMessageResponseError(
-                  'native',
-                  'Native long-message response rejected',
-                  true,
-                ),
-              ),
-          )
-          .catch(() =>
-            finish(
-              new LongMessageResponseError(
-                'response',
-                'Native long-message response inspection failed',
-                true,
-                'response-received',
-              ),
-            ),
-          );
-      });
+        })
+        .catch((error: unknown) => {
+          if (error instanceof PacketTransportError) throw packetFailure(error);
+          throw error;
+        });
     },
-    close() {
-      if (closed) return;
-      closed = true;
-      for (const cancel of [...outstanding]) cancel();
-    },
+    close: () => packets.close(),
   };
 }
