@@ -1,0 +1,30 @@
+sdk/docs/linux-runtime.md
+  s_2104cc474f1ce5::t_28dcf632aee725 212-217,237-240
+  s_2104cc474f1ce5::t_6d9bd95f7a1828 197-211,218-236,241-260
+README.md
+  s_2104cc474f1ce5::t_ed546354b63848 5-6
+catalog-linux-legacy-bridge-v1.json
+  s_2104cc474f1ce5::t_cc7c78372790ec 1-93
+packages/3.2.31-51102-linux-arm64-bridge-v1/b8b08fecdaf4f4b6c57161c406835c7d4376de1331318d0281dec9a9f118c6d9/manifest.json
+  s_2104cc474f1ce5::t_9f960e855f2ae2 1-62
+packages/3.2.31-51102-linux-x64-bridge-v1/fb6808754d6922125123526a9ab44f28c545d81d169d3b069e8ad8f5c2ad7170/manifest.json
+  s_2104cc474f1ce5::t_db4efa70a25998 1-57
+sdk/docs/evidence/linux-installed-default-legacy-40c6fc2-local.json
+  s_2104cc474f1ce5::t_264e15d325a39e 1-630
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "2956797f062a362de750a2f35ba3a3af1ebf86e2",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
