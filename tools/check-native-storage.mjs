@@ -49,6 +49,8 @@ const sources = [
   'ci/verified-download.mjs',
   'ci/verified-download.test.mjs',
   'ci/bundle-video-codec.mjs',
+  'ci/linux-video-baseline.mjs',
+  'ci/linux-video-baseline.test.mjs',
   'tools/native-storage-inventory.test.mjs',
 ];
 const offlineTests = sources.filter((path) => path.endsWith('.test.mjs'));

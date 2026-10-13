@@ -64,28 +64,41 @@ jobs:
       - name: Verify actual target
         run: node -e "if(process.platform!=='${{ matrix.platform }}'||process.arch!=='${{ matrix.arch }}')throw Error('Wrong video build target')"
       - name: Prepare exact source
+        if: matrix.platform != 'linux'
         run: node sdk/scripts/prepare-video-source.mjs out/video
       - name: Build static libraries and standard Node addon
-        if: matrix.platform != 'win32'
+        if: matrix.platform == 'darwin'
         run: node sdk/scripts/build-video-native.mjs out/video
       - name: Build MSVC static libraries and standard Node addon
         if: matrix.platform == 'win32'
         shell: msys2 {0}
         run: node sdk/scripts/build-video-native.mjs out/video
+      - name: Build Linux codec in the pinned compatibility baseline
+        if: matrix.platform == 'linux'
+        run: node ci/linux-video-baseline.mjs build '${{ matrix.arch }}'
       - name: Compile SDK for the actual native media consumer
         working-directory: sdk
         run: |
           npm ci --ignore-scripts --no-audit --no-fund
           npm exec tsc
       - name: Actual video decoding and SDK cache contract without QQ
+        if: matrix.platform != 'linux'
         run: node sdk/scripts/verify-video-native.mjs out/video/runtime/video-codec.node sdk/test/video-fixtures out/video/runtime/consumer.json
       - name: Fresh relink with preserved objects and static libraries
+        if: matrix.platform != 'linux'
         run: node sdk/scripts/relink-video-native.mjs out/video/relink out/video/relink out/video/relinked/video-codec.node
       - name: Verify relinked decoder on both actual fixtures
+        if: matrix.platform != 'linux'
         run: node sdk/scripts/verify-video-native.mjs out/video/relinked/video-codec.node sdk/test/video-fixtures out/video/relink/consumer.json
+      - name: Verify and relink Linux codec in the same offline baseline
+        if: matrix.platform == 'linux'
+        run: |
+          node ci/linux-video-baseline.mjs verify '${{ matrix.arch }}'
+          node ci/linux-video-baseline.mjs relink '${{ matrix.arch }}'
+          node ci/linux-video-baseline.mjs verify-relinked '${{ matrix.arch }}'
       - name: Record complete dependency inventory
         if: matrix.platform == 'linux'
-        run: ldd out/video/runtime/video-codec.node > out/video/runtime/dependencies.txt
+        run: node ci/linux-video-baseline.mjs dependencies '${{ matrix.arch }}'
       - name: Record macOS dependency inventory
         if: matrix.platform == 'darwin'
         run: otool -L out/video/runtime/video-codec.node > out/video/runtime/dependencies.txt
