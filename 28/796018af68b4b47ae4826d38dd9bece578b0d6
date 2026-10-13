@@ -1,0 +1,44 @@
+sdk/test/helpers/dependency-policy.ts
+  s_2104cc474f1ce5::t_57684c65b9d21e 216-224
+sdk/src/native/native-contracts.ts
+  s_2104cc474f1ce5::t_cb604850059bfb 10,88-90
+  s_2104cc474f1ce5::t_3f5263905e919e 258-268
+sdk/test/packet-native-profile.test.ts
+  s_2104cc474f1ce5::t_3153cfa982889c 1-45
+  s_2104cc474f1ce5::t_160f26ce4855be 46-75
+sdk/docs/architecture.md
+  s_2104cc474f1ce5::t_d7eff035d319c0 136-141
+sdk/docs/packet-transport.md
+  s_2104cc474f1ce5::t_7c8b991c395c78 31-37,43-51
+  s_2104cc474f1ce5::t_d7eff035d319c0 1-30,38-42,52-74
+sdk/test/architecture/module-ownership.ts
+  s_2104cc474f1ce5::t_84a7f1defbd2c6 15,21,26,29
+  s_2104cc474f1ce5::t_4984485764e4ce 7-14,16-20,22-25
+  s_2104cc474f1ce5::t_7bdd8a4c06b4d1 27-28,30-32
+sdk/src/native-services.ts
+  s_2104cc474f1ce5::t_3f5263905e919e 32,436-443
+sdk/src/features/forward/forward-resource-transport.ts
+  s_2104cc474f1ce5::t_14a0c108eb55d9 1-5,25,62-110,112,119,121,123,125,131-134,138-157,159-163,165
+sdk/src/features/forward/long-message-response.ts
+  s_2104cc474f1ce5::t_a8b7587bc94ccf 1-5,115,120-169,173,198-199,203-206,210-227,230-234,236
+sdk/src/runtime/packet-transport.ts
+  s_2104cc474f1ce5::t_25a186c96ea684 1-170
+sdk/test/packet-transport.test.ts
+  s_2104cc474f1ce5::t_8890d4b2e60ad3 1-171
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "28796018af68b4b47ae4826d38dd9bece578b0d6",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
