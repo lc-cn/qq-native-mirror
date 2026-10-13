@@ -257,6 +257,32 @@ limits. Start there when changing a module or deciding where an interface belong
 cancellation, account retirement, transactional cleanup and error projection.
 These contracts also distinguish deterministic fixtures from native/account proof.
 
+## Registration bridge preflight
+
+The creation root owns registration bridge selection, without expanding the
+bundle preparer's interface. An explicit bridge is checked before native
+acquisition; Unix adjacent and package fallbacks are selected after bundle
+preparation but before account-directory creation or worker fork. Only an absent
+adjacent path permits fallback. Existing directories, dangling links or unreadable
+files reject, while relative explicit paths preserve the worker's data-directory
+base. Windows without an explicit bridge retains its existing internal-ABI path.
+
+These failures are ordinary preflight errors with their filesystem cause retained,
+not `KernelRequestError` responses from a worker that has not started. A readable
+regular file can still be an incompatible binary: actual loading and its
+transactional worker cleanup remain necessary.
+
+Source `7f4e528` passed the complete local gate (2348 SDK tests and 83 tool tests)
+and actual installed-package declarations and controlled workers. The same
+706,558-byte package then initialized 104 native exports and closed on macOS
+ARM64 / Node 24.19.0 / QQ 7.0.2-53644 using a copied verified cache, default public
+metadata and a new empty account directory. Its missing-bridge negative case
+performed zero metadata downloads and zero worker forks. The mapping probe found
+the wrapper and registration bridge, with no QQ application or Electron Framework
+images. This is initialization evidence; no login or business operation occurred.
+The change remains an independent local candidate, with main and its pending
+remote action unchanged. See the [bounded receipt](evidence/native-bridge-preflight-7f4e528-local.json).
+
 ## Quality gates
 
 [Quality gates and evidence](architecture/quality-gates.md) describes compiler,

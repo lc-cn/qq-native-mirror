@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 1,
+  "checkedAt": "2026-10-13T08:41:40.164Z",
+  "sourceCommit": "7f4e5285fb138e11e1f780701d5531d99445d856",
+  "baseCommit": "3f8cc4b6fb8903d5f5427aa94a4da3ee33ec95c0",
+  "mainBranchChanged": false,
+  "candidateLocalBranch": "codex/native-bridge-preflight",
+  "gate": {
+    "actualSession": 73114,
+    "consumedExitCode": 0,
+    "sdkTests": 2348,
+    "toolTests": 83,
+    "sourceModules": 141,
+    "compiledFiles": 282,
+    "packedFiles": 408,
+    "format": true,
+    "lint": true,
+    "strictTypes": true,
+    "installedConsumer": true
+  },
+  "archive": {
+    "sha256": "61419baa399382a4832e0f144811c13fa9b024385112007bdff32f2debe5e2f8",
+    "integrity": "sha512-MbySd6ktPemnNZr8Hxf6KxS6vniK6bFbMQQqloR5+9GgYsL//o06zc0N7QL8cJl8jzIgOSxWlSOuvOm2nigo7g==",
+    "bytes": 706558,
+    "packedFiles": 408,
+    "identicalToFullGatePackage": true
+  },
+  "runtime": {
+    "actualSession": 39162,
+    "consumedExitCode": 0,
+    "receipt": {
+      "sourceCommit": "7f4e528",
+      "platform": "darwin",
+      "arch": "arm64",
+      "node": "v24.19.0",
+      "installedMainOnly": true,
+      "reusedVerifiedNativeCache": true,
+      "copiedAccountData": false,
+      "wrapperProvided": false,
+      "versionProvided": false,
+      "loginInvoked": false,
+      "success": true,
+      "installedMissingBridgeRejectedBeforeFetchAndFork": true,
+      "mappingProbe": {
+        "wrapperImages": 5,
+        "bridgeImages": 4,
+        "qqApplicationImages": 0,
+        "electronImages": 0
+      },
+      "exportCount": 104,
+      "initialized": true,
+      "closed": true,
+      "metadataRequests": [
+        {
+          "url": "https://raw.githubusercontent.com/lc-cn/qq-native-mirror/main/catalog.json",
+          "status": 200,
+          "sha256": "ae486c9ffd96d12377f626377243baaa17b45a7afee9bfaa3134ce9fa73b9719"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/lc-cn/qq-native-mirror/main/packages/npm-0.0.2-ci-37962268125-attempt-1-darwin-arm64-codec-gzip-v1/667c80d0284ffcfc4e0c270a6a7b09bfbbdf34ebe2cd452dc8fe016e99c3fa56/manifest.json",
+          "status": 200,
+          "sha256": "667c80d0284ffcfc4e0c270a6a7b09bfbbdf34ebe2cd452dc8fe016e99c3fa56"
+        }
+      ]
+    },
+    "receiptSha256": "8d1f4aa4d707910497c677f20941a66cce5daf684ec6a2d2811de0c407f5ccff",
+    "driverSha256": "520fd4e33dd9273f27d8ed2f98ab99686e8c66cab262f2a7d95fb0afe7d7e498"
+  },
+  "limitations": [
+    "The factory checks file presence/type/read permission, not native ABI or protocol-signing authenticity.",
+    "Actual native execution was macOS ARM64/Node24.19.0/QQ7.0.2-53644 initialization and close only with a copied verified native cache and a new empty account directory.",
+    "Metadata came from the real public default catalog/manifest; no payload acquisition was allowed in this warm-cache run.",
+    "No account login, restore, business read, send or recall occurred.",
+    "No main merge, remote push, GitHub CI, candidate promotion or npm publication occurred.",
+    "Windows/macOS x64/Linux native acceptance of this changed factory remains separate; controlled consumers do not prove their native interoperability."
+  ]
+}
