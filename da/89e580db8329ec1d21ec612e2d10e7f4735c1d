@@ -1,0 +1,36 @@
+sdk/test/helpers/dependency-policy.ts
+  s_2104cc474f1ce5::t_265d7ce4f7ae18 216-222
+  s_2104cc474f1ce5::t_be6a975fb053fe 223-226
+sdk/docs/architecture/encapsulation.md
+  s_2104cc474f1ce5::t_f2f6412383d5a7 1184-1193
+sdk/src/storage/native-package-lock.ts
+  s_2104cc474f1ce5::t_14a690c9aadcb9 1,4-9,23,35,43-46,49-50
+sdk/src/runtime/cleanup.ts
+  s_2104cc474f1ce5::t_265d7ce4f7ae18 74-93
+sdk/src/storage/data-directory-lock.ts
+  s_2104cc474f1ce5::t_f615b88d5e637c 1,5-10,21,26-27,38,45,49-52
+sdk/src/storage/process-lock.ts
+  s_2104cc474f1ce5::t_d94f303d54ca69 1,74-91,101,110,114-126
+sdk/test/architecture/module-ownership.ts
+  s_2104cc474f1ce5::t_4631f42cb95fba 7-36
+sdk/test/lock-recovery-cleanup.test.ts
+  s_2104cc474f1ce5::t_77eb63e90ee044 1-64
+sdk/test/process-lock-read-cleanup.test.ts
+  s_2104cc474f1ce5::t_95807b028817d0 1-75
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "da89e580db8329ec1d21ec612e2d10e7f4735c1d",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
