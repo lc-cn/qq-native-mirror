@@ -1,3 +1,4 @@
+import { runWithCleanupSync } from '../runtime/cleanup.ts';
 import { randomUUID } from 'node:crypto';
 import {
   constants,
@@ -70,23 +71,24 @@ export function readProcessLock(path: string): string | undefined {
       if (!stat.isFile() || stat.size < 1 || stat.size > maxOwnerBytes)
         throw new Error('Invalid process lock file');
       const fd = openSync(path, constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0));
-      try {
-        const actual = fstatSync(fd);
-        if (
-          !actual.isFile() ||
-          actual.dev !== stat.dev ||
-          actual.ino !== stat.ino ||
-          actual.size !== stat.size
-        )
-          throw new Error('Process lock changed while reading');
-        const bytes = Buffer.alloc(maxOwnerBytes + 1);
-        const length = readSync(fd, bytes, 0, bytes.length, 0);
-        if (length !== stat.size || length > maxOwnerBytes)
-          throw new Error('Invalid process lock file');
-        owner = bytes.subarray(0, length).toString('utf8');
-      } finally {
-        closeSync(fd);
-      }
+      owner = runWithCleanupSync(
+        () => {
+          const actual = fstatSync(fd);
+          if (
+            !actual.isFile() ||
+            actual.dev !== stat.dev ||
+            actual.ino !== stat.ino ||
+            actual.size !== stat.size
+          )
+            throw new Error('Process lock changed while reading');
+          const bytes = Buffer.alloc(maxOwnerBytes + 1);
+          const length = readSync(fd, bytes, 0, bytes.length, 0);
+          if (length !== stat.size || length > maxOwnerBytes)
+            throw new Error('Invalid process lock file');
+          return bytes.subarray(0, length).toString('utf8');
+        },
+        () => closeSync(fd),
+      );
     }
     if (
       owner.length > maxOwnerBytes ||
@@ -96,7 +98,7 @@ export function readProcessLock(path: string): string | undefined {
       throw new Error('Invalid process lock owner');
     return owner;
   } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return;
+    if (processLockErrorCode(error) === 'ENOENT') return;
     throw error;
   }
 }
@@ -105,7 +107,20 @@ export function removeOwnedProcessLock(path: string, owner: string): void {
     try {
       unlinkSync(path);
     } catch (error) {
-      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+      if (processLockErrorCode(error) !== 'ENOENT') throw error;
     }
   }
+}
+
+/** Inspect only an owned data code; classification must not replace an opaque failure. */
+export function processLockErrorCode(error: unknown): unknown {
+  try {
+    if ((typeof error === 'object' && error !== null) || typeof error === 'function') {
+      const field = Object.getOwnPropertyDescriptor(error, 'code');
+      return field && 'value' in field ? field.value : undefined;
+    }
+  } catch {
+    // A Proxy can reject inspection. Callers still retain the original failure.
+  }
+  return undefined;
 }

@@ -71,3 +71,23 @@ export async function runWithCleanup<T>(
   if (!outcome.ok) throw outcome.error;
   return outcome.value;
 }
+
+/** Apply the same error ownership to resources with synchronous release.
+ * Lock reads and account recovery must complete cleanup before returning.
+ */
+export function runWithCleanupSync<T>(operation: () => T, cleanup: () => void): T {
+  let outcome: { ok: true; value: T } | { ok: false; error: unknown };
+  try {
+    outcome = { ok: true, value: operation() };
+  } catch (error) {
+    outcome = { ok: false, error };
+  }
+  try {
+    cleanup();
+  } catch (error) {
+    if (!outcome.ok) throw withCleanupFailure(outcome.error, error);
+    throw error;
+  }
+  if (!outcome.ok) throw outcome.error;
+  return outcome.value;
+}

@@ -213,6 +213,17 @@ export const crossFeatureDependencies = [
 ] as const;
 
 export function dependencyViolation({ from, to, typeOnly }: SourceDependency): string | undefined {
+  if (from === 'src/runtime/cleanup.ts')
+    return 'Cleanup policy is a pure primitive; it cannot acquire resources or compose runtime owners.';
+  if (
+    [
+      'src/storage/process-lock.ts',
+      'src/storage/data-directory-lock.ts',
+      'src/storage/native-package-lock.ts',
+    ].includes(from) &&
+    to === 'src/runtime/cleanup.ts'
+  )
+    return !typeOnly ? undefined : 'Lock owners use only the pure cleanup policy at runtime.';
   if (from === 'src/runtime/worker-task.ts' || to === 'src/runtime/worker-task.ts')
     return 'The retired worker-only task helper has no source permission.';
   if (from === 'src/runtime/background-task.ts')

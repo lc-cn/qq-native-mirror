@@ -1,6 +1,12 @@
+import { runWithCleanup } from '../runtime/cleanup.ts';
 import { randomUUID } from 'node:crypto';
 import { mkdir, rm } from 'node:fs/promises';
-import { publishProcessLock, readProcessLock, removeOwnedProcessLock } from './process-lock.ts';
+import {
+  publishProcessLock,
+  readProcessLock,
+  removeOwnedProcessLock,
+  processLockErrorCode,
+} from './process-lock.ts';
 
 // Bounded synchronous owner-file publication is shared with the account lock.
 export async function acquirePackageLock(target: string): Promise<() => Promise<void>> {
@@ -14,7 +20,7 @@ export async function acquirePackageLock(target: string): Promise<() => Promise<
         removeOwnedProcessLock(lock, owner);
       };
     } catch (error) {
-      if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error;
+      if (processLockErrorCode(error) !== 'EEXIST') throw error;
     }
     const existing = readProcessLock(lock);
     if (existing === undefined) continue;
@@ -26,7 +32,7 @@ export async function acquirePackageLock(target: string): Promise<() => Promise<
       try {
         process.kill(pid, 0);
       } catch (error) {
-        dead = (error as NodeJS.ErrnoException).code === 'ESRCH';
+        dead = processLockErrorCode(error) === 'ESRCH';
       }
     }
     if (dead) {
@@ -34,18 +40,14 @@ export async function acquirePackageLock(target: string): Promise<() => Promise<
       const claim = `${lock}.reap-${existing}`;
       try {
         await mkdir(claim);
-        try {
-          removeOwnedProcessLock(lock, existing);
-        } finally {
-          await rm(claim, { recursive: true, force: true });
-        }
+        await runWithCleanup(
+          () => removeOwnedProcessLock(lock, existing),
+          () => rm(claim, { recursive: true, force: true }),
+        );
         continue;
       } catch (error) {
-        if (
-          (error as NodeJS.ErrnoException).code !== 'EEXIST' &&
-          (error as NodeJS.ErrnoException).code !== 'ENOENT'
-        )
-          throw error;
+        const code = processLockErrorCode(error);
+        if (code !== 'EEXIST' && code !== 'ENOENT') throw error;
       }
     }
     if (Date.now() - started > 180_000)

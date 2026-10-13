@@ -1181,6 +1181,16 @@ primitive; an existing or replaced owner is preserved. Rollback failure remains
 part of the reported error. This ownership check is not a cross-process atomic
 compare-and-delete guarantee.
 
+Lock reads and stale-owner recovery reuse the pure cleanup policy, with synchronous
+release for file descriptors/account claims and asynchronous release for package
+claims. Cleanup begins only after the descriptor or claim was acquired. Both
+operation and release failures survive; a failed claim acquisition cannot remove
+another recovery owner's claim. `processLockErrorCode` owns the shared conservative
+classification of filesystem/PID failures, inspecting only an own data code and
+preserving opaque exceptions. Storage's exact dependency on `runtime/cleanup`
+grants no access to account/worker owners; the cleanup primitive itself cannot
+import source modules or acquire IO.
+
 `native/native-contracts` owns only the pure capability registry and matching.
 `native/native-contract-inspection` owns file hashing and actual host identity;
 only the Node bootstrap imports that acquisition module. Service composition

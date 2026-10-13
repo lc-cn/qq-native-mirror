@@ -1,7 +1,13 @@
+import { runWithCleanupSync } from '../runtime/cleanup.ts';
 import { randomUUID } from 'node:crypto';
 import { mkdirSync, rmdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { publishProcessLock, readProcessLock, removeOwnedProcessLock } from './process-lock.ts';
+import {
+  publishProcessLock,
+  readProcessLock,
+  removeOwnedProcessLock,
+  processLockErrorCode,
+} from './process-lock.ts';
 
 /** Process-owned lock; abrupt exit leaves a token that a later worker can reclaim. */
 export function lockDataDirectory(directory: string): () => void {
@@ -12,13 +18,13 @@ export function lockDataDirectory(directory: string): () => void {
       publishProcessLock(path, token);
       return () => removeOwnedProcessLock(path, token);
     } catch (error) {
-      if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error;
+      if (processLockErrorCode(error) !== 'EEXIST') throw error;
     }
     let owner: string | undefined;
     try {
       owner = readProcessLock(path);
-    } catch {
-      throw new Error('Invalid account directory lock');
+    } catch (error) {
+      throw new Error('Invalid account directory lock', { cause: error });
     }
     if (owner === undefined) continue;
     if (!/^\d+-[a-f0-9-]{36}$/.test(owner)) throw new Error('Invalid account directory lock owner');
@@ -29,22 +35,21 @@ export function lockDataDirectory(directory: string): () => void {
     try {
       process.kill(pid, 0);
     } catch (error) {
-      dead = (error as NodeJS.ErrnoException).code === 'ESRCH';
+      dead = processLockErrorCode(error) === 'ESRCH';
     }
     if (!dead) throw new Error('Account data directory is already in use by a live worker');
     const claim = `${path}.reap-${owner}`;
     try {
       mkdirSync(claim);
     } catch (error) {
-      if ((error as NodeJS.ErrnoException).code === 'EEXIST')
+      if (processLockErrorCode(error) === 'EEXIST')
         throw new Error('Account directory lock recovery is already in progress', { cause: error });
       throw error;
     }
-    try {
-      removeOwnedProcessLock(path, owner);
-    } finally {
-      rmdirSync(claim);
-    }
+    runWithCleanupSync(
+      () => removeOwnedProcessLock(path, owner),
+      () => rmdirSync(claim),
+    );
   }
   throw new Error('Account data directory lock changed concurrently');
 }

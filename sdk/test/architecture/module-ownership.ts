@@ -4,6 +4,36 @@ import test from 'node:test';
 import { dependencyViolation } from '../helpers/dependency-policy.ts';
 import { projectRoot, graph } from '../helpers/source-graph.ts';
 
+test('lock owners share only the pure cleanup primitive without acquiring runtime owners', () => {
+  for (const from of [
+    'src/storage/process-lock.ts',
+    'src/storage/data-directory-lock.ts',
+    'src/storage/native-package-lock.ts',
+  ]) {
+    assert.equal(
+      dependencyViolation({ from, to: 'src/runtime/cleanup.ts', typeOnly: false }),
+      undefined,
+    );
+    for (const to of ['src/runtime/client-lifecycle.ts', 'src/runtime/native-service-lifetime.ts'])
+      assert.ok(dependencyViolation({ from, to, typeOnly: false }));
+  }
+  for (const to of [
+    'src/errors.ts',
+    'src/storage/process-lock.ts',
+    'src/runtime/client-lifecycle.ts',
+    'node:fs',
+  ])
+    for (const typeOnly of [false, true])
+      assert.ok(dependencyViolation({ from: 'src/runtime/cleanup.ts', to, typeOnly }));
+  assert.ok(
+    dependencyViolation({
+      from: 'src/storage/unreviewed-lock.ts',
+      to: 'src/runtime/cleanup.ts',
+      typeOnly: false,
+    }),
+  );
+});
+
 test('category input callers cannot acquire query projection or mutation execution', () => {
   const input = 'src/features/contacts/friend-category-input.ts';
   const projection = 'src/features/contacts/friend-categories.ts';
