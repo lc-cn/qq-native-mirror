@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { mkdtemp, writeFile, rm } from 'node:fs/promises';
+import { mkdtemp, writeFile, rm, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createHash } from 'node:crypto';
@@ -166,3 +166,77 @@ test('candidate validates byte trust root and complete device/version/inventory'
       /digest mismatch/,
     );
   }));
+
+// Read the actual pinned inventory, not synthetic manifests or live endpoints.
+const repository = new URL('../', import.meta.url);
+async function sourceManifest(row) {
+  const url = new URL(row.manifestUrl);
+  assert.equal(url.origin, 'https://raw.githubusercontent.com');
+  assert.ok(url.pathname.startsWith('/lc-cn/qq-native-mirror/main/packages/'));
+  const path = url.pathname.slice('/lc-cn/qq-native-mirror/main/'.length);
+  const bytes = await readFile(new URL(path, repository));
+  assert.equal(sha(bytes), row.manifestSha256);
+  return JSON.parse(bytes.toString('utf8'));
+}
+
+test('every default catalog target includes its matching-device registration bridge', async () => {
+  const catalog = JSON.parse(await readFile(new URL('catalog.json', repository), 'utf8'));
+  const reviewed = JSON.parse(
+    await readFile(new URL('catalog-linux-legacy-bridge-v1.json', repository), 'utf8'),
+  );
+  // Only the repaired legacy rows are tied to this reviewed candidate.
+  const legacyRows = catalog.packages.filter(
+    (row) => row.platform === 'linux' && row.version.clientVersion === old,
+  );
+  assert.deepEqual(legacyRows.map((row) => row.arch).sort(), ['arm64', 'x64']);
+  for (const row of legacyRows) {
+    const candidate = reviewed.packages.find(
+      (value) =>
+        value.platform === 'linux' &&
+        value.arch === row.arch &&
+        value.version.clientVersion === old,
+    );
+    assert.deepEqual(row, candidate);
+  }
+  for (const row of catalog.packages) {
+    const manifest = await sourceManifest(row);
+    assert.equal(manifest.platform, row.platform);
+    assert.equal(manifest.arch, row.arch);
+    assert.deepEqual(manifest.version, row.version);
+    const bridge = row.platform === 'win32' ? 'QQNT.dll' : 'registration-bridge.node';
+    const file = manifest.files.find((value) => value.path === bridge);
+    assert.ok(file, `${row.platform}/${row.arch}/${row.version.clientVersion} lacks ${bridge}`);
+    assert.match(file.sha256, /^[a-f0-9]{64}$/);
+    assert.ok(Number.isSafeInteger(file.size) && file.size > 0);
+  }
+});
+
+test('legacy default manifests add only a bridge while retaining the original native inventory and version', async () => {
+  const catalog = JSON.parse(await readFile(new URL('catalog.json', repository), 'utf8'));
+  const originalPaths = {
+    arm64:
+      'packages/3.2.31-51102-linux-arm64/25e3e4fbf046d7acb45f2569f2f4e2c5b374142f0575d52d5c962fdbc8c718fa/manifest.json',
+    x64: 'packages/3.2.31-51102-linux-x64/7f13f72b7cb5b86583cbf97f08bd3e61ba2b6b288250720d9db393e634bb62eb/manifest.json',
+  };
+  for (const [arch, path] of Object.entries(originalPaths)) {
+    const originalBytes = await readFile(new URL(path, repository));
+    assert.equal(sha(originalBytes), path.split('/')[2]);
+    const original = JSON.parse(originalBytes.toString('utf8'));
+    const row = catalog.packages.find(
+      (value) =>
+        value.platform === 'linux' && value.arch === arch && value.version.clientVersion === old,
+    );
+    assert.ok(row);
+    const selected = await sourceManifest(row);
+    const bridge = selected.files.filter((file) => file.path === 'registration-bridge.node');
+    assert.equal(bridge.length, 1);
+    assert.deepEqual(
+      selected.files.filter((file) => file.path !== 'registration-bridge.node'),
+      original.files,
+    );
+    assert.deepEqual(selected.version, original.version);
+    assert.equal(selected.wrapper, original.wrapper);
+    assert.equal(selected.platform, original.platform);
+    assert.equal(selected.arch, original.arch);
+  }
+});

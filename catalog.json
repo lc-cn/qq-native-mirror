@@ -9,8 +9,8 @@
         "appId": "537376498",
         "qua": "V1_LNX_3.2.31-51102_51102_GW_B"
       },
-      "manifestUrl": "https://raw.githubusercontent.com/lc-cn/qq-native-mirror/main/packages/3.2.31-51102-linux-arm64/25e3e4fbf046d7acb45f2569f2f4e2c5b374142f0575d52d5c962fdbc8c718fa/manifest.json",
-      "manifestSha256": "25e3e4fbf046d7acb45f2569f2f4e2c5b374142f0575d52d5c962fdbc8c718fa"
+      "manifestUrl": "https://raw.githubusercontent.com/lc-cn/qq-native-mirror/main/packages/3.2.31-51102-linux-arm64-bridge-v1/b8b08fecdaf4f4b6c57161c406835c7d4376de1331318d0281dec9a9f118c6d9/manifest.json",
+      "manifestSha256": "b8b08fecdaf4f4b6c57161c406835c7d4376de1331318d0281dec9a9f118c6d9"
     },
     {
       "platform": "linux",
@@ -20,8 +20,8 @@
         "appId": "537376497",
         "qua": "V1_LNX_3.2.31-51102_51102_GW_B"
       },
-      "manifestUrl": "https://raw.githubusercontent.com/lc-cn/qq-native-mirror/main/packages/3.2.31-51102-linux-x64/7f13f72b7cb5b86583cbf97f08bd3e61ba2b6b288250720d9db393e634bb62eb/manifest.json",
-      "manifestSha256": "7f13f72b7cb5b86583cbf97f08bd3e61ba2b6b288250720d9db393e634bb62eb"
+      "manifestUrl": "https://raw.githubusercontent.com/lc-cn/qq-native-mirror/main/packages/3.2.31-51102-linux-x64-bridge-v1/fb6808754d6922125123526a9ab44f28c545d81d169d3b069e8ad8f5c2ad7170/manifest.json",
+      "manifestSha256": "fb6808754d6922125123526a9ab44f28c545d81d169d3b069e8ad8f5c2ad7170"
     },
     {
       "platform": "darwin",
