@@ -1,0 +1,23 @@
+sdk/README.md
+  s_2104cc474f1ce5::t_0b8adb6b9efb61 28-32
+sdk/docs/evidence/linux-elf-runtime-floors.json
+  s_2104cc474f1ce5::t_2b7b65631b0ea8 1-1562
+sdk/docs/linux-runtime.md
+  s_2104cc474f1ce5::t_a49d60558a3877 24-41
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ac549f7cfb9a55c45f3b5f90b57f96097cb992ca",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
