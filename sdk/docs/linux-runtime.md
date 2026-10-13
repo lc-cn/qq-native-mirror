@@ -317,3 +317,52 @@ and close evidence, with no account login, restoration, messages, business queri
 or signing authenticity claim. The SDK's 141 source modules are unchanged from
 `33e3c94`; the prior full SDK gate is separate from this new tooling and native
 runtime evidence. See the [bounded receipt](evidence/shared-main-version-ci-31e5759-local.json).
+
+## Legacy default bridge correction prepublication (2026-10-13)
+
+Candidate `6baeff570fd13d85753cd368264d408c128ab53d` changes only the two
+Linux 3.2.31 default catalog rows' manifest URLs and hashes. The selected manifests
+retain every original vendor file and add the corresponding registration bridge.
+Version identities, catalog ordering, other devices and latest selection remain
+unchanged. The original manifests remain available at their immutable paths.
+New regressions verify all eight default target manifests' device, version, byte
+hash and required loading adapter, plus preservation of the legacy inventory.
+The tool gate passed 85 tests, formatting, lint and strict tooling types.
+
+Both corrected manifests and compressed bridge payloads were freshly acquired
+from their public URLs. Manifest, compressed and restored hashes and restored sizes
+matched; ELF machine types were ARM64 (183) and x64 (62). This verifies byte
+identity and architecture, without establishing vendor signing authenticity.
+
+The checked-in producer built and sealed one 710,523-byte main archive from this
+exact commit. All four checked-in Linux drivers installed those same bytes:
+
+| Selection                                 | Linux architecture | Verified native paths | Native exports | Cold payload HTTP fetches | Warm payload HTTP fetches |
+| ----------------------------------------- | ------------------ | --------------------: | -------------: | ------------------------: | ------------------------: |
+| Prospective legacy content 3.2.31-51102   | ARM64              |                     9 |             92 |                        18 |                         0 |
+| Prospective legacy content 3.2.31-51102   | Emulated x64       |                     8 |             92 |                        16 |                         0 |
+| Actual public default latest 3.2.32-52194 | ARM64              |                    20 |             98 |                        40 |                         0 |
+| Actual public default latest 3.2.32-52194 | Emulated x64       |                    19 |             98 |                        38 |                         0 |
+
+Each row initialized and closed twice in independent empty account directories,
+with every cached file hash and modification time unchanged on the second pass.
+Native payload HTTP counts include redirect legs. Execution used Node 24.21.0 and
+Debian 13/glibc in OrbStack; x64 was emulated on the ARM64 host. Latest-version rows
+used the real public default catalog with no version, wrapper or catalog option.
+Legacy rows used the existing separately named candidate route; their exact
+selection matches the proposed default entries, but the unpublished default
+catalog path is not certified by those local runs.
+
+The archive SHA-256 is
+`78953d4efeb64cb4532e7bba9383fa68aaf03f4a46b1a78b145f021e7498fa03`;
+its independent source declaration seal is
+`656226771f529a44d4d970f7293e02cce9a2c17b5babfd97bd484d964189d1f7`.
+The SDK source, configuration, tests and scripts are byte-identical to `17240b6`,
+whose fresh full gate passed 2356 SDK tests. That source gate remains separate;
+only the changed tooling gate and native Linux consumers were rerun here.
+
+This is local synthetic provenance, not a GitHub workflow run. No remote catalog
+promotion, npm publication, account login, restoration, messaging or business query
+occurred. Public legacy-default and all six native-platform CI checks remain
+required after authorization and publication. See the
+[bounded receipt](evidence/legacy-default-bridge-6baeff5-local.json).
