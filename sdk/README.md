@@ -167,6 +167,15 @@ See [multi-version mirror design](docs/multi-version-and-mirror.md) for selectio
 and complete-bundle fallback. GitHub Actions builds platform packages; push builds
 do not publish npm. See [first/trusted publishing](docs/npm-first-publish.md).
 
+In the working source, an explicit `bridgePath` must be a nonempty path to a
+readable regular file. Relative bridge paths retain the worker's `dataDir` base.
+On macOS and Linux, the default selects the adjacent registration bridge first,
+then the package's platform bridge if the adjacent path is absent. An existing
+invalid adjacent path rejects rather than silently selecting another bridge.
+Bridge file validation happens before worker creation; explicit bridge validation
+also precedes native acquisition. This file check does not certify native ABI
+compatibility or replace manifest integrity verification.
+
 ## Evidence and remaining work
 
 Six-platform prepare/close and controlled consumers have evidence; full account

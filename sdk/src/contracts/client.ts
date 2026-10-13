@@ -14,6 +14,7 @@ export interface ClientOptions {
   cacheDir?: string;
   /** Required trusted digest when fetching a manifest from a mirror. */
   manifestSha256?: string;
+  /** Explicit readable registration bridge. Relative paths use dataDir as their base. */
   bridgePath?: string;
   /** Libraries loaded globally before the QQ wrapper. Linux defaults to libgnutls.so.30. */
   preloadLibraries?: string[];

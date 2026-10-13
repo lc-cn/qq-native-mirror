@@ -129,6 +129,15 @@ export async function verifyClientFactoryConsumer(installedRoot, { source = fals
     const adjacent = join(dirname(wrapper), 'registration-bridge.node');
     const explicit = join(directory, 'explicit-bridge.node');
     await writeFile(explicit, 'synthetic bridge');
+    const unixBridge = ['darwin', 'linux'].includes(process.platform);
+    const fallback = join(
+      packageRoot,
+      `native/${process.platform}-${process.arch}/registration-bridge.node`,
+    );
+    if (unixBridge) {
+      await mkdir(dirname(fallback), { recursive: true });
+      await writeFile(fallback, 'synthetic regular fallback bridge');
+    }
     const fixtures = [
       {
         expected: ['darwin', 'linux'].includes(process.platform)
@@ -192,6 +201,65 @@ export async function verifyClientFactoryConsumer(installedRoot, { source = fals
         syncBuiltinESMExports();
       }
     }
+    // The actual factory must reject selected invalid bridges before fork; it may
+    // not silently fall back from an explicitly selected or existing adjacent path.
+    const rejectedDirectory = join(directory, 'directory-bridge.node');
+    await mkdir(rejectedDirectory);
+    const missingBridge = join(directory, 'missing-bridge.node');
+    const startsBeforeInvalid = calls.length;
+    for (const bridgePath of ['', '   ', 'invalid\0bridge', missingBridge, rejectedDirectory]) {
+      await assert.rejects(
+        createClient({
+          wrapperPath: wrapper,
+          version: { clientVersion: 'fixture', appId: '1', qua: 'fixture' },
+          bridgePath,
+          preloadLibraries: [],
+          dataDir: join(directory, 'invalid-bridge-account'),
+          autoReconnect: false,
+        }),
+        /bridgePath|registration bridge/,
+      );
+      assert.equal(calls.length, startsBeforeInvalid);
+    }
+    if (unixBridge) {
+      await rm(adjacent, { force: true });
+      await mkdir(adjacent);
+      await assert.rejects(
+        createClient({
+          wrapperPath: wrapper,
+          version: { clientVersion: 'fixture', appId: '1', qua: 'fixture' },
+          preloadLibraries: [],
+          dataDir: join(directory, 'adjacent-directory-account'),
+        }),
+        /registration bridge/,
+      );
+      assert.equal(calls.length, startsBeforeInvalid);
+      await rm(adjacent, { recursive: true });
+      await rm(fallback);
+      await assert.rejects(
+        createClient({
+          wrapperPath: wrapper,
+          version: { clientVersion: 'fixture', appId: '1', qua: 'fixture' },
+          preloadLibraries: [],
+          dataDir: join(directory, 'fallback-missing-account'),
+        }),
+        /registration bridge/,
+      );
+      assert.equal(calls.length, startsBeforeInvalid);
+      await mkdir(fallback);
+      await assert.rejects(
+        createClient({
+          wrapperPath: wrapper,
+          version: { clientVersion: 'fixture', appId: '1', qua: 'fixture' },
+          preloadLibraries: [],
+          dataDir: join(directory, 'fallback-directory-account'),
+        }),
+        /registration bridge/,
+      );
+      assert.equal(calls.length, startsBeforeInvalid);
+      await rm(fallback, { recursive: true });
+      await writeFile(fallback, 'synthetic regular fallback bridge');
+    }
     await verifyConfiguredLoginLifecycle(createClient, directory, explicit);
     const sourceSelectionChecks = await verifyNativeSourceSelection(
       createClient,
@@ -205,6 +273,8 @@ export async function verifyClientFactoryConsumer(installedRoot, { source = fals
       clientFactoryNativeExportsSnapshotContract: true,
       workerUrlExecuted: true,
       bridgePrecedenceContract: true,
+      registrationBridgePreflightContract: true,
+      registrationBridgeFixtureNativeExecuted: false,
       forkEnvironmentContract: true,
       rootClassIdentityContract: true,
       nativeExecuted: false,
