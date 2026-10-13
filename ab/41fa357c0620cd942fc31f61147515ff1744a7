@@ -1,0 +1,23 @@
+README.md
+  s_2104cc474f1ce5::t_a3d2fa193f3c43 3,5,9
+sdk/docs/evidence/legacy-default-bridge-6baeff5-local.json
+  s_2104cc474f1ce5::t_daa4a51125403e 1-227
+sdk/docs/linux-runtime.md
+  s_2104cc474f1ce5::t_7807e18f873838 320-368
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ab41fa357c0620cd942fc31f61147515ff1744a7",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
