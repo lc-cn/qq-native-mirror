@@ -1,0 +1,100 @@
+{
+  "schemaVersion": 1,
+  "checkedAt": "2026-10-13T09:26:07.481988+00:00",
+  "sourceCommit": "17240b6f21bc6fa9cd6a4829079fc063be02ee89",
+  "baseCommit": "3f8cc4b6fb8903d5f5427aa94a4da3ee33ec95c0",
+  "localCandidateOnly": true,
+  "gate": {
+    "actualSession": 80435,
+    "consumedExitCode": 0,
+    "startedWithoutDist": true,
+    "sdkTests": 2356,
+    "toolTests": 83,
+    "format": true,
+    "lint": true,
+    "strictTypes": true,
+    "build": true,
+    "installedConsumer": true
+  },
+  "archive": {
+    "sourceCommit": "17240b6f21bc6fa9cd6a4829079fc063be02ee89",
+    "fullGateSession": 80435,
+    "sha256": "83c3fd3405636887bf1c77cfbd0619e2485fb66069eabe9de0ea81f260a4d0e7",
+    "size": 708528,
+    "integrity": "sha512-atksg2Ce6IREGTU7h2R6RHU0qowYtlVnMYKbJUDvr/6JmFpJxioH73eMNjmToy3Iu8flSHM7HJbFfgeh4eEcFQ==",
+    "fileCount": 409
+  },
+  "runtime": {
+    "actualSession": 35683,
+    "consumedExitCode": 0,
+    "receipt": {
+      "sourceCommit": "17240b6f21bc6fa9cd6a4829079fc063be02ee89",
+      "platform": "darwin",
+      "arch": "arm64",
+      "node": "v24.19.0",
+      "installedMainOnly": true,
+      "reusedVerifiedNativeCache": true,
+      "copiedAccountData": false,
+      "wrapperProvided": false,
+      "versionProvided": false,
+      "loginInvoked": false,
+      "success": true,
+      "installedExitedWorkerClose": true,
+      "installedMissingBridgeRejectedBeforeFetchAndFork": true,
+      "mappingProbe": {
+        "wrapperImages": 5,
+        "bridgeImages": 4,
+        "qqApplicationImages": 0,
+        "electronImages": 0
+      },
+      "exportCount": 104,
+      "initialized": true,
+      "closed": true,
+      "metadataRequests": [
+        {
+          "url": "https://raw.githubusercontent.com/lc-cn/qq-native-mirror/main/catalog.json",
+          "status": 200,
+          "sha256": "ae486c9ffd96d12377f626377243baaa17b45a7afee9bfaa3134ce9fa73b9719"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/lc-cn/qq-native-mirror/main/packages/npm-0.0.2-ci-37962268125-attempt-1-darwin-arm64-codec-gzip-v1/667c80d0284ffcfc4e0c270a6a7b09bfbbdf34ebe2cd452dc8fe016e99c3fa56/manifest.json",
+          "status": 200,
+          "sha256": "667c80d0284ffcfc4e0c270a6a7b09bfbbdf34ebe2cd452dc8fe016e99c3fa56"
+        }
+      ]
+    },
+    "receiptSha256": "cdfc2bed0a7562741f597dc27e54c734371ceed3036a9a6b0ca2cd7d4d3c48ee",
+    "driverSha256": "6e381c3e92ed77f0f9a0a447a5c9582fc241e90fa21623bdf47e21a303c8c3f1"
+  },
+  "remoteBaseline": {
+    "sourceCommit": "3f8cc4b6fb8903d5f5427aa94a4da3ee33ec95c0",
+    "pushed": true,
+    "sdkQuality": {
+      "run": 38371615003,
+      "conclusion": "failure",
+      "cause": "Fresh noEmit projects could not resolve the public self import without dist."
+    },
+    "nativePackages": {
+      "run": 38371615604,
+      "conclusion": "failure",
+      "cause": "All six SDK consumer jobs rejected close of a pre-exited synthetic worker before final native initialization.",
+      "videoPlatformJobsPassed": 6,
+      "videoMaterialsPrerelease": true,
+      "npmPublished": false
+    },
+    "linuxVersions": {
+      "run": 38371824243,
+      "conclusion": "failure",
+      "passedRows": 5,
+      "totalRows": 6,
+      "cause": "The public default old ARM64 manifest lacks a registration bridge; candidate success does not replace public default admission."
+    }
+  },
+  "limitations": [
+    "Local repairs have not been pushed or accepted by GitHub CI.",
+    "The old Linux ARM64 public manifest bridge gap remains unresolved.",
+    "Actual native execution here is macOS ARM64 initialization and close only; no account operation or native payload download.",
+    "The earlier 7f4e528 complete check had existing dist; only this gate is fresh-dist evidence.",
+    "Protocol signature authenticity is not established."
+  ]
+}

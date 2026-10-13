@@ -280,8 +280,37 @@ metadata and a new empty account directory. Its missing-bridge negative case
 performed zero metadata downloads and zero worker forks. The mapping probe found
 the wrapper and registration bridge, with no QQ application or Electron Framework
 images. This is initialization evidence; no login or business operation occurred.
-The change remains an independent local candidate, with main and its pending
-remote action unchanged. See the [bounded receipt](evidence/native-bridge-preflight-7f4e528-local.json).
+At that earlier snapshot the change was an independent local candidate and
+main had not yet been pushed. That gate started with existing compiled files;
+the fresh-checkout evidence below supersedes its build-order scope. See the [bounded receipt](evidence/native-bridge-preflight-7f4e528-local.json).
+
+## Fresh consumer and exited-worker repairs
+
+Both noEmit tooling projects resolve the public self import to the source entry,
+so examples retain their normal `qq-native-client` import before a build exists.
+Production and installed declaration checks keep their independent module lookup.
+The test pre-hook compiles the actual production entry after consumer-role checks;
+full native build and installed-package checks still run afterwards.
+
+Close skips its IPC request only when the worker already has an exit code or a
+termination signal. It retains account retirement, pending-request rejection and
+termination cleanup. A disconnected worker without confirmed exit still rejects
+and follows the existing termination policy. Concurrent callers share the close
+promise in both cases.
+
+Candidate `17240b6` passed a complete check starting without `dist`: 2356 SDK tests,
+83 tool tests, formatting, lint, strict types, build and installed consumers.
+The exact 708,528-byte package initialized 104 native exports and closed on macOS
+ARM64 in a new empty account directory, without login. Its installed public client
+also closed the same pre-exited worker fixture that exposed the CI failure.
+See the [bounded receipt](evidence/fresh-consumer-close-17240b6-local.json).
+
+The approved main commit `3f8cc4b` was pushed. Its three GitHub workflows completed
+with failure: fresh self-import resolution in SDK quality, pre-exited worker close
+in all six native-package consumers, and a missing bridge in the old public Linux
+ARM64 version row. All six video builds and the materials prerelease succeeded.
+The local repairs have not been pushed or accepted by those workflows, and the
+old public manifest still requires a separate bridge correction and validation.
 
 ## Quality gates
 
