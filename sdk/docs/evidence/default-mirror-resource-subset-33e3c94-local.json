@@ -1,0 +1,133 @@
+{
+  "schemaVersion": 1,
+  "sdkSourceCommit": "33e3c944c5f60ee3c368262cf6b2ff77bb49f0bb",
+  "sdkVersion": "0.0.2",
+  "platform": "darwin",
+  "arch": "arm64",
+  "node": "v24.19.0",
+  "mainArchive": {
+    "sha256": "bd2608dd997430630da8e52951c0c96e0e17061779383c933dd1a6c3af60cc5c",
+    "bytes": 691990,
+    "installedFilesVerified": 405,
+    "sourceGitObjectsVerified": 141,
+    "compiledFilesVerified": 282,
+    "optionalNativePackagesInstalled": false
+  },
+  "defaultMirrorConsumer": {
+    "runtime": {
+      "sourceCommit": "33e3c944c5f60ee3c368262cf6b2ff77bb49f0bb",
+      "platform": "darwin",
+      "arch": "arm64",
+      "node": "v24.19.0",
+      "executable": "node",
+      "electronVersionPresent": false,
+      "wrapperProvided": false,
+      "versionProvided": false,
+      "nativeCacheInitiallyEmpty": true,
+      "loginOptionProvided": false,
+      "loginInvoked": false,
+      "accountPresent": false,
+      "initialized": true,
+      "closed": true,
+      "exportCount": 104,
+      "initialState": "idle",
+      "workerProcessCount": 1,
+      "mappingProbe": {
+        "complete": true,
+        "qqApplicationImages": 0,
+        "electronImages": 0,
+        "wrapperImages": 5,
+        "bridgeImages": 4
+      },
+      "elapsedMs": 140195
+    },
+    "publicMetadataObservedAt": "2026-10-13T05:20:42.135Z",
+    "catalogUrl": "https://raw.githubusercontent.com/lc-cn/qq-native-mirror/main/catalog.json",
+    "catalogSha256": "ae486c9ffd96d12377f626377243baaa17b45a7afee9bfaa3134ce9fa73b9719",
+    "selected": {
+      "platform": "darwin",
+      "arch": "arm64",
+      "version": {
+        "clientVersion": "7.0.2-53644",
+        "appId": "537391652",
+        "qua": "V1_MAC_7.0.2-53644_53644_GW_B"
+      },
+      "manifestUrl": "https://raw.githubusercontent.com/lc-cn/qq-native-mirror/main/packages/npm-0.0.2-ci-37962268125-attempt-1-darwin-arm64-codec-gzip-v1/667c80d0284ffcfc4e0c270a6a7b09bfbbdf34ebe2cd452dc8fe016e99c3fa56/manifest.json",
+      "manifestSha256": "667c80d0284ffcfc4e0c270a6a7b09bfbbdf34ebe2cd452dc8fe016e99c3fa56"
+    },
+    "runtimeFilesVerified": 1168,
+    "uniqueContents": 321,
+    "logicalRuntimeBytes": 141401883,
+    "uniqueRuntimeBytes": 128933876,
+    "driverSha256": "a775add5a45a14b058dc94c723fe192ce2ee3b7788ec46360247d59211f6246d",
+    "receiptSha256": "497842d5218b4317fec50f2e9b54c3d0f4557906f59849c7040d718f47cbe10b",
+    "actualSession": 96481,
+    "consumedExitCode": 0,
+    "metadataSession": 3994,
+    "metadataExitCode": 0,
+    "mirrorAttemptSequenceRecorded": false,
+    "mappingRawOutputRetained": false
+  },
+  "resourceSubsetConsumer": {
+    "runtime": {
+      "sourceCommit": "33e3c944c5f60ee3c368262cf6b2ff77bb49f0bb",
+      "platform": "darwin",
+      "arch": "arm64",
+      "node": "v24.19.0",
+      "executable": "node",
+      "electronVersionPresent": false,
+      "wrapperProvided": true,
+      "versionProvided": false,
+      "loginInvoked": false,
+      "initialized": true,
+      "closed": true,
+      "manifestSha256": "79b2b3892c5dc4b840980bc4b5e60365649a9b6f363a09e21be334d26c7a07fb",
+      "nativePaths": 58,
+      "initialState": "idle",
+      "accountPresent": false,
+      "exportCount": 104,
+      "mappingProbe": {
+        "complete": true,
+        "qqApplicationImages": 0,
+        "electronImages": 0,
+        "candidateWrapperImages": 5,
+        "fullFallbackImages": 0
+      },
+      "elapsedMs": 7901
+    },
+    "profileId": "darwin-arm64-resources-codec-v2",
+    "profileSha256": "d07c1e30fabbdf97c3335d96a4aeac45f399103617482c40dba066fdeaa592a9",
+    "manifestSha256": "79b2b3892c5dc4b840980bc4b5e60365649a9b6f363a09e21be334d26c7a07fb",
+    "runtimePathsVerified": 58,
+    "uniqueContents": 33,
+    "logicalRuntimeBytes": 139730364,
+    "uniqueRuntimeBytes": 128458994,
+    "uniqueBytesSaved": 474882,
+    "driverSha256": "f7ea5f6c1e25db28de3e3cdc9fc7c46af42942fecaaffe41d9ed8a0f5c54c2dc",
+    "receiptSha256": "9983ae7e54adbb6389368fb2b6f8459f993a4cd0e1facd641a36a2234a57831c",
+    "actualSession": 30122,
+    "consumedExitCode": 0,
+    "completeFallbackRetained": true,
+    "defaultsChanged": false,
+    "published": false,
+    "mappingRawOutputRetained": false
+  },
+  "scope": {
+    "actualNativeInitialization": true,
+    "actualAccountOperation": false,
+    "loginOrRestore": false,
+    "businessMessageOrQuery": false,
+    "newVideoDecode": false,
+    "publicNpmInstall": false,
+    "sixPlatformRuntimeEstablished": false,
+    "signingAuthenticityEstablished": false,
+    "remoteMutation": false
+  },
+  "limitations": [
+    "Metadata was read back after the cold runtime. Its SHA names the installed cache and all cache bytes matched; the original download URL/fallback sequence was not recorded.",
+    "The received package audit originally reviewed an earlier driver; executed-driver.mjs has its own frozen SHA and a separate final runtime review.",
+    "The 58-file subset uses an explicit local wrapper with version read from its manifest. It is not the default-latest public catalog selection.",
+    "Resource subset acceptance is initialization and close only. Historical account/media attempts do not establish current-source login, restore, reply or other business acceptance.",
+    "Mapping counters came from vmmap during the run; original vmmap output was not retained."
+  ]
+}

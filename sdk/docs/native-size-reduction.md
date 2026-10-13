@@ -319,3 +319,48 @@ This is pinned local installation evidence, with no login, account restore or QQ
 business operation; the other five platforms still require actual CI consumers.
 The [local evidence](evidence/object-ci-distribution-09fe46d-local.json) records the
 six archive identities and the separate one-host runtime result.
+
+## Current SDK cold default mirror and resource subset (2026-10-13)
+
+[Installed-consumer evidence](evidence/default-mirror-resource-subset-33e3c94-local.json)
+binds SDK source `33e3c94` to the actual 0.0.2 main archive. Its 405 installed
+files, 282 compiled files and 141 source Git objects were independently checked.
+The separate consumer omitted optional native packages and supplied no wrapper,
+version, manifest or catalog override. It used an empty native cache and a new
+account directory, with `https://gh-proxy.com/` configured as a download accelerator.
+
+On ordinary Node 24.19.0 / macOS arm64, the client initialized 104 native exports
+in `idle` and closed normally in approximately 140 seconds. The public catalog
+and manifest were read back after the run: default selection was QQ
+`7.0.2-53644`, manifest SHA-256 `667c80d0284ffcfc4e0c270a6a7b09bfbbdf34ebe2cd452dc8fe016e99c3fa56`.
+That digest names the installed cache directory, and all 1,168 cached runtime
+paths matched the manifest. The original mirror/origin attempt sequence was not
+recorded, so this result does not identify which server supplied each payload.
+
+A separate local subset retained the 58 paths from the existing
+`darwin-arm64-resources-codec-v2` profile, including all 11 video paths. Every
+retained byte matched the downloaded complete source. Through the same installed
+SDK, an explicit local wrapper with version discovered from its manifest prepared
+104 exports and closed in approximately eight seconds. It used another new
+account directory. The complete cache was retained, and the subset did not change
+the public catalog or installed package.
+
+| Inventory             | Complete default | Local resource subset |
+| --------------------- | ---------------: | --------------------: |
+| Runtime paths         |            1,168 |                    58 |
+| Unique contents       |              321 |                    33 |
+| Unique runtime bytes  |      128,933,876 |           128,458,994 |
+| Logical runtime bytes |      141,401,883 |           139,730,364 |
+
+The subset saves 1,110 paths and 288 unique contents, but only 474,882 unique
+runtime bytes. This is primarily a file-count reduction, not a substantial byte
+reduction. Transfer bytes were not measured for this subset.
+
+During both runs, the worker's `vmmap` output showed no QQ.app or Electron
+Framework image mappings. The subset worker also showed no mappings from the
+complete cache, and did map its own wrapper. Only mapping counts were retained.
+Neither consumer called login, restore, message operations or business queries;
+no new video decoding was performed. These results establish one-device native
+initialization and close. They do not establish current-source account/business
+compatibility, six-platform runtime acceptance, vendor signing authenticity or
+public npm installation. The resource subset remains an unpublished candidate.
