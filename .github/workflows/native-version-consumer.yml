@@ -12,20 +12,53 @@ on:
         required: true
 permissions:
   contents: read
+env:
+  SDK_SOURCE_MODE: ${{ inputs.sdk-source }}
 jobs:
+  prepare-main:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+      main_source_sha256: ${{ steps.seal.outputs.main_source_sha256 }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.20.0'
+      - id: matrix
+        run: node version-ci/matrix.mjs >> "$GITHUB_OUTPUT"
+      - name: Acquire verified corrected main only
+        if: inputs.sdk-source == 'published-baseline'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node version-ci/acquire-main.mjs
+      - name: Install current SDK build dependencies
+        if: inputs.sdk-source == 'current-source'
+        working-directory: sdk
+        run: npm ci --ignore-scripts --omit=optional --no-audit --no-fund
+      - name: Compile, pack and bind the one main archive
+        if: inputs.sdk-source == 'current-source'
+        run: node version-ci/build-main.mjs
+      - id: seal
+        run: node version-ci/seal-main.mjs >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: shared-main-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            out/main-source.json
+            out/qq-native-client-*.tgz
+          if-no-files-found: error
+          retention-days: 30
   verify:
+    needs: prepare-main
+    env:
+      EXPECTED_MAIN_SOURCE_SHA256: ${{ needs.prepare-main.outputs.main_source_sha256 }}
     strategy:
       fail-fast: false
-      matrix:
-        include:
-          - { version: 3.2.31-51102, arch: x64, runner: ubuntu-24.04 }
-          - { version: 3.2.31-51102, arch: arm64, runner: ubuntu-24.04-arm }
-          - { version: 3.2.32-52194, arch: x64, runner: ubuntu-24.04 }
-          - { version: 3.2.32-52194, arch: arm64, runner: ubuntu-24.04-arm }
+      matrix: ${{ fromJSON(needs.prepare-main.outputs.matrix) }}
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 30
-    env:
-      SDK_SOURCE_MODE: ${{ inputs.sdk-source }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -38,31 +71,24 @@ jobs:
         run: node -e "if(process.platform!=='linux'||process.arch!==process.env.TARGET_ARCH)throw Error('Incorrect runner')"
       - name: Validate source, artifact and cache refusal contracts
         run: |
-          node --test version-ci/main-artifact.test.mjs
+          node --test version-ci/main-artifact.test.mjs version-ci/matrix.test.mjs version-ci/mirror-selection.test.mjs
           NODE_OPTIONS="--require $(pwd)/first-ci/deny-symlink.cjs" node version-ci/offline-fixture.mjs
-      - name: Acquire verified corrected main only
-        if: inputs.sdk-source == 'published-baseline'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: node version-ci/acquire-main.mjs
-      - name: Install current SDK build dependencies
-        if: inputs.sdk-source == 'current-source'
-        working-directory: sdk
-        run: npm ci --ignore-scripts --no-audit --no-fund
-      - name: Compile, pack and bind current main to this exact source run
-        if: inputs.sdk-source == 'current-source'
-        run: node version-ci/build-main.mjs
+      - uses: actions/download-artifact@v5
+        with:
+          name: shared-main-${{ github.run_id }}-${{ github.run_attempt }}
+          path: out
       - name: Install runtime OS libraries
         run: sudo apt-get update && sudo apt-get install -y libx11-xcb1 libgnutls30
       - name: Installed main mirror fallback twice without account login
         env:
           TARGET_VERSION: ${{ matrix.version }}
+          NATIVE_CATALOG_MODE: ${{ matrix.catalog }}
         shell: bash
         run: NODE_OPTIONS="--require $(pwd)/first-ci/deny-symlink.cjs" node version-ci/verify.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: version-${{ matrix.version }}-linux-${{ matrix.arch }}
+          name: version-${{ matrix.version }}-linux-${{ matrix.arch }}-${{ matrix.catalog }}
           path: |
             out/version-consumer.json
             out/main-source.json

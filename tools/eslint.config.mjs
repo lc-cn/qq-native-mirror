@@ -37,6 +37,10 @@ export default [
       'ci/consumer-resources.mjs',
       'ci/consumer-resources.test.mjs',
       'ci/consumer-acquisition.test.mjs',
+      'version-ci/consumer.mjs',
+      'version-ci/verify.mjs',
+      'version-ci/mirror-selection.mjs',
+      'version-ci/matrix.mjs',
     ],
     languageOptions: {
       parser: tseslint.parser,

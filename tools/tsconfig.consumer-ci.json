@@ -2,13 +2,18 @@
   "extends": "../sdk/tsconfig.scripts.json",
   "compilerOptions": {
     "rootDir": "..",
-    "typeRoots": ["../sdk/node_modules/@types"]
+    "typeRoots": ["../sdk/node_modules/@types"],
+    "paths": { "qq-native-client": ["../sdk/src/index.ts"] }
   },
   "include": [
     "../ci/verify-consumer.mjs",
     "../ci/current-source-mirror.mjs",
     "../ci/consumer-resources.mjs",
     "../ci/consumer-resources.test.mjs",
-    "../ci/consumer-acquisition.test.mjs"
+    "../ci/consumer-acquisition.test.mjs",
+    "../version-ci/consumer.mjs",
+    "../version-ci/verify.mjs",
+    "../version-ci/mirror-selection.mjs",
+    "../version-ci/matrix.mjs"
   ]
 }

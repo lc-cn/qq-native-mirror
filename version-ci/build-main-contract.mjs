@@ -4,14 +4,34 @@ import { execFileSync } from 'node:child_process';
 /** Windows checkout filters may rewrite line endings. Expected public bytes
  * come from the exact source Git object; network/native bytes stay unchanged.
  */
-/** @param {string} sourceCommit */
-export function readSourceCatalog(sourceCommit) {
+/** @param {string} sourceCommit @param {string} [name] */
+export function readSourceCatalog(sourceCommit, name = 'catalog.json') {
   assert.match(sourceCommit, /^[a-f0-9]{40}$/);
+  assert.ok(['catalog.json', 'catalog-linux-legacy-bridge-v1.json'].includes(name));
   assert.equal(
     execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
     sourceCommit,
   );
-  return execFileSync('git', ['show', `${sourceCommit}:catalog.json`], { maxBuffer: 1024 * 1024 });
+  return execFileSync('git', ['show', `${sourceCommit}:${name}`], { maxBuffer: 1024 * 1024 });
+}
+
+/** Candidate metadata must come from the same immutable Git tree as the workflow.
+ * @param {string} sourceCommit @param {string} manifestUrl
+ */
+export function readSourceLegacyManifest(sourceCommit, manifestUrl) {
+  assert.match(sourceCommit, /^[a-f0-9]{40}$/);
+  const prefix = 'https://raw.githubusercontent.com/lc-cn/qq-native-mirror/main/';
+  assert.ok(manifestUrl.startsWith(prefix));
+  const path = manifestUrl.slice(prefix.length);
+  assert.match(
+    path,
+    /^packages\/3\.2\.31-51102-linux-(arm64|x64)-bridge-v1\/[a-f0-9]{64}\/manifest\.json$/,
+  );
+  assert.equal(
+    execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
+    sourceCommit,
+  );
+  return execFileSync('git', ['show', `${sourceCommit}:${path}`], { maxBuffer: 1024 * 1024 });
 }
 
 /** @param {{platform:string,arch:string,sourceCommit:string,environment:NodeJS.ProcessEnv}} identity */

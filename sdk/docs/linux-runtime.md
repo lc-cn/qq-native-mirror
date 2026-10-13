@@ -234,8 +234,8 @@ archive: it has no `registration-bridge.node`, and the archive has no Linux
 fallback bridge. The worker reported the missing
 `native/linux-arm64/registration-bridge.node` file. That failure and its original
 receipt were retained; it was not treated as an account or signing failure.
-The current multi-version workflow builds the main archive separately on each
-architecture. Those consumers do not prove that one archive built on another
+The multi-version workflow used before this cohort built the main archive separately
+on each architecture. Those consumers do not prove that one archive built on another
 platform can consume these original legacy manifests. This local cohort used
 the same main archive for every architecture and exposed that difference.
 
@@ -258,3 +258,30 @@ main archive has no matching fallback bridge. Docker here is only a Linux test
 environment, not an SDK requirement. These runs do not establish login, account
 restoration, message or reply delivery, contact/group operations, new video
 decoding, arbitrary Linux distribution support or vendor signing authenticity.
+
+## Shared main archive in multi-version CI
+
+`native-version-consumer.yml` now acquires or builds the main archive once in
+`prepare-main`. All Linux version consumers install those same bytes with optional
+native packages omitted. The producer publishes a SHA-256 of the complete source
+declaration as a separate job output; consumers verify that seal, source commit,
+run and attempt, archive size, SHA-256 and SHA-512 before installation. Replacing
+both an archive and its declared hash cannot pass the independent producer seal.
+
+The four public version/architecture rows remain. Current-source mode additionally
+checks the two legacy bridge candidates in separately named rows and receipts.
+Candidate manifest bytes are read from the workflow's exact Git tree, validated
+against the candidate catalog, and served on loopback; native payloads retain
+their original public URLs. Candidate success does not certify the unchanged
+public old-version manifests or promote the candidate catalog.
+
+Each consumer uses two independent empty account directories and one fresh cache,
+initializes and closes twice, verifies every manifest file's SHA-256, and compares
+file identities and modification times between passes. Any second-pass payload
+request rejects before HTTP acquisition. Account login is outside this workflow.
+Producer, consumer, selection and cleanup modules are included in the repository
+format, lint, type and static dependency inventory gates.
+
+This describes the checked-in workflow contract. Local regressions or local
+container execution do not establish that GitHub has executed this workflow, that
+the candidates are published, or that all public rows succeed.

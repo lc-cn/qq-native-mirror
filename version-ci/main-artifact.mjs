@@ -76,9 +76,15 @@ export function validateMainSource(value, environment = process.env) {
 }
 
 export async function readMainArtifact(directory = 'out', environment = process.env) {
-  const source = /** @type {unknown} */ (
-    JSON.parse(await readFile(join(directory, 'main-source.json'), 'utf8'))
-  );
+  const sourceBytes = await readFile(join(directory, 'main-source.json'));
+  const sourceSha256 = digest(sourceBytes);
+  if (environment.EXPECTED_MAIN_SOURCE_SHA256 !== undefined)
+    requireThat(
+      /^[a-f0-9]{64}$/.test(environment.EXPECTED_MAIN_SOURCE_SHA256) &&
+        sourceSha256 === environment.EXPECTED_MAIN_SOURCE_SHA256,
+      'Main source seal differs from shared producer',
+    );
+  const source = /** @type {unknown} */ (JSON.parse(sourceBytes.toString('utf8')));
   const row = validateMainSource(source, environment);
   const bytes = await readFile(join(directory, row.tarball));
   requireThat(
@@ -87,5 +93,10 @@ export async function readMainArtifact(directory = 'out', environment = process.
       `sha512-${digest(bytes, 'sha512', 'base64')}` === row.integrity,
     'Main tarball bytes changed',
   );
-  return { source: /** @type {MainSource} */ (source), row, path: join(directory, row.tarball) };
+  return {
+    source: /** @type {MainSource} */ (source),
+    row,
+    path: join(directory, row.tarball),
+    sourceSha256,
+  };
 }

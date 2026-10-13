@@ -119,3 +119,31 @@ test('source and package seals reject coercible objects before conversion', () =
   );
   assert.equal(conversions, 0);
 });
+
+test('independent producer seal rejects replacing source and tarball together', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'qq-version-shared-seal-'));
+  try {
+    const source = current();
+    const sourceBytes = Buffer.from(JSON.stringify(source));
+    const sealed = { ...environment, EXPECTED_MAIN_SOURCE_SHA256: digest(sourceBytes) };
+    await writeFile(join(root, 'main-source.json'), sourceBytes);
+    await writeFile(join(root, source.main.tarball), bytes);
+    assert.equal(
+      (await readMainArtifact(root, sealed)).sourceSha256,
+      sealed.EXPECTED_MAIN_SOURCE_SHA256,
+    );
+    const changed = Buffer.from('another self-consistent archive');
+    source.main.size = changed.length;
+    source.main.sha256 = digest(changed);
+    source.main.integrity = `sha512-${digest(changed, 'sha512', 'base64')}`;
+    await writeFile(join(root, 'main-source.json'), JSON.stringify(source));
+    await writeFile(join(root, source.main.tarball), changed);
+    await assert.rejects(readMainArtifact(root, sealed), /shared producer/);
+    await assert.rejects(
+      readMainArtifact(root, { ...sealed, EXPECTED_MAIN_SOURCE_SHA256: '' }),
+      /shared producer/,
+    );
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
