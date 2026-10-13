@@ -1,0 +1,1562 @@
+{
+  "schemaVersion": 1,
+  "evidenceKind": "static-public-linux-inventory",
+  "sourceCommit": "17fc0f93a876d5d52afccbd050d2a0a65e18c035",
+  "catalogSha256": "e7d15e62ab5555fefd8996afbabe677e0eff9e53f2d4c4d602ba85a5e2fcc7a0",
+  "verifiedOriginalFiles": 56,
+  "bundles": [
+    {
+      "platform": "linux",
+      "arch": "arm64",
+      "version": {
+        "clientVersion": "3.2.31-51102",
+        "appId": "537376498",
+        "qua": "V1_LNX_3.2.31-51102_51102_GW_B"
+      },
+      "manifestUrl": "https://raw.githubusercontent.com/lc-cn/qq-native-mirror/main/packages/3.2.31-51102-linux-arm64-bridge-v1/b8b08fecdaf4f4b6c57161c406835c7d4376de1331318d0281dec9a9f118c6d9/manifest.json",
+      "manifestSha256": "b8b08fecdaf4f4b6c57161c406835c7d4376de1331318d0281dec9a9f118c6d9",
+      "highestGLIBC": "GLIBC_2.34",
+      "highestGLIBCXX": "GLIBCXX_3.4.15",
+      "files": [
+        {
+          "path": "libbugly.so",
+          "sha256": "573cbe3f173c31945ad8adc7f91b462ee40e92d711f049311a9ffc67ba164f08",
+          "bytes": 5267744,
+          "elf": {
+            "machine": 183,
+            "needed": [
+              "libpthread.so.0",
+              "libcrbase.so",
+              "libunwind-aarch64.so.8",
+              "libssh2.so.1",
+              "libgssapi_krb5.so.2",
+              "libc.so.6",
+              "ld-linux-aarch64.so.1",
+              "libdl.so.2",
+              "libm.so.6",
+              "libgcc_s.so.1"
+            ],
+            "highestVersions": {
+              "GLIBC": "GLIBC_2.17",
+              "GLIBCXX": null,
+              "CXXABI": null
+            },
+            "limitingImportCounts": {
+              "GLIBC_2.17": 211
+            },
+            "keyVersionedImports": [
+              {
+                "symbol": "dlerror",
+                "library": "libdl.so.2",
+                "version": "GLIBC_2.17"
+              },
+              {
+                "symbol": "dlopen",
+                "library": "libdl.so.2",
+                "version": "GLIBC_2.17"
+              },
+              {
+                "symbol": "__assert_fail",
+                "library": "libc.so.6",
+                "version": "GLIBC_2.17"
+              }
+            ]
+          }
+        },
+        {
+          "path": "libcrbase.so",
+          "sha256": "d9152f08a120fd80d106e575582425c4f9b5ceccb579681c08a1cc998d4d290a",
+          "bytes": 14811688,
+          "elf": {
+            "machine": 183,
+            "needed": [
+              "libdl.so.2",
+              "libpthread.so.0",
+              "libm.so.6",
+              "libgcc_s.so.1",
+              "libc.so.6",
+              "ld-linux-aarch64.so.1"
+            ],
+            "highestVersions": {
+              "GLIBC": "GLIBC_2.17",
+              "GLIBCXX": null,
+              "CXXABI": null
+            },
+            "limitingImportCounts": {
+              "GLIBC_2.17": 282
+            },
+            "keyVersionedImports": [
+              {
+                "symbol": "dlerror",
+                "library": "libdl.so.2",
+                "version": "GLIBC_2.17"
+              },
+              {
+                "symbol": "dlopen",
+                "library": "libdl.so.2",
+                "version": "GLIBC_2.17"
+              },
+              {
+                "symbol": "__assert_fail",
+                "library": "libc.so.6",
+                "version": "GLIBC_2.17"
+              }
+            ]
+          }
+        },
+        {
+          "path": "libssh2.so.1",
+          "sha256": "feb4e10c885745ff39d924e0f0d83d78f0b2a26d7900965b29eba5dc70600104",
+          "bytes": 268168,
+          "elf": {
+            "machine": 183,
+            "needed": ["libgcrypt.so.20", "libz.so.1", "libc.so.6", "ld-linux-aarch64.so.1"],
+            "highestVersions": {
+              "GLIBC": "GLIBC_2.17",
+              "GLIBCXX": null,
+              "CXXABI": null
+            },
+            "limitingImportCounts": {
+              "GLIBC_2.17": 43
+            },
+            "keyVersionedImports": [
+              {
+                "symbol": "__assert_fail",
+                "library": "libc.so.6",
+                "version": "GLIBC_2.17"
+              },
+              {
+                "symbol": "__ctype_b_loc",
+                "library": "libc.so.6",
+                "version": "GLIBC_2.17"
+              },
+              {
+                "symbol": "__cxa_finalize",
+                "library": "libc.so.6",
+                "version": "GLIBC_2.17"
+              }
+            ]
+          }
+        },
+        {
+          "path": "libunwind-aarch64.so.8",
+          "sha256": "b3d419fdf5146bdf1f829fa6146b8867788f57ea75adf6bd999b4791be90f196",
+          "bytes": 153552,
+          "elf": {
+            "machine": 183,
+            "needed": ["libunwind.so.8", "libgcc_s.so.1", "libz.so.1", "libc.so.6"],
+            "highestVersions": {
+              "GLIBC": "GLIBC_2.17",
+              "GLIBCXX": null,
+              "CXXABI": null
+            },
+            "limitingImportCounts": {
+              "GLIBC_2.17": 40
+            },
+            "keyVersionedImports": [
+              {
+                "symbol": "__errno_location",
+                "library": "libc.so.6",
+                "version": "GLIBC_2.17"
+              },
+              {
+                "symbol": "__fxstat",
+                "library": "libc.so.6",
+                "version": "GLIBC_2.17"
+              },
+              {
+                "symbol": "__getauxval",
+                "library": "libc.so.6",
+                "version": "GLIBC_2.17"
+              }
+            ]
+          }
+        },
+        {
+          "path": "libunwind.so.8",
+          "sha256": "ff7bb631cb460dfcb231d80f61e1390448244a0a6f940b12c7c03dbd1a565205",
+          "bytes": 199112,
+          "elf": {
+            "machine": 183,
+            "needed": ["libc.so.6", "libgcc_s.so.1", "libz.so.1"],
+            "highestVersions": {
+              "GLIBC": "GLIBC_2.17",
+              "GLIBCXX": null,
+              "CXXABI": null
+            },
+            "limitingImportCounts": {
+              "GLIBC_2.17": 39
+            },
+            "keyVersionedImports": [
+              {
+                "symbol": "__errno_location",
+                "library": "libc.so.6",
+                "version": "GLIBC_2.17"
+              },
+              {
+                "symbol": "__fxstat",
+                "library": "libc.so.6",
+                "version": "GLIBC_2.17"
+              },
+              {
+                "symbol": "__getauxval",
+                "library": "libc.so.6",
+                "version": "GLIBC_2.17"
+              }
+            ]
+          }
+        },
+        {
+          "path": "libz.so.1",
+          "sha256": "d7e452e38e2b8d3f47d6110e50a1c0b505477d558e56806cccc75535d0302393",
+          "bytes": 104824,
+          "elf": {
+            "machine": 183,
+            "needed": ["libc.so.6", "ld-linux-aarch64.so.1"],
+            "highestVersions": {
+              "GLIBC": "GLIBC_2.17",
+              "GLIBCXX": null,
+              "CXXABI": null
+            },
+            "limitingImportCounts": {
+              "GLIBC_2.17": 19
+            },
+            "keyVersionedImports": [
+              {
+                "symbol": "__cxa_finalize",
+                "library": "libc.so.6",
+                "version": "GLIBC_2.17"
+              },
+              {
+                "symbol": "__errno_location",
+                "library": "libc.so.6",
+                "version": "GLIBC_2.17"
+              },
+              {
+                "symbol": "__snprintf_chk",
+                "library": "libc.so.6",
+                "version": "GLIBC_2.17"
+              }
+            ]
+          }
+        },
+        {
+          "path": "sharp-lib/libvips-cpp.so.42",
+          "sha256": "41978e127befa8d0bcd1a4042142bc4d7b4ddda0d76e389ee31c4aac30cec7f0",
+          "bytes": 15921144,
+          "elf": {
+            "machine": 183,
+            "needed": [
+              "libresolv.so.2",
+              "libdl.so.2",
+              "libpthread.so.0",
+              "libstdc++.so.6",
+              "libm.so.6",
+              "libgcc_s.so.1",
+              "libc.so.6",
+              "ld-linux-aarch64.so.1"
+            ],
+            "highestVersions": {
+              "GLIBC": "GLIBC_2.17",
+              "GLIBCXX": "GLIBCXX_3.4.15",
+              "CXXABI": "CXXABI_1.3.3"
+            },
+            "limitingImportCounts": {
+              "GLIBC_2.17": 345,
+              "GLIBCXX_3.4.15": 8,
+              "CXXABI_1.3.3": 6
+            },
+            "keyVersionedImports": [
+              {
+                "symbol": "dlerror",
+                "library": "libdl.so.2",
+                "version": "GLIBC_2.17"
+              },
+              {
+                "symbol": "dlopen",
+                "library": "libdl.so.2",
+                "version": "GLIBC_2.17"
+              },
+              {
+                "symbol": "fmod",
+                "library": "libm.so.6",
+                "version": "GLIBC_2.17"
+              },
+              {
+                "symbol": "_ZNSt12bad_weak_ptrD1Ev",
+                "library": "libstdc++.so.6",
+                "version": "GLIBCXX_3.4.15"
+              },
+              {
+                "symbol": "_ZNSt13__future_base12_Result_baseC2Ev",
+                "library": "libstdc++.so.6",
+                "version": "GLIBCXX_3.4.15"
+              },
+              {
+                "symbol": "_ZNSt13__future_base12_Result_baseD2Ev",
+                "library": "libstdc++.so.6",
+                "version": "GLIBCXX_3.4.15"
+              },
+              {
+                "symbol": "_ZNSt15__exception_ptr13exception_ptr4swapERS0_",
+                "library": "libstdc++.so.6",
+                "version": "CXXABI_1.3.3"
+              },
+              {
+                "symbol": "_ZNSt15__exception_ptr13exception_ptrC1ERKS0_",
+                "library": "libstdc++.so.6",
+                "version": "CXXABI_1.3.3"
+              },
+              {
+                "symbol": "_ZNSt15__exception_ptr13exception_ptrD1Ev",
+                "library": "libstdc++.so.6",
+                "version": "CXXABI_1.3.3"
+              }
+            ]
+          }
+        },
+        {
+          "path": "wrapper.node",
+          "sha256": "72978494d18d0076a378550099628569ff5081ada79f37e0b7adaeae6904217a",
+          "bytes": 134927616,
+          "elf": {
+            "machine": 183,
+            "needed": [
+              "libpthread.so.0",
+              "libvips-cpp.so.42",
+              "libX11.so.6",
+              "libX11-xcb.so.1",
+              "libbugly.so",
+              "libz.so.1",
+              "librt.so.1",
+              "libXext.so.6",
+              "libm.so.6",
+              "libgcc_s.so.1",
+              "libc.so.6",
+              "ld-linux-aarch64.so.1"
+            ],
+            "highestVersions": {
+              "GLIBC": "GLIBC_2.18",
+              "GLIBCXX": null,
+              "CXXABI": null
+            },
+            "limitingImportCounts": {
+              "GLIBC_2.18": 1
+            },
+            "keyVersionedImports": [
+              {
+                "symbol": "__cxa_thread_atexit_impl",
+                "library": "libc.so.6",
+                "version": "GLIBC_2.18"
+              }
+            ]
+          }
+        },
+        {
+          "path": "registration-bridge.node",
+          "sha256": "646d987a8b735cbca04ebe3ab3bfd197f3c2767db5a1843decb29999a51efd8b",
+          "bytes": 70560,
+          "elf": {
+            "machine": 183,
+            "needed": ["libc.so.6", "ld-linux-aarch64.so.1"],
+            "highestVersions": {
+              "GLIBC": "GLIBC_2.34",
+              "GLIBCXX": null,
+              "CXXABI": null
+            },
+            "limitingImportCounts": {
+              "GLIBC_2.34": 2
+            },
+            "keyVersionedImports": [
+              {
+                "symbol": "dlerror",
+                "library": "libc.so.6",
+                "version": "GLIBC_2.34"
+              },
+              {
+                "symbol": "dlopen",
+                "library": "libc.so.6",
+                "version": "GLIBC_2.34"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "platform": "linux",
+      "arch": "x64",
+      "version": {
+        "clientVersion": "3.2.31-51102",
+        "appId": "537376497",
+        "qua": "V1_LNX_3.2.31-51102_51102_GW_B"
+      },
+      "manifestUrl": "https://raw.githubusercontent.com/lc-cn/qq-native-mirror/main/packages/3.2.31-51102-linux-x64-bridge-v1/fb6808754d6922125123526a9ab44f28c545d81d169d3b069e8ad8f5c2ad7170/manifest.json",
+      "manifestSha256": "fb6808754d6922125123526a9ab44f28c545d81d169d3b069e8ad8f5c2ad7170",
+      "highestGLIBC": "GLIBC_2.34",
+      "highestGLIBCXX": "GLIBCXX_3.4.15",
+      "files": [
+        {
+          "path": "libbugly.so",
+          "sha256": "b4c78ae60326e7c68b9f026d5c43a8db1ad19ab4069a11a3468a498b9ee8599d",
+          "bytes": 1377128,
+          "elf": {
+            "machine": 62,
+            "needed": [
+              "libpthread.so.0",
+              "libcrbase.so",
+              "libunwind-x86_64.so.8",
+              "libgssapi_krb5.so.2",
+              "libssh2.so.1",
+              "libc.so.6",
+              "libdl.so.2",
+              "libm.so.6",
+              "libgcc_s.so.1"
+            ],
+            "highestVersions": {
+              "GLIBC": "GLIBC_2.17",
+              "GLIBCXX": null,
+              "CXXABI": null
+            },
+            "limitingImportCounts": {
+              "GLIBC_2.17": 1
+            },
+            "keyVersionedImports": [
+              {
+                "symbol": "clock_gettime",
+                "library": "libc.so.6",
+                "version": "GLIBC_2.17"
+              }
+            ]
+          }
+        },
+        {
+          "path": "libcrbase.so",
+          "sha256": "5c4ef5b297291301eb40c4ae48d31083830132b146bac3c21a68e080ec71fc8e",
+          "bytes": 2543712,
+          "elf": {
+            "machine": 62,
+            "needed": [
+              "libpthread.so.0",
+              "libdl.so.2",
+              "libm.so.6",
+              "libgcc_s.so.1",
+              "libc.so.6",
+              "ld-linux-x86-64.so.2"
+            ],
+            "highestVersions": {
+              "GLIBC": "GLIBC_2.17",
+              "GLIBCXX": null,
+              "CXXABI": null
+            },
+            "limitingImportCounts": {
+              "GLIBC_2.17": 1
+            },
+            "keyVersionedImports": [
+              {
+                "symbol": "clock_gettime",
+                "library": "libc.so.6",
+                "version": "GLIBC_2.17"
+              }
+            ]
+          }
+        },
+        {
+          "path": "libssh2.so.1",
+          "sha256": "b18f774efaf7e074338133ec9ae93dd3a94fb33ff2aa1eedbf4d5b45172d8e23",
+          "bytes": 211272,
+          "elf": {
+            "machine": 62,
+            "needed": ["libgcrypt.so.20", "libz.so.1", "libc.so.6"],
+            "highestVersions": {
+              "GLIBC": "GLIBC_2.14",
+              "GLIBCXX": null,
+              "CXXABI": null
+            },
+            "limitingImportCounts": {
+              "GLIBC_2.14": 1
+            },
+            "keyVersionedImports": [
+              {
+                "symbol": "memcpy",
+                "library": "libc.so.6",
+                "version": "GLIBC_2.14"
+              }
+            ]
+          }
+        },
+        {
+          "path": "libunwind-x86_64.so.8",
+          "sha256": "ffd57d6f0a4e902278f2f33d88247b7661f7bd03bd300733db3193d51cd98f7b",
+          "bytes": 923368,
+          "elf": {
+            "machine": 62,
+            "needed": [
+              "libunwind.so.8",
+              "libgcc_s.so.1",
+              "libz.so.1",
+              "libc.so.6",
+              "ld-linux-x86-64.so.2"
+            ],
+            "highestVersions": {
+              "GLIBC": "GLIBC_2.14",
+              "GLIBCXX": null,
+              "CXXABI": null
+            },
+            "limitingImportCounts": {
+              "GLIBC_2.14": 1
+            },
+            "keyVersionedImports": [
+              {
+                "symbol": "memcpy",
+                "library": "libc.so.6",
+                "version": "GLIBC_2.14"
+              }
+            ]
+          }
+        },
+        {
+          "path": "libunwind.so.8",
+          "sha256": "7466ebba89873fa3a959ae0a14c824140df82a8ebba40bc1c3808acbc5eab76b",
+          "bytes": 661672,
+          "elf": {
+            "machine": 62,
+            "needed": ["libc.so.6", "ld-linux-x86-64.so.2", "libgcc_s.so.1", "libz.so.1"],
+            "highestVersions": {
+              "GLIBC": "GLIBC_2.14",
+              "GLIBCXX": null,
+              "CXXABI": null
+            },
+            "limitingImportCounts": {
+              "GLIBC_2.14": 1
+            },
+            "keyVersionedImports": [
+              {
+                "symbol": "memcpy",
+                "library": "libc.so.6",
+                "version": "GLIBC_2.14"
+              }
+            ]
+          }
+        },
+        {
+          "path": "sharp-lib/libvips-cpp.so.42",
+          "sha256": "994c562dc1242f07ce62c0c918bd4e49eebf5bb7a0e34726892a4c79ddab3399",
+          "bytes": 16707440,
+          "elf": {
+            "machine": 62,
+            "needed": [
+              "libresolv.so.2",
+              "libdl.so.2",
+              "libpthread.so.0",
+              "libstdc++.so.6",
+              "libm.so.6",
+              "libgcc_s.so.1",
+              "libc.so.6",
+              "ld-linux-x86-64.so.2"
+            ],
+            "highestVersions": {
+              "GLIBC": "GLIBC_2.17",
+              "GLIBCXX": "GLIBCXX_3.4.15",
+              "CXXABI": "CXXABI_1.3.3"
+            },
+            "limitingImportCounts": {
+              "GLIBC_2.17": 1,
+              "GLIBCXX_3.4.15": 8,
+              "CXXABI_1.3.3": 2
+            },
+            "keyVersionedImports": [
+              {
+                "symbol": "clock_gettime",
+                "library": "libc.so.6",
+                "version": "GLIBC_2.17"
+              },
+              {
+                "symbol": "_ZNSt12bad_weak_ptrD1Ev",
+                "library": "libstdc++.so.6",
+                "version": "GLIBCXX_3.4.15"
+              },
+              {
+                "symbol": "_ZNSt13__future_base12_Result_baseC2Ev",
+                "library": "libstdc++.so.6",
+                "version": "GLIBCXX_3.4.15"
+              },
+              {
+                "symbol": "_ZNSt13__future_base12_Result_baseD2Ev",
+                "library": "libstdc++.so.6",
+                "version": "GLIBCXX_3.4.15"
+              },
+              {
+                "symbol": "_ZSt17current_exceptionv",
+                "library": "libstdc++.so.6",
+                "version": "CXXABI_1.3.3"
+              },
+              {
+                "symbol": "_ZSt17rethrow_exceptionNSt15__exception_ptr13exception_ptrE",
+                "library": "libstdc++.so.6",
+                "version": "CXXABI_1.3.3"
+              }
+            ]
+          }
+        },
+        {
+          "path": "wrapper.node",
+          "sha256": "18cfee3b7f8827d15760afbd6686ad4d1dd9a3fb7e2f91f4e1997a9a3bbaae12",
+          "bytes": 139573656,
+          "elf": {
+            "machine": 62,
+            "needed": [
+              "libpthread.so.0",
+              "libvips-cpp.so.42",
+              "libX11.so.6",
+              "libX11-xcb.so.1",
+              "libuuid.so.1",
+              "libbugly.so",
+              "libz.so.1",
+              "librt.so.1",
+              "libXext.so.6",
+              "libm.so.6",
+              "libgcc_s.so.1",
+              "libc.so.6",
+              "ld-linux-x86-64.so.2"
+            ],
+            "highestVersions": {
+              "GLIBC": "GLIBC_2.17",
+              "GLIBCXX": null,
+              "CXXABI": null
+            },
+            "limitingImportCounts": {
+              "GLIBC_2.17": 1
+            },
+            "keyVersionedImports": [
+              {
+                "symbol": "clock_gettime",
+                "library": "libc.so.6",
+                "version": "GLIBC_2.17"
+              }
+            ]
+          }
+        },
+        {
+          "path": "registration-bridge.node",
+          "sha256": "2564b41898b7b3ea3ca0244ec02fa578fef26e02194b3120f519b58730f0bdd4",
+          "bytes": 16336,
+          "elf": {
+            "machine": 62,
+            "needed": ["libc.so.6"],
+            "highestVersions": {
+              "GLIBC": "GLIBC_2.34",
+              "GLIBCXX": null,
+              "CXXABI": null
+            },
+            "limitingImportCounts": {
+              "GLIBC_2.34": 2
+            },
+            "keyVersionedImports": [
+              {
+                "symbol": "dlerror",
+                "library": "libc.so.6",
+                "version": "GLIBC_2.34"
+              },
+              {
+                "symbol": "dlopen",
+                "library": "libc.so.6",
+                "version": "GLIBC_2.34"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "platform": "linux",
+      "arch": "arm64",
+      "version": {
+        "clientVersion": "3.2.32-52194",
+        "appId": "537379448",
+        "qua": "V1_LNX_3.2.32-52194_52194_GW_B"
+      },
+      "manifestUrl": "https://raw.githubusercontent.com/lc-cn/qq-native-mirror/main/packages/npm-0.0.2-ci-37962268125-attempt-1-linux-arm64-codec-gzip-v1/628201012ea25d276667e4ac0064541534d6b3ab39e7348d75fb51d13e778b1b/manifest.json",
+      "manifestSha256": "628201012ea25d276667e4ac0064541534d6b3ab39e7348d75fb51d13e778b1b",
+      "highestGLIBC": "GLIBC_2.38",
+      "highestGLIBCXX": "GLIBCXX_3.4.26",
+      "files": [
+        {
+          "path": "libbugly.so",
+          "sha256": "573cbe3f173c31945ad8adc7f91b462ee40e92d711f049311a9ffc67ba164f08",
+          "bytes": 5267744,
+          "elf": {
+            "machine": 183,
+            "needed": [
+              "libpthread.so.0",
+              "libcrbase.so",
+              "libunwind-aarch64.so.8",
+              "libssh2.so.1",
+              "libgssapi_krb5.so.2",
+              "libc.so.6",
+              "ld-linux-aarch64.so.1",
+              "libdl.so.2",
+              "libm.so.6",
+              "libgcc_s.so.1"
+            ],
+            "highestVersions": {
+              "GLIBC": "GLIBC_2.17",
+              "GLIBCXX": null,
+              "CXXABI": null
+            },
+            "limitingImportCounts": {
+              "GLIBC_2.17": 211
+            },
+            "keyVersionedImports": [
+              {
+                "symbol": "dlerror",
+                "library": "libdl.so.2",
+                "version": "GLIBC_2.17"
+              },
+              {
+                "symbol": "dlopen",
+                "library": "libdl.so.2",
+                "version": "GLIBC_2.17"
+              },
+              {
+                "symbol": "__assert_fail",
+                "library": "libc.so.6",
+                "version": "GLIBC_2.17"
+              }
+            ]
+          }
+        },
+        {
+          "path": "libcrbase.so",
+          "sha256": "d9152f08a120fd80d106e575582425c4f9b5ceccb579681c08a1cc998d4d290a",
+          "bytes": 14811688,
+          "elf": {
+            "machine": 183,
+            "needed": [
+              "libdl.so.2",
+              "libpthread.so.0",
+              "libm.so.6",
+              "libgcc_s.so.1",
+              "libc.so.6",
+              "ld-linux-aarch64.so.1"
+            ],
+            "highestVersions": {
+              "GLIBC": "GLIBC_2.17",
+              "GLIBCXX": null,
+              "CXXABI": null
+            },
+            "limitingImportCounts": {
+              "GLIBC_2.17": 282
+            },
+            "keyVersionedImports": [
+              {
+                "symbol": "dlerror",
+                "library": "libdl.so.2",
+                "version": "GLIBC_2.17"
+              },
+              {
+                "symbol": "dlopen",
+                "library": "libdl.so.2",
+                "version": "GLIBC_2.17"
+              },
+              {
+                "symbol": "__assert_fail",
+                "library": "libc.so.6",
+                "version": "GLIBC_2.17"
+              }
+            ]
+          }
+        },
+        {
+          "path": "libssh2.so.1",
+          "sha256": "feb4e10c885745ff39d924e0f0d83d78f0b2a26d7900965b29eba5dc70600104",
+          "bytes": 268168,
+          "elf": {
+            "machine": 183,
+            "needed": ["libgcrypt.so.20", "libz.so.1", "libc.so.6", "ld-linux-aarch64.so.1"],
+            "highestVersions": {
+              "GLIBC": "GLIBC_2.17",
+              "GLIBCXX": null,
+              "CXXABI": null
+            },
+            "limitingImportCounts": {
+              "GLIBC_2.17": 43
+            },
+            "keyVersionedImports": [
+              {
+                "symbol": "__assert_fail",
+                "library": "libc.so.6",
+                "version": "GLIBC_2.17"
+              },
+              {
+                "symbol": "__ctype_b_loc",
+                "library": "libc.so.6",
+                "version": "GLIBC_2.17"
+              },
+              {
+                "symbol": "__cxa_finalize",
+                "library": "libc.so.6",
+                "version": "GLIBC_2.17"
+              }
+            ]
+          }
+        },
+        {
+          "path": "libunwind-aarch64.so.8",
+          "sha256": "b3d419fdf5146bdf1f829fa6146b8867788f57ea75adf6bd999b4791be90f196",
+          "bytes": 153552,
+          "elf": {
+            "machine": 183,
+            "needed": ["libunwind.so.8", "libgcc_s.so.1", "libz.so.1", "libc.so.6"],
+            "highestVersions": {
+              "GLIBC": "GLIBC_2.17",
+              "GLIBCXX": null,
+              "CXXABI": null
+            },
+            "limitingImportCounts": {
+              "GLIBC_2.17": 40
+            },
+            "keyVersionedImports": [
+              {
+                "symbol": "__errno_location",
+                "library": "libc.so.6",
+                "version": "GLIBC_2.17"
+              },
+              {
+                "symbol": "__fxstat",
+                "library": "libc.so.6",
+                "version": "GLIBC_2.17"
+              },
+              {
+                "symbol": "__getauxval",
+                "library": "libc.so.6",
+                "version": "GLIBC_2.17"
+              }
+            ]
+          }
+        },
+        {
+          "path": "libunwind.so.8",
+          "sha256": "ff7bb631cb460dfcb231d80f61e1390448244a0a6f940b12c7c03dbd1a565205",
+          "bytes": 199112,
+          "elf": {
+            "machine": 183,
+            "needed": ["libc.so.6", "libgcc_s.so.1", "libz.so.1"],
+            "highestVersions": {
+              "GLIBC": "GLIBC_2.17",
+              "GLIBCXX": null,
+              "CXXABI": null
+            },
+            "limitingImportCounts": {
+              "GLIBC_2.17": 39
+            },
+            "keyVersionedImports": [
+              {
+                "symbol": "__errno_location",
+                "library": "libc.so.6",
+                "version": "GLIBC_2.17"
+              },
+              {
+                "symbol": "__fxstat",
+                "library": "libc.so.6",
+                "version": "GLIBC_2.17"
+              },
+              {
+                "symbol": "__getauxval",
+                "library": "libc.so.6",
+                "version": "GLIBC_2.17"
+              }
+            ]
+          }
+        },
+        {
+          "path": "libz.so.1",
+          "sha256": "d7e452e38e2b8d3f47d6110e50a1c0b505477d558e56806cccc75535d0302393",
+          "bytes": 104824,
+          "elf": {
+            "machine": 183,
+            "needed": ["libc.so.6", "ld-linux-aarch64.so.1"],
+            "highestVersions": {
+              "GLIBC": "GLIBC_2.17",
+              "GLIBCXX": null,
+              "CXXABI": null
+            },
+            "limitingImportCounts": {
+              "GLIBC_2.17": 19
+            },
+            "keyVersionedImports": [
+              {
+                "symbol": "__cxa_finalize",
+                "library": "libc.so.6",
+                "version": "GLIBC_2.17"
+              },
+              {
+                "symbol": "__errno_location",
+                "library": "libc.so.6",
+                "version": "GLIBC_2.17"
+              },
+              {
+                "symbol": "__snprintf_chk",
+                "library": "libc.so.6",
+                "version": "GLIBC_2.17"
+              }
+            ]
+          }
+        },
+        {
+          "path": "sharp-lib/libvips-cpp.so.42",
+          "sha256": "41978e127befa8d0bcd1a4042142bc4d7b4ddda0d76e389ee31c4aac30cec7f0",
+          "bytes": 15921144,
+          "elf": {
+            "machine": 183,
+            "needed": [
+              "libresolv.so.2",
+              "libdl.so.2",
+              "libpthread.so.0",
+              "libstdc++.so.6",
+              "libm.so.6",
+              "libgcc_s.so.1",
+              "libc.so.6",
+              "ld-linux-aarch64.so.1"
+            ],
+            "highestVersions": {
+              "GLIBC": "GLIBC_2.17",
+              "GLIBCXX": "GLIBCXX_3.4.15",
+              "CXXABI": "CXXABI_1.3.3"
+            },
+            "limitingImportCounts": {
+              "GLIBC_2.17": 345,
+              "GLIBCXX_3.4.15": 8,
+              "CXXABI_1.3.3": 6
+            },
+            "keyVersionedImports": [
+              {
+                "symbol": "dlerror",
+                "library": "libdl.so.2",
+                "version": "GLIBC_2.17"
+              },
+              {
+                "symbol": "dlopen",
+                "library": "libdl.so.2",
+                "version": "GLIBC_2.17"
+              },
+              {
+                "symbol": "fmod",
+                "library": "libm.so.6",
+                "version": "GLIBC_2.17"
+              },
+              {
+                "symbol": "_ZNSt12bad_weak_ptrD1Ev",
+                "library": "libstdc++.so.6",
+                "version": "GLIBCXX_3.4.15"
+              },
+              {
+                "symbol": "_ZNSt13__future_base12_Result_baseC2Ev",
+                "library": "libstdc++.so.6",
+                "version": "GLIBCXX_3.4.15"
+              },
+              {
+                "symbol": "_ZNSt13__future_base12_Result_baseD2Ev",
+                "library": "libstdc++.so.6",
+                "version": "GLIBCXX_3.4.15"
+              },
+              {
+                "symbol": "_ZNSt15__exception_ptr13exception_ptr4swapERS0_",
+                "library": "libstdc++.so.6",
+                "version": "CXXABI_1.3.3"
+              },
+              {
+                "symbol": "_ZNSt15__exception_ptr13exception_ptrC1ERKS0_",
+                "library": "libstdc++.so.6",
+                "version": "CXXABI_1.3.3"
+              },
+              {
+                "symbol": "_ZNSt15__exception_ptr13exception_ptrD1Ev",
+                "library": "libstdc++.so.6",
+                "version": "CXXABI_1.3.3"
+              }
+            ]
+          }
+        },
+        {
+          "path": "wrapper.node",
+          "sha256": "c302361f52494de257044e912e43ed244bb29ee59f59345d25a8959327828337",
+          "bytes": 144561472,
+          "elf": {
+            "machine": 183,
+            "needed": [
+              "libpthread.so.0",
+              "libvips-cpp.so.42",
+              "libX11.so.6",
+              "libX11-xcb.so.1",
+              "libbugly.so",
+              "libz.so.1",
+              "librt.so.1",
+              "libXext.so.6",
+              "libm.so.6",
+              "libgcc_s.so.1",
+              "libc.so.6",
+              "ld-linux-aarch64.so.1"
+            ],
+            "highestVersions": {
+              "GLIBC": "GLIBC_2.18",
+              "GLIBCXX": null,
+              "CXXABI": null
+            },
+            "limitingImportCounts": {
+              "GLIBC_2.18": 1
+            },
+            "keyVersionedImports": [
+              {
+                "symbol": "__cxa_thread_atexit_impl",
+                "library": "libc.so.6",
+                "version": "GLIBC_2.18"
+              }
+            ]
+          }
+        },
+        {
+          "path": "registration-bridge.node",
+          "sha256": "646d987a8b735cbca04ebe3ab3bfd197f3c2767db5a1843decb29999a51efd8b",
+          "bytes": 70560,
+          "elf": {
+            "machine": 183,
+            "needed": ["libc.so.6", "ld-linux-aarch64.so.1"],
+            "highestVersions": {
+              "GLIBC": "GLIBC_2.34",
+              "GLIBCXX": null,
+              "CXXABI": null
+            },
+            "limitingImportCounts": {
+              "GLIBC_2.34": 2
+            },
+            "keyVersionedImports": [
+              {
+                "symbol": "dlerror",
+                "library": "libc.so.6",
+                "version": "GLIBC_2.34"
+              },
+              {
+                "symbol": "dlopen",
+                "library": "libc.so.6",
+                "version": "GLIBC_2.34"
+              }
+            ]
+          }
+        },
+        {
+          "path": "video/ADDON-LICENSE.txt",
+          "sha256": "642dd80631bd63618a5b9c1a77d5644e437a2f7ba2b4603088282a6dce36c973",
+          "bytes": 1086,
+          "elf": null
+        },
+        {
+          "path": "video/FFMPEG-COPYING.LGPLv2.1",
+          "sha256": "246041b6ecf9bc32d718a62c57877c78b5eb397b6467e74ed7ae2626ab189c30",
+          "bytes": 26517,
+          "elf": null
+        },
+        {
+          "path": "video/FFMPEG-LICENSE.md",
+          "sha256": "2e1d16c72fd74e12063776371da757322f8b77589386532f4fd8634bde7de1af",
+          "bytes": 4346,
+          "elf": null
+        },
+        {
+          "path": "video/NODE-LICENSE.txt",
+          "sha256": "5888dbb9a1d2b18f2c3e6c5f6af1b39de658372b402a0577b002777f14c62ace",
+          "bytes": 157609,
+          "elf": null
+        },
+        {
+          "path": "video/NOTICE.txt",
+          "sha256": "6d92d277200104c1bb7ea3ad395e8f5e0365c642d38405b5da438d300ab9aa56",
+          "bytes": 364,
+          "elf": null
+        },
+        {
+          "path": "video/build.json",
+          "sha256": "4f9c0d579a8f4e2d8ad81fd2df1a21c9384e9eb2fe19aafb616f8249a7566cf2",
+          "bytes": 3085,
+          "elf": null
+        },
+        {
+          "path": "video/consumer.json",
+          "sha256": "b8633ed9ffbc4b8f4892f908cf0e91cf57869d8a736395785af64b75041414a0",
+          "bytes": 1835,
+          "elf": null
+        },
+        {
+          "path": "video/dependencies.txt",
+          "sha256": "bd68f6299c0d7e54ff64764eef1303027f8f1e3e35e0f0da629aecaed97124de",
+          "bytes": 377,
+          "elf": null
+        },
+        {
+          "path": "video/video-codec.node",
+          "sha256": "8eff4ebdf6b704b1a3aa4a25a328c0949ce81b1b8db220ef5bf3f310fe3ac741",
+          "bytes": 15499928,
+          "elf": {
+            "machine": 183,
+            "needed": [
+              "libm.so.6",
+              "libstdc++.so.6",
+              "libgcc_s.so.1",
+              "libc.so.6",
+              "ld-linux-aarch64.so.1"
+            ],
+            "highestVersions": {
+              "GLIBC": "GLIBC_2.38",
+              "GLIBCXX": "GLIBCXX_3.4.26",
+              "CXXABI": "CXXABI_1.3.9"
+            },
+            "limitingImportCounts": {
+              "GLIBC_2.38": 1,
+              "GLIBCXX_3.4.26": 4,
+              "CXXABI_1.3.9": 1
+            },
+            "keyVersionedImports": [
+              {
+                "symbol": "fmod",
+                "library": "libm.so.6",
+                "version": "GLIBC_2.38"
+              },
+              {
+                "symbol": "_ZNKSt10filesystem7__cxx114path5_List13_Impl_deleterclEPNS2_5_ImplE",
+                "library": "libstdc++.so.6",
+                "version": "GLIBCXX_3.4.26"
+              },
+              {
+                "symbol": "_ZNSt10filesystem6statusERKNS_7__cxx114pathE",
+                "library": "libstdc++.so.6",
+                "version": "GLIBCXX_3.4.26"
+              },
+              {
+                "symbol": "_ZNSt10filesystem7__cxx114path14_M_split_cmptsEv",
+                "library": "libstdc++.so.6",
+                "version": "GLIBCXX_3.4.26"
+              },
+              {
+                "symbol": "_ZdlPvm",
+                "library": "libstdc++.so.6",
+                "version": "CXXABI_1.3.9"
+              }
+            ]
+          }
+        },
+        {
+          "path": "video/SOURCE-PROVENANCE.json",
+          "sha256": "07585bd533a6a6e38a4b2450f9fa368cc082ad9a877615ab543bca4f13d3a095",
+          "bytes": 5378,
+          "elf": null
+        },
+        {
+          "path": "video/SOURCE-AND-RELINK.txt",
+          "sha256": "c5a56e7f108ef71f15d6be76b718450d7f5e2d21d8f3715a1caa97644bc0b47d",
+          "bytes": 2042,
+          "elf": null
+        }
+      ]
+    },
+    {
+      "platform": "linux",
+      "arch": "x64",
+      "version": {
+        "clientVersion": "3.2.32-52194",
+        "appId": "537379447",
+        "qua": "V1_LNX_3.2.32-52194_52194_GW_B"
+      },
+      "manifestUrl": "https://raw.githubusercontent.com/lc-cn/qq-native-mirror/main/packages/npm-0.0.2-ci-37962268125-attempt-1-linux-x64-codec-gzip-v1/d130b3db854cd147a96bd5cb80d9d16fcf6ce364eda546849ac06403077a9ae4/manifest.json",
+      "manifestSha256": "d130b3db854cd147a96bd5cb80d9d16fcf6ce364eda546849ac06403077a9ae4",
+      "highestGLIBC": "GLIBC_2.35",
+      "highestGLIBCXX": "GLIBCXX_3.4.26",
+      "files": [
+        {
+          "path": "libbugly.so",
+          "sha256": "b4c78ae60326e7c68b9f026d5c43a8db1ad19ab4069a11a3468a498b9ee8599d",
+          "bytes": 1377128,
+          "elf": {
+            "machine": 62,
+            "needed": [
+              "libpthread.so.0",
+              "libcrbase.so",
+              "libunwind-x86_64.so.8",
+              "libgssapi_krb5.so.2",
+              "libssh2.so.1",
+              "libc.so.6",
+              "libdl.so.2",
+              "libm.so.6",
+              "libgcc_s.so.1"
+            ],
+            "highestVersions": {
+              "GLIBC": "GLIBC_2.17",
+              "GLIBCXX": null,
+              "CXXABI": null
+            },
+            "limitingImportCounts": {
+              "GLIBC_2.17": 1
+            },
+            "keyVersionedImports": [
+              {
+                "symbol": "clock_gettime",
+                "library": "libc.so.6",
+                "version": "GLIBC_2.17"
+              }
+            ]
+          }
+        },
+        {
+          "path": "libcrbase.so",
+          "sha256": "5c4ef5b297291301eb40c4ae48d31083830132b146bac3c21a68e080ec71fc8e",
+          "bytes": 2543712,
+          "elf": {
+            "machine": 62,
+            "needed": [
+              "libpthread.so.0",
+              "libdl.so.2",
+              "libm.so.6",
+              "libgcc_s.so.1",
+              "libc.so.6",
+              "ld-linux-x86-64.so.2"
+            ],
+            "highestVersions": {
+              "GLIBC": "GLIBC_2.17",
+              "GLIBCXX": null,
+              "CXXABI": null
+            },
+            "limitingImportCounts": {
+              "GLIBC_2.17": 1
+            },
+            "keyVersionedImports": [
+              {
+                "symbol": "clock_gettime",
+                "library": "libc.so.6",
+                "version": "GLIBC_2.17"
+              }
+            ]
+          }
+        },
+        {
+          "path": "libssh2.so.1",
+          "sha256": "b18f774efaf7e074338133ec9ae93dd3a94fb33ff2aa1eedbf4d5b45172d8e23",
+          "bytes": 211272,
+          "elf": {
+            "machine": 62,
+            "needed": ["libgcrypt.so.20", "libz.so.1", "libc.so.6"],
+            "highestVersions": {
+              "GLIBC": "GLIBC_2.14",
+              "GLIBCXX": null,
+              "CXXABI": null
+            },
+            "limitingImportCounts": {
+              "GLIBC_2.14": 1
+            },
+            "keyVersionedImports": [
+              {
+                "symbol": "memcpy",
+                "library": "libc.so.6",
+                "version": "GLIBC_2.14"
+              }
+            ]
+          }
+        },
+        {
+          "path": "libunwind-x86_64.so.8",
+          "sha256": "ffd57d6f0a4e902278f2f33d88247b7661f7bd03bd300733db3193d51cd98f7b",
+          "bytes": 923368,
+          "elf": {
+            "machine": 62,
+            "needed": [
+              "libunwind.so.8",
+              "libgcc_s.so.1",
+              "libz.so.1",
+              "libc.so.6",
+              "ld-linux-x86-64.so.2"
+            ],
+            "highestVersions": {
+              "GLIBC": "GLIBC_2.14",
+              "GLIBCXX": null,
+              "CXXABI": null
+            },
+            "limitingImportCounts": {
+              "GLIBC_2.14": 1
+            },
+            "keyVersionedImports": [
+              {
+                "symbol": "memcpy",
+                "library": "libc.so.6",
+                "version": "GLIBC_2.14"
+              }
+            ]
+          }
+        },
+        {
+          "path": "libunwind.so.8",
+          "sha256": "7466ebba89873fa3a959ae0a14c824140df82a8ebba40bc1c3808acbc5eab76b",
+          "bytes": 661672,
+          "elf": {
+            "machine": 62,
+            "needed": ["libc.so.6", "ld-linux-x86-64.so.2", "libgcc_s.so.1", "libz.so.1"],
+            "highestVersions": {
+              "GLIBC": "GLIBC_2.14",
+              "GLIBCXX": null,
+              "CXXABI": null
+            },
+            "limitingImportCounts": {
+              "GLIBC_2.14": 1
+            },
+            "keyVersionedImports": [
+              {
+                "symbol": "memcpy",
+                "library": "libc.so.6",
+                "version": "GLIBC_2.14"
+              }
+            ]
+          }
+        },
+        {
+          "path": "sharp-lib/libvips-cpp.so.42",
+          "sha256": "994c562dc1242f07ce62c0c918bd4e49eebf5bb7a0e34726892a4c79ddab3399",
+          "bytes": 16707440,
+          "elf": {
+            "machine": 62,
+            "needed": [
+              "libresolv.so.2",
+              "libdl.so.2",
+              "libpthread.so.0",
+              "libstdc++.so.6",
+              "libm.so.6",
+              "libgcc_s.so.1",
+              "libc.so.6",
+              "ld-linux-x86-64.so.2"
+            ],
+            "highestVersions": {
+              "GLIBC": "GLIBC_2.17",
+              "GLIBCXX": "GLIBCXX_3.4.15",
+              "CXXABI": "CXXABI_1.3.3"
+            },
+            "limitingImportCounts": {
+              "GLIBC_2.17": 1,
+              "GLIBCXX_3.4.15": 8,
+              "CXXABI_1.3.3": 2
+            },
+            "keyVersionedImports": [
+              {
+                "symbol": "clock_gettime",
+                "library": "libc.so.6",
+                "version": "GLIBC_2.17"
+              },
+              {
+                "symbol": "_ZNSt12bad_weak_ptrD1Ev",
+                "library": "libstdc++.so.6",
+                "version": "GLIBCXX_3.4.15"
+              },
+              {
+                "symbol": "_ZNSt13__future_base12_Result_baseC2Ev",
+                "library": "libstdc++.so.6",
+                "version": "GLIBCXX_3.4.15"
+              },
+              {
+                "symbol": "_ZNSt13__future_base12_Result_baseD2Ev",
+                "library": "libstdc++.so.6",
+                "version": "GLIBCXX_3.4.15"
+              },
+              {
+                "symbol": "_ZSt17current_exceptionv",
+                "library": "libstdc++.so.6",
+                "version": "CXXABI_1.3.3"
+              },
+              {
+                "symbol": "_ZSt17rethrow_exceptionNSt15__exception_ptr13exception_ptrE",
+                "library": "libstdc++.so.6",
+                "version": "CXXABI_1.3.3"
+              }
+            ]
+          }
+        },
+        {
+          "path": "wrapper.node",
+          "sha256": "7882b8e3055cd38584861042befacd8be9939896f5cbbca6fa4a230926b48526",
+          "bytes": 149670240,
+          "elf": {
+            "machine": 62,
+            "needed": [
+              "libpthread.so.0",
+              "libvips-cpp.so.42",
+              "libX11.so.6",
+              "libX11-xcb.so.1",
+              "libuuid.so.1",
+              "libbugly.so",
+              "libz.so.1",
+              "librt.so.1",
+              "libXext.so.6",
+              "libm.so.6",
+              "libgcc_s.so.1",
+              "libc.so.6",
+              "ld-linux-x86-64.so.2"
+            ],
+            "highestVersions": {
+              "GLIBC": "GLIBC_2.17",
+              "GLIBCXX": null,
+              "CXXABI": null
+            },
+            "limitingImportCounts": {
+              "GLIBC_2.17": 1
+            },
+            "keyVersionedImports": [
+              {
+                "symbol": "clock_gettime",
+                "library": "libc.so.6",
+                "version": "GLIBC_2.17"
+              }
+            ]
+          }
+        },
+        {
+          "path": "registration-bridge.node",
+          "sha256": "2564b41898b7b3ea3ca0244ec02fa578fef26e02194b3120f519b58730f0bdd4",
+          "bytes": 16336,
+          "elf": {
+            "machine": 62,
+            "needed": ["libc.so.6"],
+            "highestVersions": {
+              "GLIBC": "GLIBC_2.34",
+              "GLIBCXX": null,
+              "CXXABI": null
+            },
+            "limitingImportCounts": {
+              "GLIBC_2.34": 2
+            },
+            "keyVersionedImports": [
+              {
+                "symbol": "dlerror",
+                "library": "libc.so.6",
+                "version": "GLIBC_2.34"
+              },
+              {
+                "symbol": "dlopen",
+                "library": "libc.so.6",
+                "version": "GLIBC_2.34"
+              }
+            ]
+          }
+        },
+        {
+          "path": "video/ADDON-LICENSE.txt",
+          "sha256": "642dd80631bd63618a5b9c1a77d5644e437a2f7ba2b4603088282a6dce36c973",
+          "bytes": 1086,
+          "elf": null
+        },
+        {
+          "path": "video/FFMPEG-COPYING.LGPLv2.1",
+          "sha256": "246041b6ecf9bc32d718a62c57877c78b5eb397b6467e74ed7ae2626ab189c30",
+          "bytes": 26517,
+          "elf": null
+        },
+        {
+          "path": "video/FFMPEG-LICENSE.md",
+          "sha256": "2e1d16c72fd74e12063776371da757322f8b77589386532f4fd8634bde7de1af",
+          "bytes": 4346,
+          "elf": null
+        },
+        {
+          "path": "video/NODE-LICENSE.txt",
+          "sha256": "5888dbb9a1d2b18f2c3e6c5f6af1b39de658372b402a0577b002777f14c62ace",
+          "bytes": 157609,
+          "elf": null
+        },
+        {
+          "path": "video/NOTICE.txt",
+          "sha256": "6d92d277200104c1bb7ea3ad395e8f5e0365c642d38405b5da438d300ab9aa56",
+          "bytes": 364,
+          "elf": null
+        },
+        {
+          "path": "video/build.json",
+          "sha256": "1c38d65fc6e52e4dee92c5024ecb70845ec4b4a82a4d0a9d7a61cab933a5157e",
+          "bytes": 3083,
+          "elf": null
+        },
+        {
+          "path": "video/consumer.json",
+          "sha256": "c80cfa7f74d73c674b05b0a4ba9300b7626d75457c6c8d3338ec69d1b340d4b9",
+          "bytes": 1833,
+          "elf": null
+        },
+        {
+          "path": "video/dependencies.txt",
+          "sha256": "4cbaa7d5d7ed82b2d737de840aa8e2df21d3f7a1a37aa777968d3380f1a54ffc",
+          "bytes": 374,
+          "elf": null
+        },
+        {
+          "path": "video/video-codec.node",
+          "sha256": "195312a9613fd716e2df52a11d409571bdb5959e1537e12f475c2048c6c9f88d",
+          "bytes": 17704104,
+          "elf": {
+            "machine": 62,
+            "needed": ["libm.so.6", "libstdc++.so.6", "libgcc_s.so.1", "libc.so.6"],
+            "highestVersions": {
+              "GLIBC": "GLIBC_2.35",
+              "GLIBCXX": "GLIBCXX_3.4.26",
+              "CXXABI": "CXXABI_1.3.9"
+            },
+            "limitingImportCounts": {
+              "GLIBC_2.35": 1,
+              "GLIBCXX_3.4.26": 4,
+              "CXXABI_1.3.9": 1
+            },
+            "keyVersionedImports": [
+              {
+                "symbol": "hypot",
+                "library": "libm.so.6",
+                "version": "GLIBC_2.35"
+              },
+              {
+                "symbol": "_ZNKSt10filesystem7__cxx114path5_List13_Impl_deleterclEPNS2_5_ImplE",
+                "library": "libstdc++.so.6",
+                "version": "GLIBCXX_3.4.26"
+              },
+              {
+                "symbol": "_ZNSt10filesystem6statusERKNS_7__cxx114pathE",
+                "library": "libstdc++.so.6",
+                "version": "GLIBCXX_3.4.26"
+              },
+              {
+                "symbol": "_ZNSt10filesystem7__cxx114path14_M_split_cmptsEv",
+                "library": "libstdc++.so.6",
+                "version": "GLIBCXX_3.4.26"
+              },
+              {
+                "symbol": "_ZdlPvm",
+                "library": "libstdc++.so.6",
+                "version": "CXXABI_1.3.9"
+              }
+            ]
+          }
+        },
+        {
+          "path": "video/SOURCE-PROVENANCE.json",
+          "sha256": "2e3441773a538330167b82ec32fa479b42d8faa09500689712a7bb99143444b8",
+          "bytes": 5374,
+          "elf": null
+        },
+        {
+          "path": "video/SOURCE-AND-RELINK.txt",
+          "sha256": "6bf80b4d85d08b5c6b0be725e77785c11deb86397a91a01927d2836807d8b8cf",
+          "bytes": 2038,
+          "elf": null
+        }
+      ]
+    }
+  ],
+  "method": "Read each original file and verify SHA256/size against exact public manifest; parse ELF64 little-endian DT_NEEDED, GNU version requirements and versioned dynamic symbols without loading binary. Key imports are bounded to three examples per highest version per file; counts retain the total limiting imports.",
+  "scope": "Four selected public catalog manifests; not the newly built17fc npm-release cohort.",
+  "limits": [
+    "Highest GLIBC/GLIBCXX/CXXABI versioned imports are necessary loader conditions, not sufficient distribution/kernel/systemlibrary compatibility.",
+    "The bridge-only glibc2.34 minimum does not describe the complete latest bundle.",
+    "No ELF/addon/codec execution, account login/business operation or signing authenticity proof.",
+    "Not a guarantee for every Node24minor or every Linuxdistribution.",
+    "Non-ELF entries retain original file identity but have no ELFsymbol floor."
+  ]
+}

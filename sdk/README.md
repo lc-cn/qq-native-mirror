@@ -27,7 +27,11 @@ Catalog or manifest failures reject; they do not silently select an older packag
 Native versions and npm versions are independent. Linux requires glibc: the measured
 public/current registration bridges require **glibc 2.34 or later** (`dlopen` and
 `dlerror` import `GLIBC_2.34`). This is a bridge-only minimum; vendor libraries can
-impose higher requirements. Current Windows bundles require official Node
+impose higher requirements. The complete public Linux inventories currently require
+glibc **2.34** for QQ 3.2.31-51102 on both architectures; QQ 3.2.32-52194 requires
+**2.38 on ARM64 / 2.35 on x64**, with **GLIBCXX_3.4.26**.
+See [Linux loading prerequisites](docs/linux-runtime.md#actual-loading-prerequisites)
+for the static scope and measured environments. Current Windows bundles require official Node
 **24.20.0** with matching runtime configuration; macOS/Linux require Node 24 or
 later. Measured Linux environments include Ubuntu 24.04 with Node 24.20.0 and
 Debian 13 with Node 24.21.0, not every distribution or Node 24 minor release.

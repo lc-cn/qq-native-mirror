@@ -21,8 +21,24 @@ the ARM64 mirror bridge SHA-256 is
 `646d987a8b735cbca04ebe3ab3bfd197f3c2767db5a1843decb29999a51efd8b`.
 The measured current x64 bridge is byte-identical to that mirror bridge. Both
 architectures therefore require glibc **2.34 or later for the bridge alone**.
-This inspection does not establish the minimum for the vendor wrapper or its
-other libraries, which can require a newer runtime or additional system packages.
+The complete public inventories have also been read and checked against their
+four exact manifests (56 original files). Their highest imported symbol versions
+are recorded in [the static inventory evidence](evidence/linux-elf-runtime-floors.json):
+
+| Public QQ bundle | Architecture | Highest GLIBC requirement     | Highest GLIBCXX requirement |
+| ---------------- | ------------ | ----------------------------- | --------------------------- |
+| 3.2.31-51102     | ARM64        | 2.34 (registration bridge)    | 3.4.15                      |
+| 3.2.31-51102     | x64          | 2.34 (registration bridge)    | 3.4.15                      |
+| 3.2.32-52194     | ARM64        | 2.38 (`fmod` in video codec)  | 3.4.26                      |
+| 3.2.32-52194     | x64          | 2.35 (`hypot` in video codec) | 3.4.26                      |
+
+These are necessary symbol-version requirements of the selected public bundles,
+not proof that a distribution supplies every dependency or that the SDK runs on
+all systems above those versions. The data binds catalog SHA-256
+`e7d15e62ab5555fefd8996afbabe677e0eff9e53f2d4c4d602ba85a5e2fcc7a0`
+at source `17fc0f93a876d5d52afccbd050d2a0a65e18c035`; it is not an audit of the newly
+built `17fc` npm-release artifacts. Static inspection neither executes the codec
+nor establishes account operations, signing authenticity or an npm publication.
 
 Linux initialization evidence is bounded to the environments recorded below,
 including native Ubuntu 24.04 runners with Node 24.20.0 and local Debian 13
