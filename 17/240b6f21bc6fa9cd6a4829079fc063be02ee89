@@ -1,0 +1,29 @@
+sdk/package.json
+  s_2104cc474f1ce5::t_431293d0cff6cd 32
+sdk/src/runtime/client-lifecycle.ts
+  s_2104cc474f1ce5::t_e084638f3e309e 807-810
+sdk/test/client-lifecycle-module.test.ts
+  s_2104cc474f1ce5::t_8ed22f8f6d40ae 3411-3474
+sdk/test/example-type-resolution.test.ts
+  s_2104cc474f1ce5::t_62ffb97d340384 1-122
+sdk/tsconfig.scripts.json
+  s_2104cc474f1ce5::t_1f0af2f4f38de8 9-10
+sdk/tsconfig.test.json
+  s_2104cc474f1ce5::t_14b40c9f01ce24 9-10
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "17240b6f21bc6fa9cd6a4829079fc063be02ee89",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
