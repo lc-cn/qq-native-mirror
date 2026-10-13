@@ -1,0 +1,16 @@
+{
+  "client": {
+    "dataDir": "demo-account",
+    "cacheDir": "demo-native-cache",
+    "downloadMirrors": ["https://gh-proxy.com/"],
+    "autoReconnect": false
+  },
+  "keyword": "ping",
+  "reply": "pong",
+  "privateMessages": true,
+  "groupMessages": true,
+  "userIds": [],
+  "groupIds": [],
+  "openQr": true,
+  "loadContacts": true
+}

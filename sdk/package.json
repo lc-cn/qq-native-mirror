@@ -22,8 +22,8 @@
     "prepack": "npm run build",
     "lint": "eslint . --max-warnings=0",
     "lint:fix": "eslint . --fix --max-warnings=0",
-    "format": "prettier --write src test scripts docs README.md package.json tsconfig*.json *.mjs .prettierrc.json",
-    "format:check": "prettier --check src test scripts docs README.md package.json tsconfig*.json *.mjs .prettierrc.json",
+    "format": "prettier --write src test scripts examples docs README.md package.json tsconfig*.json *.mjs .prettierrc.json",
+    "format:check": "prettier --check src test scripts examples docs README.md package.json tsconfig*.json *.mjs .prettierrc.json",
     "typecheck": "tsc --noEmit && tsc -p tsconfig.test.json && tsc -p tsconfig.scripts.json",
     "verify:package": "node scripts/verify-package-consumer.mjs",
     "check": "npm run format:check && npm run lint && npm run check:native-storage && npm run typecheck && npm test && npm run build && npm run verify:package",
@@ -31,7 +31,9 @@
     "check:consumer-modules": "node scripts/check-consumer-modules.ts",
     "pretest": "npm run check:consumer-modules",
     "preverify:package": "npm run check:consumer-modules",
-    "check:native-storage": "node ../tools/check-native-storage.mjs"
+    "check:native-storage": "node ../tools/check-native-storage.mjs",
+    "demo": "node examples/demo.ts",
+    "predemo": "npm run build"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

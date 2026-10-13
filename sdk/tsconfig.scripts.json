@@ -11,6 +11,7 @@
   "include": [
     "src/**/*.ts",
     "scripts/**/*.ts",
+    "examples/**/*.ts",
     "scripts/consumers/**/*.mjs",
     "scripts/verify-package-consumer.mjs",
     "scripts/node-license-download.mjs",

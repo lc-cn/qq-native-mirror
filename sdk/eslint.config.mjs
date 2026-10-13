@@ -12,7 +12,13 @@ export default defineConfig([
     linterOptions: { reportUnusedDisableDirectives: 'error' },
   },
   {
-    files: ['src/**/*.ts', 'test/**/*.{ts,mjs}', 'scripts/**/*.{ts,mjs}', '*.mjs'],
+    files: [
+      'src/**/*.ts',
+      'test/**/*.{ts,mjs}',
+      'scripts/**/*.{ts,mjs}',
+      'examples/**/*.ts',
+      '*.mjs',
+    ],
     extends: [js.configs.recommended, tseslint.configs.recommended, prettier],
     languageOptions: { globals: globals.node },
     rules: {
@@ -50,6 +56,7 @@ export default defineConfig([
   {
     files: [
       'scripts/**/*.ts',
+      'examples/**/*.ts',
       'scripts/consumers/**/*.mjs',
       'scripts/verify-package-consumer.mjs',
       'scripts/node-license-download.mjs',
