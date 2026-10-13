@@ -1,0 +1,21 @@
+sdk/docs/architecture.md
+  s_2104cc474f1ce5::t_3ec786dcd62b2a 260-285
+sdk/docs/evidence/native-bridge-preflight-7f4e528-local.json
+  s_2104cc474f1ce5::t_f714f1ee7829d4 1-77
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "3b4bcd58b98976462f40cfd6b92ba3d4b9e19732",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
