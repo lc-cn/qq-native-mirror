@@ -1685,8 +1685,19 @@ async function verifyClientPresentation(QQClient) {
     const messages = [];
     for (const event of ['message', 'message.group', 'message.private', 'fixture-opaque'])
       EventEmitter.prototype.on.call(client, event, (value) => messages.push([event, value]));
-    const group = { peer: { type: 'group' }, unknown: { retained: true } };
-    const direct = { peer: { type: 'private' } };
+    const rawMessage = { native: 'opaque raw' };
+    const unknownData = { retained: true };
+    const group = {
+      messageId: '41',
+      sequence: '42',
+      time: 1700000000,
+      peer: { type: 'group', groupId: '123' },
+      sender: { userId: '456', uid: 'controlled-uid', nickname: 'fixture' },
+      elements: [{ type: 'unknown', nativeType: 999, data: unknownData }],
+      raw: rawMessage,
+      unknown: unknownData,
+    };
+    const direct = { ...group, messageId: '43', peer: { type: 'private', userId: '456' } };
     const opaque = Object.freeze({ value: Symbol('opaque') });
     child.emit('message', { event: 'message', payload: group });
     child.emit('message', { event: 'message', payload: direct });
@@ -1695,20 +1706,37 @@ async function verifyClientPresentation(QQClient) {
       messages.map(([event]) => event),
       ['message', 'message.group', 'message', 'message.private', 'fixture-opaque'],
     );
-    assert.strictEqual(messages[0][1], group);
-    assert.strictEqual(messages[1][1], group);
-    assert.strictEqual(messages[2][1], direct);
-    assert.strictEqual(messages[3][1], direct);
+    /** @type {[number, typeof group | typeof direct][]} */
+    const messageViews = [
+      [0, group],
+      [2, direct],
+    ];
+    for (const [index, dto] of messageViews) {
+      const view = messages[index][1];
+      assert.ok(view && typeof view === 'object');
+      assert.notStrictEqual(view, dto);
+      assert.deepEqual(view, dto);
+      assert.strictEqual(messages[index + 1][1], view);
+      assert.equal(typeof Object.getOwnPropertyDescriptor(view, 'reply')?.value, 'function');
+      assert.equal(Object.hasOwn(dto, 'reply'), false);
+      assert.strictEqual(Object.getOwnPropertyDescriptor(view, 'raw')?.value, rawMessage);
+      assert.strictEqual(Object.getOwnPropertyDescriptor(view, 'unknown')?.value, unknownData);
+      assert.strictEqual(Object.getOwnPropertyDescriptor(view, 'elements')?.value, dto.elements);
+      assert.equal(JSON.stringify(view), JSON.stringify(dto));
+    }
     assert.strictEqual(messages[4][1], opaque);
     child.emit('message', { event: 'fixture-opaque', payload: null });
     assert.strictEqual(messages[5][1], null);
-    const mutation = { peer: { type: 'group' } };
+    const mutation = { ...group, messageId: '44', peer: { type: 'group', groupId: '123' } };
     EventEmitter.prototype.once.call(client, 'message', () => {
       mutation.peer.type = 'private';
     });
     child.emit('message', { event: 'message', payload: mutation });
     assert.equal(messages[7][0], 'message.private');
-    assert.strictEqual(messages[7][1], mutation);
+    assert.notStrictEqual(messages[7][1], mutation);
+    assert.strictEqual(messages[6][1], messages[7][1]);
+    assert.deepEqual(messages[7][1], mutation);
+    assert.equal(Object.hasOwn(mutation, 'reply'), false);
     Object.defineProperty(child, 'exitCode', { value: 0, configurable: true });
     child.emit('exit', 0, null);
     child.emit('message', { event: 'fixture-opaque', payload: opaque });

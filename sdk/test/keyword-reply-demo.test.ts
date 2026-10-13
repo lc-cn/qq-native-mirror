@@ -11,7 +11,14 @@ import {
   type DemoConfig,
   type DemoDependencies,
 } from '../examples/keyword-reply.ts';
-import type { ClientEvents, ClientState, Account, Message, MessageInput } from '../src/types.ts';
+import type {
+  ClientEvents,
+  ClientState,
+  Account,
+  MessageEvent,
+  MessageInput,
+} from '../src/types.ts';
+import { createMessageEvent } from '../src/client/message-event.ts';
 const account: Account = { uin: '123', uid: 'self' };
 function deferred<T>() {
   let resolve!: (value: T) => void;
@@ -65,16 +72,37 @@ const config: DemoConfig = {
   loadContacts: false,
 };
 const tick = () => new Promise<void>((resolve) => setImmediate(resolve));
-function message(id: string, group = false): Message {
-  return {
-    messageId: id,
-    sequence: '1',
-    time: 100,
-    peer: group ? { type: 'group', groupId: '456' } : { type: 'private', userId: '789' },
-    sender: { userId: '789', uid: 'other', nickname: 'fixture' },
-    elements: [{ type: 'text', text: ' ping ' }],
-    raw: null,
-  };
+function message(id: string, client: Client, group = false): MessageEvent {
+  return createMessageEvent(
+    {
+      messageId:
+        (
+          {
+            self: '10',
+            old: '11',
+            keyword: '12',
+            denied: '13',
+            good: '14',
+            cooldown: '15',
+            next: '16',
+            offline: '17',
+          } as Record<string, string>
+        )[id] ?? id,
+      sequence: '1',
+      time: 100,
+      peer: group ? { type: 'group', groupId: '456' } : { type: 'private', userId: '789' },
+      sender: { userId: '789', uid: 'other', nickname: 'fixture' },
+      elements: [{ type: 'text', text: ' ping ' }],
+      raw: null,
+    },
+    {
+      assertActive() {
+        if (client.state !== 'online') throw Error('offline');
+      },
+      sendPrivateMessage: (id, input) => client.sendPrivateMessage(id, input),
+      sendGroupMessage: (id, input) => client.sendGroupMessage(id, input),
+    },
+  );
 }
 function harness(client = new Client(), cfg = config) {
   const controller = new AbortController();
@@ -108,15 +136,15 @@ test('authenticated is not ready; private and group messages receive original-ID
   const h = harness();
   await tick();
   h.client.emit('authenticated', account);
-  h.client.emit('message', message('1'));
+  h.client.emit('message', message('1', h.client));
   assert.equal(h.client.sends.length, 0);
   h.client.state = 'online';
   h.client.emit('ready', account);
   h.client.loginResult.resolve(account);
   await tick();
   assert.deepEqual(h.saved, [account]);
-  h.client.emit('message', message('002'));
-  h.client.emit('message', message('003', true));
+  h.client.emit('message', message('002', h.client));
+  h.client.emit('message', message('003', h.client, true));
   await tick();
   assert.equal(h.client.sends.length, 2);
   for (const [index, id] of ['002', '003'].entries()) {
@@ -141,27 +169,27 @@ test('self history duplicate keyword cooldown whitelist and offline suppress sen
   h.client.emit('ready', account);
   h.client.loginResult.resolve(account);
   await tick();
-  const self = message('self');
+  const self = message('self', h.client);
   self.sender.uid = 'self';
   h.client.emit('message', self);
-  const old = message('old');
+  const old = message('old', h.client);
   old.time = 1;
   h.client.emit('message', old);
-  const keyword = message('keyword');
+  const keyword = message('keyword', h.client);
   keyword.elements = [{ type: 'text', text: 'ping!' }];
   h.client.emit('message', keyword);
-  const denied = message('denied');
+  const denied = message('denied', h.client);
   denied.peer = { type: 'private', userId: '999' };
   h.client.emit('message', denied);
-  h.client.emit('message', message('good'));
-  h.client.emit('message', message('good'));
-  h.client.emit('message', message('cooldown'));
+  h.client.emit('message', message('good', h.client));
+  h.client.emit('message', message('good', h.client));
+  h.client.emit('message', message('cooldown', h.client));
   assert.equal(h.client.sends.length, 1);
   h.setTime(104000);
-  h.client.emit('message', message('next'));
+  h.client.emit('message', message('next', h.client));
   assert.equal(h.client.sends.length, 2);
   h.client.emit('offline', { source: 'login', kind: 'unknown', retryable: false, args: [] });
-  h.client.emit('message', message('offline', true));
+  h.client.emit('message', message('offline', h.client, true));
   assert.equal(h.client.sends.length, 2);
   h.controller.abort();
   await h.run;
@@ -194,7 +222,7 @@ test('send and close failures remain single attempts', async () => {
   client.emit('ready', account);
   client.loginResult.resolve(account);
   await tick();
-  client.emit('message', message('1'));
+  client.emit('message', message('1', h.client));
   await tick();
   h.controller.abort();
   await assert.rejects(

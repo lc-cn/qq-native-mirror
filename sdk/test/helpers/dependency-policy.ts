@@ -392,6 +392,15 @@ export function dependencyViolation({ from, to, typeOnly }: SourceDependency): s
     return to === 'src/storage/process-lock.ts'
       ? undefined
       : 'Package locking uses the shared process-lock primitive, not bundle management.';
+  if (from === 'src/client/message-event.ts')
+    return (typeOnly && to === 'src/contracts/messages.ts') ||
+      (!typeOnly && to === 'src/features/messages/send-input.ts')
+      ? undefined
+      : 'Message events bind captured reply inputs to injected client operations, without acquiring lifecycle or native resources.';
+  if (to === 'src/client/message-event.ts')
+    return from === 'src/client/qq-client.ts' && !typeOnly
+      ? undefined
+      : 'Only the public client binds reply capabilities to live message events.';
   if (from === 'src/client/client-event-presentation.ts')
     return typeOnly && to === 'src/contracts/native.ts'
       ? undefined
@@ -495,6 +504,7 @@ export function dependencyViolation({ from, to, typeOnly }: SourceDependency): s
   if (from === 'src/client/qq-client.ts')
     return facadeInputs.has(to) ||
       to === 'src/client/client-event-presentation.ts' ||
+      to === 'src/client/message-event.ts' ||
       to === 'src/runtime/client-lifecycle.ts' ||
       (typeOnly && to === 'src/runtime/operation-contracts.ts')
       ? undefined

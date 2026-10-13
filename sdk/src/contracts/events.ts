@@ -1,5 +1,5 @@
 import type { ClientState, OfflineInfo, Account } from './client.ts';
-import type { Message, MessageRecall } from './messages.ts';
+import type { MessageEvent, MessageRecall } from './messages.ts';
 import type { FriendRequest, FriendListUpdate, FriendAdded } from './contacts.ts';
 import type {
   GroupRequest,
@@ -26,9 +26,9 @@ export interface DiagnosticInfo {
 
 export interface ClientEvents {
   state: [ClientState];
-  message: [Message];
-  'message.private': [Message];
-  'message.group': [Message];
+  message: [MessageEvent];
+  'message.private': [MessageEvent];
+  'message.group': [MessageEvent];
   'message-recalled': [unknown];
   'message.recalled': [MessageRecall];
   kicked: [OfflineInfo];

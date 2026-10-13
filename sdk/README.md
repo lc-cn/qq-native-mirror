@@ -84,6 +84,27 @@ A mutation timeout does not prove that the server did nothing: the SDK never
 replays a timed-out send or management operation automatically.
 See [lifecycle and errors](docs/architecture.md#lifecycle-and-error-contracts).
 
+## Reply to a message event (working source)
+
+`message`, `message.private` and `message.group` deliver `MessageEvent` with
+`reply(content, quote = false): Promise<SentMessage>`. It sends to the captured
+conversation; `true` adds a reply element for the original message.
+
+```ts
+client.on('message', (message) => {
+  if (message.sender.userId === client.account?.uin) return;
+  if (!message.elements.some((element) => element.type === 'text' && element.text === 'ping'))
+    return;
+  message.reply('pong', true).catch((error) => console.error(error.message));
+});
+```
+
+Observe the returned Promise. A retained event cannot reply after its account
+session is retired by close, disconnect or replacement. No failed send is replayed.
+History/query results and worker payloads remain plain `Message` data without
+this method. This working-source addition is not a claim about the published
+`0.0.1` interface or real message delivery.
+
 ## Working-source capability guide
 
 The package-root declarations define exact method signatures. Internal file paths

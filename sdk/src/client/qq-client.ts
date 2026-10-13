@@ -1,4 +1,5 @@
 import { createClientEventPresentation } from './client-event-presentation.ts';
+import { createMessageEvent } from './message-event.ts';
 import { captureForwardSubmission } from '../features/forward/forward-input.ts';
 import { captureFriendRequest } from '../features/contacts/friend-request-input.ts';
 import { captureGroupRequestOperation } from '../features/groups/group-request-input.ts';
@@ -122,8 +123,21 @@ export class QQClient extends EventEmitter<ClientEvents> {
     autoReconnect?: ClientOptions['autoReconnect'],
   ) {
     super();
-    this.#events = createClientEventPresentation((event, payload) =>
-      Reflect.apply(this.emit, this, [event, payload]),
+    this.#events = createClientEventPresentation(
+      (event, payload) => Reflect.apply(this.emit, this, [event, payload]),
+      (message) => {
+        if (!message || typeof message !== 'object' || Array.isArray(message)) return message;
+        const assertActive =
+          this.#lifecycle?.captureOnlineOperationGuard() ??
+          (() => {
+            throw new Error('Message belongs to an inactive client session');
+          });
+        return createMessageEvent(message as Message, {
+          assertActive,
+          sendPrivateMessage: (userId, input) => this.sendPrivateMessage(userId, input),
+          sendGroupMessage: (groupId, input) => this.sendGroupMessage(groupId, input),
+        });
+      },
     );
     this.#lifecycle = new ClientLifecycle({
       worker,

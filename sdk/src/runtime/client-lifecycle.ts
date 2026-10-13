@@ -271,6 +271,24 @@ export class ClientLifecycle {
   get account(): Readonly<Account> | undefined {
     return this.#account && { ...this.#account };
   }
+  /** Bind a received action to the worker and authorization that delivered it. */
+  captureOnlineOperationGuard(): () => void {
+    const generation = this.#generation;
+    const revision = this.#offlineRevision;
+    const account = this.#account;
+    return () => {
+      if (
+        !account ||
+        this.#state !== 'online' ||
+        this.#closed ||
+        this.#closing ||
+        generation !== this.#generation ||
+        revision !== this.#offlineRevision ||
+        account !== this.#account
+      )
+        throw new Error('Message belongs to an inactive or replaced client session');
+    };
+  }
   #setState(state: ClientState) {
     if (this.#state === state) return;
     this.#state = state;

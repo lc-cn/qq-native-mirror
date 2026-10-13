@@ -1,4 +1,4 @@
-import { createClient, type MessageInput } from 'qq-native-client';
+import { createClient } from 'qq-native-client';
 import { runWhenMain } from './support/cli.ts';
 import type { DemoConfig } from './support/config.ts';
 import { ReplyPolicy } from './support/reply-policy.ts';
@@ -52,24 +52,13 @@ export async function runDemo(
       if (signal.aborted || !replies.accepts(message, client.state)) return;
       const rss = process.memoryUsage().rss;
       log(`当前内存使用量：${rss} 字节`);
-      const reply: MessageInput = [
-        { type: 'reply', messageId: message.messageId },
-        {
-          type: 'text',
-          text: `${config.reply}\n当前内存使用量：${(rss / 1024 / 1024).toFixed(2)} MB`,
-        },
-      ];
       lifetime.observe(
         (async () => {
-          const peer = message.peer;
-          const receipt =
-            peer.type === 'group'
-              ? await client.sendGroupMessage(peer.groupId, reply)
-              : await client.sendPrivateMessage(peer.userId, reply);
-          if (!signal.aborted)
-            log(
-              `已回复 ${peer.type === 'group' ? '群' : '私聊'} ${peer.type === 'group' ? peer.groupId : peer.userId}，消息 ID ${receipt.messageId}`,
-            );
+          const receipt = await message.reply(
+            `${config.reply}\n当前内存使用量：${(rss / 1024 / 1024).toFixed(2)} MB`,
+            true,
+          );
+          if (!signal.aborted) log(`已回复，消息 ID ${receipt.messageId}`);
         })(),
         '回复失败，远端效果可能未知',
       );

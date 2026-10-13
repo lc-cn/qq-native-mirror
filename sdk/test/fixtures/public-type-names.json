@@ -55,6 +55,7 @@
   "MergedForwardOptions",
   "Message",
   "MessageElement",
+  "MessageEvent",
   "MessageInput",
   "MessageRecall",
   "NativeCallbackAudit",

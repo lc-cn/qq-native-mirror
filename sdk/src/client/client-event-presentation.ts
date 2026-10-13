@@ -17,7 +17,10 @@ interface EventFields {
  * public client, across worker generations. Lifecycle owns generation filtering.
  * Delivery is synchronous: observer failures propagate and prevent later aliases.
  */
-export function createClientEventPresentation(emit: (event: string, payload: unknown) => unknown) {
+export function createClientEventPresentation(
+  emit: (event: string, payload: unknown) => unknown,
+  presentMessage: (message: unknown) => unknown = (message) => message,
+) {
   const audit = new Map<string, NativeCallbackAudit>();
   return {
     forward(event: string, value: unknown): void {
@@ -40,12 +43,19 @@ export function createClientEventPresentation(emit: (event: string, payload: unk
       const payload =
         event === 'login-error'
           ? new Error(typeof fields?.message === 'string' ? fields.message : 'Native login failed')
-          : value;
+          : event === 'message'
+            ? presentMessage(value)
+            : value;
       if (event === 'qrcode' && fields && typeof fields.image === 'string')
         fields.image = Buffer.from(fields.image, 'base64');
       emit(event, payload);
       if (event === 'message')
-        emit(fields?.peer?.type === 'group' ? 'message.group' : 'message.private', payload);
+        emit(
+          (payload as EventFields | null | undefined)?.peer?.type === 'group'
+            ? 'message.group'
+            : 'message.private',
+          payload,
+        );
     },
     /** Independent snapshots contain shapes and counts, never callback arguments. */
     get audit(): NativeCallbackAudit[] {

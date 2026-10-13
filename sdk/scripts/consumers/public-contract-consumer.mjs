@@ -92,6 +92,19 @@ void login;
 const invalidLogin: LoginRequest = { method: 'quick' };
 // @ts-expect-error Received forward cards cannot be sent as raw message inputs.
 const receivedAsSendable: SendableMessageElement = { type: 'forward', format: 'ark', resourceId: 'r' };
+declare const liveMessage: ClientEvents['message'][0];
+const typedMessageEvent: MessageEvent = liveMessage;
+const replyFunction: MessageEvent['reply'] = typedMessageEvent.reply;
+void replyFunction;
+// @ts-expect-error Live reply capabilities cannot be reassigned by observers.
+typedMessageEvent.reply = async () => ({ messageId: '1', sequence: '1', time: 0 });
+const replyReceipt: Promise<SentMessage> = liveMessage.reply('pong', true);
+void replyReceipt;
+// @ts-expect-error Reply quoting is a boolean, not a string option.
+liveMessage.reply('pong', 'quote');
+declare const historicalMessage: Message;
+// @ts-expect-error Historical message data does not own a live client reply capability.
+historicalMessage.reply('pong');
 declare const event: ClientEvents['request.group'][0];
 const request: GroupRequest = event;
 declare const receipt: SentMergedForward;

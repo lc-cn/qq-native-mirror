@@ -153,6 +153,12 @@ filters retired worker events before forwarding them; presentation neither
 acquires a worker nor interprets authorization state. SDK-produced state/log/
 termination events keep the lifecycle's correlated typed outlet.
 
+`client/message-event` binds `MessageEvent.reply(content, quote = false)` to a
+captured conversation and account-operation guard supplied by `QQClient`. It only
+captures public send inputs and invokes injected operations; it owns no worker,
+account acquisition or native transport. Primary and alias message events share
+that reply capability, while worker and historical message DTOs remain data-only.
+
 Feature modules may depend on public contracts and narrow native/runtime ports.
 They do not import the public Client or compose other account sessions. Relative
 internal paths are private; only the package root and CLI are public entry points.

@@ -485,3 +485,42 @@ test('client event presentation has one composer and no lifecycle, native or IO 
     dependencyViolation({ from: presentation, to: 'src/contracts/native.ts', typeOnly: false }),
   );
 });
+
+test('message event replies have one client binder and only captured input dependencies', () => {
+  const owner = 'src/client/message-event.ts';
+  assert.deepEqual(
+    graph.get(join(projectRoot, owner))!.map(({ target, typeOnly }) => ({ target, typeOnly })),
+    [
+      { target: join(projectRoot, 'src/contracts/messages.ts'), typeOnly: true },
+      { target: join(projectRoot, 'src/features/messages/send-input.ts'), typeOnly: false },
+    ],
+  );
+  assert.equal(
+    dependencyViolation({ from: 'src/client/qq-client.ts', to: owner, typeOnly: false }),
+    undefined,
+  );
+  for (const typeOnly of [false, true]) {
+    for (const from of [
+      'src/client/create-client.ts',
+      'src/client/client-event-presentation.ts',
+      'src/runtime/client-lifecycle.ts',
+      'src/native-services.ts',
+      'src/features/messages/message-query.ts',
+      'src/client/new-owner.ts',
+    ])
+      assert.ok(dependencyViolation({ from, to: owner, typeOnly }));
+    for (const to of [
+      'src/client/qq-client.ts',
+      'src/runtime/client-lifecycle.ts',
+      'src/runtime/worker-rpc-channel.ts',
+      'src/native/native-object.ts',
+      'node:fs',
+      'src/features/messages/existing-native-message-sender.ts',
+    ])
+      assert.ok(dependencyViolation({ from: owner, to, typeOnly }));
+  }
+  assert.ok(dependencyViolation({ from: owner, to: 'src/contracts/messages.ts', typeOnly: false }));
+  assert.ok(
+    dependencyViolation({ from: owner, to: 'src/features/messages/send-input.ts', typeOnly: true }),
+  );
+});
