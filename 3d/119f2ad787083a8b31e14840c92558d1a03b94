@@ -1,0 +1,21 @@
+sdk/README.md
+  s_2104cc474f1ce5::t_3bdc91cfd15130 25-31
+sdk/docs/linux-runtime.md
+  s_2104cc474f1ce5::t_d9afdc9de64eff 16-33
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "3d119f2ad787083a8b31e14840c92558d1a03b94",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
