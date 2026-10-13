@@ -29,7 +29,7 @@
     "check": "npm run format:check && npm run lint && npm run check:native-storage && npm run typecheck && npm test && npm run build && npm run verify:package",
     "clean": "node scripts/clean-dist.mjs",
     "check:consumer-modules": "node scripts/check-consumer-modules.ts",
-    "pretest": "npm run check:consumer-modules",
+    "pretest": "npm run check:consumer-modules && tsc",
     "preverify:package": "npm run check:consumer-modules",
     "check:native-storage": "node ../tools/check-native-storage.mjs",
     "demo": "node examples/demo.ts",

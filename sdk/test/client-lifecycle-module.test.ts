@@ -3408,3 +3408,67 @@ test('conflicting public login does not consume active configured failure notifi
     await lifecycle.close();
   }
 });
+
+for (const snapshot of [
+  { name: 'zero exit code', exitCode: 0, signalCode: null },
+  { name: 'nonzero exit code', exitCode: 23, signalCode: null },
+  { name: 'termination signal', exitCode: null, signalCode: 'SIGTERM' },
+] as const) {
+  test(`close accepts an already exited worker with ${snapshot.name} without another IPC or kill`, async () => {
+    const f = workerFixture();
+    Object.assign(f.worker, {
+      connected: false,
+      exitCode: snapshot.exitCode,
+      signalCode: snapshot.signalCode,
+    });
+    let kills = 0;
+    f.worker.kill = () => {
+      kills++;
+      throw Error('Exited worker must not be killed');
+    };
+    const states: unknown[] = [];
+    const lifecycle = new ClientLifecycle({
+      worker: f.worker,
+      timeout: 1000,
+      emit(event, value) {
+        if (event === 'state') states.push(value);
+      },
+      forward() {},
+      exportsUpdated() {},
+    });
+    assert.equal(lifecycle.state, 'idle', 'Construction does not invent an exit notification');
+    const closing = lifecycle.close();
+    assert.equal(lifecycle.close(), closing);
+    await closing;
+    assert.equal(lifecycle.close(), closing);
+    assert.equal(lifecycle.state, 'closed');
+    assert.deepEqual(states, ['closing', 'closed']);
+    assert.equal(f.sent.length, 0);
+    assert.equal(kills, 0);
+  });
+}
+
+test('close still rejects disconnected workers whose exit is unconfirmed and terminates once', async () => {
+  const f = workerFixture();
+  Object.assign(f.worker, { connected: false });
+  let kills = 0;
+  const kill = f.worker.kill;
+  f.worker.kill = (...args) => {
+    kills++;
+    return Reflect.apply(kill, f.worker, args);
+  };
+  const lifecycle = new ClientLifecycle({
+    worker: f.worker,
+    timeout: 1000,
+    emit() {},
+    forward() {},
+    exportsUpdated() {},
+  });
+  const closing = lifecycle.close();
+  assert.equal(lifecycle.close(), closing);
+  await assert.rejects(closing, /QQ client is closed/);
+  assert.equal(lifecycle.close(), closing);
+  assert.equal(lifecycle.state, 'closed');
+  assert.equal(f.sent.length, 0);
+  assert.equal(kills, 1);
+});

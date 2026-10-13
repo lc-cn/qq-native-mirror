@@ -804,8 +804,10 @@ export class ClientLifecycle {
   async #closeWorker(): Promise<void> {
     let acknowledged = false;
     try {
-      await this.request('close', {}, 2000);
-      acknowledged = true;
+      if (this.#worker.exitCode == null && this.#worker.signalCode == null) {
+        await this.request('close', {}, 2000);
+        acknowledged = true;
+      }
     } finally {
       this.#closed = true;
       this.#account = undefined;

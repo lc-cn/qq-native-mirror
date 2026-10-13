@@ -6,7 +6,8 @@
     "rootDir": ".",
     "allowImportingTsExtensions": true,
     "allowJs": true,
-    "checkJs": false
+    "checkJs": false,
+    "paths": { "qq-native-client": ["./src/index.ts"] }
   },
   "include": ["src/**/*.ts", "test/**/*.ts"]
 }
