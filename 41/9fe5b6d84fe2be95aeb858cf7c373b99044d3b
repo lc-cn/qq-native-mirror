@@ -1,0 +1,28 @@
+ci/linux-video-baseline.test.mjs
+  s_2104cc474f1ce5::t_4b57ced0b05c0e 1-61,68,71-75,77-82
+  s_2104cc474f1ce5::t_4597b840e013fe 62-67,69-70,76
+.github/workflows/video-codec-native.yml
+  s_2104cc474f1ce5::t_9da7267fc91a71 67,70,76-78,85,88,91,93-98,101
+ci/linux-video-baseline.mjs
+  s_2104cc474f1ce5::t_720ec46c25ae1e 1-171
+tools/check-native-storage.mjs
+  s_2104cc474f1ce5::t_1ff88f1aa079d4 52-53
+tools/tsconfig.consumer-ci.json
+  s_2104cc474f1ce5::t_78352fc5d0f563 10-11
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "419fe5b6d84fe2be95aeb858cf7c373b99044d3b",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
