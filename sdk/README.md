@@ -24,9 +24,13 @@ for that device. An installed package is reused only when its full version,
 runtime constraints and original file inventory match the trusted manifest.
 Otherwise the selected bundle is downloaded or reused from verified cache.
 Catalog or manifest failures reject; they do not silently select an older package.
-Native versions and npm versions are independent. Linux requires glibc. Current Windows bundles
-require official Node **24.20.0** with matching runtime configuration;
-macOS/Linux require Node 24 or later.
+Native versions and npm versions are independent. Linux requires glibc: the measured
+public/current registration bridges require **glibc 2.34 or later** (`dlopen` and
+`dlerror` import `GLIBC_2.34`). This is a bridge-only minimum; vendor libraries can
+impose higher requirements. Current Windows bundles require official Node
+**24.20.0** with matching runtime configuration; macOS/Linux require Node 24 or
+later. Measured Linux environments include Ubuntu 24.04 with Node 24.20.0 and
+Debian 13 with Node 24.21.0, not every distribution or Node 24 minor release.
 
 ```ts
 import { createClient } from 'qq-native-client';

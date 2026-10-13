@@ -13,6 +13,24 @@ The table describes QR-only probes. A subsequent Linux arm64 run received user p
 
 The ELF wrappers import the custom `qq_magic_napi_register` symbol, just like the tested macOS wrapper. The compiled Linux registration bridge forwards that symbol to standard `napi_module_register`.
 
+Static ELF inspection of the public mirror registration bridges and the current
+Linux x64 shared-main bridge found `GLIBC_2.34` imports for `dlopen` and `dlerror`.
+The x64 bridge SHA-256 is
+`2564b41898b7b3ea3ca0244ec02fa578fef26e02194b3120f519b58730f0bdd4`;
+the ARM64 mirror bridge SHA-256 is
+`646d987a8b735cbca04ebe3ab3bfd197f3c2767db5a1843decb29999a51efd8b`.
+The measured current x64 bridge is byte-identical to that mirror bridge. Both
+architectures therefore require glibc **2.34 or later for the bridge alone**.
+This inspection does not establish the minimum for the vendor wrapper or its
+other libraries, which can require a newer runtime or additional system packages.
+
+Linux initialization evidence is bounded to the environments recorded below,
+including native Ubuntu 24.04 runners with Node 24.20.0 and local Debian 13
+containers with Node 24.21.0 (x64 emulated where stated). The Node 24-or-later
+requirement is not a claim that every Node minor release or glibc distribution
+has been tested. These loader prerequisites do not upgrade account, signing or
+business-operation evidence, and do not establish an npm publication.
+
 A base `node:24` Debian container has most needed loader libraries, but requires the distribution package `libx11-xcb1`. QQ's included `libbugly.so` imports `gnutls_free` without a direct ELF dependency that loads GnuTLS. Loading the standard system `libgnutls.so.30` globally fixes that missing symbol. The bridge now exposes `preloadLibrary(path)` using `dlopen(RTLD_NOW | RTLD_GLOBAL)`. Both architectures were verified with this method, without `LD_PRELOAD` or a QQ host.
 
 The wrapper ELF RPATH is `$ORIGIN:$ORIGIN/sharp-lib`. Native files include `libvips-cpp.so.42`, `libbugly.so`, `libcrbase.so`, unwind and SSH libraries, plus base distribution libc, X11, C++ and Kerberos dependencies. An Alpine/musl base is not equivalent to this verified glibc environment.
