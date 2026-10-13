@@ -1,0 +1,21 @@
+sdk/docs/native-size-reduction.md
+  s_2104cc474f1ce5::t_5fde745ea38411 322-366
+sdk/docs/evidence/default-mirror-resource-subset-33e3c94-local.json
+  s_2104cc474f1ce5::t_922ab0c904c383 1-133
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "40c6fc2428f649bbd1b221ac32708ae826eca2ac",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
