@@ -285,3 +285,35 @@ format, lint, type and static dependency inventory gates.
 This describes the checked-in workflow contract. Local regressions or local
 container execution do not establish that GitHub has executed this workflow, that
 the candidates are published, or that all public rows succeed.
+
+## Local execution of the shared-main CI driver (2026-10-13)
+
+At source `31e57593b54c126d4d6f68a117439180c3edee97`, the actual
+`build-main.mjs` produced one 704,009-byte archive on macOS ARM64 / Node 24.19.0.
+Its SHA-256 is `8345a2d0616d3bc04f38fed784d54e166bad4de5907f96acef1c0db8809cb545`;
+the complete source declaration seal is
+`c50335cc705b48e21d45b57949c3318636413c42dd6b1369e64ecaf44ebc040f`.
+All four containers installed those same bytes using the checked-in
+`verify.mjs`, with optional native packages omitted and no account mounts.
+
+| Selection                              | Linux architecture | Verified native paths | Native exports | Cold payload HTTP fetches | Warm payload HTTP fetches |
+| -------------------------------------- | ------------------ | --------------------: | -------------: | ------------------------: | ------------------------: |
+| Public default 3.2.32-52194            | ARM64              |                    20 |             98 |                        40 |                         0 |
+| Public default 3.2.32-52194            | Emulated x64       |                    19 |             98 |                        38 |                         0 |
+| Complete legacy candidate 3.2.31-51102 | ARM64              |                     9 |             92 |                        18 |                         0 |
+| Complete legacy candidate 3.2.31-51102 | Emulated x64       |                     8 |             92 |                        16 |                         0 |
+
+Every row completed two independent empty-account initializations and closes,
+with the shared cache's complete file hashes and modification times unchanged on
+the second pass. These HTTP counts include redirect fetches, rather than counting
+only unique native objects. The consumers ran Node 24.21.0 on Debian 13/glibc in
+OrbStack; x64 execution was emulated on the ARM64 host. The tool gate passed all
+83 tests, including source seals, candidate selection, stale-receipt refusal and
+primary/cleanup error preservation.
+
+The run identifier is explicitly synthetic local provenance; no GitHub job,
+remote push, candidate promotion or npm publication occurred. This is initialization
+and close evidence, with no account login, restoration, messages, business queries
+or signing authenticity claim. The SDK's 141 source modules are unchanged from
+`33e3c94`; the prior full SDK gate is separate from this new tooling and native
+runtime evidence. See the [bounded receipt](evidence/shared-main-version-ci-31e5759-local.json).
