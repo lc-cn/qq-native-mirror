@@ -1,0 +1,630 @@
+{
+  "schemaVersion": 1,
+  "sdkSourceCommit": "40c6fc2428f649bbd1b221ac32708ae826eca2ac",
+  "sdkVersion": "0.0.2",
+  "mainArchive": {
+    "sha256": "94a019b6544aae3ca98880c89399a8f6a69db78b07f6675b35e40302b6b5c0d6",
+    "bytes": 695146,
+    "packedFiles": 406,
+    "sourceModules": 141,
+    "compiledFiles": 282,
+    "optionalNativePackagesInstalled": false,
+    "electronInstalled": false
+  },
+  "cases": [
+    {
+      "selectionScope": "public-default-latest",
+      "arch": "arm64",
+      "execution": "OrbStack Linux VM on ARM64 Mac",
+      "node": "v24.21.0",
+      "osRelease": "PRETTY_NAME=\"Debian GNU/Linux 13 (trixie)\"\nNAME=\"Debian GNU/Linux\"\nVERSION_ID=\"13\"\nVERSION=\"13 (trixie)\"\nVERSION_CODENAME=trixie\nDEBIAN_VERSION_FULL=13.7\nID=debian\nHOME_URL=\"https://www.debian.org/\"\nSUPPORT_URL=\"https://www.debian.org/support\"\nBUG_REPORT_URL=\"https://bugs.debian.org/\"\n",
+      "imageId": "sha256:82720fef34275016c7f710e7afdb3d7978ac8b8dd4688cdfb1506eb9c2395cc8",
+      "dockerArchitecture": "arm64",
+      "wrapperProvided": false,
+      "versionProvided": false,
+      "manifestProvided": false,
+      "selectedVersion": {
+        "clientVersion": "3.2.32-52194",
+        "appId": "537379448",
+        "qua": "V1_LNX_3.2.32-52194_52194_GW_B"
+      },
+      "selectedManifestSha256": "628201012ea25d276667e4ac0064541534d6b3ab39e7348d75fb51d13e778b1b",
+      "phases": [
+        {
+          "phase": "cold",
+          "initialized": true,
+          "closed": true,
+          "state": "idle",
+          "accountPresent": false,
+          "exports": 98,
+          "nativeFilesVerified": 20,
+          "payloadRequests": 20,
+          "elapsedMs": 20092,
+          "workerExecutable": "/usr/local/bin/node",
+          "wrapperMapped": true,
+          "bridgeMapped": true,
+          "qqApplicationImages": 0,
+          "electronImages": 0,
+          "nativeLibraryPathsSha256": "636af15a0c43b92a61be67a81298607b525fe6d886a6bb4baf0e6bfafb3be95a"
+        },
+        {
+          "phase": "warm",
+          "initialized": true,
+          "closed": true,
+          "state": "idle",
+          "accountPresent": false,
+          "exports": 98,
+          "nativeFilesVerified": 20,
+          "payloadRequests": 0,
+          "elapsedMs": 759,
+          "workerExecutable": "/usr/local/bin/node",
+          "wrapperMapped": true,
+          "bridgeMapped": true,
+          "qqApplicationImages": 0,
+          "electronImages": 0,
+          "nativeLibraryPathsSha256": "636af15a0c43b92a61be67a81298607b525fe6d886a6bb4baf0e6bfafb3be95a"
+        }
+      ],
+      "warmFilesUnchanged": true,
+      "sdkFetchHosts": {
+        "raw.githubusercontent.com": 4,
+        "gh-proxy.com": 20
+      },
+      "requestFailures": 0,
+      "allPayloadsViaGhProxy": true,
+      "receiptSha256": "165ed8f6a8e8eb15b96f1520d23ce9f01dfff59069520424d37a6c89c1a8aa37",
+      "driverSha256": "511075e07b3166d3a97942da2b6ade00dd27c13d5298c98512531e20fbd75417",
+      "actualRuntimeSession": 31762,
+      "consumedExitCode": 0,
+      "nativeInventory": [
+        {
+          "path": "libbugly.so",
+          "sha256": "573cbe3f173c31945ad8adc7f91b462ee40e92d711f049311a9ffc67ba164f08",
+          "bytes": 5267744
+        },
+        {
+          "path": "libcrbase.so",
+          "sha256": "d9152f08a120fd80d106e575582425c4f9b5ceccb579681c08a1cc998d4d290a",
+          "bytes": 14811688
+        },
+        {
+          "path": "libssh2.so.1",
+          "sha256": "feb4e10c885745ff39d924e0f0d83d78f0b2a26d7900965b29eba5dc70600104",
+          "bytes": 268168
+        },
+        {
+          "path": "libunwind-aarch64.so.8",
+          "sha256": "b3d419fdf5146bdf1f829fa6146b8867788f57ea75adf6bd999b4791be90f196",
+          "bytes": 153552
+        },
+        {
+          "path": "libunwind.so.8",
+          "sha256": "ff7bb631cb460dfcb231d80f61e1390448244a0a6f940b12c7c03dbd1a565205",
+          "bytes": 199112
+        },
+        {
+          "path": "libz.so.1",
+          "sha256": "d7e452e38e2b8d3f47d6110e50a1c0b505477d558e56806cccc75535d0302393",
+          "bytes": 104824
+        },
+        {
+          "path": "sharp-lib/libvips-cpp.so.42",
+          "sha256": "41978e127befa8d0bcd1a4042142bc4d7b4ddda0d76e389ee31c4aac30cec7f0",
+          "bytes": 15921144
+        },
+        {
+          "path": "wrapper.node",
+          "sha256": "c302361f52494de257044e912e43ed244bb29ee59f59345d25a8959327828337",
+          "bytes": 144561472
+        },
+        {
+          "path": "registration-bridge.node",
+          "sha256": "646d987a8b735cbca04ebe3ab3bfd197f3c2767db5a1843decb29999a51efd8b",
+          "bytes": 70560
+        },
+        {
+          "path": "video/ADDON-LICENSE.txt",
+          "sha256": "642dd80631bd63618a5b9c1a77d5644e437a2f7ba2b4603088282a6dce36c973",
+          "bytes": 1086
+        },
+        {
+          "path": "video/FFMPEG-COPYING.LGPLv2.1",
+          "sha256": "246041b6ecf9bc32d718a62c57877c78b5eb397b6467e74ed7ae2626ab189c30",
+          "bytes": 26517
+        },
+        {
+          "path": "video/FFMPEG-LICENSE.md",
+          "sha256": "2e1d16c72fd74e12063776371da757322f8b77589386532f4fd8634bde7de1af",
+          "bytes": 4346
+        },
+        {
+          "path": "video/NODE-LICENSE.txt",
+          "sha256": "5888dbb9a1d2b18f2c3e6c5f6af1b39de658372b402a0577b002777f14c62ace",
+          "bytes": 157609
+        },
+        {
+          "path": "video/NOTICE.txt",
+          "sha256": "6d92d277200104c1bb7ea3ad395e8f5e0365c642d38405b5da438d300ab9aa56",
+          "bytes": 364
+        },
+        {
+          "path": "video/build.json",
+          "sha256": "4f9c0d579a8f4e2d8ad81fd2df1a21c9384e9eb2fe19aafb616f8249a7566cf2",
+          "bytes": 3085
+        },
+        {
+          "path": "video/consumer.json",
+          "sha256": "b8633ed9ffbc4b8f4892f908cf0e91cf57869d8a736395785af64b75041414a0",
+          "bytes": 1835
+        },
+        {
+          "path": "video/dependencies.txt",
+          "sha256": "bd68f6299c0d7e54ff64764eef1303027f8f1e3e35e0f0da629aecaed97124de",
+          "bytes": 377
+        },
+        {
+          "path": "video/video-codec.node",
+          "sha256": "8eff4ebdf6b704b1a3aa4a25a328c0949ce81b1b8db220ef5bf3f310fe3ac741",
+          "bytes": 15499928
+        },
+        {
+          "path": "video/SOURCE-PROVENANCE.json",
+          "sha256": "07585bd533a6a6e38a4b2450f9fa368cc082ad9a877615ab543bca4f13d3a095",
+          "bytes": 5378
+        },
+        {
+          "path": "video/SOURCE-AND-RELINK.txt",
+          "sha256": "c5a56e7f108ef71f15d6be76b718450d7f5e2d21d8f3715a1caa97644bc0b47d",
+          "bytes": 2042
+        }
+      ]
+    },
+    {
+      "selectionScope": "public-default-latest",
+      "arch": "x64",
+      "execution": "x64 emulation inside OrbStack Linux VM on ARM64 Mac",
+      "node": "v24.21.0",
+      "osRelease": "PRETTY_NAME=\"Debian GNU/Linux 13 (trixie)\"\nNAME=\"Debian GNU/Linux\"\nVERSION_ID=\"13\"\nVERSION=\"13 (trixie)\"\nVERSION_CODENAME=trixie\nDEBIAN_VERSION_FULL=13.7\nID=debian\nHOME_URL=\"https://www.debian.org/\"\nSUPPORT_URL=\"https://www.debian.org/support\"\nBUG_REPORT_URL=\"https://bugs.debian.org/\"\n",
+      "imageId": "sha256:ff23385f5afc921d36971b2289a4c4a1931664bfedd40ce13266476f6ac0b001",
+      "dockerArchitecture": "amd64",
+      "wrapperProvided": false,
+      "versionProvided": false,
+      "manifestProvided": false,
+      "selectedVersion": {
+        "clientVersion": "3.2.32-52194",
+        "appId": "537379447",
+        "qua": "V1_LNX_3.2.32-52194_52194_GW_B"
+      },
+      "selectedManifestSha256": "d130b3db854cd147a96bd5cb80d9d16fcf6ce364eda546849ac06403077a9ae4",
+      "phases": [
+        {
+          "phase": "cold",
+          "initialized": true,
+          "closed": true,
+          "state": "idle",
+          "accountPresent": false,
+          "exports": 98,
+          "nativeFilesVerified": 19,
+          "payloadRequests": 19,
+          "elapsedMs": 18353,
+          "workerExecutable": "/usr/local/bin/node",
+          "wrapperMapped": true,
+          "bridgeMapped": true,
+          "qqApplicationImages": 0,
+          "electronImages": 0,
+          "nativeLibraryPathsSha256": "3cca9b7336c8bbebc93fc37d5bbfa3cbddbd0d8f9f479cfd3e4cadb497f628c8"
+        },
+        {
+          "phase": "warm",
+          "initialized": true,
+          "closed": true,
+          "state": "idle",
+          "accountPresent": false,
+          "exports": 98,
+          "nativeFilesVerified": 19,
+          "payloadRequests": 0,
+          "elapsedMs": 2432,
+          "workerExecutable": "/usr/local/bin/node",
+          "wrapperMapped": true,
+          "bridgeMapped": true,
+          "qqApplicationImages": 0,
+          "electronImages": 0,
+          "nativeLibraryPathsSha256": "3cca9b7336c8bbebc93fc37d5bbfa3cbddbd0d8f9f479cfd3e4cadb497f628c8"
+        }
+      ],
+      "warmFilesUnchanged": true,
+      "sdkFetchHosts": {
+        "raw.githubusercontent.com": 4,
+        "gh-proxy.com": 19
+      },
+      "requestFailures": 0,
+      "allPayloadsViaGhProxy": true,
+      "receiptSha256": "793950f2983e1568b97b08a87dc0829e2b97633ce7cd9a94fb6387fedc56e9f3",
+      "driverSha256": "511075e07b3166d3a97942da2b6ade00dd27c13d5298c98512531e20fbd75417",
+      "actualRuntimeSession": 10454,
+      "consumedExitCode": 0,
+      "nativeInventory": [
+        {
+          "path": "libbugly.so",
+          "sha256": "b4c78ae60326e7c68b9f026d5c43a8db1ad19ab4069a11a3468a498b9ee8599d",
+          "bytes": 1377128
+        },
+        {
+          "path": "libcrbase.so",
+          "sha256": "5c4ef5b297291301eb40c4ae48d31083830132b146bac3c21a68e080ec71fc8e",
+          "bytes": 2543712
+        },
+        {
+          "path": "libssh2.so.1",
+          "sha256": "b18f774efaf7e074338133ec9ae93dd3a94fb33ff2aa1eedbf4d5b45172d8e23",
+          "bytes": 211272
+        },
+        {
+          "path": "libunwind-x86_64.so.8",
+          "sha256": "ffd57d6f0a4e902278f2f33d88247b7661f7bd03bd300733db3193d51cd98f7b",
+          "bytes": 923368
+        },
+        {
+          "path": "libunwind.so.8",
+          "sha256": "7466ebba89873fa3a959ae0a14c824140df82a8ebba40bc1c3808acbc5eab76b",
+          "bytes": 661672
+        },
+        {
+          "path": "sharp-lib/libvips-cpp.so.42",
+          "sha256": "994c562dc1242f07ce62c0c918bd4e49eebf5bb7a0e34726892a4c79ddab3399",
+          "bytes": 16707440
+        },
+        {
+          "path": "wrapper.node",
+          "sha256": "7882b8e3055cd38584861042befacd8be9939896f5cbbca6fa4a230926b48526",
+          "bytes": 149670240
+        },
+        {
+          "path": "registration-bridge.node",
+          "sha256": "2564b41898b7b3ea3ca0244ec02fa578fef26e02194b3120f519b58730f0bdd4",
+          "bytes": 16336
+        },
+        {
+          "path": "video/ADDON-LICENSE.txt",
+          "sha256": "642dd80631bd63618a5b9c1a77d5644e437a2f7ba2b4603088282a6dce36c973",
+          "bytes": 1086
+        },
+        {
+          "path": "video/FFMPEG-COPYING.LGPLv2.1",
+          "sha256": "246041b6ecf9bc32d718a62c57877c78b5eb397b6467e74ed7ae2626ab189c30",
+          "bytes": 26517
+        },
+        {
+          "path": "video/FFMPEG-LICENSE.md",
+          "sha256": "2e1d16c72fd74e12063776371da757322f8b77589386532f4fd8634bde7de1af",
+          "bytes": 4346
+        },
+        {
+          "path": "video/NODE-LICENSE.txt",
+          "sha256": "5888dbb9a1d2b18f2c3e6c5f6af1b39de658372b402a0577b002777f14c62ace",
+          "bytes": 157609
+        },
+        {
+          "path": "video/NOTICE.txt",
+          "sha256": "6d92d277200104c1bb7ea3ad395e8f5e0365c642d38405b5da438d300ab9aa56",
+          "bytes": 364
+        },
+        {
+          "path": "video/build.json",
+          "sha256": "1c38d65fc6e52e4dee92c5024ecb70845ec4b4a82a4d0a9d7a61cab933a5157e",
+          "bytes": 3083
+        },
+        {
+          "path": "video/consumer.json",
+          "sha256": "c80cfa7f74d73c674b05b0a4ba9300b7626d75457c6c8d3338ec69d1b340d4b9",
+          "bytes": 1833
+        },
+        {
+          "path": "video/dependencies.txt",
+          "sha256": "4cbaa7d5d7ed82b2d737de840aa8e2df21d3f7a1a37aa777968d3380f1a54ffc",
+          "bytes": 374
+        },
+        {
+          "path": "video/video-codec.node",
+          "sha256": "195312a9613fd716e2df52a11d409571bdb5959e1537e12f475c2048c6c9f88d",
+          "bytes": 17704104
+        },
+        {
+          "path": "video/SOURCE-PROVENANCE.json",
+          "sha256": "2e3441773a538330167b82ec32fa479b42d8faa09500689712a7bb99143444b8",
+          "bytes": 5374
+        },
+        {
+          "path": "video/SOURCE-AND-RELINK.txt",
+          "sha256": "6bf80b4d85d08b5c6b0be725e77785c11deb86397a91a01927d2836807d8b8cf",
+          "bytes": 2038
+        }
+      ]
+    },
+    {
+      "selectionScope": "local-legacy-complete-manifest",
+      "arch": "arm64",
+      "execution": "OrbStack Linux VM on ARM64 Mac",
+      "node": "v24.21.0",
+      "osRelease": "PRETTY_NAME=\"Debian GNU/Linux 13 (trixie)\"\nNAME=\"Debian GNU/Linux\"\nVERSION_ID=\"13\"\nVERSION=\"13 (trixie)\"\nVERSION_CODENAME=trixie\nDEBIAN_VERSION_FULL=13.7\nID=debian\nHOME_URL=\"https://www.debian.org/\"\nSUPPORT_URL=\"https://www.debian.org/support\"\nBUG_REPORT_URL=\"https://bugs.debian.org/\"\n",
+      "imageId": "sha256:82720fef34275016c7f710e7afdb3d7978ac8b8dd4688cdfb1506eb9c2395cc8",
+      "dockerArchitecture": "arm64",
+      "wrapperProvided": false,
+      "versionProvided": false,
+      "manifestProvided": true,
+      "selectedVersion": {
+        "clientVersion": "3.2.31-51102",
+        "appId": "537376498",
+        "qua": "V1_LNX_3.2.31-51102_51102_GW_B"
+      },
+      "selectedManifestSha256": "b8b08fecdaf4f4b6c57161c406835c7d4376de1331318d0281dec9a9f118c6d9",
+      "phases": [
+        {
+          "phase": "cold",
+          "initialized": true,
+          "closed": true,
+          "state": "idle",
+          "accountPresent": false,
+          "exports": 92,
+          "nativeFilesVerified": 9,
+          "payloadRequests": 9,
+          "elapsedMs": 33000,
+          "workerExecutable": "/usr/local/bin/node",
+          "wrapperMapped": true,
+          "bridgeMapped": true,
+          "qqApplicationImages": 0,
+          "electronImages": 0,
+          "nativeLibraryPathsSha256": "e9cdfa9f383434206046efe2a3f560ad36008c0a371965e89857fd5285582014"
+        },
+        {
+          "phase": "warm",
+          "initialized": true,
+          "closed": true,
+          "state": "idle",
+          "accountPresent": false,
+          "exports": 92,
+          "nativeFilesVerified": 9,
+          "payloadRequests": 0,
+          "elapsedMs": 242,
+          "workerExecutable": "/usr/local/bin/node",
+          "wrapperMapped": true,
+          "bridgeMapped": true,
+          "qqApplicationImages": 0,
+          "electronImages": 0,
+          "nativeLibraryPathsSha256": "e9cdfa9f383434206046efe2a3f560ad36008c0a371965e89857fd5285582014"
+        }
+      ],
+      "warmFilesUnchanged": true,
+      "sdkFetchHosts": {
+        "127.0.0.1": 2,
+        "gh-proxy.com": 9
+      },
+      "requestFailures": 0,
+      "allPayloadsViaGhProxy": true,
+      "receiptSha256": "600849626a9134b131275b4ad208a9f33ca87f8a4da7a8cd3333f620b537dc83",
+      "driverSha256": "e418684c457e82b2e482741ce587592a4346fe3405bfbed6eb6aa8df6013801b",
+      "actualRuntimeSession": 37699,
+      "consumedExitCode": 0,
+      "nativeInventory": [
+        {
+          "path": "libbugly.so",
+          "sha256": "573cbe3f173c31945ad8adc7f91b462ee40e92d711f049311a9ffc67ba164f08",
+          "bytes": 5267744
+        },
+        {
+          "path": "libcrbase.so",
+          "sha256": "d9152f08a120fd80d106e575582425c4f9b5ceccb579681c08a1cc998d4d290a",
+          "bytes": 14811688
+        },
+        {
+          "path": "libssh2.so.1",
+          "sha256": "feb4e10c885745ff39d924e0f0d83d78f0b2a26d7900965b29eba5dc70600104",
+          "bytes": 268168
+        },
+        {
+          "path": "libunwind-aarch64.so.8",
+          "sha256": "b3d419fdf5146bdf1f829fa6146b8867788f57ea75adf6bd999b4791be90f196",
+          "bytes": 153552
+        },
+        {
+          "path": "libunwind.so.8",
+          "sha256": "ff7bb631cb460dfcb231d80f61e1390448244a0a6f940b12c7c03dbd1a565205",
+          "bytes": 199112
+        },
+        {
+          "path": "libz.so.1",
+          "sha256": "d7e452e38e2b8d3f47d6110e50a1c0b505477d558e56806cccc75535d0302393",
+          "bytes": 104824
+        },
+        {
+          "path": "sharp-lib/libvips-cpp.so.42",
+          "sha256": "41978e127befa8d0bcd1a4042142bc4d7b4ddda0d76e389ee31c4aac30cec7f0",
+          "bytes": 15921144
+        },
+        {
+          "path": "wrapper.node",
+          "sha256": "72978494d18d0076a378550099628569ff5081ada79f37e0b7adaeae6904217a",
+          "bytes": 134927616
+        },
+        {
+          "path": "registration-bridge.node",
+          "sha256": "646d987a8b735cbca04ebe3ab3bfd197f3c2767db5a1843decb29999a51efd8b",
+          "bytes": 70560
+        }
+      ]
+    },
+    {
+      "selectionScope": "local-legacy-complete-manifest",
+      "arch": "x64",
+      "execution": "x64 emulation inside OrbStack Linux VM on ARM64 Mac",
+      "node": "v24.21.0",
+      "osRelease": "PRETTY_NAME=\"Debian GNU/Linux 13 (trixie)\"\nNAME=\"Debian GNU/Linux\"\nVERSION_ID=\"13\"\nVERSION=\"13 (trixie)\"\nVERSION_CODENAME=trixie\nDEBIAN_VERSION_FULL=13.7\nID=debian\nHOME_URL=\"https://www.debian.org/\"\nSUPPORT_URL=\"https://www.debian.org/support\"\nBUG_REPORT_URL=\"https://bugs.debian.org/\"\n",
+      "imageId": "sha256:ff23385f5afc921d36971b2289a4c4a1931664bfedd40ce13266476f6ac0b001",
+      "dockerArchitecture": "amd64",
+      "wrapperProvided": false,
+      "versionProvided": false,
+      "manifestProvided": true,
+      "selectedVersion": {
+        "clientVersion": "3.2.31-51102",
+        "appId": "537376497",
+        "qua": "V1_LNX_3.2.31-51102_51102_GW_B"
+      },
+      "selectedManifestSha256": "fb6808754d6922125123526a9ab44f28c545d81d169d3b069e8ad8f5c2ad7170",
+      "phases": [
+        {
+          "phase": "cold",
+          "initialized": true,
+          "closed": true,
+          "state": "idle",
+          "accountPresent": false,
+          "exports": 92,
+          "nativeFilesVerified": 8,
+          "payloadRequests": 8,
+          "elapsedMs": 41591,
+          "workerExecutable": "/usr/local/bin/node",
+          "wrapperMapped": true,
+          "bridgeMapped": true,
+          "qqApplicationImages": 0,
+          "electronImages": 0,
+          "nativeLibraryPathsSha256": "0e5d6e1d3de40ca21ef782fa1422090fc8e69e3aebaf9a95125cebaf5d1dfea4"
+        },
+        {
+          "phase": "warm",
+          "initialized": true,
+          "closed": true,
+          "state": "idle",
+          "accountPresent": false,
+          "exports": 92,
+          "nativeFilesVerified": 8,
+          "payloadRequests": 0,
+          "elapsedMs": 1250,
+          "workerExecutable": "/usr/local/bin/node",
+          "wrapperMapped": true,
+          "bridgeMapped": true,
+          "qqApplicationImages": 0,
+          "electronImages": 0,
+          "nativeLibraryPathsSha256": "0e5d6e1d3de40ca21ef782fa1422090fc8e69e3aebaf9a95125cebaf5d1dfea4"
+        }
+      ],
+      "warmFilesUnchanged": true,
+      "sdkFetchHosts": {
+        "127.0.0.1": 2,
+        "gh-proxy.com": 8
+      },
+      "requestFailures": 0,
+      "allPayloadsViaGhProxy": true,
+      "receiptSha256": "2e483e569b8d4139953fb0d60c6de046645df82054a160c320d3ceb5ab039a25",
+      "driverSha256": "e418684c457e82b2e482741ce587592a4346fe3405bfbed6eb6aa8df6013801b",
+      "actualRuntimeSession": 63286,
+      "consumedExitCode": 0,
+      "nativeInventory": [
+        {
+          "path": "libbugly.so",
+          "sha256": "b4c78ae60326e7c68b9f026d5c43a8db1ad19ab4069a11a3468a498b9ee8599d",
+          "bytes": 1377128
+        },
+        {
+          "path": "libcrbase.so",
+          "sha256": "5c4ef5b297291301eb40c4ae48d31083830132b146bac3c21a68e080ec71fc8e",
+          "bytes": 2543712
+        },
+        {
+          "path": "libssh2.so.1",
+          "sha256": "b18f774efaf7e074338133ec9ae93dd3a94fb33ff2aa1eedbf4d5b45172d8e23",
+          "bytes": 211272
+        },
+        {
+          "path": "libunwind-x86_64.so.8",
+          "sha256": "ffd57d6f0a4e902278f2f33d88247b7661f7bd03bd300733db3193d51cd98f7b",
+          "bytes": 923368
+        },
+        {
+          "path": "libunwind.so.8",
+          "sha256": "7466ebba89873fa3a959ae0a14c824140df82a8ebba40bc1c3808acbc5eab76b",
+          "bytes": 661672
+        },
+        {
+          "path": "sharp-lib/libvips-cpp.so.42",
+          "sha256": "994c562dc1242f07ce62c0c918bd4e49eebf5bb7a0e34726892a4c79ddab3399",
+          "bytes": 16707440
+        },
+        {
+          "path": "wrapper.node",
+          "sha256": "18cfee3b7f8827d15760afbd6686ad4d1dd9a3fb7e2f91f4e1997a9a3bbaae12",
+          "bytes": 139573656
+        },
+        {
+          "path": "registration-bridge.node",
+          "sha256": "2564b41898b7b3ea3ca0244ec02fa578fef26e02194b3120f519b58730f0bdd4",
+          "bytes": 16336
+        }
+      ]
+    }
+  ],
+  "originalLegacyFailure": {
+    "arch": "arm64",
+    "version": {
+      "clientVersion": "3.2.31-51102",
+      "appId": "537376498",
+      "qua": "V1_LNX_3.2.31-51102_51102_GW_B"
+    },
+    "error": {
+      "name": "KernelRequestError",
+      "message": "/acceptance/consumer/node_modules/qq-native-client/native/linux-arm64/registration-bridge.node: cannot open shared object file: No such file or directory"
+    },
+    "actualSession": 21034,
+    "consumedExitCode": 1,
+    "receiptSha256": "eacee4bc34269af4dc1fee78260d47e22909ffcd2617e7cf57c6cde4b17d5502",
+    "driverSha256": "57bde0e570608e78bbfc207e6b1814ac6013e078f06078e583d01d4b7da12e01",
+    "reason": "The original manifest has no registration bridge, and this Mac-built main archive contains no Linux fallback bridge.",
+    "repeatNotPerformed": true
+  },
+  "legacyCandidates": [
+    {
+      "arch": "arm64",
+      "oldManifestSha256": "25e3e4fbf046d7acb45f2569f2f4e2c5b374142f0575d52d5c962fdbc8c718fa",
+      "bridgeSourceManifestSha256": "628201012ea25d276667e4ac0064541534d6b3ab39e7348d75fb51d13e778b1b",
+      "candidateManifestSha256": "b8b08fecdaf4f4b6c57161c406835c7d4376de1331318d0281dec9a9f118c6d9",
+      "paths": 9,
+      "bridge": {
+        "path": "registration-bridge.node",
+        "url": "https://github.com/lc-cn/qq-native-mirror/releases/download/native-npm-v0.0.2-ci-37962268125-attempt-1/646d987a8b735cbca04ebe3ab3bfd197f3c2767db5a1843decb29999a51efd8b.gz",
+        "sha256": "646d987a8b735cbca04ebe3ab3bfd197f3c2767db5a1843decb29999a51efd8b",
+        "size": 70560,
+        "encoding": "gzip",
+        "downloadSha256": "75417c83051f33b7db8ed857f1a3005d405d7a6582c9883cfda034035e62ca26"
+      }
+    },
+    {
+      "arch": "x64",
+      "oldManifestSha256": "7f13f72b7cb5b86583cbf97f08bd3e61ba2b6b288250720d9db393e634bb62eb",
+      "bridgeSourceManifestSha256": "d130b3db854cd147a96bd5cb80d9d16fcf6ce364eda546849ac06403077a9ae4",
+      "candidateManifestSha256": "fb6808754d6922125123526a9ab44f28c545d81d169d3b069e8ad8f5c2ad7170",
+      "paths": 8,
+      "bridge": {
+        "path": "registration-bridge.node",
+        "url": "https://github.com/lc-cn/qq-native-mirror/releases/download/native-npm-v0.0.2-ci-37962268125-attempt-1/2564b41898b7b3ea3ca0244ec02fa578fef26e02194b3120f519b58730f0bdd4.gz",
+        "sha256": "2564b41898b7b3ea3ca0244ec02fa578fef26e02194b3120f519b58730f0bdd4",
+        "size": 16336,
+        "encoding": "gzip",
+        "downloadSha256": "79da02f0f7304322be8c1235859a592eab9150cedc657ed42263e5b653e3be32"
+      }
+    }
+  ],
+  "defaultCatalogSha256": "ae486c9ffd96d12377f626377243baaa17b45a7afee9bfaa3134ce9fa73b9719",
+  "optInCatalogSha256": "e7d15e62ab5555fefd8996afbabe677e0eff9e53f2d4c4d602ba85a5e2fcc7a0",
+  "publicDefaultCatalogUnchanged": true,
+  "originalManifestsAndPayloadsRetained": true,
+  "remoteMutation": false,
+  "npmPublished": false,
+  "accountOperations": false,
+  "signingAuthenticityEstablished": false,
+  "limitations": [
+    "Linux ARM64 ran in an OrbStack VM; x64 used emulation, not a native x64 host.",
+    "Node24.21.0 Debian13/glibc/system-library compatibility is proven here; arbitrary distributions and musl are not.",
+    "The two3.2.31 bridge-complete manifests were served over real localhost HTTP with trusted SHA. The public old-version catalog was not changed and still lacks these bridge files.",
+    "Only initialization and close were exercised; no login, restore, business query, reply, message send or new video decoding.",
+    "SDK fetch observations preserve arguments and responses; traces do not observe implicit vendor-native network traffic.",
+    "Proc evidence retains filtered native library paths and counts, not complete raw maps."
+  ]
+}

@@ -194,3 +194,67 @@ No QQ account was mounted, restored or logged in, no business query or message w
 The retained Linux arm64 `3.2.31-51102` wrapper SHA256 `72978494d18d0076a378550099628569ff5081ada79f37e0b7adaeae6904217a` contains bounded RTTI type strings for `KernelBuddyService::getBuddyListV2`: `const std::string&`, `bool`, `BuddyListReqType` and `const shared_ptr<IBuddyListCallback>&`. System `/usr/bin/c++filt -t` decodes these type names. Independent parent review rehashes the original wrapper and checks all raw string offsets and demangled bytes; the native three-argument assertion is separately preserved. This identifies the C++ method types, but does not establish JS conversion, enum value 0 semantics or callback-to-Promise result/data serialization. The SDK version guard remains unchanged.
 
 The matching ASAR SHA256 `3dd85cdbe8244fd92a3194ef9e25e0e47776f0c24663f274dd3318687e431d23` has 169 stored JS members whose bytes are not valid UTF-8. All member byte hashes and decoding outcomes were independently rechecked, and `background.js` stored bytes match the ASAR's own declared integrity. A failed text search of these stored bytes therefore cannot establish absence of a vendor call. This does not identify the storage transformation or supply plaintext source. [Bound static evidence](evidence/old-linux-buddy-static.json) records these limits. No native service or account was executed.
+
+## Installed current SDK: default latest and complete legacy candidate (2026-10-13)
+
+[Bound local evidence](evidence/linux-installed-default-legacy-40c6fc2-local.json)
+uses the actual main archive from SDK source `40c6fc2`, version 0.0.2. Its 406
+installed files, 282 compiled files and 141 source Git objects were independently
+checked. Installing the main archive selected only `silk-wasm`; all optional
+native auxiliaries were omitted. This is a local tarball installation, not a
+public npm installation.
+
+The disposable test images use Debian 13, ordinary Node 24.21.0, `libx11-xcb1`
+and `libgnutls30t64`. Only each new acceptance directory was mounted. The ARM64
+case runs in an OrbStack Linux VM on an ARM64 Mac; the x64 case uses emulation.
+No QQ application, Electron host or existing account directory was provided.
+
+| Architecture | QQ kernel    | Selection                                      | Paths | Exports | Cold payload requests | Warm payload requests |
+| ------------ | ------------ | ---------------------------------------------- | ----: | ------: | --------------------: | --------------------: |
+| arm64        | 3.2.32-52194 | Actual public default; wrapper/version omitted |    20 |      98 |                    20 |                     0 |
+| x64 emulated | 3.2.32-52194 | Actual public default; wrapper/version omitted |    19 |      98 |                    19 |                     0 |
+| arm64        | 3.2.31-51102 | Local complete bridge manifest candidate       |     9 |      92 |                     9 |                     0 |
+| x64 emulated | 3.2.31-51102 | Local complete bridge manifest candidate       |     8 |      92 |                     8 |                     0 |
+
+All eight clients initialized in `idle` without an account and closed normally.
+Every runtime path was rehashed; warm file hashes and modification times matched
+the cold pass. Warm payload requests were refused before network access, and none
+were attempted. During the cold passes, every SDK-observed payload request went
+through `https://gh-proxy.com/` and returned HTTP 200; no origin fallback was
+observed. The observer preserved actual fetch arguments and response objects,
+capturing only small metadata bodies. It does not observe vendor-native network
+activity. The workers used the Node executable and mapped the cached wrapper and
+bridge, with no reported `/opt/QQ/` or Electron mappings. Only filtered native
+library paths and counts were retained from `/proc`.
+
+### Legacy dependency omission and candidate correction
+
+The original public 3.2.31 ARM64 manifest failed with this same Mac-built main
+archive: it has no `registration-bridge.node`, and the archive has no Linux
+fallback bridge. The worker reported the missing
+`native/linux-arm64/registration-bridge.node` file. That failure and its original
+receipt were retained; it was not treated as an account or signing failure.
+The current multi-version workflow builds the main archive separately on each
+architecture. Those consumers do not prove that one archive built on another
+platform can consume these original legacy manifests. This local cohort used
+the same main archive for every architecture and exposed that difference.
+
+The separate `catalog-linux-legacy-bridge-v1.json` candidate adds complete
+3.2.31 manifests for both Linux architectures. Each retains all original native
+paths and hashes and adds the architecture's existing public registration bridge
+from the 3.2.32 mirror. The original manifests and assets remain available. No
+wrapper instructions, signature results or SDK implementation were changed.
+
+For local runtime verification, each candidate manifest was served over real
+localhost HTTP and supplied with its trusted SHA-256 to `createClient`; wrapper,
+bridge and version options were omitted. Payloads still came from existing public
+release assets. Both candidates then passed the cold/warm rows above. This proves
+the bridge closes the measured initialization dependency gap for these two
+samples. It does not establish old-kernel business compatibility.
+
+The opt-in catalog and new manifests have not been published. The public default
+catalog is unchanged; the original old-version selection can still fail when the
+main archive has no matching fallback bridge. Docker here is only a Linux test
+environment, not an SDK requirement. These runs do not establish login, account
+restoration, message or reply delivery, contact/group operations, new video
+decoding, arbitrary Linux distribution support or vendor signing authenticity.
