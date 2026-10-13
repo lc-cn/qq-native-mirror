@@ -1,0 +1,21 @@
+sdk/docs/architecture.md
+  s_2104cc474f1ce5::t_58043cd4cbec16 283-313
+sdk/docs/evidence/fresh-consumer-close-17240b6-local.json
+  s_2104cc474f1ce5::t_17a7d2f82513b2 1-100
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a3587740b9e4afd3cb4bd44485b88058b8e3c9d3",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
