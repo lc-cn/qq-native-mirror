@@ -336,8 +336,8 @@ Shutdown releases subscriptions and closes the client.
 `prepare` checks resource loading and native initialization before account login.
 It prints the initialized client state, native export names and their count, then
 closes. It disables configured login and reconnection and rejects account flags
-such as `--uin`, `--method` and `--qr-file`. Ctrl+C cancels supported downloads and
-waits, suppresses a pending result and waits for owned resources to close. It cannot
+such as `--uin`, `--method` and `--qr-file`. Ctrl+C cancels pending downloads and
+resource waits, suppresses an unfinished result and waits for owned resources to close. It cannot
 synchronously interrupt native code or a filesystem operation already in progress.
 This check does not verify account access or signing integrity.
 

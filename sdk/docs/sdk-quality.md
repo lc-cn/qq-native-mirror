@@ -388,3 +388,32 @@ temporary directory was removed. No account login or restoration was requested.
 This proves the local initialization path only: neither the published package,
 automatic latest selection, real native cancellation nor signing authenticity
 was established by this check. The earlier `f67af5b` CI does not cover this change.
+
+The following local iteration, `a2664efbaee69a702c488aa8d96adc3e8ce8a0f0`, adds
+`createClient(options, { signal })`. The signal controls creation only, stays out
+of native IPC, and detaches before a successful client is returned. The CLI owns
+that signal before starting creation. Cancellation reaches catalog and manifest
+reads, payload streams, cache queues and lock waits. An interrupted initialization
+is closed before rejection. Per-target ordering survives a cancelled middle
+waiter; another caller revalidates the cache rather than inheriting the first
+caller's cancellation. Completed verified cache contents remain reusable.
+
+The [local cancellation acceptance](evidence/creation-cancellation-local-a2664ef.json)
+records a successful complete `npm run check`: 2,626 SDK tests, 88 tool tests,
+strict source/test/script types, zero-warning lint, formatting, clean build and
+packed installation. Both source and installed CLI entries cancel actual owned
+loopback HTTP bodies with OS SIGINT on this macOS host. The cases stall either
+the manifest or three concurrent payloads; both exit 130 without a success result,
+close all connections and leave no staging or package lock. Native loading is
+forbidden in those cases. Separate real 4 MiB local/installed manifest reads keep
+the caller's cancellation object. Regressions also retain distinct response,
+staging and lock cleanup failures, including a later parallel download's failure.
+
+A separate normal-path check rehashed the pinned local bundle's 1,156 paths, then
+ran the unmodified built CLI against the real macOS ARM64 wrapper. It returned
+`idle` and 104 exports and exited normally in 1.169 seconds, without account login.
+This does not prove cancellation of blocked native code, Windows signal behavior,
+catalog latest selection, account operations or signing authenticity. Cancellation
+is cooperative and waits for cleanup; synchronous native execution, decompression
+and an already running filesystem operation cannot be interrupted synchronously.
+The parent `8173891` remote CI excludes this implementation.

@@ -1,0 +1,95 @@
+{
+  "schemaVersion": 1,
+  "sourceCommit": "a2664efbaee69a702c488aa8d96adc3e8ce8a0f0",
+  "scope": "Local creation-cancellation implementation, actual installed CLI loopback cancellation and separate normal native initialization; no account use",
+  "creationInterface": {
+    "call": "createClient(options, { signal })",
+    "signalInNativeIpc": false,
+    "returnedClientControlledByCreationSignal": false,
+    "remoteCiForThisCommit": false
+  },
+  "gates": {
+    "command": "npm run check",
+    "exitCode": 0,
+    "sdkTests": 2626,
+    "toolTests": 88,
+    "sourceTestScriptTypes": true,
+    "zeroWarningLint": true,
+    "prettier": true,
+    "cleanBuild": true,
+    "packedInstalledConsumer": true,
+    "logSha256": "581eb1f37c9dfe918f6bfb4cc5738a0e98ce3a0364cd83c3bb1ad2983dd9b519"
+  },
+  "installedControlledAcceptance": {
+    "package": "qq-native-client",
+    "version": "0.0.2",
+    "integrity": "sha512-+mziYgDfjemLAduCY1hotWwCg6DBCtJMa/CPNM0P0lqkB7lJKQ2mKAmOvwTz/h5Tp72de1J+oXik2mijuPqVMQ==",
+    "fileCount": 456,
+    "clientFactoryCancellationContract": true,
+    "cliPrepareLifecycleContract": true,
+    "cliPrepareLoginSuppressionContract": true,
+    "nativeCreationManifestCancellationContract": true,
+    "nativeCreationPayloadCancellationContract": true,
+    "nativeCreationCancellationCleanupContract": true,
+    "nativeCreationCancellationSignalMode": "os-sigint",
+    "nativeCreationCancellationLoopbackOnly": true,
+    "nativeCreationCancellationNativeExecuted": false,
+    "nativeCreationCancellationAccountUsed": false,
+    "nativeExecuted": false,
+    "accountUsed": false,
+    "externalNetworkUsedByCancellationCases": false
+  },
+  "regressionScope": [
+    "Pre-aborted creation before resource acquisition; creation-only signal never serialized to native options.",
+    "Catalog headers, manifest bodies, three concurrent payload bodies and real 4 MiB local/installed manifest reads.",
+    "OS SIGINT through source and installed CLI on this POSIX host, exit 130, no success output, all stalled connections closed and no staging or package locks left.",
+    "Cancelled queue waiters cannot bypass predecessors; one caller cancellation does not poison the next installation or delete another lock owner.",
+    "Warm cache is reverified; interrupted staging is removed, while an already committed complete cache is retained.",
+    "Cancellation reason and distinct response, staging or lock cleanup failures remain available, including a later parallel worker cleanup failure.",
+    "Pending initialization is retired and closed before rejection; late results remain observed, and successful creation detaches its signal listener."
+  ],
+  "normalNativeSmoke": {
+    "receiptSha256": "6fd90fb90155868e9862fd155a2cdd6319e8789ad9c43551f9971259c47318a0",
+    "node": "v24.19.0",
+    "platform": "darwin",
+    "arch": "arm64",
+    "cliSha256": "1a97af1dbb44ed0d8e68cf50da07d4454f63a276d7ebdb0827b1d0bc721b989f",
+    "bundleOrigin": "local qq-native-client-darwin-arm64 0.0.1 plain auxiliary",
+    "manifestSha256": "1254507504dc04285b4f6a5b650c0b248ee9cd51e896a0c441b76e3cd5711b73",
+    "wrapperSha256": "fbc8ad9b328d05e16784d76b0181dda894c17001179dbf8c0d5dd00dc6271358",
+    "version": {
+      "clientVersion": "7.0.2-53644",
+      "appId": "537391652",
+      "qua": "V1_MAC_7.0.2-53644_53644_GW_B"
+    },
+    "bundleFilesPreverified": 1156,
+    "freshDataDirectory": true,
+    "accountLoginRequested": false,
+    "accountUsed": false,
+    "automaticLatestSelectionTested": false,
+    "npmPublishedPackageTested": false,
+    "signingAuthenticityVerified": false,
+    "exitCode": 0,
+    "timedOut": false,
+    "elapsedSeconds": 1.169,
+    "stdoutSha256": "6e376f34952c4d72ad6b43386767b19029781cc1ae4c8fb1de4c97fb0aaf2b4f",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrBytes": 0,
+    "nativeExecuted": true,
+    "nativeInitializedAndProcessExited": true,
+    "ownedTemporaryDirectoryRemoved": true,
+    "output": {
+      "state": "idle",
+      "nativeExportCount": 104
+    }
+  },
+  "limits": [
+    "The normal native smoke used the explicitly pinned local Darwin ARM64 0.0.1 auxiliary and QQ 7.0.2-53644; it did not select catalog latest.",
+    "The native smoke establishes normal initialization/close only. Pending native initialization cancellation and late cleanup are controlled-worker checks, not a real blocked-addon cancellation experiment.",
+    "Cancellation is cooperative and awaits owned cleanup. Synchronous native execution, decompression and a filesystem operation already in progress cannot be synchronously interrupted.",
+    "Completed verified cache objects may remain reusable after cancellation; cancellation does not promise rollback of an already atomic cache publication.",
+    "The installed CLI cancellation cases forbid native loading and use only owned loopback HTTP; Windows programmatic signal handling exists in the fixture but was not run on this macOS host.",
+    "CI for parent 81738914c633c8e4effc7755860498c3a75ebddd does not include this cancellation implementation.",
+    "No QR login, restore, account query, message or group operation, signature authenticity, account longevity or npm publication was validated."
+  ]
+}
