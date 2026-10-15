@@ -44,6 +44,8 @@ import { verifyFriendQueryConsumer } from './consumers/friend-query-consumer-con
 import { verifyHistoryQueryConsumer } from './consumers/history-query-consumer-contract.mjs';
 import { verifyContactObjectsConsumer } from './consumers/contact-objects-consumer-contract.mjs';
 import { verifyBotApiConsumer } from './consumers/bot-api-consumer-contract.mjs';
+import { verifyContactResourcesConsumer } from './consumers/contact-resources-consumer-contract.mjs';
+import { verifyOfflineTransitionConsumer } from './consumers/offline-transition-consumer-contract.mjs';
 
 // Offline packaging check: controlled services and actual worker routing with a replacement kernel; no QQ native binaries or accounts.
 const root = fileURLToPath(new URL('../', import.meta.url));
@@ -144,6 +146,12 @@ const contactObjectChecks = await verifyContactObjectsConsumer(
   join(destination, 'node_modules/qq-native-client'),
 );
 const botApiChecks = await verifyBotApiConsumer(join(destination, 'node_modules/qq-native-client'));
+const contactResourceChecks = await verifyContactResourcesConsumer(
+  join(destination, 'node_modules/qq-native-client'),
+);
+const offlineTransitionChecks = await verifyOfflineTransitionConsumer(
+  join(destination, 'node_modules/qq-native-client'),
+);
 const messageBatchChecks = await verifyMessageBatchConsumer(
   join(destination, 'node_modules/qq-native-client'),
 );
@@ -560,6 +568,8 @@ const receipt = {
     ...publicContractChecks,
     ...contactObjectChecks,
     ...botApiChecks,
+    ...contactResourceChecks,
+    ...offlineTransitionChecks,
     privateFilesExcluded: true,
     installedImport: true,
     cliHelp: true,

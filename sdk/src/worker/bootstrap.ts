@@ -9,7 +9,9 @@ import { inspectNativeContracts } from '../native/native-contract-inspection.ts'
 import { NativeWorkerBootstrap } from './native-bootstrap.ts';
 
 /** Bind Node acquisition ports once; the IPC entry never loads native addons. */
-export function createWorkerBootstrap(emit: (event: string, payload: unknown) => void) {
+export function createWorkerBootstrap(
+  emit: (event: string, payload: unknown, offlineTransition?: number) => void,
+) {
   return new NativeWorkerBootstrap(
     {
       createDataDirectory: (path) => mkdir(path, { recursive: true, mode: 0o700 }),

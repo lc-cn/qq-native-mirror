@@ -89,7 +89,35 @@ That consumer verified precise event declarations, immutable message routing,
 mixed input on client/contact/reply entry points and request approval lifetime.
 These are controlled SDK checks, not new native-account or release evidence.
 
-Next, complete contact-object access to already implemented group resources and
-audit the remaining documented business events against their actual producers.
+The third iteration provides `group.files`, `group.notices` and `group.essence`,
+plus selected-conversation forwarding, merged-forward composition and attachment
+downloads. These objects share the original online session and reuse the same
+domain validation as direct client methods. Notice inputs are captured before
+IPC and revalidated in the worker; invalid text/options fail before acquiring a
+ticket or uploading an image. The installed consumer exercises the package-root
+classes, payloads, results, errors and separately retained resource lifetimes.
+
+The event producer audit verified the documented friend/group/recall names and
+found a malformed friend-list callback could leak a projection exception. That
+path now captures own data and emits a fixed diagnostic without swallowing user
+observer exceptions. A regression begins at the actual registered Buddy listener.
+
+The same audit found that `offline` was forwarded before parent-side account
+retirement. The lifecycle now retires on that first notification. An internal
+worker-envelope sequence correlates subsequent `disconnected`/`kicked` aliases,
+so they cannot cancel a new login started inside an offline listener. A later
+independent transition still cancels it. The public installed-consumer contract
+covers both outcomes and asserts that old contact, resource and reply actions
+cannot dispatch from an offline observer.
+
+The full local `npm run check` passed on 2026-10-15 with 2,449 SDK tests and 85
+tool tests, formatting, lint, strict types, clean build and packed/installed
+consumers. The installed checks exercised group resources, conversation resource
+operations and offline-observer login ownership. The lifecycle regression also
+traversed the actual worker IPC path with simulated native services. No real QQ
+native library, account login, remote mutation or npm publication was exercised
+by this acceptance. These installed contracts are wired into the existing host
+CI consumer; remote execution for this revision remains outstanding.
+
 Native capability gaps, cross-platform account acceptance, signing authenticity
 and publication retain their separate completion requirements above.

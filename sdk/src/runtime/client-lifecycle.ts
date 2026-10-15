@@ -108,6 +108,27 @@ function sameLoginRequest(first: LoginRequest, second: LoginRequest | undefined)
   return ('uin' in first ? first.uin : undefined) === ('uin' in second ? second.uin : undefined);
 }
 
+type OfflineEvent = 'offline' | 'disconnected' | 'logout' | 'kicked';
+
+/** Only kernel-owned envelope data can correlate separate IPC deliveries. */
+function captureOfflineTransition(message: object): number | undefined {
+  try {
+    const field = Object.getOwnPropertyDescriptor(message, 'offlineTransition');
+    const value: unknown = field && 'value' in field ? field.value : undefined;
+    if (typeof value === 'number' && Number.isSafeInteger(value) && value > 0) return value;
+  } catch {
+    // Unreadable metadata has no deduplication authority.
+  }
+  return;
+}
+
+interface OfflineTransition {
+  readonly id: number;
+  readonly revision: number;
+  readonly retryable: boolean;
+  events: number;
+}
+
 /** Owns a client's worker generations, authorization state and shutdown.
  * Requests are never replayed. Callback presentation belongs to the public facade.
  * Only explicitly retryable disconnections can schedule automatic restoration.
@@ -172,6 +193,9 @@ export class ClientLifecycle {
   }
   #attach(worker: ChildProcess) {
     const generation = ++this.#generation;
+    // Kernel sequence numbers belong to one worker. Keep only its high-water
+    // mark and four notification bits, rather than retaining an event history.
+    let offlineTransition: OfflineTransition | undefined;
     const isCurrent = () => generation === this.#generation && !this.#closed && !this.#closing;
     worker.on('message', (value: unknown) => {
       if (!value || typeof value !== 'object') return;
@@ -222,34 +246,66 @@ export class ClientLifecycle {
             return;
         }
         if (
+          message.event === 'offline' ||
           message.event === 'disconnected' ||
           message.event === 'logout' ||
           message.event === 'kicked'
         ) {
+          const event = message.event;
+          const eventBit = { offline: 1, disconnected: 2, logout: 4, kicked: 8 }[event];
           const beforePolicyRevision = this.#offlineRevision;
-          let policyFailure: { error: unknown } | undefined;
-          try {
-            retryableDisconnect =
-              message.event === 'disconnected' && message.payload?.retryable === true;
-          } catch (error) {
-            policyFailure = { error };
-          }
-          // A fallible policy lookup cannot supersede a nested retirement or close.
+          const transition = captureOfflineTransition(message);
           if (!isCurrent() || beforePolicyRevision !== this.#offlineRevision) return;
-          try {
-            offlineRevision = this.#retireAccount(message.event);
-          } catch (error) {
-            if (policyFailure) {
-              // eslint-disable-next-line preserve-caught-error -- Preserve both policy and observer failures.
-              throw new AggregateError(
-                [policyFailure.error, error],
-                'QQ offline policy inspection and notification failed',
-              );
+          if (transition !== undefined && offlineTransition && transition <= offlineTransition.id) {
+            if (transition < offlineTransition.id || offlineTransition.events & eventBit) return;
+            // Reserve before observers: nested delivery of this same companion
+            // notification cannot retire or present it a second time.
+            offlineTransition.events |= eventBit;
+            offlineRevision = offlineTransition.revision;
+            retryableDisconnect = event === 'disconnected' && offlineTransition.retryable;
+          } else {
+            let policyFailure: { error: unknown } | undefined;
+            let retryable = false;
+            let clearLastAccount = event === 'logout' || event === 'kicked';
+            try {
+              const kind = message.payload?.kind;
+              clearLastAccount ||= kind === 'forced' || kind === 'logout';
+              retryable = !clearLastAccount && message.payload?.retryable === true;
+            } catch (error) {
+              policyFailure = { error };
             }
-            throw error;
+            // A fallible policy lookup cannot supersede a nested retirement or close.
+            if (!isCurrent() || beforePolicyRevision !== this.#offlineRevision) return;
+            if (transition !== undefined)
+              offlineTransition = {
+                id: transition,
+                revision: beforePolicyRevision + 1,
+                retryable,
+                events: eventBit,
+              };
+            try {
+              offlineRevision = this.#retireAccount(event, clearLastAccount);
+            } catch (error) {
+              if (policyFailure) {
+                // eslint-disable-next-line preserve-caught-error -- Preserve both policy and observer failures.
+                throw new AggregateError(
+                  [policyFailure.error, error],
+                  'QQ offline policy inspection and notification failed',
+                );
+              }
+              throw error;
+            }
+            if (policyFailure) throw policyFailure.error;
+            retryableDisconnect = event === 'disconnected' && retryable;
           }
-          if (policyFailure) throw policyFailure.error;
         }
+        // State observers can synchronously close or admit a newer offline
+        // transition. Do not publish the superseded outer notification.
+        if (
+          offlineRevision !== undefined &&
+          (!isCurrent() || offlineRevision !== this.#offlineRevision)
+        )
+          return;
         this.#context.forward(message.event, message.payload);
         if (
           retryableDisconnect &&
@@ -339,7 +395,7 @@ export class ClientLifecycle {
    * The revision prevents a nested offline notification from reviving an older
    * event's automatic restore decision. It does not retire the worker generation.
    */
-  #retireAccount(event: 'disconnected' | 'logout' | 'kicked'): number {
+  #retireAccount(event: OfflineEvent, clearLastAccount: boolean): number {
     this.#cancelConfiguredLogin();
     this.#cancelAutomaticRestore();
     const revision = ++this.#offlineRevision;
@@ -347,7 +403,7 @@ export class ClientLifecycle {
     this.#login = undefined;
     this.#account = undefined;
     this.#state = 'disconnected';
-    if (event !== 'disconnected') this.#lastAccount = undefined;
+    if (clearLastAccount) this.#lastAccount = undefined;
     this.#rpc.rejectPending(
       new Error(`QQ account became offline (${event}); request was not replayed`),
       (method) => method === 'close',

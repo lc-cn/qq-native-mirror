@@ -2,6 +2,8 @@ import { verifyHistoryQueryConsumer } from '../sdk/scripts/consumers/history-que
 import { verifyFriendQueryConsumer } from '../sdk/scripts/consumers/friend-query-consumer-contract.mjs';
 import { verifyContactObjectsConsumer } from '../sdk/scripts/consumers/contact-objects-consumer-contract.mjs';
 import { verifyBotApiConsumer } from '../sdk/scripts/consumers/bot-api-consumer-contract.mjs';
+import { verifyContactResourcesConsumer } from '../sdk/scripts/consumers/contact-resources-consumer-contract.mjs';
+import { verifyOfflineTransitionConsumer } from '../sdk/scripts/consumers/offline-transition-consumer-contract.mjs';
 import { npm } from './npm.mjs';
 import { closeConsumerResources } from './consumer-resources.mjs';
 import { ChildProcess, execFileSync, execFile } from 'node:child_process';
@@ -1014,6 +1016,8 @@ try {
   const friendQueryChecks = await verifyFriendQueryConsumer(installedRoot);
   const contactObjectChecks = await verifyContactObjectsConsumer(installedRoot);
   const botApiChecks = await verifyBotApiConsumer(installedRoot);
+  const contactResourceChecks = await verifyContactResourcesConsumer(installedRoot);
+  const offlineTransitionChecks = await verifyOfflineTransitionConsumer(installedRoot);
   globalThis.fetch = () => {
     throw new Error('Unexpected mirror request with installed platform package');
   };
@@ -1044,6 +1048,8 @@ try {
         contactGroupChecks,
         contactObjectChecks,
         botApiChecks,
+        contactResourceChecks,
+        offlineTransitionChecks,
         actionPortChecks,
         profileRequestChecks,
         groupRequestChecks,

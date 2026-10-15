@@ -26,7 +26,7 @@ export type { AccountIdentity } from './runtime/account-session-lifecycle.ts';
 export function createKernel(
   wrapper: NativeObject,
   options: KernelOptions,
-  emit: (event: string, payload: unknown) => void,
+  emit: (event: string, payload: unknown, offlineTransition?: number) => void,
 ) {
   let loginService: NativeObject | undefined;
   let startupSession: NativeObject | undefined;
@@ -39,9 +39,10 @@ export function createKernel(
   let accountMsfConnected = false;
   let closed = false;
   let generation = 0;
+  let offlineTransition = 0;
   let pending: AuthenticationAttempt | undefined;
-  const notify = (event: string, payload: unknown) => {
-    if (!closed) emit(event, payload);
+  const notify = (event: string, payload: unknown, transition?: number) => {
+    if (!closed) emit(event, payload, transition);
   };
   const invalidateAttempt = () => pending?.invalidate();
   // Detach before teardown: reentrant native notifications cannot reuse a Session.
@@ -104,11 +105,14 @@ export function createKernel(
   };
   const transitionOffline = (details: Record<string, unknown>) => {
     if (closed) return;
+    // One retirement has several public notifications. Keep their correlation
+    // in the worker envelope, never in the public/native offline payload.
+    const transition = ++offlineTransition;
     retireAccount('notification', new Error('Native account became offline'));
     const info = { ...details, retryable: false };
-    notify('offline', info);
-    notify('disconnected', info);
-    return info;
+    notify('offline', info, transition);
+    notify('disconnected', info, transition);
+    return { info, transition };
   };
   const auditedNoop =
     (family: string, name: string) =>
@@ -201,13 +205,13 @@ export function createKernel(
         if (event === 'kicked') {
           forcedOffline = true;
           const kicked = payload as { info?: unknown; args?: unknown[] };
-          const info = transitionOffline({
+          const offline = transitionOffline({
             source: 'kicked',
             kind: 'forced',
             kickedInfo: kicked.info,
             args: kicked.args ?? [],
           });
-          if (info) notify('kicked', info);
+          if (offline) notify('kicked', offline.info, offline.transition);
           return;
         }
         notify(event, payload);

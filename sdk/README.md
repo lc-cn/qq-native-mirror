@@ -184,12 +184,39 @@ const sent = await friend.sendMessage('hello');
 await friend.recallMessage(sent.messageId);
 ```
 
-| Object           | Operations                                                                     |
-| ---------------- | ------------------------------------------------------------------------------ |
-| Friend and group | `sendMessage`, `getHistory`, `getMessage`, `getMessages`, `recallMessage`      |
-| Friend           | `getProfile`, `setRemark`, `setCategory`, `delete`                             |
-| Group            | `getInfo`, `getMembers`, `pickMember`, `setName`, `setRemark`, `mute`, `leave` |
-| Group member     | `getProfile`, `setCard`, `setAdmin`, `mute`, `kick`                            |
+| Object           | Operations                                                                                                                                                    |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Friend and group | `sendMessage`, `getHistory`, `getMessage`, `getMessages`, `recallMessage`, `getForwardMessages`, `forwardMessages`, `sendMergedForward`, `downloadAttachment` |
+| Friend           | `getProfile`, `setRemark`, `setCategory`, `delete`                                                                                                            |
+| Group            | `getInfo`, `getMembers`, `listMutedMembers`, `pickMember`, `setName`, `setRemark`, `mute`, `leave`                                                            |
+| Group member     | `getProfile`, `setCard`, `setAdmin`, `mute`, `kick`                                                                                                           |
+| `group.files`    | `count`, `getPage`, `list`, `createFolder`, `deleteFolder`, `deleteFile`                                                                                      |
+| `group.notices`  | `list`, `publish`, `delete`                                                                                                                                   |
+| `group.essence`  | `getPage`, `list`, `set`                                                                                                                                      |
+
+Group resources keep their own focused API and the selected group's identity:
+
+```ts
+const group = client.pickGroup('987654');
+const files = await group.files.list({ maxPages: 5 });
+const notices = await group.notices.list();
+const essence = await group.essence.getPage({ pageStart: 0, pageLimit: 20 });
+console.log(files.length, notices.notices.length, essence);
+
+// Forward existing messages from this group into the chosen destination.
+await group.forwardMessages({ type: 'private', userId: '123456' }, ['789']);
+// Download an attachment already identified by a message/element query.
+await group.downloadAttachment('789', '1', '/absolute/path/attachment.bin');
+```
+
+`files.list()` and `essence.list()` either reach the server end marker or reject;
+they do not return a truncated success when the page budget runs out.
+`notices.list()` returns the supported notice page, not a complete history.
+`essence.set(messageId, enabled)` uses a kernel message ID; essence query results
+contain sequence/random identifiers and cannot be passed as that ID.
+`sendMergedForward()` accepts text records. Mutation completion retains the
+underlying operation's submission/acknowledgement semantics; it does not establish
+delivery or remote state and failures are not automatically retried.
 
 `pickFriend`, `pickGroup` and `pickMember` are synchronous and require an online
 client and positive decimal QQ IDs as strings. Selection performs no network
@@ -201,8 +228,13 @@ the same [acknowledgement limits](docs/contacts-groups.md) as the client method.
 Each object belongs to the session in which it was selected. After disconnect,
 reconnect, account replacement or close, its methods reject; select a fresh object
 after login. A retained object never silently starts using another account.
-The classes are exported as `FriendContact`, `GroupContact` and
-`GroupMemberContact`; the existing `Friend`, `Group` and `GroupMember` types remain
+The `offline` listener observes the retired account state. A new explicit login
+started there survives the companion notifications from that same transition;
+a later independent disconnect still cancels it.
+The classes are exported as `FriendContact`, `GroupContact`, `GroupMemberContact`,
+`GroupFiles`, `GroupNotices` and `GroupEssence`. Resource objects have the same
+session lifetime as their group, even when retained separately. The existing
+`Friend`, `Group` and `GroupMember` types remain
 plain query results. This API is part of the working source, not the recorded
 `0.0.1` npm release.
 

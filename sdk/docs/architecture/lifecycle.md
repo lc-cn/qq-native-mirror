@@ -28,6 +28,13 @@
   Retry-policy inspection failure still retires the account and pending RPCs;
   its original value is preserved, alongside any notification failure. Reentrant
   close or a newer offline notification suppresses the obsolete event.
+  The kernel assigns an internal envelope sequence to the `offline`,
+  `disconnected` and optional `kicked` notifications from one retirement. The
+  first notification retires the account; its companions cannot cancel a login
+  started by an observer. Correlation is scoped to the worker generation and
+  retains only the latest sequence and seen event names. It is not part of
+  `OfflineInfo`. Older workers that emit an untagged `disconnected` still retire
+  the current authorization.
 - One automatic restore task owns its captured account request, timer, failure
   notification and retry decision. Explicit close, admitted manual login,
   admitted manual reconnect and a new offline transition retire that task.

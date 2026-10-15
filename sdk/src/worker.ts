@@ -8,9 +8,10 @@ import { observeBackgroundTask } from './runtime/background-task.ts';
 const send = (value: unknown) => {
   if (process.connected) process.send?.(value);
 };
-const bootstrap = createWorkerBootstrap((event, payload) =>
+const bootstrap = createWorkerBootstrap((event, payload, offlineTransition) =>
   send({
     event,
+    ...(offlineTransition === undefined ? {} : { offlineTransition }),
     payload:
       payload instanceof Error
         ? { message: serializeKernelError(payload).message }

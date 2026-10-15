@@ -38,7 +38,7 @@ export interface NativeBootstrapDependencies {
   createKernel(
     wrapper: NativeObject,
     options: KernelOptions,
-    emit: (event: string, payload: unknown) => void,
+    emit: (event: string, payload: unknown, offlineTransition?: number) => void,
   ): WorkerKernel;
 }
 
@@ -57,11 +57,11 @@ export class NativeWorkerBootstrap {
   #kernelClose?: Promise<void>;
   #close?: Promise<void>;
   readonly #dependencies: NativeBootstrapDependencies;
-  readonly #emit: (event: string, payload: unknown) => void;
+  readonly #emit: (event: string, payload: unknown, offlineTransition?: number) => void;
 
   constructor(
     dependencies: NativeBootstrapDependencies,
-    emit: (event: string, payload: unknown) => void,
+    emit: (event: string, payload: unknown, offlineTransition?: number) => void,
   ) {
     this.#dependencies = dependencies;
     this.#emit = emit;
@@ -138,8 +138,9 @@ export class NativeWorkerBootstrap {
           videoCodec,
           nativeContracts,
         },
-        (event, payload) => {
-          if (this.#state === 'initializing' || this.#state === 'ready') this.#emit(event, payload);
+        (event, payload, offlineTransition) => {
+          if (this.#state === 'initializing' || this.#state === 'ready')
+            this.#emit(event, payload, offlineTransition);
         },
       );
       // Retain before prepare: it may synchronously invoke callbacks and close.

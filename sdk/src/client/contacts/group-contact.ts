@@ -1,17 +1,23 @@
-import type { GroupInfoUpdate, GroupMember } from '../../contracts/groups.ts';
+import type { GroupInfoUpdate, GroupMember, GroupMutedMember } from '../../contracts/groups.ts';
 import type { MessageInput, Peer, SentMessage } from '../../contracts/messages.ts';
 import { captureGroupOperation } from '../../features/groups/group-operation-input.ts';
 import { captureGroupMessage } from '../../features/messages/send-input.ts';
 import { sendGroupId } from '../../validation/identifiers.ts';
 import type { ContactContext } from './contact-context.ts';
 import { ConversationContact } from './conversation-contact.ts';
+import { GroupEssence } from './group-essence.ts';
+import { GroupFiles } from './group-files.ts';
 import { GroupMemberContact } from './group-member-contact.ts';
+import { GroupNotices } from './group-notices.ts';
 
 /** Actions in one group, scoped to the current online session. Selection performs
  * no lookup and does not assert that the account has joined the group.
  */
 export class GroupContact extends ConversationContact<Extract<Peer, { type: 'group' }>> {
   readonly groupId: string;
+  readonly files: GroupFiles;
+  readonly essence: GroupEssence;
+  readonly notices: GroupNotices;
   readonly #context: ContactContext;
 
   /** @internal Constructed by QQClient with its captured session context. */
@@ -20,6 +26,9 @@ export class GroupContact extends ConversationContact<Extract<Peer, { type: 'gro
     super(context, { type: 'group', groupId: id });
     this.#context = context;
     this.groupId = id;
+    this.files = new GroupFiles(context, id);
+    this.essence = new GroupEssence(context, id);
+    this.notices = new GroupNotices(context, id);
     Object.freeze(this);
   }
 
@@ -42,6 +51,12 @@ export class GroupContact extends ConversationContact<Extract<Peer, { type: 'gro
   async getMembers(): Promise<GroupMember[]> {
     this.assertActive();
     return this.invoke('getGroupMembers', { groupId: this.groupId });
+  }
+
+  /** Preserve native mute metadata without interpreting its time units. */
+  async listMutedMembers(): Promise<GroupMutedMember[]> {
+    this.assertActive();
+    return this.invoke('listGroupMutedMembers', { groupId: this.groupId });
   }
 
   async setName(name: string): Promise<void> {

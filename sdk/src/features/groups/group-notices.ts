@@ -7,8 +7,8 @@ import { nativeResultError } from '../../errors.ts';
  * No list implementation: native bulletin result/listener fields remain unknown;
  * pinned OneBot GetGroupNotice uses WebApi rather than these native callbacks.
  */
-import { isAbsolute } from 'node:path';
 import { realpath, stat } from 'node:fs/promises';
+import { captureGroupNoticeDeletion, captureGroupNoticePublication } from './group-notice-input.ts';
 export interface GroupNoticePicture {
   id: string;
   width: number;
@@ -39,25 +39,6 @@ function record(value: unknown): Record<string, unknown> | undefined {
   return value && typeof value === 'object' ? (value as Record<string, unknown>) : undefined;
 }
 export type GroupNoticeOperation = 'publishGroupNotice' | 'deleteGroupNotice';
-export interface GroupNoticePublishOptions {
-  imagePath?: string;
-  pinned?: boolean;
-  confirmRequired?: boolean;
-}
-function groupId(value: unknown): string {
-  if (typeof value !== 'string' || !/^\d+$/.test(value))
-    throw new Error('groupId must be a numeric string');
-  return value;
-}
-function string(value: unknown, name: string): string {
-  if (typeof value !== 'string') throw new Error(`${name} must be a string`);
-  return value;
-}
-function flag(value: unknown, name: string): number {
-  if (value === undefined) return 0;
-  if (typeof value !== 'boolean') throw new Error(`${name} must be a boolean`);
-  return value ? 1 : 0;
-}
 function check(result: unknown, method: string): asserts result is Record<string, unknown> {
   if (
     !result ||
@@ -142,10 +123,11 @@ export function createGroupNotices(context: GroupNoticesContext) {
     payload: Record<string, unknown>,
   ): Promise<void> {
     alive();
-    const group = groupId(payload.groupId);
     if (method === 'deleteGroupNotice') {
-      const noticeId = string(payload.noticeId, 'noticeId');
-      if (!noticeId) throw new Error('noticeId must not be empty');
+      const { groupId: group, noticeId } = captureGroupNoticeDeletion(
+        payload.groupId,
+        payload.noticeId,
+      );
       const key = await pskey();
       const result = await wait(groupCall('deleteGroupBulletin', [group, key, noticeId]));
       // The native declaration returns void; this is dispatch completion only.
@@ -155,23 +137,17 @@ export function createGroupNotices(context: GroupNoticesContext) {
     }
     if (method !== 'publishGroupNotice')
       throw new Error(`Unsupported group notice operation: ${method}`);
-    const content = string(payload.text, 'text');
-    const capturedOptions = payload.options;
-    if (
-      capturedOptions !== undefined &&
-      (!capturedOptions || typeof capturedOptions !== 'object' || Array.isArray(capturedOptions))
-    )
-      throw new Error('options must be an object');
-    const options = (capturedOptions ?? {}) as Record<string, unknown>;
-    const pinned = flag(options.pinned, 'pinned');
-    const confirmRequired = flag(options.confirmRequired, 'confirmRequired');
+    const captured = captureGroupNoticePublication(payload.groupId, payload.text, payload.options);
+    const group = captured.groupId;
+    const content = captured.text;
+    const options = captured.options ?? {};
+    const pinned = options.pinned ? 1 : 0;
+    const confirmRequired = options.confirmRequired ? 1 : 0;
     let imagePath: string | undefined;
     const capturedImagePath = options.imagePath;
     if (capturedImagePath !== undefined) {
-      const input = string(capturedImagePath, 'imagePath');
-      if (!isAbsolute(input)) throw new Error('imagePath must be an absolute local file path');
       alive();
-      imagePath = await wait(realpath(input));
+      imagePath = await wait(realpath(capturedImagePath));
       if (!(await wait(stat(imagePath))).isFile())
         throw new Error('imagePath must reference a local file');
     }

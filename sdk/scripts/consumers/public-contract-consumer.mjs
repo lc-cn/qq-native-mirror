@@ -165,6 +165,37 @@ const contactHistory: Promise<Message[]> = groupContact.getHistory({limit: 10});
 const contactBatch: Promise<(Message | undefined)[]> = friendContact.getMessages(['789']);
 const memberProfile: Promise<UserProfile> = memberContact.getProfile();
 const selectedMembers: Promise<GroupMember[]> = groupContact.getMembers();
+const selectedMuted: Promise<GroupMutedMember[]> = groupContact.listMutedMembers();
+const selectedFiles: import('qq-native-client').GroupFiles = groupContact.files;
+const selectedNotices: import('qq-native-client').GroupNotices = groupContact.notices;
+const selectedEssence: import('qq-native-client').GroupEssence = groupContact.essence;
+const selectedFilePage: Promise<GroupFilePage> = selectedFiles.getPage({ startIndex: 0 });
+const selectedFileList: Promise<GroupFileEntry[]> = selectedFiles.list({ maxPages: 2 });
+const selectedCount: Promise<number> = selectedFiles.count();
+const selectedFolder: Promise<GroupFolder> = selectedFiles.createFolder('files');
+const selectedFileDeletion: Promise<void> = selectedFiles.deleteFile('file-id');
+const selectedFolderDeletion: Promise<void> = selectedFiles.deleteFolder('folder-id');
+const selectedNoticePage: Promise<GroupNoticePage> = selectedNotices.list();
+const selectedNoticePublication: Promise<void> = selectedNotices.publish('notice', { pinned: true });
+const selectedNoticeDeletion: Promise<void> = selectedNotices.delete('notice-id');
+const selectedEssencePage: Promise<GroupEssencePage> = selectedEssence.getPage({ pageStart: 0 });
+const selectedEssenceList: Promise<GroupEssenceMessage[]> = selectedEssence.list({ maxPages: 2 });
+const selectedEssenceMutation: Promise<void> = selectedEssence.set('789', true);
+const selectedForwardRead: Promise<Message[]> = friendContact.getForwardMessages('789');
+const selectedForwardSubmission: Promise<void> = friendContact.forwardMessages(groupContact.peer, ['789'] as const);
+const selectedMerged: Promise<SentMergedForward> = groupContact.sendMergedForward([{ userId: '123', nickname: 'name', time: 1, text: 'hello' }]);
+const selectedAttachment: Promise<{file: string}> = groupContact.downloadAttachment('789', '1', '/tmp/attachment');
+// @ts-expect-error Selected resource objects cannot be replaced.
+groupContact.files = selectedFiles;
+// @ts-expect-error Resource routing is immutable.
+selectedNotices.groupId = '999';
+// @ts-expect-error Full group-file traversal always starts at zero.
+selectedFiles.list({ startIndex: 1 });
+// @ts-expect-error Group resource capabilities do not belong to private contacts.
+friendContact.notices.list();
+// @ts-expect-error Essence mutations use kernel message IDs, not list-entry objects.
+selectedEssence.set({ sequence: '1', random: '2' }, true);
+void [selectedMuted, selectedFilePage, selectedFileList, selectedCount, selectedFolder, selectedFileDeletion, selectedFolderDeletion, selectedNoticePage, selectedNoticePublication, selectedNoticeDeletion, selectedEssencePage, selectedEssenceList, selectedEssenceMutation, selectedForwardRead, selectedForwardSubmission, selectedMerged, selectedAttachment];
 // @ts-expect-error Selecting a contact requires a lossless string identity.
 client.pickFriend(123);
 // @ts-expect-error A selected identity cannot be reassigned.

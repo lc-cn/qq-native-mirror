@@ -6,6 +6,14 @@ import type {
   SentMessage,
 } from '../../contracts/messages.ts';
 import type { OperationCall, OperationResult } from '../../runtime/operation-contracts.ts';
+import type {
+  ForwardTextNode,
+  MergedForwardOptions,
+  SentMergedForward,
+} from '../../contracts/forward.ts';
+import { captureForwardSubmission } from '../../features/forward/forward-input.ts';
+import { captureMergedForward } from '../../features/forward/merged-forward-input.ts';
+import { captureDownloadRequest } from '../../features/media/download-input.ts';
 import {
   normalizeHistoryQuery,
   normalizeMessageBatchQuery,
@@ -54,6 +62,57 @@ export abstract class ConversationContact<P extends Peer> {
   async getMessages(messageIds: readonly string[]): Promise<(Message | undefined)[]> {
     this.assertActive();
     return this.invoke('getMessages', normalizeMessageBatchQuery(this.peer, messageIds));
+  }
+
+  /** Read a card in this conversation. Nested cards keep the outer root ID and
+   * supply their own parent ID; first-level cards use the root for both.
+   */
+  async getForwardMessages(
+    rootMessageId: string,
+    parentMessageId: string = rootMessageId,
+  ): Promise<Message[]> {
+    this.assertActive();
+    const root = normalizeMessageQuery(this.peer, rootMessageId);
+    const parent = normalizeMessageQuery(root.peer, parentMessageId);
+    return this.invoke('getForwardMessages', {
+      peer: root.peer,
+      rootMessageId: root.messageId,
+      parentMessageId: parent.messageId,
+    });
+  }
+
+  /** Forward existing messages from this conversation. Native submission does
+   * not confirm destination receipt, and failures are never automatically retried.
+   */
+  async forwardMessages(destination: Peer, messageIds: readonly string[]): Promise<void> {
+    this.assertActive();
+    return this.invoke(
+      'forwardMessages',
+      captureForwardSubmission({ source: this.peer, destination, messageIds }),
+    );
+  }
+
+  /** Compose text records into a card addressed to this conversation. Upload
+   * and card dispatch retain their existing completion and unknown-effect errors.
+   */
+  async sendMergedForward(
+    nodes: readonly ForwardTextNode[],
+    options: MergedForwardOptions = {},
+  ): Promise<SentMergedForward> {
+    this.assertActive();
+    return this.invoke('sendMergedForward', captureMergedForward(this.peer, nodes, options));
+  }
+
+  async downloadAttachment(
+    messageId: string,
+    elementId: string,
+    destination: string,
+  ): Promise<{ file: string }> {
+    this.assertActive();
+    return this.invoke(
+      'downloadAttachment',
+      captureDownloadRequest(this.peer, messageId, elementId, destination),
+    );
   }
 
   /** Submit once. A timeout after dispatch leaves the remote effect unknown. */

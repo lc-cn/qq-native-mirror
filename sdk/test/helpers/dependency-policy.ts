@@ -175,12 +175,16 @@ const facadeInputs = new Set([
   'src/features/groups/group-essence-input.ts',
   'src/features/groups/files/group-file-input.ts',
   'src/features/groups/group-search-input.ts',
+  'src/features/groups/group-notice-input.ts',
 ]);
 
 const publicContacts = new Set([
   'src/client/contacts/friend-contact.ts',
   'src/client/contacts/group-contact.ts',
   'src/client/contacts/group-member-contact.ts',
+  'src/client/contacts/group-files.ts',
+  'src/client/contacts/group-essence.ts',
+  'src/client/contacts/group-notices.ts',
 ]);
 // Contacts bind existing input capture to an injected session capability. They
 // cannot acquire a client/lifecycle or execute native operations themselves.
@@ -193,6 +197,9 @@ const contactDependencies: Record<string, readonly string[]> = {
     'src/client/contacts/contact-context.ts',
     'src/features/messages/query-input.ts',
     'src/features/messages/recall-input.ts',
+    'src/features/forward/forward-input.ts',
+    'src/features/forward/merged-forward-input.ts',
+    'src/features/media/download-input.ts',
   ],
   'src/client/contacts/friend-contact.ts': [
     'src/client/contacts/contact-context.ts',
@@ -205,6 +212,9 @@ const contactDependencies: Record<string, readonly string[]> = {
     'src/client/contacts/contact-context.ts',
     'src/client/contacts/conversation-contact.ts',
     'src/client/contacts/group-member-contact.ts',
+    'src/client/contacts/group-files.ts',
+    'src/client/contacts/group-essence.ts',
+    'src/client/contacts/group-notices.ts',
     'src/features/groups/group-operation-input.ts',
     'src/features/messages/send-input.ts',
     'src/validation/identifiers.ts',
@@ -213,6 +223,21 @@ const contactDependencies: Record<string, readonly string[]> = {
     'src/client/contacts/contact-context.ts',
     'src/features/contacts/contact-operation-input.ts',
     'src/features/groups/group-operation-input.ts',
+    'src/validation/identifiers.ts',
+  ],
+  'src/client/contacts/group-files.ts': [
+    'src/client/contacts/contact-context.ts',
+    'src/features/groups/files/group-file-input.ts',
+    'src/validation/identifiers.ts',
+  ],
+  'src/client/contacts/group-essence.ts': [
+    'src/client/contacts/contact-context.ts',
+    'src/features/groups/group-essence-input.ts',
+    'src/validation/identifiers.ts',
+  ],
+  'src/client/contacts/group-notices.ts': [
+    'src/client/contacts/contact-context.ts',
+    'src/features/groups/group-notice-input.ts',
     'src/validation/identifiers.ts',
   ],
 };

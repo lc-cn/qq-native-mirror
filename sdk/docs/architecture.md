@@ -176,7 +176,8 @@ canonical `request.friend`; presentation also accepts the older worker name and
 provides its deprecated public alias. Both event names share one capability.
 
 `client/contacts` binds immutable selected IDs to the same account-operation
-guard. `ConversationContact<Peer>` shares message queries and recall between
+guard. `ConversationContact<Peer>` shares message queries, recall, forwarding and
+attachment downloads between
 `FriendContact` and `GroupContact`; `GroupMemberContact` owns group-member actions
 without pretending to be a friend. `QQClient` injects a typed operation capability
 and checks the captured session again after input validation, because caller
@@ -184,6 +185,14 @@ getters may retire the session while inputs are being read. The contact layer
 imports neither `QQClient` nor its lifecycle, and selects no native services.
 Selection performs no I/O; methods return existing operation results. These
 objects have no implicit metadata cache or reconnect policy.
+
+`GroupContact` composes `GroupFiles`, `GroupNotices` and `GroupEssence` using that
+same injected capability. Each object owns one resource workflow and reuses the
+domain input owner used by the direct client API. They neither call back into the
+client nor implement native protocols. Notice publication captures options and
+validates text before ticket acquisition, image I/O or dispatch; the worker
+reuses that preflight at its boundary. Resource selection performs no I/O, and a
+retained resource cannot outlive its selecting online session.
 
 The lifecycle validates and commits an online identity before forwarding either
 `login` or `ready`. Consecutive readiness notifications for the exact same UIN and

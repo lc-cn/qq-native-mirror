@@ -172,6 +172,9 @@ test('dependency policy rejects reverse, type-only and new cross-domain coupling
     ['src/client/contacts/friend-contact.ts', 'src/client/qq-client.ts'],
     ['src/client/contacts/group-contact.ts', 'src/runtime/client-lifecycle.ts'],
     ['src/client/contacts/group-member-contact.ts', 'src/native-services.ts'],
+    ['src/client/contacts/group-files.ts', 'src/features/groups/files/group-file-pages.ts'],
+    ['src/client/contacts/group-notices.ts', 'src/features/groups/group-notices.ts'],
+    ['src/client/contacts/group-essence.ts', 'src/runtime/client-lifecycle.ts'],
     [
       'src/client/contacts/conversation-contact.ts',
       'src/features/messages/native-message-sender.ts',

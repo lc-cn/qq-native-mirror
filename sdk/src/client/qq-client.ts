@@ -10,6 +10,11 @@ import { captureFriendRequest } from '../features/contacts/friend-request-input.
 import { captureGroupRequestOperation } from '../features/groups/group-request-input.ts';
 import { captureGroupSearch } from '../features/groups/group-search-input.ts';
 import { captureGroupOperation } from '../features/groups/group-operation-input.ts';
+import {
+  captureGroupNoticeDeletion,
+  captureGroupNoticeList,
+  captureGroupNoticePublication,
+} from '../features/groups/group-notice-input.ts';
 import { captureContactOperation } from '../features/contacts/contact-operation-input.ts';
 import {
   captureCreateGroupFolder,
@@ -537,14 +542,21 @@ export class QQClient extends EventEmitter<ClientEvents> {
       options: { maxPages: query.maxPages },
     });
   }
-  listGroupNotices(groupId: string): Promise<GroupNoticePage> {
-    return this.#operation('listGroupNotices', { groupId });
+  async listGroupNotices(groupId: string): Promise<GroupNoticePage> {
+    return this.#operation('listGroupNotices', captureGroupNoticeList(groupId));
   }
-  publishGroupNotice(groupId: string, text: string, options?: GroupNoticeOptions): Promise<void> {
-    return this.#operation('publishGroupNotice', { groupId, text, options });
+  async publishGroupNotice(
+    groupId: string,
+    text: string,
+    options?: GroupNoticeOptions,
+  ): Promise<void> {
+    return this.#operation(
+      'publishGroupNotice',
+      captureGroupNoticePublication(groupId, text, options),
+    );
   }
-  deleteGroupNotice(groupId: string, noticeId: string): Promise<void> {
-    return this.#operation('deleteGroupNotice', { groupId, noticeId });
+  async deleteGroupNotice(groupId: string, noticeId: string): Promise<void> {
+    return this.#operation('deleteGroupNotice', captureGroupNoticeDeletion(groupId, noticeId));
   }
   /** Native submission only; completion does not confirm the remote group state. */
   async leaveGroup(groupId: string): Promise<void> {
