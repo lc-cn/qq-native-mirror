@@ -1,0 +1,27 @@
+sdk/docs/signing-integrity.md
+  s_2104cc474f1ce5::t_8b142cf41fee8a 121-122
+sdk/docs/sdk-quality.md
+  s_2104cc474f1ce5::t_9ad0b7432cc84e 420-433
+sdk/docs/linux-signing-static.md
+  s_2104cc474f1ce5::t_8b142cf41fee8a 484-501
+sdk/docs/evidence/signing-record-pointer-provenance.json
+  s_2104cc474f1ce5::t_16befa72fc02c7 1-234
+sdk/scripts/linux-signing-record-pointer-provenance.py
+  s_2104cc474f1ce5::t_9584995570198d 1-190
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6cc0b9b25ee52a73f14274ddd5c9e932fb49e263",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
