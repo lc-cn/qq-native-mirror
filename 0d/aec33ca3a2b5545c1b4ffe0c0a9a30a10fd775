@@ -1,0 +1,68 @@
+sdk/examples/support/reply-policy.ts
+  s_2104cc474f1ce5::t_c3832e3ab9bcf7 22-25
+  s_2104cc474f1ce5::t_a844373031f688 1,41,51
+sdk/test/client-event-presentation.test.ts
+  s_2104cc474f1ce5::t_a844373031f688 7,12,17-27,95,110,135-137
+sdk/test/keyword-reply-demo.test.ts
+  s_2104cc474f1ce5::t_c3832e3ab9bcf7 216-243,267-317
+  s_2104cc474f1ce5::t_47b0754375fefa 244-266
+  s_2104cc474f1ce5::t_a844373031f688 18,23,77-82,104,111-122,199
+sdk/README.md
+  s_2104cc474f1ce5::t_1865647e276f5c 103-119,124
+sdk/docs/architecture.md
+  s_2104cc474f1ce5::t_36df7c0b563b0b 43-44,96-97,210-229
+sdk/docs/sdk-quality.md
+  s_2104cc474f1ce5::t_f6b050b9bf6a2c 124-149
+sdk/scripts/consumers/bot-api-consumer-contract.mjs
+  s_2104cc474f1ce5::t_2b39290713e856 22-24,37-40,50-53,62,67-83,117-142,236-239,256-257
+sdk/scripts/consumers/client-lifecycle-consumer-contract.mjs
+  s_2104cc474f1ce5::t_304a56312a01fd 1718,1725-1727,1740-1744
+sdk/scripts/consumers/public-contract-consumer.mjs
+  s_2104cc474f1ce5::t_f09503c14ccdc1 108-127
+sdk/src/client/client-event-presentation.ts
+  s_2104cc474f1ce5::t_32d5c488664f9e 2
+sdk/src/client/events.ts
+  s_2104cc474f1ce5::t_846020e1f6e35c 1-3,5,12-52,54-59,62-67
+sdk/src/client/message-event.ts
+  s_2104cc474f1ce5::t_2696537364c12e 1-2,4-7,14-17,33-55,59,72-92,94-95,112-113
+sdk/src/client/qq-client.ts
+  s_2104cc474f1ce5::t_0c2af5e37f8b42 58,144,225-227
+sdk/src/client/request-event.ts
+  s_2104cc474f1ce5::t_6ba8b3164ad4b8 1-3
+sdk/src/contracts/diagnostics.ts
+  s_2104cc474f1ce5::t_54c5450f44f84c 1-12
+sdk/src/runtime/client-lifecycle.ts
+  s_2104cc474f1ce5::t_fcc4083bd17681 11-14
+sdk/src/types.ts
+  s_2104cc474f1ce5::t_3a8338db5d2414 1,4,9
+sdk/test/architecture/contracts.ts
+  s_2104cc474f1ce5::t_468db230fdf2ae 50-52,97-100,308-336
+sdk/test/architecture/dependency-direction.ts
+  s_2104cc474f1ce5::t_13a2e76ae68be3 210
+sdk/test/architecture/module-ownership.ts
+  s_2104cc474f1ce5::t_338de783795430 458-459,482,498,500-504
+sdk/test/bot-api-consumer.test.mjs
+  s_2104cc474f1ce5::t_4b66593e222a65 11-12
+sdk/test/client.test.ts
+  s_2104cc474f1ce5::t_e366c4edbfd7d3 303-307,313-317,322-323
+sdk/test/helpers/dependency-policy.ts
+  s_2104cc474f1ce5::t_8b142162394e39 454-478,480-488,490,517
+sdk/test/message-event.test.ts
+  s_2104cc474f1ce5::t_18414ac6671b7f 7-18,35-46,90-101,169-170,179,185-194,199-200,209-220,241-244,247-248,279,295-296,333-341,345-551
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "0daec33ca3a2b5545c1b4ffe0c0a9a30a10fd775",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
