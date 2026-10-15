@@ -1,0 +1,35 @@
+sdk/scripts/build-native.ts
+  s_2104cc474f1ce5::t_45006731019d68 7
+  s_2104cc474f1ce5::t_648a2b014186bd 6,8-12
+ci/npm.mjs
+  s_2104cc474f1ce5::t_1f4fb1839a2381 1
+ci/linux-video-baseline.test.mjs
+  s_2104cc474f1ce5::t_648a2b014186bd 6,15,17,21,23,25
+sdk/test/native-build-entrypoint.test.ts
+  s_2104cc474f1ce5::t_45006731019d68 1-47
+sdk/README.md
+  s_2104cc474f1ce5::t_d38220d1241f45 369-374
+sdk/scripts/npm-cli.mjs
+  s_2104cc474f1ce5::t_1f4fb1839a2381 1-16
+sdk/scripts/verify-package-consumer.mjs
+  s_2104cc474f1ce5::t_648a2b014186bd 61-64,66,108,124
+  s_2104cc474f1ce5::t_1f4fb1839a2381 6
+sdk/scripts/consumer-module-policy.ts
+  s_2104cc474f1ce5::t_1f4fb1839a2381 64
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "aa745d7e15094a3fc904f9f4204141f60c5cafcc",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
