@@ -289,8 +289,8 @@ CLI JSON and normalized watch output. It checks missing optional identity, displ
 mutation and retired-session rejection. Installed declarations expose 77 public
 types including `GroupRequestParticipant`. Transport and account boundaries remain
 controlled in these tests; no real request, account login or approval was attempted.
-This participant addition has local evidence only and is not part of the earlier
-`7c8361c` CI candidate.
+This local acceptance preceded the `f67af5b` CI evidence below. The participant
+addition was not part of the earlier `7c8361c` CI candidate.
 
 The next workflow step adds an explicit `getUserProfileByUid()` query and
 `profile-uid` CLI command. A request participant can be inspected through the
@@ -309,9 +309,36 @@ identity, explicit UID queries and approval, exact Map-entry and account identit
 checks, original-session retirement and CLI cleanup. Independent review found no
 blocking issue and passed 27 focused profile, retirement and composition checks.
 These checks use controlled transports; they do not establish native-store coverage
-for strangers, profile freshness or real-account behavior. This UID-profile
-addition has local evidence only and is not part of the earlier `7c8361c` CI
-candidate.
+for strangers, profile freshness or real-account behavior. The UID-profile addition
+was not part of the earlier `7c8361c` CI candidate; its later remote evidence is
+bound to the exact candidate below.
+
+Candidate `f67af5bdcb8a8499280caf98d8b23dbb0249b46d` subsequently passed the four
+authorized workflows: SDK quality, six default mirror hosts, six Linux
+version/catalog cases and six native npm package builds with installed consumers.
+The [f67 artifact audit](evidence/sdk-ci-f67af5b.json) binds every result to that
+source and run attempt 1. It verifies 9,282,839 bytes of twelve actual artifact
+ZIPs against GitHub digests, then the main tarballs' size, SHA-256 and SHA-512.
+All 448 common package files, including 312 compiled files, are identical across
+the twelve mirrors. All twelve receipts report successful preparation/close,
+cold payload downloads and zero warm payload requests. The default six explicitly
+record the controlled UID-profile composition, identity, session and CLI checks;
+the multi-version receipts omit those fields. None of these mirror receipts has
+a standalone participant-consumer field, so neither omission is treated as a pass.
+
+The separate native npm audit fetched 1,394,656 bounded range bytes, verifying the
+852,724-byte aggregate main and six source/manifest-bound installed consumers.
+Each platform records 247 passing contract flags; all nine explicit participant
+and UID-profile checks also pass, with native group-request/profile queries and
+account use explicitly false. The aggregate receipt and Linux x64 receipt differ only in
+tarball request order; their other parsed fields agree, but their bytes differ.
+The publish job was skipped. Auxiliary native tarball and manifest hashes remain
+receipt declarations because those bodies were not downloaded. Missing restore
+fields remain unproven. This evidence establishes installation, initialization
+and controlled SDK behavior for `f67af5b`; it does not establish stranger-profile
+coverage, account access, approval effects or signing authenticity. Later local
+changes, including the signing-tool repair and `prepare` CLI, are outside this
+exact-source remote proof.
 
 The signing-research delivery audit found eleven static reproduction tools that
 the documents referenced but the source snapshot had never included. Their local
@@ -337,3 +364,27 @@ it. Independent review matched the public restoration inventory to all eleven
 source and output hashes and found no blocking issue. The ten wrong-version
 refusals and eleven positive static replays remain separate from the controlled
 SDK/package checks and add no account or signing-authenticity evidence.
+
+The next local workflow adds `prepare --config FILE` to check resource loading
+before account login. It disables configured login and reconnection, rejects
+account flags, prints the observed state and native export inventory, then
+closes. The existing command runner now owns signals before creating a client;
+an interrupted, late client is closed once without printing its result. Creation,
+output, shutdown and synchronous close failures retain their documented outcomes.
+Ctrl+C still waits for initialization to return; it cannot cancel an ongoing
+resource download. Existing account commands keep their login and listener order.
+
+Local source `677fd003e6ea868f59beca27b25d8b783e4bc65d` passed 2,590 SDK tests,
+88 tool tests, formatting, zero-warning lint, strict source/test/script types,
+clean build and the packed/installed consumer, including the actual installed CLI
+entry with a controlled acquisition boundary. The final installation stage first
+stopped on a missing offline npm cache entry; the same stage passed with the
+project's existing cache. A separate [real CLI check](evidence/cli-prepare-local-677fd00.json)
+used Node 24.19.0 on macOS ARM64, the explicitly pinned local 0.0.1 auxiliary bundle
+and a fresh temporary data directory. All 1,156 manifest paths were rehashed first.
+The unmodified built CLI initialized the real native wrapper, returned `idle` and
+104 exports, and exited normally after 8.164 seconds with empty stderr; its owned
+temporary directory was removed. No account login or restoration was requested.
+This proves the local initialization path only: neither the published package,
+automatic latest selection, real native cancellation nor signing authenticity
+was established by this check. The earlier `f67af5b` CI does not cover this change.
