@@ -14,57 +14,85 @@ function object(value: unknown): Record<string, unknown> | undefined {
     ? (value as Record<string, unknown>)
     : undefined;
 }
+/** Native projections consume own data only. Accessors and descriptor traps
+ * belong to the malformed-input boundary, never to callback presentation.
+ */
+function dataField(value: object, key: string): unknown {
+  const descriptor = Object.getOwnPropertyDescriptor(value, key);
+  if (descriptor && !('value' in descriptor)) throw new Error('Invalid native friend field');
+  return descriptor?.value;
+}
+function array(value: unknown): unknown[] | undefined {
+  if (!Array.isArray(value)) return;
+  const length = dataField(value, 'length');
+  if (typeof length !== 'number' || !Number.isSafeInteger(length) || length < 0) return;
+  const result: unknown[] = [];
+  for (let index = 0; index < length; index++) {
+    const descriptor = Object.getOwnPropertyDescriptor(value, String(index));
+    if (!descriptor || !('value' in descriptor)) return;
+    result.push(descriptor.value);
+  }
+  return result;
+}
 function friend(value: unknown): FriendChange | undefined {
   const raw = object(value);
+  if (!raw) return;
+  const uid = dataField(raw, 'uid');
+  const userId = dataField(raw, 'uin');
+  const nickname = dataField(raw, 'nick');
   if (
-    !raw ||
-    typeof raw.uid !== 'string' ||
-    !raw.uid.trim() ||
-    typeof raw.uin !== 'string' ||
-    !/^\d+$/.test(raw.uin) ||
-    typeof raw.nick !== 'string'
+    typeof uid !== 'string' ||
+    !uid.trim() ||
+    typeof userId !== 'string' ||
+    !/^\d+$/.test(userId) ||
+    typeof nickname !== 'string'
   )
     return;
-  const result: FriendChange = { uid: raw.uid, userId: raw.uin, nickname: raw.nick };
-  if (raw.remark !== undefined) {
-    if (typeof raw.remark !== 'string') return;
-    result.remark = raw.remark;
+  const result: FriendChange = { uid, userId, nickname };
+  const remark = dataField(raw, 'remark');
+  if (remark !== undefined) {
+    if (typeof remark !== 'string') return;
+    result.remark = remark;
   }
   return result;
 }
 function category(value: unknown): FriendCategoryChange | undefined {
   const raw = object(value);
+  if (!raw) return;
+  const categoryId = dataField(raw, 'categoryId');
+  const name = dataField(raw, 'categoryName');
+  const memberCount = dataField(raw, 'categoryMbCount');
+  const buddies = array(dataField(raw, 'buddyList'));
   if (
-    !raw ||
-    typeof raw.categoryId !== 'number' ||
-    !Number.isSafeInteger(raw.categoryId) ||
-    typeof raw.categoryName !== 'string' ||
-    typeof raw.categoryMbCount !== 'number' ||
-    !Number.isSafeInteger(raw.categoryMbCount) ||
-    raw.categoryMbCount < 0 ||
-    !Array.isArray(raw.buddyList)
+    typeof categoryId !== 'number' ||
+    !Number.isSafeInteger(categoryId) ||
+    typeof name !== 'string' ||
+    typeof memberCount !== 'number' ||
+    !Number.isSafeInteger(memberCount) ||
+    memberCount < 0 ||
+    !buddies
   )
     return;
-  const friends = Array.from(raw.buddyList, friend);
+  const friends = buddies.map(friend);
   if (friends.some((value) => value === undefined)) return;
   return {
-    categoryId: raw.categoryId,
-    name: raw.categoryName,
-    memberCount: raw.categoryMbCount,
+    categoryId,
+    name,
+    memberCount,
     friends: friends as FriendChange[],
   };
 }
 export function createFriendEvents(emit: (event: string, payload: unknown) => void) {
   return {
     onBuddyListChange(values: unknown): void {
-      const invalid = () => emit('diagnostic', { stage: 'invalid-native-friend-list-update' });
-      if (!Array.isArray(values)) {
-        invalid();
-        return;
+      let categories: (FriendCategoryChange | undefined)[] | undefined;
+      try {
+        categories = array(values)?.map(category);
+      } catch {
+        // Native field/descriptor failures emit no payload or exception details.
       }
-      const categories = Array.from(values, category);
-      if (categories.some((value) => value === undefined)) {
-        invalid();
+      if (!categories || categories.some((value) => value === undefined)) {
+        emit('diagnostic', { stage: 'invalid-native-friend-list-update' });
         return;
       }
       const update: FriendListUpdate = { categories: categories as FriendCategoryChange[] };
