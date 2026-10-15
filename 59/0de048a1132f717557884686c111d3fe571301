@@ -1,0 +1,102 @@
+ci/verify-consumer.mjs
+  s_2104cc474f1ce5::t_ff8e9035d9f662 6,1020,1052
+  s_2104cc474f1ce5::t_7c60f154a17b76 5,1019,1051
+sdk/src/client/contacts/group-files.ts
+  s_2104cc474f1ce5::t_c9e427be830e3b 1-79
+sdk/scripts/consumers/contact-resources-consumer-contract.mjs
+  s_2104cc474f1ce5::t_80e4efda16ff2c 18-23,30-38,40-47,57-66,69-78,117-139,147-152,158,174-177,179-196,198-204,224-227,229,246-249,251-252,257-263,265,280-283
+  s_2104cc474f1ce5::t_40898fa73782f8 1-17,24-29,39,48-56,67-68,79-116,140-146,153-157,159-173,178,197,205-223,228,230-245,250,253-256,264,266-279,284-294
+sdk/src/index.ts
+  s_2104cc474f1ce5::t_7b5799612034b5 6-8
+sdk/src/client/contacts/group-essence.ts
+  s_2104cc474f1ce5::t_c9e427be830e3b 1-57
+sdk/test/contact-resources-consumer.test.mjs
+  s_2104cc474f1ce5::t_31446e729e96b2 1-7
+sdk/src/client/qq-client.ts
+  s_2104cc474f1ce5::t_60ab3041703c8e 13-17,545-546,548-555
+  s_2104cc474f1ce5::t_757c81fd010f21 556,558-559
+sdk/test/architecture/dependency-direction.ts
+  s_2104cc474f1ce5::t_a8114fb9eacc1a 175-177
+sdk/test/contact-conversation-resource.test.ts
+  s_2104cc474f1ce5::t_cb0683b9db0f61 1-269
+  s_2104cc474f1ce5::t_9caf752a928a22 270-310
+sdk/docs/architecture/lifecycle.md
+  s_2104cc474f1ce5::t_4f8f4ac9d5d479 31-37
+sdk/scripts/consumers/offline-transition-consumer-contract.mjs
+  s_2104cc474f1ce5::t_aab9a0b4dc5e9b 1-37,39-50,54-56,60-61,64-68,70-83,86-91,100-105,110-113,116-136,138-141
+  s_2104cc474f1ce5::t_a542fb20f45d39 69
+  s_2104cc474f1ce5::t_f867fa90e8f82b 38,51-53,57-59,62-63,84-85,92-99,106-109,114-115,137
+  s_2104cc474f1ce5::t_4cbdcdb04db746 142-144
+sdk/scripts/verify-package-consumer.mjs
+  s_2104cc474f1ce5::t_ff8e9035d9f662 48,149-154,572
+  s_2104cc474f1ce5::t_7c60f154a17b76 47,571
+sdk/src/features/groups/group-notice-input.ts
+  s_2104cc474f1ce5::t_60ab3041703c8e 1-49
+sdk/src/features/groups/group-notices.ts
+  s_2104cc474f1ce5::t_8da746a7c433c5 11,127-130
+  s_2104cc474f1ce5::t_60ab3041703c8e 140-145,150
+sdk/docs/sdk-quality.md
+  s_2104cc474f1ce5::t_4f8f4ac9d5d479 105-112
+  s_2104cc474f1ce5::t_993d7459c0ed27 113-121
+  s_2104cc474f1ce5::t_31446e729e96b2 92-104
+sdk/src/client/contacts/group-contact.ts
+  s_2104cc474f1ce5::t_c9e427be830e3b 1,8-9,18-19,29-30,56-59
+  s_2104cc474f1ce5::t_3afca61b55b173 11,20,31
+  s_2104cc474f1ce5::t_cb483b3e25eb95 60-61
+sdk/src/client/contacts/group-notices.ts
+  s_2104cc474f1ce5::t_60ab3041703c8e 1-45
+sdk/test/offline-transition-consumer.test.mjs
+  s_2104cc474f1ce5::t_aab9a0b4dc5e9b 1-12
+sdk/docs/architecture.md
+  s_2104cc474f1ce5::t_64f713234f9d66 179-180,189-195
+  s_2104cc474f1ce5::t_850ad84947cff0 196
+sdk/test/group-notice-input.test.ts
+  s_2104cc474f1ce5::t_27fa46e31dad34 21
+  s_2104cc474f1ce5::t_7c60f154a17b76 31-49,57-62,66-69,81-90,92,102,115-118,122-138
+  s_2104cc474f1ce5::t_7b5799612034b5 1-20,22-30,50-56,63-65,70-80,91,93-101,103-114,119-121,139-144
+sdk/src/client/contacts/conversation-contact.ts
+  s_2104cc474f1ce5::t_8e70aa50181781 9-16,67-116
+  s_2104cc474f1ce5::t_5d083a365915de 117
+sdk/README.md
+  s_2104cc474f1ce5::t_64f713234f9d66 189,197-219,234-237
+  s_2104cc474f1ce5::t_4f8f4ac9d5d479 187-188,190-195,231-233
+  s_2104cc474f1ce5::t_7facb897b996d9 196
+sdk/scripts/consumers/public-contract-consumer.mjs
+  s_2104cc474f1ce5::t_27fa46e31dad34 168-185,187-198
+  s_2104cc474f1ce5::t_64f713234f9d66 186
+sdk/test/group-resources.test.ts
+  s_2104cc474f1ce5::t_94d9f94ffaa2e0 1-293
+  s_2104cc474f1ce5::t_a04e6d83280037 294-391
+sdk/test/helpers/external-dependencies.ts
+  s_2104cc474f1ce5::t_a8114fb9eacc1a 22-23
+sdk/test/helpers/dependency-policy.ts
+  s_2104cc474f1ce5::t_7b5799612034b5 178,185-187,200-202,215-217,228-242
+sdk/src/kernel.ts
+  s_2104cc474f1ce5::t_8eafc045743ac6 29,42,44-45,108-110,113-115,208,214
+sdk/src/runtime/client-lifecycle.ts
+  s_2104cc474f1ce5::t_381396c9eabea2 111-131,196-198,249,254-255,257,259-275,277-299,302-308,398,406
+sdk/src/worker.ts
+  s_2104cc474f1ce5::t_3390aa154c22c3 11,14
+sdk/src/worker/bootstrap.ts
+  s_2104cc474f1ce5::t_95b8cb07dc067e 12-14
+sdk/src/worker/native-bootstrap.ts
+  s_2104cc474f1ce5::t_e2919e94cdb10b 41,60,64,141-143
+sdk/test/client-offline-transition.test.ts
+  s_2104cc474f1ce5::t_8634c1c39ec261 1-366
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "590de048a1132f717557884686c111d3fe571301",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
