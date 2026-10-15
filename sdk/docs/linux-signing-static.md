@@ -481,3 +481,21 @@ python3 scripts/linux-signing-input-buffer-provenance.py /absolute/path/wrapper.
 脚本固定完整 binary SHA、五个 unwind 范围、九个指令窗口的 SHA 和完整 objdump 指令字，以及 opcode 表和静态 blob。dispatcher 窗口同时核对实际表地址和目标基址。需要支持 AArch64 ELF 的 objdump；可用 `--objdump /absolute/path/objdump` 指定工具。全部检查完成后才输出 JSON，收据保存在 `.local/research/linux-signing-input-buffer-provenance.json`。本次只增加指针来源证据，没有执行 native/provider、修改检测结果或使用账号；实际记录身份、混淆分支顺序、OR8 到最终输出的传播和签名真实性仍未证明。
 
 2026-10-15 本地正向运行核对了这九个窗口的 321 条指令字。另一个独立 `PT_LOAD` reader 对四个有限函数的 9,908 条指令做字节核对，并检查保存指针槽的直接写入、global 重定位及直接分支；根侧复跑得到相同收据 SHA-256 `704ed0e3907c16fce62cfacb6b69b28a5cffcc1479248ba83ba9bf3a47de8690`。完整函数字节核对不等于已解释全部混淆状态。实际旧版、错误文件（含 Python `-O`）、缺失 objdump 和不输出指令的工具四种反例均非零退出且证据 stdout 为空。独立复核确认脚本和本节结论一致；私有证据保存在 `.local/research/global48-alias-20261015/`。下一必要证据是实际选中记录的 `+8` 字段赋值来源。
+
+## 记录指针登记与已知初始字段写入
+
+继续沿同一固定 binary 的 setup `0x43318f8` 检查，发现 `0x4331ea8` 和 `0x433213c` 将调用方参数载体中的 64 位指针传入 `0x4332380`。这里的 owner 是 `workspace+8`；特别是 `0x4331eac` 的 `str x28, [x20, #8]` 写的是 `workspace+8`，不能误读成 `record+8` 的数据指针初始化。
+
+非零指针、`x3` bit0 为零的登记分支经 `0x434daa4` 查找或追加记录指针，再在 `0x43324fc` 将所得 slot 写入 `owner.indexTable[index]`。vector 位于 `owner+0x20`。动态 PLT 精确绑定的 `vector<long>::emplace_back<long&>` 在本 ELF 中的定义为 `0x434dc5c`：有剩余容量时，`0x434dd24` 将传入的 64 位值写入原 end；扩容定义 `0x434e45c` 在 `0x434e4cc` 将同一值写入新表相应位置。这两处是指针值登记，没有克隆记录或为 `record+8` 分配数据。lookup `0x4331760` 通过 flag、index table 和 vector 取回登记的记录指针。
+
+前述嵌套输入构造 `0x4356f94` 则有一处明确的初始字段赋值：`0x4356fb0` 调用 `malloc(16)` 创建记录，`0x4356fcc` 调用 `malloc(uint32(length)+1)` 分配数据，`0x4356ff0` 的指令字 `f90006b6` 将数据指针写入记录 `+8`。随后尾调用 `0x4356e3c`，该 wrapper 保存输入参数载体并将其传给 setup。本次补上的是这一已知输入记录与登记机制之间的连接；**没有证明 `0x4334248` 实际选中的记录就是它**。
+
+```sh
+python3 scripts/linux-signing-record-pointer-provenance.py /absolute/path/wrapper.node
+# 如系统 objdump 不支持 AArch64 ELF，可明确指定：
+python3 scripts/linux-signing-record-pointer-provenance.py /absolute/path/wrapper.node --objdump /absolute/path/objdump
+```
+
+脚本不依赖私有研究目录、不加载 addon，也不写证据文件；所有检查通过后才向 stdout 输出完整 JSON。它固定完整 binary SHA，用 `PT_LOAD` 映射、相邻 unwind、完整范围 SHA 和系统 objdump 核对 13 个有限函数的 1,707 条指令，并检查五个动态 PLT 绑定、global 重定位和有限直接分支引用。独立复核后重放得到与私有原始收据逐字值一致的结果，完整 JSON SHA-256 为 `df546f20c146354476a082d605a55fe9dee687f8c301929d5c202506c3d1d438`。实际旧版 ELF、Python `-O` 下错误文件、缺失 objdump 和空输出工具均被拒绝，失败 stdout 为空。[简洁证据摘要](evidence/signing-record-pointer-provenance.json) 保留脚本 SHA、范围摘要、关键赋值及边界；本工具尚不属于此前远端 CI 的验收范围。
+
+consumer 中还有七处对同一登记函数的直接调用：`0x4335770`、`0x43365e8`、`0x43377e0`、`0x4338658`、`0x4339698`、`0x4339a04`、`0x433a9ec`。下一必要证据是实际指令 byte1 低四位对应的 index、该 slot 的最后一次登记，以及所登记记录的 `+8` 写入来源。完整函数字节核对不代表混淆状态顺序已经解释，也不排除后续替换、间接调用或动态符号替换。因此 `global48AliasExcluded` 仍为 `false`，不能证明 global 前 48 字节不可变、OR8 传播至最终输出、签名真实性、服务端账号标记或踢号机制。本轮未执行 native/provider 或账号操作。

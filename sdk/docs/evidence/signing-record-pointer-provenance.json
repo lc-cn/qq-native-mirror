@@ -1,0 +1,234 @@
+{
+  "schemaVersion": 1,
+  "scope": "Local static ELF evidence; not remote CI, native runtime, provider, or account verification",
+  "binary": {
+    "platform": "linux",
+    "arch": "arm64",
+    "version": "3.2.32-52194",
+    "sha256": "c302361f52494de257044e912e43ed244bb29ee59f59345d25a8959327828337"
+  },
+  "script": {
+    "path": "scripts/linux-signing-record-pointer-provenance.py",
+    "sha256": "a46be83e1a756037c9694096423d693688892f136474350ea91427959bcb7034"
+  },
+  "fullReceiptSha256": "df546f20c146354476a082d605a55fe9dee687f8c301929d5c202506c3d1d438",
+  "verification": {
+    "publicStdoutMatchesIndependentlyReplayedPrivateReceiptBytes": true,
+    "mapping": "ELF PT_LOAD byte reader; adjacent .eh_frame_hdr bounds; system objdump full-word cross-check",
+    "functionRanges": 13,
+    "instructionCount": 1707,
+    "negativeChecks": [
+      {
+        "case": "actual-old-elf",
+        "exitCode": 1,
+        "stdoutBytes": 0,
+        "expectedRejection": "SHA-256 mismatch"
+      },
+      {
+        "case": "optimized-wrong-file",
+        "exitCode": 1,
+        "stdoutBytes": 0,
+        "expectedRejection": "SHA-256 mismatch"
+      },
+      {
+        "case": "missing-objdump",
+        "exitCode": 1,
+        "stdoutBytes": 0,
+        "expectedRejection": "No such file"
+      },
+      {
+        "case": "empty-objdump",
+        "exitCode": 1,
+        "stdoutBytes": 0,
+        "expectedRejection": "Incomplete objdump range"
+      }
+    ],
+    "oldBinarySha256": "72978494d18d0076a378550099628569ff5081ada79f37e0b7adaeae6904217a"
+  },
+  "coverage": [
+    {
+      "start": "0x4331760",
+      "stop": "0x4331848",
+      "sha256": "921210f8a894797f81ba9c3c1494c3bce52f673759b05b1bd81fb81677572cd9",
+      "instructionCount": 58
+    },
+    {
+      "start": "0x433185c",
+      "stop": "0x4331890",
+      "sha256": "157e1b83519c8a6f1fb672caf7ca6cf3b8389fad1adfd69ba17be72fe1ee22ec",
+      "instructionCount": 13
+    },
+    {
+      "start": "0x4331890",
+      "stop": "0x43318f8",
+      "sha256": "e29110ead92004753e321b8f823a2b37f43cf350aa5f6733d2734ae8237461fd",
+      "instructionCount": 26
+    },
+    {
+      "start": "0x43318f8",
+      "stop": "0x4332284",
+      "sha256": "68967be04b919c821b1c02adb080182e7af83c9580772f5a10ee35d018e0e5dd",
+      "instructionCount": 611
+    },
+    {
+      "start": "0x4332284",
+      "stop": "0x4332380",
+      "sha256": "da7f77d80b04fbdae97ae794672bd4a654e7edbba4cadaab17652b77e44577fa",
+      "instructionCount": 63
+    },
+    {
+      "start": "0x4332380",
+      "stop": "0x4332588",
+      "sha256": "aee23e0038ebe3f7544e193d50078c884dabcdd647fe75ec42695f719cd0914e",
+      "instructionCount": 130
+    },
+    {
+      "start": "0x434daa4",
+      "stop": "0x434dc44",
+      "sha256": "85d926ba46a801d5dbb9ced72611816a01872a0d3aac49398c398fc5b4e7cbe7",
+      "instructionCount": 104
+    },
+    {
+      "start": "0x434dc5c",
+      "stop": "0x434dda0",
+      "sha256": "578f7a54e9ebd2e176b0936ee07710ca5fec29541220cf8bbadfcb4a1be8a845",
+      "instructionCount": 81
+    },
+    {
+      "start": "0x434dda0",
+      "stop": "0x434e45c",
+      "sha256": "a21bcc4f4b746bff3b277a4cdf9a4a6ca8c9ef7f50733b6407878ffc8f099660",
+      "instructionCount": 431
+    },
+    {
+      "start": "0x434e45c",
+      "stop": "0x434e518",
+      "sha256": "0ea79f434c45a0bf50268a8d45c0d4921dcccb0be859b70274a98bffeda088e9",
+      "instructionCount": 47
+    },
+    {
+      "start": "0x4356e3c",
+      "stop": "0x4356f94",
+      "sha256": "4663f9676a13c2762a0fb3233e07e9b6ffeacf21ef442a99dc3843ddd44dcf87",
+      "instructionCount": 86
+    },
+    {
+      "start": "0x4356f94",
+      "stop": "0x4357024",
+      "sha256": "04b63ec9327e570c51ef4a083eb1dc2fbdd744877d8e10de6c43b6a45d6d61f5",
+      "instructionCount": 36
+    },
+    {
+      "start": "0x42f9558",
+      "stop": "0x42f95ac",
+      "sha256": "dc051f9a4046d87df5498c7aad413d69213e8460094a7a946b40cbe607f70d8c",
+      "instructionCount": 21
+    }
+  ],
+  "criticalAssignments": [
+    {
+      "at": "0x4331eac",
+      "word": "f900069c",
+      "instruction": "str\tx28, [x20, #0x8]",
+      "meaning": "Writes workspace+8 (owner+0), not record+8."
+    },
+    {
+      "at": "0x43324fc",
+      "word": "f8357928",
+      "instruction": "str\tx8, [x9, x21, lsl #3]",
+      "meaning": "Stores the registered vector slot into owner.indexTable[index]."
+    },
+    {
+      "at": "0x434dd24",
+      "word": "f9000109",
+      "instruction": "str\tx9, [x8]",
+      "meaning": "Writes the supplied record pointer value at the vector end when capacity is available."
+    },
+    {
+      "at": "0x434e4cc",
+      "word": "f8387ac8",
+      "instruction": "str\tx8, [x22, x24, lsl #3]",
+      "meaning": "Writes the supplied record pointer value into the new vector during reallocation."
+    },
+    {
+      "at": "0x4356ff0",
+      "word": "f90006b6",
+      "instruction": "str\tx22, [x21, #0x8]",
+      "meaning": "Stores the allocation pointer into +8 of the known nested input record; does not identify the later selected record."
+    }
+  ],
+  "dynamicBindings": [
+    {
+      "plt": "0x83a460",
+      "got": "0x89e0070",
+      "symbol": "_ZNSt6vectorIlSaIlEE12emplace_backIJRlEEES3_DpOT_",
+      "definition": "0x434dc5c"
+    },
+    {
+      "plt": "0x83bec0",
+      "got": "0x89e0da0",
+      "symbol": "_ZNSt6vectorIlSaIlEE17_M_realloc_insertIJRlEEEvN9__gnu_cxx17__normal_iteratorIPlS1_EEDpOT_",
+      "definition": "0x434e45c"
+    },
+    {
+      "plt": "0x83a7c0",
+      "got": "0x89e0220",
+      "symbol": "malloc",
+      "definition": "0x0"
+    },
+    {
+      "plt": "0x83a5f0",
+      "got": "0x89e0138",
+      "symbol": "memset",
+      "definition": "0x0"
+    },
+    {
+      "plt": "0x83a700",
+      "got": "0x89e01c0",
+      "symbol": "memcpy",
+      "definition": "0x0"
+    }
+  ],
+  "globalRelocation": {
+    "got": "0x89dee08",
+    "global": "0x8a077f0"
+  },
+  "directReferences": {
+    "0x4332380": [
+      "0x4331ea8",
+      "0x433213c",
+      "0x4335770",
+      "0x43365e8",
+      "0x43377e0",
+      "0x4338658",
+      "0x4339698",
+      "0x4339a04",
+      "0x433a9ec"
+    ],
+    "0x434daa4": ["0x43324f0"]
+  },
+  "facts": [
+    "Setup saves workspace x0 in x20 and argument carrier x2 in x19; workspace+8 is the owner passed to 0x4332380 at 0x4331ea8 and 0x433213c. The passed x2 is a loaded 64-bit caller argument, not a newly allocated record.",
+    "At 0x4331eac, str x28,[x20,#8] targets workspace+8 (owner+0), not record+8. These unrelated +8 offsets must not be conflated.",
+    "The nonzero x2, x3 bit0-clear registration branch stores the supplied pointer in a local at 0x4332410/0x43324dc, passes it to 0x434daa4, and stores the resulting slot index into owner.indexTable[index] at 0x43324fc. The flag is set at 0x4332518.",
+    "0x434daa4 searches owner+0x20 through 0x434dda0; the found-entry branch returns (entry-begin)/8, and the append branch returns the old (end-begin)/8 then calls the dynamically bound vector<long>::emplace_back with the saved pointer value.",
+    "The vector definition stores the supplied 64-bit value at the old end at 0x434dd24 when capacity exists. Its reallocation definition stores the same supplied value at newBegin+index*8 at 0x434e4cc, then publishes new vector boundaries at 0x434e4fc/0x434e504. Neither selected assignment clones the record or rewrites record+8.",
+    "Lookup 0x4331760 uses flag[index]&1, indexTable[index], and owner.recordVector[slot]; its returned value remains the registered record pointer.",
+    "One known nested-input constructor allocates a 16-byte record via malloc at 0x4356fb0, allocates data via malloc at 0x4356fcc, and writes that data pointer to record+8 at 0x4356ff0 (f90006b6). It then passes the record as x1 to 0x4356e3c via the tail branch 0x4357020.",
+    "Nested entry 0x4356e5c saves incoming x1/x2 in its argument-save area; 0x4356f0c..0x4356f44 forms and passes the carrier to setup. The descriptor starts LL\\0. This proves a known incoming record route, not which record a later consumer opcode selects."
+  ],
+  "conclusion": "Record registration preserves caller-supplied pointer identity. One nested input record has an allocation-backed initial +8 field, but the record selected at 0x4334248 is not proven identical to it. Global first-48-byte aliasing remains unresolved.",
+  "nextVerifiableEdge": "Bind actual instruction byte1&15 at 0x4334240 to the last preceding owner.indexTable write, then trace that registered record supplier and its +8 writes. Consumer contains seven additional direct registration calls besides the two setup sites.",
+  "limits": [
+    "Byte verification and selected dataflow do not establish every flattened-state order, caller reachability, runtime opcode sequence, bounds, or memory integrity.",
+    "The full flattened search body is byte-verified; it is not an independent proof of every possible search execution.",
+    "The vector allocation/copy helpers and dynamic allocator implementations are named or retained as call boundaries, not executed or exhaustively expanded; dynamic symbol interposition is not excluded.",
+    "Known constructor allocation is not a universal first assignment for every workspace record. Later pointer-table replacement, record mutation, and other callers are not excluded.",
+    "No global immutability, alias exclusion, OR8 final-output propagation, signature authenticity, account marking, or kick mechanism is established."
+  ],
+  "nativeExecuted": false,
+  "providerExecuted": false,
+  "accountUsed": false,
+  "global48AliasExcluded": false,
+  "signingAuthenticityEstablished": false
+}

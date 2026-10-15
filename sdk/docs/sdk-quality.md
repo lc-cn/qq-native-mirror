@@ -417,3 +417,17 @@ catalog latest selection, account operations or signing authenticity. Cancellati
 is cooperative and waits for cleanup; synchronous native execution, decompression
 and an already running filesystem operation cannot be interrupted synchronously.
 The parent `8173891` remote CI excludes this implementation.
+
+The signing follow-up adds a source-checkout-only record-pointer reproduction
+tool for the exact Linux ARM64 binary. Independent replay agrees on thirteen
+finite functions and 1,707 instruction words, five dynamic PLT bindings and the
+selected field writes. Registration preserves a supplied record pointer rather
+than cloning its data. One known nested input has an allocation-backed initial
+`record+8`; a separate `workspace+8` write concerns another object field. The
+actual opcode-selected record is still not tied to that constructor, so global
+buffer aliasing remains unresolved. The public tool emits the same JSON bytes as
+the independently replayed private receipt. An actual older ELF, an optimized
+wrong-file run, a missing disassembler and an empty disassembler all reject with
+empty evidence stdout. The two signing-document/tool checks and formatting pass.
+This excluded research tool adds no native/provider, account, signing-authenticity
+or remote CI proof; see the [static summary](evidence/signing-record-pointer-provenance.json).
