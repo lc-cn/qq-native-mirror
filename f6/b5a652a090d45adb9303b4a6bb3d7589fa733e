@@ -1,0 +1,79 @@
+sdk/src/features/groups/group-avatar-input.ts
+  s_2104cc474f1ce5::t_9f681aa04aae80 1-17
+sdk/docs/sdk-quality.md
+  s_2104cc474f1ce5::t_89cbcb54618176 150-168
+sdk/scripts/consumers/public-contract-consumer.mjs
+  s_2104cc474f1ce5::t_6e4fe38728ad22 189-199
+sdk/src/features/groups/group-avatar.ts
+  s_2104cc474f1ce5::t_189f2c1a71ab20 74
+  s_2104cc474f1ce5::t_9f681aa04aae80 1-73,76-83,86-92,109-111
+  s_2104cc474f1ce5::t_6a077d7b7c7a6e 75,84-85,93-108
+sdk/test/features/groups/group-avatar-input.test.ts
+  s_2104cc474f1ce5::t_189f2c1a71ab20 1-56
+  s_2104cc474f1ce5::t_17dcaf8b6c805b 57-59
+sdk/scripts/consumers/bot-api-consumer-contract.mjs
+  s_2104cc474f1ce5::t_6e4fe38728ad22 2,259-356
+sdk/test/bot-api-consumer.test.mjs
+  s_2104cc474f1ce5::t_6e4fe38728ad22 6,13-15
+sdk/test/group-avatar-composition.test.ts
+  s_2104cc474f1ce5::t_8ff4b7a5ba692b 100-103,105-108,120-126,139-146,148-149,156,159
+  s_2104cc474f1ce5::t_9529f2db21a0a4 1-99,104,109-119,127-138,147,150-155,157-158,160-167
+sdk/test/features/groups/group-avatar.test.ts
+  s_2104cc474f1ce5::t_6a077d7b7c7a6e 2,26,77-82,120-136,159-175,179-183,188-189,193-201,209-210,216-218,242-251,253-258,278-281,325-327,338,340-347,350-351,360-364,367-374,397-399,405-416
+  s_2104cc474f1ce5::t_a123667659212b 202-208,328-337,339,348-349,352-359,365-366,375-396
+  s_2104cc474f1ce5::t_189f2c1a71ab20 1,3-25,27-76,83-119,137-158,176-178,184-187,190-192,211-215,219-241,252,259-277,282-324,400-404,417-420
+sdk/README.md
+  s_2104cc474f1ce5::t_629c8a56d7c9d1 258-265
+sdk/docs/architecture.md
+  s_2104cc474f1ce5::t_bfa0c8f9484a7d 199-205
+sdk/docs/contacts-groups.md
+  s_2104cc474f1ce5::t_bfb3d3c2a12949 10,27-62
+sdk/docs/evidence/group-avatar-contract.json
+  s_2104cc474f1ce5::t_845eca96a684d3 1-62
+sdk/scripts/verify-package-consumer.mjs
+  s_2104cc474f1ce5::t_91bebf30b22cec 341-345,348-372
+sdk/src/cli.ts
+  s_2104cc474f1ce5::t_0c2615719178f7 58
+sdk/src/cli/commands/groups.ts
+  s_2104cc474f1ce5::t_fde9c535ecb3a8 1,90-96
+sdk/src/client/contacts/group-contact.ts
+  s_2104cc474f1ce5::t_c98f82834f3c2f 1,63-70
+sdk/src/client/qq-client.ts
+  s_2104cc474f1ce5::t_34b466bc42c653 1,465-470
+sdk/src/native-services.ts
+  s_2104cc474f1ce5::t_21e932d75e2f21 32,86,129-130,391-398,590-591
+sdk/src/native/native-contracts.ts
+  s_2104cc474f1ce5::t_dbfb30b693dcd8 20,92-94,249-255
+sdk/src/runtime/operation-contracts.ts
+  s_2104cc474f1ce5::t_f01e1c6abe0da7 97
+sdk/src/runtime/operations.ts
+  s_2104cc474f1ce5::t_1173eaadc28209 36
+sdk/test/architecture/module-ownership.ts
+  s_2104cc474f1ce5::t_7be956bd4118d1 148,537-553
+sdk/test/architecture/resources.ts
+  s_2104cc474f1ce5::t_d05831bd0ae745 42,71
+sdk/test/cli-command-plan.test.ts
+  s_2104cc474f1ce5::t_2b17de9890ff9a 210-233
+sdk/test/cli-entrypoint.test.ts
+  s_2104cc474f1ce5::t_e14f99163bf304 19,111-126
+sdk/test/helpers/dependency-policy.ts
+  s_2104cc474f1ce5::t_d9304df41a86a7 96,126,174,215,323,327-339
+sdk/test/helpers/external-dependencies.ts
+  s_2104cc474f1ce5::t_fe3e2501a8583e 22-23
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "f6b5a652a090d45adb9303b4a6bb3d7589fa733e",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
