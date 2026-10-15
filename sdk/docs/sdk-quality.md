@@ -193,3 +193,13 @@ working-directory types to fail. Windows entrypoint branch tests run in isolated
 child processes; they do not establish an actual Windows build. These two later
 iterations have local evidence only, independent of the authorized remote CI
 candidate `f6b5a652a090d45adb9303b4a6bb3d7589fa733e`.
+
+That authorized candidate subsequently passed remote SDK quality, all six default
+mirror hosts and six Linux version/catalog cases. The [downloaded artifact audit](evidence/bot-api-ci-f6b5a65.json)
+checks all twelve main archives against receipt size, SHA-256 and SHA-512, exact
+source/run bindings and common package contents. Host receipts confirm cold
+downloads, zero native-payload warm fetches, unchanged warm cache files and actual
+native preparation/close. They do not establish account operations or avatar
+effects. The archived avatar admission is Darwin ARM64 only; later Linux avatar
+and Windows tooling changes remain outside this remote evidence. Separate native
+package rebuilding and npm publication are not conclusions of this audit.
