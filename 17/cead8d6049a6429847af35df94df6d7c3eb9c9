@@ -1,0 +1,27 @@
+sdk/docs/linux-signing-static.md
+  s_2104cc474f1ce5::t_738ba8139dc547 468-469
+  s_2104cc474f1ce5::t_4df9fac24c94dd 467
+  s_2104cc474f1ce5::t_7b4eb09a487f0d 454-466
+sdk/docs/signing-integrity.md
+  s_2104cc474f1ce5::t_7b4eb09a487f0d 21-28
+sdk/scripts/linux-signing-input-buffer-provenance.py
+  s_2104cc474f1ce5::t_7b4eb09a487f0d 165-168
+  s_2104cc474f1ce5::t_5786333dfc9183 1-27,29-106,119-121,123-142,145-164,169-173
+  s_2104cc474f1ce5::t_4df9fac24c94dd 28,107-118,122,143-144
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "17cead8d6049a6429847af35df94df6d7c3eb9c9",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
