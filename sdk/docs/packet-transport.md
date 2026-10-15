@@ -50,7 +50,25 @@ still unbound. This adds 13 complete-function checks, without executing either
 path. A generic UTF-8 string conversion cannot stand in for a lossless arbitrary
 binary protocol codec.
 
-The composition now rejects the Buffer adapter for this exact measured profile,
+Independent static inspection of Linux arm64 QQ `3.2.32-52194`, wrapper SHA-256
+`c302361f52494de257044e912e43ed244bb29ee59f59345d25a8959327828337`,
+confirmed the same incompatible carrier in its own registered Msg binding. The
+actual Session getter and JavaScript class wrapper preserve that Msg receiver.
+The second argument is converted to UTF-8 text, including object-to-string
+coercion; it is not read as Buffer bytes. Its per-invocation callback resolves
+`result` as int32 and both `errMsg` and `rsp` as UTF-8 strings. The response has
+no `rspbuffer` field. An independent reader checked the ELF load segments and
+dynamic relocations against the raw bytes; no addon or account was executed.
+The sanitized exact-profile record is
+[`packet-string-carriers.json`](evidence/packet-string-carriers.json).
+
+The Linux finding establishes the input and normal local response mismatch.
+The full network response relay, callback arrival and reversible wire encoding
+remain unverified. It does not establish a working SSO or group-member-title
+operation. Converting arbitrary protobuf bytes through UTF-8 text can lose data;
+neither hex nor base64 is assumed as a replacement.
+
+The composition now rejects the Buffer adapter for these exact measured profiles,
 before acquiring its packet service or dispatching the request. Resource reads
 report `unsupported-native-contract`; merged-forward upload retains its existing
 phase/progress error and reports upload/card as not dispatched. Matching another

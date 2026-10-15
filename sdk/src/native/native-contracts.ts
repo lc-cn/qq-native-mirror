@@ -68,6 +68,9 @@ const binaryProfiles: readonly BinaryContract[] = [
     '3.2.32-52194',
     'c302361f52494de257044e912e43ed244bb29ee59f59345d25a8959327828337',
     [
+      // The measured UTF-8 request/response carrier rejects the Buffer adapter.
+      // This grants no packet transport; see docs/evidence/packet-string-carriers.json.
+      'stringSsoCarrier',
       // Exact Group receiver, two-string arguments and normal ACK codec.
       // See docs/evidence/group-avatar-contract.json; remote effect is unverified.
       'groupAvatarSetting',

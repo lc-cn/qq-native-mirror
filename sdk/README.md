@@ -287,6 +287,12 @@ and still does not independently confirm remote disappearance. `deleteGroupFile`
 additionally requires an exact per-file acknowledgement, with the same remote
 effect limitation.
 
+`getForwardResource` and merged-forward upload cannot use the measured macOS ARM64
+`7.0.2-53644` or Linux ARM64 `3.2.32-52194` SSO bindings: those bindings carry UTF-8
+strings, while the current adapter requires lossless bytes. The exact profiles
+reject before packet dispatch. See [packet transport](docs/packet-transport.md)
+for the supported contract and remaining native evidence.
+
 ## CLI
 
 ```sh

@@ -203,3 +203,22 @@ native preparation/close. They do not establish account operations or avatar
 effects. The archived avatar admission is Darwin ARM64 only; later Linux avatar
 and Windows tooling changes remain outside this remote evidence. Separate native
 package rebuilding and npm publication are not conclusions of this audit.
+
+The eighth iteration closes a measured packet-adapter incompatibility. The exact
+Linux ARM64 3.2.32-52194 Msg binding converts its second argument through UTF-8
+string coercion and resolves a string `rsp`, rather than the Buffer request and
+`rspbuffer` response required by the adapter. Two independent static reviews
+confirmed the registered binding and local callback contract. This profile now
+shares the existing string-carrier rejection policy with the measured Darwin
+ARM64 profile. Forward-resource reads fail before packet acquisition; merged
+forwarding preserves its upload error and explicitly undispatched upload/card
+state. The installed consumer checks that the SSO method is neither read nor
+called. This prevents corrupted-byte dispatch; it does not add a working SSO
+transport or establish a reversible encoding for either profile.
+
+The full local `npm run check` passed on 2026-10-15: 2,531 SDK tests, 88 tool
+tests, formatting, zero-warning lint, strict types, clean build and the actual
+packed/installed consumer. Its `forwardStringCarrierRejectionContract` verifies
+both public forwarding outcomes and zero incompatible packet dispatch. This
+later change has local evidence only; it is not part of the remote `f6b5a65`
+candidate and did not use a native account.

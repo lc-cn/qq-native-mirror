@@ -248,7 +248,8 @@ export async function verifyForwardConsumer(packageRoot) {
       target: '456',
       'message-ids': `${longId},2`,
     });
-    const { QQClient } = await load('index.js');
+    const { QQClient, MergedForwardError } = await load('index.js');
+    await verifyStringCarrierRejection(createNativeServices, MergedForwardError);
     const cliWorker = controlledCloseWorker();
     const cliClient = new QQClient(cliWorker, 500);
     cliClient.forwardMessages = async (source, dest, messageIds) => {
@@ -706,11 +707,75 @@ export async function verifyForwardConsumer(packageRoot) {
       forwardPendingPeerCloseContract: true,
       forwardBatchDecodeCloseContract: true,
       forwardLateFailureObserved: true,
+      forwardStringCarrierRejectionContract: true,
       nativeForwardQueryAttempted: false,
       forwardSubmissionAttempted: false,
     };
   } finally {
     for (const owner of owners) owner.close();
+  }
+}
+
+/**
+ * @param {InstalledModules['native-services.js']['createNativeServices']} createNativeServices
+ * @param {InstalledModules['index.js']['MergedForwardError']} MergedForwardError
+ */
+async function verifyStringCarrierRejection(createNativeServices, MergedForwardError) {
+  let acquisitions = 0,
+    methodReads = 0,
+    sends = 0;
+  const profile = {
+    platform: 'linux',
+    arch: 'arm64',
+    clientVersion: '3.2.32-52194',
+    wrapperSha256: 'c302361f52494de257044e912e43ed244bb29ee59f59345d25a8959327828337',
+  };
+  const services = createNativeServices({
+    session: {
+      getMsgService() {
+        acquisitions++;
+        return {
+          addKernelMsgListener() {},
+          get sendSsoCmdReqByContend() {
+            methodReads++;
+            return () => {
+              sends++;
+              throw Error('Unexpected incompatible packet dispatch');
+            };
+          },
+        };
+      },
+      getGroupService: () => ({ addKernelGroupListener() {} }),
+      getBuddyService: () => ({ addKernelBuddyListener() {} }),
+    },
+    version: profile.clientVersion,
+    binaryProfile: profile,
+    identity: { userId: '123', uid: 'u_self' },
+    events: { emit() {} },
+  });
+  const initialAcquisitions = acquisitions;
+  try {
+    await assert.rejects(
+      services.invokeOperation('getForwardResource', { resourceId: 'fixture-resource' }),
+      (/** @type {unknown} */ error) =>
+        error instanceof Error && 'code' in error && error.code === 'unsupported-native-contract',
+    );
+    await assert.rejects(
+      services.invokeOperation('sendMergedForward', {
+        peer: { type: 'group', groupId: '123' },
+        nodes: [{ userId: '123', nickname: 'fixture', time: 100, text: 'fixture' }],
+      }),
+      (/** @type {unknown} */ error) =>
+        error instanceof MergedForwardError &&
+        error.phase === 'upload' &&
+        error.progress.uploadCompletion === 'not-dispatched' &&
+        error.progress.cardCompletion === 'not-dispatched',
+    );
+    assert.equal(acquisitions, initialAcquisitions);
+    assert.equal(methodReads, 0);
+    assert.equal(sends, 0);
+  } finally {
+    services.close();
   }
 }
 
