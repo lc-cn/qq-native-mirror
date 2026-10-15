@@ -1,0 +1,159 @@
+sdk/src/contracts/events.ts
+  s_2104cc474f1ce5::t_d634a88f706c7f 8-10,44,47
+  s_2104cc474f1ce5::t_0a448db4eda464 35-36
+  s_2104cc474f1ce5::t_88805e94c55941 3-7,45-46
+sdk/scripts/consumers/profile-request-consumer-contract.mjs
+  s_2104cc474f1ce5::t_31dbcadac60e3e 303
+sdk/src/contracts/messages.ts
+  s_2104cc474f1ce5::t_0a448db4eda464 31-33,50-51,58-65
+  s_2104cc474f1ce5::t_e8586ecac9d1d3 66-67
+sdk/test/friend-request-integration.test.ts
+  s_2104cc474f1ce5::t_31dbcadac60e3e 1-201
+sdk/src/client/contacts/conversation-contact.ts
+  s_2104cc474f1ce5::t_914ce0b36608f6 20-21,24
+  s_2104cc474f1ce5::t_b2beab71861c75 34
+  s_2104cc474f1ce5::t_43cdd40fffa94a 1-19,22-23,25-33,35-64
+sdk/src/client/client-event-presentation.ts
+  s_2104cc474f1ce5::t_076f6cdf8fac5b 3-4,16-21,30,43,53-54,61
+  s_2104cc474f1ce5::t_88805e94c55941 36-41,55-60,62-67
+  s_2104cc474f1ce5::t_af9afe3f897a29 2,42,44-52
+  s_2104cc474f1ce5::t_e5c944ffeeaa78 86
+sdk/src/client/qq-client.ts
+  s_2104cc474f1ce5::t_076f6cdf8fac5b 3,131-135,138-149
+  s_2104cc474f1ce5::t_b2beab71861c75 223
+  s_2104cc474f1ce5::t_43cdd40fffa94a 4-7,150,222,224-239,241,247
+  s_2104cc474f1ce5::t_9eec5a71af869d 151-155,240,242-246
+sdk/src/contracts/contacts.ts
+  s_2104cc474f1ce5::t_d634a88f706c7f 76-83
+sdk/test/helpers/dependency-policy.ts
+  s_2104cc474f1ce5::t_9dff09de774b16 440-456,479
+  s_2104cc474f1ce5::t_17349a3c4aee5b 180-219,459,467-472,480-482,486,490
+  s_2104cc474f1ce5::t_184984b74afd91 457-458,460,466,483-485,487-489,491-493
+sdk/test/fixtures/public-type-names.json
+  s_2104cc474f1ce5::t_d634a88f706c7f 22,44,51,68
+sdk/test/keyword-reply-demo.test.ts
+  s_2104cc474f1ce5::t_9d08997e6fdd43 76,93-95,108-109
+sdk/src/runtime/client-lifecycle.ts
+  s_2104cc474f1ce5::t_3243b2c4de47f9 187-193,195-197,200-211,216-222
+ci/verify-consumer.mjs
+  s_2104cc474f1ce5::t_c3f00fb6f49de6 4,1016,1046
+  s_2104cc474f1ce5::t_215928a8839ee9 3,1015,1045
+sdk/src/client/contacts/contact-context.ts
+  s_2104cc474f1ce5::t_43cdd40fffa94a 1-18
+sdk/test/client-event-presentation.test.ts
+  s_2104cc474f1ce5::t_d2d0ecc4696855 2,6-7,101,114,125-126,132-135,137,145-151,153-191,193-200,219-224,226,229-234
+  s_2104cc474f1ce5::t_9d08997e6fdd43 5,9-19,30-31,33,85,87,93-95,98,102,124,127-131,136,152,192,205-218,225,227-228
+  s_2104cc474f1ce5::t_5dcb7a84e3b9fb 109,117,138-144
+  s_2104cc474f1ce5::t_076f6cdf8fac5b 20-24,32,108,201-204
+  s_2104cc474f1ce5::t_88805e94c55941 48-57
+  s_2104cc474f1ce5::t_a4d7afe911234e 8
+  s_2104cc474f1ce5::t_6fce451dc1444d 235
+sdk/src/index.ts
+  s_2104cc474f1ce5::t_39f1cadc09cfc4 6
+  s_2104cc474f1ce5::t_43cdd40fffa94a 3-5
+sdk/docs/sdk-acceptance.md
+  s_2104cc474f1ce5::t_9a41eac202bb23 8-10
+sdk/test/architecture/dependency-direction.ts
+  s_2104cc474f1ce5::t_17349a3c4aee5b 172-178
+  s_2104cc474f1ce5::t_7e2009d3ddde22 179-181
+sdk/test/message-event.test.ts
+  s_2104cc474f1ce5::t_adc57ee39e2d29 38-39,45,232-294
+  s_2104cc474f1ce5::t_9d08997e6fdd43 32,41-44,46-52,54,56,88,193,226,228
+  s_2104cc474f1ce5::t_7ae17648306f1c 296-322
+  s_2104cc474f1ce5::t_d75c6efac65013 295
+sdk/test/client-readiness.test.ts
+  s_2104cc474f1ce5::t_3243b2c4de47f9 80,221
+  s_2104cc474f1ce5::t_cc5e5b067eb264 1-79,81-220,222-253
+  s_2104cc474f1ce5::t_dcfcb14efc6d98 254-256
+sdk/test/bot-api-consumer.test.mjs
+  s_2104cc474f1ce5::t_eaef81ee61d7ee 1-5,7-12
+  s_2104cc474f1ce5::t_fdd471b67583d8 6
+sdk/src/client/contacts/friend-contact.ts
+  s_2104cc474f1ce5::t_43cdd40fffa94a 1,3-11,13-58
+  s_2104cc474f1ce5::t_914ce0b36608f6 2,12
+  s_2104cc474f1ce5::t_8c18865a2e8dac 59-61
+sdk/src/client/message-segment.ts
+  s_2104cc474f1ce5::t_39f1cadc09cfc4 1-38
+sdk/docs/architecture.md
+  s_2104cc474f1ce5::t_8a58622885e8c3 73,151,163-176
+  s_2104cc474f1ce5::t_bb306270fa40d8 3,178-194,199
+  s_2104cc474f1ce5::t_13dd16f3d1ea06 177
+sdk/docs/sdk-quality.md
+  s_2104cc474f1ce5::t_9a41eac202bb23 1-10,19-68
+  s_2104cc474f1ce5::t_5e64055a554434 11-18,69-76
+  s_2104cc474f1ce5::t_a8b8a961e11a41 77,82-95
+  s_2104cc474f1ce5::t_8a58622885e8c3 78-81
+sdk/scripts/verify-package-consumer.mjs
+  s_2104cc474f1ce5::t_c3f00fb6f49de6 46,146,562
+  s_2104cc474f1ce5::t_f8c6e230153c06 45,143-145,561
+sdk/scripts/consumers/contact-objects-consumer-contract.mjs
+  s_2104cc474f1ce5::t_f8c6e230153c06 1-84
+  s_2104cc474f1ce5::t_c97ddce072e64b 85-104
+sdk/test/client.test.ts
+  s_2104cc474f1ce5::t_ec48234b9d413d 300-313
+sdk/test/request-event.test.ts
+  s_2104cc474f1ce5::t_21a20729e5b9c7 1-74,79-99,104-153,155-190,197,199-249,252-275
+  s_2104cc474f1ce5::t_a1f6880f0cc6a9 75-78,100-103,154,191-196,198,250-251
+sdk/scripts/consumers/bot-api-consumer-contract.mjs
+  s_2104cc474f1ce5::t_4a096a6af74092 21-22
+  s_2104cc474f1ce5::t_eaef81ee61d7ee 10-18,23-24,48-50,53-54,64-90,98-101,109-134,142-145,153-174,183-187,189
+  s_2104cc474f1ce5::t_c3f00fb6f49de6 1-9,19-20,25-47,51-52,55-63,91-97,102-108,135-141,146-152,175-182,188,190-197
+  s_2104cc474f1ce5::t_a2aa84a5daf3fb 198-202
+sdk/README.md
+  s_2104cc474f1ce5::t_9a41eac202bb23 11-12,168-188,195-208
+  s_2104cc474f1ce5::t_8a58622885e8c3 95-102,118-167,189-194
+sdk/scripts/consumers/client-worker-fixture.mjs
+  s_2104cc474f1ce5::t_d06cc98877588d 1-47
+  s_2104cc474f1ce5::t_8b8674e59de15b 48-50
+sdk/test/message-segment.test.ts
+  s_2104cc474f1ce5::t_d59780ff41f0f5 1-202,204-273
+  s_2104cc474f1ce5::t_a702add9834b43 203
+sdk/src/client/request-event.ts
+  s_2104cc474f1ce5::t_21a20729e5b9c7 1-109
+sdk/src/client/contacts/group-contact.ts
+  s_2104cc474f1ce5::t_43cdd40fffa94a 1,3-12,14-79
+  s_2104cc474f1ce5::t_914ce0b36608f6 2,13
+sdk/test/architecture/module-ownership.ts
+  s_2104cc474f1ce5::t_88805e94c55941 458-460
+  s_2104cc474f1ce5::t_439266d0a884a5 461
+sdk/test/contact-handles.test.ts
+  s_2104cc474f1ce5::t_dafb9c2c2e3247 96-97,119-123,157-161,203-208,261-265,267
+  s_2104cc474f1ce5::t_27a12f8829bcf7 1-95,98-118,124-156,162-202,209-260,266,268-308
+sdk/src/features/messages/send-input.ts
+  s_2104cc474f1ce5::t_39f1cadc09cfc4 64-67,70,75-80
+sdk/src/client/contacts/group-member-contact.ts
+  s_2104cc474f1ce5::t_43cdd40fffa94a 1-25,27-86
+  s_2104cc474f1ce5::t_b2beab71861c75 26
+sdk/scripts/consumers/public-contract-consumer.mjs
+  s_2104cc474f1ce5::t_4a096a6af74092 81,104-137,162-163,181
+  s_2104cc474f1ce5::t_17349a3c4aee5b 155-161,164-177,179
+  s_2104cc474f1ce5::t_f8c6e230153c06 178,180
+sdk/scripts/consumers/client-lifecycle-consumer-contract.mjs
+  s_2104cc474f1ce5::t_17349a3c4aee5b 1735
+  s_2104cc474f1ce5::t_076f6cdf8fac5b 1738
+sdk/src/contracts/groups.ts
+  s_2104cc474f1ce5::t_d634a88f706c7f 239-246
+sdk/src/client/message-event.ts
+  s_2104cc474f1ce5::t_9e7179122a1fd7 1,10-16,21-28,38-53
+  s_2104cc474f1ce5::t_af9afe3f897a29 20,29-30,34-37,55
+sdk/src/features/contacts/friend-requests.ts
+  s_2104cc474f1ce5::t_31dbcadac60e3e 127
+sdk/test/features/contacts/friend-requests.test.ts
+  s_2104cc474f1ce5::t_31dbcadac60e3e 71,162
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "f6eb28bf8039fdcb184c829c862e134622006b8b",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
