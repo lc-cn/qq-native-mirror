@@ -312,3 +312,28 @@ These checks use controlled transports; they do not establish native-store cover
 for strangers, profile freshness or real-account behavior. This UID-profile
 addition has local evidence only and is not part of the earlier `7c8361c` CI
 candidate.
+
+The signing-research delivery audit found eleven static reproduction tools that
+the documents referenced but the source snapshot had never included. Their local
+originals and shared dependencies were verified and restored. Eight sources are
+unchanged; two fixed-address scanners now reject a mismatched ELF before parsing,
+and the older vtable scanner accepts an explicit file argument. All eleven tools
+were rerun from the SDK directory with explicit inputs; ten Linux tools matched
+historical results and rejected the other pinned version without emitting
+evidence. A repeated macOS archive inventory found only the documented package-main
+reference change. Two automatic source checks now verify the signing documents'
+tool paths and literal `runpy` dependency closure, including prose references.
+The four historical private runtime harnesses remain explicitly historical; their
+old package and container layout are not advertised as current commands. This
+repair concerns reproducibility and does not establish authentic signing or new
+account behavior.
+
+Full local acceptance on 2026-10-15 passed 2,577 SDK tests, 88 tool tests,
+formatting, zero-warning lint, strict source/test/script types, clean build and
+the actual packed/installed consumer. Separate isolated source fixtures proved
+that the new gate rejects missing prose references and transitive scripts, while
+reading an existing fixture containing an intentional exception without executing
+it. Independent review matched the public restoration inventory to all eleven
+source and output hashes and found no blocking issue. The ten wrong-version
+refusals and eleven positive static replays remain separate from the controlled
+SDK/package checks and add no account or signing-authenticity evidence.

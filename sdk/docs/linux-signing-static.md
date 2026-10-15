@@ -1,5 +1,19 @@
 # Offline Linux security-sign initialization evidence
 
+Static reproduction scripts named below are available in the SDK source checkout,
+not the installed npm package. Run them from the SDK directory with the matching
+binary's absolute path. Historical private runtime harnesses are identified
+separately; their original package, container and mount layout are not current
+source-checkout commands.
+
+The [restoration record](evidence/signing-reproduction-tools.json) binds eleven
+previously omitted static tools to their original local source hashes and repeated
+receipts. Eight files are unchanged; two fixed-address scanners now reject a
+different binary hash, and the older vtable scanner accepts an explicit binary
+path. Documentation checks cover both these signing documents and the tools'
+literal `runpy` dependencies. This source-delivery repair adds no native runtime
+or signing-authenticity proof.
+
 Inspected on 2026-09-30 without executing QQ, loading an account, generating a signature, sending SSO requests, or editing native bytes. The private expert report about a fake-sign/detection marker is treated as a hypothesis requiring verification; absence of public documentation does not disprove it.
 
 Binary: official Linux arm64 QQ 3.2.32-52194 wrapper.node, SHA-256 `c302361f52494de257044e912e43ed244bb29ee59f59345d25a8959327828337`. All addresses below are ELF virtual addresses before relocation for this exact binary. They are not portable version contracts.
@@ -107,7 +121,7 @@ The next useful evidence is receiver provenance at the indirect service calls, i
 
 A narrowly scoped observation now crosses the previously unresolved virtual-call boundary. The installed npm package was imported by name in a Linux ARM64 container with `--network none`, read-only mounts of only the package, exported native bundle and observation scripts, and a fresh empty data directory in tmpfs. The harness calls `createClient()` and later `close()` only. It never calls login, account-session authentication, SSO or a signing API. GDB was added to a separate local tool image; `SYS_PTRACE` and an unconfined seccomp profile permit debugging inside this container, while network and mount restrictions remain.
 
-`scripts/linux-signing-observe-gdb.py` verifies the exact wrapper SHA-256 before observing it. A shared-object load event obtains the wrapper load bias from the zero-file-offset `/proc/<pid>/maps` entry. Four **hardware execution breakpoints** observe native init entries; no native instructions, flags, guards or pointers are changed. An inherited Node preload schedules SIGUSR2 in the worker solely to stop the debugger for read-only observation after preparation. It reads the callback/control pair and, when non-null, the object's first vtable pointer. Only booleans, module-relative addresses and hit counts are emitted, not heap buffers, identities or credentials.
+The historical private harness `linux-signing-observe-gdb.py` verified the exact wrapper SHA-256 before observing it. A shared-object load event obtained the wrapper load bias from the zero-file-offset `/proc/<pid>/maps` entry. Four **hardware execution breakpoints** observed native init entries; no native instructions, flags, guards or pointers were changed. An inherited Node preload scheduled SIGUSR2 in the worker solely to stop the debugger for read-only observation after preparation. It read the callback/control pair and, when non-null, the object's first vtable pointer. Only booleans, module-relative addresses and hit counts were emitted, not heap buffers, identities or credentials.
 
 Actual receipt `.local/research/linux-signing-observe-receipt.json`:
 
@@ -121,7 +135,7 @@ The immediate caller can now be verified statically: at `0x130984c`, the code re
 
 This establishes that the inspected **prepare** flow registers a non-null native callback of the identified class. The earlier possibility that this prepare flow simply leaves the global callback null is ruled out for this exact bundle/package/environment. It does **not** establish provider internal initialization, invocation/result of `0x42627dc`, valid signatures, absence of degraded/fake-sign markers, or server acceptance; no signing path was intentionally exercised. The observation does not dismiss the expert's detection concern. The first run's debugger stopped again on the worker's normal SIGTERM during close; the receipt concerns the completed preparation and pointer snapshot, not clean-shutdown acceptance. The runner now passes SIGTERM without stopping.
 
-Reproduction components are `scripts/linux-signing-observe.sh`, `scripts/linux-signing-observe-consumer.mjs`, `scripts/linux-signing-observe-timer.cjs` and `scripts/linux-signing-observe-gdb.py`. The tool image `qq-native-debug-env:arm64` derives from the previously prepared `qq-native-load-env:arm64` plus Debian GDB. No original native file was modified.
+The original private reproduction components are `linux-signing-observe.sh`, `linux-signing-observe-consumer.mjs`, `linux-signing-observe-timer.cjs` and `linux-signing-observe-gdb.py`. They are retained with the historical research workspace and its private `0.0.1` package, rather than shipped as current SDK tools. The tool image `qq-native-debug-env:arm64` derived from the previously prepared `qq-native-load-env:arm64` plus Debian GDB. No original native file was modified.
 
 ## Provider-local caller-image predicate and normal return
 
@@ -206,7 +220,7 @@ This provides a concrete native loading contract to document: the embedded code 
 
 ## Direct entry observation during no-account preparation
 
-`sh scripts/linux-signing-observe.sh provider` selects four hardware execution breakpoints: MSFService initialization entries 0x1378c4c/0x137a48c, the statically identified callback sign method 0x1375a78 and candidate provider entry 0x42627dc. The original registration observation remains the default mode. No instruction or native memory is patched.
+The historical private `linux-signing-observe.sh` harness's `provider` mode selected four hardware execution breakpoints: MSFService initialization entries 0x1378c4c/0x137a48c, the statically identified callback sign method 0x1375a78 and candidate provider entry 0x42627dc. Registration observation was its default mode. No instruction or native memory was patched.
 
 The pinned arm64 wrapper run on 2026-09-30 recorded one 0x1378c4c hit and zero hits for the other three entries before the timed snapshot. It prepared 98 exports, retained a nonnull callback/control pair with the known vtable, and read the image field as 0xffffffff. The observer reported no errors and the SDK closed after continuation; GDB reports the worker's owner-requested SIGTERM, not a normal worker exit. External networking was disabled and no account was mounted or login called. Receipt: `.local/research/linux-signing-observe-provider.json`; full log alongside it.
 

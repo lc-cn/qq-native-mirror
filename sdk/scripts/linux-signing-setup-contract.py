@@ -1,0 +1,8 @@
+#!/usr/bin/env python3
+"""Bounded setup register and field-write evidence; no native execution."""
+import runpy,contextlib,io,json
+with contextlib.redirect_stdout(io.StringIO()):e=runpy.run_path('scripts/linux-signing-provider-map.py')
+checks={0x4331918:0xaa0003f4,0x4331924:0xaa0203f3,0x4331928:0xaa0103f6,0x4331930:0x94000255,0x4331938:0x910006c8,0x433193c:0xb9005be0,0x433194c:0xf90007e8,0x4331954:0xf8408528,0x4331958:0xf9000fe9,0x43319a4:0x9100627b,0x4331e98:0xf940011c,0x4331eac:0xf900069c,0x4331eb4:0xb85ec3a8,0x4331f1c:0xb9001288,0x4331b88:0x9100212a,0x4331b94:0xf900026a,0x4332234:0x9100212a,0x4332244:0xf900026a}
+for a,w in checks.items():
+ if e['instruction'](a)!=w:raise SystemExit(f'Instruction mismatch {hex(a)}')
+print(json.dumps({'sha256':e['base']['expected'],'setup':'0x43318f8','entrySaves':{'workspaceX0':'x20','originalX1':'x22 initially; later reused','descriptorX2':'x19'},'initialDerivedLocals':{'sp+0x8':'original x1+1','sp+0x58':'w0 return of 0x4332284(original x1)','sp+0x18':'workspace+8','x27':'descriptor+0x18'},'verifiedDirectWorkspaceWrites':[{'at':'0x4331eac','offset':8,'width':8,'source':'x28 loaded from pointer in setup sp+0x48; complete source unresolved'},{'at':'0x4331f1c','offset':16,'width':4,'source':'word in setup x29-0x14; complete source unresolved'}],'descriptorMutation':[{'at':'0x4331b94','effect':'descriptor first pointer +=8'},{'at':'0x4332244','effect':'descriptor first pointer +=8, alternative state block'}],'limits':'Some setup paths advance argument-list descriptor. No proven persistent original-x1 field, no final type/alias assignment; indirect workspace helper writes not reconstructed.'},indent=2))

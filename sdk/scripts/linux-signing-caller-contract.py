@@ -1,0 +1,8 @@
+#!/usr/bin/env python3
+"""One bounded caller contract, hash-pinned static instructions only."""
+import contextlib,io,runpy,json
+with contextlib.redirect_stdout(io.StringIO()):e=runpy.run_path('scripts/linux-signing-provider-map.py')
+checks={0x43300b0:0xaa0003f4,0x43300c0:0xaa0103f3,0x43300a8:0xa90893e3,0x43300ac:0xf90043e2,0x43300b4:0xa9099be5,0x43300bc:0xf90057e7,0x4330108:0x940005d5,0x4330110:0xaa1403e1,0x4330114:0x97142ad3,0x4330134:0xd101a3a0,0x4330138:0x9102c3e2,0x433013c:0xaa1303e1,0x4330150:0x940005ea,0x4330154:0xd101a3a0,0x4330158:0x94000fbc,0x433015c:0xaa0003f3,0x4330180:0xaa1303e0,0x4330198:0xd65f03c0}
+for a,w in checks.items():
+ if e['instruction'](a)!=w:raise SystemExit(f'Instruction mismatch {hex(a)}')
+print(json.dumps({'sha256':e['base']['expected'],'entry':'0x433008c','argumentSaves':{'originalX0':'x20','originalX1':'x19','originalX2':'sp+0x80','originalX3':'sp+0x88','originalX4':'sp+0x90','originalX5':'sp+0x98','originalX6':'sp+0xa0','originalX7':'sp+0xa8'},'workspace':'x29-0x68','originalX0Assign':'workspace+0x40 std::string::_M_assign at 0x4330114','setupCall':{'site':'0x4330150','target':'0x43318f8','x0':'workspace','x1':'original x1','x2':'sp+0xb0, copied argument-list descriptor'},'consumerCall':{'site':'0x4330158','target':'0x4334048','explicitX0':'workspace','otherArgumentRegisters':'not explicitly prepared after setup helper; contracts unknown','x8IndirectResult':'not established'},'return':'consumer x0 retained in x19, cleanup then returned in x0 at 0x4330180','limits':'No established alias between consumer modified object and provider +0x200; no native execution.'},indent=2))

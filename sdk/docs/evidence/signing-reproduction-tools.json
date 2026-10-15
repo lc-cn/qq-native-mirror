@@ -1,0 +1,211 @@
+{
+  "schemaVersion": 1,
+  "kind": "signing-static-reproduction-tool-restoration",
+  "sourceBaseline": "17cead8",
+  "historicalDocumentIntroduction": "8df9fd312f6234201a6aa481ac3d1f838b0fc089",
+  "scope": {
+    "documents": [
+      "docs/linux-signing-static.md",
+      "docs/signing-integrity.md"
+    ],
+    "currentSourceReferencesAndLiteralRunpyDependenciesChecked": true,
+    "allSdkDocumentationAudited": false,
+    "scriptsIncludedInNpmPackage": false
+  },
+  "independentOriginalAuditSha256": "5e89f45a9387c1a5bd0edafc118e4c7541b7cec1639e94b6b8bac905519a0181",
+  "restoredValidationSha256": "b148c513035f133ee070ac77536fa68045250ed838436398ae5e3139fb1d5442",
+  "sharedUnchangedDependencies": [
+    {
+      "path": "scripts/linux-signing-provider-map.py",
+      "sha256": "575d258c566f10f89962c68f95cec01b2f60909e9496db10283f359cdc02e3fc"
+    },
+    {
+      "path": "scripts/linux-signing-init-map.py",
+      "sha256": "69b3667c39f48324679756a03ea7f871372b4a73eb169855875126abbb710d48"
+    },
+    {
+      "path": "scripts/linux-signing-vtable.py",
+      "sha256": "102b2d85c370223e5caad0ed9845210c97b21adb609ca81934db3a17fac851eb"
+    }
+  ],
+  "restoredSources": [
+    {
+      "name": "linux-signing-static.py",
+      "originalSha256": "e86393c850c79c84fc49c9fe4ce79bea7dcf3cd131a291f5e31bb2dca262e35f",
+      "restoredSha256": "abd420509896bcd67ffd935f46ea8398791ab787cdc027256efb53d2c3af5c96",
+      "syntaxParsed": true,
+      "positivePassed": true,
+      "historicalReceipt": "linux-signing-xrefs.json",
+      "historicalReceiptMatchedExcept": [
+        "binary source path"
+      ],
+      "otherBinaryRejectedWithoutEvidence": true,
+      "stdoutSha256": "f5aa0e25fa2145bb0e8df91d53c674de03b119a4c6925317c7f9a5805872f4c3",
+      "nativeExecuted": false,
+      "accountUsed": false
+    },
+    {
+      "name": "linux-signing-global-refs.py",
+      "originalSha256": "4b32441b4197b70e39e8f77b416f744f092598c5a13a0497143479c736ec7fe8",
+      "restoredSha256": "282dc44f65d58ed6fa9e46b98c3e91132320cdbc8247be334fb08f1c27bac855",
+      "syntaxParsed": true,
+      "positivePassed": true,
+      "historicalReceipt": "linux-signing-global-refs.json",
+      "historicalReceiptMatchedExcept": [],
+      "otherBinaryRejectedWithoutEvidence": true,
+      "stdoutSha256": "629ad0c36dcd6d2b80dfb5aebd1cdebc4ddf840c1b7a0ab3a4a306aba9cf128c",
+      "nativeExecuted": false,
+      "accountUsed": false
+    },
+    {
+      "name": "linux-signing-field-map.py",
+      "originalSha256": "13bcee6732dd83c5b3420d5a9ece8cdbc2afdfa1b74edf2e30a6714968e9a26f",
+      "restoredSha256": "13bcee6732dd83c5b3420d5a9ece8cdbc2afdfa1b74edf2e30a6714968e9a26f",
+      "syntaxParsed": true,
+      "positivePassed": true,
+      "historicalReceipt": "linux-signing-field-map.json",
+      "historicalReceiptMatchedExcept": [],
+      "otherBinaryRejectedWithoutEvidence": true,
+      "stdoutSha256": "bf3624cc549473070da25e28e87ab0045b28b9b6756e979920cb73ca432a504a",
+      "nativeExecuted": false,
+      "accountUsed": false
+    },
+    {
+      "name": "linux-signing-state-effects.py",
+      "originalSha256": "3e4e231ba114ec4f1d5ef288a8f48fc39b890d97e7f8f8dbea4fa6f7e343b17a",
+      "restoredSha256": "3e4e231ba114ec4f1d5ef288a8f48fc39b890d97e7f8f8dbea4fa6f7e343b17a",
+      "syntaxParsed": true,
+      "positivePassed": true,
+      "historicalReceipt": "linux-signing-state-effects.json",
+      "historicalReceiptMatchedExcept": [],
+      "otherBinaryRejectedWithoutEvidence": true,
+      "stdoutSha256": "00556621ad3c0bf920d304215a8bb80a5ae7598c24fefbe1d56c6ef24eed4898",
+      "nativeExecuted": false,
+      "accountUsed": false
+    },
+    {
+      "name": "linux-signing-image-predicate.py",
+      "originalSha256": "682039a006a84ffc58cc41f77797af31d62688e8f6ea961c4ea03930a279843d",
+      "restoredSha256": "682039a006a84ffc58cc41f77797af31d62688e8f6ea961c4ea03930a279843d",
+      "syntaxParsed": true,
+      "positivePassed": true,
+      "historicalReceipt": "linux-signing-image-predicate.json",
+      "historicalReceiptMatchedExcept": [],
+      "otherBinaryRejectedWithoutEvidence": true,
+      "stdoutSha256": "f6ab67e93494c3a264083a89dd04d153fc498b43370ba987fe2f6b27e663b5bc",
+      "nativeExecuted": false,
+      "accountUsed": false
+    },
+    {
+      "name": "linux-signing-output-copy.py",
+      "originalSha256": "4ee3e47b2a47cc58e62a6ac8d250b2c7e6449578b659277c51671031fa632850",
+      "restoredSha256": "4ee3e47b2a47cc58e62a6ac8d250b2c7e6449578b659277c51671031fa632850",
+      "syntaxParsed": true,
+      "positivePassed": true,
+      "historicalReceipt": "linux-signing-output-copy.json",
+      "historicalReceiptMatchedExcept": [],
+      "otherBinaryRejectedWithoutEvidence": true,
+      "stdoutSha256": "95baf825c98079d32bcd4ba0ecf4684772f48e7aa34d72318423ca14ab3179f6",
+      "nativeExecuted": false,
+      "accountUsed": false
+    },
+    {
+      "name": "linux-signing-caller-contract.py",
+      "originalSha256": "a94a54ac8d706228440ed7ac0c92adbf182453df048afc172ff1124d23b5f773",
+      "restoredSha256": "a94a54ac8d706228440ed7ac0c92adbf182453df048afc172ff1124d23b5f773",
+      "syntaxParsed": true,
+      "positivePassed": true,
+      "historicalReceipt": "linux-signing-caller-contract.json",
+      "historicalReceiptMatchedExcept": [],
+      "otherBinaryRejectedWithoutEvidence": true,
+      "stdoutSha256": "a5952b44087eef2fa7e28d36ed4a0c80caef149fc595f081a5bdaaa2ad2cda04",
+      "nativeExecuted": false,
+      "accountUsed": false
+    },
+    {
+      "name": "linux-signing-setup-contract.py",
+      "originalSha256": "b336282cc4fb9d33a8db4a47b042ac4b5c48a8e0fcca789096acfdc01da4b36b",
+      "restoredSha256": "b336282cc4fb9d33a8db4a47b042ac4b5c48a8e0fcca789096acfdc01da4b36b",
+      "syntaxParsed": true,
+      "positivePassed": true,
+      "historicalReceipt": "linux-signing-setup-contract.json",
+      "historicalReceiptMatchedExcept": [],
+      "otherBinaryRejectedWithoutEvidence": true,
+      "stdoutSha256": "d5b1699fe9731c0f6166ee5c39f4106a33e057626d3433e8fdbd69fbfd2750ce",
+      "nativeExecuted": false,
+      "accountUsed": false
+    },
+    {
+      "name": "linux-signing-old-vtable.py",
+      "originalSha256": "9173536a7297aaea34fe23a8f36b2a4e264ecad85574df25ddba2ae75f09adde",
+      "restoredSha256": "7486ced44debd65cc793538ee5cfef24edc7a394049bc36090546d33f1bc3d4b",
+      "syntaxParsed": true,
+      "positivePassed": true,
+      "historicalReceipt": "linux-signing-old-vtable.json",
+      "historicalReceiptMatchedExcept": [],
+      "otherBinaryRejectedWithoutEvidence": true,
+      "stdoutSha256": "08e93125110a358c64e0a67d77e1a7f7782074abc4a40f76578e9ea04b6e5663",
+      "nativeExecuted": false,
+      "accountUsed": false
+    },
+    {
+      "name": "linux-signing-old-preinit.py",
+      "originalSha256": "024f785de1b5f882dc12d0b34d15981963a85bf8672e130b0ea5a245d1fb2801",
+      "restoredSha256": "024f785de1b5f882dc12d0b34d15981963a85bf8672e130b0ea5a245d1fb2801",
+      "syntaxParsed": true,
+      "positivePassed": true,
+      "historicalReceipt": "linux-signing-old-preinit.json",
+      "historicalReceiptMatchedExcept": [],
+      "otherBinaryRejectedWithoutEvidence": true,
+      "stdoutSha256": "33abca979d3030ccb49a1c86cc66f8a72d86e73f69d14fc6ddc27c3756f15b55",
+      "nativeExecuted": false,
+      "accountUsed": false
+    },
+    {
+      "name": "inspect-official-bootstrap.py",
+      "originalSha256": "022c6d8bdfdef52d160be4d48a910bcb8e378cdd4d8099fdd5d3761219ce2950",
+      "restoredSha256": "022c6d8bdfdef52d160be4d48a910bcb8e378cdd4d8099fdd5d3761219ce2950",
+      "syntaxParsed": true,
+      "positivePassed": true,
+      "historicalReceipt": "official-bootstrap-inspection.json",
+      "historicalReceiptMatchedExcept": [
+        "mainReferencesNapCat: historical true, current false"
+      ],
+      "otherBinaryRejectedWithoutEvidence": null,
+      "stdoutSha256": "5391bbb0f6aff86f35333d284d4287454b0676b687065e654a1fc8ce88cd9488",
+      "nativeExecuted": false,
+      "accountUsed": false
+    }
+  ],
+  "intentionalSourceAdjustments": {
+    "linux-signing-static.py": "Check the exact newer ELF SHA-256 before using fixed addresses.",
+    "linux-signing-global-refs.py": "Check the exact newer ELF SHA-256 before using fixed addresses.",
+    "linux-signing-old-vtable.py": "Accept an explicit binary argument; retain the former default for the historical workspace."
+  },
+  "pinnedElfSha256": {
+    "3.2.32-52194-linux-arm64": "c302361f52494de257044e912e43ed244bb29ee59f59345d25a8959327828337",
+    "3.2.31-51102-linux-arm64": "72978494d18d0076a378550099628569ff5081ada79f37e0b7adaeae6904217a"
+  },
+  "historicalPrivateHarnesses": [
+    "linux-signing-observe.sh",
+    "linux-signing-observe-consumer.mjs",
+    "linux-signing-observe-timer.cjs",
+    "linux-signing-observe-gdb.py"
+  ],
+  "bootstrapRepeat": {
+    "asarSha256": "e515fbf7c47d0e05a5539c9aeeea8a3268551dd5f6ddb7a39a9a4bb656c7bf12",
+    "onlyChangedReportField": "mainReferencesNapCat",
+    "historicalValue": true,
+    "currentValue": false,
+    "wholeInstallationPristineEstablished": false
+  },
+  "nativeExecuted": false,
+  "accountUsed": false,
+  "signingAuthenticityEstablished": false,
+  "limits": [
+    "Tool restoration and receipt replay do not establish additional native runtime or account behavior.",
+    "This checks two signing documents, not every SDK documentation reference.",
+    "Literal runpy dependency inventory is not a general Python dependency parser.",
+    "Historical private runtime harnesses are named as historical records; their environment is not distributed as a current source command."
+  ]
+}
