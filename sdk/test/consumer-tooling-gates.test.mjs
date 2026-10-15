@@ -510,16 +510,35 @@ await test('installed package orchestrator and worker test entry observe their a
   }
   const file = resolve(root, 'scripts/verify-package-consumer.mjs');
   const actual = readFileSync(file, 'utf8');
-  assert.ok(
-    diagnostics(
-      replaceOnce(
-        actual,
-        "run('npm', ['run', 'build'], root);",
-        "run(42, ['run', 'build'], root);",
-      ),
-      file,
-    ).length > 0,
-  );
+  // Exercise the current npm wrapper and retain the underlying process-command
+  // contract. Strict anchors ensure a refactor cannot silently skip a negative case.
+  for (const fixture of [
+    {
+      name: 'npm argument',
+      before: "runNpm(['run', 'build'], root);",
+      invalid: "runNpm([42, 'build'], root);",
+      diagnostic: 2322,
+    },
+    {
+      name: 'npm working directory',
+      before: "runNpm(['run', 'build'], root);",
+      invalid: "runNpm(['run', 'build'], 42);",
+      diagnostic: 2345,
+    },
+    {
+      name: 'process command',
+      before:
+        "const help = run(process.execPath, ['node_modules/qq-native-client/dist/cli.js', '--help']);",
+      invalid: "const help = run(42, ['node_modules/qq-native-client/dist/cli.js', '--help']);",
+      diagnostic: 2345,
+    },
+  ]) {
+    const invalid = replaceOnce(actual, fixture.before, fixture.invalid);
+    assert.ok(
+      diagnostics(invalid, file).some((item) => item.code === fixture.diagnostic),
+      `${fixture.name} must retain its string type`,
+    );
+  }
 });
 
 await test('client lifecycle consumer preserves actual constructor types and observes its verification entry without execution', async () => {
