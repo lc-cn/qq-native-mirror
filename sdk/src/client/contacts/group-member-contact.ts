@@ -1,8 +1,9 @@
 import type { UserProfile } from '../../contracts/contacts.ts';
-import type { KickOptions } from '../../contracts/groups.ts';
+import type { GroupMember, GroupMemberQueryOptions, KickOptions } from '../../contracts/groups.ts';
 import type { OperationCall, OperationResult } from '../../runtime/operation-contracts.ts';
 import { captureContactOperation } from '../../features/contacts/contact-operation-input.ts';
 import { captureGroupOperation } from '../../features/groups/group-operation-input.ts';
+import { captureGroupMemberQuery } from '../../features/groups/group-member-query-input.ts';
 import { sendGroupId } from '../../validation/identifiers.ts';
 import { contactUserId, type ContactContext } from './contact-context.ts';
 
@@ -33,6 +34,20 @@ export class GroupMemberContact {
       'getUserProfile',
       captureContactOperation('getUserProfile', { userId: this.userId }).payload,
     );
+  }
+
+  /** Read role and card from a successful complete group member query. */
+  async getInfo(options?: GroupMemberQueryOptions): Promise<GroupMember | undefined> {
+    this.#context.assertActive();
+    let captured;
+    try {
+      captured = captureGroupMemberQuery(this.groupId, this.userId, options);
+    } finally {
+      this.#context.assertActive();
+    }
+    const member = await this.#invoke('getGroupMember', captured);
+    this.#context.assertActive();
+    return member;
   }
 
   async setCard(card: string): Promise<void> {

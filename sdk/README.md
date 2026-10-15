@@ -197,6 +197,10 @@ const recent = await group.getHistory({ limit: 10 });
 const members = await group.getMembers();
 console.log(profile.nickname, recent.length, members.length, member.userId);
 
+const info = await member.getInfo({ refresh: true });
+if (info) console.log(info.role, info.card);
+// Also available as client.getGroupMember(groupId, userId, options).
+
 const sent = await friend.sendMessage('hello');
 await friend.recallMessage(sent.messageId);
 ```
@@ -205,11 +209,22 @@ await friend.recallMessage(sent.messageId);
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Friend and group | `sendMessage`, `getHistory`, `getMessage`, `getMessages`, `recallMessage`, `getForwardMessages`, `forwardMessages`, `sendMergedForward`, `downloadAttachment` |
 | Friend           | `getProfile`, `setRemark`, `setCategory`, `delete`                                                                                                            |
-| Group            | `getInfo`, `getMembers`, `listMutedMembers`, `pickMember`, `setName`, `setRemark`, `mute`, `leave`                                                            |
-| Group member     | `getProfile`, `setCard`, `setAdmin`, `mute`, `kick`                                                                                                           |
+| Group            | `getInfo`, `getMembers`, `listMutedMembers`, `pickMember`, `setAvatar`, `setName`, `setRemark`, `mute`, `leave`                                               |
+| Group member     | `getInfo`, `getProfile`, `setCard`, `setAdmin`, `mute`, `kick`                                                                                                |
 | `group.files`    | `count`, `getPage`, `list`, `createFolder`, `deleteFolder`, `deleteFile`                                                                                      |
 | `group.notices`  | `list`, `publish`, `delete`                                                                                                                                   |
 | `group.essence`  | `getPage`, `list`, `set`                                                                                                                                      |
+
+`member.getInfo()` reads group-specific nickname, card and role; `getProfile()`
+reads account profile data. The same member API is available on a group message's
+`event.member`. A missing member returns `undefined` only after a successful,
+complete member snapshot. Query failures and incomplete or ambiguous lists reject.
+The current implementation reads the full member list, so its cost scales with
+group size. `getGroupMembers`, `group.getMembers` and the single-member APIs accept
+`{ refresh: true }` to request native refresh; omission preserves the native
+default (`false`). This flag does not guarantee an atomic or current server
+snapshot. Returned data is passive; later changes and permission checks remain
+the caller's responsibility. See [member queries](docs/contacts-groups.md#group-member-queries).
 
 Group resources keep their own focused API and the selected group's identity:
 

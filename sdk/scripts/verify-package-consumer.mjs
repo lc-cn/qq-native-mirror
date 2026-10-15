@@ -345,6 +345,8 @@ const help = run(process.execPath, ['node_modules/qq-native-client/dist/cli.js',
 if (
   !help.includes('group-kick') ||
   !help.includes('group-avatar') ||
+  !help.includes('member-info') ||
+  !help.includes('--refresh true|false') ||
   !help.includes('--message-file')
 )
   throw new Error('Installed CLI lacks commands');
@@ -373,6 +375,30 @@ if (
   /ENOENT|dlopen|catalog/.test(invalidAvatar.stderr)
 )
   throw new Error('Installed avatar CLI did not validate intent before account acquisition');
+
+for (const command of ['members', 'member-info']) {
+  const result = spawnSync(
+    process.execPath,
+    [
+      cliEntry,
+      command,
+      '--config',
+      'absent-config.json',
+      '--group-id',
+      '123',
+      ...(command === 'member-info' ? ['--user-id', '456'] : []),
+      '--refresh',
+      'invalid',
+    ],
+    { cwd: destination, encoding: 'utf8', timeout: 5000 },
+  );
+  if (
+    result.status !== 1 ||
+    !result.stderr.includes('--refresh must be true or false') ||
+    /ENOENT|dlopen|catalog/.test(result.stderr)
+  )
+    throw new Error('Installed member CLI did not validate intent before account acquisition');
+}
 
 for (const name of ['constructor', 'toString', '__proto__']) {
   const result = spawnSync(process.execPath, [cliEntry, name, '--config', 'absent-config.json'], {

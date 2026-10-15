@@ -1,4 +1,8 @@
 import { captureSetGroupAvatar } from '../features/groups/group-avatar-input.ts';
+import {
+  captureGroupMemberList,
+  captureGroupMemberQuery,
+} from '../features/groups/group-member-query-input.ts';
 import { createClientEventPresentation } from './client-event-presentation.ts';
 import { createMessageEvent } from './message-event.ts';
 import { createFriendRequestEvent, createGroupRequestEvent } from './request-event.ts';
@@ -79,6 +83,7 @@ import type {
   GroupFileEntry,
   GroupFileListOptions,
   GroupMember,
+  GroupMemberQueryOptions,
   GroupInfoUpdate,
   GroupMutedMember,
   KickOptions,
@@ -296,8 +301,39 @@ export class QQClient extends EventEmitter<ClientEvents> {
   async getGroupInfo(groupId: string): Promise<GroupInfoUpdate> {
     return this.#operation('getGroupInfo', { groupId: sendGroupId(groupId) });
   }
-  async getGroupMembers(groupId: string): Promise<GroupMember[]> {
-    return this.#operation('getGroupMembers', { groupId: sendGroupId(groupId) });
+  async getGroupMembers(
+    groupId: string,
+    options?: GroupMemberQueryOptions,
+  ): Promise<GroupMember[]> {
+    const context = this.#contactContext();
+    let captured;
+    try {
+      captured = captureGroupMemberList(groupId, options);
+    } finally {
+      context.assertActive();
+    }
+    const members = await context.invoke('getGroupMembers', captured);
+    context.assertActive();
+    return members;
+  }
+  /** Read a complete member list and select one account. Only a successful full
+   * query may return undefined; no membership or permission is inferred locally.
+   */
+  async getGroupMember(
+    groupId: string,
+    userId: string,
+    options?: GroupMemberQueryOptions,
+  ): Promise<GroupMember | undefined> {
+    const context = this.#contactContext();
+    let captured;
+    try {
+      captured = captureGroupMemberQuery(groupId, userId, options);
+    } finally {
+      context.assertActive();
+    }
+    const member = await context.invoke('getGroupMember', captured);
+    context.assertActive();
+    return member;
   }
   async sendPrivateMessage(userId: string, message: MessageInput): Promise<SentMessage> {
     return this.#operation('sendPrivateMessage', capturePrivateMessage(userId, message));

@@ -179,6 +179,11 @@ export interface GroupMember {
   role: 'owner' | 'admin' | 'member';
 }
 
+export interface GroupMemberQueryOptions {
+  /** Request a native member-list refresh. Omission preserves the existing false default. */
+  refresh?: boolean;
+}
+
 /** Native metadata notification; optional fields remain absent when not supplied. */
 export interface GroupChange {
   groupId: string;

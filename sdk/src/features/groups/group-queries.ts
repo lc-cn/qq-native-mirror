@@ -9,6 +9,11 @@ import { nativeResultError } from '../../errors.ts';
 import { sendGroupId } from '../../validation/identifiers.ts';
 import { projectGroupInfo } from './group-events.ts';
 import { projectGroupMuteList } from './group-mute-list.ts';
+import {
+  captureGroupMemberList,
+  captureGroupMemberQuery,
+  groupMemberIdentity,
+} from './group-member-query-input.ts';
 function record(value: unknown): Record<string, unknown> | undefined {
   return value && typeof value === 'object' ? (value as Record<string, unknown>) : undefined;
 }
@@ -230,68 +235,93 @@ export function createGroupQueries(context: GroupQueriesContext) {
     refresh: unknown = false,
   ): Promise<GroupMember[]> => {
     alive();
-    const id = sendGroupId(groupId);
-    refresh = refresh ?? false;
-    if (typeof refresh !== 'boolean') throw new Error('refresh must be a boolean');
-    const result: unknown = await waitForMembers(requestMembers(id, refresh));
-    // Pinned NodeIKernelGroupService.getAllMemberList reports errCode and
-    // finish:true. A Map alone does not establish a successful full list.
-    const errCode = record(result)?.errCode;
-    if (errCode !== 0)
-      throw nativeResultError('Native group member query failed', { errCode }, 'errCode');
-    const response = record(record(result)?.result);
-    const infos = response?.infos;
-    if (!(infos instanceof Map)) throw new Error('Invalid native group member map');
-    if (response?.finish !== true)
-      throw Object.assign(new Error('Native group member list is incomplete'), {
-        code: 'incomplete-result',
+    const captured = captureGroupMemberList(groupId, { refresh: refresh ?? false });
+    alive();
+    const result: unknown = await waitForMembers(
+      requestMembers(captured.groupId, captured.refresh ?? false),
+    );
+    try {
+      // Pinned NodeIKernelGroupService.getAllMemberList reports errCode and
+      // finish:true. A Map alone does not establish a successful full list.
+      const errCode = record(result)?.errCode;
+      if (errCode !== 0)
+        throw nativeResultError('Native group member query failed', { errCode }, 'errCode');
+      const response = record(record(result)?.result);
+      const infos = response?.infos;
+      if (!(infos instanceof Map)) throw new Error('Invalid native group member map');
+      if (response?.finish !== true)
+        throw Object.assign(new Error('Native group member list is incomplete'), {
+          code: 'incomplete-result',
+        });
+      const entries: IterableIterator<[unknown, unknown]> = Map.prototype.entries.call(infos);
+      const identities = new Set<string>();
+      const members = Array.from(entries, ([uid, member]): GroupMember => {
+        if (
+          typeof uid !== 'string' ||
+          !uid.trim() ||
+          !member ||
+          typeof member !== 'object' ||
+          Array.isArray(member)
+        )
+          throw new Error('Invalid native group member');
+        const row = record(member)!;
+        const memberUid = row.uid;
+        const userId = row.uin;
+        const nickname = row.nick;
+        const card = row.cardName;
+        const nativeRole = row.role;
+        if (
+          memberUid !== uid ||
+          typeof userId !== 'string' ||
+          !/^\d+$/.test(userId) ||
+          !/[1-9]/.test(userId) ||
+          typeof nickname !== 'string' ||
+          typeof card !== 'string'
+        )
+          throw new Error('Invalid native group member');
+        const role =
+          nativeRole === 4
+            ? 'owner'
+            : nativeRole === 3
+              ? 'admin'
+              : nativeRole === 2
+                ? 'member'
+                : undefined;
+        if (!role) throw new Error('Unknown native group member role');
+        const identity = groupMemberIdentity(userId);
+        if (identities.has(identity))
+          throw new Error('Duplicate native group member account identity');
+        identities.add(identity);
+        return { userId, uid, nickname, card, role };
       });
-    const entries: IterableIterator<[unknown, unknown]> = Map.prototype.entries.call(infos);
-    const members = Array.from(entries, ([uid, member]): GroupMember => {
-      if (
-        typeof uid !== 'string' ||
-        !uid.trim() ||
-        !member ||
-        typeof member !== 'object' ||
-        Array.isArray(member)
-      )
-        throw new Error('Invalid native group member');
-      const row = record(member)!;
-      const memberUid = row.uid;
-      const userId = row.uin;
-      const nickname = row.nick;
-      const card = row.cardName;
-      const nativeRole = row.role;
-      if (
-        memberUid !== uid ||
-        typeof userId !== 'string' ||
-        !/^\d+$/.test(userId) ||
-        typeof nickname !== 'string' ||
-        typeof card !== 'string'
-      )
-        throw new Error('Invalid native group member');
-      const role =
-        nativeRole === 4
-          ? 'owner'
-          : nativeRole === 3
-            ? 'admin'
-            : nativeRole === 2
-              ? 'member'
-              : undefined;
-      if (!role) throw new Error('Unknown native group member role');
-      return { userId, uid, nickname, card, role };
-    });
-    // Commit only a complete validated query; failures leave no partial cache.
+      // Commit only a complete validated query; failures leave no partial cache.
+      alive();
+      commitMembers(members);
+      alive();
+      return members;
+    } finally {
+      alive();
+    }
+  };
+  const getGroupMember = async (
+    groupId: unknown,
+    userId: unknown,
+    refresh: unknown = false,
+  ): Promise<GroupMember | undefined> => {
     alive();
-    commitMembers(members);
+    const captured = captureGroupMemberQuery(groupId, userId, { refresh });
     alive();
-    return members;
+    const members = await getGroupMembers(captured.groupId, captured.refresh);
+    alive();
+    const identity = groupMemberIdentity(captured.userId);
+    return members.find((member) => groupMemberIdentity(member.userId) === identity);
   };
   return {
     listGroups,
     getGroupInfo,
     listGroupMutedMembers,
     getGroupMembers,
+    getGroupMember,
     close() {
       if (closed) return;
       closed = true;

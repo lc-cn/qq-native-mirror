@@ -528,6 +528,8 @@ export function createNativeServices(context: NativeServiceContext) {
             return groupQueries.listGroups(payload.refresh);
           case 'getGroupMembers':
             return groupQueries.getGroupMembers(payload.groupId, payload.refresh);
+          case 'getGroupMember':
+            return groupQueries.getGroupMember(payload.groupId, payload.userId, payload.refresh);
           case 'sendPrivateMessage':
             return sender.sendPrivateMessage(payload.userId, payload.message);
           case 'sendGroupMessage':

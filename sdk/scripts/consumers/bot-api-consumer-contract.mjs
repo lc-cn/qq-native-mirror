@@ -19,12 +19,21 @@ export async function verifyBotApiConsumer(packageRoot) {
 export async function verifyBotApiClient({ QQClient, segment }) {
   const worker = new ClientWorkerFixture();
   const receipt = { messageId: '99', sequence: '1', time: 1 };
+  const memberInfo = {
+    userId: '456',
+    uid: 'u_friend',
+    nickname: 'friend',
+    card: 'project admin',
+    role: 'admin',
+  };
   worker.respond = (command) =>
     command.method === 'handleFriendRequest' ||
     command.method === 'handleGroupRequest' ||
     command.method === 'setGroupMemberCard'
       ? undefined
-      : receipt;
+      : command.method === 'getGroupMember'
+        ? { ...memberInfo }
+        : receipt;
   const client = new QQClient(worker, 500);
   const account = { uin: '123', uid: 'u_self' };
   try {
@@ -117,6 +126,7 @@ export async function verifyBotApiClient({ QQClient, segment }) {
     );
     const groupReply = message;
     const beforeContacts = worker.requests.length;
+    assert.deepEqual(await groupMessage.member.getInfo({ refresh: true }), memberInfo);
     await groupMessage.group.sendMessage('group action');
     await groupMessage.member.setCard('member action');
     const privateDto = {
@@ -136,6 +146,7 @@ export async function verifyBotApiClient({ QQClient, segment }) {
     assert.deepEqual(
       worker.requests.slice(beforeContacts).map(({ id: _id, ...command }) => command),
       [
+        { method: 'getGroupMember', groupId: '789', userId: '456', refresh: true },
         { method: 'sendGroupMessage', groupId: '789', message: [segment.text('group action')] },
         { method: 'setGroupMemberCard', groupId: '789', userId: '456', card: 'member action' },
         { method: 'sendPrivateMessage', userId: '654', message: [segment.text('private action')] },
@@ -237,6 +248,7 @@ export async function verifyBotApiClient({ QQClient, segment }) {
     await assert.rejects(groupReply.reply('stale'), /session|inactive/);
     await assert.rejects(groupMessage.group.sendMessage('stale'), /session|inactive/);
     await assert.rejects(groupMessage.member.setCard('stale'), /session|inactive/);
+    await assert.rejects(groupMessage.member.getInfo(), /session|inactive/);
     await assert.rejects(privateMessage.friend.sendMessage('stale'), /session|inactive/);
     assert.equal(worker.requests.length, beforeStale);
     client.once('request.friend', (event) => {
@@ -255,6 +267,7 @@ export async function verifyBotApiClient({ QQClient, segment }) {
     installedImmutableMessageRouting: true,
     installedRequestApprovalLifetime: true,
     installedMessageContacts: true,
+    installedMessageMemberInfo: true,
     installedCapturedMessageText: true,
     ...(await verifyGroupAvatarClient(QQClient)),
   };

@@ -1,4 +1,8 @@
 import { captureSetGroupAvatar } from '../../features/groups/group-avatar-input.ts';
+import {
+  captureGroupMemberList,
+  captureGroupMemberQuery,
+} from '../../features/groups/group-member-query-input.ts';
 import { captureGroupRequestOperation } from '../../features/groups/group-request-input.ts';
 import { resolve } from 'node:path';
 import { captureGroupOperation } from '../../features/groups/group-operation-input.ts';
@@ -32,10 +36,25 @@ export const groupsCommands = {
     },
   },
   members: {
-    flags: ['config', 'uin', 'group-id'],
+    flags: ['config', 'uin', 'group-id', 'refresh'],
     prepare(flags) {
-      const groupId = numeric(flags, 'group-id');
-      return (client) => client.getGroupMembers(groupId);
+      const { groupId, ...options } = captureGroupMemberList(
+        required(flags, 'group-id'),
+        flags.refresh === undefined ? undefined : { refresh: bool(flags, 'refresh') },
+      );
+      return (client) => client.getGroupMembers(groupId, options);
+    },
+  },
+  'member-info': {
+    flags: ['config', 'uin', 'group-id', 'user-id', 'refresh'],
+    prepare(flags) {
+      const { groupId, userId, ...options } = captureGroupMemberQuery(
+        required(flags, 'group-id'),
+        required(flags, 'user-id'),
+        flags.refresh === undefined ? undefined : { refresh: bool(flags, 'refresh') },
+      );
+      // Keep a successful lookup miss distinct from a void mutation acknowledgement.
+      return async (client) => (await client.getGroupMember(groupId, userId, options)) ?? null;
     },
   },
   'group-requests': {

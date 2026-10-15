@@ -15,6 +15,7 @@ export const SERVICE_OPERATIONS = Object.freeze([
   'getGroupInfo',
   'listGroupMutedMembers',
   'getGroupMembers',
+  'getGroupMember',
   'sendPrivateMessage',
   'sendGroupMessage',
   'sendMergedForward',

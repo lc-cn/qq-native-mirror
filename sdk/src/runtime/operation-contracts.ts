@@ -20,6 +20,7 @@ import type {
   GroupFolder,
   GroupInfoUpdate,
   GroupMember,
+  GroupMemberQueryOptions,
   GroupMutedMember,
   GroupNoticeOptions,
   GroupNoticePage,
@@ -83,7 +84,11 @@ export interface ServiceOperationContracts {
   listGroups: Operation<undefined, Group[]>;
   getGroupInfo: Operation<{ groupId: string }, GroupInfoUpdate>;
   listGroupMutedMembers: Operation<{ groupId: string }, GroupMutedMember[]>;
-  getGroupMembers: Operation<{ groupId: string }, GroupMember[]>;
+  getGroupMembers: Operation<{ groupId: string } & GroupMemberQueryOptions, GroupMember[]>;
+  getGroupMember: Operation<
+    { groupId: string; userId: string } & GroupMemberQueryOptions,
+    GroupMember | undefined
+  >;
   searchGroup: Operation<{ groupId: string }, GroupSearchMatch | undefined>;
   getGroupFileCount: Operation<{ groupId: string }, number>;
   getGroupFilePage: Operation<{ groupId: string; options: CapturedFilePageOptions }, GroupFilePage>;

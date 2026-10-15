@@ -172,6 +172,7 @@ const facadeInputs = new Set([
   'src/features/groups/files/group-file-input.ts',
   'src/features/groups/group-search-input.ts',
   'src/features/groups/group-avatar-input.ts',
+  'src/features/groups/group-member-query-input.ts',
   'src/features/groups/group-notice-input.ts',
 ]);
 
@@ -213,6 +214,7 @@ const contactDependencies: Record<string, readonly string[]> = {
     'src/client/contacts/group-essence.ts',
     'src/client/contacts/group-notices.ts',
     'src/features/groups/group-avatar-input.ts',
+    'src/features/groups/group-member-query-input.ts',
     'src/features/groups/group-operation-input.ts',
     'src/features/messages/send-input.ts',
     'src/validation/identifiers.ts',
@@ -221,6 +223,7 @@ const contactDependencies: Record<string, readonly string[]> = {
     'src/client/contacts/contact-context.ts',
     'src/features/contacts/contact-operation-input.ts',
     'src/features/groups/group-operation-input.ts',
+    'src/features/groups/group-member-query-input.ts',
     'src/validation/identifiers.ts',
   ],
   'src/client/contacts/group-files.ts': [
@@ -337,6 +340,11 @@ export function dependencyViolation({ from, to, typeOnly }: SourceDependency): s
     return !typeOnly && ['src/validation/identifiers.ts', 'node:path'].includes(to)
       ? undefined
       : 'Group avatar input captures identifiers and paths without acquiring files or native operations.';
+  if (from === 'src/features/groups/group-member-query-input.ts')
+    return (!typeOnly && to === 'src/validation/identifiers.ts') ||
+      (typeOnly && to === 'src/contracts/groups.ts')
+      ? undefined
+      : 'Group member query input captures only decimal selectors and own data options.';
   if (from === 'src/features/forward/forward-input.ts')
     return typeOnly && to === 'src/contracts/messages.ts'
       ? undefined

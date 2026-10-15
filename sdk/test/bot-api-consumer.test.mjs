@@ -9,6 +9,7 @@ await test('public bot APIs preserve messages, request decisions and group-avata
     installedImmutableMessageRouting: true,
     installedRequestApprovalLifetime: true,
     installedMessageContacts: true,
+    installedMessageMemberInfo: true,
     installedCapturedMessageText: true,
     installedGroupAvatarRouting: true,
     installedGroupAvatarValidation: true,

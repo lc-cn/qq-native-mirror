@@ -33,7 +33,8 @@ const usage = `qq-native-client <command> [options]
   friend-category-set --config FILE --target UIN_OR_UID --category-id UINT32 [--uin UIN]  Assign a friend to a category
   friend-categories --config FILE [--uin UIN]  List categorized friends
   groups --config FILE [--uin UIN]      Restore login and list groups
-  members --config FILE --group-id ID [--uin UIN]
+  members --config FILE --group-id ID [--refresh true|false] [--uin UIN]
+  member-info --config FILE --group-id ID --user-id ID [--refresh true|false] [--uin UIN]
   history --config FILE --kind private|group --target ID [--limit 20] [--before MESSAGE_ID] [--uin UIN]
   message --config FILE --kind private|group --target ID --message-id ID
   messages --config FILE --kind private|group --target ID --message-ids ID,ID

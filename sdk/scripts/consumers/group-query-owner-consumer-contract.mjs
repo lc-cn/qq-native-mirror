@@ -19,6 +19,7 @@ export async function verifyGroupQueryOwnerConsumer(packageRoot) {
     queryModule,
     channelModule,
   ]);
+  await verifyMemberSnapshots(createGroupQueries);
   /** @type {('getGroupInfo' | 'listGroupMutedMembers' | 'getGroupMembers')[]} */
   const identityMethods = ['getGroupInfo', 'listGroupMutedMembers', 'getGroupMembers'];
   const account = new AbortController();
@@ -43,14 +44,16 @@ export async function verifyGroupQueryOwnerConsumer(packageRoot) {
     for (const method of identityMethods)
       for (const id of ['', '0000', ' 1', '1*', 123, null])
         await assert.rejects(preflight[method](id), { message: 'Invalid send group identifier' });
+    for (const userId of ['', '0000', ' 1', 'u_member', 123, null])
+      await assert.rejects(preflight.getGroupMember('123', userId));
     assert.equal(acquisitions, 0);
     assert.equal(callbackRequests, 0);
   } finally {
     preflight.close();
   }
 
-  /** @type {('getGroupInfo' | 'listGroupMutedMembers' | 'listGroups' | 'getGroupMembers')[]} */
-  const pendingMethods = [...identityMethods, 'listGroups'];
+  /** @type {('getGroupInfo' | 'listGroupMutedMembers' | 'listGroups' | 'getGroupMembers' | 'getGroupMember')[]} */
+  const pendingMethods = [...identityMethods, 'listGroups', 'getGroupMember'];
   for (const method of pendingMethods) {
     const channel = createNativeEventChannel(account.signal);
     /** @type {(reason: unknown) => void} */
@@ -78,7 +81,12 @@ export async function verifyGroupQueryOwnerConsumer(packageRoot) {
         assert.fail('A retired query must not update identity storage');
       },
     });
-    const pending = method === 'listGroups' ? queries.listGroups() : queries[method]('000123');
+    const pending =
+      method === 'listGroups'
+        ? queries.listGroups()
+        : method === 'getGroupMember'
+          ? queries.getGroupMember('000123', '456')
+          : queries[method]('000123');
     const observed = pending.then(
       () => 'fulfilled',
       (error) => {
@@ -124,6 +132,84 @@ export async function verifyGroupQueryOwnerConsumer(packageRoot) {
     groupQueryInputOwnerContract: true,
     groupQueryLocalCloseContract: true,
     groupQuerySharedChannelContract: true,
+    groupMemberSnapshotContract: true,
     nativeGroupQueryAttempted: false,
   };
+}
+
+/** A selected member must come from a complete, unambiguous native snapshot.
+ * @param {typeof import('../../src/features/groups/group-queries.ts').createGroupQueries} createGroupQueries
+ */
+async function verifyMemberSnapshots(createGroupQueries) {
+  const account = new AbortController();
+  /** @type {unknown} */
+  let result;
+  /** @type {unknown[][]} */
+  const calls = [];
+  let commits = 0;
+  const nativeMember = {
+    uid: 'u_member',
+    uin: '9007199254740993',
+    nick: 'member',
+    cardName: 'project admin',
+    role: 3,
+  };
+  const queries = createGroupQueries({
+    signal: account.signal,
+    getGroupService: () => ({
+      getAllMemberList(...args) {
+        calls.push(args);
+        return result;
+      },
+    }),
+    eventCall() {
+      assert.fail('Member reads use the complete native result, not an unrelated callback');
+    },
+    awaitAlive: async (value) => value,
+    commitMembers() {
+      commits++;
+    },
+  });
+  try {
+    result = {
+      errCode: 0,
+      result: { finish: true, infos: new Map([[nativeMember.uid, nativeMember]]) },
+    };
+    assert.deepEqual(await queries.getGroupMember('000123', '09007199254740993', true), {
+      userId: nativeMember.uin,
+      uid: nativeMember.uid,
+      nickname: nativeMember.nick,
+      card: nativeMember.cardName,
+      role: 'admin',
+    });
+    assert.equal(await queries.getGroupMember('000123', '9007199254740992', false), undefined);
+    assert.deepEqual(calls, [
+      ['000123', true],
+      ['000123', false],
+    ]);
+    assert.equal(commits, 2);
+    for (const invalid of [
+      { errCode: 71 },
+      { errCode: 0, result: { finish: false, infos: new Map() } },
+      {
+        errCode: 0,
+        result: {
+          finish: true,
+          infos: new Map([
+            [nativeMember.uid, nativeMember],
+            ['u_duplicate', { ...nativeMember, uid: 'u_duplicate', uin: '09007199254740993' }],
+          ]),
+        },
+      },
+    ]) {
+      result = invalid;
+      await assert.rejects(queries.getGroupMember('123', nativeMember.uin));
+      assert.equal(commits, 2, 'An invalid complete list must not update identity storage');
+    }
+    result = { errCode: 0, result: { finish: true, infos: new Map() } };
+    assert.equal(await queries.getGroupMember('123', nativeMember.uin), undefined);
+    assert.equal(commits, 3);
+  } finally {
+    queries.close();
+  }
 }

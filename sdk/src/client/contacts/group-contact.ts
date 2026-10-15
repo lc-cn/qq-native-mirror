@@ -1,5 +1,11 @@
 import { captureSetGroupAvatar } from '../../features/groups/group-avatar-input.ts';
-import type { GroupInfoUpdate, GroupMember, GroupMutedMember } from '../../contracts/groups.ts';
+import type {
+  GroupInfoUpdate,
+  GroupMember,
+  GroupMemberQueryOptions,
+  GroupMutedMember,
+} from '../../contracts/groups.ts';
+import { captureGroupMemberList } from '../../features/groups/group-member-query-input.ts';
 import type { MessageInput, Peer, SentMessage } from '../../contracts/messages.ts';
 import { captureGroupOperation } from '../../features/groups/group-operation-input.ts';
 import { captureGroupMessage } from '../../features/messages/send-input.ts';
@@ -49,9 +55,17 @@ export class GroupContact extends ConversationContact<Extract<Peer, { type: 'gro
     return this.invoke('getGroupInfo', { groupId: this.groupId });
   }
 
-  async getMembers(): Promise<GroupMember[]> {
+  async getMembers(options?: GroupMemberQueryOptions): Promise<GroupMember[]> {
     this.assertActive();
-    return this.invoke('getGroupMembers', { groupId: this.groupId });
+    let captured;
+    try {
+      captured = captureGroupMemberList(this.groupId, options);
+    } finally {
+      this.assertActive();
+    }
+    const members = await this.invoke('getGroupMembers', captured);
+    this.assertActive();
+    return members;
   }
 
   /** Preserve native mute metadata without interpreting its time units. */

@@ -39,6 +39,7 @@
   "GroupListUpdate",
   "GroupMember",
   "GroupMemberChange",
+  "GroupMemberQueryOptions",
   "GroupMemberUpdate",
   "GroupMembershipEvent",
   "GroupMessageEvent",

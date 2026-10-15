@@ -141,6 +141,45 @@ const info = await client.getGroupInfo('123456');
 CLI: `qq-native-client group-info --config ./qq.json --group-id 123456`.
 The exact native path is `getGroupDetailInfo(groupId, 2)` plus `onGroupDetailInfoChange`. Both native success and a valid same-group callback are required. Concurrent same-group reads coalesce but receive independent DTOs. The five-second deadline also interrupts a pending native return; close interrupts either phase. After a failed query, that group's channel is quarantined until the Session is recreated, because callbacks have no request nonce. An unsolicited same-group callback can satisfy a read: this is a valid observed snapshot, not proof that the notification was caused by this request.
 
+## Group member queries
+
+```ts
+const member = client.pickGroup('123456').pickMember('987654');
+const info = await member.getInfo({ refresh: true });
+if (info) console.log(info.nickname, info.card, info.role);
+
+const same = await client.getGroupMember('123456', '987654');
+const members = await client.getGroupMembers('123456', { refresh: true });
+const selectedMembers = await client.pickGroup('123456').getMembers({ refresh: true });
+```
+
+`GroupMemberQueryOptions.refresh` is an optional boolean; omission uses `false`.
+The SDK preserves explicitly supplied `true` and `false` through IPC to
+`getAllMemberList(groupId, refresh)`. It does not implement a second native query,
+cache or automatic refresh. A single-member read currently reads and validates
+the full list, with work proportional to the group size. The native refresh flag
+requests a refresh; it does not establish atomicity or server freshness.
+
+`getInfo()` returns the existing `GroupMember` snapshot with `userId`, `uid`,
+`nickname`, `card` and `role`. `getProfile()` remains the separate account-profile
+query. `message.group` handlers can use `event.member.getInfo()` with the original
+captured sender and session. A retained member rejects after that session retires.
+
+The member is selected only after native `errCode: 0`, `finish: true` and complete
+row validation. Missing members then return `undefined`; failures, partial lists
+and duplicate numeric account identities reject without partially updating
+identity storage. Decimal matching preserves precision and accepts leading zeroes;
+the returned row keeps its original ID spelling. A successful read does not prove
+that membership or role remains unchanged before a later management operation.
+These additions reuse the existing native contract; current-source real-account
+acceptance is still required.
+
+CLI: `qq-native-client member-info --config ./qq.json --group-id 123456 --user-id 987654 --refresh true`.
+The existing `members` command also accepts `--refresh true|false`. Both capture
+and validate intent before configuration loading or account restoration.
+`member-info` prints JSON `null` for a successful missing-member result; failures
+remain errors and never print a mutation acknowledgement.
+
 ## Membership system messages
 
 ```ts

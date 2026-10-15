@@ -204,6 +204,17 @@ effects. The archived avatar admission is Darwin ARM64 only; later Linux avatar
 and Windows tooling changes remain outside this remote evidence. Separate native
 package rebuilding and npm publication are not conclusions of this audit.
 
+The same exact candidate also passed the separate six-platform native npm build
+and installed-consumer workflow. A [bounded artifact audit](evidence/bot-api-native-packages-ci-f6b5a65.json)
+verified all six build/consumer source bindings and the actual aggregate main
+archive's SHA-256/SHA-512. Runner receipts report platform-selected auxiliary
+installation, native-file hashing and preparation/close. Only 1,362,262 bytes of
+selected artifact content were downloaded; auxiliary tarball and manifest-body
+hashes were compared as declarations rather than independently recomputed. The
+aggregate consumer duplicates the Linux x64 receipt and is not a seventh run.
+The publish job was skipped. No account, avatar effect, signing authenticity or
+later local revision is established by this workflow.
+
 The eighth iteration closes a measured packet-adapter incompatibility. The exact
 Linux ARM64 3.2.32-52194 Msg binding converts its second argument through UTF-8
 string coercion and resolves a string `rsp`, rather than the Buffer request and
@@ -222,3 +233,24 @@ packed/installed consumer. Its `forwardStringCarrierRejectionContract` verifies
 both public forwarding outcomes and zero incompatible packet dispatch. This
 later change has local evidence only; it is not part of the remote `f6b5a65`
 candidate and did not use a native account.
+
+The ninth iteration exposes group-specific member information through
+`getGroupMember()` and `member.getInfo()`, including members captured by live group
+messages. Existing list methods now accept explicit refresh options; `member-info`
+and `members --refresh` provide the same CLI workflow. All entry points share the
+complete-list query owner. Missing members return `undefined` only after a
+successful complete snapshot; malformed, partial and duplicate numeric identities
+reject before identity-cache commit. Decimal matching preserves precision and
+original ID spelling. No separate member protocol, implicit cache or synchronous
+role getter was introduced. The current query cost scales with the group size,
+and refresh does not establish an atomic server snapshot.
+
+Local acceptance on 2026-10-15 passed 2,551 SDK tests, 88 tool tests, formatting,
+zero-warning lint, strict source/test/script types and a clean build. The initial
+installed check caught the new options type missing from the exact public export
+inventory; after adding that expected export, the complete packed/installed
+consumer passed. It verifies member information and refresh through client,
+contact and live-event entry points, full-snapshot validation and retirement.
+The actual CLI runner prints `null` for a successful missing-member query, preserves
+read errors without a success record, and closes once. These are controlled SDK
+and installed-package checks, not new native-account or remote CI evidence.

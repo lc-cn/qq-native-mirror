@@ -185,6 +185,20 @@ const contactHistory: Promise<Message[]> = groupContact.getHistory({limit: 10});
 const contactBatch: Promise<(Message | undefined)[]> = friendContact.getMessages(['789']);
 const memberProfile: Promise<UserProfile> = memberContact.getProfile();
 const selectedMembers: Promise<GroupMember[]> = groupContact.getMembers();
+const memberQueryOptions: import('qq-native-client').GroupMemberQueryOptions = { refresh: true };
+const selectedMemberInfo: Promise<GroupMember | undefined> = memberContact.getInfo(memberQueryOptions);
+const queriedMemberInfo: Promise<GroupMember | undefined> = client.getGroupMember('456', '123', memberQueryOptions);
+const refreshedMembers: Promise<GroupMember[]> = client.getGroupMembers('456', memberQueryOptions);
+const refreshedContactMembers: Promise<GroupMember[]> = groupContact.getMembers({ refresh: false });
+// @ts-expect-error A successful complete query may not contain the selected member.
+const requiredMemberInfo: Promise<GroupMember> = memberContact.getInfo();
+// @ts-expect-error Refresh is an explicit boolean, not a numeric cache age.
+memberContact.getInfo({ refresh: 1 });
+// @ts-expect-error Account identities preserve decimal precision as strings.
+client.getGroupMember('456', 123);
+// @ts-expect-error Account profile queries do not read group-specific metadata.
+friendContact.getInfo();
+void [selectedMemberInfo, queriedMemberInfo, refreshedMembers, refreshedContactMembers];
 const selectedMuted: Promise<GroupMutedMember[]> = groupContact.listMutedMembers();
 const groupAvatar: Promise<void> = client.setGroupAvatar('456', '/tmp/avatar.png');
 const selectedGroupAvatar: Promise<void> = groupContact.setAvatar('/tmp/avatar.png');
