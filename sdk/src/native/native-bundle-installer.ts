@@ -17,9 +17,9 @@ import { dirname, join, resolve, sep } from 'node:path';
 import { homedir } from 'node:os';
 import type { NativeManifest } from '../contracts/native.ts';
 import { acquirePackageLock } from '../storage/native-package-lock.ts';
+import { runNativeInstallation } from '../storage/native-installation-queue.ts';
 
 const digest = (data: Uint8Array) => createHash('sha256').update(data).digest('hex');
-const installations = new Map<string, Promise<void>>();
 
 /** Trusted inputs have passed the resolver's manifest/version/path checks.
  * Owns content cache, per-bundle queue, cross-process lock and atomic installation.
@@ -31,6 +31,7 @@ export interface VerifiedBundleInstallation {
   manifestUrl: string;
   cacheDir?: string;
   mirrors: readonly string[];
+  signal?: AbortSignal;
   download(url: string, maxBytes: number): Promise<Buffer>;
 }
 export async function installVerifiedBundle({
@@ -40,7 +41,9 @@ export async function installVerifiedBundle({
   cacheDir,
   mirrors,
   download,
+  signal,
 }: VerifiedBundleInstallation): Promise<string> {
+  signal?.throwIfAborted();
   const requestedBase = resolve(cacheDir ?? join(homedir(), '.cache/qq-native-client'));
   await mkdir(requestedBase, { recursive: true });
   const base = await realpath(requestedBase);
@@ -48,25 +51,26 @@ export async function installVerifiedBundle({
   async function validate(): Promise<boolean> {
     try {
       for (const file of manifest.files) {
+        signal?.throwIfAborted();
         const path = join(target, file.path);
         if (
           !(await realpath(path)).startsWith(target + sep) ||
           !(await lstat(path)).isFile() ||
-          digest(await readFile(path)) !== file.sha256.toLowerCase()
+          digest(await readFile(path, { signal })) !== file.sha256.toLowerCase()
         )
           return false;
       }
       return true;
     } catch {
+      signal?.throwIfAborted();
       return false;
     }
   }
-  const previous = installations.get(target) ?? Promise.resolve();
-  const installation = previous
-    .catch(() => {})
-    .then(async () => {
+  await runNativeInstallation(
+    target,
+    async () => {
       if (await validate()) return;
-      const release = await acquirePackageLock(target);
+      const release = await acquirePackageLock(target, signal);
       await runWithCleanup(async () => {
         if (!(await validate())) {
           await mkdir(base, { recursive: true });
@@ -95,13 +99,15 @@ export async function installVerifiedBundle({
               const results = await Promise.allSettled(
                 Array.from({ length: Math.min(4, groups.length) }, async () => {
                   while (!failed && next < groups.length) {
+                    signal?.throwIfAborted();
                     const group = groups[next++]!;
                     const file = group[0]!;
                     try {
                       const contentPath = join(contentCache, file.sha256.toLowerCase());
-                      let data: Buffer | undefined = await readFile(contentPath).catch(
+                      let data: Buffer | undefined = await readFile(contentPath, { signal }).catch(
                         () => undefined,
                       );
+                      signal?.throwIfAborted();
                       const cached = !!data && digest(data) === file.sha256.toLowerCase();
                       if (!cached) {
                         const original = new URL(file.url, manifestUrl).href;
@@ -111,7 +117,9 @@ export async function installVerifiedBundle({
                           original,
                         ]) {
                           try {
+                            signal?.throwIfAborted();
                             let candidate = await download(url, 512 * 1024 * 1024);
+                            signal?.throwIfAborted();
                             if (file.encoding === 'gzip') {
                               if (digest(candidate) !== file.downloadSha256!.toLowerCase())
                                 throw new Error(`Compressed native SHA-256 mismatch: ${file.path}`);
@@ -124,6 +132,9 @@ export async function installVerifiedBundle({
                             data = candidate;
                             break;
                           } catch (error) {
+                            // The transport has already captured cancellation.
+                            // Keep its body-cleanup error as well as its reason.
+                            if (signal?.aborted) throw error;
                             lastError = error;
                           }
                         }
@@ -135,20 +146,35 @@ export async function installVerifiedBundle({
                         const contentTemporary = join(contentCache, `.content-${randomUUID()}`);
                         await runWithCleanup(
                           async () => {
-                            await writeFile(contentTemporary, data, { mode: 0o600 });
+                            signal?.throwIfAborted();
+                            await writeFile(contentTemporary, data, { mode: 0o600, signal }).catch(
+                              (error: unknown) => {
+                                signal?.throwIfAborted();
+                                throw error;
+                              },
+                            );
+                            signal?.throwIfAborted();
                             await rename(contentTemporary, contentPath);
                           },
                           () => rm(contentTemporary, { force: true }),
                         );
                       }
                       const destination = join(temporary, file.path);
+                      signal?.throwIfAborted();
                       await mkdir(dirname(destination), { recursive: true });
                       // Reflinks preserve independent mutable files; unsupported
                       // filesystems fall back to ordinary copies, never cache hardlinks.
                       await copyFile(contentPath, destination, fsConstants.COPYFILE_FICLONE);
-                      if (digest(await readFile(destination)) !== file.sha256.toLowerCase())
+                      const copied = await readFile(destination, { signal }).catch(
+                        (error: unknown) => {
+                          signal?.throwIfAborted();
+                          throw error;
+                        },
+                      );
+                      if (digest(copied) !== file.sha256.toLowerCase())
                         throw new Error(`Copied native SHA-256 mismatch: ${file.path}`);
                       for (const duplicate of group.slice(1)) {
+                        signal?.throwIfAborted();
                         const duplicatePath = join(temporary, duplicate.path);
                         await mkdir(dirname(duplicatePath), { recursive: true });
                         await link(destination, duplicatePath);
@@ -160,10 +186,30 @@ export async function installVerifiedBundle({
                   }
                 }),
               );
+              if (signal?.aborted) {
+                // Every active response owns its cleanup. A later worker's
+                // distinct cleanup failure must not disappear behind the first
+                // worker's ordinary cancellation reason.
+                const failures: unknown[] = [];
+                for (const result of results)
+                  if (
+                    result.status === 'rejected' &&
+                    !failures.some((error) => Object.is(error, result.reason))
+                  )
+                    failures.push(result.reason);
+                if (failures.length > 1)
+                  throw new AggregateError(
+                    failures,
+                    'Native package cancellation and worker cleanup failed',
+                  );
+              }
               const failure = results.find((result) => result.status === 'rejected');
               if (failure?.status === 'rejected') throw failure.reason;
+              signal?.throwIfAborted();
               // Another client may have completed the same immutable package meanwhile.
-              if (await validate()) await rm(temporary, { recursive: true });
+              const alreadyInstalled = await validate();
+              signal?.throwIfAborted();
+              if (alreadyInstalled) await rm(temporary, { recursive: true });
               else {
                 await rm(target, { recursive: true, force: true });
                 await rename(temporary, target);
@@ -173,12 +219,8 @@ export async function installVerifiedBundle({
           );
         }
       }, release);
-    });
-  installations.set(target, installation);
-  try {
-    await installation;
-  } finally {
-    if (installations.get(target) === installation) installations.delete(target);
-  }
+    },
+    signal,
+  );
   return target;
 }

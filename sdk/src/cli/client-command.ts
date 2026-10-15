@@ -95,7 +95,7 @@ export function observeWatchEvents(
 
 export interface ClientCommandContext {
   /** A factory lets the runner own signals while native resources are prepared. */
-  client: QQClient | (() => Promise<QQClient>);
+  client: QQClient | ((signal: AbortSignal) => Promise<QQClient>);
   command: string;
   login: LoginRequest;
   autoReconnect: ClientOptions['autoReconnect'];
@@ -118,6 +118,7 @@ export interface ClientCommandContext {
 export async function runClientCommand(context: ClientCommandContext): Promise<void> {
   const { command, output, report, signals, setExitCode } = context;
   let client = typeof context.client === 'function' ? undefined : context.client;
+  const creation = new AbortController();
   let closed = false;
   let stopped = false;
   let shutdown: Promise<void> | undefined;
@@ -166,6 +167,7 @@ export async function runClientCommand(context: ClientCommandContext): Promise<v
     stopped = true;
     closed = true;
     setExitCode(130);
+    creation.abort();
     endWatch?.();
     void close()
       .catch(() => {})
@@ -175,7 +177,7 @@ export async function runClientCommand(context: ClientCommandContext): Promise<v
     signals.once('SIGINT', stop);
     signals.once('SIGTERM', stop);
     if (stopped) return;
-    if (typeof context.client === 'function') client = await context.client();
+    if (typeof context.client === 'function') client = await context.client(creation.signal);
     if (stopped || !client) return;
     if (command === 'prepare') {
       const nativeExports = client.nativeExports;

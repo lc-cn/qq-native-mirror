@@ -3,6 +3,7 @@ import { withCleanupFailure } from '../runtime/cleanup.ts';
 type NativeResponse = Pick<Response, 'ok' | 'status' | 'body'>;
 interface ResponseReadPolicy {
   maxBytes: number;
+  signal?: AbortSignal;
   errors: {
     http(status: number): string;
     empty(status: number): string;
@@ -42,6 +43,8 @@ export async function readNativeResponse(
   response: NativeResponse,
   policy: ResponseReadPolicy,
 ): Promise<Buffer> {
+  const signal = policy.signal;
+  if (signal?.aborted) await discardNativeResponse(response, { error: signal.reason });
   if (!response.ok) {
     await discardNativeResponse(response, {
       error: new Error(policy.errors.http(response.status)),
@@ -60,18 +63,28 @@ export async function readNativeResponse(
   const chunks: Buffer[] = [];
   let size = 0;
   let failure: Failure | undefined;
+  let cancellation: Promise<void> | undefined;
+  const cancel = (reason: unknown) =>
+    (cancellation ??= Promise.resolve().then(() => reader.cancel(reason)));
+  const aborted = () => {
+    void cancel(signal?.reason).catch(() => {});
+  };
+  signal?.addEventListener('abort', aborted, { once: true });
   try {
     while (true) {
+      signal?.throwIfAborted();
       const chunk = await reader.read();
+      signal?.throwIfAborted();
       if (chunk.done) break;
       size += chunk.value.byteLength;
       if (size > policy.maxBytes) throw new Error(policy.errors.tooLarge);
       chunks.push(Buffer.from(chunk.value));
     }
+    signal?.throwIfAborted();
   } catch (error) {
     failure = { error };
     try {
-      await reader.cancel(error);
+      await cancel(error);
     } catch (cleanup) {
       failure = retainFailure(failure, cleanup);
     }
@@ -81,6 +94,7 @@ export async function readNativeResponse(
   } catch (cleanup) {
     failure = retainFailure(failure, cleanup);
   }
+  signal?.removeEventListener('abort', aborted);
   if (failure) throw failure.error;
   return Buffer.concat(chunks);
 }

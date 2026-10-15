@@ -71,7 +71,7 @@ test('concurrent hydration preserves all files, zero bytes, independent inodes a
   try {
     const [a, b] = await Promise.all([f.run(), f.run()]);
     assert.equal(a, b);
-    assert.equal(f.locks(), 1);
+    assert.equal(f.locks(), 2);
     assert.deepEqual(await readFile(join(a, 'wrapper.node')), f.raw);
     assert.equal((await readFile(join(a, 'empty'))).length, 0);
     if (process.platform !== 'win32')

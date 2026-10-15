@@ -4,6 +4,24 @@ import test from 'node:test';
 import { dependencyViolation } from '../helpers/dependency-policy.ts';
 import { projectRoot, graph } from '../helpers/source-graph.ts';
 
+test('creation cancellation stays in the observer and two native installation owners', () => {
+  const abort = 'src/runtime/abort.ts';
+  const queue = 'src/storage/native-installation-queue.ts';
+  for (const from of ['src/client/create-client.ts', queue])
+    assert.equal(dependencyViolation({ from, to: abort, typeOnly: false }), undefined);
+  for (const from of [
+    'src/native/native-bundle-installer.ts',
+    'src/native/native-installed-storage.ts',
+  ])
+    assert.equal(dependencyViolation({ from, to: queue, typeOnly: false }), undefined);
+  for (const from of ['src/cli.ts', 'src/client/qq-client.ts', 'src/storage/new-installer.ts'])
+    for (const to of [abort, queue])
+      for (const typeOnly of [false, true]) assert.ok(dependencyViolation({ from, to, typeOnly }));
+  for (const from of [abort, queue])
+    for (const to of ['src/runtime/client-lifecycle.ts', 'src/native/native-package.ts', 'node:fs'])
+      for (const typeOnly of [false, true]) assert.ok(dependencyViolation({ from, to, typeOnly }));
+});
+
 test('packet lifetime stays behind the two reviewed protocol adapters', () => {
   const transport = 'src/runtime/packet-transport.ts';
   for (const from of [

@@ -1,4 +1,5 @@
 import { runWithCleanup } from '../runtime/cleanup.ts';
+import { runNativeInstallation } from '../storage/native-installation-queue.ts';
 import { createHash, randomUUID } from 'node:crypto';
 import { gunzipSync } from 'node:zlib';
 import { constants } from 'node:fs';
@@ -9,7 +10,6 @@ const sha = (b: Uint8Array) => createHash('sha256').update(b).digest('hex');
 const hash = /^[a-f0-9]{64}$/;
 const limit = 512 * 1024 * 1024,
   totalLimit = 2 * 1024 * 1024 * 1024;
-const pending = new Map<string, Promise<string>>();
 function check(ok: unknown, message: string): asserts ok {
   if (!ok) throw Error(message);
 }
@@ -34,10 +34,12 @@ function size(value: unknown) {
 export function installedStorageDirectoryParts(absolute: string, root: string): string[] {
   return absolute.slice(root.length).split(/[\\/]/).filter(Boolean);
 }
-async function directory(value: string, create = false) {
+async function directory(value: string, create = false, signal?: AbortSignal) {
+  signal?.throwIfAborted();
   const absolute = resolve(value);
   let current = parse(absolute).root;
   for (const part of installedStorageDirectoryParts(absolute, current)) {
+    signal?.throwIfAborted();
     current = join(current, part);
     if (create)
       try {
@@ -45,7 +47,9 @@ async function directory(value: string, create = false) {
       } catch (e) {
         if ((e as NodeJS.ErrnoException).code !== 'EEXIST') throw e;
       }
+    signal?.throwIfAborted();
     const stat = await lstat(current);
+    signal?.throwIfAborted();
     check(
       stat.isDirectory() && !stat.isSymbolicLink(),
       'Installed storage directory must not be a symlink',
@@ -53,15 +57,24 @@ async function directory(value: string, create = false) {
   }
   return absolute;
 }
-async function regular(root: string, name: string, max: number) {
+async function regular(root: string, name: string, max: number, signal?: AbortSignal) {
+  signal?.throwIfAborted();
   const full = join(root, path(name));
-  await directory(dirname(full));
+  await directory(dirname(full), false, signal);
   const stat = await lstat(full);
+  signal?.throwIfAborted();
   check(
     stat.isFile() && !stat.isSymbolicLink() && stat.size <= max,
     'Invalid installed storage regular file',
   );
-  const body = await readFile(full, { flag: constants.O_RDONLY | constants.O_NOFOLLOW });
+  const body = await readFile(full, {
+    flag: constants.O_RDONLY | constants.O_NOFOLLOW,
+    signal,
+  }).catch((error: unknown) => {
+    signal?.throwIfAborted();
+    throw error;
+  });
+  signal?.throwIfAborted();
   check(body.length === stat.size && body.length <= max, 'Installed storage file size changed');
   return body;
 }
@@ -71,8 +84,10 @@ export async function restoreInstalledNativeStorage(
   manifestBytes: Uint8Array,
   manifest: NativeManifest,
   cacheDir: string,
-  acquireLock: (target: string) => Promise<() => Promise<void>>,
+  acquireLock: (target: string, signal?: AbortSignal) => Promise<() => Promise<void>>,
+  signal?: AbortSignal,
 ): Promise<string> {
+  signal?.throwIfAborted();
   const storage = manifest.npmStorage;
   check(
     storage?.format === 'gzip-objects-v1' &&
@@ -130,81 +145,92 @@ export async function restoreInstalledNativeStorage(
       (!manifest.videoCodec || names.has(path(manifest.videoCodec))),
     'Installed storage entry missing',
   );
-  const root = await directory(packageRoot),
-    base = await directory(cacheDir, true),
+  const root = await directory(packageRoot, false, signal),
+    base = await directory(cacheDir, true, signal),
     target = join(base, 'npm-' + sha(manifestBytes));
   async function valid() {
     try {
-      await directory(target);
+      await directory(target, false, signal);
       for (const file of manifest.files) {
-        const body = await regular(target, file.path, size(file.size));
+        const body = await regular(target, file.path, size(file.size), signal);
         if (body.length !== file.size || sha(body) !== file.sha256) return false;
       }
+      signal?.throwIfAborted();
       return true;
     } catch {
+      signal?.throwIfAborted();
       return false;
     }
   }
-  const prior = pending.get(target);
-  if (prior) return prior;
-  const work = (async () => {
-    const release = await acquireLock(target);
-    return runWithCleanup(async () => {
-      // A symlink at the cache root is rejected, never recursively removed.
-      try {
-        const stat = await lstat(target);
-        check(
-          stat.isDirectory() && !stat.isSymbolicLink(),
-          'Unsafe installed storage cache target',
-        );
-      } catch (e) {
-        if ((e as NodeJS.ErrnoException).code !== 'ENOENT') throw e;
-      }
-      for (const object of objects.values()) {
-        const body = await regular(root, object.path, object.downloadSize);
-        check(
-          body.length === object.downloadSize && sha(body) === object.downloadSha256,
-          'Installed storage compressed checksum mismatch',
-        );
-      }
-      if (await valid()) return target;
-      const temporary = join(base, '.npm-' + randomUUID());
-      await mkdir(temporary);
-      return runWithCleanup(
-        async () => {
-          for (const object of objects.values()) {
-            const compressed = await regular(root, object.path, object.downloadSize);
-            check(
-              compressed.length === object.downloadSize &&
-                sha(compressed) === object.downloadSha256,
-              'Installed storage compressed checksum mismatch',
-            );
-            const raw = gunzipSync(compressed, { maxOutputLength: Math.max(1, object.size) });
-            check(
-              raw.length === object.size && sha(raw) === object.sha256,
-              'Installed storage raw checksum mismatch',
-            );
-            for (const file of manifest.files.filter((f) => f.sha256 === object.sha256)) {
-              const output = join(temporary, file.path);
-              await directory(dirname(output), true);
-              await writeFile(output, raw, { flag: 'wx' });
+  return runNativeInstallation(
+    target,
+    async () => {
+      const release = await acquireLock(target, signal);
+      return runWithCleanup(async () => {
+        signal?.throwIfAborted();
+        // A symlink at the cache root is rejected, never recursively removed.
+        try {
+          const stat = await lstat(target);
+          signal?.throwIfAborted();
+          check(
+            stat.isDirectory() && !stat.isSymbolicLink(),
+            'Unsafe installed storage cache target',
+          );
+        } catch (e) {
+          signal?.throwIfAborted();
+          if ((e as NodeJS.ErrnoException).code !== 'ENOENT') throw e;
+        }
+        for (const object of objects.values()) {
+          const body = await regular(root, object.path, object.downloadSize, signal);
+          check(
+            body.length === object.downloadSize && sha(body) === object.downloadSha256,
+            'Installed storage compressed checksum mismatch',
+          );
+        }
+        if (await valid()) return target;
+        const temporary = join(base, '.npm-' + randomUUID());
+        signal?.throwIfAborted();
+        await mkdir(temporary);
+        return runWithCleanup(
+          async () => {
+            signal?.throwIfAborted();
+            for (const object of objects.values()) {
+              const compressed = await regular(root, object.path, object.downloadSize, signal);
+              check(
+                compressed.length === object.downloadSize &&
+                  sha(compressed) === object.downloadSha256,
+                'Installed storage compressed checksum mismatch',
+              );
+              const raw = gunzipSync(compressed, { maxOutputLength: Math.max(1, object.size) });
+              check(
+                raw.length === object.size && sha(raw) === object.sha256,
+                'Installed storage raw checksum mismatch',
+              );
+              signal?.throwIfAborted();
+              for (const file of manifest.files.filter((f) => f.sha256 === object.sha256)) {
+                const output = join(temporary, file.path);
+                await directory(dirname(output), true, signal);
+                await writeFile(output, raw, { flag: 'wx', signal }).catch((error: unknown) => {
+                  signal?.throwIfAborted();
+                  throw error;
+                });
+                signal?.throwIfAborted();
+              }
             }
-          }
-          if (!(await valid())) {
-            await rm(target, { recursive: true, force: true });
-            await rename(temporary, target);
-          }
-          check(await valid(), 'Installed storage hydration failed');
-          return target;
-        },
-        () => rm(temporary, { recursive: true, force: true }),
-      );
-    }, release);
-  })();
-  pending.set(target, work);
-  try {
-    return await work;
-  } finally {
-    if (pending.get(target) === work) pending.delete(target);
-  }
+            if (!(await valid())) {
+              signal?.throwIfAborted();
+              await rm(target, { recursive: true, force: true });
+              signal?.throwIfAborted();
+              await rename(temporary, target);
+              signal?.throwIfAborted();
+            }
+            check(await valid(), 'Installed storage hydration failed');
+            return target;
+          },
+          () => rm(temporary, { recursive: true, force: true }),
+        );
+      }, release);
+    },
+    signal,
+  );
 }

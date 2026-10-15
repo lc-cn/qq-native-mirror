@@ -336,9 +336,21 @@ Shutdown releases subscriptions and closes the client.
 `prepare` checks resource loading and native initialization before account login.
 It prints the initialized client state, native export names and their count, then
 closes. It disables configured login and reconnection and rejects account flags
-such as `--uin`, `--method` and `--qr-file`. Ctrl+C suppresses a pending result and
-closes the client as soon as initialization returns; it does not cancel an ongoing
-resource download. This check does not verify account access or signing integrity.
+such as `--uin`, `--method` and `--qr-file`. Ctrl+C cancels supported downloads and
+waits, suppresses a pending result and waits for owned resources to close. It cannot
+synchronously interrupt native code or a filesystem operation already in progress.
+This check does not verify account access or signing integrity.
+
+Programs can pass a creation signal and call `creation.abort()` while awaiting it:
+
+```ts
+const creation = new AbortController();
+const client = await createClient(options, { signal: creation.signal });
+```
+
+Once creation succeeds, the signal no longer controls the returned client; use
+`client.close()` for its lifetime. The signal is separate from JSON configuration
+and native options.
 
 ## Native packages and mirrors
 

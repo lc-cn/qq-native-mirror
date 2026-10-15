@@ -204,3 +204,35 @@ test('signal converts a synchronous close throw into one cached cleanup failure'
   assert.ok(f.codes.length > 0 && f.codes.every((code) => code === 130));
   released(f);
 });
+
+test('runner aborts the independent creation signal and observes factory cancellation', async () => {
+  const f = fixture();
+  let captured!: AbortSignal;
+  f.context.client = (signal) => {
+    captured = signal;
+    assert.equal(signal.aborted, false);
+    return new Promise((_resolve, reject) => {
+      signal.addEventListener('abort', () => reject(signal.reason), { once: true });
+    });
+  };
+  const pending = runClientCommand(f.context);
+  const rejected = assert.rejects(pending, (error) => error === captured.reason);
+  f.signals.emit('SIGINT');
+  await rejected;
+  assert.equal(captured.aborted, true);
+  assert.deepEqual(f.outputs, []);
+  assert.ok(f.codes.length > 0 && f.codes.every((code) => code === 130));
+  released(f, 0);
+});
+
+test('runner aborts creation before closing a client already acquired', async () => {
+  const f = fixture();
+  f.context.client = async (signal) => {
+    signal.addEventListener('abort', () => f.calls.push('abort'), { once: true });
+    return f.client as unknown as QQClient;
+  };
+  f.context.output = () => f.signals.emit('SIGINT');
+  await runClientCommand(f.context);
+  assert.deepEqual(f.calls, ['abort', 'close']);
+  released(f);
+});

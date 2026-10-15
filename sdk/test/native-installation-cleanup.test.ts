@@ -54,6 +54,12 @@ export async function acquirePackageLock(){count.locks++;return async()=>{count.
       "'../contracts/native.ts'",
       JSON.stringify(pathToFileURL(join(sourceRoot, 'contracts/native.ts')).href),
     );
+    for (const module of ['runtime/abort.ts', 'storage/native-installation-queue.ts']) {
+      source = source.replace(
+        `'../${module}'`,
+        JSON.stringify(pathToFileURL(join(sourceRoot, module)).href),
+      );
+    }
     await mkdir(join(root, 'native'));
     await mkdir(join(root, 'runtime'));
     await writeFile(
@@ -218,14 +224,15 @@ test('bundle retains content cleanup, staging cleanup and release alongside prim
 });
 
 for (const kind of ['bundle', 'installed'] as const) {
-  test(`${kind} concurrent same-target installation keeps one successful acquisition`, async () => {
+  test(`${kind} concurrent same-target installation preserves a verified cache hit`, async () => {
     const f = await fixture(kind, {});
     try {
       const targets = await Promise.all([f.run(), f.run()]);
       assert.equal(targets[0], targets[1]);
       assert.deepEqual(await readFile(join(targets[0], 'wrapper.node')), f.raw);
-      assert.equal(f.hooks.counts().locks, 1);
-      assert.equal(f.hooks.counts().release, 1);
+      assert.equal(f.hooks.counts().locks, kind === 'bundle' ? 1 : 2);
+      assert.equal(f.hooks.counts().release, kind === 'bundle' ? 1 : 2);
+      assert.equal(f.hooks.counts().write, 1);
       assert.equal(f.calls(), kind === 'bundle' ? 1 : 0);
     } finally {
       await rm(f.root, { recursive: true, force: true });

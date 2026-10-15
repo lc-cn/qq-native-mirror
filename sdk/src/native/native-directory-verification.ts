@@ -12,10 +12,13 @@ export async function verifyNativeDirectory(
   base: string,
   manifest: NativeManifest,
   source: 'local' | 'installed',
+  signal?: AbortSignal,
 ): Promise<string | undefined> {
+  signal?.throwIfAborted();
   const label = source === 'local' ? 'Local' : 'Installed';
   const names = new Set<string>();
   for (const file of manifest.files) {
+    signal?.throwIfAborted();
     // Preserve the stricter legacy local codec-inventory preflight. Installed
     // object-storage validation remains with its own storage-format owner.
     if (
@@ -28,17 +31,24 @@ export async function verifyNativeDirectory(
       throw new Error(`Invalid ${source} native manifest`);
     names.add(relative);
     const path = join(base, relative);
-    if (
-      !(await realpath(path)).startsWith(base + sep) ||
-      !(await lstat(path)).isFile() ||
-      createHash('sha256')
-        .update(await readFile(path))
-        .digest('hex') !== file.sha256.toLowerCase()
-    )
+    signal?.throwIfAborted();
+    const canonical = await realpath(path);
+    signal?.throwIfAborted();
+    const stat = await lstat(path);
+    signal?.throwIfAborted();
+    if (!canonical.startsWith(base + sep) || !stat.isFile())
+      throw new Error(`${label} native file failed verification: ${relative}`);
+    const body = await readFile(path, { signal }).catch((error: unknown) => {
+      signal?.throwIfAborted();
+      throw error;
+    });
+    signal?.throwIfAborted();
+    if (createHash('sha256').update(body).digest('hex') !== file.sha256.toLowerCase())
       throw new Error(`${label} native file failed verification: ${relative}`);
   }
   if (!names.has(safeRelative(manifest.wrapper)))
     throw new Error(`${label} native wrapper is missing`);
   const codec = declaredVideoCodec(manifest, names);
+  signal?.throwIfAborted();
   return codec === undefined ? undefined : join(base, codec);
 }

@@ -7,6 +7,7 @@ import type { ClientOptions } from '../contracts/client.ts';
 import { normalizeLoginRequest } from '../native/login-request.ts';
 import { prepareNative } from '../native/native-package.ts';
 import { QQClient, completeClientInitialization } from './qq-client.ts';
+import { waitWithSignal } from '../runtime/abort.ts';
 
 /** This checks only the selected file, never native ABI compatibility. */
 async function registrationBridge(path: string, optional = false): Promise<string | undefined> {
@@ -31,12 +32,17 @@ async function registrationBridge(path: string, optional = false): Promise<strin
 }
 
 /** Resolve one native bundle and initialize its isolated worker before exposing a client. */
-export async function createClient(options: ClientOptions): Promise<QQClient> {
+export async function createClient(
+  options: ClientOptions,
+  { signal }: { signal?: AbortSignal } = {},
+): Promise<QQClient> {
+  signal?.throwIfAborted();
   if (!options.dataDir) throw new Error('dataDir is required');
   options = {
     ...options,
     login: options.login === undefined ? undefined : normalizeLoginRequest(options.login),
   };
+  signal?.throwIfAborted();
   if (
     options.timeoutMs !== undefined &&
     (!Number.isSafeInteger(options.timeoutMs) ||
@@ -66,10 +72,13 @@ export async function createClient(options: ClientOptions): Promise<QQClient> {
     // Explicit relative paths were loaded from the worker's data-directory cwd.
     bridgePath = await registrationBridge(resolve(dataDir, options.bridgePath));
   }
-  const native = await prepareNative(options);
+  signal?.throwIfAborted();
+  const native = await prepareNative(options, signal);
+  signal?.throwIfAborted();
   if (bridgePath === undefined && ['darwin', 'linux'].includes(process.platform)) {
     const adjacentBridge = join(dirname(native.wrapperPath), 'registration-bridge.node');
     bridgePath = await registrationBridge(adjacentBridge, true);
+    signal?.throwIfAborted();
     if (bridgePath === undefined)
       bridgePath = await registrationBridge(
         fileURLToPath(
@@ -80,11 +89,13 @@ export async function createClient(options: ClientOptions): Promise<QQClient> {
         ),
       );
   }
+  signal?.throwIfAborted();
   const workerUrl = new URL(
     import.meta.url.endsWith('.ts') ? '../worker.ts' : '../worker.js',
     import.meta.url,
   );
   await mkdir(dataDir, { recursive: true, mode: 0o700 });
+  signal?.throwIfAborted();
   const env = { ...process.env };
   delete env.ELECTRON_RUN_AS_NODE;
   const spawnWorker = () =>
@@ -115,13 +126,27 @@ export async function createClient(options: ClientOptions): Promise<QQClient> {
     { spawn: spawnWorker, payload },
     options.autoReconnect,
   );
+  let shutdown: Promise<void> | undefined;
+  const close = () =>
+    (shutdown ??= (async () => {
+      await client.close();
+    })());
+  const aborted = () => {
+    // Cancellation retires this unexposed client. The catch below awaits the
+    // same cleanup and retains any close failure alongside the abort reason.
+    void close().catch(() => {});
+  };
   try {
-    const result = await client.request<unknown>('init', payload);
+    signal?.addEventListener('abort', aborted, { once: true });
+    signal?.throwIfAborted();
+    const result = await waitWithSignal(client.request<unknown>('init', payload), signal);
+    signal?.throwIfAborted();
     completeClientInitialization(client, result, options.login !== undefined);
+    signal?.throwIfAborted();
     return client;
   } catch (error) {
     try {
-      await client.close();
+      await close();
     } catch (cleanupError) {
       // eslint-disable-next-line preserve-caught-error -- AggregateError retains both original and cleanup errors.
       throw new AggregateError(
@@ -130,5 +155,8 @@ export async function createClient(options: ClientOptions): Promise<QQClient> {
       );
     }
     throw error;
+  } finally {
+    // Once returned, the client has its own lifetime, independent of creation.
+    signal?.removeEventListener('abort', aborted);
   }
 }

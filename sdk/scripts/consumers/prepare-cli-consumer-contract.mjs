@@ -27,6 +27,7 @@ export async function verifyPrepareCli(entry) {
         login: { method: 'quick', uin: '123' },
         autoLogin: true,
         autoReconnect: { maxAttempts: 2, delayMs: 1 },
+        signal: 'not a cancellation interface',
       }),
     );
     await writeFile(
@@ -42,10 +43,16 @@ console.log=(line)=>{
   output(line);
   if(mode==='signal-after')process.emit('SIGINT');
 };
-export async function createClient(options){
-  record('create',{autoLogin:options.autoLogin,autoReconnect:options.autoReconnect,configuredLogin:options.login!==undefined});
+export async function createClient(options,{signal}){
+  record('create',{autoLogin:options.autoLogin,autoReconnect:options.autoReconnect,configuredLogin:options.login!==undefined,creationSignal:signal instanceof AbortSignal});
+  if(!(signal instanceof AbortSignal)||signal.aborted)throw Error('missing independent creation signal');
   if(options.autoLogin!==false||options.autoReconnect!==false||options.login!==undefined)throw Error('prepare retained account configuration');
   if(mode==='create-failure')throw Error('fixture create failed');
+  if(mode==='signal-abort'){
+    const waiting=new Promise((_resolve,reject)=>signal.addEventListener('abort',()=>{record('aborted');reject(signal.reason);},{once:true}));
+    process.emit('SIGINT');
+    await waiting;
+  }
   if(mode==='signal-before'||mode==='signal-reject'){
     process.emit('SIGINT');
     await new Promise(resolve=>setImmediate(resolve));
@@ -92,6 +99,7 @@ registerHooks({resolve(specifier,context,next){
       ['signal-before', 130, ['create', 'initialized', 'close'], false, undefined],
       ['signal-after', 130, ['create', 'initialized', 'output', 'close'], true, undefined],
       ['signal-reject', 130, ['create'], false, 'fixture late create failed'],
+      ['signal-abort', 130, ['create', 'aborted'], false, 'This operation was aborted'],
     ];
     for (const [mode, status, expectedEvents, hasOutput, error] of scenarios) {
       await writeFile(events, '');
@@ -122,7 +130,13 @@ registerHooks({resolve(specifier,context,next){
       );
       assert.deepEqual(
         rows[0],
-        { event: 'create', autoLogin: false, autoReconnect: false, configuredLogin: false },
+        {
+          event: 'create',
+          autoLogin: false,
+          autoReconnect: false,
+          configuredLogin: false,
+          creationSignal: true,
+        },
         mode,
       );
       if (hasOutput)

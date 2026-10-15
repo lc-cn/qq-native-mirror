@@ -6,6 +6,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { createHash } from 'node:crypto';
+import { verifyClientCancellation } from './client-cancellation-consumer-contract.mjs';
 
 /** @typedef {import('../../src/index.ts').QQClient} Client */
 /** @typedef {import('../../src/index.ts').ClientOptions} ClientOptions */
@@ -266,8 +267,15 @@ export async function verifyClientFactoryConsumer(installedRoot, { source = fals
       directory,
       explicit,
     );
+    const cancellationChecks = await verifyClientCancellation(
+      createClient,
+      QQClient,
+      directory,
+      explicit,
+    );
     return {
       ...sourceSelectionChecks,
+      ...cancellationChecks,
       clientFactoryInstalledContract: true,
       clientFactoryConfiguredLoginLifecycleContract: true,
       clientFactoryNativeExportsSnapshotContract: true,

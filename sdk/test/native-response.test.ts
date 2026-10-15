@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { getEventListeners } from 'node:events';
 import { discardNativeResponse, readNativeResponse } from '../src/native/native-response.ts';
 
 const policy = {
@@ -10,6 +11,73 @@ const policy = {
     tooLarge: 'Too large',
   },
 };
+
+test('caller cancellation interrupts a stalled body and awaits cancellation before release', async () => {
+  const controller = new AbortController();
+  const reason = new Error('body cancelled');
+  let release!: () => void;
+  let cancellationStarted!: () => void;
+  const started = new Promise<void>((resolve) => (cancellationStarted = resolve));
+  const stream = observedStream({
+    cancel(value) {
+      assert.equal(value, reason);
+      cancellationStarted();
+      return new Promise<void>((resolve) => (release = resolve));
+    },
+  });
+  const reading = readNativeResponse(new Response(stream.body), {
+    ...policy,
+    signal: controller.signal,
+  });
+  const rejected = assert.rejects(reading, (error) => error === reason);
+  controller.abort(reason);
+  await started;
+  assert.deepEqual(stream.counts(), { cancellations: 1, releases: 0 });
+  release();
+  await rejected;
+  assert.deepEqual(stream.counts(), { cancellations: 1, releases: 1 });
+  assert.equal(getEventListeners(controller.signal, 'abort').length, 0);
+});
+
+test('cancellation retains a distinct body cleanup failure without a second cancellation', async () => {
+  const controller = new AbortController();
+  const reason = new Error('cancelled');
+  const cleanup = new Error('cancel cleanup failed');
+  const stream = observedStream({
+    cancel() {
+      throw cleanup;
+    },
+  });
+  const reading = readNativeResponse(new Response(stream.body), {
+    ...policy,
+    signal: controller.signal,
+  });
+  const rejected = assert.rejects(reading, (error) => {
+    assert.ok(error instanceof AggregateError);
+    assert.deepEqual(error.errors, [reason, cleanup]);
+    return true;
+  });
+  controller.abort(reason);
+  await rejected;
+  assert.deepEqual(stream.counts(), { cancellations: 1, releases: 1 });
+  assert.equal(getEventListeners(controller.signal, 'abort').length, 0);
+});
+
+test('successful body removes cancellation listener and ignores a later abort', async () => {
+  const controller = new AbortController();
+  const stream = observedStream({
+    start(value) {
+      value.close();
+    },
+  });
+  assert.deepEqual(
+    await readNativeResponse(new Response(stream.body), { ...policy, signal: controller.signal }),
+    Buffer.alloc(0),
+  );
+  assert.equal(getEventListeners(controller.signal, 'abort').length, 0);
+  controller.abort();
+  assert.deepEqual(stream.counts(), { cancellations: 0, releases: 1 });
+});
 
 function observedStream(source: UnderlyingDefaultSource<Uint8Array>, afterRelease?: () => void) {
   const body = new ReadableStream<Uint8Array>(source);

@@ -78,7 +78,14 @@ export async function verifyPublicContracts(packageRoot, compilerRoot, typeRoots
     consumer,
     `
 import type { ${expected.join(', ')} } from 'qq-native-client';
-import { segment } from 'qq-native-client';
+import { segment, createClient } from 'qq-native-client';
+declare const creationOptions: ClientOptions;
+const creating: Promise<import('qq-native-client').QQClient> = createClient(creationOptions, { signal: new AbortController().signal });
+void creating;
+// @ts-expect-error Cancellation belongs to the separate creation scope, not native options.
+createClient({ dataDir: '/unused', signal: new AbortController().signal });
+// @ts-expect-error A controller is not its AbortSignal.
+createClient(creationOptions, { signal: new AbortController() });
 export type CompatibilityTypes = [${expected.join(', ')}];
 declare const peer: Peer;
 if (peer.type === 'group') {

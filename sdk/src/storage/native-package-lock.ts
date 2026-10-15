@@ -1,6 +1,7 @@
 import { runWithCleanup } from '../runtime/cleanup.ts';
 import { randomUUID } from 'node:crypto';
 import { mkdir, rm } from 'node:fs/promises';
+import { setTimeout } from 'node:timers/promises';
 import {
   publishProcessLock,
   readProcessLock,
@@ -9,11 +10,16 @@ import {
 } from './process-lock.ts';
 
 // Bounded synchronous owner-file publication is shared with the account lock.
-export async function acquirePackageLock(target: string): Promise<() => Promise<void>> {
+export async function acquirePackageLock(
+  target: string,
+  signal?: AbortSignal,
+): Promise<() => Promise<void>> {
+  signal?.throwIfAborted();
   const lock = `${target}.lock`;
   const owner = `${process.pid}-${randomUUID()}`;
   const started = Date.now();
   for (;;) {
+    signal?.throwIfAborted();
     try {
       publishProcessLock(lock, owner);
       return async () => {
@@ -41,7 +47,10 @@ export async function acquirePackageLock(target: string): Promise<() => Promise<
       try {
         await mkdir(claim);
         await runWithCleanup(
-          () => removeOwnedProcessLock(lock, existing),
+          () => {
+            signal?.throwIfAborted();
+            removeOwnedProcessLock(lock, existing);
+          },
           () => rm(claim, { recursive: true, force: true }),
         );
         continue;
@@ -52,6 +61,11 @@ export async function acquirePackageLock(target: string): Promise<() => Promise<
     }
     if (Date.now() - started > 180_000)
       throw new Error(`Timed out waiting for native package lock: ${lock}`);
-    await new Promise((resolve) => setTimeout(resolve, 25));
+    try {
+      await setTimeout(25, undefined, { signal });
+    } catch (error) {
+      signal?.throwIfAborted();
+      throw error;
+    }
   }
 }

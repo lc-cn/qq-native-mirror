@@ -79,7 +79,7 @@ export const externalRuntimeDependencies: Readonly<Record<string, readonly strin
   'src/runtime/account-session-lifecycle.ts': ['node:fs/promises', 'node:os', 'node:path'],
   'src/runtime/kernel-environment.ts': ['node:fs/promises', 'node:os', 'node:path'],
   'src/storage/data-directory-lock.ts': ['node:crypto', 'node:fs', 'node:path'],
-  'src/storage/native-package-lock.ts': ['node:crypto', 'node:fs/promises'],
+  'src/storage/native-package-lock.ts': ['node:crypto', 'node:fs/promises', 'node:timers/promises'],
   'src/storage/process-lock.ts': ['node:crypto', 'node:fs'],
   'src/worker/bootstrap.ts': ['node:fs/promises', 'node:os'],
 };

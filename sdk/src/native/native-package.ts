@@ -45,7 +45,9 @@ function verifyNodeRuntime(manifest: NativeManifest): void {
 async function installedNative(
   options: ClientOptions,
   selected?: NativeManifest,
+  signal?: AbortSignal,
 ): Promise<PreparedNative | undefined> {
+  signal?.throwIfAborted();
   const name = `qq-native-client-${process.platform}-${process.arch}`;
   let entry: string;
   try {
@@ -54,7 +56,10 @@ async function installedNative(
     if ((error as NodeJS.ErrnoException).code === 'MODULE_NOT_FOUND') return;
     throw error;
   }
-  const manifestBytes = await readFile(entry);
+  const manifestBytes = await readFile(entry, { signal }).catch((error: unknown) => {
+    signal?.throwIfAborted();
+    throw error;
+  });
   const manifest = JSON.parse(manifestBytes.toString('utf8')) as NativeManifest;
   if (
     manifest.schemaVersion !== 1 ||
@@ -82,15 +87,18 @@ async function installedNative(
           manifest,
           resolve(options.cacheDir ?? join(homedir(), '.cache/qq-native-client')),
           acquirePackageLock,
+          signal,
         );
-  const codec = await verifyNativeDirectory(base, manifest, 'installed');
+  const codec = await verifyNativeDirectory(base, manifest, 'installed', signal);
+  signal?.throwIfAborted();
   return {
     wrapperPath: join(base, manifest.wrapper),
     version: manifest.version,
     ...(codec === undefined ? {} : { videoCodecPath: codec }),
   };
 }
-async function download(url: string, maxBytes: number): Promise<Buffer> {
+async function download(url: string, maxBytes: number, signal?: AbortSignal): Promise<Buffer> {
+  signal?.throwIfAborted();
   const parsed = new URL(url);
   if (
     parsed.protocol !== 'https:' &&
@@ -101,7 +109,18 @@ async function download(url: string, maxBytes: number): Promise<Buffer> {
   let response: Response | undefined;
   let current = parsed;
   for (let hops = 0; hops <= 5; hops++) {
-    response = await fetch(current, { signal: AbortSignal.timeout(600_000), redirect: 'manual' });
+    signal?.throwIfAborted();
+    const deadline = AbortSignal.timeout(600_000);
+    try {
+      response = await fetch(current, {
+        signal: signal ? AbortSignal.any([signal, deadline]) : deadline,
+        redirect: 'manual',
+      });
+    } catch (error) {
+      signal?.throwIfAborted();
+      throw error;
+    }
+    if (signal?.aborted) await discardNativeResponse(response, { error: signal.reason });
     if (![301, 302, 303, 307, 308].includes(response.status)) break;
     let next: URL;
     try {
@@ -131,6 +150,7 @@ async function download(url: string, maxBytes: number): Promise<Buffer> {
   if (!response) throw new Error('Native download failed');
   return readNativeResponse(response, {
     maxBytes,
+    signal,
     errors: {
       http: (status) => `Download failed: HTTP ${status}`,
       empty: (status) => `Download failed: HTTP ${status}`,
@@ -138,17 +158,23 @@ async function download(url: string, maxBytes: number): Promise<Buffer> {
     },
   });
 }
-export async function prepareNative(options: ClientOptions): Promise<PreparedNative> {
+export async function prepareNative(
+  options: ClientOptions,
+  signal?: AbortSignal,
+): Promise<PreparedNative> {
+  signal?.throwIfAborted();
   validateNativeSourceOptions(options);
   const mirrors = validateDownloadMirrors(options.downloadMirrors);
   if (options.wrapperPath) {
     const wrapperPath = options.wrapperPath;
-    const adjacent = await readFile(join(dirname(wrapperPath), 'manifest.json'), 'utf8').catch(
-      (error) => {
-        if ((error as NodeJS.ErrnoException).code === 'ENOENT' && options.version) return undefined;
-        throw error;
-      },
-    );
+    const adjacent = await readFile(join(dirname(wrapperPath), 'manifest.json'), {
+      encoding: 'utf8',
+      signal,
+    }).catch((error) => {
+      signal?.throwIfAborted();
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT' && options.version) return undefined;
+      throw error;
+    });
     const local = adjacent === undefined ? undefined : (JSON.parse(adjacent) as NativeManifest);
     if (local !== undefined) verifyNodeRuntime(local);
     if (!options.version) {
@@ -184,10 +210,12 @@ export async function prepareNative(options: ClientOptions): Promise<PreparedNat
         )
       )
         throw new Error('Local manifest version does not match requested version');
-      codec = await verifyNativeDirectory(base, local, 'local');
+      codec = await verifyNativeDirectory(base, local, 'local', signal);
     }
+    const resolvedWrapper = await realpath(wrapperPath);
+    signal?.throwIfAborted();
     return {
-      wrapperPath: await realpath(wrapperPath),
+      wrapperPath: resolvedWrapper,
       version: options.version,
       ...(codec === undefined ? {} : { videoCodecPath: codec }),
     };
@@ -195,10 +223,10 @@ export async function prepareNative(options: ClientOptions): Promise<PreparedNat
   const automaticLatest = !options.version && !options.manifestUrl && !options.catalogUrl;
   // A fixed version can resolve locally; the default must establish catalog latest first.
   if (options.version && !options.manifestUrl && !options.catalogUrl) {
-    const installed = await installedNative(options);
+    const installed = await installedNative(options, undefined, signal);
     if (installed) return installed;
   }
-  if (!options.manifestUrl) options = await resolveNativeCatalog(options);
+  if (!options.manifestUrl) options = await resolveNativeCatalog(options, signal);
   if (
     !options.manifestUrl ||
     !options.manifestSha256 ||
@@ -206,7 +234,8 @@ export async function prepareNative(options: ClientOptions): Promise<PreparedNat
   ) {
     throw new Error('Provide wrapperPath and version, or manifestUrl and trusted manifestSha256');
   }
-  const body = await download(options.manifestUrl, 1024 * 1024);
+  const body = await download(options.manifestUrl, 1024 * 1024, signal);
+  signal?.throwIfAborted();
   if (digest(body) !== options.manifestSha256.toLowerCase())
     throw new Error('Native manifest SHA-256 mismatch');
   const manifest = JSON.parse(body.toString('utf8')) as NativeManifest;
@@ -236,7 +265,11 @@ export async function prepareNative(options: ClientOptions): Promise<PreparedNat
   }
   const codec = validateRemoteInventory(manifest);
   if (automaticLatest) {
-    const installed = await installedNative({ ...options, version: manifest.version }, manifest);
+    const installed = await installedNative(
+      { ...options, version: manifest.version },
+      manifest,
+      signal,
+    );
     if (installed) return installed;
   }
   const target = await installVerifiedBundle({
@@ -245,8 +278,10 @@ export async function prepareNative(options: ClientOptions): Promise<PreparedNat
     manifestUrl: options.manifestUrl,
     cacheDir: options.cacheDir,
     mirrors,
-    download,
+    signal,
+    download: (url, maxBytes) => download(url, maxBytes, signal),
   });
+  signal?.throwIfAborted();
   return {
     wrapperPath: join(target, manifest.wrapper),
     version: manifest.version,

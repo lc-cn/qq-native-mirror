@@ -152,7 +152,7 @@ async function main() {
     ...(command === 'prepare' ? { autoLogin: false, autoReconnect: false } : {}),
   };
   await runClientCommand({
-    client: () => createClient(clientOptions),
+    client: (signal) => createClient(clientOptions, { signal }),
     command,
     login,
     autoReconnect: options.autoReconnect,

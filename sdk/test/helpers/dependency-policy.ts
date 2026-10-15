@@ -279,6 +279,22 @@ export const crossFeatureDependencies = [
 ] as const;
 
 export function dependencyViolation({ from, to, typeOnly }: SourceDependency): string | undefined {
+  if (from === 'src/runtime/abort.ts')
+    return 'Abort waiting observes an existing promise; it cannot acquire resources or runtime owners.';
+  if (to === 'src/runtime/abort.ts')
+    return !typeOnly &&
+      ['src/client/create-client.ts', 'src/storage/native-installation-queue.ts'].includes(from)
+      ? undefined
+      : 'Only creation and the native installation queue use abortable observation.';
+  if (from === 'src/storage/native-installation-queue.ts')
+    return 'The installation queue only orders callers through the reviewed abort-wait primitive.';
+  if (to === 'src/storage/native-installation-queue.ts')
+    return !typeOnly &&
+      ['src/native/native-bundle-installer.ts', 'src/native/native-installed-storage.ts'].includes(
+        from,
+      )
+      ? undefined
+      : 'Only the two native installers acquire the cache installation queue.';
   if (from === 'src/runtime/packet-transport.ts')
     return 'Packet transport owns byte request lifetime only; it cannot acquire domain, native loader or account implementations.';
   if (to === 'src/runtime/packet-transport.ts')

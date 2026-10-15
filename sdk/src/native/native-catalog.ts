@@ -1,6 +1,6 @@
 import type { ClientOptions } from '../contracts/client.ts';
 import type { QQVersion } from '../contracts/native.ts';
-import { readNativeResponse } from './native-response.ts';
+import { discardNativeResponse, readNativeResponse } from './native-response.ts';
 export const DEFAULT_NATIVE_CATALOG =
   'https://raw.githubusercontent.com/lc-cn/qq-native-mirror/main/catalog.json';
 export interface NativeCatalog {
@@ -80,12 +80,28 @@ export function selectNativePackage(
     throw new Error('Ambiguous native catalog version');
   return selected;
 }
-export async function resolveNativeCatalog(options: ClientOptions): Promise<ClientOptions> {
+export async function resolveNativeCatalog(
+  options: ClientOptions,
+  signal?: AbortSignal,
+): Promise<ClientOptions> {
+  signal?.throwIfAborted();
   const url = httpsUrl(options.catalogUrl ?? DEFAULT_NATIVE_CATALOG);
-  const response = await fetch(url, { redirect: 'error', signal: AbortSignal.timeout(30000) });
+  const deadline = AbortSignal.timeout(30000);
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      redirect: 'error',
+      signal: signal ? AbortSignal.any([signal, deadline]) : deadline,
+    });
+  } catch (error) {
+    signal?.throwIfAborted();
+    throw error;
+  }
+  if (signal?.aborted) await discardNativeResponse(response, { error: signal.reason });
   const body = (
     await readNativeResponse(response, {
       maxBytes: 1024 * 1024,
+      signal,
       errors: {
         http: (status) => `Native catalog unavailable: HTTP ${status}`,
         empty: () => 'Native catalog response is empty',
@@ -93,6 +109,7 @@ export async function resolveNativeCatalog(options: ClientOptions): Promise<Clie
       },
     })
   ).toString('utf8');
+  signal?.throwIfAborted();
   const selected = selectNativePackage(
     JSON.parse(body),
     process.platform,
