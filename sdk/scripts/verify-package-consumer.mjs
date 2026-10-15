@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { execFileSync, spawnSync } from 'node:child_process';
+import { npm } from './npm-cli.mjs';
 import { verifyForwardConsumer } from './consumers/forward-consumer-contract.mjs';
 import { verifyRecallConsumer } from './consumers/recall-consumer-contract.mjs';
 import { verifyMentionConsumer } from './consumers/mention-consumer-contract.mjs';
@@ -57,9 +58,12 @@ const run = (command, args, cwd = destination) =>
     encoding: 'utf8',
     env: { ...process.env },
   });
-run('npm', ['run', 'build'], root);
+/** Run the selected Node/npm pair without a shell or Windows command shim. */
+/** @param {string[]} args @param {string} [cwd] */
+const runNpm = (args, cwd = destination) => run(npm[0], [...npm[1], ...args], cwd);
+runNpm(['run', 'build'], root);
 const packed = JSON.parse(
-  run('npm', ['pack', '--ignore-scripts', '--json', '--pack-destination', destination], root),
+  runNpm(['pack', '--ignore-scripts', '--json', '--pack-destination', destination], root),
 )[0];
 /** @type {string[]} */
 const files = packed.files.map((/** @type {{path:string}} */ file) => file.path);
@@ -101,7 +105,7 @@ const silkVersion = lock.packages?.['node_modules/silk-wasm']?.version;
 if (silkVersion !== '3.7.1' || installedSilk.version !== silkVersion)
   throw new Error('Installed SILK dependency does not match the pinned lock version');
 const silkPacked = JSON.parse(
-  run('npm', [
+  runNpm([
     'pack',
     lock.packages['node_modules/silk-wasm'].resolved,
     '--offline',
@@ -117,7 +121,7 @@ if (
   silkPacked.integrity !== lock.packages['node_modules/silk-wasm'].integrity
 )
   throw new Error('Offline SILK tarball does not match the pinned lock integrity');
-run('npm', [
+runNpm([
   'install',
   '--offline',
   '--ignore-scripts',

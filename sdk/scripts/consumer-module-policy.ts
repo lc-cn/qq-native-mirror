@@ -61,6 +61,7 @@ export function consumerModulePolicy(repositoryRoot: string): ConsumerModuleRefe
       `${root}ci/verify-consumer.mjs`,
       `${root}ci/current-source-mirror.mjs`,
       `${root}sdk/scripts/verify-package-consumer.mjs`,
+      `${root}sdk/scripts/npm-cli.mjs`,
       `${root}ci/npm.mjs`,
       `${root}ci/consumer-resources.mjs`,
       `${root}version-ci/main-artifact.mjs`,

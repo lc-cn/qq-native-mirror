@@ -3,7 +3,7 @@ import test from 'node:test';
 import { mkdtempSync, readdirSync, rmSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   linuxVideoDockerArgs,
@@ -12,16 +12,17 @@ import {
 } from './linux-video-baseline.mjs';
 
 test('build permits pinned downloads while all later stages share an offline read-only baseline', () => {
+  const root = resolve(tmpdir(), 'repo with spaces');
   for (const arch of ['x64', 'arm64']) {
-    const build = linuxVideoDockerArgs('build', arch, '/tmp/repo with spaces', 1001, 1001);
+    const build = linuxVideoDockerArgs('build', arch, root, 1001, 1001);
     assert.ok(build.includes(linuxVideoImage));
     assert.ok(!build.includes('--network=none'));
     for (const stage of ['verify', 'relink', 'verify-relinked', 'dependencies']) {
-      const args = linuxVideoDockerArgs(stage, arch, '/tmp/repo with spaces', 1001, 1001);
+      const args = linuxVideoDockerArgs(stage, arch, root, 1001, 1001);
       assert.ok(args.includes('--network=none'));
-      assert.ok(args.includes('type=bind,src=/tmp/repo with spaces,dst=/workspace,readonly'));
+      assert.ok(args.includes(`type=bind,src=${root},dst=/workspace,readonly`));
       assert.ok(
-        args.includes('type=bind,src=/tmp/repo with spaces/out/video,dst=/workspace/out/video'),
+        args.includes(`type=bind,src=${resolve(root, 'out/video')},dst=/workspace/out/video`),
       );
       assert.deepEqual(args.slice(-5), [
         'node',

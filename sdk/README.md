@@ -366,6 +366,9 @@ npm run check
 
 The gate runs formatting, zero-warning lint, source/test type checking,
 deterministic regressions, a clean build and a real packed/installed consumer.
-Controlled tests do not log into accounts. Local bridge builds require a platform
-compiler and Node headers; Windows CI builds against its pinned runtime.
-Published consumers use prebuilt packages without a compiler.
+Controlled tests do not log into accounts. On macOS/Linux, the local build
+compiles the registration bridge and requires a compiler and Node headers. On
+Windows, it compiles TypeScript and uses the version-bound adapter supplied by
+the verified native bundle; the adapter itself is built separately in CI against
+its pinned Node runtime. Published consumers use prebuilt packages without a
+compiler.

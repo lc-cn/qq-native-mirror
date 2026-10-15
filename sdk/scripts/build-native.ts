@@ -3,6 +3,13 @@ import { existsSync, mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+// Windows uses the version-bound internal-ABI adapter from its verified native
+// bundle. It must not attempt to compile the Unix registration bridge.
+if (process.platform === 'win32') {
+  console.log('Windows registration adapter is supplied by the verified native bundle.');
+  process.exit(0);
+}
+
 if (!['darwin', 'linux'].includes(process.platform)) {
   throw new Error(
     `Native registration bridge currently supports macOS and Linux; received ${process.platform}`,
