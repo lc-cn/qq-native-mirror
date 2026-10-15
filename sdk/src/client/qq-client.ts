@@ -408,6 +408,21 @@ export class QQClient extends EventEmitter<ClientEvents> {
       captureContactOperation('getUserProfile', { userId }).payload,
     );
   }
+  /** Explicitly read one native UID. Missing or mismatched profile data rejects;
+   * this does not assert that an unavailable account does not exist.
+   */
+  async getUserProfileByUid(uid: string): Promise<UserProfile> {
+    const context = this.#contactContext();
+    let captured;
+    try {
+      captured = captureContactOperation('getUserProfileByUid', { uid }).payload;
+    } finally {
+      context.assertActive();
+    }
+    const profile = await context.invoke('getUserProfileByUid', captured);
+    context.assertActive();
+    return profile;
+  }
   async setFriendRemark(userId: string, remark: string): Promise<void> {
     return this.#operation(
       'setFriendRemark',

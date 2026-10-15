@@ -178,5 +178,58 @@
     "Submission acknowledgement does not prove remote membership.",
     "No native addon, account, request approval or signing authenticity was verified by this source audit."
   ],
-  "localSourceAuditReceiptSha256": "dff1f053f664158aa07cd6cc869636123385c6c0d07b544d1e8761a777fd4789"
+  "localSourceAuditReceiptSha256": "dff1f053f664158aa07cd6cc869636123385c6c0d07b544d1e8761a777fd4789",
+  "explicitProfileQuery": {
+    "method": "getUserProfileByUid(uid): Promise<UserProfile>",
+    "upstreamCommit": "26d7533e0f5800fdff865ab2f2ad7692917e1076",
+    "nativeCall": "Profile.getCoreAndBaseInfo('nodeStore', [uid])",
+    "sources": [
+      {
+        "path": "packages/napcat-core/apis/user.ts",
+        "gitBlob": "59fb780fe2bbe736124f4c90c10841c08c9a0ad7",
+        "sha256": "7d1475f0c4ab1a574b435114ee379e758f6c9f4e8423efe5b0540b882280ebaf",
+        "bytes": 9160,
+        "reviewedLinePairs": [
+          16,
+          22
+        ],
+        "url": "https://github.com/NapNeko/NapCatQQ/blob/26d7533e0f5800fdff865ab2f2ad7692917e1076/packages/napcat-core/apis/user.ts"
+      },
+      {
+        "path": "packages/napcat-core/types/user.ts",
+        "gitBlob": "669f23389834cd7a2fa05743bd8726423bacc6df",
+        "sha256": "b9284193422f4ff1e9eb00fcf21078f1bdc0251e300bce56eec72388160dcd04",
+        "bytes": 7125,
+        "reviewedLinePairs": [
+          36,
+          40,
+          208,
+          213
+        ],
+        "url": "https://github.com/NapNeko/NapCatQQ/blob/26d7533e0f5800fdff865ab2f2ad7692917e1076/packages/napcat-core/types/user.ts"
+      },
+      {
+        "path": "packages/napcat-core/services/NodeIKernelProfileService.ts",
+        "gitBlob": "5ed307970b4b5e3a36ce4027568b3446194b7df2",
+        "sha256": "9df6304da4f892c6aea86adb0ea4a49f74c9dee422ac0fb92e908f74c24aaeb8",
+        "bytes": 3241,
+        "reviewedLinePairs": [
+          16,
+          16
+        ],
+        "url": "https://github.com/NapNeko/NapCatQQ/blob/26d7533e0f5800fdff865ab2f2ad7692917e1076/packages/napcat-core/services/NodeIKernelProfileService.ts"
+      }
+    ],
+    "scope": "Explicit caller-selected lookup through the existing Profile port. No automatic participant enrichment, identity-conversion fallback or directory cache update.",
+    "identityChecks": [
+      "Exact requested UID Map entry",
+      "Matching coreInfo.uid",
+      "Positive decimal coreInfo.uin preserved as a string"
+    ],
+    "limits": [
+      "Missing native store data is an error, not proof of account nonexistence.",
+      "Uncached stranger coverage, freshness and six-platform account execution remain unverified.",
+      "The earlier native Group listener roles and zero-lookup projection policy remain unchanged."
+    ]
+  }
 }

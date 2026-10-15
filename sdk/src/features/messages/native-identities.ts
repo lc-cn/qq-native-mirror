@@ -1,11 +1,8 @@
 /** Exact native UixConvert maps; no profile/group fallback or retry. */
+export { nativeUid } from '../../validation/identifiers.ts';
+
 export function positiveDecimal(value: unknown): value is string {
   return typeof value === 'string' && /^\d+$/.test(value) && /[1-9]/.test(value);
-}
-export function nativeUid(value: unknown): value is string {
-  return (
-    typeof value === 'string' && !!value.trim() && value.trim() === value && !value.includes('*')
-  );
 }
 export async function resolveNativeUins(
   requested: readonly string[],

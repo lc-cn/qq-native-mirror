@@ -255,6 +255,21 @@ The actual CLI runner prints `null` for a successful missing-member query, prese
 read errors without a success record, and closes once. These are controlled SDK
 and installed-package checks, not new native-account or remote CI evidence.
 
+Candidate `7c8361ca374b53ff2325366edfdaeafda6394fb8` subsequently passed all four
+authorized workflows: SDK quality, six default mirror hosts, six Linux
+version/catalog cases and six native npm package builds with installed consumers.
+The [artifact audit](evidence/sdk-ci-7c8361c.json) verifies all twelve mirror main
+archives, their SHA-256/SHA-512 and source/run bindings. Their 446 common files
+are identical. The six default hosts and Linux version cases report successful
+preparation/close, cold downloads and zero native-payload warm requests. The
+separate native package audit verified the 836,004-byte aggregate main and six
+manifest-bound consumer receipts using 1,376,140 bounded range bytes. It confirms
+platform-selected installation and the installed member/refresh/CLI contracts;
+the publish job was skipped. Auxiliary tarball hashes remain receipt declarations,
+and no account operation, group-avatar effect or signing authenticity is proved.
+This exact remote candidate includes Linux ARM64 avatar admission and SSO refusal,
+but excludes the later participant and UID-profile additions below.
+
 The tenth iteration supplies the participant identity missing from group-request
 workflows. Pending joins and invitation approvals expose an optional applicant;
 invitations to the current account expose an optional inviter. Each contains an
@@ -276,3 +291,24 @@ types including `GroupRequestParticipant`. Transport and account boundaries rema
 controlled in these tests; no real request, account login or approval was attempted.
 This participant addition has local evidence only and is not part of the earlier
 `7c8361c` CI candidate.
+
+The next workflow step adds an explicit `getUserProfileByUid()` query and
+`profile-uid` CLI command. A request participant can be inspected through the
+existing Profile port before an application decides approval. The query uses one
+exact UID lookup, requires matching core identity and a positive decimal QQ-number
+string, and reuses the current profile DTO. Missing native store data remains an
+error; no conversion fallback, automatic request enrichment or cache mutation is
+introduced. The public query captures its online session and rejects a successful
+response if that session retires before delivery. The existing QQ-number profile
+entry and its identity-matching semantics are preserved.
+
+The complete local `npm run check` passed on 2026-10-15: 2,575 SDK tests, 88 tool
+tests, formatting, zero-warning lint, strict source/test/script types, clean build
+and the actual packed/installed consumer. The installed composition covers request
+identity, explicit UID queries and approval, exact Map-entry and account identity
+checks, original-session retirement and CLI cleanup. Independent review found no
+blocking issue and passed 27 focused profile, retirement and composition checks.
+These checks use controlled transports; they do not establish native-store coverage
+for strangers, profile freshness or real-account behavior. This UID-profile
+addition has local evidence only and is not part of the earlier `7c8361c` CI
+candidate.

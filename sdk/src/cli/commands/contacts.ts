@@ -43,6 +43,15 @@ export const contactsCommands = {
       return (client) => client.getUserProfile(input.userId);
     },
   },
+  'profile-uid': {
+    flags: ['config', 'uin', 'uid'],
+    prepare(flags) {
+      const input = captureContactOperation('getUserProfileByUid', {
+        uid: required(flags, 'uid'),
+      }).payload;
+      return (client) => client.getUserProfileByUid(input.uid);
+    },
+  },
   requests: {
     flags: ['config', 'uin'],
     prepare() {

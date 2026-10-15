@@ -70,6 +70,7 @@ export interface ServiceOperationContracts {
   listFriends: Operation<undefined, Friend[]>;
   listFriendCategories: Operation<undefined, FriendCategory[]>;
   getUserProfile: Operation<{ userId: string }, UserProfile>;
+  getUserProfileByUid: Operation<{ uid: string }, UserProfile>;
   setFriendRemark: Operation<{ userId: string; remark: string }, void>;
   deleteFriend: Operation<{ userId: string; options: Required<DeleteFriendOptions> }, void>;
   listFriendRequests: Operation<undefined, FriendRequest[]>;

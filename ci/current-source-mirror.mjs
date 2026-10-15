@@ -9,6 +9,7 @@ import { npm } from './npm.mjs';
 import { readMainArtifact } from '../version-ci/main-artifact.mjs';
 import { readSourceCatalog } from '../version-ci/build-main-contract.mjs';
 import { verifyMirrorConsumer } from '../sdk/scripts/consumers/mirror-consumer-contract.mjs';
+import { verifyUidProfileConsumer } from '../sdk/scripts/consumers/uid-profile-consumer-contract.mjs';
 
 const directory = await mkdtemp(join(tmpdir(), 'qq-current-main-installed-'));
 const output = resolve('out/current-source-mirror.json');
@@ -51,6 +52,7 @@ try {
     }
   }
   stage = 'installed-contracts';
+  const uidProfileChecks = await verifyUidProfileConsumer(installedRoot);
   const { createClient } = await /** @type {Promise<typeof import('../sdk/src/index.ts')>} */ (
     import(pathToFileURL(join(installedRoot, 'dist/index.js')).href)
   );
@@ -108,6 +110,7 @@ try {
     },
   });
   Object.assign(receipt, {
+    uidProfileChecks,
     success: true,
     installedMainOnly: true,
     symlinkCreationDenied: true,

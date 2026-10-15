@@ -183,6 +183,9 @@ with a native `uid` and optional `nickname`. A join or invitation awaiting
 administrator approval identifies the applicant; an invitation to this account
 identifies the inviter. UID is not a QQ account number. Missing identity stays
 absent and does not trigger a profile lookup. See the [request identity contract](docs/contacts-groups.md#group-requests).
+When the application needs an account number, explicitly call
+`client.getUserProfileByUid(participant.uid)` and read the returned `userId`.
+The query rejects when the native profile store cannot provide a matching profile.
 The legacy `friend-request` name remains a deprecated alias of `request.friend`;
 both receive the same event, so applications normally subscribe to one name.
 

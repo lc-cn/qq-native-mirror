@@ -877,8 +877,15 @@ changing accessors or mutation during the lookup cannot replace validated input.
 injected Profile port and the account wait/signal. It returns the canonical public
 `UserProfile`; the old `ContactProfile` name is a type reexport. It cannot resolve
 UIDs, mutate contacts or acquire another lifetime. Projection captures the requested
-Map entry and each core field once; the original `raw` carrier retains identity. Map lookup overrides retain
-their existing receiver and behavior. Retirement is checked before and after each
+Map entry and each core field once; the original `raw` carrier retains identity.
+The existing account-number query preserves Map lookup overrides and exact UIN
+matching. Explicit UID queries select the intrinsic Map entry and validate a
+positive UIN, since they have no independently resolved account number to match.
+Both routes share acquisition and projection. The UID route bypasses directory
+resolution and never updates its cache; the public facade binds each read to the
+initiating online session. Pure UID validation is shared through `validation/identifiers`,
+with the old message-domain export retained for compatibility.
+Retirement is checked before and after each
 read, including a thrown getter or Map lookup; the exact close reason wins and no
 subsequent native field is inspected. While active, thrown reads retain their
 original error identity. Both domains capture the completion status

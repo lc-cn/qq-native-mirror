@@ -180,14 +180,18 @@ export async function verifyActionPortConsumer(installedRoot) {
     const invokeOperation = (method, payload) => {
       if (
         contact &&
-        (method === 'setFriendRemark' || method === 'deleteFriend' || method === 'getUserProfile')
+        (method === 'setFriendRemark' ||
+          method === 'deleteFriend' ||
+          method === 'getUserProfile' ||
+          method === 'getUserProfileByUid')
       )
         return contact.invokeOperation(method, payload);
       if (
         group &&
         method !== 'setFriendRemark' &&
         method !== 'deleteFriend' &&
-        method !== 'getUserProfile'
+        method !== 'getUserProfile' &&
+        method !== 'getUserProfileByUid'
       )
         return group.invokeOperation(method, payload);
       throw Error('Fixture domain/operation mismatch');

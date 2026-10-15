@@ -371,9 +371,12 @@ export function dependencyViolation({ from, to, typeOnly }: SourceDependency): s
     'src/features/groups/group-operation-input.ts': 'src/contracts/groups.ts',
   };
   if (Object.hasOwn(domainInputContracts, from))
-    return typeOnly && to === domainInputContracts[from as keyof typeof domainInputContracts]
+    return (typeOnly && to === domainInputContracts[from as keyof typeof domainInputContracts]) ||
+      (from === 'src/features/contacts/contact-operation-input.ts' &&
+        !typeOnly &&
+        to === 'src/validation/identifiers.ts')
       ? undefined
-      : 'Domain input modules only reference their domain data contracts; execution and resource dependencies are forbidden.';
+      : 'Domain inputs use their data contracts and explicitly shared identifier rules; execution and resource dependencies are forbidden.';
   if (from === 'src/native-services.ts' && Object.hasOwn(domainInputContracts, to))
     return 'Domain input capture belongs to its domain owner; composition only routes payloads.';
   if (from === 'src/native-services.ts' && to === 'src/validation/identifiers.ts')

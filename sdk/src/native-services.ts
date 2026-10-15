@@ -558,6 +558,7 @@ export function createNativeServices(context: NativeServiceContext) {
           case 'handleFriendRequest':
             return friendRequests.invokeOperation(method, payload);
           case 'getUserProfile':
+          case 'getUserProfileByUid':
           case 'setFriendRemark':
           case 'deleteFriend':
             return contactOperations.invokeOperation(method, payload);

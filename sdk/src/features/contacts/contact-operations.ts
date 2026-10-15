@@ -74,6 +74,21 @@ export function createContactOperations(context: ContactOperationsContext) {
     payload: Record<string, unknown>,
   ): Promise<UserProfile | void> {
     alive();
+    if (method === 'getUserProfileByUid') {
+      let captured;
+      try {
+        captured = captureContactOperation(method, payload);
+      } finally {
+        alive();
+      }
+      const profile = await queryUserProfile(
+        { signal, awaitAlive, getProfileService },
+        undefined,
+        captured.payload.uid,
+      );
+      alive();
+      return profile;
+    }
     const captured = captureContactOperation(method, payload);
     alive();
     const id = captured.payload.userId;

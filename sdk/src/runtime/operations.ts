@@ -52,6 +52,7 @@ export const SERVICE_OPERATIONS = Object.freeze([
   'deleteGroupNotice',
   'downloadAttachment',
   'getUserProfile',
+  'getUserProfileByUid',
   'setFriendRemark',
   'deleteFriend',
   'listFriendRequests',

@@ -1,4 +1,10 @@
 /** Shared identifier input rules; native numeric bounds belong to each operation. */
+export function nativeUid(value: unknown): value is string {
+  return (
+    typeof value === 'string' && !!value.trim() && value.trim() === value && !value.includes('*')
+  );
+}
+
 export function sendUserId(value: unknown, allowAll = false): string {
   if (typeof value !== 'string' || !value || value.trim() !== value || value.includes('*'))
     throw new Error('Invalid send user identifier');

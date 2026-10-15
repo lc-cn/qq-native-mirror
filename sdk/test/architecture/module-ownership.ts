@@ -379,6 +379,17 @@ test('category completion has exact callers and cannot regain native or identity
 });
 
 test('management and request input owners stay pure while facade and CLI share their captures', () => {
+  for (const from of [
+    'src/features/contacts/contact-operation-input.ts',
+    'src/features/contacts/friend-request-input.ts',
+    'src/features/groups/group-request-input.ts',
+    'src/features/groups/group-operation-input.ts',
+  ])
+    assert.equal(
+      dependencyViolation({ from, to: 'src/validation/identifiers.ts', typeOnly: false }) ===
+        undefined,
+      from === 'src/features/contacts/contact-operation-input.ts',
+    );
   for (const [input, contract, command, operation] of [
     [
       'contacts/contact-operation-input.ts',

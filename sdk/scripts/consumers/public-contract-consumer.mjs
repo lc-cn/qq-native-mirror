@@ -189,6 +189,15 @@ const ownerUid: string = search.ownerUid;
 // @ts-expect-error Search snapshots do not invent a numeric owner account.
 search.ownerUserId;
 declare const client: import('qq-native-client').QQClient;
+const explicitUidProfile: Promise<UserProfile> = client.getUserProfileByUid(requestParticipant.uid);
+const numericAccountProfile: Promise<UserProfile> = client.getUserProfile('123');
+// @ts-expect-error Native UID queries require exact string identities.
+client.getUserProfileByUid(123);
+// @ts-expect-error UID profile results are required; missing profiles reject instead of returning void.
+const optionalUidProfile: Promise<undefined> = client.getUserProfileByUid('opaque-without-prefix');
+// @ts-expect-error An explicit UID profile query is not a group membership query.
+const uidProfileMember: Promise<GroupMember> = client.getUserProfileByUid('opaque-without-prefix');
+void [explicitUidProfile, numericAccountProfile];
 const friendContact: import('qq-native-client').FriendContact = client.pickFriend('123');
 const groupContact: import('qq-native-client').GroupContact = client.pickGroup('456');
 const memberContact: import('qq-native-client').GroupMemberContact = groupContact.pickMember('123');

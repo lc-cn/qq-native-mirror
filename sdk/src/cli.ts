@@ -48,6 +48,7 @@ const usage = `qq-native-client <command> [options]
   nickname --config FILE --name TEXT
   signature --config FILE --text TEXT   Empty text explicitly clears the signature
   profile --config FILE --target USER_ID
+  profile-uid --config FILE --uid UID [--uin UIN]
   requests --config FILE
   group-requests --config FILE [--doubt true|false] [--limit 20] [--before SEQUENCE]
   group-request --config FILE --group-id ID --sequence SEQUENCE --type 1|5|7 --accept true|false [--doubt true|false] [--reason TEXT]

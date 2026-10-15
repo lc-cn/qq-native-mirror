@@ -71,6 +71,39 @@ actual listener mapping and a differently shaped synthetic invitation producer
 that must not be used as a universal role rule. Source and controlled consumer
 checks do not establish request delivery or approval on a real account.
 
+### Look up a request participant explicitly
+
+```ts
+const participant = request.kind === 'invite' ? request.inviter : request.applicant;
+if (participant) {
+  const profile = await client.getUserProfileByUid(participant.uid);
+  console.log(profile.userId, profile.nickname);
+  // Your application can now decide whether to call the original request.approve().
+}
+```
+
+`getUserProfileByUid(uid): Promise<UserProfile>` shares the existing profile query
+and returns `{ userId, uid, nickname, remark, raw }`. It selects the exact UID in
+one native `Profile.getCoreAndBaseInfo('nodeStore', [uid])` response, verifies the
+profile's UID and a positive decimal account ID, and preserves the ID as a string,
+including leading zeros and values above JavaScript's safe integer range.
+
+This explicit operation accepts a nonblank UID without surrounding whitespace or
+`*`; it does not require a `u_` prefix or convert the selector. Passive notification
+text can contain values that are unsuitable for an operation. Invalid inputs fail
+before native acquisition. Missing or mismatched profiles reject; a missing store
+entry does not establish that the QQ account does not exist. The query makes no
+identity-conversion fallback, directory-cache update or automatic retry. Availability
+for uncached strangers and profile freshness still require native-account evidence.
+
+The call belongs to the current online session. Disconnect, account replacement or
+close prevents a queued successful result from escaping into a later session.
+`getUserProfile(userId)` keeps its existing QQ-number query contract. No lookup
+happens merely because a group request was delivered.
+
+CLI: `qq-native-client profile-uid --config ./qq.json --uid u_example`.
+The existing `profile --target USER_ID` command continues to accept a QQ number.
+
 ## Group avatars
 
 ```ts

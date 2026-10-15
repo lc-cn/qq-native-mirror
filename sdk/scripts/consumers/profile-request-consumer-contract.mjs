@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { ChildProcess, execFileSync } from 'node:child_process';
+import { verifyUidProfileConsumer } from './uid-profile-consumer-contract.mjs';
 
 /** An isolated Node process makes GC counts independent of the other package
  * checks. Bound growth, not an absolute VM-specific baseline. */
@@ -435,6 +436,7 @@ export async function verifyProfileRequestConsumer(installedRoot) {
   }
   verifyRequestWaitRetention(installedRoot);
   return {
+    ...(await verifyUidProfileConsumer(installedRoot)),
     selfProfileContract: true,
     profileRequestInstalledComposition: true,
     profileInputSnapshotContract: true,

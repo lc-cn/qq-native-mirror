@@ -31,7 +31,7 @@ function text(value: unknown, name: string): string {
 function projectProfile(
   signal: AbortSignal,
   profile: unknown,
-  id: string,
+  id: string | undefined,
   uid: string,
 ): UserProfile {
   if (!profile || typeof profile !== 'object' || capture(signal, () => Array.isArray(profile)))
@@ -48,7 +48,7 @@ function projectProfile(
     profileUid !== uid ||
     typeof uin !== 'string' ||
     !/^\d+$/.test(uin) ||
-    uin !== id
+    (id === undefined ? !/[1-9]/.test(uin) : uin !== id)
   )
     throw new Error('Native profile identity does not match requested user');
   const nickname = text(capture(signal, () => core.nick) ?? '', 'native nickname');
@@ -57,15 +57,16 @@ function projectProfile(
   return { userId: uin, uid: profileUid, nickname, remark, raw: profile };
 }
 
-/** Read one already-resolved contact through the pinned Profile port. The caller
- * owns input capture and UID resolution; this stateless module owns acquisition,
+/** Read one captured UID through the pinned Profile port. A supplied account ID
+ * retains the existing exact UIN check; UID-only reads require a positive UIN.
+ * The caller owns input capture and UID resolution; this stateless module owns acquisition,
  * Map lookup and projection. It neither mutates contacts nor acquires a Session.
  * PC source: NapCatQQ 26d7533e0f5800fdff865ab2f2ad7692917e1076,
  * apis/user.ts#L16-L22 and services/NodeIKernelProfileService.ts#L16.
  */
 export async function queryUserProfile(
   context: UserProfileQueryContext,
-  capturedUserId: string,
+  capturedUserId: string | undefined,
   uid: string,
 ): Promise<UserProfile> {
   const { signal, awaitAlive, getProfileService } = context;
@@ -80,6 +81,12 @@ export async function queryUserProfile(
   if (!capture(signal, () => profiles instanceof Map))
     throw new Error('Native profile response must be a Map');
   const map = profiles as Map<unknown, unknown>;
+  if (capturedUserId === undefined) {
+    // The UID-only query has no independently resolved account ID. Select the
+    // actual Map entry rather than an overridden method that could invent one.
+    const profile: unknown = capture(signal, () => Map.prototype.get.call(map, uid));
+    return projectProfile(signal, profile, undefined, uid);
+  }
   const lookup = capture(signal, () => map.get);
   const profile: unknown = capture(signal, () => Reflect.apply(lookup, map, [uid]));
   return projectProfile(signal, profile, capturedUserId, uid);

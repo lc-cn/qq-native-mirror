@@ -1,7 +1,9 @@
 import type { DeleteFriendOptions } from '../../contracts/contacts.ts';
+import { nativeUid } from '../../validation/identifiers.ts';
 
 interface ContactPayloads {
   getUserProfile: { userId: string };
+  getUserProfileByUid: { uid: string };
   setFriendRemark: { userId: string; remark: string };
   deleteFriend: { userId: string; options: Required<DeleteFriendOptions> };
 }
@@ -33,6 +35,12 @@ export function captureContactOperation(
   method: ContactOperation,
   payload: Record<string, unknown>,
 ): CapturedContactOperation {
+  if (method === 'getUserProfileByUid') {
+    const uid = payload.uid;
+    if (!nativeUid(uid))
+      throw new Error('uid must be an unmasked native UID without surrounding whitespace');
+    return { method, payload: { uid } };
+  }
   const id = userId(payload.userId);
   switch (method) {
     case 'getUserProfile':
