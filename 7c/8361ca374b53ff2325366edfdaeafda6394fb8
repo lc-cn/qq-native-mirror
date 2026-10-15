@@ -1,0 +1,102 @@
+sdk/docs/contacts-groups.md
+  s_2104cc474f1ce5::t_4d87c2677bb025 177-179,182
+  s_2104cc474f1ce5::t_c25bd906cb0b04 144-176
+  s_2104cc474f1ce5::t_c93a362d59f270 180-181
+sdk/scripts/consumers/bot-api-consumer-contract.mjs
+  s_2104cc474f1ce5::t_c25bd906cb0b04 22-28,34-36,129,149,251,270
+sdk/test/features/groups/group-member-query-input.test.ts
+  s_2104cc474f1ce5::t_d6cca62e143b32 1-63
+  s_2104cc474f1ce5::t_8c40f98fa01c5e 64-87
+sdk/src/runtime/operation-contracts.ts
+  s_2104cc474f1ce5::t_d50ef2a441c911 23,87-91
+sdk/scripts/verify-package-consumer.mjs
+  s_2104cc474f1ce5::t_4d87c2677bb025 348-349,379-401
+  s_2104cc474f1ce5::t_bab3688a4b2341 402
+sdk/src/contracts/groups.ts
+  s_2104cc474f1ce5::t_d50ef2a441c911 182-186
+sdk/src/client/contacts/group-member-contact.ts
+  s_2104cc474f1ce5::t_78f549d7b86771 42,44,48-50
+  s_2104cc474f1ce5::t_7f2fe39fa2d24c 2,6,39-41,43,45-47
+  s_f21319594bee88::t_3569e3973c1169 51-52
+sdk/scripts/consumers/public-contract-consumer.mjs
+  s_2104cc474f1ce5::t_da393bef76fc6b 188-201
+sdk/test/fixtures/public-type-names.json
+  s_2104cc474f1ce5::t_be3cd98298cc3f 42
+sdk/src/cli/commands/groups.ts
+  s_2104cc474f1ce5::t_4d87c2677bb025 2-5,39-49,51-55
+  s_2104cc474f1ce5::t_c93a362d59f270 56-57
+sdk/docs/sdk-quality.md
+  s_2104cc474f1ce5::t_dc4a7ebd919cee 207-217,236-246
+  s_2104cc474f1ce5::t_b0bc6bebb49a8d 247-256
+sdk/scripts/consumers/contact-objects-consumer-contract.mjs
+  s_2104cc474f1ce5::t_da393bef76fc6b 9-15,31-37,87-118,126,138-139,159-160
+  s_2104cc474f1ce5::t_80f2c2e78ef198 5,148-154,161,164-213
+  s_2104cc474f1ce5::t_4c67b8d0e382f0 214
+sdk/src/features/groups/group-queries.ts
+  s_2104cc474f1ce5::t_7f2fe39fa2d24c 301-303
+  s_2104cc474f1ce5::t_78f549d7b86771 243
+  s_2104cc474f1ce5::t_d50ef2a441c911 12-16,238-242,257,291-294,298,300,304-312,314,316
+  s_2104cc474f1ce5::t_7265ff765805e3 277
+  s_2104cc474f1ce5::t_1d3f799b5fecc9 244-256,258-276,278-290,295,297,299,317,324
+sdk/test/helpers/dependency-policy.ts
+  s_2104cc474f1ce5::t_d59450f5e4a1e7 175,217,226,343-347
+sdk/src/cli.ts
+  s_2104cc474f1ce5::t_4d87c2677bb025 36-37
+sdk/test/architecture/resources.ts
+  s_2104cc474f1ce5::t_d59450f5e4a1e7 43,73
+sdk/src/features/groups/group-member-query-input.ts
+  s_2104cc474f1ce5::t_d50ef2a441c911 1-52
+sdk/test/bot-api-consumer.test.mjs
+  s_2104cc474f1ce5::t_ce5599a7b7281a 12
+sdk/test/features/groups/group-member-query.test.ts
+  s_2104cc474f1ce5::t_d6cca62e143b32 1-162
+  s_2104cc474f1ce5::t_63f530ada7b133 163-197
+sdk/test/group-member-cli.test.ts
+  s_2104cc474f1ce5::t_4d87c2677bb025 1-4,6-44,55
+  s_2104cc474f1ce5::t_c93a362d59f270 5,45-54
+sdk/test/group-member-query.test.ts
+  s_2104cc474f1ce5::t_ff252b9cd8658e 1-214
+  s_2104cc474f1ce5::t_2a0600e789ee0b 215-277
+sdk/scripts/consumers/group-query-owner-consumer-contract.mjs
+  s_2104cc474f1ce5::t_55d3c00f5a1b8c 22,47-48,55-56,84-89,135,139-214
+  s_2104cc474f1ce5::t_20413d9b5d6d01 215
+sdk/src/native-services.ts
+  s_2104cc474f1ce5::t_d50ef2a441c911 531-532
+sdk/README.md
+  s_2104cc474f1ce5::t_c25bd906cb0b04 200-203,212-213,218-227
+  s_2104cc474f1ce5::t_b34d86bc9ee617 228
+sdk/src/runtime/operations.ts
+  s_2104cc474f1ce5::t_d50ef2a441c911 18
+sdk/src/client/contacts/group-contact.ts
+  s_2104cc474f1ce5::t_78f549d7b86771 60,62,66-68
+  s_2104cc474f1ce5::t_7f2fe39fa2d24c 2-8,58,61,63-65
+sdk/src/client/qq-client.ts
+  s_2104cc474f1ce5::t_78f549d7b86771 309,311,315-317,328,330,334-336
+  s_2104cc474f1ce5::t_7f2fe39fa2d24c 2-5,86,304-308,310,312-314,318-327,329,331-333
+sdk/docs/evidence/bot-api-native-packages-ci-f6b5a65.json
+  s_2104cc474f1ce5::t_c0dfeefce4f627 1-377
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "7c8361ca374b53ff2325366edfdaeafda6394fb8",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    },
+    "s_f21319594bee88": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a03291-207e-7d10-a69e-0838833440c1",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
