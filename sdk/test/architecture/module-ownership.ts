@@ -455,7 +455,10 @@ test('client event presentation has one composer and no lifecycle, native or IO 
   const edges = graph.get(join(projectRoot, presentation))!;
   assert.deepEqual(
     edges.map(({ target, typeOnly }) => ({ target, typeOnly })),
-    [{ target: join(projectRoot, 'src/contracts/native.ts'), typeOnly: true }],
+    ['native', 'messages', 'contacts', 'groups'].map((domain) => ({
+      target: join(projectRoot, `src/contracts/${domain}.ts`),
+      typeOnly: true,
+    })),
   );
   assert.equal(
     dependencyViolation({ from: 'src/client/qq-client.ts', to: presentation, typeOnly: false }),

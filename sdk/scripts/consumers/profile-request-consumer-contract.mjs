@@ -300,7 +300,7 @@ export async function verifyProfileRequestConsumer(installedRoot) {
     assert.ok(Array.isArray(listed));
     assert.equal(listed.length, 1);
     assert.equal(listed[0].uid, 'u_request');
-    assert.equal(requests.events[0][0], 'friend-request');
+    assert.equal(requests.events[0][0], 'request.friend');
     await requests.services.invokeOperation('handleFriendRequest', {
       request: { uid: 'u_request', time: '123' },
       accept: false,

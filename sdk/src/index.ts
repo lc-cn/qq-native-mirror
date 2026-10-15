@@ -1,5 +1,9 @@
 export { createClient } from './client/create-client.ts';
 export { QQClient } from './client/qq-client.ts';
+export { FriendContact } from './client/contacts/friend-contact.ts';
+export { GroupContact } from './client/contacts/group-contact.ts';
+export { GroupMemberContact } from './client/contacts/group-member-contact.ts';
+export { segment } from './client/message-segment.ts';
 export { KernelRequestError, MergedForwardError } from './errors.ts';
 export type { MergedForwardFailure, MergedForwardProgress } from './errors.ts';
 export type * from './types.ts';

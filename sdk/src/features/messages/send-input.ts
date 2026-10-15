@@ -61,18 +61,23 @@ function captureElement(value: unknown, group: boolean): SendableMessageElement 
   }
 }
 
-/** Capture the dense batch before IPC, UID queries, media preparation, reply
- * lookup or submission. Uses array data slots rather than caller-owned iterators.
- * Does not assert local media content validity. */
+/** Normalize text, a single element or a dense mixed batch before IPC, UID
+ * queries, media preparation, reply lookup or submission. Array data slots are
+ * read without caller-owned iterators. Does not inspect local media contents.
+ */
 export function captureSendInput(input: unknown, group: boolean): SendableMessageElement[] {
   if (typeof input === 'string') return [{ type: 'text', text: input }];
-  if (!Array.isArray(input)) throw new Error('Message must contain elements');
+  if (!Array.isArray(input)) return [captureElement(input, group)];
   const length = field(input, 'length');
   if (typeof length !== 'number' || !Number.isSafeInteger(length) || length <= 0)
     throw new Error('Message must contain elements');
   const captured: SendableMessageElement[] = [];
-  for (let index = 0; index < length; index++)
-    captured.push(captureElement(field(input, String(index)), group));
+  for (let index = 0; index < length; index++) {
+    const value = field(input, String(index));
+    captured.push(
+      typeof value === 'string' ? { type: 'text', text: value } : captureElement(value, group),
+    );
+  }
   return captured;
 }
 

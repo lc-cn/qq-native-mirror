@@ -184,19 +184,42 @@ export class ClientLifecycle {
         if (this.#closing) return;
         let offlineRevision: number | undefined;
         let retryableDisconnect = false;
-        if (message.event === 'ready') {
-          const account = captureWorkerAccount(message.payload, isCurrent);
-          if (!isCurrent()) return;
+        if (message.event === 'login' || message.event === 'ready') {
+          const revision = this.#offlineRevision;
+          const previous = this.#account;
+          const canPublish = () =>
+            isCurrent() && revision === this.#offlineRevision && previous === this.#account;
+          const account = captureWorkerAccount(message.payload, canPublish);
+          if (!canPublish()) return;
           if (!account) {
-            this.#context.forward('diagnostic', { stage: 'invalid-worker-ready-account' });
+            this.#context.forward('diagnostic', {
+              stage: `invalid-worker-${message.event}-account`,
+            });
             return;
           }
-          this.#account = account;
+          // Kernel emits login and then ready for one Session. Keep that Session's
+          // capability identity across repeated readiness while it remains online.
+          // Offline and worker replacement already retire this object; a different
+          // exact UIN or UID must retire it even without a preceding offline event.
+          if (
+            this.#state !== 'online' ||
+            !previous ||
+            previous.uin !== account.uin ||
+            previous.uid !== account.uid
+          )
+            this.#account = account;
+          const current = this.#account;
           this.#lastAccount = { ...account };
           this.#autoAttempts = 0;
           this.#cancelScheduledRestore();
           this.#setState('online');
-          if (!isCurrent()) return;
+          if (
+            !isCurrent() ||
+            revision !== this.#offlineRevision ||
+            current !== this.#account ||
+            this.#state !== 'online'
+          )
+            return;
         }
         if (
           message.event === 'disconnected' ||

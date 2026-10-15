@@ -73,7 +73,7 @@ const config: DemoConfig = {
 };
 const tick = () => new Promise<void>((resolve) => setImmediate(resolve));
 function message(id: string, client: Client, group = false): MessageEvent {
-  return createMessageEvent(
+  const event = createMessageEvent(
     {
       messageId:
         (
@@ -90,7 +90,9 @@ function message(id: string, client: Client, group = false): MessageEvent {
         )[id] ?? id,
       sequence: '1',
       time: 100,
-      peer: group ? { type: 'group', groupId: '456' } : { type: 'private', userId: '789' },
+      peer: group
+        ? { type: 'group', groupId: '456' }
+        : { type: 'private', userId: id === 'denied' ? '999' : '789' },
       sender: { userId: '789', uid: 'other', nickname: 'fixture' },
       elements: [{ type: 'text', text: ' ping ' }],
       raw: null,
@@ -103,6 +105,8 @@ function message(id: string, client: Client, group = false): MessageEvent {
       sendGroupMessage: (id, input) => client.sendGroupMessage(id, input),
     },
   );
+  assert.ok(event);
+  return event;
 }
 function harness(client = new Client(), cfg = config) {
   const controller = new AbortController();
@@ -179,7 +183,6 @@ test('self history duplicate keyword cooldown whitelist and offline suppress sen
   keyword.elements = [{ type: 'text', text: 'ping!' }];
   h.client.emit('message', keyword);
   const denied = message('denied', h.client);
-  denied.peer = { type: 'private', userId: '999' };
   h.client.emit('message', denied);
   h.client.emit('message', message('good', h.client));
   h.client.emit('message', message('good', h.client));

@@ -1,5 +1,10 @@
 import { createClientEventPresentation } from './client-event-presentation.ts';
 import { createMessageEvent } from './message-event.ts';
+import { createFriendRequestEvent, createGroupRequestEvent } from './request-event.ts';
+import type { ContactContext } from './contacts/contact-context.ts';
+import { FriendContact } from './contacts/friend-contact.ts';
+import { GroupContact } from './contacts/group-contact.ts';
+import { GroupMemberContact } from './contacts/group-member-contact.ts';
 import { captureForwardSubmission } from '../features/forward/forward-input.ts';
 import { captureFriendRequest } from '../features/contacts/friend-request-input.ts';
 import { captureGroupRequestOperation } from '../features/groups/group-request-input.ts';
@@ -123,20 +128,31 @@ export class QQClient extends EventEmitter<ClientEvents> {
     autoReconnect?: ClientOptions['autoReconnect'],
   ) {
     super();
+    const captureEventGuard = () =>
+      this.#lifecycle?.captureOnlineOperationGuard() ??
+      (() => {
+        throw new Error('Event belongs to an inactive client session');
+      });
     this.#events = createClientEventPresentation(
       (event, payload) => Reflect.apply(this.emit, this, [event, payload]),
-      (message) => {
-        if (!message || typeof message !== 'object' || Array.isArray(message)) return message;
-        const assertActive =
-          this.#lifecycle?.captureOnlineOperationGuard() ??
-          (() => {
-            throw new Error('Message belongs to an inactive client session');
-          });
-        return createMessageEvent(message as Message, {
-          assertActive,
-          sendPrivateMessage: (userId, input) => this.sendPrivateMessage(userId, input),
-          sendGroupMessage: (groupId, input) => this.sendGroupMessage(groupId, input),
-        });
+      {
+        message: (value) =>
+          createMessageEvent(value, {
+            assertActive: captureEventGuard(),
+            sendPrivateMessage: (userId, input) => this.sendPrivateMessage(userId, input),
+            sendGroupMessage: (groupId, input) => this.sendGroupMessage(groupId, input),
+          }),
+        friendRequest: (value) =>
+          createFriendRequestEvent(value, {
+            assertActive: captureEventGuard(),
+            handleFriendRequest: (request, accept) => this.handleFriendRequest(request, accept),
+          }),
+        groupRequest: (value) =>
+          createGroupRequestEvent(value, {
+            assertActive: captureEventGuard(),
+            handleGroupRequest: (request, accept, reason) =>
+              this.handleGroupRequest(request, accept, reason),
+          }),
       },
     );
     this.#lifecycle = new ClientLifecycle({
@@ -202,6 +218,32 @@ export class QQClient extends EventEmitter<ClientEvents> {
   /** Restart the isolated native process and restore authorization. Requests are never replayed. */
   reconnect(login?: LoginRequest): Promise<Account> {
     return this.#lifecycle.reconnect(login);
+  }
+  #contactContext(): ContactContext {
+    const assertActive = this.#lifecycle.captureOnlineOperationGuard();
+    assertActive();
+    return Object.freeze({
+      assertActive,
+      invoke: <C extends OperationCall>(...command: C): Promise<OperationResult<C[0]>> => {
+        // Input capture may run caller code. Recheck the original session at dispatch.
+        assertActive();
+        return this.#operation<C>(...command);
+      },
+    });
+  }
+  /** Select a positive decimal QQ account locally. Requires an online session;
+   * the returned object is retired by offline, reconnect or close.
+   */
+  pickFriend(userId: string): FriendContact {
+    return new FriendContact(this.#contactContext(), userId);
+  }
+  /** Select a group locally, without asserting membership or fetching metadata. */
+  pickGroup(groupId: string): GroupContact {
+    return new GroupContact(this.#contactContext(), groupId);
+  }
+  /** Select one member identity in one group, without asserting membership. */
+  pickMember(groupId: string, userId: string): GroupMemberContact {
+    return new GroupMemberContact(this.#contactContext(), groupId, userId);
   }
   #operation<C extends OperationCall>(...command: C): Promise<OperationResult<C[0]>> {
     if (this.state !== 'online')

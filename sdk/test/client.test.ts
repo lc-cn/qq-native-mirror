@@ -297,16 +297,20 @@ test('two client instances isolate identical RPC IDs, messages and account termi
     leftWorker.emit('message', { id: leftWorker.requests.at(-1).id, result: ['left'] });
     assert.deepEqual(await a, ['left']);
     assert.deepEqual(await b, ['right']);
-    leftWorker.emit('message', {
-      event: 'message',
-      payload: { messageId: 'same-id', account: 'left' },
-    });
-    rightWorker.emit('message', {
-      event: 'message',
-      payload: { messageId: 'same-id', account: 'right' },
-    });
-    assert.deepEqual(leftMessages, [{ messageId: 'same-id', account: 'left' }]);
-    assert.deepEqual(rightMessages, [{ messageId: 'same-id', account: 'right' }]);
+    const leftMessage = {
+      messageId: 'same-id',
+      account: 'left',
+      peer: { type: 'private', userId: '789' },
+    };
+    const rightMessage = {
+      messageId: 'same-id',
+      account: 'right',
+      peer: { type: 'group', groupId: '789' },
+    };
+    leftWorker.emit('message', { event: 'message', payload: leftMessage });
+    rightWorker.emit('message', { event: 'message', payload: rightMessage });
+    assert.deepEqual(leftMessages, [leftMessage]);
+    assert.deepEqual(rightMessages, [rightMessage]);
     leftWorker.emit('message', {
       event: 'kicked',
       payload: { source: 'kicked', kind: 'forced', retryable: false, args: [] },

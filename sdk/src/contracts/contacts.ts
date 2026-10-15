@@ -73,3 +73,11 @@ export interface FriendRequest {
   initiator: boolean;
   raw: unknown;
 }
+
+/** Live request capability bound to the receiving account session. */
+export interface FriendRequestEvent extends FriendRequest {
+  /** Submit an explicit decision (accept by default). Submission does not prove
+   * remote friendship; retired sessions reject and failed actions are not replayed.
+   */
+  readonly approve: (accept?: boolean) => Promise<void>;
+}

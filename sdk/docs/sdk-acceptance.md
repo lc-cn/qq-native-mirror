@@ -5,6 +5,9 @@ lifecycle, contacts, groups, messaging, media, management and CLI use. Consumers
 must not need an installed QQ application, Electron, a UI or Docker. Completion
 requires the entire capability and platform matrix below.
 
+The [SDK quality acceptance plan](sdk-quality.md) defines the implementation
+order, consumer experience and engineering gates used to reach this target.
+
 Single-friend category assignment currently has static contracts for five exact
 profiles: Linux x64/ARM64 3.2.32-52194, macOS x64/ARM64 7.0.2-53644 and Windows x64
 9.9.33-52230. Installed consumers exercise these profiles with substituted

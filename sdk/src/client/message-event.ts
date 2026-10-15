@@ -1,10 +1,4 @@
-import type {
-  Message,
-  MessageEvent,
-  MessageInput,
-  Peer,
-  SentMessage,
-} from '../contracts/messages.ts';
+import type { MessageEvent, MessageInput, Peer, SentMessage } from '../contracts/messages.ts';
 import { captureSendInput, sendGroupId, sendUserId } from '../features/messages/send-input.ts';
 
 export interface MessageReplyContext {
@@ -13,37 +7,58 @@ export interface MessageReplyContext {
   sendGroupMessage(groupId: string, content: MessageInput): Promise<SentMessage>;
 }
 
-function dataField(value: unknown, key: string): unknown {
-  if (!value || typeof value !== 'object') return undefined;
-  const descriptor = Object.getOwnPropertyDescriptor(value, key);
+function snapshot(value: unknown): PropertyDescriptorMap | undefined {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return;
+  return Object.getOwnPropertyDescriptors(value);
+}
+
+function dataField(descriptors: PropertyDescriptorMap, key: string): unknown {
+  const descriptor = Object.hasOwn(descriptors, key) ? descriptors[key] : undefined;
   return descriptor && 'value' in descriptor ? descriptor.value : undefined;
+}
+
+/** Only an explicit, addressable conversation can become a typed message event. */
+function capturePeer(descriptors: PropertyDescriptorMap): Readonly<Peer> | undefined {
+  const source = snapshot(dataField(descriptors, 'peer'));
+  if (!source) return;
+  const type = dataField(source, 'type');
+  if (type === 'group')
+    return Object.freeze({ type, groupId: sendGroupId(dataField(source, 'groupId')) });
+  if (type === 'private')
+    return Object.freeze({ type, userId: sendUserId(dataField(source, 'userId')) });
 }
 
 /** Bind actions after IPC. Routing is captured before observers can mutate event fields;
  * the source DTO remains serializable and never receives a client or function reference.
  */
-export function createMessageEvent(message: Message, context: MessageReplyContext): MessageEvent {
-  const sourcePeer = dataField(message, 'peer');
-  const type = dataField(sourcePeer, 'type');
-  const destination = dataField(sourcePeer, type === 'group' ? 'groupId' : 'userId');
-  const peer: Peer | undefined =
-    typeof destination === 'string'
-      ? type === 'group'
-        ? { type, groupId: destination }
-        : type === 'private'
-          ? { type, userId: destination }
-          : undefined
-      : undefined;
-  const messageId = dataField(message, 'messageId');
-  const descriptors = Object.getOwnPropertyDescriptors(message);
+export function createMessageEvent(
+  message: unknown,
+  context: MessageReplyContext,
+): MessageEvent | undefined {
+  let descriptors: PropertyDescriptorMap;
+  let peer: Readonly<Peer>;
+  let messageId: unknown;
+  try {
+    const captured = snapshot(message);
+    if (!captured) return;
+    const capturedPeer = capturePeer(captured);
+    if (!capturedPeer) return;
+    descriptors = captured;
+    peer = capturedPeer;
+    messageId = dataField(captured, 'messageId');
+  } catch {
+    // The same snapshot owns display and reply identity. Any descriptor failure
+    // rejects presentation without leaking native details or invoking observers.
+    return;
+  }
   delete descriptors.reply;
+  descriptors.peer = { value: peer, enumerable: true, writable: false, configurable: false };
   const event = Object.defineProperties({}, descriptors) as MessageEvent;
   Object.defineProperty(event, 'reply', {
     enumerable: false,
     value: async (content: MessageInput, quote = false): Promise<SentMessage> => {
       if (typeof quote !== 'boolean') throw new TypeError('quote must be a boolean');
       context.assertActive();
-      if (!peer) throw new Error('Message has no replyable conversation');
       const group = peer.type === 'group';
       const destination =
         peer.type === 'group' ? sendGroupId(peer.groupId) : sendUserId(peer.userId);

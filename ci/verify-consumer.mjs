@@ -1,5 +1,7 @@
 import { verifyHistoryQueryConsumer } from '../sdk/scripts/consumers/history-query-consumer-contract.mjs';
 import { verifyFriendQueryConsumer } from '../sdk/scripts/consumers/friend-query-consumer-contract.mjs';
+import { verifyContactObjectsConsumer } from '../sdk/scripts/consumers/contact-objects-consumer-contract.mjs';
+import { verifyBotApiConsumer } from '../sdk/scripts/consumers/bot-api-consumer-contract.mjs';
 import { npm } from './npm.mjs';
 import { closeConsumerResources } from './consumer-resources.mjs';
 import { ChildProcess, execFileSync, execFile } from 'node:child_process';
@@ -1010,6 +1012,8 @@ try {
   }
   /** @type {Awaited<ReturnType<typeof verifyFriendQueryConsumer>>} */
   const friendQueryChecks = await verifyFriendQueryConsumer(installedRoot);
+  const contactObjectChecks = await verifyContactObjectsConsumer(installedRoot);
+  const botApiChecks = await verifyBotApiConsumer(installedRoot);
   globalThis.fetch = () => {
     throw new Error('Unexpected mirror request with installed platform package');
   };
@@ -1038,6 +1042,8 @@ try {
         workerErrorChecks,
         clientFactoryChecks,
         contactGroupChecks,
+        contactObjectChecks,
+        botApiChecks,
         actionPortChecks,
         profileRequestChecks,
         groupRequestChecks,

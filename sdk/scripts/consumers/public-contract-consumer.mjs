@@ -78,6 +78,7 @@ export async function verifyPublicContracts(packageRoot, compilerRoot, typeRoots
     consumer,
     `
 import type { ${expected.join(', ')} } from 'qq-native-client';
+import { segment } from 'qq-native-client';
 export type CompatibilityTypes = [${expected.join(', ')}];
 declare const peer: Peer;
 if (peer.type === 'group') {
@@ -100,6 +101,40 @@ void replyFunction;
 typedMessageEvent.reply = async () => ({ messageId: '1', sequence: '1', time: 0 });
 const replyReceipt: Promise<SentMessage> = liveMessage.reply('pong', true);
 void replyReceipt;
+declare const groupEvent: ClientEvents['message.group'][0];
+declare const privateEvent: ClientEvents['message.private'][0];
+const groupId: string = groupEvent.peer.groupId;
+const privateId: string = privateEvent.peer.userId;
+const typedGroup: GroupMessageEvent = groupEvent;
+const typedPrivate: PrivateMessageEvent = privateEvent;
+// @ts-expect-error Group event routing cannot expose a private destination.
+groupEvent.peer.userId;
+// @ts-expect-error The conversation is immutable in live events.
+groupEvent.peer.groupId = '123';
+// @ts-expect-error Listeners cannot replace the captured conversation.
+liveMessage.peer = {type: 'private', userId: '123'};
+const textElement: Extract<SendableMessageElement, {type: 'text'}> = segment.text('hello');
+const imageElement: Extract<SendableMessageElement, {type: 'image'}> = segment.image('/image.png');
+const mixedMessage = [segment.at('123'), ' hello', segment.face(14)] as const;
+const composedInput: MessageInput = mixedMessage;
+const singleInput: MessageInput = textElement;
+const composedReply: Promise<SentMessage> = groupEvent.reply(mixedMessage);
+// @ts-expect-error Message input cannot contain arbitrary primitives.
+const invalidMixed: MessageInput = ['text', 123];
+// @ts-expect-error Media helpers currently accept local paths, not buffers.
+segment.image(new Uint8Array());
+declare const friendRequestEvent: FriendRequestEvent;
+declare const groupRequestEvent: GroupRequestEvent;
+const friendApproval: Promise<void> = friendRequestEvent.approve();
+const groupApproval: Promise<void> = groupRequestEvent.approve(false, 'declined');
+// @ts-expect-error An approval result is not proof of remote friendship.
+const confirmed: Promise<boolean> = friendRequestEvent.approve();
+// @ts-expect-error An approval capability is immutable.
+groupRequestEvent.approve = async () => {};
+declare const requestSnapshot: GroupRequest;
+// @ts-expect-error Query snapshots do not own live approval capabilities.
+requestSnapshot.approve();
+void [groupId, privateId, typedGroup, typedPrivate, imageElement, composedInput, singleInput, composedReply, friendApproval, groupApproval];
 // @ts-expect-error Reply quoting is a boolean, not a string option.
 liveMessage.reply('pong', 'quote');
 declare const historicalMessage: Message;
@@ -117,6 +152,33 @@ const ownerUid: string = search.ownerUid;
 // @ts-expect-error Search snapshots do not invent a numeric owner account.
 search.ownerUserId;
 declare const client: import('qq-native-client').QQClient;
+const friendContact: import('qq-native-client').FriendContact = client.pickFriend('123');
+const groupContact: import('qq-native-client').GroupContact = client.pickGroup('456');
+const memberContact: import('qq-native-client').GroupMemberContact = groupContact.pickMember('123');
+const selectedMember: import('qq-native-client').GroupMemberContact = client.pickMember('456', '123');
+const selectedUserId: string = friendContact.peer.userId;
+const selectedGroupId: string = groupContact.peer.groupId;
+const contactSend: Promise<SentMessage> = friendContact.sendMessage('hello');
+const contactComposed: Promise<SentMessage> = groupContact.sendMessage(mixedMessage);
+const clientSingle: Promise<SentMessage> = client.sendPrivateMessage('123', segment.text('hello'));
+const contactHistory: Promise<Message[]> = groupContact.getHistory({limit: 10});
+const contactBatch: Promise<(Message | undefined)[]> = friendContact.getMessages(['789']);
+const memberProfile: Promise<UserProfile> = memberContact.getProfile();
+const selectedMembers: Promise<GroupMember[]> = groupContact.getMembers();
+// @ts-expect-error Selecting a contact requires a lossless string identity.
+client.pickFriend(123);
+// @ts-expect-error A selected identity cannot be reassigned.
+friendContact.userId = '456';
+// @ts-expect-error Conversation routing is immutable.
+groupContact.peer.groupId = '789';
+// @ts-expect-error A friend has no group peer.
+friendContact.peer.groupId;
+// @ts-expect-error Group membership does not imply private-message capability.
+memberContact.sendMessage('hello');
+declare const snapshotFriend: Friend;
+// @ts-expect-error Friend query snapshots remain data, without active operations.
+snapshotFriend.sendMessage('hello');
+void [selectedMember, selectedUserId, selectedGroupId, contactSend, contactComposed, clientSingle, contactHistory, contactBatch, memberProfile, selectedMembers];
 const searchResult: Promise<GroupSearchMatch | undefined> = client.searchGroup('123');
 const folderResult: Promise<GroupFolder> = client.createGroupFolder('123', 'files');
 const filePageResult: Promise<GroupFilePage> = client.getGroupFilePage('123', {startIndex: 0});

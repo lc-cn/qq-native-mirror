@@ -177,6 +177,46 @@ const facadeInputs = new Set([
   'src/features/groups/group-search-input.ts',
 ]);
 
+const publicContacts = new Set([
+  'src/client/contacts/friend-contact.ts',
+  'src/client/contacts/group-contact.ts',
+  'src/client/contacts/group-member-contact.ts',
+]);
+// Contacts bind existing input capture to an injected session capability. They
+// cannot acquire a client/lifecycle or execute native operations themselves.
+const contactDependencies: Record<string, readonly string[]> = {
+  'src/client/contacts/contact-context.ts': [
+    'src/features/contacts/contact-operation-input.ts',
+    'src/validation/identifiers.ts',
+  ],
+  'src/client/contacts/conversation-contact.ts': [
+    'src/client/contacts/contact-context.ts',
+    'src/features/messages/query-input.ts',
+    'src/features/messages/recall-input.ts',
+  ],
+  'src/client/contacts/friend-contact.ts': [
+    'src/client/contacts/contact-context.ts',
+    'src/client/contacts/conversation-contact.ts',
+    'src/features/contacts/contact-operation-input.ts',
+    'src/features/contacts/friend-category-input.ts',
+    'src/features/messages/send-input.ts',
+  ],
+  'src/client/contacts/group-contact.ts': [
+    'src/client/contacts/contact-context.ts',
+    'src/client/contacts/conversation-contact.ts',
+    'src/client/contacts/group-member-contact.ts',
+    'src/features/groups/group-operation-input.ts',
+    'src/features/messages/send-input.ts',
+    'src/validation/identifiers.ts',
+  ],
+  'src/client/contacts/group-member-contact.ts': [
+    'src/client/contacts/contact-context.ts',
+    'src/features/contacts/contact-operation-input.ts',
+    'src/features/groups/group-operation-input.ts',
+    'src/validation/identifiers.ts',
+  ],
+};
+
 // Cross-domain collaboration is reviewed at exact module pairs. A new feature
 // does not gain permission to import an entire neighboring feature directory.
 export const crossFeatureDependencies = [
@@ -397,18 +437,60 @@ export function dependencyViolation({ from, to, typeOnly }: SourceDependency): s
       (!typeOnly && to === 'src/features/messages/send-input.ts')
       ? undefined
       : 'Message events bind captured reply inputs to injected client operations, without acquiring lifecycle or native resources.';
+  if (from === 'src/client/message-segment.ts')
+    return typeOnly && to === 'src/contracts/messages.ts'
+      ? undefined
+      : 'Message constructors create public element data; validation and native work belong to send inputs and operations.';
+  if (to === 'src/client/message-segment.ts')
+    return from === 'src/index.ts' && !typeOnly
+      ? undefined
+      : 'Message constructors are a public convenience; internal operations consume captured element data.';
+  if (from === 'src/client/request-event.ts')
+    return (typeOnly && ['src/contracts/contacts.ts', 'src/contracts/groups.ts'].includes(to)) ||
+      (!typeOnly &&
+        [
+          'src/features/contacts/friend-request-input.ts',
+          'src/features/groups/group-request-input.ts',
+        ].includes(to))
+      ? undefined
+      : 'Request events capture approval identity and invoke injected actions without acquiring a client or native services.';
+  if (to === 'src/client/request-event.ts')
+    return from === 'src/client/qq-client.ts'
+      ? undefined
+      : 'Only the client binds request events to their session capabilities.';
   if (to === 'src/client/message-event.ts')
     return from === 'src/client/qq-client.ts' && !typeOnly
       ? undefined
       : 'Only the public client binds reply capabilities to live message events.';
   if (from === 'src/client/client-event-presentation.ts')
-    return typeOnly && to === 'src/contracts/native.ts'
+    return typeOnly &&
+      [
+        'src/contracts/native.ts',
+        'src/contracts/messages.ts',
+        'src/contracts/contacts.ts',
+        'src/contracts/groups.ts',
+      ].includes(to)
       ? undefined
       : 'Client event presentation owns only delivery and shape audit; it cannot acquire lifecycle or native resources.';
   if (to === 'src/client/client-event-presentation.ts')
     return from === 'src/client/qq-client.ts' && !typeOnly
       ? undefined
       : 'Only the public client composes its event presentation owner.';
+  if (from.startsWith('src/client/contacts/'))
+    return contactDependencies[from] &&
+      ((typeOnly && (isContract(to) || to === 'src/runtime/operation-contracts.ts')) ||
+        contactDependencies[from].includes(to))
+      ? undefined
+      : 'Contact objects use domain inputs and an injected operation capability, never client, lifecycle or native composition.';
+  if (to.startsWith('src/client/contacts/'))
+    return (!typeOnly &&
+      publicContacts.has(to) &&
+      (from === 'src/index.ts' || from === 'src/client/qq-client.ts')) ||
+      (typeOnly &&
+        from === 'src/client/qq-client.ts' &&
+        to === 'src/client/contacts/contact-context.ts')
+      ? undefined
+      : 'Only the public client constructs session-scoped contacts; the entry exports the public classes.';
   if (from === 'src/types.ts')
     return typeOnly && isContract(to)
       ? undefined

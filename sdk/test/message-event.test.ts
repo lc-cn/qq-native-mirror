@@ -29,15 +29,31 @@ test('reply captures routing and quote ID, detached closure is readonly/nonenume
       sendPrivateMessage: send,
       sendGroupMessage: send,
     });
+    assert.ok(event);
     const descriptor = Object.getOwnPropertyDescriptor(event, 'reply');
     assert.equal(descriptor?.enumerable, false);
     assert.equal(descriptor?.writable, false);
     assert.equal(Object.hasOwn(message, 'reply'), false);
     assert.equal(event.raw, message.raw);
+    assert.equal(event.elements, message.elements);
+    assert.equal(event.sender, message.sender);
     const reply = event.reply;
+    const sourcePeer = message.peer;
+    const capturedPeer = { ...sourcePeer };
+    assert.notEqual(event.peer, sourcePeer);
+    assert.equal(Object.isFrozen(event.peer), true);
+    assert.equal(Object.isFrozen(sourcePeer), false);
+    assert.equal(Reflect.set(event, 'peer', { type: 'private', userId: '000' }), false);
+    assert.equal(Reflect.defineProperty(event, 'peer', { value: sourcePeer }), false);
+    assert.equal(Reflect.deleteProperty(event, 'peer'), false);
+    assert.equal(Reflect.set(event.peer, 'type', group ? 'private' : 'group'), false);
+    assert.equal(Reflect.set(event.peer, group ? 'groupId' : 'userId', '000'), false);
+    assert.equal(Reflect.defineProperty(event.peer, 'type', { value: 'invalid' }), false);
+    assert.equal(Reflect.deleteProperty(event.peer, 'type'), false);
     message.messageId = '999';
+    Reflect.set(sourcePeer, group ? 'groupId' : 'userId', '999');
     message.peer = { type: 'private', userId: '999' };
-    event.peer = { type: 'private', userId: '000' };
+    assert.deepEqual(event.peer, capturedPeer);
     assert.equal(await reply('pong'), receipt);
     await reply('quoted', true);
     assert.deepEqual(calls, [
@@ -69,6 +85,7 @@ test('invalid input and stale lifetime reject without sending; original send err
       throw original;
     },
   });
+  assert.ok(event);
   await assert.rejects(Reflect.apply(event.reply, undefined, [[{ type: 'text', text: 42 }]]));
   assert.equal(calls, 0);
   await assert.rejects(event.reply('pong'), (error) => error === original);
@@ -173,6 +190,7 @@ test('input descriptor reentrancy retires before dispatch and caller elements st
       return receipt;
     },
   });
+  assert.ok(event);
   const element = new Proxy(
     { type: 'text' as const, text: 'pong' },
     {
@@ -205,8 +223,100 @@ test('invalid routing and quote flags cannot dispatch', async () => {
   };
   const message = raw();
   Object.defineProperty(message, 'peer', { value: { type: 'other', userId: '789' } });
-  await assert.rejects(createMessageEvent(message, context).reply('pong'), /conversation/);
+  assert.equal(createMessageEvent(message, context), undefined);
   const event = createMessageEvent(raw(), context);
+  assert.ok(event);
   await assert.rejects(Reflect.apply(event.reply, undefined, ['pong', 'true']), /boolean/);
   assert.equal(calls, 0);
 });
+
+test('invalid peer shapes and accessors produce diagnostics without typed message delivery', async () => {
+  const worker = new Worker();
+  const client = new QQClient(worker, 500);
+  let accessorReads = 0;
+  const getter = () => {
+    accessorReads++;
+    throw new Error('PRIVATE_NATIVE_ROUTING');
+  };
+  const invalid: unknown[] = [
+    undefined,
+    null,
+    [],
+    false,
+    'opaque',
+    ...[
+      undefined,
+      null,
+      [],
+      {},
+      { type: 'unknown', userId: '789' },
+      { type: 'private' },
+      { type: 'private', userId: 789 },
+      { type: 'private', userId: '' },
+      { type: 'private', userId: '0' },
+      { type: 'private', userId: 'all' },
+      { type: 'group', groupId: 'u_fixture' },
+      { type: 'group', groupId: '0' },
+      Object.create({ type: 'private', userId: '789' }),
+      Object.defineProperty({ userId: '789' }, 'type', { get: getter }),
+      Object.defineProperty({ type: 'private' }, 'userId', { get: getter }),
+      Object.defineProperty({ type: 'group' }, 'groupId', { get: getter }),
+      new Proxy(
+        {},
+        {
+          getOwnPropertyDescriptor() {
+            throw new Error('PRIVATE_NATIVE_ROUTING');
+          },
+        },
+      ),
+    ].map((peer) => ({ ...raw(), peer })),
+    Object.create(raw()),
+    Object.defineProperty(raw(), 'peer', { get: getter }),
+  ];
+  const diagnostics: unknown[] = [];
+  const delivered: unknown[] = [];
+  client.on('diagnostic', (value) => diagnostics.push(value));
+  client.on('message', (value) => delivered.push(value));
+  client.on('message.private', (value) => delivered.push(value));
+  client.on('message.group', (value) => delivered.push(value));
+  try {
+    worker.emit('message', { event: 'ready', payload: { uin: '123', uid: 'self' } });
+    for (const payload of invalid) worker.emit('message', { event: 'message', payload });
+    assert.equal(accessorReads, 0);
+    assert.deepEqual(delivered, []);
+    assert.deepEqual(
+      diagnostics,
+      invalid.map(() => ({ stage: 'invalid-worker-message-peer' })),
+    );
+    assert.deepEqual(worker.requests, []);
+  } finally {
+    await client.close();
+  }
+});
+
+for (const trap of ['ownKeys', 'messageId'] as const) {
+  test(`message snapshot ${trap} failure rejects a valid peer without dispatch`, () => {
+    const payload = new Proxy(raw(), {
+      ownKeys(target) {
+        if (trap === 'ownKeys') throw new Error('PRIVATE_NATIVE_SNAPSHOT');
+        return Reflect.ownKeys(target);
+      },
+      getOwnPropertyDescriptor(target, key) {
+        if (trap === 'messageId' && key === 'messageId') throw new Error('PRIVATE_NATIVE_SNAPSHOT');
+        return Reflect.getOwnPropertyDescriptor(target, key);
+      },
+    });
+    const event = createMessageEvent(payload, {
+      assertActive() {
+        assert.fail('snapshot must not start an operation');
+      },
+      async sendPrivateMessage() {
+        assert.fail('snapshot must not send');
+      },
+      async sendGroupMessage() {
+        assert.fail('snapshot must not send');
+      },
+    });
+    assert.equal(event, undefined);
+  });
+}

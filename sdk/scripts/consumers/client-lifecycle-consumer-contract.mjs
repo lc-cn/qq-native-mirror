@@ -1732,10 +1732,10 @@ async function verifyClientPresentation(QQClient) {
       mutation.peer.type = 'private';
     });
     child.emit('message', { event: 'message', payload: mutation });
-    assert.equal(messages[7][0], 'message.private');
+    assert.equal(messages[7][0], 'message.group', 'observer mutation cannot reroute the alias');
     assert.notStrictEqual(messages[7][1], mutation);
     assert.strictEqual(messages[6][1], messages[7][1]);
-    assert.deepEqual(messages[7][1], mutation);
+    assert.deepEqual(messages[7][1], { ...mutation, peer: { type: 'group', groupId: '123' } });
     assert.equal(Object.hasOwn(mutation, 'reply'), false);
     Object.defineProperty(child, 'exitCode', { value: 0, configurable: true });
     child.emit('exit', 0, null);

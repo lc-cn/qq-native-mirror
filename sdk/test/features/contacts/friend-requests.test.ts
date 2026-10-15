@@ -68,7 +68,7 @@ test('friend metadata shares the Buddy listener without completing or invalidati
     assert.equal(((await query) as any[]).length, 1);
     assert.deepEqual(
       events.map(([name]) => name),
-      ['friend-list-updated', 'diagnostic', 'friend-request'],
+      ['friend-list-updated', 'diagnostic', 'request.friend'],
     );
     assert.equal(registrations, 1);
     assert.equal(queries, 1);
@@ -159,7 +159,7 @@ test('only undecided incoming notifications emit, deduplicated by UID and time',
   ]);
   f.notify([incoming]);
   assert.equal(f.emitted.length, 1);
-  assert.equal(f.emitted[0].event, 'friend-request');
+  assert.equal(f.emitted[0].event, 'request.friend');
   assert.ok(!f.calls.some((call) => call[0] === 'approve'), 'never auto-approves');
   f.operations.close();
   f.notify([{ ...incoming, reqTime: '124' }]);

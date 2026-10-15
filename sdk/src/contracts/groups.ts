@@ -236,6 +236,14 @@ export interface GroupRequest {
   raw: unknown;
 }
 
+/** Live request capability bound to the receiving account session. */
+export interface GroupRequestEvent extends GroupRequest {
+  /** Submit one decision (accept by default), preserving the native operation's
+   * acknowledgement semantics. A timeout does not prove the request was unchanged.
+   */
+  readonly approve: (accept?: boolean, reason?: string) => Promise<void>;
+}
+
 export interface GroupRequestOptions {
   doubt?: boolean;
   limit?: number;

@@ -1,8 +1,13 @@
 import type { ClientState, OfflineInfo, Account } from './client.ts';
-import type { MessageEvent, MessageRecall } from './messages.ts';
-import type { FriendRequest, FriendListUpdate, FriendAdded } from './contacts.ts';
 import type {
-  GroupRequest,
+  MessageEvent,
+  PrivateMessageEvent,
+  GroupMessageEvent,
+  MessageRecall,
+} from './messages.ts';
+import type { FriendRequestEvent, FriendListUpdate, FriendAdded } from './contacts.ts';
+import type {
+  GroupRequestEvent,
   GroupListUpdate,
   GroupMemberUpdate,
   GroupInfoUpdate,
@@ -27,8 +32,8 @@ export interface DiagnosticInfo {
 export interface ClientEvents {
   state: [ClientState];
   message: [MessageEvent];
-  'message.private': [MessageEvent];
-  'message.group': [MessageEvent];
+  'message.private': [PrivateMessageEvent];
+  'message.group': [GroupMessageEvent];
   'message-recalled': [unknown];
   'message.recalled': [MessageRecall];
   kicked: [OfflineInfo];
@@ -36,8 +41,10 @@ export interface ClientEvents {
   'msf-status': [{ status: number; reason: number; args: unknown[] }];
   'msf-error': [{ code?: number | string; description?: string; args: unknown[] }];
   'reconnect-error': [Error];
-  'request.friend': [FriendRequest];
-  'request.group': [GroupRequest];
+  'request.friend': [FriendRequestEvent];
+  /** @deprecated Use request.friend. Both names share one event and approval capability. */
+  'friend-request': [FriendRequestEvent];
+  'request.group': [GroupRequestEvent];
   'friend-list-updated': [FriendListUpdate];
   'friend-added': [FriendAdded];
   'group-list-updated': [GroupListUpdate];

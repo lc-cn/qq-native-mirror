@@ -124,7 +124,7 @@ export function createFriendRequests(context: FriendRequestsContext) {
             if (seen.has(key)) continue;
             seen.add(key);
             if (seen.size > 5000) seen.delete(seen.values().next().value!);
-            emit('friend-request', request);
+            emit('request.friend', request);
           }
           for (const waiter of waiters) waiter.resolve(requests);
         } catch (error) {

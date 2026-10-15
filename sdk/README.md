@@ -8,6 +8,8 @@ Development is ongoing. Source is the `0.0.2` candidate; the recorded initial np
 release is `0.0.1`. Working-source additions are not necessarily published npm
 features. See [release records](docs/npm-first-publish.md) and the
 [full capability and acceptance checklist](docs/sdk-acceptance.md).
+The [quality acceptance plan](docs/sdk-quality.md) tracks the route to a complete
+SDK, including public API usability, lifecycle reliability and release evidence.
 
 ## Install and log in
 
@@ -90,6 +92,14 @@ See [lifecycle and errors](docs/architecture.md#lifecycle-and-error-contracts).
 `reply(content, quote = false): Promise<SentMessage>`. It sends to the captured
 conversation; `true` adds a reply element for the original message.
 
+`message.private` receives `PrivateMessageEvent` with `peer.userId`;
+`message.group` receives `GroupMessageEvent` with `peer.groupId`. The general
+event and its alias share one event object. Its `peer` is a detached, frozen
+snapshot and cannot be replaced; routing stays consistent with its type and
+reply destination. Malformed worker conversation data produces a diagnostic
+instead of a typed message event. Other message fields retain their existing
+snapshot/reference semantics.
+
 ```ts
 client.on('message', (message) => {
   if (message.sender.userId === client.account?.uin) return;
@@ -104,6 +114,97 @@ session is retired by close, disconnect or replacement. No failed send is replay
 History/query results and worker payloads remain plain `Message` data without
 this method. This working-source addition is not a claim about the published
 `0.0.1` interface or real message delivery.
+
+## Compose messages (working source)
+
+`MessageInput` accepts text, one sendable element, or a readonly array mixing text
+and elements. Use `segment` for typed element construction:
+
+```ts
+import { segment } from 'qq-native-client';
+
+await client
+  .pickGroup('987654')
+  .sendMessage([segment.at('123456'), ' received ', segment.face(14)]);
+await client.pickFriend('123456').sendMessage(segment.image('/absolute/path/to/image.png'));
+```
+
+The constructors are `text(text)`, `at(userId, text?)`, `face(id)`, `image(file)`,
+`record(file)`, `video(file)`, `file(file, name?)` and `reply(messageId)`.
+`at('all')` mentions the group. Constructors only create data; sending validates
+the complete input, captures it without changing the caller's data, and then
+dispatches. Media uses absolute local paths. Private mentions, sparse/nested
+arrays, accessors and unsupported element kinds reject before dispatch.
+Client sends, contact sends and `message.reply()` accept the same inputs.
+
+## Decide incoming requests (working source)
+
+`request.friend` provides `FriendRequestEvent.approve(accept = true)`;
+`request.group` provides `GroupRequestEvent.approve(accept = true, reason?)`.
+Both return `Promise<void>` and act only when called. For example, an application
+can pass a received event and its own decision to these functions:
+
+```ts
+import type { FriendRequestEvent, GroupRequestEvent } from 'qq-native-client';
+
+async function decideFriend(request: FriendRequestEvent, accept: boolean): Promise<void> {
+  await request.approve(accept);
+}
+
+async function decideGroup(request: GroupRequestEvent, accept: boolean): Promise<void> {
+  await request.approve(accept, accept ? undefined : 'Request declined');
+}
+```
+
+An event keeps its original request identity even if its visible fields change.
+Approval rejects after its account session retires, and failures are not retried.
+The result retains the client method's submission/acknowledgement semantics; it
+does not independently confirm friendship or group membership. List results
+remain plain `FriendRequest`/`GroupRequest` snapshots without `approve()`.
+The legacy `friend-request` name remains a deprecated alias of `request.friend`;
+both receive the same event, so applications normally subscribe to one name.
+
+## Work with friends, groups and members (working source)
+
+After login, select a destination once. These methods use the same validation,
+operation results and error behavior as the corresponding client methods.
+
+```ts
+const friend = client.pickFriend('123456');
+const group = client.pickGroup('987654');
+const member = group.pickMember('123456');
+// Equivalent selection: client.pickMember('987654', '123456').
+
+const profile = await friend.getProfile();
+const recent = await group.getHistory({ limit: 10 });
+const members = await group.getMembers();
+console.log(profile.nickname, recent.length, members.length, member.userId);
+
+const sent = await friend.sendMessage('hello');
+await friend.recallMessage(sent.messageId);
+```
+
+| Object           | Operations                                                                     |
+| ---------------- | ------------------------------------------------------------------------------ |
+| Friend and group | `sendMessage`, `getHistory`, `getMessage`, `getMessages`, `recallMessage`      |
+| Friend           | `getProfile`, `setRemark`, `setCategory`, `delete`                             |
+| Group            | `getInfo`, `getMembers`, `pickMember`, `setName`, `setRemark`, `mute`, `leave` |
+| Group member     | `getProfile`, `setCard`, `setAdmin`, `mute`, `kick`                            |
+
+`pickFriend`, `pickGroup` and `pickMember` are synchronous and require an online
+client and positive decimal QQ IDs as strings. Selection performs no network
+request and does not verify friendship or membership. IDs and conversation peers
+are immutable. `GroupMemberContact.getProfile()` reads the account profile; use
+`group.getMembers()` for group-specific membership data. Mutation completion has
+the same [acknowledgement limits](docs/contacts-groups.md) as the client method.
+
+Each object belongs to the session in which it was selected. After disconnect,
+reconnect, account replacement or close, its methods reject; select a fresh object
+after login. A retained object never silently starts using another account.
+The classes are exported as `FriendContact`, `GroupContact` and
+`GroupMemberContact`; the existing `Friend`, `Group` and `GroupMember` types remain
+plain query results. This API is part of the working source, not the recorded
+`0.0.1` npm release.
 
 ## Working-source capability guide
 

@@ -42,6 +42,8 @@ import { verifyQunWebConsumer } from './consumers/qun-web-consumer-contract.mjs'
 import { verifyFriendCategoryMutationsConsumer } from './consumers/friend-category-mutations-consumer-contract.mjs';
 import { verifyFriendQueryConsumer } from './consumers/friend-query-consumer-contract.mjs';
 import { verifyHistoryQueryConsumer } from './consumers/history-query-consumer-contract.mjs';
+import { verifyContactObjectsConsumer } from './consumers/contact-objects-consumer-contract.mjs';
+import { verifyBotApiConsumer } from './consumers/bot-api-consumer-contract.mjs';
 
 // Offline packaging check: controlled services and actual worker routing with a replacement kernel; no QQ native binaries or accounts.
 const root = fileURLToPath(new URL('../', import.meta.url));
@@ -138,6 +140,10 @@ const publicContractChecks = await verifyPublicContracts(
 const contactGroupChecks = await verifyContactGroupConsumer(
   join(destination, 'node_modules/qq-native-client'),
 );
+const contactObjectChecks = await verifyContactObjectsConsumer(
+  join(destination, 'node_modules/qq-native-client'),
+);
+const botApiChecks = await verifyBotApiConsumer(join(destination, 'node_modules/qq-native-client'));
 const messageBatchChecks = await verifyMessageBatchConsumer(
   join(destination, 'node_modules/qq-native-client'),
 );
@@ -552,6 +558,8 @@ const receipt = {
     groupFilePagesChecks,
     groupFileActionChecks,
     ...publicContractChecks,
+    ...contactObjectChecks,
+    ...botApiChecks,
     privateFilesExcluded: true,
     installedImport: true,
     cliHelp: true,

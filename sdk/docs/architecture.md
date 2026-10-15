@@ -1,6 +1,6 @@
 # Architecture and maintenance contracts
 
-The package exposes `createClient`, `QQClient`, public DTOs and a CLI. The native
+The package exposes `createClient`, `QQClient`, contact objects, public DTOs and a CLI. The native
 kernel runs in an isolated Node child process. Platform bundles supply the QQ
 binaries; the public API does not require an installed QQ application.
 
@@ -70,6 +70,7 @@ and real callers; similar method names alone do not establish that need.
 | ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `src/index.ts`                                             | Public exports only; preserves the package interface without acquiring resources.                                                                           |
 | `src/client/qq-client.ts`                                  | Public client facade and typed operations; composes lifecycle and event presentation.                                                                       |
+| `src/client/contacts/`                                     | Session-scoped friend/group/member objects, shared conversation behavior and input capture; invokes an injected operation capability.                       |
 | `src/client/client-event-presentation.ts`                  | Worker event presentation and bounded callback shape audit; no lifecycle, transport or native acquisition.                                                  |
 | `src/client/create-client.ts`                              | Native bundle selection, registration bridge file preflight, worker bootstrap and transactional initialization.                                             |
 | `src/cli.ts`, `src/worker.ts`                              | Executable entry points. Their emitted URLs are runtime contracts.                                                                                          |
@@ -147,7 +148,7 @@ operations. The dependency gate forbids these group inputs from reaching back
 into message-send validation.
 
 `client/client-event-presentation` owns the QR image conversion, login error
-presentation, message aliases and bounded callback shape audit. The public facade
+presentation, message/request delivery, aliases and bounded callback shape audit. The public facade
 binds its event sink and exposes independent audit snapshots. The lifecycle owner
 filters retired worker events before forwarding them; presentation neither
 acquires a worker nor interprets authorization state. SDK-produced state/log/
@@ -159,11 +160,43 @@ captures public send inputs and invokes injected operations; it owns no worker,
 account acquisition or native transport. Primary and alias message events share
 that reply capability, while worker and historical message DTOs remain data-only.
 
+Message events replace only their peer with a detached immutable snapshot, so
+the private/group event types and their reply destination stay consistent.
+Malformed routing is diagnosed before either message event is emitted, and
+worker-supplied private/group aliases cannot bypass this presentation boundary.
+`client/message-segment` constructs typed element DTOs without validation or I/O;
+the shared send input owner normalizes text, single elements and readonly mixed
+arrays before any client, contact or event reply reaches transport.
+
+`client/request-event` captures friend/group approval identities and binds a
+non-enumerable `approve()` function through injected actions and an account guard.
+It reuses the existing request input owners and does not perform decisions on
+receipt. The request query DTOs remain data-only. The friend adapter emits the
+canonical `request.friend`; presentation also accepts the older worker name and
+provides its deprecated public alias. Both event names share one capability.
+
+`client/contacts` binds immutable selected IDs to the same account-operation
+guard. `ConversationContact<Peer>` shares message queries and recall between
+`FriendContact` and `GroupContact`; `GroupMemberContact` owns group-member actions
+without pretending to be a friend. `QQClient` injects a typed operation capability
+and checks the captured session again after input validation, because caller
+getters may retire the session while inputs are being read. The contact layer
+imports neither `QQClient` nor its lifecycle, and selects no native services.
+Selection performs no I/O; methods return existing operation results. These
+objects have no implicit metadata cache or reconnect policy.
+
+The lifecycle validates and commits an online identity before forwarding either
+`login` or `ready`. Consecutive readiness notifications for the exact same UIN and
+UID preserve that session's contact/reply capabilities. An intervening offline
+transition, worker replacement or different identity retires them. Event
+presentation captures private/group routing before observers run, so editing a
+message view cannot redirect its alias or captured reply destination.
+
 Feature modules may depend on public contracts and narrow native/runtime ports.
 They do not import the public Client or compose other account sessions. Relative
 internal paths are private; only the package root and CLI are public entry points.
 
-Each public type has one declaration in `src/contracts/`. Internal modules import
+Each public DTO has one declaration in `src/contracts/`. Internal modules import
 their needed domains directly; `types.ts` only reexports them for compatibility
 through the package root. The event table composes domain DTOs, and domains never
 depend back on that table. Forward submission receipts depend on message receipts;
