@@ -19,7 +19,9 @@ export async function verifyBotApiClient({ QQClient, segment }) {
   const worker = new ClientWorkerFixture();
   const receipt = { messageId: '99', sequence: '1', time: 1 };
   worker.respond = (command) =>
-    command.method === 'handleFriendRequest' || command.method === 'handleGroupRequest'
+    command.method === 'handleFriendRequest' ||
+    command.method === 'handleGroupRequest' ||
+    command.method === 'setGroupMemberCard'
       ? undefined
       : receipt;
   const client = new QQClient(worker, 500);
@@ -32,6 +34,10 @@ export async function verifyBotApiClient({ QQClient, segment }) {
     let message;
     /** @type {unknown[]} */
     const aliases = [];
+    /** @type {import('../../src/types.ts').GroupMessageEvent | undefined} */
+    let groupMessage;
+    /** @type {import('../../src/types.ts').PrivateMessageEvent | undefined} */
+    let privateMessage;
     client.on('message', (event) => {
       message = event;
       assert.equal(Reflect.set(event, 'peer', { type: 'private', userId: '999' }), false);
@@ -41,8 +47,11 @@ export async function verifyBotApiClient({ QQClient, segment }) {
     client.on('message.group', (event) => {
       assert.equal(event.peer.groupId, '789');
       aliases.push(event);
+      groupMessage = event;
     });
-    client.on('message.private', () => assert.fail('Unexpected private alias'));
+    client.on('message.private', (event) => {
+      privateMessage = event;
+    });
     /** @type {import('../../src/types.ts').Message} */
     const raw = {
       messageId: '42',
@@ -50,11 +59,28 @@ export async function verifyBotApiClient({ QQClient, segment }) {
       time: 1,
       peer: { type: 'group', groupId: '789' },
       sender: { userId: '456', uid: 'u_friend', nickname: 'friend' },
-      elements: [],
+      elements: [segment.text(' ping'), segment.at('123'), segment.text(' pong ')],
       raw: { retained: true },
     };
     worker.emit('message', { event: 'message', payload: raw });
     assert.ok(message);
+    assert.ok(groupMessage);
+    assert.equal(message.text, ' ping pong ');
+    assert.strictEqual(message.conversation, groupMessage.group);
+    assert.equal(groupMessage.member.userId, '456');
+    assert.equal(groupMessage.member.groupId, '789');
+    for (const key of ['text', 'conversation', 'group', 'member']) {
+      assert.equal(Reflect.set(message, key, 'altered'), false);
+      assert.equal(Reflect.deleteProperty(message, key), false);
+    }
+    assert.equal(Object.getOwnPropertyDescriptor(message, 'text')?.enumerable, true);
+    for (const key of ['conversation', 'group', 'member'])
+      assert.equal(Object.getOwnPropertyDescriptor(message, key)?.enumerable, false);
+    assert.equal(Object.hasOwn(message, 'friend'), false);
+    raw.sender.userId = '999';
+    raw.elements.splice(0, raw.elements.length, segment.text('altered'));
+    assert.equal(message.text, ' ping pong ');
+    assert.equal(groupMessage.member.userId, '456');
     assert.strictEqual(aliases[0], message);
     assert.notStrictEqual(message.peer, raw.peer);
     raw.peer = { type: 'private', userId: '999' };
@@ -86,6 +112,32 @@ export async function verifyBotApiClient({ QQClient, segment }) {
             { type: 'face', id: 14 },
           ],
         },
+      ],
+    );
+    const groupReply = message;
+    const beforeContacts = worker.requests.length;
+    await groupMessage.group.sendMessage('group action');
+    await groupMessage.member.setCard('member action');
+    const privateDto = {
+      ...raw,
+      peer: { type: 'private', userId: '654' },
+      elements: [segment.text('private')],
+    };
+    worker.emit('message', { event: 'message', payload: privateDto });
+    assert.ok(privateMessage);
+    assert.strictEqual(privateMessage.conversation, privateMessage.friend);
+    assert.equal(privateMessage.friend.userId, '654');
+    assert.equal(privateMessage.text, 'private');
+    assert.equal(Object.hasOwn(privateMessage, 'group'), false);
+    assert.equal(Object.hasOwn(privateMessage, 'member'), false);
+    privateDto.peer.userId = '999';
+    await privateMessage.friend.sendMessage('private action');
+    assert.deepEqual(
+      worker.requests.slice(beforeContacts).map(({ id: _id, ...command }) => command),
+      [
+        { method: 'sendGroupMessage', groupId: '789', message: [segment.text('group action')] },
+        { method: 'setGroupMemberCard', groupId: '789', userId: '456', card: 'member action' },
+        { method: 'sendPrivateMessage', userId: '654', message: [segment.text('private action')] },
       ],
     );
     const beforeInvalid = worker.requests.length;
@@ -181,7 +233,10 @@ export async function verifyBotApiClient({ QQClient, segment }) {
     const beforeStale = worker.requests.length;
     await assert.rejects(friendRequest.approve(), /session|inactive/);
     await assert.rejects(groupRequest.approve(), /session|inactive/);
-    await assert.rejects(message.reply('stale'), /session|inactive/);
+    await assert.rejects(groupReply.reply('stale'), /session|inactive/);
+    await assert.rejects(groupMessage.group.sendMessage('stale'), /session|inactive/);
+    await assert.rejects(groupMessage.member.setCard('stale'), /session|inactive/);
+    await assert.rejects(privateMessage.friend.sendMessage('stale'), /session|inactive/);
     assert.equal(worker.requests.length, beforeStale);
     client.once('request.friend', (event) => {
       friendRequest = event;
@@ -198,5 +253,7 @@ export async function verifyBotApiClient({ QQClient, segment }) {
     installedMessageComposition: true,
     installedImmutableMessageRouting: true,
     installedRequestApprovalLifetime: true,
+    installedMessageContacts: true,
+    installedCapturedMessageText: true,
   };
 }

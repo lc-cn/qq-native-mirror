@@ -4,18 +4,26 @@ import test from 'node:test';
 import { createClientEventPresentation } from '../src/client/client-event-presentation.ts';
 import { createMessageEvent } from '../src/client/message-event.ts';
 import { QQClient } from '../src/index.ts';
-import type { Message, MessageEvent } from '../src/types.ts';
+import type { Message, MessageEvent, Peer } from '../src/types.ts';
 
 function presentMessage(message: unknown) {
   return createMessageEvent(message, {
     assertActive() {},
-    async sendPrivateMessage() {
-      assert.fail('presentation must not send');
-    },
-    async sendGroupMessage() {
+    async invoke() {
       assert.fail('presentation must not send');
     },
   });
+}
+function messageFixture(peer: Peer): Message {
+  return {
+    messageId: '123',
+    sequence: '1',
+    time: 1,
+    peer,
+    sender: { userId: '789', uid: 'u_sender', nickname: 'sender' },
+    elements: [],
+    raw: {},
+  };
 }
 const presenters = {
   message: presentMessage,
@@ -84,7 +92,7 @@ test('login error presentation creates Error while unrelated failures remain opa
 
 test('message delivery emits one captured event then its alias with the same payload', () => {
   const { presentation, events } = fixture();
-  const group = { peer: { type: 'group', groupId: '456' }, messageId: '123' };
+  const group = messageFixture({ type: 'group', groupId: '456' });
   presentation.forward('message', group);
   assert.deepEqual(
     events.map(([name]) => name),
@@ -99,7 +107,7 @@ test('message delivery emits one captured event then its alias with the same pay
 });
 
 test('synchronous observer errors retain identity and stop later aliases', () => {
-  const payload = { peer: { type: 'private', userId: '789' } };
+  const payload = messageFixture({ type: 'private', userId: '789' });
   const names: string[] = [];
   const failure = new Error('observer failed');
   const presentation = createClientEventPresentation((event) => {
@@ -124,9 +132,9 @@ test('synchronous observer errors retain identity and stop later aliases', () =>
 test('source mutation during presentation or delivery cannot change the captured peer or alias', () => {
   for (const type of ['private', 'group'] as const) {
     const other = type === 'private' ? 'group' : 'private';
-    const raw = {
-      peer: type === 'private' ? { type, userId: '789' } : { type, groupId: '456' },
-    };
+    const raw = messageFixture(
+      type === 'private' ? { type, userId: '789' } : { type, groupId: '456' },
+    );
     const original = { ...raw.peer };
     let presented: MessageEvent | undefined;
     const events: [string, unknown][] = [];

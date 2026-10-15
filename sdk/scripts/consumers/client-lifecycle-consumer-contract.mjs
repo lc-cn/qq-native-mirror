@@ -1715,14 +1715,16 @@ async function verifyClientPresentation(QQClient) {
       const view = messages[index][1];
       assert.ok(view && typeof view === 'object');
       assert.notStrictEqual(view, dto);
-      assert.deepEqual(view, dto);
+      assert.deepEqual(view, { ...dto, text: '' });
       assert.strictEqual(messages[index + 1][1], view);
       assert.equal(typeof Object.getOwnPropertyDescriptor(view, 'reply')?.value, 'function');
       assert.equal(Object.hasOwn(dto, 'reply'), false);
       assert.strictEqual(Object.getOwnPropertyDescriptor(view, 'raw')?.value, rawMessage);
       assert.strictEqual(Object.getOwnPropertyDescriptor(view, 'unknown')?.value, unknownData);
       assert.strictEqual(Object.getOwnPropertyDescriptor(view, 'elements')?.value, dto.elements);
-      assert.equal(JSON.stringify(view), JSON.stringify(dto));
+      assert.equal(JSON.stringify(view), JSON.stringify({ ...dto, text: '' }));
+      assert.equal(Object.getOwnPropertyDescriptor(view, 'text')?.writable, false);
+      assert.equal(Object.getOwnPropertyDescriptor(view, 'conversation')?.enumerable, false);
     }
     assert.strictEqual(messages[4][1], opaque);
     child.emit('message', { event: 'fixture-opaque', payload: null });
@@ -1735,7 +1737,11 @@ async function verifyClientPresentation(QQClient) {
     assert.equal(messages[7][0], 'message.group', 'observer mutation cannot reroute the alias');
     assert.notStrictEqual(messages[7][1], mutation);
     assert.strictEqual(messages[6][1], messages[7][1]);
-    assert.deepEqual(messages[7][1], { ...mutation, peer: { type: 'group', groupId: '123' } });
+    assert.deepEqual(messages[7][1], {
+      ...mutation,
+      peer: { type: 'group', groupId: '123' },
+      text: '',
+    });
     assert.equal(Object.hasOwn(mutation, 'reply'), false);
     Object.defineProperty(child, 'exitCode', { value: 0, configurable: true });
     child.emit('exit', 0, null);

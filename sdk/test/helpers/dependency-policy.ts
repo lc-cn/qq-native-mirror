@@ -46,12 +46,6 @@ const primitives = new Set(['src/types.ts', 'src/errors.ts', 'src/validation/ide
 const isContract = (path: string) => path.startsWith('src/contracts/');
 const contractDependencies: Record<string, readonly string[]> = {
   'src/contracts/client.ts': ['src/contracts/native.ts'],
-  'src/contracts/events.ts': [
-    'src/contracts/client.ts',
-    'src/contracts/contacts.ts',
-    'src/contracts/groups.ts',
-    'src/contracts/messages.ts',
-  ],
   'src/contracts/forward.ts': ['src/contracts/messages.ts'],
 };
 const workerDependencies = new Set([
@@ -457,11 +451,43 @@ export function dependencyViolation({ from, to, typeOnly }: SourceDependency): s
     return to === 'src/storage/process-lock.ts'
       ? undefined
       : 'Package locking uses the shared process-lock primitive, not bundle management.';
-  if (from === 'src/client/message-event.ts')
-    return (typeOnly && to === 'src/contracts/messages.ts') ||
-      (!typeOnly && to === 'src/features/messages/send-input.ts')
+  if (from === 'src/client/events.ts')
+    return typeOnly &&
+      [
+        'src/contracts/client.ts',
+        'src/contracts/diagnostics.ts',
+        'src/contracts/contacts.ts',
+        'src/contracts/groups.ts',
+        'src/contracts/messages.ts',
+        'src/client/contacts/friend-contact.ts',
+        'src/client/contacts/group-contact.ts',
+        'src/client/contacts/group-member-contact.ts',
+      ].includes(to)
       ? undefined
-      : 'Message events bind captured reply inputs to injected client operations, without acquiring lifecycle or native resources.';
+      : 'Live event declarations combine passive DTOs and contact types without runtime or lifecycle composition.';
+  if (to === 'src/client/events.ts')
+    return typeOnly &&
+      [
+        'src/types.ts',
+        'src/client/qq-client.ts',
+        'src/client/message-event.ts',
+        'src/client/request-event.ts',
+        'src/client/client-event-presentation.ts',
+      ].includes(from)
+      ? undefined
+      : 'Only public type exports and client event owners depend on live event declarations.';
+  if (from === 'src/client/message-event.ts')
+    return (typeOnly &&
+      ['src/contracts/messages.ts', 'src/client/contacts/contact-context.ts'].includes(to)) ||
+      (!typeOnly &&
+        [
+          'src/features/messages/send-input.ts',
+          'src/client/contacts/friend-contact.ts',
+          'src/client/contacts/group-contact.ts',
+          'src/client/contacts/group-member-contact.ts',
+        ].includes(to))
+      ? undefined
+      : 'Message events capture input and bind contacts to an injected session capability, without lifecycle or native resources.';
   if (from === 'src/client/message-segment.ts')
     return typeOnly && to === 'src/contracts/messages.ts'
       ? undefined
@@ -488,13 +514,7 @@ export function dependencyViolation({ from, to, typeOnly }: SourceDependency): s
       ? undefined
       : 'Only the public client binds reply capabilities to live message events.';
   if (from === 'src/client/client-event-presentation.ts')
-    return typeOnly &&
-      [
-        'src/contracts/native.ts',
-        'src/contracts/messages.ts',
-        'src/contracts/contacts.ts',
-        'src/contracts/groups.ts',
-      ].includes(to)
+    return typeOnly && to === 'src/contracts/native.ts'
       ? undefined
       : 'Client event presentation owns only delivery and shape audit; it cannot acquire lifecycle or native resources.';
   if (to === 'src/client/client-event-presentation.ts')

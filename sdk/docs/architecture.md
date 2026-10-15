@@ -40,7 +40,8 @@ Native composition -> domain adapters + shared request/event lifetime
 Domain adapters -> same domain + exact reviewed cross-domain pairs + typed ports
 Bundle management -> native modules + storage
 Storage -> storage + public primitives
-Public contracts -> exact reviewed type-only contract dependencies
+Passive public contracts -> exact reviewed type-only contract dependencies
+Live event declarations -> passive contracts + contact types
 ```
 
 The executable dependency policy includes type-only edges. Every source file must
@@ -92,7 +93,8 @@ and real callers; similar method names alone do not establish that need.
 | `src/native/native-directory-verification.ts`              | Read-only integrity verification of an already selected local/npm inventory.                                                                                |
 | `src/storage/`                                             | Process/account-directory ownership and locking.                                                                                                            |
 | `src/validation/`                                          | Shared pure identity rules; native field-width limits remain with the specific operation.                                                                   |
-| `src/contracts/`                                           | Public DTOs owned by client, contacts, groups, messages, forward, native and event domains.                                                                 |
+| `src/client/events.ts`                                     | Declaration-only live events and their table; combines passive data with session-bound contact types.                                                       |
+| `src/contracts/`                                           | Passive public data owned by client, contacts, groups, messages, forward, native and diagnostics domains.                                                   |
 | `src/types.ts`, `src/errors.ts`                            | Compatibility type exports and public errors. Contracts do not import implementation modules.                                                               |
 | `test/`                                                    | Deterministic regression fixtures, including worker substitution.                                                                                           |
 | `scripts/`                                                 | Build/release entry points and separately authorized account acceptance executors.                                                                          |
@@ -205,13 +207,26 @@ Feature modules may depend on public contracts and narrow native/runtime ports.
 They do not import the public Client or compose other account sessions. Relative
 internal paths are private; only the package root and CLI are public entry points.
 
-Each public DTO has one declaration in `src/contracts/`. Internal modules import
-their needed domains directly; `types.ts` only reexports them for compatibility
-through the package root. The event table composes domain DTOs, and domains never
-depend back on that table. Forward submission receipts depend on message receipts;
-received forward elements belong to the message contract, avoiding a type cycle.
-Only the client contract depends on native bundle version metadata. These exact
-type dependencies are checked rather than opening all contract domains to each other.
+Each passive public DTO has one declaration in `src/contracts/`. Live message and
+request-event declarations plus `ClientEvents` belong to `client/events.ts`,
+which combines those DTOs with contact types through type-only imports. Neither
+contracts nor contact implementations depend on live event declarations. This
+keeps the message-data → contact → message-data cycle out of the type graph.
+`types.ts` reexports both owners for compatibility through the package root;
+internal modules import the owning module directly. Runtime lifecycle events
+retain their narrow internal tuple union and do not depend on public live events.
+Forward submission receipts depend on message receipts; received forward elements
+belong to the message contract. Only the client contract depends on native bundle
+metadata. These exact type dependencies are checked, including erased imports.
+
+Message presentation captures text and contact identities from own data descriptors
+before observers run. Text preserves the order and whitespace of text elements;
+it does not synthesize descriptions of media. The general event exposes its
+conversation; specific aliases expose friend or group/member contacts. These
+objects use the same captured session capability as reply, without holding the
+client itself. They are non-enumerable and immutable; raw, sender and element DTO
+references retain their existing semantics. Account replacement during input
+inspection cannot grant the resulting event access to the replacement account.
 
 Contracts contain only interfaces, type aliases and type-only imports/exports.
 They do not create objects, load native code, execute IO or define concrete classes.

@@ -105,6 +105,26 @@ declare const groupEvent: ClientEvents['message.group'][0];
 declare const privateEvent: ClientEvents['message.private'][0];
 const groupId: string = groupEvent.peer.groupId;
 const privateId: string = privateEvent.peer.userId;
+const capturedText: string = liveMessage.text;
+const capturedConversation: import('qq-native-client').FriendContact | import('qq-native-client').GroupContact = liveMessage.conversation;
+const capturedFriend: import('qq-native-client').FriendContact = privateEvent.friend;
+const capturedGroup: import('qq-native-client').GroupContact = groupEvent.group;
+const capturedMember: import('qq-native-client').GroupMemberContact = groupEvent.member;
+const groupConversation: import('qq-native-client').GroupContact = groupEvent.conversation;
+const privateConversation: import('qq-native-client').FriendContact = privateEvent.conversation;
+const eventConversationSend: Promise<SentMessage> = liveMessage.conversation.sendMessage('hello');
+const eventMemberProfile: Promise<UserProfile> = groupEvent.member.getProfile();
+// @ts-expect-error Observers cannot replace captured text.
+liveMessage.text = 'altered';
+// @ts-expect-error Observers cannot redirect an event capability.
+groupEvent.group = groupConversation;
+// @ts-expect-error Private events do not expose group operations.
+privateEvent.group;
+// @ts-expect-error Group events do not imply a private relationship.
+groupEvent.friend;
+// @ts-expect-error General event handlers must select a precise alias for member operations.
+liveMessage.member;
+void [capturedText, capturedConversation, capturedFriend, capturedGroup, capturedMember, groupConversation, privateConversation, eventConversationSend, eventMemberProfile];
 const typedGroup: GroupMessageEvent = groupEvent;
 const typedPrivate: PrivateMessageEvent = privateEvent;
 // @ts-expect-error Group event routing cannot expose a private destination.

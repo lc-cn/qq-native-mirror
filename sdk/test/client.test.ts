@@ -300,17 +300,27 @@ test('two client instances isolate identical RPC IDs, messages and account termi
     const leftMessage = {
       messageId: 'same-id',
       account: 'left',
+      sequence: '1',
+      time: 1,
+      sender: { userId: '789', uid: 'u_peer', nickname: 'peer' },
+      elements: [{ type: 'text', text: 'left' }],
+      raw: {},
       peer: { type: 'private', userId: '789' },
     };
     const rightMessage = {
       messageId: 'same-id',
       account: 'right',
+      sequence: '1',
+      time: 1,
+      sender: { userId: '789', uid: 'u_peer', nickname: 'peer' },
+      elements: [{ type: 'text', text: 'right' }],
+      raw: {},
       peer: { type: 'group', groupId: '789' },
     };
     leftWorker.emit('message', { event: 'message', payload: leftMessage });
     rightWorker.emit('message', { event: 'message', payload: rightMessage });
-    assert.deepEqual(leftMessages, [leftMessage]);
-    assert.deepEqual(rightMessages, [rightMessage]);
+    assert.deepEqual(leftMessages, [{ ...leftMessage, text: 'left' }]);
+    assert.deepEqual(rightMessages, [{ ...rightMessage, text: 'right' }]);
     leftWorker.emit('message', {
       event: 'kicked',
       payload: { source: 'kicked', kind: 'forced', retryable: false, args: [] },

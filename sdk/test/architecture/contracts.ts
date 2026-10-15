@@ -47,7 +47,9 @@ test('package entry contains only public reexports', () => {
 
 test('public contracts contain declarations only, including newly added domain files', () => {
   for (const path of files.filter(
-    (path) => label(path).startsWith('src/contracts/') || label(path) === 'src/types.ts',
+    (path) =>
+      label(path).startsWith('src/contracts/') ||
+      ['src/types.ts', 'src/client/events.ts'].includes(label(path)),
   )) {
     const tree = ts.createSourceFile(
       path,
@@ -92,7 +94,10 @@ test('public contract type dependencies have no cycles', () => {
     active.delete(path);
     complete.add(path);
   }
-  for (const path of files.filter((path) => label(path).startsWith('src/contracts/'))) walk(path);
+  for (const path of files.filter(
+    (path) => label(path).startsWith('src/contracts/') || label(path) === 'src/client/events.ts',
+  ))
+    walk(path);
 });
 
 test('outbound native contracts own closed data declarations and their reviewed peer type', () => {
@@ -299,4 +304,33 @@ test('native export publisher gate rejects namespace and public reexport bypasse
       "import { completeClientInitialization as publish } from './qq-client.ts'; export { publish as initialize }; ",
     ).length > 0,
   );
+});
+
+test('live event declarations cannot pull passive contracts or runtime into the client layer', () => {
+  const live = 'src/client/events.ts';
+  for (const typeOnly of [true, false]) {
+    for (const from of [
+      'src/contracts/messages.ts',
+      'src/contracts/diagnostics.ts',
+      'src/contracts/contacts.ts',
+      'src/contracts/groups.ts',
+      'src/runtime/client-lifecycle.ts',
+      'src/client/contacts/group-contact.ts',
+    ])
+      assert.ok(dependencyViolation({ from, to: live, typeOnly }));
+    for (const to of [
+      'src/runtime/client-lifecycle.ts',
+      'src/client/qq-client.ts',
+      'src/native-services.ts',
+    ])
+      assert.ok(dependencyViolation({ from: live, to, typeOnly }));
+  }
+  for (const to of [
+    'src/client/contacts/friend-contact.ts',
+    'src/client/contacts/group-contact.ts',
+    'src/client/contacts/group-member-contact.ts',
+  ]) {
+    assert.equal(dependencyViolation({ from: live, to, typeOnly: true }), undefined);
+    assert.ok(dependencyViolation({ from: live, to, typeOnly: false }));
+  }
 });

@@ -15,10 +15,12 @@ import type {
   ClientEvents,
   ClientState,
   Account,
+  MessageElement,
   MessageEvent,
   MessageInput,
 } from '../src/types.ts';
 import { createMessageEvent } from '../src/client/message-event.ts';
+import type { OperationCall, OperationResult } from '../src/runtime/operation-contracts.ts';
 const account: Account = { uin: '123', uid: 'self' };
 function deferred<T>() {
   let resolve!: (value: T) => void;
@@ -72,7 +74,12 @@ const config: DemoConfig = {
   loadContacts: false,
 };
 const tick = () => new Promise<void>((resolve) => setImmediate(resolve));
-function message(id: string, client: Client, group = false): MessageEvent {
+function message(
+  id: string,
+  client: Client,
+  group = false,
+  elements: MessageElement[] = [{ type: 'text', text: ' ping ' }],
+): MessageEvent {
   const event = createMessageEvent(
     {
       messageId:
@@ -94,15 +101,25 @@ function message(id: string, client: Client, group = false): MessageEvent {
         ? { type: 'group', groupId: '456' }
         : { type: 'private', userId: id === 'denied' ? '999' : '789' },
       sender: { userId: '789', uid: 'other', nickname: 'fixture' },
-      elements: [{ type: 'text', text: ' ping ' }],
+      elements,
       raw: null,
     },
     {
       assertActive() {
         if (client.state !== 'online') throw Error('offline');
       },
-      sendPrivateMessage: (id, input) => client.sendPrivateMessage(id, input),
-      sendGroupMessage: (id, input) => client.sendGroupMessage(id, input),
+      invoke<C extends OperationCall>(...command: C): Promise<OperationResult<C[0]>> {
+        const [operation, payload] = command;
+        if (operation === 'sendPrivateMessage')
+          return client.sendPrivateMessage(payload.userId, payload.message) as Promise<
+            OperationResult<C[0]>
+          >;
+        if (operation === 'sendGroupMessage')
+          return client.sendGroupMessage(payload.groupId, payload.message) as Promise<
+            OperationResult<C[0]>
+          >;
+        assert.fail(`Unexpected demo operation: ${operation}`);
+      },
     },
   );
   assert.ok(event);
@@ -179,8 +196,7 @@ test('self history duplicate keyword cooldown whitelist and offline suppress sen
   const old = message('old', h.client);
   old.time = 1;
   h.client.emit('message', old);
-  const keyword = message('keyword', h.client);
-  keyword.elements = [{ type: 'text', text: 'ping!' }];
+  const keyword = message('keyword', h.client, false, [{ type: 'text', text: 'ping!' }]);
   h.client.emit('message', keyword);
   const denied = message('denied', h.client);
   h.client.emit('message', denied);
@@ -196,6 +212,108 @@ test('self history duplicate keyword cooldown whitelist and offline suppress sen
   assert.equal(h.client.sends.length, 2);
   h.controller.abort();
   await h.run;
+});
+test('duplicate readiness preserves reply deduplication, cooldown and the original online log', async (t) => {
+  const h = harness();
+  t.after(async () => {
+    h.controller.abort();
+    await h.run;
+  });
+  await tick();
+  h.client.state = 'online';
+  h.client.emit('ready', account);
+  h.client.loginResult.resolve(account);
+  await tick();
+  h.client.emit('message', message('201', h.client));
+  assert.equal(h.client.sends.length, 1);
+
+  h.setTime(100001);
+  h.client.emit('ready', { ...account });
+  h.client.emit('message', message('201', h.client));
+  h.client.emit('message', message('202', h.client));
+  assert.equal(h.client.sends.length, 1, 'readiness cannot reset the current cooldown');
+
+  h.setTime(103000);
+  h.client.emit('ready', { ...account });
+  h.client.emit('message', message('201', h.client));
+  assert.equal(h.client.sends.length, 1, 'an older ID remains seen after cooldown expires');
+  h.client.emit('message', message('203', h.client));
+  assert.equal(h.client.sends.length, 2, 'a new message is eligible after the original cooldown');
+  assert.equal(h.logs.filter((line) => line.startsWith('已上线：')).length, 1);
+});
+test('keyword matching uses captured event text without rereading mutable elements', async (t) => {
+  const h = harness();
+  t.after(async () => {
+    h.controller.abort();
+    await h.run;
+  });
+  await tick();
+  h.client.state = 'online';
+  h.client.emit('ready', account);
+  h.client.loginResult.resolve(account);
+  await tick();
+  const accepted = message('204', h.client);
+  Object.defineProperty(accepted, 'elements', {
+    get: () => assert.fail('reply policy must use the captured text'),
+  });
+  h.client.emit('message', accepted);
+  assert.equal(h.client.sends.length, 1);
+  h.setTime(103000);
+  const rejected = message('205', h.client, false, [{ type: 'text', text: 'ping!' }]);
+  rejected.elements = [{ type: 'text', text: 'ping' }];
+  h.client.emit('message', rejected);
+  assert.equal(h.client.sends.length, 1, 'mutable elements cannot change the captured keyword');
+});
+test('same-account restoration after offline starts a new reply window and logs once', async (t) => {
+  const h = harness();
+  t.after(async () => {
+    h.controller.abort();
+    await h.run;
+  });
+  await tick();
+  h.client.state = 'online';
+  h.client.emit('ready', account);
+  h.client.loginResult.resolve(account);
+  await tick();
+  h.client.emit('message', message('201', h.client));
+  assert.equal(h.client.sends.length, 1);
+  h.client.state = 'disconnected';
+  const offline = { source: 'login', kind: 'transport', retryable: false, args: [] } as const;
+  h.client.emit('offline', { ...offline, args: [] });
+  h.client.emit('disconnected', { ...offline, args: [] });
+  h.client.emit('message', message('202', h.client));
+  assert.equal(h.client.sends.length, 1);
+
+  h.setTime(100001);
+  h.client.state = 'online';
+  h.client.emit('ready', { ...account });
+  h.client.emit('ready', { ...account });
+  h.client.emit('message', message('201', h.client));
+  assert.equal(h.client.sends.length, 2, 'same identity has a fresh window after real retirement');
+  assert.equal(h.logs.filter((line) => line.startsWith('已上线：')).length, 2);
+  assert.equal(h.logs.filter((line) => line.startsWith('账号已离线')).length, 1);
+});
+test('a changed UIN or UID starts a new reply window without merging distinct identities', async (t) => {
+  const h = harness();
+  t.after(async () => {
+    h.controller.abort();
+    await h.run;
+  });
+  await tick();
+  h.client.state = 'online';
+  h.client.emit('ready', account);
+  h.client.loginResult.resolve(account);
+  await tick();
+  h.client.emit('message', message('201', h.client));
+  for (const identity of [
+    { ...account, uin: '0123' },
+    { uin: '0123', uid: 'other_self' },
+  ]) {
+    h.client.emit('ready', identity);
+    h.client.emit('message', message('201', h.client));
+  }
+  assert.equal(h.client.sends.length, 3);
+  assert.equal(h.logs.filter((line) => line.startsWith('已上线：')).length, 3);
 });
 test('abort while factory loads closes late client once without login', async () => {
   const client = new Client(),

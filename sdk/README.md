@@ -100,19 +100,28 @@ See [lifecycle and errors](docs/architecture.md#lifecycle-and-error-contracts).
 `reply(content, quote = false): Promise<SentMessage>`. It sends to the captured
 conversation; `true` adds a reply element for the original message.
 
-`message.private` receives `PrivateMessageEvent` with `peer.userId`;
-`message.group` receives `GroupMessageEvent` with `peer.groupId`. The general
-event and its alias share one event object. Its `peer` is a detached, frozen
-snapshot and cannot be replaced; routing stays consistent with its type and
-reply destination. Malformed worker conversation data produces a diagnostic
-instead of a typed message event. Other message fields retain their existing
-snapshot/reference semantics.
+Every live message has immutable `text`, made by joining its text elements in
+order without trimming or inserting media labels. Use `message.text.trim()` for
+keyword matching. `conversation` exposes the captured private or group contact.
+
+`message.private` receives `PrivateMessageEvent` with `peer.userId` and `friend`;
+`message.group` receives `GroupMessageEvent` with `peer.groupId`, `group` and
+`member`. For example, `event.group.files.list()` reads that group's files and
+`event.member.getProfile()` queries the captured sender. Contact objects do not
+assert friendship, membership or permission and share the event's session lifetime.
+
+The general event and its alias share one object. Its `peer` is a detached,
+frozen snapshot; `text` and contact properties cannot be replaced. Later changes
+to `sender` or `elements` cannot change those captured values or reply routing.
+Contact objects and `reply` are non-enumerable, so JSON output remains message
+data. Malformed worker conversation/member identities produce a diagnostic
+instead of an actionable event. Other message fields retain their existing
+snapshot/reference semantics; history/query results remain passive `Message` DTOs.
 
 ```ts
 client.on('message', (message) => {
   if (message.sender.userId === client.account?.uin) return;
-  if (!message.elements.some((element) => element.type === 'text' && element.text === 'ping'))
-    return;
+  if (message.text.trim() !== 'ping') return;
   message.reply('pong', true).catch((error) => console.error(error.message));
 });
 ```

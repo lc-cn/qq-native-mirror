@@ -1,7 +1,5 @@
 import type { NativeCallbackAudit } from '../contracts/native.ts';
-import type { MessageEvent } from '../contracts/messages.ts';
-import type { FriendRequestEvent } from '../contracts/contacts.ts';
-import type { GroupRequestEvent } from '../contracts/groups.ts';
+import type { MessageEvent, FriendRequestEvent, GroupRequestEvent } from './events.ts';
 
 /** A property view for the existing worker event presentation. These fields are
  * checked where interpreted; the original opaque payload is still forwarded.

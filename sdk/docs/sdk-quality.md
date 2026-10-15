@@ -121,3 +121,29 @@ CI consumer; remote execution for this revision remains outstanding.
 
 Native capability gaps, cross-platform account acceptance, signing authenticity
 and publication retain their separate completion requirements above.
+
+The fourth iteration makes received messages directly usable in bot handlers:
+`text` captures ordered text elements, `conversation` exposes the selected peer,
+and private/group aliases add `friend` or `group`/`member`. These identities and
+capabilities are immutable and share the receiving session. DTO mutations cannot
+redirect them; a session replacement during descriptor inspection still retires
+all captured actions. Capabilities stay out of JSON, while `text` is enumerable.
+The keyword demo consumes captured text and preserves deduplication, cooldown and
+its online window across repeated readiness for the same account. A real offline
+transition or changed account starts a fresh window.
+
+Live event declarations now belong to `client/events.ts`; passive contracts and
+`contracts/diagnostics.ts` have no dependency on client implementations. Public
+names remain available from the package root. Architecture checks cover type-only
+edges and cycles, and the installed declaration consumer verifies precise alias
+contacts, readonly fields and the passive history-message contract.
+
+The final local `npm run check` passed on 2026-10-15: 2,459 SDK tests, 88 tool
+tests, formatting, zero-warning lint, strict typing, clean build and the actual
+packed/installed consumer. Its new `installedMessageContacts` and
+`installedCapturedMessageText` checks passed alongside the existing lifecycle,
+resource, CLI and public-type checks. This iteration also integrates the pinned
+Linux video-codec CI build baseline and measured ELF requirements. The build
+container is a CI dependency, not an SDK runtime requirement; the changed workflow
+has local tool-test coverage but no new remote build or published artifact proof.
+No real-account login, native message send or management operation was performed.

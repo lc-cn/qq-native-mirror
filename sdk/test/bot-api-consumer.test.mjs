@@ -8,5 +8,7 @@ await test('public bot APIs compose messages, immutable routing and session-boun
     installedMessageComposition: true,
     installedImmutableMessageRouting: true,
     installedRequestApprovalLifetime: true,
+    installedMessageContacts: true,
+    installedCapturedMessageText: true,
   });
 });

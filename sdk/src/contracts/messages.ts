@@ -45,26 +45,6 @@ export interface Message extends SentMessage {
   raw: unknown;
 }
 
-/** A received event bound to its original client session and conversation. */
-export interface MessageEvent extends Message {
-  /** Captured routing is immutable; modifying the source DTO cannot redirect an event. */
-  readonly peer: Readonly<Peer>;
-  /** Reply in this conversation. Set quote to true to quote this message (default false).
-   * Offline, closed or replaced sessions reject; sends are never automatically replayed.
-   */
-  readonly reply: (content: MessageInput, quote?: boolean) => Promise<SentMessage>;
-}
-
-/** A live private message with a directly addressable private conversation. */
-export interface PrivateMessageEvent extends MessageEvent {
-  readonly peer: Readonly<Extract<Peer, { type: 'private' }>>;
-}
-
-/** A live group message with a directly addressable group conversation. */
-export interface GroupMessageEvent extends MessageEvent {
-  readonly peer: Readonly<Extract<Peer, { type: 'group' }>>;
-}
-
 /** Passive recall metadata. The native timestamp string's unit and operator are unverified. */
 export interface MessageRecall {
   peer: Peer;

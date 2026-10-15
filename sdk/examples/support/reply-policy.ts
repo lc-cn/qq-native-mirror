@@ -1,4 +1,4 @@
-import type { Account, ClientState, Message } from 'qq-native-client';
+import type { Account, ClientState, MessageEvent } from 'qq-native-client';
 import type { DemoConfig } from './config.ts';
 
 /** Reply eligibility for this manual session; it never sends or retries messages. */
@@ -19,6 +19,10 @@ export class ReplyPolicy {
     return this.#account !== undefined;
   }
   ready = (account: Account): void => {
+    // Duplicate readiness belongs to the same online window. An actual offline
+    // transition clears this identity, so restoring the same account starts anew.
+    const previous = this.#account;
+    if (previous && previous.uin === account.uin && previous.uid === account.uid) return;
     this.#account = { ...account };
     this.#readyAt = this.now();
     this.#seen.clear();
@@ -34,7 +38,7 @@ export class ReplyPolicy {
   clear(): void {
     this.#account = undefined;
   }
-  accepts(message: Message, state: ClientState): boolean {
+  accepts(message: MessageEvent, state: ClientState): boolean {
     const account = this.#account;
     if (!account || state !== 'online') return false;
     if (
@@ -44,11 +48,7 @@ export class ReplyPolicy {
       return false;
     const timestamp = message.time >= 1e12 ? message.time : message.time * 1000;
     if (!Number.isFinite(timestamp) || timestamp < this.#readyAt - 5000) return false;
-    const content = message.elements
-      .filter((element) => element.type === 'text')
-      .map((element) => element.text)
-      .join('')
-      .trim();
+    const content = message.text.trim();
     if (content !== this.config.keyword) return false;
     const peer = message.peer;
     if (

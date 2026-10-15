@@ -55,7 +55,7 @@ import {
 import { EventEmitter } from 'node:events';
 import type { ChildProcess } from 'node:child_process';
 import type { Account, ClientOptions, LoginRequest, ClientState } from '../contracts/client.ts';
-import type { ClientEvents } from '../contracts/events.ts';
+import type { ClientEvents } from './events.ts';
 import type {
   Friend,
   FriendCategory,
@@ -141,12 +141,7 @@ export class QQClient extends EventEmitter<ClientEvents> {
     this.#events = createClientEventPresentation(
       (event, payload) => Reflect.apply(this.emit, this, [event, payload]),
       {
-        message: (value) =>
-          createMessageEvent(value, {
-            assertActive: captureEventGuard(),
-            sendPrivateMessage: (userId, input) => this.sendPrivateMessage(userId, input),
-            sendGroupMessage: (groupId, input) => this.sendGroupMessage(groupId, input),
-          }),
+        message: (value) => createMessageEvent(value, this.#operationContext(captureEventGuard())),
         friendRequest: (value) =>
           createFriendRequestEvent(value, {
             assertActive: captureEventGuard(),
@@ -227,6 +222,9 @@ export class QQClient extends EventEmitter<ClientEvents> {
   #contactContext(): ContactContext {
     const assertActive = this.#lifecycle.captureOnlineOperationGuard();
     assertActive();
+    return this.#operationContext(assertActive);
+  }
+  #operationContext(assertActive: () => void): ContactContext {
     return Object.freeze({
       assertActive,
       invoke: <C extends OperationCall>(...command: C): Promise<OperationResult<C[0]>> => {

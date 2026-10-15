@@ -6,12 +6,12 @@ import { withCleanupFailure } from './cleanup.ts';
 import { deserializeKernelError, KernelRequestError, normalizeKernelError } from '../errors.ts';
 import { normalizeLoginRequest } from '../native/login-request.ts';
 import type { Account, ClientOptions, ClientState, LoginRequest } from '../contracts/client.ts';
-import type { ClientEvents } from '../contracts/events.ts';
 
 /** SDK-produced events with guaranteed payload types. Worker events remain unknown. */
-export type ClientLifecycleEvent = {
-  [Name in 'state' | 'log' | 'terminated']: [event: Name, ...payload: ClientEvents[Name]];
-}['state' | 'log' | 'terminated'];
+export type ClientLifecycleEvent =
+  | [event: 'state', state: ClientState]
+  | [event: 'log', entry: { stream: 'stdout' | 'stderr'; text: string }]
+  | [event: 'terminated', error: Error];
 
 export interface ClientLifecycleContext {
   worker: ChildProcess;

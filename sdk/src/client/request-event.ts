@@ -1,5 +1,6 @@
-import type { FriendRequest, FriendRequestEvent } from '../contracts/contacts.ts';
-import type { GroupRequest, GroupRequestEvent } from '../contracts/groups.ts';
+import type { FriendRequestEvent, GroupRequestEvent } from './events.ts';
+import type { FriendRequest } from '../contracts/contacts.ts';
+import type { GroupRequest } from '../contracts/groups.ts';
 import { captureFriendRequest } from '../features/contacts/friend-request-input.ts';
 import { captureGroupRequestOperation } from '../features/groups/group-request-input.ts';
 

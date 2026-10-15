@@ -455,8 +455,8 @@ test('client event presentation has one composer and no lifecycle, native or IO 
   const edges = graph.get(join(projectRoot, presentation))!;
   assert.deepEqual(
     edges.map(({ target, typeOnly }) => ({ target, typeOnly })),
-    ['native', 'messages', 'contacts', 'groups'].map((domain) => ({
-      target: join(projectRoot, `src/contracts/${domain}.ts`),
+    ['src/contracts/native.ts', 'src/client/events.ts'].map((owner) => ({
+      target: join(projectRoot, owner),
       typeOnly: true,
     })),
   );
@@ -479,7 +479,7 @@ test('client event presentation has one composer and no lifecycle, native or IO 
       'src/native/native-object.ts',
       'src/native/native-package.ts',
       'src/client/qq-client.ts',
-      'src/contracts/events.ts',
+      'src/contracts/diagnostics.ts',
       'node:fs',
     ])
       assert.ok(dependencyViolation({ from: presentation, to, typeOnly }));
@@ -495,7 +495,13 @@ test('message event replies have one client binder and only captured input depen
     graph.get(join(projectRoot, owner))!.map(({ target, typeOnly }) => ({ target, typeOnly })),
     [
       { target: join(projectRoot, 'src/contracts/messages.ts'), typeOnly: true },
+      { target: join(projectRoot, 'src/client/events.ts'), typeOnly: true },
       { target: join(projectRoot, 'src/features/messages/send-input.ts'), typeOnly: false },
+      { target: join(projectRoot, 'src/client/contacts/contact-context.ts'), typeOnly: true },
+      ...['friend-contact', 'group-contact', 'group-member-contact'].map((name) => ({
+        target: join(projectRoot, `src/client/contacts/${name}.ts`),
+        typeOnly: false,
+      })),
     ],
   );
   assert.equal(

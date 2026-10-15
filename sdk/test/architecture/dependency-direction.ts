@@ -207,7 +207,7 @@ test('dependency policy rejects reverse, type-only and new cross-domain coupling
     ['src/native-services.ts', 'src/client/create-client.ts'],
     ['src/unowned.ts', 'src/runtime/client-lifecycle.ts'],
     ['src/contracts/groups.ts', 'src/features/groups/group-queries.ts'],
-    ['src/contracts/groups.ts', 'src/contracts/events.ts'],
+    ['src/contracts/groups.ts', 'src/contracts/diagnostics.ts'],
     ['src/contracts/messages.ts', 'src/contracts/forward.ts'],
     ['src/contracts/new-domain.ts', 'src/contracts/client.ts'],
     ['src/contracts/client.ts', 'src/index.ts'],
