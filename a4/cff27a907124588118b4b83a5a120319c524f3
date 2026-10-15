@@ -1,0 +1,23 @@
+sdk/test/features/contacts/friend-event-capture.test.ts
+  s_2104cc474f1ce5::t_ec79997d78adae 51-146
+  s_2104cc474f1ce5::t_e0ac1dc7ee034e 1-50
+  s_2104cc474f1ce5::t_3f475533965580 147-161
+sdk/src/features/contacts/friend-events.ts
+  s_2104cc474f1ce5::t_2f417c77b5ceb3 17-36,39-42,44-48,51-55,61-65,67-73,76,79-81,88-92,94-95
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a4cff27a907124588118b4b83a5a120319c524f3",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
