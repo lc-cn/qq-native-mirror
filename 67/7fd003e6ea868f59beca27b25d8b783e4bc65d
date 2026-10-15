@@ -1,0 +1,39 @@
+sdk/src/cli.ts
+  s_2104cc474f1ce5::t_d53ec234cc50cc 27,86,149-153,155
+sdk/src/cli/client-command.ts
+  s_2104cc474f1ce5::t_d53ec234cc50cc 97-98,119-120,124-127,132,175-184,219
+  s_2104cc474f1ce5::t_8475eba084b00d 128-130
+  s_2104cc474f1ce5::t_4058b44e6ef3b7 185-190,218
+sdk/src/cli/command-plan.ts
+  s_2104cc474f1ce5::t_d53ec234cc50cc 32
+sdk/test/cli-prepare.test.ts
+  s_2104cc474f1ce5::t_7d2d475bb7e205 1-205
+  s_2104cc474f1ce5::t_821c37b486a28d 206
+sdk/README.md
+  s_2104cc474f1ce5::t_d53ec234cc50cc 324,336-341
+  s_2104cc474f1ce5::t_ff9d0c711e1120 342
+sdk/scripts/consumers/prepare-cli-consumer-contract.mjs
+  s_2104cc474f1ce5::t_5644812b05f4ca 1-164
+sdk/scripts/consumers/history-lifecycle-consumer-contract.mjs
+  s_2104cc474f1ce5::t_7d2d475bb7e205 5,509
+sdk/test/cli-prepare-consumer.test.mjs
+  s_2104cc474f1ce5::t_5644812b05f4ca 1-14
+sdk/test/cli-client-command.test.ts
+  s_2104cc474f1ce5::t_9c3a3f385792e8 212-232
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "677fd003e6ea868f59beca27b25d8b783e4bc65d",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
