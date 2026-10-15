@@ -1,0 +1,33 @@
+sdk/README.md
+  s_2104cc474f1ce5::t_b382afe7175756 260-263
+sdk/docs/evidence/group-avatar-contract.json
+  s_2104cc474f1ce5::t_0c3df8449a674f 11-16,38,40-41
+sdk/src/native/native-contracts.ts
+  s_2104cc474f1ce5::t_0c3df8449a674f 71-73
+sdk/docs/contacts-groups.md
+  s_2104cc474f1ce5::t_0c3df8449a674f 47-51
+  s_2104cc474f1ce5::t_02df172ec8a201 10
+sdk/test/group-avatar-composition.test.ts
+  s_2104cc474f1ce5::t_bf44f5fc61b84b 67,70-77,80-81,83-129,131-132,135-138,140,143,145-147,150-170,172-173
+  s_2104cc474f1ce5::t_1df59c9e2d04d0 171,174
+  s_2104cc474f1ce5::t_a95c278b566c90 175-178,189
+sdk/docs/sdk-quality.md
+  s_2104cc474f1ce5::t_c9e92d270550f9 187-195
+  s_2104cc474f1ce5::t_fd4391d71ee858 169-186
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "de344a51f247d82e1aa6cca478a682eb3329ad58",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
