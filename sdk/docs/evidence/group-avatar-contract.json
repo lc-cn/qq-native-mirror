@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "operation": "setGroupAvatar",
+  "nativeMethod": "Session.getGroupService().setHeader(groupId, file)",
+  "profiles": [
+    {
+      "platform": "darwin",
+      "arch": "arm64",
+      "clientVersion": "7.0.2-53644",
+      "wrapperSha256": "fbc8ad9b328d05e16784d76b0181dda894c17001179dbf8c0d5dd00dc6271358"
+    }
+  ],
+  "source": {
+    "repository": "https://github.com/NapNeko/NapCatQQ",
+    "commit": "26d7533e0f5800fdff865ab2f2ad7692917e1076",
+    "caller": {
+      "path": "packages/napcat-core/apis/group.ts",
+      "lines": [
+        137,
+        138
+      ]
+    },
+    "declaration": {
+      "path": "packages/napcat-core/services/NodeIKernelGroupService.ts",
+      "lines": [
+        125,
+        125
+      ]
+    }
+  },
+  "verification": {
+    "tier": "static binary contract and independently reviewed source caller",
+    "registration": "The Group service registers setHeader against the inspected wrapper binding.",
+    "receiver": "The normal Session supplier and JavaScript wrapper preserve the concrete Group receiver used by setHeader.",
+    "arguments": [
+      "UTF-8 string converted by base-10 unsigned 64-bit parsing for the group number",
+      "UTF-8 string passed to the operation as the image pathname"
+    ],
+    "callback": "The concrete operation forwards int32 status and UTF-8 error text through the captured callback to the normal promise result codec.",
+    "normalResult": {
+      "result": "int32 number",
+      "errMsg": "string"
+    },
+    "independentReview": true
+  },
+  "sdkPolicy": {
+    "groupId": "positive decimal string within uint64, preserving spelling and precision",
+    "file": "stable absolute local path with no NUL, readable nonempty regular file",
+    "success": "Numeric result zero acknowledges the native operation. It does not prove remote propagation.",
+    "failure": "Nonzero status preserves its numeric code; malformed result rejects. Native errMsg is not exposed.",
+    "retry": "No automatic retry. Timeout or retirement after dispatch may leave the remote effect unknown."
+  },
+  "limitations": [
+    "No native invocation or remote group avatar change has been tested for this operation.",
+    "Queue scheduling, callback timing and every internal transport path were not exhaustively inspected. An unavailable service path can omit the callback.",
+    "Image encoding and size constraints, permissions, server policy and avatar cache propagation remain unverified.",
+    "Other platform/version/hash combinations are unsupported until independently verified."
+  ],
+  "nativeExecuted": false,
+  "accountUsed": false,
+  "remoteEffectVerified": false
+}

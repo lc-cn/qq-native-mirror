@@ -55,6 +55,7 @@ const usage = `qq-native-client <command> [options]
   download --config FILE --kind private|group --target ID --message-id ID --element-id ID --destination FILE
   friend-remark --config FILE --target USER_ID --remark TEXT
   friend-delete --config FILE --target USER_ID [--block true|false] [--both true|false]
+  group-avatar --config FILE --group-id ID --file ABSOLUTE_PATH
   group-name --config FILE --group-id ID --name TEXT
   group-essence-list --config FILE --group-id ID [--page-start 0] [--page-limit 50]
   group-essence-all --config FILE --group-id ID [--max-pages 20]

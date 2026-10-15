@@ -207,3 +207,27 @@ test('category assignment captures target and uint32 before client acquisition',
   } as unknown as QQClient);
   assert.deepEqual(calls, [['00123', 7]]);
 });
+
+test('group avatar CLI snapshots exact local-file intent before account acquisition', async () => {
+  const file = resolve('avatar image.png');
+  const flags = { 'group-id': '00123', file };
+  const action = await prepareCommand('group-avatar', flags);
+  flags['group-id'] = '999';
+  flags.file = resolve('changed.png');
+  const calls: unknown[][] = [];
+  await action({
+    setGroupAvatar: async (...args: unknown[]) => {
+      calls.push(args);
+    },
+  } as unknown as QQClient);
+  assert.deepEqual(calls, [['00123', file]]);
+  await assert.rejects(prepareCommand('group-avatar', { 'group-id': '123' }), /--file is required/);
+  await assert.rejects(
+    prepareCommand('group-avatar', { 'group-id': '123', file: 'relative.png' }),
+    /absolute/,
+  );
+  await assert.rejects(
+    prepareCommand('group-avatar', { 'group-id': '18446744073709551616', file }),
+    /uint64/,
+  );
+});

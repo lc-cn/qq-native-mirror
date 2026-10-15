@@ -17,6 +17,7 @@ type NativeCapability =
   | 'groupFilePages'
   | 'groupFileDeletion'
   | 'groupSearch'
+  | 'groupAvatarSetting'
   | 'groupFolderDeletion'
   | 'groupFolderCreation';
 type BinaryContract = readonly [
@@ -88,6 +89,9 @@ const binaryProfiles: readonly BinaryContract[] = [
       // Carrier shape only: two strings -> result/errMsg/rsp. Wire encoding
       // is unresolved; this fact rejects the incompatible Buffer adapter.
       'stringSsoCarrier',
+      // Exact Group receiver, two-string arguments and normal ACK codec.
+      // See docs/evidence/group-avatar-contract.json; remote effect is unverified.
+      'groupAvatarSetting',
       'categoryCreation',
       'categoryRenaming',
       'categoryDeletion',
@@ -240,6 +244,13 @@ export function supportsGroupSearch(
   version: string,
 ): boolean {
   return matchesContract(profile, version, 'groupSearch');
+}
+
+export function supportsGroupAvatarSetting(
+  profile: NativeContractProfile | undefined,
+  version: string,
+): boolean {
+  return matchesContract(profile, version, 'groupAvatarSetting');
 }
 
 export function supportsGroupFolderDeletion(

@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { ClientWorkerFixture } from './client-worker-fixture.mjs';
@@ -255,5 +256,103 @@ export async function verifyBotApiClient({ QQClient, segment }) {
     installedRequestApprovalLifetime: true,
     installedMessageContacts: true,
     installedCapturedMessageText: true,
+    ...(await verifyGroupAvatarClient(QQClient)),
+  };
+}
+
+/** Exercise the same facade contract against source and packed implementations.
+ * File validation in this layer captures a path; the controlled worker performs
+ * no filesystem/native work and cannot prove profile support or remote effects.
+ * @param {typeof import('../../src/index.ts').QQClient} QQClient */
+async function verifyGroupAvatarClient(QQClient) {
+  const worker = new ClientWorkerFixture();
+  const client = new QQClient(worker, 500);
+  const account = { uin: '123', uid: 'u_self' };
+  const groupId = '00018446744073709551615';
+  const file = join(tmpdir(), 'qq-native-avatar-consumer.png');
+  try {
+    worker.emit('message', { event: 'ready', payload: account });
+    const group = client.pickGroup(groupId);
+    assert.equal(Reflect.set(group, 'groupId', '999'), false);
+    assert.equal(worker.requests.length, 0);
+    assert.equal(await client.setGroupAvatar(groupId, file), undefined);
+    assert.equal(await group.setAvatar(file), undefined);
+    const command = { method: 'setGroupAvatar', groupId, file };
+    assert.deepEqual(
+      worker.requests.map(({ id: _id, ...request }) => request),
+      [command, command],
+    );
+
+    const beforeInvalid = worker.requests.length;
+    for (const invalidId of [
+      '0',
+      '-1',
+      '1e3',
+      ' 789',
+      'u_group',
+      '18446744073709551616',
+      789,
+      null,
+      { toString: () => '789' },
+    ]) {
+      await assert.rejects(async () =>
+        Reflect.apply(client.setGroupAvatar, client, [invalidId, file]),
+      );
+    }
+    for (const invalidFile of [
+      '',
+      'relative.png',
+      'https://example.invalid/avatar.png',
+      `${file}\0suffix`,
+      null,
+      { toString: () => file },
+    ]) {
+      await assert.rejects(async () =>
+        Reflect.apply(client.setGroupAvatar, client, [groupId, invalidFile]),
+      );
+      await assert.rejects(async () => Reflect.apply(group.setAvatar, group, [invalidFile]));
+    }
+    assert.equal(worker.requests.length, beforeInvalid);
+
+    worker.failure = { message: 'controlled avatar failure', code: 73 };
+    const beforeFailure = worker.requests.length;
+    await assert.rejects(client.setGroupAvatar(groupId, file), {
+      operation: 'setGroupAvatar',
+      message: 'controlled avatar failure',
+      code: 73,
+    });
+    await assert.rejects(group.setAvatar(file), {
+      operation: 'setGroupAvatar',
+      message: 'controlled avatar failure',
+      code: 73,
+    });
+    assert.equal(worker.requests.length, beforeFailure + 2);
+    worker.failure = undefined;
+
+    worker.emit('message', { event: 'disconnected', payload: { retryable: false } });
+    const beforeOffline = worker.requests.length;
+    await assert.rejects(group.setAvatar(file), /session|inactive/);
+    assert.equal(worker.requests.length, beforeOffline);
+    worker.emit('message', { event: 'ready', payload: account });
+    await assert.rejects(group.setAvatar(file), /session|inactive/);
+    assert.equal(worker.requests.length, beforeOffline);
+    const restoredGroup = client.pickGroup(groupId);
+    await restoredGroup.setAvatar(file);
+    assert.deepEqual(
+      worker.requests.slice(beforeOffline).map(({ id: _id, ...request }) => request),
+      [command],
+    );
+    await client.close();
+    const afterClose = worker.requests.length;
+    await assert.rejects(restoredGroup.setAvatar(file), /session|inactive|closed/);
+    assert.equal(worker.requests.length, afterClose);
+  } finally {
+    worker.failure = undefined;
+    await client.close();
+  }
+  return {
+    installedGroupAvatarRouting: true,
+    installedGroupAvatarValidation: true,
+    installedGroupAvatarLifetime: true,
   };
 }

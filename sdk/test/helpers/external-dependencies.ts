@@ -19,6 +19,8 @@ export const externalRuntimeDependencies: Readonly<Record<string, readonly strin
   'src/features/forward/long-message-request.ts': ['node:zlib'],
   'src/features/forward/long-message-response.ts': ['node:util'],
   'src/features/forward/merged-forward.ts': ['node:crypto'],
+  'src/features/groups/group-avatar.ts': ['node:fs', 'node:fs/promises'],
+  'src/features/groups/group-avatar-input.ts': ['node:path'],
   'src/features/groups/group-notices.ts': ['node:fs/promises'],
   'src/features/groups/group-notice-input.ts': ['node:path'],
   'src/features/groups/group-system-events.ts': ['node:crypto'],

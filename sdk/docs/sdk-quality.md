@@ -147,3 +147,22 @@ Linux video-codec CI build baseline and measured ELF requirements. The build
 container is a CI dependency, not an SDK runtime requirement; the changed workflow
 has local tool-test coverage but no new remote build or published artifact proof.
 No real-account login, native message send or management operation was performed.
+
+The fifth iteration adds `client.setGroupAvatar()` and `group.setAvatar()`, with
+the same domain input contract available through the `group-avatar` CLI command.
+The worker checks the exact measured native profile before reading a file or
+acquiring the native Group service. The supported contract is currently limited
+to Darwin arm64 7.0.2-53644 and its pinned wrapper hash. Unsupported binaries fail
+explicitly. Input validation, file access, native dispatch and acknowledgement
+have separate ownership; account retirement prevents further dispatch. A five
+second native response deadline releases waiting resources, reports an unknown
+remote effect and never retries a write. Late results remain observed.
+
+The local `npm run check` passed on 2026-10-15 with 2,503 SDK tests and 88 tool
+tests, formatting, zero-warning lint, strict typing, clean build and the actual
+packed/installed consumer. The installed checks cover exact public payloads,
+validation before IPC, native error propagation, retired group objects and CLI
+preflight. The native contract has an independently replayed static evidence
+chain; no native avatar call or real-account mutation was made. Image limits,
+permissions and the remote avatar effect remain unverified, as do the other five
+platform profiles. These changes are local and have not been published to npm.

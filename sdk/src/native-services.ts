@@ -29,6 +29,7 @@ import {
   supportsGroupFileDeletion,
   supportsGroupFolderCreation,
   supportsGroupSearch,
+  supportsGroupAvatarSetting,
   hasStringSsoCarrier,
 } from './native/native-contracts.ts';
 import { createFriendSystemEvents } from './features/contacts/friend-system-events.ts';
@@ -82,6 +83,7 @@ import {
   createGroupEssenceMutations,
   type GroupEssenceMutationContext,
 } from './features/groups/group-essence.ts';
+import { createGroupAvatar, type GroupAvatarContext } from './features/groups/group-avatar.ts';
 import { createGroupEventIngress } from './features/groups/group-events.ts';
 import { createGroupQueries, type GroupQueriesContext } from './features/groups/group-queries.ts';
 import { createGroupSystemEvents } from './features/groups/group-system-events.ts';
@@ -124,7 +126,8 @@ export interface NativeServicePorts {
   Group: ServicePort<GroupQueriesContext['getGroupService']> &
     ServicePort<GroupRequestsContext['getGroupService']> &
     ServicePort<GroupNoticesContext['getGroupService']> &
-    ServicePort<GroupOperationsContext['getGroupService']> & {
+    ServicePort<GroupOperationsContext['getGroupService']> &
+    ServicePort<GroupAvatarContext['getGroupService']> & {
       [Method in EssenceMethod]: (request: EssenceRequest) => unknown;
     };
   MSF: ServicePort<NativeMessageSenderContext['getServerTimeService']>;
@@ -385,6 +388,14 @@ export function createNativeServices(context: NativeServiceContext) {
         awaitAlive,
       }),
     );
+    const groupAvatar = own(
+      createGroupAvatar({
+        getGroupService: () => service('Group'),
+        supportsSetting: () => supportsGroupAvatarSetting(nativeContracts, version),
+        signal: lifetime.signal,
+        awaitAlive,
+      }),
+    );
     const groupOperations = createGroupOperations({
       getGroupService: () => service('Group'),
       resolveUid: uidFor,
@@ -576,6 +587,8 @@ export function createNativeServices(context: NativeServiceContext) {
             return groupFiles.deleteGroupFolder(payload.groupId, payload.folderId);
           case 'deleteGroupFile':
             return groupFiles.deleteGroupFile(payload.groupId, payload.fileId);
+          case 'setGroupAvatar':
+            return groupAvatar.setGroupAvatar(payload.groupId, payload.file);
           case 'setGroupName':
             return groupOperations.invokeOperation(method, payload);
           case 'getGroupEssencePage':

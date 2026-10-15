@@ -16,6 +16,7 @@ function help(entry: string) {
   assert.match(result.stdout, /qq-native-client <command>/);
   assert.match(result.stdout, /forward-resource/);
   assert.match(result.stdout, /group-essence/);
+  assert.match(result.stdout, /group-avatar/);
   assert.equal(result.stderr, '');
 }
 function missingResource(entry: string) {
@@ -106,4 +107,20 @@ test('non-file argv during import is caught and cannot invoke CLI main', async (
   } finally {
     await rm(root, { recursive: true, force: true });
   }
+});
+
+test('actual avatar CLI rejects relative image intent before reading account config', () => {
+  const result = invoke(cli, [
+    'group-avatar',
+    '--config',
+    '/does-not-exist.json',
+    '--group-id',
+    '123',
+    '--file',
+    'relative.png',
+  ]);
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /absolute local path/);
+  assert.doesNotMatch(result.stderr, /ENOENT|dlopen|catalog/);
+  assert.equal(result.stdout, '');
 });

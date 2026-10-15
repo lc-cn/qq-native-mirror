@@ -1,3 +1,4 @@
+import { captureSetGroupAvatar } from '../../features/groups/group-avatar-input.ts';
 import type { GroupInfoUpdate, GroupMember, GroupMutedMember } from '../../contracts/groups.ts';
 import type { MessageInput, Peer, SentMessage } from '../../contracts/messages.ts';
 import { captureGroupOperation } from '../../features/groups/group-operation-input.ts';
@@ -57,6 +58,14 @@ export class GroupContact extends ConversationContact<Extract<Peer, { type: 'gro
   async listMutedMembers(): Promise<GroupMutedMember[]> {
     this.assertActive();
     return this.invoke('listGroupMutedMembers', { groupId: this.groupId });
+  }
+
+  /** Submit a stable absolute local image path once. Requires a verified native
+   * profile; native acknowledgement does not confirm remote avatar propagation.
+   */
+  async setAvatar(file: string): Promise<void> {
+    this.assertActive();
+    return this.invoke('setGroupAvatar', captureSetGroupAvatar(this.groupId, file));
   }
 
   async setName(name: string): Promise<void> {

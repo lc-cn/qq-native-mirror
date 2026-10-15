@@ -1,3 +1,4 @@
+import { captureSetGroupAvatar } from '../../features/groups/group-avatar-input.ts';
 import { captureGroupRequestOperation } from '../../features/groups/group-request-input.ts';
 import { resolve } from 'node:path';
 import { captureGroupOperation } from '../../features/groups/group-operation-input.ts';
@@ -84,6 +85,13 @@ export const groupsCommands = {
     prepare(flags) {
       const groupId = numeric(flags, 'group-id');
       return (client) => client.getGroupInfo(groupId);
+    },
+  },
+  'group-avatar': {
+    flags: ['config', 'uin', 'group-id', 'file'],
+    prepare(flags) {
+      const input = captureSetGroupAvatar(required(flags, 'group-id'), required(flags, 'file'));
+      return (client) => client.setGroupAvatar(input.groupId, input.file);
     },
   },
   'group-name': {

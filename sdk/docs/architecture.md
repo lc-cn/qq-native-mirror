@@ -196,6 +196,13 @@ validates text before ticket acquisition, image I/O or dispatch; the worker
 reuses that preflight at its boundary. Resource selection performs no I/O, and a
 retained resource cannot outlive its selecting online session.
 
+`group-avatar-input` owns the uint64 selector and absolute-path rules shared by
+client, contact and CLI. `group-avatar` owns measured-profile gating, file preflight,
+the lazy Group port and one acknowledgement deadline. Composition only binds its
+support decision and lifetime. It does not borrow message-image staging or group-file
+protocols. File preflight uses no retained file handle; timeout/retirement releases
+the SDK wait while observing late native completion without replaying a mutation.
+
 The lifecycle validates and commits an online identity before forwarding either
 `login` or `ready`. Consecutive readiness notifications for the exact same UIN and
 UID preserve that session's contact/reply capabilities. An intervening offline

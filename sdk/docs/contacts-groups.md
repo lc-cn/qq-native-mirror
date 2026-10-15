@@ -7,7 +7,7 @@ These are working-source additions for the next candidate, not published `0.0.1`
 | Friends           | Lists/profiles, remarks/deletion, request listing/handling, `request.friend`, `friend-list-updated`, `friend-added`                                                                                                                                                                                                                                            | Sending applications; independent deleted/profile/remark notices                                                                               |
 | Friend categories | `listFriendCategories`, `addFriendCategory`, `renameFriendCategory` (four measured binaries), `deleteFriendCategory` (three measured macOS ARM64/Linux binaries), `reorderFriendCategories`, `setFriendCategory` (measured Linux x64/ARM64 3.2.32-52194, macOS x64/ARM64 7.0.2-53644 and Windows x64 9.9.33-52230); categorized `friend-list-updated` metadata | Move friends on Windows ARM64; rename/delete/reorder on remaining binaries and real account mutation acceptance require separate verification  |
 | Group queries     | Lists/members/`getGroupInfo`/`listGroupMutedMembers`, `group-list-updated`, `group-members-updated`, `group-info-updated`, `group-membership`, `group-admin`, `group-mute`                                                                                                                                                                                     | Complete join classification and real event/query acceptance                                                                                   |
-| Group actions     | Name/remark, all/member mute, member card/admin/kick, leave, notices, requests, essence add/remove folder deletion acknowledgement and single-group file count                                                                                                                                                                                                 | Create/join/invite, member titles, live essence pagination and add/remove events, remaining group file operations and real mutation acceptance |
+| Group actions     | Avatar (measured macOS ARM64), name/remark, all/member mute, member card/admin/kick, leave, notices, requests, essence add/remove folder deletion acknowledgement and single-group file count                                                                                                                                                                  | Create/join/invite, member titles, live essence pagination and add/remove events, remaining group file operations and real mutation acceptance |
 
 The [group creation investigation](group-creation-research.md) records the current
 fixed-profile binary evidence and the caller/input/security contracts still needed
@@ -23,6 +23,42 @@ const categories = await client.listFriendCategories();
 The query preserves native category order, counts and repeated memberships. Profile lookup deduplicates UIDs; native counts are not replaced with array lengths. Friend account IDs remain strings. Failed/malformed/sparse responses, missing profiles and mismatched identities reject the entire batch. Category membership is captured before profile lookup, and closing interrupts either stage before identity-cache commit. The existing V2 version gate remains in force.
 
 CLI: `qq-native-client friend-categories --config ./qq.json`.
+
+## Group avatars
+
+```ts
+await client.setGroupAvatar('123456', '/absolute/path/avatar.png');
+await client.pickGroup('123456').setAvatar('/absolute/path/avatar.png');
+```
+
+Both methods return `Promise<void>` when the native operation acknowledges with
+numeric `result: 0`. They use the same input policy and never retry. A group
+object stays bound to its original online session, including when retained
+through `event.group`. Select a fresh object after reconnect.
+
+The group ID is a positive decimal string within uint64; spelling and precision
+are preserved. The image must be a stable absolute local path without NUL. The
+worker checks for a readable, nonempty regular file after checking native support
+and before acquiring the native setter. Keep the file unchanged until the call
+settles; preflight does not freeze its bytes. Accepted image formats/sizes and
+role permissions still require real-account validation.
+
+The [static contract record](evidence/group-avatar-contract.json) currently enables
+only the exact macOS ARM64 `7.0.2-53644` wrapper hash. It binds the actual Group
+receiver, argument conversion and normal `{result, errMsg}` callback. Other
+profiles reject with `unsupported-native-contract` before file inspection or
+setter acquisition. Adding a matching method name does not enable a profile.
+
+Nonzero int32 status rejects with its numeric error code. Malformed results reject
+as `invalid-result`; native response wording is not exposed. The native response
+wait has a five-second deadline. Timeout, disconnect or closure after dispatch
+leaves the effect unknown, and a late callback never triggers a retry. Successful
+acknowledgement does not prove the avatar propagated to other clients. No real
+group avatar was changed during deterministic or installed-consumer verification.
+
+CLI: `qq-native-client group-avatar --config ./qq.json --group-id 123456 --file /absolute/path/avatar.png`.
+Arguments are captured before reading account configuration; this command does
+not convert relative paths or download images.
 
 ## Group remarks and detail synchronization
 

@@ -93,6 +93,7 @@ export const serviceFeatureRuntimeDependencies = [
   'src/features/contacts/friend-category-assignment.ts',
   'src/features/contacts/friend-category-mutations.ts',
   'src/features/groups/group-search.ts',
+  'src/features/groups/group-avatar.ts',
   'src/features/groups/files/group-files.ts',
   'src/features/groups/files/group-file-pages.ts',
   'src/features/messages/message-queries.ts',
@@ -122,6 +123,7 @@ export const serviceFeatureTypeDependencies = [
   'src/features/contacts/friend-category-assignment.ts',
   'src/features/contacts/friend-category-mutations.ts',
   'src/features/groups/group-search.ts',
+  'src/features/groups/group-avatar.ts',
   'src/features/groups/files/group-files.ts',
   'src/features/messages/message-queries.ts',
   'src/features/contacts/contact-directory.ts',
@@ -169,6 +171,7 @@ const facadeInputs = new Set([
   'src/features/groups/group-essence-input.ts',
   'src/features/groups/files/group-file-input.ts',
   'src/features/groups/group-search-input.ts',
+  'src/features/groups/group-avatar-input.ts',
   'src/features/groups/group-notice-input.ts',
 ]);
 
@@ -209,6 +212,7 @@ const contactDependencies: Record<string, readonly string[]> = {
     'src/client/contacts/group-files.ts',
     'src/client/contacts/group-essence.ts',
     'src/client/contacts/group-notices.ts',
+    'src/features/groups/group-avatar-input.ts',
     'src/features/groups/group-operation-input.ts',
     'src/features/messages/send-input.ts',
     'src/validation/identifiers.ts',
@@ -316,9 +320,23 @@ export function dependencyViolation({ from, to, typeOnly }: SourceDependency): s
       'src/features/contacts/friend-requests.ts',
       'src/features/groups/files/group-files.ts',
       'src/features/groups/group-requests.ts',
+      'src/features/groups/group-avatar.ts',
     ].includes(from)
       ? undefined
       : 'Feature lifetime requires an exact reviewed local operation owner.';
+  if (from === 'src/features/groups/group-avatar.ts' && to.startsWith('src/'))
+    return !typeOnly &&
+      [
+        'src/features/groups/group-avatar-input.ts',
+        'src/runtime/feature-lifetime.ts',
+        'src/errors.ts',
+      ].includes(to)
+      ? undefined
+      : 'Group avatar owns local-file preflight and one injected native ACK, without acquiring a client, service composition or other protocols.';
+  if (from === 'src/features/groups/group-avatar-input.ts')
+    return !typeOnly && ['src/validation/identifiers.ts', 'node:path'].includes(to)
+      ? undefined
+      : 'Group avatar input captures identifiers and paths without acquiring files or native operations.';
   if (from === 'src/features/forward/forward-input.ts')
     return typeOnly && to === 'src/contracts/messages.ts'
       ? undefined

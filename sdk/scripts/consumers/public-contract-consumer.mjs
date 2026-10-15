@@ -186,6 +186,17 @@ const contactBatch: Promise<(Message | undefined)[]> = friendContact.getMessages
 const memberProfile: Promise<UserProfile> = memberContact.getProfile();
 const selectedMembers: Promise<GroupMember[]> = groupContact.getMembers();
 const selectedMuted: Promise<GroupMutedMember[]> = groupContact.listMutedMembers();
+const groupAvatar: Promise<void> = client.setGroupAvatar('456', '/tmp/avatar.png');
+const selectedGroupAvatar: Promise<void> = groupContact.setAvatar('/tmp/avatar.png');
+// @ts-expect-error Group identities must preserve decimal precision as strings.
+client.setGroupAvatar(456, '/tmp/avatar.png');
+// @ts-expect-error Avatar inputs are local paths, not byte arrays.
+groupContact.setAvatar(new Uint8Array());
+// @ts-expect-error A native avatar acknowledgement is not remote-effect readback.
+const avatarConfirmed: Promise<boolean> = client.setGroupAvatar('456', '/tmp/avatar.png');
+// @ts-expect-error Private contacts do not own group-avatar mutations.
+friendContact.setAvatar('/tmp/avatar.png');
+void [groupAvatar, selectedGroupAvatar];
 const selectedFiles: import('qq-native-client').GroupFiles = groupContact.files;
 const selectedNotices: import('qq-native-client').GroupNotices = groupContact.notices;
 const selectedEssence: import('qq-native-client').GroupEssence = groupContact.essence;

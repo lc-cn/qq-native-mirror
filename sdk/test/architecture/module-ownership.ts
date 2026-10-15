@@ -145,6 +145,7 @@ test('feature lifetime has no dependencies and only reviewed local owners can ac
       'src/features/contacts/friend-requests.ts',
       'src/features/groups/files/group-files.ts',
       'src/features/groups/group-requests.ts',
+      'src/features/groups/group-avatar.ts',
     ])
       assert.equal(dependencyViolation({ from, to: lifetime, typeOnly }), undefined);
     for (const from of [
@@ -532,4 +533,21 @@ test('message event replies have one client binder and only captured input depen
   assert.ok(
     dependencyViolation({ from: owner, to: 'src/features/messages/send-input.ts', typeOnly: true }),
   );
+});
+
+test('group avatar preflight and acknowledgement stay behind their measured feature owner', () => {
+  const owner = 'src/features/groups/group-avatar.ts';
+  const input = 'src/features/groups/group-avatar-input.ts';
+  for (const typeOnly of [true, false]) {
+    for (const to of [
+      'src/native-services.ts',
+      'src/client/qq-client.ts',
+      'src/features/groups/group-operations.ts',
+      'src/features/groups/files/group-file-result.ts',
+    ])
+      assert.ok(dependencyViolation({ from: owner, to, typeOnly }));
+    for (const to of [owner, 'node:fs/promises', 'src/runtime/feature-lifetime.ts'])
+      assert.ok(dependencyViolation({ from: input, to, typeOnly }));
+  }
+  assert.equal(dependencyViolation({ from: owner, to: input, typeOnly: false }), undefined);
 });

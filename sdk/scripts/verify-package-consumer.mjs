@@ -338,9 +338,38 @@ const friendQueryChecks = await verifyFriendQueryConsumer(
   join(destination, 'node_modules/qq-native-client'),
 );
 const help = run(process.execPath, ['node_modules/qq-native-client/dist/cli.js', '--help']);
-if (!help.includes('group-kick') || !help.includes('--message-file'))
+if (
+  !help.includes('group-kick') ||
+  !help.includes('group-avatar') ||
+  !help.includes('--message-file')
+)
   throw new Error('Installed CLI lacks commands');
 const cliEntry = 'node_modules/qq-native-client/dist/cli.js';
+const invalidAvatar = spawnSync(
+  process.execPath,
+  [
+    cliEntry,
+    'group-avatar',
+    '--config',
+    'absent-config.json',
+    '--group-id',
+    '123',
+    '--file',
+    'relative.png',
+  ],
+  {
+    cwd: destination,
+    encoding: 'utf8',
+    timeout: 5000,
+  },
+);
+if (
+  invalidAvatar.status !== 1 ||
+  !invalidAvatar.stderr.includes('absolute local path') ||
+  /ENOENT|dlopen|catalog/.test(invalidAvatar.stderr)
+)
+  throw new Error('Installed avatar CLI did not validate intent before account acquisition');
+
 for (const name of ['constructor', 'toString', '__proto__']) {
   const result = spawnSync(process.execPath, [cliEntry, name, '--config', 'absent-config.json'], {
     cwd: destination,

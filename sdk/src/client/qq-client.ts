@@ -1,3 +1,4 @@
+import { captureSetGroupAvatar } from '../features/groups/group-avatar-input.ts';
 import { createClientEventPresentation } from './client-event-presentation.ts';
 import { createMessageEvent } from './message-event.ts';
 import { createFriendRequestEvent, createGroupRequestEvent } from './request-event.ts';
@@ -460,6 +461,12 @@ export class QQClient extends EventEmitter<ClientEvents> {
       'setGroupRemark',
       captureGroupOperation('setGroupRemark', { groupId: capturedGroupId, remark }).payload,
     );
+  }
+  /** Set an avatar from a stable absolute local file. A verified native profile is
+   * required; acknowledgement does not confirm remote propagation. No retry.
+   */
+  async setGroupAvatar(groupId: string, file: string): Promise<void> {
+    return this.#operation('setGroupAvatar', captureSetGroupAvatar(groupId, file));
   }
   async setGroupName(groupId: string, name: string): Promise<void> {
     return this.#operation(
