@@ -431,3 +431,25 @@ wrong-file run, a missing disassembler and an empty disassembler all reject with
 empty evidence stdout. The two signing-document/tool checks and formatting pass.
 This excluded research tool adds no native/provider, account, signing-authenticity
 or remote CI proof; see the [static summary](evidence/signing-record-pointer-provenance.json).
+
+The separately authorized parent `81738914c633c8e4effc7755860498c3a75ebddd`
+completed all four remote workflows at attempt 1. Its native package workflow
+finished fifteen jobs successfully and skipped publication. The
+[817 artifact audit](evidence/sdk-ci-8173891.json) verifies 9,540,917 bytes of
+twelve complete mirror ZIPs against GitHub digests and checks their main package
+hashes. All 451 common files, including 312 compiled files, agree. All twelve
+mirror receipts report native preparation/close, no login attempt and zero warm
+payload requests; missing fields remain unrecorded.
+
+The native-package audit reads 1,415,266 bounded range bytes across thirty-three
+selected members, including the actual 873,670-byte aggregate main. Six platform
+consumers and the aggregate explicitly pass both CLI `prepare` controlled checks;
+those fields are absent in the twelve mirror receipts. The installed CLI helper
+substitutes its client factory and emits process signals programmatically. It
+does not demonstrate OS signal delivery or cancellation of blocked native code.
+The aggregate consumer is byte-identical to Linux x64 and adds no platform.
+Auxiliary tarball and native manifest hashes remain declarations: their bodies
+were not fetched. Windows runtime/stopping-probe and npm `.cmd` limits remain
+explicit. The archived factory still accepts one options argument; this remote
+proof includes neither the later creation-cancellation implementation nor the new
+record-pointer research tool, and establishes no new account or signing result.

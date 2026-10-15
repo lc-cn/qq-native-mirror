@@ -1,0 +1,1853 @@
+{
+  "schemaVersion": 1,
+  "sourceCommit": "81738914c633c8e4effc7755860498c3a75ebddd",
+  "completedRunSnapshotSha256": "1d8f5aee3e41a2a1f9d164c09cffd3c3ca8a27e5e46accab9663ff2efc771d26",
+  "scope": "CI installation, native preparation/close and controlled SDK contracts for this exact authorized source; no live account feature acceptance",
+  "mirrorRuns": {
+    "default-mirror": {
+      "id": "38713700511",
+      "url": "https://github.com/lc-cn/qq-native-mirror/actions/runs/38713700511",
+      "headSha": "81738914c633c8e4effc7755860498c3a75ebddd",
+      "runAttempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "sourceMode": "current-source"
+    },
+    "multi-version": {
+      "id": "38713705100",
+      "url": "https://github.com/lc-cn/qq-native-mirror/actions/runs/38713705100",
+      "headSha": "81738914c633c8e4effc7755860498c3a75ebddd",
+      "runAttempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "sourceMode": "current-source"
+    }
+  },
+  "mirrorArchiveAudit": {
+    "receiptSha256": "e83699cb0923c820d63654a10123c11a83108e15cbcd37f60f1ff7c44ac0949e",
+    "reviewMethod": {
+      "packageExecutedByAuditor": false,
+      "nativeExecutedByAuditor": false,
+      "networkUsedByAuditor": "Read-only gh downloads and artifact metadata only",
+      "sourceAndRunIdentityCheckedAgainstGithubArtifactMetadata": true,
+      "officialArtifactZipSha256AndExtractedMembersChecked": true,
+      "archiveSha256SizeAndSha512Checked": true,
+      "archivePackageIdentityAndEntrySafetyChecked": true,
+      "allCommonPackageFilesByteIdenticalAcrossTwelveArchives": true,
+      "commonFiles": 451,
+      "commonCompiledFiles": 312,
+      "archiveDifferences": "Only platform registration bridge inclusion; all six multi-version cases share one Linux x64-built main archive. Target native resources are fetched by the tested mirror path."
+    },
+    "download": {
+      "receiptSha256": "91a15dbdca7b22ef38f7d1bfc9f3405f5d9e7c06fa0c6088196db066e36d5313",
+      "actualArtifactZipBytes": 9540917,
+      "artifactCount": 12,
+      "officialZipDigestsVerified": 12,
+      "artifactContentBytesOnly": true,
+      "apiTlsAndHttpOverheadNotCounted": true,
+      "selectedArtifactNames": [
+        "current-source-win32-arm64",
+        "current-source-darwin-x64",
+        "current-source-darwin-arm64",
+        "current-source-win32-x64",
+        "current-source-linux-arm64",
+        "current-source-linux-x64",
+        "version-3.2.31-51102-linux-arm64-legacy-bridge-candidate",
+        "version-3.2.31-51102-linux-arm64-public-default",
+        "version-3.2.32-52194-linux-x64-public-default",
+        "version-3.2.32-52194-linux-arm64-public-default",
+        "version-3.2.31-51102-linux-x64-public-default",
+        "version-3.2.31-51102-linux-x64-legacy-bridge-candidate"
+      ]
+    },
+    "summary": {
+      "defaultPlatformCases": 6,
+      "linuxVersionCases": 6,
+      "linuxVersions": ["3.2.31-51102", "3.2.32-52194"],
+      "linuxArchitectures": ["x64", "arm64"],
+      "allNativePreparedAndClosed": true,
+      "allWarmPayloadRequestsZero": true,
+      "allLoginAttemptedFalse": true,
+      "defaultRestoreAndNativeSendAttemptedFalse": true,
+      "compiledMemberInfoRootContactOptionsRefreshAndCliPresent": true,
+      "compiledPrepareCliRouteAndLoginSuppressionPresent": true,
+      "compiledCreationCancellationPresent": false,
+      "cliPrepareControlledFieldsRecordedInDefaultMirror": 0,
+      "cliPrepareControlledFieldsRecordedInMultiVersion": 0,
+      "compiledGroupRequestParticipantAndUidProfileApisPresent": true,
+      "defaultUidProfileControlledConsumerChecksRecorded": 6,
+      "multiVersionUidProfileControlledConsumerChecksRecorded": 0,
+      "standaloneParticipantConsumerFieldsRecorded": 0,
+      "compiledGroupAvatarRootContactAndCliPresent": true,
+      "avatarAdmittedProfilesInAuditedArtifact": [
+        {
+          "platform": "linux",
+          "arch": "arm64",
+          "clientVersion": "3.2.32-52194",
+          "wrapperSha256": "c302361f52494de257044e912e43ed244bb29ee59f59345d25a8959327828337"
+        },
+        {
+          "platform": "darwin",
+          "arch": "arm64",
+          "clientVersion": "7.0.2-53644",
+          "wrapperSha256": "fbc8ad9b328d05e16784d76b0181dda894c17001179dbf8c0d5dd00dc6271358"
+        }
+      ],
+      "linuxAvatarAdmissionPresent": true,
+      "linuxStringSsoCarrierRejectionPresent": true,
+      "stringSsoCarrierProfilesInAuditedArtifact": [
+        {
+          "platform": "linux",
+          "arch": "arm64",
+          "clientVersion": "3.2.32-52194",
+          "wrapperSha256": "c302361f52494de257044e912e43ed244bb29ee59f59345d25a8959327828337"
+        },
+        {
+          "platform": "darwin",
+          "arch": "arm64",
+          "clientVersion": "7.0.2-53644",
+          "wrapperSha256": "fbc8ad9b328d05e16784d76b0181dda894c17001179dbf8c0d5dd00dc6271358"
+        }
+      ]
+    },
+    "defaultCases": [
+      {
+        "artifact": "default-mirror/current-source-darwin-arm64",
+        "githubArtifactId": 11961776398,
+        "githubArtifactDigest": "sha256:d73b10a62bb4946b356b3c75e880bac1e7b2c23bd756780f42a9d2179d36e6d4",
+        "sourceReceiptSha256": "a18867c1b62e82a9decf37674028f502b3312a25d9434b440a3e5505cde582a6",
+        "consumerReceiptSha256": "393bd91e3d2159e63a5ae44e1a67da91ff588be4cc81c38fb22d577ab0f5e3ee",
+        "sourceRun": "38713700511",
+        "sourceRunAttempt": 1,
+        "sourceMode": "current-source",
+        "node": "v24.20.0",
+        "clientVersion": "7.0.2-53644",
+        "main": {
+          "name": "qq-native-client",
+          "version": "0.0.2",
+          "archiveBytes": 794107,
+          "sha256": "93f4846fd45463c85ef6dbc10a16dafc1122419c0a33bdd982daa2edabae59b3",
+          "integrity": "sha512-YF9PX44ltyz7hansTGhGvE4FClxBEZXPQJpY0/9bm8iD4F8qH4EI3Rbil1lFQX6dlScLtAoDOmlPJa2lwv7V1g==",
+          "sha512IntegrityVerified": true,
+          "sizeVerified": true,
+          "regularFiles": 452,
+          "bridgePaths": ["package/native/darwin-arm64/registration-bridge.node"]
+        },
+        "verifiedFiles": 1168,
+        "uidProfileChecksPresent": true,
+        "standaloneParticipantConsumerFieldPresent": false,
+        "unrecordedFields": ["accountUsed"],
+        "cliPrepareControlledFields": {
+          "cliPrepareLifecycleContract": null,
+          "cliPrepareLoginSuppressionContract": null
+        },
+        "cliPrepareControlledFieldsPresent": {
+          "cliPrepareLifecycleContract": false,
+          "cliPrepareLoginSuppressionContract": false
+        },
+        "device": "darwin-arm64",
+        "manifestSha256": "667c80d0284ffcfc4e0c270a6a7b09bfbbdf34ebe2cd452dc8fe016e99c3fa56",
+        "catalogSha256": "e7d15e62ab5555fefd8996afbabe677e0eff9e53f2d4c4d602ba85a5e2fcc7a0",
+        "uidProfileChecks": {
+          "explicitUidProfileCompositionContract": true,
+          "uidProfileNoAutomaticLookupOrFallback": true,
+          "uidProfileExactIdentityContract": true,
+          "uidProfileOriginalSessionContract": true,
+          "uidProfileCliLifecycleContract": true,
+          "nativeProfileQueryAttempted": false,
+          "accountUsed": false
+        },
+        "reported": {
+          "prepared": true,
+          "closed": true,
+          "loginAttempted": false,
+          "coldPayloadRequests": 321,
+          "warmPayloadRequests": 0,
+          "warmFilesUnchanged": true,
+          "cacheFilesHashVerified": true,
+          "restoreAttempted": false,
+          "nativeSendAttempted": false,
+          "published": false
+        },
+        "unrecordedFieldValues": {
+          "accountUsed": null
+        }
+      },
+      {
+        "artifact": "default-mirror/current-source-darwin-x64",
+        "githubArtifactId": 11962145380,
+        "githubArtifactDigest": "sha256:449627219471b1fc20908631e8be3b8df10cddcb0b2cee48abdb68161416855d",
+        "sourceReceiptSha256": "f448a71a992794012499b6c2fa684bc1970c1a25522fba87f240372f9e0ff9c3",
+        "consumerReceiptSha256": "492ff475aba0a2a010d1f5956a2615d38cf36ba9c268d64c506dd48eac5bbc3d",
+        "sourceRun": "38713700511",
+        "sourceRunAttempt": 1,
+        "sourceMode": "current-source",
+        "node": "v24.20.0",
+        "clientVersion": "7.0.2-53644",
+        "main": {
+          "name": "qq-native-client",
+          "version": "0.0.2",
+          "archiveBytes": 792993,
+          "sha256": "b6e96fc4d6fb01be1ed07c87a436505456f00daa3abeb5897b9a26b072c9d5de",
+          "integrity": "sha512-QxniiRbWILspfQ0ldJ8jYmAlxt/Yw2GBFoRxnIKFr+k2hrpy2IeS+gmzT2mFf/egisPhjeKdrB7ifbEp6xspRw==",
+          "sha512IntegrityVerified": true,
+          "sizeVerified": true,
+          "regularFiles": 452,
+          "bridgePaths": ["package/native/darwin-x64/registration-bridge.node"]
+        },
+        "verifiedFiles": 1168,
+        "uidProfileChecksPresent": true,
+        "standaloneParticipantConsumerFieldPresent": false,
+        "unrecordedFields": ["accountUsed"],
+        "cliPrepareControlledFields": {
+          "cliPrepareLifecycleContract": null,
+          "cliPrepareLoginSuppressionContract": null
+        },
+        "cliPrepareControlledFieldsPresent": {
+          "cliPrepareLifecycleContract": false,
+          "cliPrepareLoginSuppressionContract": false
+        },
+        "device": "darwin-x64",
+        "manifestSha256": "85cb263ef00cdd2e24239fb6991a7b4f71b6802e25688e1851f65ad3c3c07fa2",
+        "catalogSha256": "e7d15e62ab5555fefd8996afbabe677e0eff9e53f2d4c4d602ba85a5e2fcc7a0",
+        "uidProfileChecks": {
+          "explicitUidProfileCompositionContract": true,
+          "uidProfileNoAutomaticLookupOrFallback": true,
+          "uidProfileExactIdentityContract": true,
+          "uidProfileOriginalSessionContract": true,
+          "uidProfileCliLifecycleContract": true,
+          "nativeProfileQueryAttempted": false,
+          "accountUsed": false
+        },
+        "reported": {
+          "prepared": true,
+          "closed": true,
+          "loginAttempted": false,
+          "coldPayloadRequests": 321,
+          "warmPayloadRequests": 0,
+          "warmFilesUnchanged": true,
+          "cacheFilesHashVerified": true,
+          "restoreAttempted": false,
+          "nativeSendAttempted": false,
+          "published": false
+        },
+        "unrecordedFieldValues": {
+          "accountUsed": null
+        }
+      },
+      {
+        "artifact": "default-mirror/current-source-linux-arm64",
+        "githubArtifactId": 11961064920,
+        "githubArtifactDigest": "sha256:75f2781c3cf084db4051cd5f340d031b97b9e805773248e34e4d44559a74d585",
+        "sourceReceiptSha256": "af907c8ea30834046649adaf5d5247cf26cea7de15a1723e18f04cae6fb1300e",
+        "consumerReceiptSha256": "341d556a5b362fe1786495137e5ff58b1275cd5753710e6dda596819bd19c7dd",
+        "sourceRun": "38713700511",
+        "sourceRunAttempt": 1,
+        "sourceMode": "current-source",
+        "node": "v24.20.0",
+        "clientVersion": "3.2.32-52194",
+        "main": {
+          "name": "qq-native-client",
+          "version": "0.0.2",
+          "archiveBytes": 795624,
+          "sha256": "db82cc36161f5c1149588389e73ac713c80a037cdbc21bdfd222aa82c99dd6fe",
+          "integrity": "sha512-QtJaAiJy8YZkotiK5DUOIgCBUb9TH4Dh7sE+gG60RLuOMB5gN73GUDk9/VeVxOaBme2GhCNQjb7BqeNqZdTnlg==",
+          "sha512IntegrityVerified": true,
+          "sizeVerified": true,
+          "regularFiles": 452,
+          "bridgePaths": ["package/native/linux-arm64/registration-bridge.node"]
+        },
+        "verifiedFiles": 20,
+        "uidProfileChecksPresent": true,
+        "standaloneParticipantConsumerFieldPresent": false,
+        "unrecordedFields": ["accountUsed"],
+        "cliPrepareControlledFields": {
+          "cliPrepareLifecycleContract": null,
+          "cliPrepareLoginSuppressionContract": null
+        },
+        "cliPrepareControlledFieldsPresent": {
+          "cliPrepareLifecycleContract": false,
+          "cliPrepareLoginSuppressionContract": false
+        },
+        "device": "linux-arm64",
+        "manifestSha256": "628201012ea25d276667e4ac0064541534d6b3ab39e7348d75fb51d13e778b1b",
+        "catalogSha256": "e7d15e62ab5555fefd8996afbabe677e0eff9e53f2d4c4d602ba85a5e2fcc7a0",
+        "uidProfileChecks": {
+          "explicitUidProfileCompositionContract": true,
+          "uidProfileNoAutomaticLookupOrFallback": true,
+          "uidProfileExactIdentityContract": true,
+          "uidProfileOriginalSessionContract": true,
+          "uidProfileCliLifecycleContract": true,
+          "nativeProfileQueryAttempted": false,
+          "accountUsed": false
+        },
+        "reported": {
+          "prepared": true,
+          "closed": true,
+          "loginAttempted": false,
+          "coldPayloadRequests": 20,
+          "warmPayloadRequests": 0,
+          "warmFilesUnchanged": true,
+          "cacheFilesHashVerified": true,
+          "restoreAttempted": false,
+          "nativeSendAttempted": false,
+          "published": false
+        },
+        "unrecordedFieldValues": {
+          "accountUsed": null
+        }
+      },
+      {
+        "artifact": "default-mirror/current-source-linux-x64",
+        "githubArtifactId": 11960799890,
+        "githubArtifactDigest": "sha256:dc4ffefd4be78a9badff28da7a8908748b19cef578aa301ea073926d13049758",
+        "sourceReceiptSha256": "f8c245d673fdef926cd80859c694de7ba3df524f7f0d1b10e5441f8fa0bfb86f",
+        "consumerReceiptSha256": "722df1fe483356abce616e16c2b7e81561592a59ce52fe41e875a625de48535b",
+        "sourceRun": "38713700511",
+        "sourceRunAttempt": 1,
+        "sourceMode": "current-source",
+        "node": "v24.20.0",
+        "clientVersion": "3.2.32-52194",
+        "main": {
+          "name": "qq-native-client",
+          "version": "0.0.2",
+          "archiveBytes": 794516,
+          "sha256": "4df244f108d97cfe3c3fdfde1f967c64a16a0419de87d6f331254a16e993ff5c",
+          "integrity": "sha512-pGolsAslWntc14vz1lCU77TQpmn4w80oNOfHluVkzLCrU9qvHKXzt0qBxCAszkfDrlXG1XJXHSbAcviG4HUXtQ==",
+          "sha512IntegrityVerified": true,
+          "sizeVerified": true,
+          "regularFiles": 452,
+          "bridgePaths": ["package/native/linux-x64/registration-bridge.node"]
+        },
+        "verifiedFiles": 19,
+        "uidProfileChecksPresent": true,
+        "standaloneParticipantConsumerFieldPresent": false,
+        "unrecordedFields": ["accountUsed"],
+        "cliPrepareControlledFields": {
+          "cliPrepareLifecycleContract": null,
+          "cliPrepareLoginSuppressionContract": null
+        },
+        "cliPrepareControlledFieldsPresent": {
+          "cliPrepareLifecycleContract": false,
+          "cliPrepareLoginSuppressionContract": false
+        },
+        "device": "linux-x64",
+        "manifestSha256": "d130b3db854cd147a96bd5cb80d9d16fcf6ce364eda546849ac06403077a9ae4",
+        "catalogSha256": "e7d15e62ab5555fefd8996afbabe677e0eff9e53f2d4c4d602ba85a5e2fcc7a0",
+        "uidProfileChecks": {
+          "explicitUidProfileCompositionContract": true,
+          "uidProfileNoAutomaticLookupOrFallback": true,
+          "uidProfileExactIdentityContract": true,
+          "uidProfileOriginalSessionContract": true,
+          "uidProfileCliLifecycleContract": true,
+          "nativeProfileQueryAttempted": false,
+          "accountUsed": false
+        },
+        "reported": {
+          "prepared": true,
+          "closed": true,
+          "loginAttempted": false,
+          "coldPayloadRequests": 19,
+          "warmPayloadRequests": 0,
+          "warmFilesUnchanged": true,
+          "cacheFilesHashVerified": true,
+          "restoreAttempted": false,
+          "nativeSendAttempted": false,
+          "published": false
+        },
+        "unrecordedFieldValues": {
+          "accountUsed": null
+        }
+      },
+      {
+        "artifact": "default-mirror/current-source-win32-arm64",
+        "githubArtifactId": 11962250107,
+        "githubArtifactDigest": "sha256:cec327dfd8f1fb08a166988f013c1c28d10c4465cb51afb5c6fdce63006d9e2b",
+        "sourceReceiptSha256": "29f4f3d9dcad02fa8425345174a842992545c5bd862245c8a5d1f17820d66ee9",
+        "consumerReceiptSha256": "d291e230e9cfabcb8ffeca4e9fef615322e2033ecaeab80fc085753e0ce5af88",
+        "sourceRun": "38713700511",
+        "sourceRunAttempt": 1,
+        "sourceMode": "current-source",
+        "node": "v24.20.0",
+        "clientVersion": "9.9.33-52230",
+        "main": {
+          "name": "qq-native-client",
+          "version": "0.0.2",
+          "archiveBytes": 790890,
+          "sha256": "6bf7f2ac643f85a814ef011294093dd0a32643eaf72d721ad1169c7331354b67",
+          "integrity": "sha512-B6FB2nG3QJg6LlkdEC2Hx72ZP05OkO1GfpCxW9jLD/eGaB4cNnC9BqT+9cj4R3pNMV+7QPu4os7iyd3Tl4NMkw==",
+          "sha512IntegrityVerified": true,
+          "sizeVerified": true,
+          "regularFiles": 451,
+          "bridgePaths": []
+        },
+        "verifiedFiles": 27,
+        "uidProfileChecksPresent": true,
+        "standaloneParticipantConsumerFieldPresent": false,
+        "unrecordedFields": ["accountUsed"],
+        "cliPrepareControlledFields": {
+          "cliPrepareLifecycleContract": null,
+          "cliPrepareLoginSuppressionContract": null
+        },
+        "cliPrepareControlledFieldsPresent": {
+          "cliPrepareLifecycleContract": false,
+          "cliPrepareLoginSuppressionContract": false
+        },
+        "device": "win32-arm64",
+        "manifestSha256": "6bd0b50b9647222a38d1b053e21214c591f9589d5beb88ef07e9737a69df9e03",
+        "catalogSha256": "e7d15e62ab5555fefd8996afbabe677e0eff9e53f2d4c4d602ba85a5e2fcc7a0",
+        "uidProfileChecks": {
+          "explicitUidProfileCompositionContract": true,
+          "uidProfileNoAutomaticLookupOrFallback": true,
+          "uidProfileExactIdentityContract": true,
+          "uidProfileOriginalSessionContract": true,
+          "uidProfileCliLifecycleContract": true,
+          "nativeProfileQueryAttempted": false,
+          "accountUsed": false
+        },
+        "reported": {
+          "prepared": true,
+          "closed": true,
+          "loginAttempted": false,
+          "coldPayloadRequests": 26,
+          "warmPayloadRequests": 0,
+          "warmFilesUnchanged": true,
+          "cacheFilesHashVerified": true,
+          "restoreAttempted": false,
+          "nativeSendAttempted": false,
+          "published": false
+        },
+        "unrecordedFieldValues": {
+          "accountUsed": null
+        }
+      },
+      {
+        "artifact": "default-mirror/current-source-win32-x64",
+        "githubArtifactId": 11961324336,
+        "githubArtifactDigest": "sha256:b4d998f3e90d3f9c3cf73115497c055ada3bd2444d50b13e0208e3dab108640d",
+        "sourceReceiptSha256": "29f4f3d9dcad02fa8425345174a842992545c5bd862245c8a5d1f17820d66ee9",
+        "consumerReceiptSha256": "dc38a8c727ede5fb856de00453723b44db699998b1f09e0f913124e910feb0b1",
+        "sourceRun": "38713700511",
+        "sourceRunAttempt": 1,
+        "sourceMode": "current-source",
+        "node": "v24.20.0",
+        "clientVersion": "9.9.33-52230",
+        "main": {
+          "name": "qq-native-client",
+          "version": "0.0.2",
+          "archiveBytes": 790890,
+          "sha256": "6bf7f2ac643f85a814ef011294093dd0a32643eaf72d721ad1169c7331354b67",
+          "integrity": "sha512-B6FB2nG3QJg6LlkdEC2Hx72ZP05OkO1GfpCxW9jLD/eGaB4cNnC9BqT+9cj4R3pNMV+7QPu4os7iyd3Tl4NMkw==",
+          "sha512IntegrityVerified": true,
+          "sizeVerified": true,
+          "regularFiles": 451,
+          "bridgePaths": []
+        },
+        "verifiedFiles": 32,
+        "uidProfileChecksPresent": true,
+        "standaloneParticipantConsumerFieldPresent": false,
+        "unrecordedFields": ["accountUsed"],
+        "cliPrepareControlledFields": {
+          "cliPrepareLifecycleContract": null,
+          "cliPrepareLoginSuppressionContract": null
+        },
+        "cliPrepareControlledFieldsPresent": {
+          "cliPrepareLifecycleContract": false,
+          "cliPrepareLoginSuppressionContract": false
+        },
+        "device": "win32-x64",
+        "manifestSha256": "baa75f687fbefcfca1698b5555c1f3c96d50643e76f993075a883865f822197e",
+        "catalogSha256": "e7d15e62ab5555fefd8996afbabe677e0eff9e53f2d4c4d602ba85a5e2fcc7a0",
+        "uidProfileChecks": {
+          "explicitUidProfileCompositionContract": true,
+          "uidProfileNoAutomaticLookupOrFallback": true,
+          "uidProfileExactIdentityContract": true,
+          "uidProfileOriginalSessionContract": true,
+          "uidProfileCliLifecycleContract": true,
+          "nativeProfileQueryAttempted": false,
+          "accountUsed": false
+        },
+        "reported": {
+          "prepared": true,
+          "closed": true,
+          "loginAttempted": false,
+          "coldPayloadRequests": 31,
+          "warmPayloadRequests": 0,
+          "warmFilesUnchanged": true,
+          "cacheFilesHashVerified": true,
+          "restoreAttempted": false,
+          "nativeSendAttempted": false,
+          "published": false
+        },
+        "unrecordedFieldValues": {
+          "accountUsed": null
+        }
+      }
+    ],
+    "linuxVersionCases": [
+      {
+        "artifact": "multi-version/version-3.2.31-51102-linux-arm64-legacy-bridge-candidate",
+        "githubArtifactId": 11962405002,
+        "githubArtifactDigest": "sha256:c13e7343a4e68ca98e5bd716a674b3c382c0248f85ff56bcb7f1677993d83db4",
+        "sourceReceiptSha256": "e2f469d9a900130a527de670f82a28a655f3c1b435e8f91876bddeb4abc008f6",
+        "consumerReceiptSha256": "8072b7aead1ef1349836b9a41b747ba4a72284027f0a8a275239f5b8dac9a63c",
+        "sourceRun": "38713705100",
+        "sourceRunAttempt": 1,
+        "sourceMode": "current-source",
+        "node": "v24.20.0",
+        "clientVersion": "3.2.31-51102",
+        "main": {
+          "name": "qq-native-client",
+          "version": "0.0.2",
+          "archiveBytes": 794516,
+          "sha256": "4df244f108d97cfe3c3fdfde1f967c64a16a0419de87d6f331254a16e993ff5c",
+          "integrity": "sha512-pGolsAslWntc14vz1lCU77TQpmn4w80oNOfHluVkzLCrU9qvHKXzt0qBxCAszkfDrlXG1XJXHSbAcviG4HUXtQ==",
+          "sha512IntegrityVerified": true,
+          "sizeVerified": true,
+          "regularFiles": 452,
+          "bridgePaths": ["package/native/linux-x64/registration-bridge.node"]
+        },
+        "verifiedFiles": 9,
+        "uidProfileChecksPresent": false,
+        "standaloneParticipantConsumerFieldPresent": false,
+        "unrecordedFields": ["accountUsed", "restoreAttempted", "nativeSendAttempted"],
+        "cliPrepareControlledFields": {
+          "cliPrepareLifecycleContract": null,
+          "cliPrepareLoginSuppressionContract": null
+        },
+        "cliPrepareControlledFieldsPresent": {
+          "cliPrepareLifecycleContract": false,
+          "cliPrepareLoginSuppressionContract": false
+        },
+        "platform": "linux",
+        "arch": "arm64",
+        "selectionMode": "legacy-bridge-candidate",
+        "automaticLatest": false,
+        "reported": {
+          "prepared": true,
+          "closed": true,
+          "loginAttempted": false,
+          "coldPayloadRequests": 18,
+          "warmPayloadRequests": 0,
+          "warmFilesUnchanged": true
+        },
+        "unrecordedFieldValues": {
+          "accountUsed": null,
+          "restoreAttempted": null,
+          "nativeSendAttempted": null
+        }
+      },
+      {
+        "artifact": "multi-version/version-3.2.31-51102-linux-arm64-public-default",
+        "githubArtifactId": 11962225201,
+        "githubArtifactDigest": "sha256:5ad193902a80a5c5c8c043080e0a62a05f42eaadc235d554c44101274144ae88",
+        "sourceReceiptSha256": "e2f469d9a900130a527de670f82a28a655f3c1b435e8f91876bddeb4abc008f6",
+        "consumerReceiptSha256": "a398ae3190db84bd870fffabbc911d646e079c3c6d4a914f95d964d98eeede26",
+        "sourceRun": "38713705100",
+        "sourceRunAttempt": 1,
+        "sourceMode": "current-source",
+        "node": "v24.20.0",
+        "clientVersion": "3.2.31-51102",
+        "main": {
+          "name": "qq-native-client",
+          "version": "0.0.2",
+          "archiveBytes": 794516,
+          "sha256": "4df244f108d97cfe3c3fdfde1f967c64a16a0419de87d6f331254a16e993ff5c",
+          "integrity": "sha512-pGolsAslWntc14vz1lCU77TQpmn4w80oNOfHluVkzLCrU9qvHKXzt0qBxCAszkfDrlXG1XJXHSbAcviG4HUXtQ==",
+          "sha512IntegrityVerified": true,
+          "sizeVerified": true,
+          "regularFiles": 452,
+          "bridgePaths": ["package/native/linux-x64/registration-bridge.node"]
+        },
+        "verifiedFiles": 9,
+        "uidProfileChecksPresent": false,
+        "standaloneParticipantConsumerFieldPresent": false,
+        "unrecordedFields": ["accountUsed", "restoreAttempted", "nativeSendAttempted"],
+        "cliPrepareControlledFields": {
+          "cliPrepareLifecycleContract": null,
+          "cliPrepareLoginSuppressionContract": null
+        },
+        "cliPrepareControlledFieldsPresent": {
+          "cliPrepareLifecycleContract": false,
+          "cliPrepareLoginSuppressionContract": false
+        },
+        "platform": "linux",
+        "arch": "arm64",
+        "selectionMode": "public-default",
+        "automaticLatest": false,
+        "reported": {
+          "prepared": true,
+          "closed": true,
+          "loginAttempted": false,
+          "coldPayloadRequests": 18,
+          "warmPayloadRequests": 0,
+          "warmFilesUnchanged": true
+        },
+        "unrecordedFieldValues": {
+          "accountUsed": null,
+          "restoreAttempted": null,
+          "nativeSendAttempted": null
+        }
+      },
+      {
+        "artifact": "multi-version/version-3.2.31-51102-linux-x64-legacy-bridge-candidate",
+        "githubArtifactId": 11961199542,
+        "githubArtifactDigest": "sha256:99b4766a19ecb10ebbab997317bc62804311d4ab7b75671b693b870718276ac1",
+        "sourceReceiptSha256": "e2f469d9a900130a527de670f82a28a655f3c1b435e8f91876bddeb4abc008f6",
+        "consumerReceiptSha256": "0b127c6a23720f108552076be04f91b2b1c5612917c5b98a1781d7f7c88a9a0f",
+        "sourceRun": "38713705100",
+        "sourceRunAttempt": 1,
+        "sourceMode": "current-source",
+        "node": "v24.20.0",
+        "clientVersion": "3.2.31-51102",
+        "main": {
+          "name": "qq-native-client",
+          "version": "0.0.2",
+          "archiveBytes": 794516,
+          "sha256": "4df244f108d97cfe3c3fdfde1f967c64a16a0419de87d6f331254a16e993ff5c",
+          "integrity": "sha512-pGolsAslWntc14vz1lCU77TQpmn4w80oNOfHluVkzLCrU9qvHKXzt0qBxCAszkfDrlXG1XJXHSbAcviG4HUXtQ==",
+          "sha512IntegrityVerified": true,
+          "sizeVerified": true,
+          "regularFiles": 452,
+          "bridgePaths": ["package/native/linux-x64/registration-bridge.node"]
+        },
+        "verifiedFiles": 8,
+        "uidProfileChecksPresent": false,
+        "standaloneParticipantConsumerFieldPresent": false,
+        "unrecordedFields": ["accountUsed", "restoreAttempted", "nativeSendAttempted"],
+        "cliPrepareControlledFields": {
+          "cliPrepareLifecycleContract": null,
+          "cliPrepareLoginSuppressionContract": null
+        },
+        "cliPrepareControlledFieldsPresent": {
+          "cliPrepareLifecycleContract": false,
+          "cliPrepareLoginSuppressionContract": false
+        },
+        "platform": "linux",
+        "arch": "x64",
+        "selectionMode": "legacy-bridge-candidate",
+        "automaticLatest": false,
+        "reported": {
+          "prepared": true,
+          "closed": true,
+          "loginAttempted": false,
+          "coldPayloadRequests": 16,
+          "warmPayloadRequests": 0,
+          "warmFilesUnchanged": true
+        },
+        "unrecordedFieldValues": {
+          "accountUsed": null,
+          "restoreAttempted": null,
+          "nativeSendAttempted": null
+        }
+      },
+      {
+        "artifact": "multi-version/version-3.2.31-51102-linux-x64-public-default",
+        "githubArtifactId": 11961384229,
+        "githubArtifactDigest": "sha256:d38346fc98e76c38036fe194c162ef01d79db0764f2066a757604025bcaeffef",
+        "sourceReceiptSha256": "e2f469d9a900130a527de670f82a28a655f3c1b435e8f91876bddeb4abc008f6",
+        "consumerReceiptSha256": "a46c09811f8b13219eae54e6ca96c252a881c44f51484828db576bdca890bb91",
+        "sourceRun": "38713705100",
+        "sourceRunAttempt": 1,
+        "sourceMode": "current-source",
+        "node": "v24.20.0",
+        "clientVersion": "3.2.31-51102",
+        "main": {
+          "name": "qq-native-client",
+          "version": "0.0.2",
+          "archiveBytes": 794516,
+          "sha256": "4df244f108d97cfe3c3fdfde1f967c64a16a0419de87d6f331254a16e993ff5c",
+          "integrity": "sha512-pGolsAslWntc14vz1lCU77TQpmn4w80oNOfHluVkzLCrU9qvHKXzt0qBxCAszkfDrlXG1XJXHSbAcviG4HUXtQ==",
+          "sha512IntegrityVerified": true,
+          "sizeVerified": true,
+          "regularFiles": 452,
+          "bridgePaths": ["package/native/linux-x64/registration-bridge.node"]
+        },
+        "verifiedFiles": 8,
+        "uidProfileChecksPresent": false,
+        "standaloneParticipantConsumerFieldPresent": false,
+        "unrecordedFields": ["accountUsed", "restoreAttempted", "nativeSendAttempted"],
+        "cliPrepareControlledFields": {
+          "cliPrepareLifecycleContract": null,
+          "cliPrepareLoginSuppressionContract": null
+        },
+        "cliPrepareControlledFieldsPresent": {
+          "cliPrepareLifecycleContract": false,
+          "cliPrepareLoginSuppressionContract": false
+        },
+        "platform": "linux",
+        "arch": "x64",
+        "selectionMode": "public-default",
+        "automaticLatest": false,
+        "reported": {
+          "prepared": true,
+          "closed": true,
+          "loginAttempted": false,
+          "coldPayloadRequests": 16,
+          "warmPayloadRequests": 0,
+          "warmFilesUnchanged": true
+        },
+        "unrecordedFieldValues": {
+          "accountUsed": null,
+          "restoreAttempted": null,
+          "nativeSendAttempted": null
+        }
+      },
+      {
+        "artifact": "multi-version/version-3.2.32-52194-linux-arm64-public-default",
+        "githubArtifactId": 11961603702,
+        "githubArtifactDigest": "sha256:3ce2da3d5175623076027b76d5db38c1ef6ec17caf44c032e5aa9d8e7fe6362b",
+        "sourceReceiptSha256": "e2f469d9a900130a527de670f82a28a655f3c1b435e8f91876bddeb4abc008f6",
+        "consumerReceiptSha256": "3853b77e852acc898e80a824d354407dd0073dda8c9cc943492ba20ffb63aa2c",
+        "sourceRun": "38713705100",
+        "sourceRunAttempt": 1,
+        "sourceMode": "current-source",
+        "node": "v24.20.0",
+        "clientVersion": "3.2.32-52194",
+        "main": {
+          "name": "qq-native-client",
+          "version": "0.0.2",
+          "archiveBytes": 794516,
+          "sha256": "4df244f108d97cfe3c3fdfde1f967c64a16a0419de87d6f331254a16e993ff5c",
+          "integrity": "sha512-pGolsAslWntc14vz1lCU77TQpmn4w80oNOfHluVkzLCrU9qvHKXzt0qBxCAszkfDrlXG1XJXHSbAcviG4HUXtQ==",
+          "sha512IntegrityVerified": true,
+          "sizeVerified": true,
+          "regularFiles": 452,
+          "bridgePaths": ["package/native/linux-x64/registration-bridge.node"]
+        },
+        "verifiedFiles": 20,
+        "uidProfileChecksPresent": false,
+        "standaloneParticipantConsumerFieldPresent": false,
+        "unrecordedFields": ["accountUsed", "restoreAttempted", "nativeSendAttempted"],
+        "cliPrepareControlledFields": {
+          "cliPrepareLifecycleContract": null,
+          "cliPrepareLoginSuppressionContract": null
+        },
+        "cliPrepareControlledFieldsPresent": {
+          "cliPrepareLifecycleContract": false,
+          "cliPrepareLoginSuppressionContract": false
+        },
+        "platform": "linux",
+        "arch": "arm64",
+        "selectionMode": "public-default",
+        "automaticLatest": true,
+        "reported": {
+          "prepared": true,
+          "closed": true,
+          "loginAttempted": false,
+          "coldPayloadRequests": 40,
+          "warmPayloadRequests": 0,
+          "warmFilesUnchanged": true
+        },
+        "unrecordedFieldValues": {
+          "accountUsed": null,
+          "restoreAttempted": null,
+          "nativeSendAttempted": null
+        }
+      },
+      {
+        "artifact": "multi-version/version-3.2.32-52194-linux-x64-public-default",
+        "githubArtifactId": 11962115291,
+        "githubArtifactDigest": "sha256:949b2b2a6567323e90be50c3dec6dff4c192945591c73d950e840b1b8a4a8bd4",
+        "sourceReceiptSha256": "e2f469d9a900130a527de670f82a28a655f3c1b435e8f91876bddeb4abc008f6",
+        "consumerReceiptSha256": "fe4175ee1a5d01a3ce959506e4064ee40eeded2113e8cf6087fa5b7c0759cf33",
+        "sourceRun": "38713705100",
+        "sourceRunAttempt": 1,
+        "sourceMode": "current-source",
+        "node": "v24.20.0",
+        "clientVersion": "3.2.32-52194",
+        "main": {
+          "name": "qq-native-client",
+          "version": "0.0.2",
+          "archiveBytes": 794516,
+          "sha256": "4df244f108d97cfe3c3fdfde1f967c64a16a0419de87d6f331254a16e993ff5c",
+          "integrity": "sha512-pGolsAslWntc14vz1lCU77TQpmn4w80oNOfHluVkzLCrU9qvHKXzt0qBxCAszkfDrlXG1XJXHSbAcviG4HUXtQ==",
+          "sha512IntegrityVerified": true,
+          "sizeVerified": true,
+          "regularFiles": 452,
+          "bridgePaths": ["package/native/linux-x64/registration-bridge.node"]
+        },
+        "verifiedFiles": 19,
+        "uidProfileChecksPresent": false,
+        "standaloneParticipantConsumerFieldPresent": false,
+        "unrecordedFields": ["accountUsed", "restoreAttempted", "nativeSendAttempted"],
+        "cliPrepareControlledFields": {
+          "cliPrepareLifecycleContract": null,
+          "cliPrepareLoginSuppressionContract": null
+        },
+        "cliPrepareControlledFieldsPresent": {
+          "cliPrepareLifecycleContract": false,
+          "cliPrepareLoginSuppressionContract": false
+        },
+        "platform": "linux",
+        "arch": "x64",
+        "selectionMode": "public-default",
+        "automaticLatest": true,
+        "reported": {
+          "prepared": true,
+          "closed": true,
+          "loginAttempted": false,
+          "coldPayloadRequests": 38,
+          "warmPayloadRequests": 0,
+          "warmFilesUnchanged": true
+        },
+        "unrecordedFieldValues": {
+          "accountUsed": null,
+          "restoreAttempted": null,
+          "nativeSendAttempted": null
+        }
+      }
+    ],
+    "compiledApiHashes": {
+      "package/dist/cli.js": "84b763c0c17668f351f4f7dfce24a2cd09383e0d8fdb759527d4854e9b1d2f4d",
+      "package/dist/cli/client-command.js": "11d6af09426990a4a492fe7a38acad209b5d60be730b423274767366e04645c4",
+      "package/dist/cli/command-plan.js": "56dc467baf4ef5fb6f64648d9aefb2dd1224d67a1243ed9b828731fb296f9ef1",
+      "package/dist/cli/commands/contacts.js": "fc575b0d3fdc11312870ccf0b6da9f7b85d97cd7c82093e7311d22d720793b62",
+      "package/dist/cli/commands/groups.js": "58d600b03861901d12682fd89a3f38fc8c4d916e104d60aa6d659def93d4be67",
+      "package/dist/client/contacts/group-contact.d.ts": "de4e6bb33f917e5c439c8e6c99555a9ef2af123b9d6d0591d948204add2d47e1",
+      "package/dist/client/contacts/group-contact.js": "4c3243ffb2538cc3c3c49c9c1cb694614fa3b476131ae8d05614eb5cd204ca91",
+      "package/dist/client/contacts/group-member-contact.d.ts": "b9adc05f39585a0f5c5bf9010abb569d4279d117db915d457f318539f7888a26",
+      "package/dist/client/contacts/group-member-contact.js": "e69123b496b81693b0dada358856269099e2e702955667079a2d35a49686627c",
+      "package/dist/client/create-client.d.ts": "6fbe833b06014a74d512501a5317163cb8bc9fab78a331afa8f0113b4e56eb80",
+      "package/dist/client/create-client.js": "29c09466ae4b9a4b6859b3d8746dfe9432686b55ed5c3b2fbc6690c63b3d592b",
+      "package/dist/client/qq-client.d.ts": "dac6c05e2c75ca6daab5a59f3fbc647f402d17449a7343466676f5d81649a85b",
+      "package/dist/client/qq-client.js": "1af6fcf06c1b29b3f9b2f231a830c01d26a25d798c5fd396fb9dddd429b3dbb6",
+      "package/dist/contracts/groups.d.ts": "2167ebb786a99ea1fbed2e318d26c2db8b46326ff0960ef5285b0c8fe5759b03",
+      "package/dist/features/contacts/contact-operations.js": "71d29b258df5a3f7f52d5cddf2bd4574858553eef6141ebab234c4a430324101",
+      "package/dist/features/contacts/user-profile-query.js": "423cc8584248310bee1738f96d54beb6706d32de76842e3f93d0a0c90ecd67a7",
+      "package/dist/features/groups/group-member-query-input.js": "7c04d353d1584a23084e11eb433240c34c1e653492476a99d9dd745cd27ddc3d",
+      "package/dist/features/groups/group-queries.js": "d1a6fa4b8143f4a676cbeff8eab719c507bad9f2cf1d19cf2c3d7b8ea8efc205",
+      "package/dist/features/groups/group-requests.js": "7cdfc029566c72d02055edd3b0b59ddae6fd94d9ffbf4e2d6ef22bb8703a548e",
+      "package/dist/index.d.ts": "ff73b14e16766214b8d2f83ba26187deda0ded0cfe6d739328a680a720ebc677",
+      "package/dist/native-services.js": "3d8d3bebdbd0964a0374389dc0ca011d3d7967dd585fd69a670efbcdcf0ffc42",
+      "package/dist/native/native-contracts.js": "dfa42daa8700ce60216b24afcce2fbe5d2faecdbaaeb05e27d067cfc18716569",
+      "package/dist/runtime/operations.js": "02be45f98f9cff372f981b96a547faf6f8ddd519d842ebc8331a07937d6eb1ac",
+      "package/dist/types.d.ts": "d2ca54aa9ecc52f0072bc63cc8a7b08a54cd2e0679cce734e90dab8d53d117db",
+      "package/docs/evidence/group-avatar-contract.json": "e0177e156b36489a0acfcc7f98185a7eeef44861f2e0e99d08880789c9607b0a",
+      "package/docs/evidence/packet-string-carriers.json": "3da3e7a526492811b2e652f73dc817e2a38ecb9b0bc2f0ff256f5cec6460b361"
+    },
+    "cliPrepareEvidence": {
+      "compiledRoutePresentInAllTwelveMainArchives": true,
+      "forcedAutoLoginAndAutoReconnectFalse": true,
+      "prepareBranchReturnsBeforeLogin": true,
+      "creationCancellationIncluded": false,
+      "controlledFieldNames": ["cliPrepareLifecycleContract", "cliPrepareLoginSuppressionContract"],
+      "recordedInTheseTwelveReceipts": false,
+      "pinnedSourceFileInventorySha256": "38208cf35b9be1886d5098a6ba64cb82de882b30ec97460396c6c8d9ec7c2051",
+      "producer": "sdk/scripts/consumers/prepare-cli-consumer-contract.mjs",
+      "sharedWrapper": "sdk/scripts/consumers/history-lifecycle-consumer-contract.mjs",
+      "sourceDefinedRecordingDestinations": [
+        "ci/verify-consumer.mjs -> out/consumer.json (native-npm workflow)",
+        "sdk/scripts/verify-package-consumer.mjs -> final JSON report"
+      ],
+      "recordingDestinationsAuditedHere": false,
+      "boundary": "This audit proves archived compiled prepare control flow and missing receipt fields; it does not borrow native-npm controlled consumer success from outside the twelve selected artifacts.",
+      "pinnedSourceFileHashes": {
+        "ci/current-source-mirror.mjs": "462ea9eeedb6dd06a312e26fe0609703e1bc11672850808f1a0a58beff8e1126",
+        "ci/verify-consumer.mjs": "f02e05dbaa9a2ed47b5dd7075ab17710472663ef9b2e8d2cd6fb4fc04ab01574",
+        "version-ci/consumer.mjs": "2bc80073a1c90d0eb5201f21df188a852a9eb213ac50b6da51e81f23907b5f74",
+        "sdk/scripts/consumers/history-lifecycle-consumer-contract.mjs": "35f43a28749d57be9cdafb5fa5b13dac96d689dac74018eb3f9e97bd8d2d64bd",
+        "sdk/scripts/consumers/prepare-cli-consumer-contract.mjs": "1262303670902c78f8200ab5cfc42f4134e950af23395ba2815d728a07cdc6f3",
+        "sdk/scripts/verify-package-consumer.mjs": "bc7da1575c77126c73d1f7471e72602ae20c024cf20b58eb234c2568d84aff81",
+        ".github/workflows/native-npm.yml": "cbc1c3eabbc9f2402528116e44dd9f9bd3437117c22811183b2b30cd65f3815e"
+      }
+    },
+    "limits": [
+      "No live account login, restoration, message exchange, member query, group-avatar operation or remote effect is proven by these no-account receipts.",
+      "The compiled member APIs and CLI were statically inspected in the archive. Their presence is not a live native member-query result.",
+      "Linux ARM64 avatar admission and SSO string-carrier rejection are included in this commit; their bundled evidence is static and explicitly has no native/account/remote-effect validation.",
+      "Multi-version receipts explicitly record loginAttempted=false but omit accountUsed, restoreAttempted and nativeSendAttempted; missing fields are not interpreted as false.",
+      "Default mirror receipts omit accountUsed; noAccount=true appears in separate video receipts.",
+      "Video receipts lack their own sourceCommit/main-archive binding; association comes from the downloaded GitHub artifact, not a self-contained source claim.",
+      "Native cache payload bytes are not attached to these artifacts. Cache hashing is recorded by CI and was not rerun locally by this auditor.",
+      "Official artifact ZIP bytes were downloaded and SHA256 matched GitHub API digest fields, then extracted member hashes were replayed. Artifact attestations were not independently verified.",
+      "Six default mirror receipts explicitly record uidProfileChecks for controlled composition, identity, session and CLI contracts, with nativeProfileQueryAttempted=false/accountUsed=false. This is not a live native Profile result.",
+      "Six multi-version receipts omit uidProfileChecks; none of the twelve mirror receipts has a standalone participant consumer field. Compiled participant code is present, but its dedicated consumer outcome is not inferred from mirror job success or another CI.",
+      "CLI prepare compiled route, forced login/reconnect suppression and return-before-login are present in all twelve archives. Neither mirror receipt schema records cliPrepareLifecycleContract or cliPrepareLoginSuppressionContract. Immutable source wires those fields into native-npm out/consumer.json and the package verifier final report, which are outside this audit.",
+      "The archived createClient has one options parameter and the CLI runner has no creation AbortController. Current local creation cancellation is absent and receives no CI evidence from these runs.",
+      "SDK quality logs and native npm build artifacts are outside this twelve-main-archive audit; npm publication is not established.",
+      "No historical source was recompiled locally; workflow source receipts and GitHub metadata supply the source binding. No result from f67af5b or any later local revision is included.",
+      "Download bytes count the twelve artifact ZIP response bodies only; metadata response sizes and TLS/HTTP overhead are not included. The redundant shared-main artifact was not downloaded."
+    ]
+  },
+  "laterLocalChangesIncluded": false,
+  "laterLocalScopeExclusion": "Later local changes, including a2664ef creation cancellation, are outside this exact-source CI evidence. The prepare CLI command is present in 8173891.",
+  "sdkQuality": {
+    "id": "38713658315",
+    "url": "https://github.com/lc-cn/qq-native-mirror/actions/runs/38713658315",
+    "headSha": "81738914c633c8e4effc7755860498c3a75ebddd",
+    "runAttempt": 1,
+    "status": "completed",
+    "conclusion": "success",
+    "runMetadataSha256": "f6936134699512ac544f82a758835e4b1e2873f1ddcbbee642141ad5c303102e",
+    "detailedLogsAuditedHere": false
+  },
+  "nativePackageRun": {
+    "id": "38713658249",
+    "url": "https://github.com/lc-cn/qq-native-mirror/actions/runs/38713658249",
+    "headSha": "81738914c633c8e4effc7755860498c3a75ebddd",
+    "runAttempt": 1,
+    "status": "completed",
+    "conclusion": "success",
+    "successfulJobs": 15,
+    "publishJob": "skipped"
+  },
+  "nativePackageAudit": {
+    "receiptSha256": "50df1aa70024c2b0eca35553204e31c11d7be14b7f13bdd1ee26a112af375f3c",
+    "method": "official GitHub metadata; bounded unauthenticated blob ranges after authenticated API redirect; ZIP CRC and local hash validation; no native or SDK execution",
+    "rangeBytesDownloaded": 1415266,
+    "maximumTotalRangeBytes": 5242880,
+    "artifactZipsRepresentedBytes": 775260888,
+    "selectedMembersDownloaded": 33,
+    "mainPackage": {
+      "name": "qq-native-client",
+      "version": "0.0.2",
+      "tarball": "qq-native-client-0.0.2.tgz",
+      "size": 873670,
+      "sha256": "decb3a1fb69adb31c642d4f060d765e594409f1e5d90b7ee5be7c41a0da27ed4",
+      "integrity": "sha512-FThhS2uw9G2EJy8N1cSQ80zP/mlRTZT4XV9GKfNoJ/4OZFM3PMWE4H/vP7cH0UDWjlfbXjAEnORHC8xr1hyYlA==",
+      "sha256Verified": true,
+      "sha512Verified": true,
+      "archiveMemberCount": 459,
+      "exactSixOptionalDependenciesVerified": true,
+      "nativeAdapters": [
+        {
+          "path": "package/native/darwin-arm64/registration-bridge.node",
+          "bytes": 50888,
+          "sha256": "f2d1ce7d463431d659525f3b3b1781f38da42f931f66183e9c6edb99e250673d"
+        },
+        {
+          "path": "package/native/darwin-x64/registration-bridge.node",
+          "bytes": 13472,
+          "sha256": "dcf5229c4595791c11f30ac263a0116ed72d81e218702025d5857b197d0efb88"
+        },
+        {
+          "path": "package/native/linux-arm64/registration-bridge.node",
+          "bytes": 70560,
+          "sha256": "646d987a8b735cbca04ebe3ab3bfd197f3c2767db5a1843decb29999a51efd8b"
+        },
+        {
+          "path": "package/native/linux-x64/registration-bridge.node",
+          "bytes": 16336,
+          "sha256": "2564b41898b7b3ea3ca0244ec02fa578fef26e02194b3120f519b58730f0bdd4"
+        },
+        {
+          "path": "package/native/win32-arm64/QQNT.dll",
+          "bytes": 31744,
+          "sha256": "05332e954a872e92365cbe19dad7c27ea7d4c2b0574b3a64232c72a438a69a59"
+        },
+        {
+          "path": "package/native/win32-x64/QQNT.dll",
+          "bytes": 30208,
+          "sha256": "ce52cb46d8673e0220e7e1b567791e5bfb2686a886e48d62e5d2efdce87a5d65"
+        }
+      ]
+    },
+    "sameCommitDefaultMirrorMainComparisons": [
+      {
+        "platform": "linux-x64",
+        "referenceRun": "38713700511",
+        "referenceArchiveSha256": "4df244f108d97cfe3c3fdfde1f967c64a16a0419de87d6f331254a16e993ff5c",
+        "referenceSourceArchiveHashesVerified": true,
+        "identicalSharedFiles": 452,
+        "referenceFilesMissing": 0,
+        "changedSharedFiles": 0
+      },
+      {
+        "platform": "linux-arm64",
+        "referenceRun": "38713700511",
+        "referenceArchiveSha256": "db82cc36161f5c1149588389e73ac713c80a037cdbc21bdfd222aa82c99dd6fe",
+        "referenceSourceArchiveHashesVerified": true,
+        "identicalSharedFiles": 452,
+        "referenceFilesMissing": 0,
+        "changedSharedFiles": 0
+      },
+      {
+        "platform": "darwin-x64",
+        "referenceRun": "38713700511",
+        "referenceArchiveSha256": "b6e96fc4d6fb01be1ed07c87a436505456f00daa3abeb5897b9a26b072c9d5de",
+        "referenceSourceArchiveHashesVerified": true,
+        "identicalSharedFiles": 452,
+        "referenceFilesMissing": 0,
+        "changedSharedFiles": 0
+      },
+      {
+        "platform": "darwin-arm64",
+        "referenceRun": "38713700511",
+        "referenceArchiveSha256": "93f4846fd45463c85ef6dbc10a16dafc1122419c0a33bdd982daa2edabae59b3",
+        "referenceSourceArchiveHashesVerified": true,
+        "identicalSharedFiles": 452,
+        "referenceFilesMissing": 0,
+        "changedSharedFiles": 0
+      },
+      {
+        "platform": "win32-x64",
+        "referenceRun": "38713700511",
+        "referenceArchiveSha256": "6bf7f2ac643f85a814ef011294093dd0a32643eaf72d721ad1169c7331354b67",
+        "referenceSourceArchiveHashesVerified": true,
+        "identicalSharedFiles": 451,
+        "referenceFilesMissing": 0,
+        "changedSharedFiles": 0
+      },
+      {
+        "platform": "win32-arm64",
+        "referenceRun": "38713700511",
+        "referenceArchiveSha256": "6bf7f2ac643f85a814ef011294093dd0a32643eaf72d721ad1169c7331354b67",
+        "referenceSourceArchiveHashesVerified": true,
+        "identicalSharedFiles": 451,
+        "referenceFilesMissing": 0,
+        "changedSharedFiles": 0
+      }
+    ],
+    "actualMainWorkflowFiles": [
+      {
+        "path": "package/dist/client/create-client.d.ts",
+        "bytes": 279,
+        "sha256": "6fbe833b06014a74d512501a5317163cb8bc9fab78a331afa8f0113b4e56eb80",
+        "expectedPublicAndWorkerRouteMarkersPresent": true
+      },
+      {
+        "path": "package/dist/client/create-client.js",
+        "bytes": 4719,
+        "sha256": "29c09466ae4b9a4b6859b3d8746dfe9432686b55ed5c3b2fbc6690c63b3d592b",
+        "expectedPublicAndWorkerRouteMarkersPresent": true
+      },
+      {
+        "path": "package/dist/cli.js",
+        "bytes": 10437,
+        "sha256": "84b763c0c17668f351f4f7dfce24a2cd09383e0d8fdb759527d4854e9b1d2f4d",
+        "expectedPublicAndWorkerRouteMarkersPresent": true
+      },
+      {
+        "path": "package/dist/cli/client-command.js",
+        "bytes": 7377,
+        "sha256": "11d6af09426990a4a492fe7a38acad209b5d60be730b423274767366e04645c4",
+        "expectedPublicAndWorkerRouteMarkersPresent": true
+      },
+      {
+        "path": "package/dist/client/qq-client.d.ts",
+        "bytes": 9715,
+        "sha256": "dac6c05e2c75ca6daab5a59f3fbc647f402d17449a7343466676f5d81649a85b",
+        "expectedPublicAndWorkerRouteMarkersPresent": true
+      },
+      {
+        "path": "package/dist/contracts/groups.d.ts",
+        "bytes": 8132,
+        "sha256": "2167ebb786a99ea1fbed2e318d26c2db8b46326ff0960ef5285b0c8fe5759b03",
+        "expectedPublicAndWorkerRouteMarkersPresent": true
+      },
+      {
+        "path": "package/dist/client/qq-client.js",
+        "bytes": 20915,
+        "sha256": "1af6fcf06c1b29b3f9b2f231a830c01d26a25d798c5fd396fb9dddd429b3dbb6",
+        "expectedPublicAndWorkerRouteMarkersPresent": true
+      },
+      {
+        "path": "package/dist/features/contacts/user-profile-query.js",
+        "bytes": 3460,
+        "sha256": "423cc8584248310bee1738f96d54beb6706d32de76842e3f93d0a0c90ecd67a7",
+        "expectedPublicAndWorkerRouteMarkersPresent": true
+      },
+      {
+        "path": "package/dist/features/contacts/contact-operation-input.js",
+        "bytes": 1910,
+        "sha256": "f8c126d05477ec01cb7ae6d6635e4721d09772245f3042d4674d7bfdbedd20b3",
+        "expectedPublicAndWorkerRouteMarkersPresent": true
+      },
+      {
+        "path": "package/dist/native-services.js",
+        "bytes": 23153,
+        "sha256": "3d8d3bebdbd0964a0374389dc0ca011d3d7967dd585fd69a670efbcdcf0ffc42",
+        "expectedPublicAndWorkerRouteMarkersPresent": true
+      },
+      {
+        "path": "package/dist/runtime/operations.js",
+        "bytes": 2337,
+        "sha256": "02be45f98f9cff372f981b96a547faf6f8ddd519d842ebc8331a07937d6eb1ac",
+        "expectedPublicAndWorkerRouteMarkersPresent": true
+      },
+      {
+        "path": "package/dist/cli/commands/contacts.js",
+        "bytes": 5621,
+        "sha256": "fc575b0d3fdc11312870ccf0b6da9f7b85d97cd7c82093e7311d22d720793b62",
+        "expectedPublicAndWorkerRouteMarkersPresent": true
+      }
+    ],
+    "cliPrepareEvidence": {
+      "compiledPrepareRouteVerified": true,
+      "prepareReturnsBeforeLogin": true,
+      "forcedAutoLoginAndAutoReconnectFalse": true,
+      "sixPlatformConsumerFieldsPresentAndTrue": true,
+      "aggregateConsumerFieldsPresentAndTrue": true,
+      "controlledFields": ["cliPrepareLifecycleContract", "cliPrepareLoginSuppressionContract"],
+      "sameCommitMirrorReceiptsRecordTheseFields": false,
+      "createClientDeclarationHasSingleOptionsArgument": true,
+      "creationCancellationIncluded": false,
+      "mirrorReceiptFieldAbsenceRechecked": [
+        {
+          "path": "default-mirror/current-source-darwin-arm64/current-source-mirror.json",
+          "sha256": "393bd91e3d2159e63a5ae44e1a67da91ff588be4cc81c38fb22d577ab0f5e3ee",
+          "bothFieldsAbsent": true
+        },
+        {
+          "path": "default-mirror/current-source-darwin-x64/current-source-mirror.json",
+          "sha256": "492ff475aba0a2a010d1f5956a2615d38cf36ba9c268d64c506dd48eac5bbc3d",
+          "bothFieldsAbsent": true
+        },
+        {
+          "path": "default-mirror/current-source-linux-arm64/current-source-mirror.json",
+          "sha256": "341d556a5b362fe1786495137e5ff58b1275cd5753710e6dda596819bd19c7dd",
+          "bothFieldsAbsent": true
+        },
+        {
+          "path": "default-mirror/current-source-linux-x64/current-source-mirror.json",
+          "sha256": "722df1fe483356abce616e16c2b7e81561592a59ce52fe41e875a625de48535b",
+          "bothFieldsAbsent": true
+        },
+        {
+          "path": "default-mirror/current-source-win32-arm64/current-source-mirror.json",
+          "sha256": "d291e230e9cfabcb8ffeca4e9fef615322e2033ecaeab80fc085753e0ce5af88",
+          "bothFieldsAbsent": true
+        },
+        {
+          "path": "default-mirror/current-source-win32-x64/current-source-mirror.json",
+          "sha256": "dc38a8c727ede5fb856de00453723b44db699998b1f09e0f913124e910feb0b1",
+          "bothFieldsAbsent": true
+        },
+        {
+          "path": "multi-version/version-3.2.31-51102-linux-arm64-legacy-bridge-candidate/version-consumer.json",
+          "sha256": "8072b7aead1ef1349836b9a41b747ba4a72284027f0a8a275239f5b8dac9a63c",
+          "bothFieldsAbsent": true
+        },
+        {
+          "path": "multi-version/version-3.2.31-51102-linux-arm64-public-default/version-consumer.json",
+          "sha256": "a398ae3190db84bd870fffabbc911d646e079c3c6d4a914f95d964d98eeede26",
+          "bothFieldsAbsent": true
+        },
+        {
+          "path": "multi-version/version-3.2.31-51102-linux-x64-legacy-bridge-candidate/version-consumer.json",
+          "sha256": "0b127c6a23720f108552076be04f91b2b1c5612917c5b98a1781d7f7c88a9a0f",
+          "bothFieldsAbsent": true
+        },
+        {
+          "path": "multi-version/version-3.2.31-51102-linux-x64-public-default/version-consumer.json",
+          "sha256": "a46c09811f8b13219eae54e6ca96c252a881c44f51484828db576bdca890bb91",
+          "bothFieldsAbsent": true
+        },
+        {
+          "path": "multi-version/version-3.2.32-52194-linux-arm64-public-default/version-consumer.json",
+          "sha256": "3853b77e852acc898e80a824d354407dd0073dda8c9cc943492ba20ffb63aa2c",
+          "bothFieldsAbsent": true
+        },
+        {
+          "path": "multi-version/version-3.2.32-52194-linux-x64-public-default/version-consumer.json",
+          "sha256": "fe4175ee1a5d01a3ce959506e4064ee40eeded2113e8cf6087fa5b7c0759cf33",
+          "bothFieldsAbsent": true
+        }
+      ],
+      "controlledFactory": "prepare helper substitutes createClient while executing the installed CLI",
+      "signals": "helper calls process.emit for SIGINT; not operating-system signal delivery",
+      "blockedNativeCreationCancellationVerified": false,
+      "boundary": "Installed controlled CLI contracts; no native login or cancellation API claim for this immutable candidate."
+    },
+    "aggregateReceipt": {
+      "sha256": "0e443a773881a0c0612903b6b94e7fe687cd568612e7fea936dee5823fde4dd0",
+      "linuxX64ConsumerSha256": "0e443a773881a0c0612903b6b94e7fe687cd568612e7fea936dee5823fde4dd0",
+      "identicalToLinuxX64Consumer": true,
+      "sameContractResultsAsLinuxX64": true,
+      "onlyTarballRequestOrderDiffers": false,
+      "aggregateTarballRequests": ["silk-wasm", "qq-native-client-linux-x64", "qq-native-client"],
+      "linuxX64TarballRequests": ["silk-wasm", "qq-native-client-linux-x64", "qq-native-client"],
+      "reportedBySeparateAggregateJob": true,
+      "additionalPlatformCoverage": false
+    },
+    "videoMaterials": {
+      "manifestBoundHashesVerified": true,
+      "sameRunSourceBindingVerified": true,
+      "bindingSha256": "56a3378edcab1641df0e5eea1946e4d1e95bc8907d43e42b652dffeb8a485cf8",
+      "reportSha256": "dc82629b97c2bae514b2b560d1bd524f1e656e75a5cd731abc00a066ea146597",
+      "remoteAssetBytesDownloadedOrVerified": false
+    },
+    "localNativeExecuted": false,
+    "localAccountUsed": false,
+    "limits": [
+      "Full ZIP bytes/digests were not fetched or verified; official API digest values remain declarations.",
+      "Six native tarball hashes, SHA512 integrity and native manifest hashes are build/release declarations only. Native tarball and manifest bodies were not downloaded.",
+      "Prepare/close and installed file hashing are CI consumer receipt evidence, not replayed locally. No SDK or .node file was executed during this audit.",
+      "Installed contract fixtures validate public routing/error/lifecycle behavior; their success is not a real-account native feature result.",
+      "All six consumers explicitly record loginAttempted=false, accountUsed=false, nativeSendAttempted=false; restoreAttempted is absent and not inferred.",
+      "No QR login, real-message arrival, group-avatar side effect, remote signature authenticity, or account longevity proof is supplied.",
+      "Native package consumers do not record cold/warm cache metrics; those belong to the separately audited default-mirror run.",
+      "Aggregate receipt is byte-identical to platform Linux x64. A separate aggregate job does not add another supported platform.",
+      "Only the aggregate main tarball was fetched; six platform pre-aggregation main tarballs, silk-wasm and remote video materials were not downloaded.",
+      "Windows stopping probe passed with qqLoaded=false and normalCloseVerified=false; adapter build runtimeVerified=false remains unchanged.",
+      "Member information, request participant identity, explicit UID profile, CLI, lifecycle and string-SSO-carrier flags are installed controlled-contract receipts, not live account/native-query evidence.",
+      "The UID lookup contract uses a controlled Profile receiver and the group-request identity contract uses controlled notices; nativeGroupRequestAttempted=false/nativeProfileQueryAttempted=false remain explicit.",
+      "Windows installed CLI entrypoint checks passed, but posixNpmBinEntrypointChecked=false does not prove a Windows npm .cmd shim invocation. PE headers and ZIP CRC/size are static adapter-byte checks only.",
+      "Prepare lifecycle helper replaces createClient and emits process signals programmatically; it does not prove actual OS signal delivery or interruption of blocked native creation, including Windows.",
+      "CLI prepare controlled-contract fields occur in all six native-package consumers and aggregate; the twelve mirror receipts omit these fields. Archived main still exposes single-argument createClient; later creation cancellation is outside this commit.",
+      "publish job skipped establishes no npm publish by this run; no assertion is made about current npm registry state.",
+      "Same-commit archive comparison used downloaded 817 CI archives only, never current local product sources; this is not a signed supply-chain attestation."
+    ],
+    "platforms": [
+      {
+        "platform": "linux-x64",
+        "node": "v24.20.0",
+        "build": {
+          "path": "selected-npm-linux-x64/build.json",
+          "bytes": 739,
+          "sha256": "3ea8023c15fb396ad908a2840309dd46544e9e42f0bf75253ead084b1b8a26cb"
+        },
+        "consumer": {
+          "path": "selected-npm-linux-x64/consumer.json",
+          "bytes": 20962,
+          "sha256": "0e443a773881a0c0612903b6b94e7fe687cd568612e7fea936dee5823fde4dd0"
+        },
+        "buildSourceBindingVerified": true,
+        "releaseAndPlatformConsumerBytesIdentical": true,
+        "installedNativeStorage": {
+          "format": "plain-installed",
+          "nativePaths": 19,
+          "allInstalledFilesVerified": true,
+          "installedPathsReused": true,
+          "networkFallbackAttempted": false
+        },
+        "version": {
+          "clientVersion": "3.2.32-52194",
+          "appId": "537379447",
+          "qua": "V1_LNX_3.2.32-52194_52194_GW_B"
+        },
+        "nativeExports": 98,
+        "nativePackage": {
+          "name": "qq-native-client-linux-x64",
+          "version": "0.0.2",
+          "tarball": "qq-native-client-linux-x64-0.0.2.tgz",
+          "size": 68331864,
+          "sha256": "7cb14e0fdcd47602722e0f7b07b9c7d8c9e2b72a82f2ec3fd8f7e611ab6968a0",
+          "integrity": "sha512-BNF+a0QM2nJy976PuiNS7doI6Ji1pgw5hhlvMcmvYPnOZGr513zV1eCtemDbhhxsmviyb2qEZtaXPT4C2eV8vA==",
+          "manifestSha256": "d7e307d92dda03eb79de3effce1c8252380968675d4ea933e2f3747606325b77",
+          "receipt": "evidence/linux-x64.consumer.json",
+          "receiptSha256": "0e443a773881a0c0612903b6b94e7fe687cd568612e7fea936dee5823fde4dd0",
+          "tarballBytesLocallyVerified": false,
+          "manifestBodyLocallyVerified": false,
+          "sourceManifestSha256Declared": "be9da51b924212050965ff61b640d8bc1d70c675c2ab6f786ab43143f06375cf",
+          "buildAndReleaseDistributionDeclarationsAgree": true
+        },
+        "installedMainOnly": true,
+        "automaticPlatformSelection": true,
+        "actualRequestedPackages": ["silk-wasm", "qq-native-client-linux-x64", "qq-native-client"],
+        "prepareAndCloseReported": true,
+        "loginAttempted": false,
+        "accountUsed": false,
+        "nativeSendAttempted": false,
+        "restoreAttempted": "absent; not inferred",
+        "coldWarmDownloadProof": "not recorded by this npm consumer; separate default-mirror audit",
+        "allContractFlagsTrue": true,
+        "contractFlagCount": 249,
+        "newMemberAndSsoControlledContracts": {
+          "installedGroupMemberInfo": true,
+          "installedGroupMemberRefresh": true,
+          "installedGroupMemberCliMissing": true,
+          "installedMessageMemberInfo": true,
+          "groupMemberSnapshotContract": true,
+          "forwardStringCarrierRejectionContract": true,
+          "installedCliEntrypointContract": true
+        },
+        "cliPrepareControlledContracts": {
+          "cliPrepareLifecycleContract": true,
+          "cliPrepareLoginSuppressionContract": true
+        },
+        "newMemberNativeQueryAttempted": false,
+        "newParticipantAndUidProfileControlledContracts": {
+          "groupRequestParticipantCompositionContract": true,
+          "groupRequestParticipantApprovalIdentityContract": true,
+          "groupRequestParticipantOptionalDataContract": true,
+          "groupRequestParticipantCliWatchContract": true,
+          "explicitUidProfileCompositionContract": true,
+          "uidProfileNoAutomaticLookupOrFallback": true,
+          "uidProfileExactIdentityContract": true,
+          "uidProfileOriginalSessionContract": true,
+          "uidProfileCliLifecycleContract": true
+        },
+        "newWorkflowExecutionBoundaries": {
+          "nativeGroupRequestAttempted": false,
+          "nativeProfileQueryAttempted": false,
+          "accountUsed": false
+        },
+        "newPublicApiChecks": {
+          "installedMessageComposition": true,
+          "installedImmutableMessageRouting": true,
+          "installedRequestApprovalLifetime": true,
+          "installedMessageContacts": true,
+          "installedMessageMemberInfo": true,
+          "installedCapturedMessageText": true,
+          "installedGroupAvatarRouting": true,
+          "installedGroupAvatarValidation": true,
+          "installedGroupAvatarLifetime": true
+        },
+        "publicDeclarationsMatchVerifiedMainBytes": true,
+        "posixNpmBinEntrypointChecked": true
+      },
+      {
+        "platform": "linux-arm64",
+        "node": "v24.20.0",
+        "build": {
+          "path": "selected-npm-linux-arm64/build.json",
+          "bytes": 745,
+          "sha256": "da22cd291c405ebb846a3b27a78d3234658b6f37daf8f6ea91770fe482966b9a"
+        },
+        "consumer": {
+          "path": "selected-npm-linux-arm64/consumer.json",
+          "bytes": 20968,
+          "sha256": "2ccdc4b3c03177c9346e9700458b7f71af53c298e80fc216635a8e13f33bb5ed"
+        },
+        "buildSourceBindingVerified": true,
+        "releaseAndPlatformConsumerBytesIdentical": true,
+        "installedNativeStorage": {
+          "format": "plain-installed",
+          "nativePaths": 20,
+          "allInstalledFilesVerified": true,
+          "installedPathsReused": true,
+          "networkFallbackAttempted": false
+        },
+        "version": {
+          "clientVersion": "3.2.32-52194",
+          "appId": "537379448",
+          "qua": "V1_LNX_3.2.32-52194_52194_GW_B"
+        },
+        "nativeExports": 98,
+        "nativePackage": {
+          "name": "qq-native-client-linux-arm64",
+          "version": "0.0.2",
+          "tarball": "qq-native-client-linux-arm64-0.0.2.tgz",
+          "size": 70425393,
+          "sha256": "c7305be12b3b6632bbca7b0ce01125241a6b9c1453daca5a48af63b649d40313",
+          "integrity": "sha512-8/m3sq7lw6e079U2hPvy/6m7wgIuoli7SBwfGiVY6dFersZS3xIHAACIP+bmngezaLDAxsPkOOJtxmwuZLpPbg==",
+          "manifestSha256": "11a10e00ed405aad26c5aadd4923dc4497475636b45725705af203acf18eccbe",
+          "receipt": "evidence/linux-arm64.consumer.json",
+          "receiptSha256": "2ccdc4b3c03177c9346e9700458b7f71af53c298e80fc216635a8e13f33bb5ed",
+          "tarballBytesLocallyVerified": false,
+          "manifestBodyLocallyVerified": false,
+          "sourceManifestSha256Declared": "84d61aca429377e9fd6717327c23d3a5e06d6655e520fc60b1adc12378b2848a",
+          "buildAndReleaseDistributionDeclarationsAgree": true
+        },
+        "installedMainOnly": true,
+        "automaticPlatformSelection": true,
+        "actualRequestedPackages": [
+          "silk-wasm",
+          "qq-native-client-linux-arm64",
+          "qq-native-client"
+        ],
+        "prepareAndCloseReported": true,
+        "loginAttempted": false,
+        "accountUsed": false,
+        "nativeSendAttempted": false,
+        "restoreAttempted": "absent; not inferred",
+        "coldWarmDownloadProof": "not recorded by this npm consumer; separate default-mirror audit",
+        "allContractFlagsTrue": true,
+        "contractFlagCount": 249,
+        "newMemberAndSsoControlledContracts": {
+          "installedGroupMemberInfo": true,
+          "installedGroupMemberRefresh": true,
+          "installedGroupMemberCliMissing": true,
+          "installedMessageMemberInfo": true,
+          "groupMemberSnapshotContract": true,
+          "forwardStringCarrierRejectionContract": true,
+          "installedCliEntrypointContract": true
+        },
+        "cliPrepareControlledContracts": {
+          "cliPrepareLifecycleContract": true,
+          "cliPrepareLoginSuppressionContract": true
+        },
+        "newMemberNativeQueryAttempted": false,
+        "newParticipantAndUidProfileControlledContracts": {
+          "groupRequestParticipantCompositionContract": true,
+          "groupRequestParticipantApprovalIdentityContract": true,
+          "groupRequestParticipantOptionalDataContract": true,
+          "groupRequestParticipantCliWatchContract": true,
+          "explicitUidProfileCompositionContract": true,
+          "uidProfileNoAutomaticLookupOrFallback": true,
+          "uidProfileExactIdentityContract": true,
+          "uidProfileOriginalSessionContract": true,
+          "uidProfileCliLifecycleContract": true
+        },
+        "newWorkflowExecutionBoundaries": {
+          "nativeGroupRequestAttempted": false,
+          "nativeProfileQueryAttempted": false,
+          "accountUsed": false
+        },
+        "newPublicApiChecks": {
+          "installedMessageComposition": true,
+          "installedImmutableMessageRouting": true,
+          "installedRequestApprovalLifetime": true,
+          "installedMessageContacts": true,
+          "installedMessageMemberInfo": true,
+          "installedCapturedMessageText": true,
+          "installedGroupAvatarRouting": true,
+          "installedGroupAvatarValidation": true,
+          "installedGroupAvatarLifetime": true
+        },
+        "publicDeclarationsMatchVerifiedMainBytes": true,
+        "posixNpmBinEntrypointChecked": true
+      },
+      {
+        "platform": "darwin-x64",
+        "node": "v24.20.0",
+        "build": {
+          "path": "selected-npm-darwin-x64/build.json",
+          "bytes": 745,
+          "sha256": "e10186754c2d9a28c31f1670ee6d94c49659b9957f779f328ec1ab1546afb289"
+        },
+        "consumer": {
+          "path": "selected-npm-darwin-x64/consumer.json",
+          "bytes": 20966,
+          "sha256": "3e8ec216dd7e7e73f6842626f885c8455b4794d917c5c784556446cb75b0401a"
+        },
+        "buildSourceBindingVerified": true,
+        "releaseAndPlatformConsumerBytesIdentical": true,
+        "installedNativeStorage": {
+          "format": "plain-installed",
+          "nativePaths": 1168,
+          "allInstalledFilesVerified": true,
+          "installedPathsReused": true,
+          "networkFallbackAttempted": false
+        },
+        "version": {
+          "clientVersion": "7.0.2-53644",
+          "appId": "537391652",
+          "qua": "V1_MAC_7.0.2-53644_53644_GW_B"
+        },
+        "nativeExports": 104,
+        "nativePackage": {
+          "name": "qq-native-client-darwin-x64",
+          "version": "0.0.2",
+          "tarball": "qq-native-client-darwin-x64-0.0.2.tgz",
+          "size": 65852190,
+          "sha256": "2c23a255a14cde1b5d729eb638ac57adc0acf6fadc69c37f8c2818a3e28c5e5e",
+          "integrity": "sha512-RKr0lRLj1JHbYOqn11cAVznI88Dpp4k+0agBpVPvFuFewZMM/9OqGmWJhbSeWnxMnUJaT9aNyjKVV7QAwOY6oQ==",
+          "manifestSha256": "16ff5e5ba6c05b2d736db9ff8de53070751ef342faf9cad5a03fda1fdabb9103",
+          "receipt": "evidence/darwin-x64.consumer.json",
+          "receiptSha256": "3e8ec216dd7e7e73f6842626f885c8455b4794d917c5c784556446cb75b0401a",
+          "tarballBytesLocallyVerified": false,
+          "manifestBodyLocallyVerified": false,
+          "sourceManifestSha256Declared": "e65c57b5002e42daf59a845b92a185a57db31045e666961c904c96ba4f5c249b",
+          "buildAndReleaseDistributionDeclarationsAgree": true
+        },
+        "installedMainOnly": true,
+        "automaticPlatformSelection": true,
+        "actualRequestedPackages": ["silk-wasm", "qq-native-client", "qq-native-client-darwin-x64"],
+        "prepareAndCloseReported": true,
+        "loginAttempted": false,
+        "accountUsed": false,
+        "nativeSendAttempted": false,
+        "restoreAttempted": "absent; not inferred",
+        "coldWarmDownloadProof": "not recorded by this npm consumer; separate default-mirror audit",
+        "allContractFlagsTrue": true,
+        "contractFlagCount": 249,
+        "newMemberAndSsoControlledContracts": {
+          "installedGroupMemberInfo": true,
+          "installedGroupMemberRefresh": true,
+          "installedGroupMemberCliMissing": true,
+          "installedMessageMemberInfo": true,
+          "groupMemberSnapshotContract": true,
+          "forwardStringCarrierRejectionContract": true,
+          "installedCliEntrypointContract": true
+        },
+        "cliPrepareControlledContracts": {
+          "cliPrepareLifecycleContract": true,
+          "cliPrepareLoginSuppressionContract": true
+        },
+        "newMemberNativeQueryAttempted": false,
+        "newParticipantAndUidProfileControlledContracts": {
+          "groupRequestParticipantCompositionContract": true,
+          "groupRequestParticipantApprovalIdentityContract": true,
+          "groupRequestParticipantOptionalDataContract": true,
+          "groupRequestParticipantCliWatchContract": true,
+          "explicitUidProfileCompositionContract": true,
+          "uidProfileNoAutomaticLookupOrFallback": true,
+          "uidProfileExactIdentityContract": true,
+          "uidProfileOriginalSessionContract": true,
+          "uidProfileCliLifecycleContract": true
+        },
+        "newWorkflowExecutionBoundaries": {
+          "nativeGroupRequestAttempted": false,
+          "nativeProfileQueryAttempted": false,
+          "accountUsed": false
+        },
+        "newPublicApiChecks": {
+          "installedMessageComposition": true,
+          "installedImmutableMessageRouting": true,
+          "installedRequestApprovalLifetime": true,
+          "installedMessageContacts": true,
+          "installedMessageMemberInfo": true,
+          "installedCapturedMessageText": true,
+          "installedGroupAvatarRouting": true,
+          "installedGroupAvatarValidation": true,
+          "installedGroupAvatarLifetime": true
+        },
+        "publicDeclarationsMatchVerifiedMainBytes": true,
+        "posixNpmBinEntrypointChecked": true
+      },
+      {
+        "platform": "darwin-arm64",
+        "node": "v24.20.0",
+        "build": {
+          "path": "selected-npm-darwin-arm64/build.json",
+          "bytes": 751,
+          "sha256": "6e465e0006ab206494cbb6fa9694badf7058789045f4f5db0bedad8006e9a4b7"
+        },
+        "consumer": {
+          "path": "selected-npm-darwin-arm64/consumer.json",
+          "bytes": 20972,
+          "sha256": "c29c69b84d5413517e5f769654e5e6ee75ee1dd1cf0e382204d3c66e890de6b7"
+        },
+        "buildSourceBindingVerified": true,
+        "releaseAndPlatformConsumerBytesIdentical": true,
+        "installedNativeStorage": {
+          "format": "plain-installed",
+          "nativePaths": 1168,
+          "allInstalledFilesVerified": true,
+          "installedPathsReused": true,
+          "networkFallbackAttempted": false
+        },
+        "version": {
+          "clientVersion": "7.0.2-53644",
+          "appId": "537391652",
+          "qua": "V1_MAC_7.0.2-53644_53644_GW_B"
+        },
+        "nativeExports": 104,
+        "nativePackage": {
+          "name": "qq-native-client-darwin-arm64",
+          "version": "0.0.2",
+          "tarball": "qq-native-client-darwin-arm64-0.0.2.tgz",
+          "size": 59911844,
+          "sha256": "5bd2f5ec074b5c1908ae10242b4c2b26613f6de693604f445699732c1bda5fb3",
+          "integrity": "sha512-vJU58jzV+gJOwgEgfWz+S0pSU3LCB/AkHRXTKfrKBEr+1s0phfUyjAk4Lypg3+yNLJ2ZJxtnhvrnD+qpsgyb/Q==",
+          "manifestSha256": "02866520ae463d1bbe9b7131d81633da0aa5c286116dd3fcd71cd60b65dbb142",
+          "receipt": "evidence/darwin-arm64.consumer.json",
+          "receiptSha256": "c29c69b84d5413517e5f769654e5e6ee75ee1dd1cf0e382204d3c66e890de6b7",
+          "tarballBytesLocallyVerified": false,
+          "manifestBodyLocallyVerified": false,
+          "sourceManifestSha256Declared": "9907a7993e8c276291f8e4f490fa675adbc8799e0bd392416b889ea6ee8e683a",
+          "buildAndReleaseDistributionDeclarationsAgree": true
+        },
+        "installedMainOnly": true,
+        "automaticPlatformSelection": true,
+        "actualRequestedPackages": [
+          "silk-wasm",
+          "qq-native-client",
+          "qq-native-client-darwin-arm64"
+        ],
+        "prepareAndCloseReported": true,
+        "loginAttempted": false,
+        "accountUsed": false,
+        "nativeSendAttempted": false,
+        "restoreAttempted": "absent; not inferred",
+        "coldWarmDownloadProof": "not recorded by this npm consumer; separate default-mirror audit",
+        "allContractFlagsTrue": true,
+        "contractFlagCount": 249,
+        "newMemberAndSsoControlledContracts": {
+          "installedGroupMemberInfo": true,
+          "installedGroupMemberRefresh": true,
+          "installedGroupMemberCliMissing": true,
+          "installedMessageMemberInfo": true,
+          "groupMemberSnapshotContract": true,
+          "forwardStringCarrierRejectionContract": true,
+          "installedCliEntrypointContract": true
+        },
+        "cliPrepareControlledContracts": {
+          "cliPrepareLifecycleContract": true,
+          "cliPrepareLoginSuppressionContract": true
+        },
+        "newMemberNativeQueryAttempted": false,
+        "newParticipantAndUidProfileControlledContracts": {
+          "groupRequestParticipantCompositionContract": true,
+          "groupRequestParticipantApprovalIdentityContract": true,
+          "groupRequestParticipantOptionalDataContract": true,
+          "groupRequestParticipantCliWatchContract": true,
+          "explicitUidProfileCompositionContract": true,
+          "uidProfileNoAutomaticLookupOrFallback": true,
+          "uidProfileExactIdentityContract": true,
+          "uidProfileOriginalSessionContract": true,
+          "uidProfileCliLifecycleContract": true
+        },
+        "newWorkflowExecutionBoundaries": {
+          "nativeGroupRequestAttempted": false,
+          "nativeProfileQueryAttempted": false,
+          "accountUsed": false
+        },
+        "newPublicApiChecks": {
+          "installedMessageComposition": true,
+          "installedImmutableMessageRouting": true,
+          "installedRequestApprovalLifetime": true,
+          "installedMessageContacts": true,
+          "installedMessageMemberInfo": true,
+          "installedCapturedMessageText": true,
+          "installedGroupAvatarRouting": true,
+          "installedGroupAvatarValidation": true,
+          "installedGroupAvatarLifetime": true
+        },
+        "publicDeclarationsMatchVerifiedMainBytes": true,
+        "posixNpmBinEntrypointChecked": true
+      },
+      {
+        "platform": "win32-x64",
+        "node": "v24.20.0",
+        "build": {
+          "path": "selected-npm-win32-x64/build.json",
+          "bytes": 739,
+          "sha256": "8cf9d4d26d607fd3d4ab9e65da4b8efa49bcc5c1943e51f64aae68f3e2a254f6"
+        },
+        "consumer": {
+          "path": "selected-npm-win32-x64/consumer.json",
+          "bytes": 20960,
+          "sha256": "c3748806d035040d0e1d134ecf538463d9f208b21c3fd3ec40a6f3f340828582"
+        },
+        "buildSourceBindingVerified": true,
+        "releaseAndPlatformConsumerBytesIdentical": true,
+        "installedNativeStorage": {
+          "format": "plain-installed",
+          "nativePaths": 32,
+          "allInstalledFilesVerified": true,
+          "installedPathsReused": true,
+          "networkFallbackAttempted": false
+        },
+        "version": {
+          "clientVersion": "9.9.33-52230",
+          "appId": "537379411",
+          "qua": "V1_WIN_NQ_9.9.33_52230_GW_B"
+        },
+        "nativeExports": 98,
+        "nativePackage": {
+          "name": "qq-native-client-win32-x64",
+          "version": "0.0.2",
+          "tarball": "qq-native-client-win32-x64-0.0.2.tgz",
+          "size": 66610743,
+          "sha256": "ff99dc2e6cc35d231174059d083634565adce957a3539bbded835e076af7213b",
+          "integrity": "sha512-pIIrcae3UprElo4IcHlYNnDV/nFMMILYoDFH+VRXhGcLJRgb0PA9AkHbJXL/Hk7RX9yWZZ8qCCYGToRaqbtA8A==",
+          "manifestSha256": "022a131cee458b6eb8c773e27bf3ff2b912df9eb18d1e7680208077dde2b17b8",
+          "receipt": "evidence/win32-x64.consumer.json",
+          "receiptSha256": "c3748806d035040d0e1d134ecf538463d9f208b21c3fd3ec40a6f3f340828582",
+          "tarballBytesLocallyVerified": false,
+          "manifestBodyLocallyVerified": false,
+          "sourceManifestSha256Declared": "f1baccbd0f25208c7de25736d04cbb69d64b3f158d63a3a6079e89882f802b56",
+          "buildAndReleaseDistributionDeclarationsAgree": true
+        },
+        "installedMainOnly": true,
+        "automaticPlatformSelection": true,
+        "actualRequestedPackages": ["silk-wasm", "qq-native-client", "qq-native-client-win32-x64"],
+        "prepareAndCloseReported": true,
+        "loginAttempted": false,
+        "accountUsed": false,
+        "nativeSendAttempted": false,
+        "restoreAttempted": "absent; not inferred",
+        "coldWarmDownloadProof": "not recorded by this npm consumer; separate default-mirror audit",
+        "allContractFlagsTrue": true,
+        "contractFlagCount": 249,
+        "newMemberAndSsoControlledContracts": {
+          "installedGroupMemberInfo": true,
+          "installedGroupMemberRefresh": true,
+          "installedGroupMemberCliMissing": true,
+          "installedMessageMemberInfo": true,
+          "groupMemberSnapshotContract": true,
+          "forwardStringCarrierRejectionContract": true,
+          "installedCliEntrypointContract": true
+        },
+        "cliPrepareControlledContracts": {
+          "cliPrepareLifecycleContract": true,
+          "cliPrepareLoginSuppressionContract": true
+        },
+        "newMemberNativeQueryAttempted": false,
+        "newParticipantAndUidProfileControlledContracts": {
+          "groupRequestParticipantCompositionContract": true,
+          "groupRequestParticipantApprovalIdentityContract": true,
+          "groupRequestParticipantOptionalDataContract": true,
+          "groupRequestParticipantCliWatchContract": true,
+          "explicitUidProfileCompositionContract": true,
+          "uidProfileNoAutomaticLookupOrFallback": true,
+          "uidProfileExactIdentityContract": true,
+          "uidProfileOriginalSessionContract": true,
+          "uidProfileCliLifecycleContract": true
+        },
+        "newWorkflowExecutionBoundaries": {
+          "nativeGroupRequestAttempted": false,
+          "nativeProfileQueryAttempted": false,
+          "accountUsed": false
+        },
+        "newPublicApiChecks": {
+          "installedMessageComposition": true,
+          "installedImmutableMessageRouting": true,
+          "installedRequestApprovalLifetime": true,
+          "installedMessageContacts": true,
+          "installedMessageMemberInfo": true,
+          "installedCapturedMessageText": true,
+          "installedGroupAvatarRouting": true,
+          "installedGroupAvatarValidation": true,
+          "installedGroupAvatarLifetime": true
+        },
+        "publicDeclarationsMatchVerifiedMainBytes": true,
+        "posixNpmBinEntrypointChecked": false,
+        "windowsAdapterBuild": {
+          "node": "v24.20.0",
+          "arch": "x64",
+          "sourceSha256": "987113866ab9018998f09f74072afe7136f3da8b934e35d89531e1e49890062f",
+          "nodeConfigSha256": "cef8c4e3f5021ff106d9d0a910912e6336d56faaec280e8000ee84227fa86a96",
+          "exports": 99,
+          "stoppingContract": "real Environment::is_stopping(), null environment/isolate => true",
+          "runtimeVerified": false
+        },
+        "windowsStoppingTransition": {
+          "probe": "real-node-stopping-transition",
+          "nullIsStopping": true,
+          "liveIsStopping": false,
+          "stopReturnedZero": true,
+          "stoppedIsStopping": true,
+          "passed": true,
+          "qqLoaded": false,
+          "accountAccessed": false,
+          "normalCloseVerified": false
+        },
+        "windowsAggregateAdapterBytes": {
+          "path": "package/native/win32-x64/QQNT.dll",
+          "bytes": 30208,
+          "sha256": "ce52cb46d8673e0220e7e1b567791e5bfb2686a886e48d62e5d2efdce87a5d65",
+          "peMachine": "0x8664",
+          "architectureMatchesPlatform": true,
+          "platformArtifactZipCrcAndSizeMatch": true,
+          "locallyExecuted": false
+        }
+      },
+      {
+        "platform": "win32-arm64",
+        "node": "v24.20.0",
+        "build": {
+          "path": "selected-npm-win32-arm64/build.json",
+          "bytes": 745,
+          "sha256": "16f6ad3b916bc2996d1c7b0a032e6fed6b434e3677ca0984b4b22e2c6bf6aa34"
+        },
+        "consumer": {
+          "path": "selected-npm-win32-arm64/consumer.json",
+          "bytes": 20966,
+          "sha256": "2519f4c6c9fff11c3d1764520a1ad0ca76101aef1f8f76fbc4dbf689788bbb0f"
+        },
+        "buildSourceBindingVerified": true,
+        "releaseAndPlatformConsumerBytesIdentical": true,
+        "installedNativeStorage": {
+          "format": "plain-installed",
+          "nativePaths": 27,
+          "allInstalledFilesVerified": true,
+          "installedPathsReused": true,
+          "networkFallbackAttempted": false
+        },
+        "version": {
+          "clientVersion": "9.9.33-52230",
+          "appId": "537379423",
+          "qua": "V1_WIN_NQ_9.9.33_52230_GW_B"
+        },
+        "nativeExports": 98,
+        "nativePackage": {
+          "name": "qq-native-client-win32-arm64",
+          "version": "0.0.2",
+          "tarball": "qq-native-client-win32-arm64-0.0.2.tgz",
+          "size": 54121898,
+          "sha256": "69f544018c4173c3f350923c561c692300781eec2f0cb91289bf4cdf051b9e03",
+          "integrity": "sha512-0Wfa7p1nginXL7o2L9xfFgvMuNVjiQlsm+iTn3ILFb//Aj6fRr9C4nvCmJNsKq3i0Yx++3l5ZVUFA/4YejuY6Q==",
+          "manifestSha256": "786d181a1c789859f9d4c2accd2b5ea7fcf6300dc182f519a0e3278db6cbdf08",
+          "receipt": "evidence/win32-arm64.consumer.json",
+          "receiptSha256": "2519f4c6c9fff11c3d1764520a1ad0ca76101aef1f8f76fbc4dbf689788bbb0f",
+          "tarballBytesLocallyVerified": false,
+          "manifestBodyLocallyVerified": false,
+          "sourceManifestSha256Declared": "d2e934b62d9b002cd4d78d5b881cbb885d090b0b21597e8837ba60fa1ab58a21",
+          "buildAndReleaseDistributionDeclarationsAgree": true
+        },
+        "installedMainOnly": true,
+        "automaticPlatformSelection": true,
+        "actualRequestedPackages": [
+          "silk-wasm",
+          "qq-native-client-win32-arm64",
+          "qq-native-client"
+        ],
+        "prepareAndCloseReported": true,
+        "loginAttempted": false,
+        "accountUsed": false,
+        "nativeSendAttempted": false,
+        "restoreAttempted": "absent; not inferred",
+        "coldWarmDownloadProof": "not recorded by this npm consumer; separate default-mirror audit",
+        "allContractFlagsTrue": true,
+        "contractFlagCount": 249,
+        "newMemberAndSsoControlledContracts": {
+          "installedGroupMemberInfo": true,
+          "installedGroupMemberRefresh": true,
+          "installedGroupMemberCliMissing": true,
+          "installedMessageMemberInfo": true,
+          "groupMemberSnapshotContract": true,
+          "forwardStringCarrierRejectionContract": true,
+          "installedCliEntrypointContract": true
+        },
+        "cliPrepareControlledContracts": {
+          "cliPrepareLifecycleContract": true,
+          "cliPrepareLoginSuppressionContract": true
+        },
+        "newMemberNativeQueryAttempted": false,
+        "newParticipantAndUidProfileControlledContracts": {
+          "groupRequestParticipantCompositionContract": true,
+          "groupRequestParticipantApprovalIdentityContract": true,
+          "groupRequestParticipantOptionalDataContract": true,
+          "groupRequestParticipantCliWatchContract": true,
+          "explicitUidProfileCompositionContract": true,
+          "uidProfileNoAutomaticLookupOrFallback": true,
+          "uidProfileExactIdentityContract": true,
+          "uidProfileOriginalSessionContract": true,
+          "uidProfileCliLifecycleContract": true
+        },
+        "newWorkflowExecutionBoundaries": {
+          "nativeGroupRequestAttempted": false,
+          "nativeProfileQueryAttempted": false,
+          "accountUsed": false
+        },
+        "newPublicApiChecks": {
+          "installedMessageComposition": true,
+          "installedImmutableMessageRouting": true,
+          "installedRequestApprovalLifetime": true,
+          "installedMessageContacts": true,
+          "installedMessageMemberInfo": true,
+          "installedCapturedMessageText": true,
+          "installedGroupAvatarRouting": true,
+          "installedGroupAvatarValidation": true,
+          "installedGroupAvatarLifetime": true
+        },
+        "publicDeclarationsMatchVerifiedMainBytes": true,
+        "posixNpmBinEntrypointChecked": false,
+        "windowsAdapterBuild": {
+          "node": "v24.20.0",
+          "arch": "arm64",
+          "sourceSha256": "987113866ab9018998f09f74072afe7136f3da8b934e35d89531e1e49890062f",
+          "nodeConfigSha256": "d88076f720833fd4be4bbf6578de921dcee49d73d069838b85acc6486f10cc9a",
+          "exports": 99,
+          "stoppingContract": "real Environment::is_stopping(), null environment/isolate => true",
+          "runtimeVerified": false
+        },
+        "windowsStoppingTransition": {
+          "probe": "real-node-stopping-transition",
+          "nullIsStopping": true,
+          "liveIsStopping": false,
+          "stopReturnedZero": true,
+          "stoppedIsStopping": true,
+          "passed": true,
+          "qqLoaded": false,
+          "accountAccessed": false,
+          "normalCloseVerified": false
+        },
+        "windowsAggregateAdapterBytes": {
+          "path": "package/native/win32-arm64/QQNT.dll",
+          "bytes": 31744,
+          "sha256": "05332e954a872e92365cbe19dad7c27ea7d4c2b0574b3a64232c72a438a69a59",
+          "peMachine": "0xaa64",
+          "architectureMatchesPlatform": true,
+          "platformArtifactZipCrcAndSizeMatch": true,
+          "locallyExecuted": false
+        }
+      }
+    ]
+  }
+}
