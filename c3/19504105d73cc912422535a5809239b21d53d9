@@ -1,0 +1,21 @@
+sdk/docs/sdk-quality.md
+  s_2104cc474f1ce5::t_d0651b6ee29f3f 196-205
+sdk/docs/evidence/bot-api-ci-f6b5a65.json
+  s_2104cc474f1ce5::t_8c06d664607af3 1-814
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c319504105d73cc912422535a5809239b21d53d9",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
