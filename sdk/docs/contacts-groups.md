@@ -7,7 +7,7 @@ These are working-source additions for the next candidate, not published `0.0.1`
 | Friends           | Lists/profiles, remarks/deletion, request listing/handling, `request.friend`, `friend-list-updated`, `friend-added`                                                                                                                                                                                                                                            | Sending applications; independent deleted/profile/remark notices                                                                               |
 | Friend categories | `listFriendCategories`, `addFriendCategory`, `renameFriendCategory` (four measured binaries), `deleteFriendCategory` (three measured macOS ARM64/Linux binaries), `reorderFriendCategories`, `setFriendCategory` (measured Linux x64/ARM64 3.2.32-52194, macOS x64/ARM64 7.0.2-53644 and Windows x64 9.9.33-52230); categorized `friend-list-updated` metadata | Move friends on Windows ARM64; rename/delete/reorder on remaining binaries and real account mutation acceptance require separate verification  |
 | Group queries     | Lists/members/`getGroupInfo`/`listGroupMutedMembers`, `group-list-updated`, `group-members-updated`, `group-info-updated`, `group-membership`, `group-admin`, `group-mute`                                                                                                                                                                                     | Complete join classification and real event/query acceptance                                                                                   |
-| Group actions     | Avatar (measured macOS ARM64), name/remark, all/member mute, member card/admin/kick, leave, notices, requests, essence add/remove folder deletion acknowledgement and single-group file count                                                                                                                                                                  | Create/join/invite, member titles, live essence pagination and add/remove events, remaining group file operations and real mutation acceptance |
+| Group actions     | Avatar (measured macOS/Linux ARM64), name/remark, all/member mute, member card/admin/kick, leave, notices, requests, essence add/remove folder deletion acknowledgement and single-group file count                                                                                                                                                            | Create/join/invite, member titles, live essence pagination and add/remove events, remaining group file operations and real mutation acceptance |
 
 The [group creation investigation](group-creation-research.md) records the current
 fixed-profile binary evidence and the caller/input/security contracts still needed
@@ -44,10 +44,11 @@ settles; preflight does not freeze its bytes. Accepted image formats/sizes and
 role permissions still require real-account validation.
 
 The [static contract record](evidence/group-avatar-contract.json) currently enables
-only the exact macOS ARM64 `7.0.2-53644` wrapper hash. It binds the actual Group
-receiver, argument conversion and normal `{result, errMsg}` callback. Other
-profiles reject with `unsupported-native-contract` before file inspection or
-setter acquisition. Adding a matching method name does not enable a profile.
+the exact macOS ARM64 `7.0.2-53644` and Linux ARM64 `3.2.32-52194` wrapper hashes.
+Each profile has independently reviewed evidence for the actual Group receiver,
+argument conversion and normal `{result, errMsg}` callback. Other profiles reject
+with `unsupported-native-contract` before file inspection or setter acquisition.
+Adding a matching method name does not enable a profile.
 
 Nonzero int32 status rejects with its numeric error code. Malformed results reject
 as `invalid-result`; native response wording is not exposed. The native response

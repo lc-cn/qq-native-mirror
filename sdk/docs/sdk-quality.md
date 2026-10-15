@@ -166,3 +166,30 @@ preflight. The native contract has an independently replayed static evidence
 chain; no native avatar call or real-account mutation was made. Image limits,
 permissions and the remote avatar effect remain unverified, as do the other five
 platform profiles. These changes are local and have not been published to npm.
+
+The sixth iteration fixes the Windows development build path. The SDK build
+compiles TypeScript on Windows and leaves registration to the version-bound
+adapter supplied by the verified native bundle. It no longer attempts the Unix
+bridge compiler there. Local package verification and CI share one Node/npm CLI
+pair and execute it without a shell or Windows command shim. The helper remains
+inside the SDK tooling boundary, with one exact consumer-module permission; CI
+reexports it. The Linux codec baseline test now derives mount source paths from
+the host while retaining its offline, read-only and ABI-budget assertions.
+
+The seventh iteration admits the exact Linux ARM64 3.2.32-52194 wrapper for group
+avatars. Independent static review binds the actual Node Session lookup to its
+Group receiver, argument conversion and normal acknowledgement callback. Both
+admitted profiles exercise the same implementation. Composition tests verify
+each receiver and lifetime, and reject the other four known profiles or missing
+and inconsistent identity fields before service acquisition. No platform-specific
+business implementation or automatic retry was introduced. The static evidence
+does not establish a Linux avatar mutation, image constraints or remote effects.
+
+Combined local acceptance on 2026-10-15 passed the full `npm run check`: 2,529 SDK
+tests, 88 build/mirror tool tests, formatting, zero-warning lint, strict types,
+clean build and the packed/installed consumer. The negative tooling fixtures
+follow the actual npm wrapper and still require invalid command, argument and
+working-directory types to fail. Windows entrypoint branch tests run in isolated
+child processes; they do not establish an actual Windows build. These two later
+iterations have local evidence only, independent of the authorized remote CI
+candidate `f6b5a652a090d45adb9303b4a6bb3d7589fa733e`.

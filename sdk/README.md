@@ -257,9 +257,10 @@ plain query results. This API is part of the working source, not the recorded
 
 Group avatars use `client.setGroupAvatar(groupId, absoluteFilePath)` or
 `group.setAvatar(absoluteFilePath)`. The working source currently enables this
-operation for the exact macOS ARM64 QQ `7.0.2-53644` profile. It validates a readable,
-nonempty local file, waits up to five seconds for the native acknowledgement and
-never retries; other profiles reject before native invocation. See the
+operation for the exact macOS ARM64 QQ `7.0.2-53644` and Linux ARM64 QQ
+`3.2.32-52194` profiles. It validates a readable, nonempty local file, waits up to
+five seconds for the native acknowledgement and never retries; other profiles
+reject before native invocation. See the
 [group avatar contract](docs/contacts-groups.md#group-avatars) for error semantics
 and the separate remote-effect acceptance requirement.
 

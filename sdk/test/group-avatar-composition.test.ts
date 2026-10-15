@@ -64,59 +64,118 @@ function fixture(
   };
 }
 
-function verifiedProfile(): NativeContractProfile {
-  assert.equal(evidence.profiles.length, 1);
+function verifiedProfiles(): NativeContractProfile[] {
   assert.equal(evidence.nativeExecuted, false);
   assert.equal(evidence.accountUsed, false);
-  const profile = evidence.profiles[0]!;
-  assert.equal(profile.platform, 'darwin');
-  assert.equal(profile.arch, 'arm64');
-  return profile;
+  assert.deepEqual(
+    evidence.profiles.map(({ platform, arch, clientVersion }) => [platform, arch, clientVersion]),
+    [
+      ['darwin', 'arm64', '7.0.2-53644'],
+      ['linux', 'arm64', '3.2.32-52194'],
+    ],
+  );
+  return evidence.profiles;
 }
 
-test('composed avatar operation routes the captured file and group to the verified Group receiver', async (t) => {
-  const profile = verifiedProfile();
-  const file = await avatarFile(t);
-  const f = fixture(profile, profile.clientVersion);
-  t.after(() => f.services.close());
-  const before = f.acquisitions();
+for (const profile of verifiedProfiles()) {
+  const name = `${profile.platform}/${profile.arch}`;
 
-  assert.equal(
-    await f.services.invokeOperation('setGroupAvatar', { groupId: '000123', file }),
-    undefined,
-  );
-  assert.deepEqual(f.calls, [['000123', file]]);
-  assert.equal(f.acquisitions(), before + 1);
-  assert.equal(f.methodReads(), 1);
-});
+  test(`${name} avatar composition routes the captured file and group to the verified Group receiver`, async (t) => {
+    const file = await avatarFile(t);
+    const f = fixture(profile, profile.clientVersion);
+    t.after(() => f.services.close());
+    const before = f.acquisitions();
 
-test('avatar composition rejects the other five known binaries and every incomplete profile before acquisition', async (t) => {
-  const profile = verifiedProfile();
+    assert.equal(
+      await f.services.invokeOperation('setGroupAvatar', { groupId: '000123', file }),
+      undefined,
+    );
+    assert.deepEqual(f.calls, [['000123', file]]);
+    assert.equal(f.acquisitions(), before + 1);
+    assert.equal(f.methodReads(), 1);
+  });
+
+  test(`${name} Session close cancels an issued avatar wait, observes late rejection and never resubmits`, async (t) => {
+    const file = await avatarFile(t);
+    let rejectNative!: (error: unknown) => void;
+    const pending = new Promise<unknown>((_resolve, reject) => {
+      rejectNative = reject;
+    });
+    let markDispatched!: () => void;
+    const dispatched = new Promise<void>((resolve) => {
+      markDispatched = resolve;
+    });
+    const f = fixture(profile, profile.clientVersion, () => {
+      markDispatched();
+      return pending;
+    });
+    t.after(() => f.services.close());
+    const stopped = assert.rejects(
+      f.services.invokeOperation('setGroupAvatar', { groupId: '123', file }),
+      /closed/,
+    );
+    await dispatched;
+    f.services.close();
+    await stopped;
+    rejectNative(new Error('late native rejection'));
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    await assert.rejects(
+      f.services.invokeOperation('setGroupAvatar', { groupId: '123', file }),
+      /closed/,
+    );
+    assert.deepEqual(f.calls, [['123', file]]);
+    assert.equal(f.methodReads(), 1);
+  });
+}
+
+test('avatar composition rejects the other four known binaries and every incomplete profile before acquisition', async (t) => {
+  const profiles = verifiedProfiles();
   const file = await avatarFile(t);
   const otherProfiles = knownProfiles.profiles.filter(
-    (candidate) => candidate.platform !== profile.platform || candidate.arch !== profile.arch,
+    (candidate) =>
+      !profiles.some(
+        (profile) => candidate.platform === profile.platform && candidate.arch === profile.arch,
+      ),
   );
-  assert.equal(otherProfiles.length, 5);
+  assert.equal(otherProfiles.length, 4);
   assert.equal(
     new Set(otherProfiles.map((candidate) => `${candidate.platform}/${candidate.arch}`)).size,
-    5,
+    4,
   );
-  const candidates: [NativeContractProfile | undefined, string][] = [
-    ...otherProfiles.map((candidate): [NativeContractProfile, string] => [
+  const candidates: [string, NativeContractProfile | undefined, string][] = otherProfiles.map(
+    (candidate) => [
+      `${candidate.platform}/${candidate.arch}: unverified binary`,
       candidate,
       candidate.clientVersion,
-    ]),
-    [undefined, profile.clientVersion],
-    [{ ...profile, platform: 'unknown' }, profile.clientVersion],
-    [{ ...profile, arch: 'unknown' }, profile.clientVersion],
-    [{ ...profile, wrapperSha256: '0'.repeat(64) }, profile.clientVersion],
-    [{ ...profile, clientVersion: 'unverified' }, 'unverified'],
-    [profile, 'unverified'],
-  ];
-  for (const [candidate, version] of candidates) {
-    const f = fixture(candidate, version);
-    const before = f.acquisitions();
-    try {
+    ],
+  );
+  for (const profile of profiles) {
+    const name = `${profile.platform}/${profile.arch}`;
+    const withoutHash = { ...profile };
+    const withoutVersion = { ...profile };
+    Reflect.deleteProperty(withoutHash, 'wrapperSha256');
+    Reflect.deleteProperty(withoutVersion, 'clientVersion');
+    candidates.push(
+      [`${name}: missing profile`, undefined, profile.clientVersion],
+      [`${name}: wrong platform`, { ...profile, platform: 'unknown' }, profile.clientVersion],
+      [`${name}: wrong architecture`, { ...profile, arch: 'unknown' }, profile.clientVersion],
+      [`${name}: missing hash`, withoutHash, profile.clientVersion],
+      [`${name}: wrong hash`, { ...profile, wrapperSha256: '0'.repeat(64) }, profile.clientVersion],
+      [`${name}: missing profile version`, withoutVersion, profile.clientVersion],
+      [
+        `${name}: unverified profile version`,
+        { ...profile, clientVersion: 'unverified' },
+        'unverified',
+      ],
+      [`${name}: missing operation version`, profile, ''],
+      [`${name}: mismatched operation version`, profile, 'unverified'],
+    );
+  }
+  for (const [name, candidate, version] of candidates) {
+    await t.test(name, async (subtest) => {
+      const f = fixture(candidate, version);
+      const before = f.acquisitions();
+      subtest.after(() => f.services.close());
       await assert.rejects(f.services.invokeOperation('setGroupAvatar', { groupId: '123', file }), {
         code: 'unsupported-native-contract',
       });
@@ -127,41 +186,6 @@ test('avatar composition rejects the other five known binaries and every incompl
       );
       assert.equal(f.methodReads(), 0);
       assert.deepEqual(f.calls, []);
-    } finally {
-      f.services.close();
-    }
+    });
   }
-});
-
-test('Session close cancels an issued avatar wait, observes late rejection and never resubmits', async (t) => {
-  const profile = verifiedProfile();
-  const file = await avatarFile(t);
-  let rejectNative!: (error: unknown) => void;
-  const pending = new Promise<unknown>((_resolve, reject) => {
-    rejectNative = reject;
-  });
-  let markDispatched!: () => void;
-  const dispatched = new Promise<void>((resolve) => {
-    markDispatched = resolve;
-  });
-  const f = fixture(profile, profile.clientVersion, () => {
-    markDispatched();
-    return pending;
-  });
-  t.after(() => f.services.close());
-  const stopped = assert.rejects(
-    f.services.invokeOperation('setGroupAvatar', { groupId: '123', file }),
-    /closed/,
-  );
-  await dispatched;
-  f.services.close();
-  await stopped;
-  rejectNative(new Error('late native rejection'));
-  await new Promise<void>((resolve) => setImmediate(resolve));
-  await assert.rejects(
-    f.services.invokeOperation('setGroupAvatar', { groupId: '123', file }),
-    /closed/,
-  );
-  assert.deepEqual(f.calls, [['123', file]]);
-  assert.equal(f.methodReads(), 1);
 });

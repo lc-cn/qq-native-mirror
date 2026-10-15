@@ -8,6 +8,12 @@
       "arch": "arm64",
       "clientVersion": "7.0.2-53644",
       "wrapperSha256": "fbc8ad9b328d05e16784d76b0181dda894c17001179dbf8c0d5dd00dc6271358"
+    },
+    {
+      "platform": "linux",
+      "arch": "arm64",
+      "clientVersion": "3.2.32-52194",
+      "wrapperSha256": "c302361f52494de257044e912e43ed244bb29ee59f59345d25a8959327828337"
     }
   ],
   "source": {
@@ -29,9 +35,10 @@
     }
   },
   "verification": {
-    "tier": "static binary contract and independently reviewed source caller",
+    "tier": "independently reviewed static binary contracts and source caller",
     "registration": "The Group service registers setHeader against the inspected wrapper binding.",
-    "receiver": "The normal Session supplier and JavaScript wrapper preserve the concrete Group receiver used by setHeader.",
+    "receiver": "For both admitted profiles, the normal Session supplier and JavaScript wrapper preserve the concrete Group receiver used by setHeader. Linux ARM64 startup stores the primary Session object in the shared map; the account lookup preserves that object through the Group supplier and JavaScript wrapper. The separate shell interface is not substituted for the account receiver.",
+    "linuxArm64Replay": "Pinned ELF bytes independently replayed against function hashes, instructions, direct branches, relocations, literals and imported symbols; a separate program-segment mapping confirmed the inspected bytes. Registration, concrete receiver supply, arguments and normal callback result were reviewed together.",
     "arguments": [
       "UTF-8 string converted by base-10 unsigned 64-bit parsing for the group number",
       "UTF-8 string passed to the operation as the image pathname"
