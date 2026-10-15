@@ -51,7 +51,7 @@ and regression coverage. Native research is driven by a blocked workflow or an
 unverified platform contract. Local implementation continues while unrelated
 account or publication checks await user participation.
 
-## Current iteration
+## Implementation and acceptance record
 
 The working source adds `FriendContact`, `GroupContact` and `GroupMemberContact`.
 Selection validates a positive decimal QQ ID and requires an online client; it
@@ -254,3 +254,25 @@ contact and live-event entry points, full-snapshot validation and retirement.
 The actual CLI runner prints `null` for a successful missing-member query, preserves
 read errors without a success record, and closes once. These are controlled SDK
 and installed-package checks, not new native-account or remote CI evidence.
+
+The tenth iteration supplies the participant identity missing from group-request
+workflows. Pending joins and invitation approvals expose an optional applicant;
+invitations to the current account expose an optional inviter. Each contains an
+opaque native UID and optional nickname. The existing Group listener owns the
+projection, shared by list results and live events. It captures passive display
+data without profile lookup, omits malformed optional metadata, and retains the
+whole-batch rule for required request fields. Processed statuses and unverified
+roles remain absent. Approval continues to use the original captured request
+tuple and account session. The fixed-source evidence explicitly distinguishes
+the actual listener from an upstream synthetic invitation with reversed fields.
+
+The complete local `npm run check` passed on 2026-10-15: 2,559 SDK tests, 88 tool
+tests, formatting, zero-warning lint, strict types, clean build and packed/installed
+consumers. The same composed consumer follows native-shaped callbacks through the
+real feature owner and public client into list/event identities, explicit approval,
+CLI JSON and normalized watch output. It checks missing optional identity, display
+mutation and retired-session rejection. Installed declarations expose 77 public
+types including `GroupRequestParticipant`. Transport and account boundaries remain
+controlled in these tests; no real request, account login or approval was attempted.
+This participant addition has local evidence only and is not part of the earlier
+`7c8361c` CI candidate.

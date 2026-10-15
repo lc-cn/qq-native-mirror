@@ -24,6 +24,53 @@ The query preserves native category order, counts and repeated memberships. Prof
 
 CLI: `qq-native-client friend-categories --config ./qq.json`.
 
+## Group requests
+
+```ts
+client.on('request.group', (request) => {
+  const participant = request.kind === 'invite' ? request.inviter : request.applicant;
+  console.log(request.groupId, request.kind, participant?.uid, participant?.nickname);
+  // Call request.approve(accept, reason?) only after your application decides.
+});
+const page = await client.listGroupRequests({ doubt: false, limit: 20 });
+```
+
+Events and list results share optional `GroupRequestParticipant` snapshots:
+`{ readonly uid: string; readonly nickname?: string }`. Only pending requests
+(`status === 1`) from the native Group listener establish these roles:
+
+| Kind                       | Identity                                                            |
+| -------------------------- | ------------------------------------------------------------------- |
+| `join` (type 7)            | `applicant`: the person applying to join                            |
+| `invite-approval` (type 5) | `applicant`: the prospective member awaiting administrator approval |
+| `invite` (type 1)          | `inviter`: the person inviting the logged-in account                |
+
+The inviter of an `invite-approval` request, the processing administrator and
+participant roles in processed requests are not established. Their fields remain
+absent. Native UID is opaque and is not a QQ account number; projection does not
+resolve a profile or create a contact handle. Strings retain their original text.
+
+Optional identity metadata is read from own data properties without invoking
+getters or converting values. Missing, empty or malformed UID omits the
+participant; malformed nickname omits only the nickname. This preserves requests
+from older native variants that lack identity metadata. The participant object
+is detached from `raw`, so later raw mutation cannot change the projected UID.
+Required request fields still validate as a complete batch before any event or
+page is delivered.
+
+`GroupRequestEvent.approve(accept = true, reason?)` retains its original
+group/sequence/type/doubt tuple and original online session. Changing participant
+metadata or public routing fields cannot redirect it. Lists remain passive DTOs;
+use `client.handleGroupRequest(request, accept, reason?)` for an explicit list
+decision. Completion reports native submission, not confirmed membership.
+
+CLI `group-requests` prints the same participant fields in its page JSON;
+`watch --events normalized` or `all` includes them in `request.group` records.
+The [fixed-source evidence](evidence/group-request-participants.json) records the
+actual listener mapping and a differently shaped synthetic invitation producer
+that must not be used as a universal role rule. Source and controlled consumer
+checks do not establish request delivery or approval on a real account.
+
 ## Group avatars
 
 ```ts

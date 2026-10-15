@@ -1,4 +1,8 @@
-import type { GroupRequest, GroupRequestPage } from '../../contracts/groups.ts';
+import type {
+  GroupRequest,
+  GroupRequestPage,
+  GroupRequestParticipant,
+} from '../../contracts/groups.ts';
 import { nativeResultError } from '../../errors.ts';
 import { FeatureLifetime } from '../../runtime/feature-lifetime.ts';
 import { captureGroupRequestOperation, type GroupRequestOperation } from './group-request-input.ts';
@@ -26,6 +30,34 @@ function requestType(value: unknown): 1 | 5 | 7 {
   if (value !== 1 && value !== 5 && value !== 7) throw new Error('Unsupported group request type');
   return value;
 }
+function ownData(raw: object, key: string): unknown {
+  const field = Object.getOwnPropertyDescriptor(raw, key);
+  return field && Object.hasOwn(field, 'value') ? field.value : undefined;
+}
+/** Optional display data must not invoke accessors or invalidate an otherwise
+ * actionable notification. A failed nickname read preserves the captured UID.
+ */
+function participant(raw: object, key: 'user1' | 'user2'): GroupRequestParticipant | undefined {
+  let carrier: object;
+  let uid: string;
+  try {
+    const value = ownData(raw, key);
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return;
+    const identifier = ownData(value, 'uid');
+    if (typeof identifier !== 'string' || !identifier.trim()) return;
+    carrier = value;
+    uid = identifier;
+  } catch {
+    return;
+  }
+  try {
+    const nickname = ownData(carrier, 'nickName');
+    if (typeof nickname === 'string' && nickname.trim()) return { uid, nickname };
+  } catch {
+    // Optional nickname failure must not discard a valid participant identity.
+  }
+  return { uid };
+}
 function normalize(raw: unknown, doubt: boolean): NativeGroupRequest | undefined {
   if (!raw || typeof raw !== 'object') throw new Error('Invalid native group notification');
   const value = raw as Record<string, unknown>;
@@ -43,6 +75,9 @@ function normalize(raw: unknown, doubt: boolean): NativeGroupRequest | undefined
     throw new Error('Invalid native group request status');
   const message = value.postscript;
   if (typeof message !== 'string') throw new Error('Invalid native group request message');
+  // Native Group listener roles, not a universal user1/user2 convention:
+  // pinned napcat-onebot/index.ts:486-546 handles only pending requests.
+  const person = status === 1 ? participant(value, type === 1 ? 'user2' : 'user1') : undefined;
   return {
     groupId,
     sequence,
@@ -51,6 +86,7 @@ function normalize(raw: unknown, doubt: boolean): NativeGroupRequest | undefined
     doubt,
     status,
     message,
+    ...(person ? (type === 1 ? { inviter: person } : { applicant: person }) : {}),
     raw,
   };
 }

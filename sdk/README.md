@@ -178,6 +178,11 @@ Approval rejects after its account session retires, and failures are not retried
 The result retains the client method's submission/acknowledgement semantics; it
 does not independently confirm friendship or group membership. List results
 remain plain `FriendRequest`/`GroupRequest` snapshots without `approve()`.
+Pending group requests also expose optional `applicant` or `inviter` snapshots
+with a native `uid` and optional `nickname`. A join or invitation awaiting
+administrator approval identifies the applicant; an invitation to this account
+identifies the inviter. UID is not a QQ account number. Missing identity stays
+absent and does not trigger a profile lookup. See the [request identity contract](docs/contacts-groups.md#group-requests).
 The legacy `friend-request` name remains a deprecated alias of `request.friend`;
 both receive the same event, so applications normally subscribe to one name.
 

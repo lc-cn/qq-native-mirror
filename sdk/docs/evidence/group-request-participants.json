@@ -1,0 +1,182 @@
+{
+  "schemaVersion": 1,
+  "scope": "Passive participant projection for pending notifications from the existing native Group listener; source evidence, not native-account acceptance",
+  "upstream": {
+    "repository": "https://github.com/NapNeko/NapCatQQ",
+    "commit": "7471e3ecd648189a9e80530b00348a17a4528906",
+    "sourceArchiveSha256": "04932694259cba52886350289017f8155367c38f2cee8da3f175e13cb758cdc8",
+    "sourceTreeSha256": "dece94806b5a63bf1d1afdd41c84c86ffd3e1846ca19883f5fbf0528ff21b753",
+    "verification": "Ten complete source blobs match the retained non-truncated Git tree. Native notify schema, Group listener/service and actual OneBot event caller have identical Git blob IDs at the previously pinned 26d7533e0f5800fdff865ab2f2ad7692917e1076."
+  },
+  "sources": [
+    {
+      "path": "packages/napcat-core/types/notify.ts",
+      "gitBlob": "d798af8c00051541b271099dc299ac67a69b4a01",
+      "sha256": "9e584203e817c2bbc26ca5b50a51070a74a387947f1ac9ee00c566d514a371f6",
+      "bytes": 4710,
+      "url": "https://github.com/NapNeko/NapCatQQ/blob/7471e3ecd648189a9e80530b00348a17a4528906/packages/napcat-core/types/notify.ts",
+      "reviewedLinePairs": [
+        1,
+        17,
+        91,
+        108
+      ]
+    },
+    {
+      "path": "packages/napcat-core/listeners/NodeIKernelGroupListener.ts",
+      "gitBlob": "bbb0443ce5bb2cb0b1cb19f42fb9db804375c6e9",
+      "sha256": "cee7370172b3ccebeda8f9a9061d71fa035ee00e183c2d0891091a7c68eb3f02",
+      "bytes": 2095,
+      "url": "https://github.com/NapNeko/NapCatQQ/blob/7471e3ecd648189a9e80530b00348a17a4528906/packages/napcat-core/listeners/NodeIKernelGroupListener.ts",
+      "reviewedLinePairs": [
+        43,
+        54
+      ]
+    },
+    {
+      "path": "packages/napcat-core/services/NodeIKernelGroupService.ts",
+      "gitBlob": "c7c65fd6ea5ff76836ef6d90b04b864a70087992",
+      "sha256": "dce848cf2a0c15c27442e3e2e7892df32b30feb98f663c26a7770b7012e3bf21",
+      "bytes": 14544,
+      "url": "https://github.com/NapNeko/NapCatQQ/blob/7471e3ecd648189a9e80530b00348a17a4528906/packages/napcat-core/services/NodeIKernelGroupService.ts",
+      "reviewedLinePairs": [
+        204,
+        222
+      ]
+    },
+    {
+      "path": "packages/napcat-core/apis/group.ts",
+      "gitBlob": "8ec8fa9d53fc88655f8f6b0355d01e57ed6b35ee",
+      "sha256": "bb2abe51a98c73e87786031f3ee30eb1de6a2b0f9dbde610f7d2b11489979a23",
+      "bytes": 22091,
+      "url": "https://github.com/NapNeko/NapCatQQ/blob/7471e3ecd648189a9e80530b00348a17a4528906/packages/napcat-core/apis/group.ts",
+      "reviewedLinePairs": [
+        459,
+        469,
+        547,
+        559
+      ]
+    },
+    {
+      "path": "packages/napcat-core/apis/user.ts",
+      "gitBlob": "68772316fe68a2aa3db0df48da438a3bd5563bc1",
+      "sha256": "3a4732bf038ca8596495288d34711640a1d47ae7048ba61d6e5a2db2a4967a7e",
+      "bytes": 9231,
+      "url": "https://github.com/NapNeko/NapCatQQ/blob/7471e3ecd648189a9e80530b00348a17a4528906/packages/napcat-core/apis/user.ts",
+      "reviewedLinePairs": [
+        208,
+        220
+      ]
+    },
+    {
+      "path": "packages/napcat-onebot/index.ts",
+      "gitBlob": "838af29b6b4690bf43d2f5d3e9e0f13fecfe4007",
+      "sha256": "e76d07630379b14ab821657cb21db2f75964e12971eb3c6e60e96a4d5d87d11a",
+      "bytes": 29715,
+      "url": "https://github.com/NapNeko/NapCatQQ/blob/7471e3ecd648189a9e80530b00348a17a4528906/packages/napcat-onebot/index.ts",
+      "reviewedLinePairs": [
+        467,
+        554
+      ]
+    },
+    {
+      "path": "packages/napcat-onebot/api/msg.ts",
+      "gitBlob": "c1a43a76cee8326b3a4c72e77a3fa5d017cf5abb",
+      "sha256": "3bd3eac29a6d1147f575ecb6ef5d51e1dc7eb125df02859f712b7804a625279a",
+      "bytes": 62545,
+      "url": "https://github.com/NapNeko/NapCatQQ/blob/7471e3ecd648189a9e80530b00348a17a4528906/packages/napcat-onebot/api/msg.ts",
+      "reviewedLinePairs": [
+        1554,
+        1584
+      ]
+    },
+    {
+      "path": "packages/napcat-onebot/action/extends/GetGroupAddRequest.ts",
+      "gitBlob": "5ad4bdd75725ff4ef7e2b7d27c33940c3b5adda2",
+      "sha256": "5c16ccbeaeed5889a7c2232adc6cfd2fa4883784fa7039506467d35e3ad7e386",
+      "bytes": 2754,
+      "url": "https://github.com/NapNeko/NapCatQQ/blob/7471e3ecd648189a9e80530b00348a17a4528906/packages/napcat-onebot/action/extends/GetGroupAddRequest.ts",
+      "reviewedLinePairs": [
+        47,
+        65
+      ]
+    },
+    {
+      "path": "packages/napcat-onebot/action/group/SetGroupAddRequest.ts",
+      "gitBlob": "2f47f1275b1a6a382e684166d63d761776a56271",
+      "sha256": "61eb9812355850458226e7b617a9dd3f1919780c77a3dd3569274fa728636f5b",
+      "bytes": 2660,
+      "url": "https://github.com/NapNeko/NapCatQQ/blob/7471e3ecd648189a9e80530b00348a17a4528906/packages/napcat-onebot/action/group/SetGroupAddRequest.ts",
+      "reviewedLinePairs": [
+        31,
+        64
+      ]
+    },
+    {
+      "path": "packages/napcat-onebot/event/request/OB11GroupRequest.ts",
+      "gitBlob": "0c4b9c4dc2d2945edb4852cfcac9563d367c0676",
+      "sha256": "058a2cffcf9489ff84237a6d0d95c9e2b888182fb7bc16b1e2d4814460768531",
+      "bytes": 597,
+      "url": "https://github.com/NapNeko/NapCatQQ/blob/7471e3ecd648189a9e80530b00348a17a4528906/packages/napcat-onebot/event/request/OB11GroupRequest.ts",
+      "reviewedLinePairs": [
+        13,
+        19
+      ]
+    }
+  ],
+  "pendingNativeRoles": [
+    {
+      "status": 1,
+      "type": 7,
+      "kind": "join",
+      "participant": "applicant",
+      "nativeField": "user1"
+    },
+    {
+      "status": 1,
+      "type": 5,
+      "kind": "invite-approval",
+      "participant": "applicant",
+      "nativeField": "user1"
+    },
+    {
+      "status": 1,
+      "type": 1,
+      "kind": "invite",
+      "participant": "inviter",
+      "nativeField": "user2"
+    }
+  ],
+  "participantFields": {
+    "uid": "Own nonempty string uid, preserved exactly; opaque native UID, not QQ account number",
+    "nickname": "Optional own nonempty string nickName, preserved exactly"
+  },
+  "projectionPolicy": {
+    "malformedOptionalParticipant": "Omit identity without rejecting an otherwise valid request",
+    "malformedOptionalNickname": "Omit nickname while preserving valid UID",
+    "requiredRequestFields": "Existing whole-batch validation remains authoritative",
+    "lookupCalls": 0,
+    "participantDetachedFromRaw": true,
+    "approvalTuple": [
+      "groupId",
+      "sequence",
+      "type",
+      "doubt"
+    ]
+  },
+  "counterevidence": [
+    "GroupNotify user structures contain uid,nickName, no uin",
+    "actionUser schema comment is unknown",
+    "ignored type7 list calls user1 invitor_uin and requester_nick, so public labels are inconsistent",
+    "MsgApi synthesizes a type1 notify with user1=inviter,user2=self; do not generalize native-listener roles across producers",
+    "approval passes only doubt,seq,type,groupCode,postscript,operateType; no actor identity"
+  ],
+  "limits": [
+    "Roles are scoped to actual native Group callbacks with status 1, not arbitrary GroupNotify-shaped objects.",
+    "The member who issued a type 5 invitation and processed-row participant roles are unknown.",
+    "No QQ account number or administrator identity is inferred.",
+    "Submission acknowledgement does not prove remote membership.",
+    "No native addon, account, request approval or signing authenticity was verified by this source audit."
+  ],
+  "localSourceAuditReceiptSha256": "dff1f053f664158aa07cd6cc869636123385c6c0d07b544d1e8761a777fd4789"
+}

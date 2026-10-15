@@ -152,6 +152,23 @@ const confirmed: Promise<boolean> = friendRequestEvent.approve();
 // @ts-expect-error An approval capability is immutable.
 groupRequestEvent.approve = async () => {};
 declare const requestSnapshot: GroupRequest;
+const requestParticipant: import('qq-native-client').GroupRequestParticipant = { uid: 'u_opaque' };
+const requestApplicant: import('qq-native-client').GroupRequestParticipant | undefined = requestSnapshot.applicant;
+const requestInviter: import('qq-native-client').GroupRequestParticipant | undefined = groupRequestEvent.inviter;
+const participantNickname: string | undefined = requestParticipant.nickname;
+// @ts-expect-error Missing native display data does not invent a participant.
+const requiredRequestApplicant: import('qq-native-client').GroupRequestParticipant = requestSnapshot.applicant;
+// @ts-expect-error Group request participants carry opaque UIDs, not fabricated numeric accounts.
+requestParticipant.userId;
+// @ts-expect-error Participant nickname is optional display text, not a required account name.
+const requiredParticipantNickname: string = requestParticipant.nickname;
+// @ts-expect-error Native participant identity is a captured readonly value.
+requestParticipant.uid = 'u_changed';
+// @ts-expect-error Captured display text cannot be assigned through the public type.
+requestParticipant.nickname = 'changed';
+// @ts-expect-error Request participants preserve string identity rather than coercing numbers.
+const numericParticipant: import('qq-native-client').GroupRequestParticipant = { uid: 123 };
+void [requestApplicant, requestInviter, participantNickname];
 // @ts-expect-error Query snapshots do not own live approval capabilities.
 requestSnapshot.approve();
 void [groupId, privateId, typedGroup, typedPrivate, imageElement, composedInput, singleInput, composedReply, friendApproval, groupApproval];

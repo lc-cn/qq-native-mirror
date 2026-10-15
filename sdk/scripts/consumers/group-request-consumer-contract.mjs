@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { ChildProcess } from 'node:child_process';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { verifyGroupRequestParticipantConsumer } from './group-request-participant-consumer-contract.mjs';
 
 /** Installed compiled composition with controlled group notifications. No addon
  * is loaded and no account is restored or request approved remotely. */
@@ -260,6 +261,7 @@ export async function verifyGroupRequestConsumer(installedRoot) {
   assert.equal(observer.events.filter(([name]) => name === 'request.group').length, 1);
 
   return {
+    ...(await verifyGroupRequestParticipantConsumer(installedRoot)),
     groupRequestInstalledComposition: true,
     groupRequestSerialCursorContract: true,
     groupRequestDualCompletionContract: true,

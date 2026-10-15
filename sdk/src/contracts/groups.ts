@@ -230,6 +230,12 @@ export interface KickOptions {
   reason?: string;
 }
 
+/** Passive identity supplied by a native group notification; no QQ-number lookup. */
+export interface GroupRequestParticipant {
+  readonly uid: string;
+  readonly nickname?: string;
+}
+
 export interface GroupRequest {
   groupId: string;
   sequence: string;
@@ -238,6 +244,10 @@ export interface GroupRequest {
   doubt: boolean;
   status: number;
   message: string;
+  /** Pending join or invitation-approval target; not the member issuing an invitation. */
+  applicant?: GroupRequestParticipant;
+  /** Member inviting this account, only on a pending invitation addressed to it. */
+  inviter?: GroupRequestParticipant;
   raw: unknown;
 }
 

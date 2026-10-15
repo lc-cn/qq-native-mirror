@@ -52,6 +52,7 @@
   "GroupRequestEvent",
   "GroupRequestOptions",
   "GroupRequestPage",
+  "GroupRequestParticipant",
   "GroupSearchMatch",
   "HistoryOptions",
   "KickOptions",

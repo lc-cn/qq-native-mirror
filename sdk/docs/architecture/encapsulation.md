@@ -953,6 +953,14 @@ cleanup failure retains its original value. A void decision completion confirms
 dispatch only. The local and multi-platform installed-consumer checks share the
 same controlled composition contract; they do not approve real group requests.
 
+Optional group-request participants are projected by this same listener owner.
+Only the pending native callback's type determines whether `user1` is an applicant
+or `user2` is an inviter. The projection captures own string data into a separate
+passive object, omits malformed optional metadata and never resolves identities.
+It does not generalize roles to synthetic notifications or processed requests.
+The event presentation layer continues to bind approval to the original request
+tuple and account session; participant metadata is display data, not authority.
+
 `GroupQueries` owns group-ID capture, refresh defaults, full-list selection, per-group query coalescing, failed-channel
 quarantine and complete member-result validation. The query port exposes only the four verified Group read methods; native method
 returns stay `unknown` until their receiving validator checks them. Service and
