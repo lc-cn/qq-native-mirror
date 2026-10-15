@@ -451,3 +451,19 @@ python3 scripts/linux-signing-global48-result-constructor.py /absolute/path/wrap
 ```
 
 两个脚本固定完整 binary SHA，分别验证 39/20 条指令、三段相邻 unwind 边界、全部系统 objdump 字及选定参数/存储边。独立 ELF `PT_LOAD` 检查复核全部 59 条指令/摘要、五条外部直接分支、四处动态符号绑定与完整 PLT 地址计算（包含 ADD），并确认实际旧版 binary 被 SHA 拒绝且证据 stdout 为空。私有证据为 `.local/research/linux-signing-global48-leaf-boundaries{,-independent}.json` 与 `linux-signing-global48-result-constructor{,-independent}.json`。没有执行 native/provider、账号操作或改写检测值。这仍未证明 OR8 到最终输出的传播、签名真实性、服务端账号标记或运行时 global 数据不变性。
+
+## 原地修改缓冲区的两条输入来源
+
+同一固定 SHA 下，`0x434e864` 的输入不能因为经过栈槽就被视为独立栈缓冲区。调用者在入口 `0x4332640` 将原始 `x1` 保存到 `frame+0x18`，在 `0x43336b0` 将同一指针读入 `x23`，再在 `0x43336c0` 作为 `x1` 传入修改函数。紧邻的 `memcpy` 也以该指针作为目的地址。这里确认的是保存和恢复地址，不是为数据分配内存。
+
+第一条调用路径 `0x43325e4` 的输入来自 wrapper `0x4332598` 的原始 `x0`，经 `x20` 转交；该 wrapper 的更上层输入仍未确认。第二条路径 `0x4336440` 的输入来自 `consumer frame+0x5b0`：`0x4334248` 按当前指令 byte1 的低四位调用已有 lookup，`0x4334258` 读取返回记录的 `+8` 字段，`0x4334280` 保存该地址，`0x4336404/0x4336418` 再将它传给 helper。lookup 读取已有 flag/index/pointer 表，没有为记录或数据建立独立分配。因此，这一输入被进一步收窄为 workspace 管理的记录数据指针，仍未排除它与 global 对象前 48 字节的别名。
+
+完整 `.text` 的直接 `B/BL` 扫描仅找到到 `0x4332614` 的上述两个调用、到 `0x434e864` 的 `0x43336d0`；没有到确切 wrapper 入口 `0x4332598` 的直接分支。该结果不排除间接或计算得到的调用。固定 opcode 表还将 `0x7b` 映射到上述 lookup 入口 `0x4334230`；378 字节的固定初始 blob 中没有 `0x7b` 裸字节。这不能证明运行时指令源不变、嵌套程序不使用该 opcode，或该路径不可达。
+
+```sh
+python3 scripts/linux-signing-input-buffer-provenance.py /absolute/path/wrapper.node
+```
+
+脚本固定完整 binary SHA、五个 unwind 范围、九个指令窗口的 SHA 和完整 objdump 指令字，以及 opcode 表和静态 blob。dispatcher 窗口同时核对实际表地址和目标基址。需要支持 AArch64 ELF 的 objdump；可用 `--objdump /absolute/path/objdump` 指定工具。全部检查完成后才输出 JSON，收据保存在 `.local/research/linux-signing-input-buffer-provenance.json`。本次只增加指针来源证据，没有执行 native/provider、修改检测结果或使用账号；实际记录身份、混淆分支顺序、OR8 到最终输出的传播和签名真实性仍未证明。
+
+2026-10-15 本地正向运行核对了这九个窗口的 321 条指令字。另一个独立 `PT_LOAD` reader 对四个有限函数的 9,908 条指令做字节核对，并检查保存指针槽的直接写入、global 重定位及直接分支；根侧复跑得到相同收据 SHA-256 `704ed0e3907c16fce62cfacb6b69b28a5cffcc1479248ba83ba9bf3a47de8690`。完整函数字节核对不等于已解释全部混淆状态。实际旧版、错误文件（含 Python `-O`）、缺失 objdump 和不输出指令的工具四种反例均非零退出且证据 stdout 为空。独立复核确认脚本和本节结论一致；私有证据保存在 `.local/research/global48-alias-20261015/`。下一必要证据是实际选中记录的 `+8` 字段赋值来源。

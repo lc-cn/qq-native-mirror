@@ -18,6 +18,14 @@ The processing helper's next callee constructs a length/data input record, then 
 
 The injected bytes now have a verified initialization source: an 88-byte allocation whose first 48 bytes are copied from a pinned static template, with the pointer stored into the same global. The preceding caller uses a `pthread_once` path and saves the initializer address in TLS. Independent ELF mapping checks confirmed the full local wrapper/initializer instructions, static source and dynamic symbol bindings. Later writes and indirect external callback dispatch remain unexamined; this does not establish unchanged runtime bytes, detector semantics or signing authenticity. See [the initialization evidence](linux-signing-static.md#注入的-48-字节的初始化来源).
 
+A subsequent static pass follows the input of a known in-place modifier through
+its two direct callers. One forwards an unresolved wrapper argument; the other
+forwards an existing workspace record's data pointer. Saving that pointer in a
+stack slot does not establish independent stack storage. Neither path yet excludes
+aliasing with the injected global object's first 48 bytes. This identifies the
+next record-identity and caller-provenance questions; it does not prove a changed
+signature or server marker. See [input-buffer provenance](linux-signing-static.md#原地修改缓冲区的两条输入来源).
+
 The user clarified that this report came privately from a professional and that no public project name, issue or quotation is available. It remains an unresolved investigation hypothesis. Lack of a public citation must not be treated as evidence against it. No repeated login experiment on the user's regular account will be used to test the hypothesis.
 
 ## JavaScript initialization contract audit
