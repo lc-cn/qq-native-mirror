@@ -1,0 +1,23 @@
+sdk/docs/sdk-quality.md
+  s_2104cc474f1ce5::t_26abc8a2e694e8 391-419
+sdk/README.md
+  s_2104cc474f1ce5::t_26abc8a2e694e8 339-340
+sdk/docs/evidence/creation-cancellation-local-a2664ef.json
+  s_2104cc474f1ce5::t_24c8f6b573e470 1-95
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "3fa415997f9202dcb293e01aec9f31574970b2b5",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
