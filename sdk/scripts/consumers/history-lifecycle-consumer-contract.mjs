@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { join, dirname } from 'node:path';
 import { ChildProcess, spawnSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
+import { verifyPrepareCli } from './prepare-cli-consumer-contract.mjs';
 
 /** Owned fake-service/worker contracts; no native addon or account operations.
  * @param {{QQClient:typeof import('../../src/index.ts').QQClient,
@@ -505,6 +506,7 @@ export async function verifyHistoryLifecycleConsumer(packageRoot) {
   }
   return {
     ...checks,
+    ...(await verifyPrepareCli(join(packageRoot, 'dist/cli.js'))),
     installedCliEntrypointContract: true,
     posixNpmBinEntrypointChecked: process.platform !== 'win32',
   };

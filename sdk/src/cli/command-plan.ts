@@ -29,6 +29,7 @@ const entryCommands = {
     'download-mirror',
   ],
   config: ['config'],
+  prepare: ['config'],
   login: ['config', 'method', 'uin', 'qr-file'],
   watch: ['config', 'uin', 'events'],
 };

@@ -209,3 +209,24 @@ test('signal during an already dispatched action suppresses its late output with
   assert.equal(f.outputs.length, 0);
   assertReleased(f);
 });
+
+test('deferred acquisition keeps account login listeners, request and output unchanged', async () => {
+  const f = fixture();
+  const calls: string[] = [];
+  f.context.client = async () => {
+    calls.push('create');
+    return f.client as unknown as QQClient;
+  };
+  f.client.login = async (...args: unknown[]) => {
+    calls.push('login');
+    assert.deepEqual(args, [{ method: 'restore' }]);
+    assert.equal(f.client.listenerCount('qrcode'), 1);
+    assert.equal(f.client.listenerCount('login-error'), 1);
+    assert.equal(f.signals.listenerCount('SIGINT'), 1);
+    return account;
+  };
+  await runClientCommand(f.context);
+  assert.deepEqual(calls, ['create', 'login']);
+  assert.deepEqual(f.outputs, [JSON.stringify(account)]);
+  assertReleased(f);
+});

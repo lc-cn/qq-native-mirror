@@ -94,7 +94,8 @@ export function observeWatchEvents(
 }
 
 export interface ClientCommandContext {
-  client: QQClient;
+  /** A factory lets the runner own signals while native resources are prepared. */
+  client: QQClient | (() => Promise<QQClient>);
   command: string;
   login: LoginRequest;
   autoReconnect: ClientOptions['autoReconnect'];
@@ -115,14 +116,20 @@ export interface ClientCommandContext {
  * Dependencies describe the actual CLI IO so tests use the same execution path.
  */
 export async function runClientCommand(context: ClientCommandContext): Promise<void> {
-  const { client, command, output, report, signals, setExitCode } = context;
+  const { command, output, report, signals, setExitCode } = context;
+  let client = typeof context.client === 'function' ? undefined : context.client;
   let closed = false;
   let stopped = false;
   let shutdown: Promise<void> | undefined;
-  const close = () =>
-    (shutdown ??= (async () => {
-      await client.close();
+  const close = () => {
+    // An interrupted factory still owns its unfinished resources. Once it
+    // returns, the finally block closes that client without caching an early no-op.
+    if (!client) return Promise.resolve();
+    const ownedClient = client;
+    return (shutdown ??= (async () => {
+      await ownedClient.close();
     })());
+  };
   let qrWrite: Promise<void> = Promise.resolve();
   const qrcode = ({ image }: { image: Buffer }) => {
     if (closed) return;
@@ -165,6 +172,22 @@ export async function runClientCommand(context: ClientCommandContext): Promise<v
       .finally(() => setExitCode(130));
   };
   try {
+    signals.once('SIGINT', stop);
+    signals.once('SIGTERM', stop);
+    if (stopped) return;
+    if (typeof context.client === 'function') client = await context.client();
+    if (stopped || !client) return;
+    if (command === 'prepare') {
+      const nativeExports = client.nativeExports;
+      output(
+        JSON.stringify(
+          { state: client.state, nativeExports, nativeExportCount: nativeExports.length },
+          null,
+          2,
+        ),
+      );
+      return;
+    }
     client.on('qrcode', qrcode);
     client.on('login-error', loginError);
     // Readiness can deliver business events synchronously; attach before login.
@@ -176,8 +199,6 @@ export async function runClientCommand(context: ClientCommandContext): Promise<v
         failWatch?.(error),
       );
     }
-    signals.once('SIGINT', stop);
-    signals.once('SIGTERM', stop);
     const account = await client.login(context.login);
     await qrWrite;
     if (stopped) return;
@@ -194,8 +215,8 @@ export async function runClientCommand(context: ClientCommandContext): Promise<v
       cleanupAll([
         () => removeWatchEvents?.(),
         () => removeWatchFailures?.(),
-        () => client.off('qrcode', qrcode),
-        () => client.off('login-error', loginError),
+        () => client?.off('qrcode', qrcode),
+        () => client?.off('login-error', loginError),
         () => signals.removeListener('SIGINT', stop),
         () => signals.removeListener('SIGTERM', stop),
       ]);

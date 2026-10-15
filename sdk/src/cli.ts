@@ -24,6 +24,7 @@ const usage = `qq-native-client <command> [options]
        [--wrapper FILE | --manifest URL --manifest-sha256 HASH]
        [--client-version V --app-id ID --qua Q]
   config --config FILE                 Check and display configuration
+  prepare --config FILE                Load native resources and close without login
   login --config FILE [--method qr|restore|quick] [--uin UIN] [--qr-file FILE]
   contacts --config FILE [--uin UIN]    Restore login and list friends
   friend-category-add --config FILE --name TEXT [--uin UIN]  Create an empty friend category
@@ -82,7 +83,7 @@ const usage = `qq-native-client <command> [options]
   group-notice-delete --config FILE --group-id ID --notice-id ID
   group-leave --config FILE --group-id ID
 Account commands accept optional --uin UIN. Empty card/remark clears it.
-Commands restore existing authorization unless login --method qr is explicit.
+Account commands restore existing authorization unless login --method qr is explicit.
 `;
 function validateConfig(value: unknown): asserts value is ClientOptions {
   if (!value || typeof value !== 'object' || Array.isArray(value))
@@ -145,9 +146,13 @@ async function main() {
     else if (method !== 'restore') throw new Error('--method must be qr, restore or quick');
   }
   if (command === 'watch') watchReconnectEnabled(options.autoReconnect);
-  const client = await createClient({ ...options, login: undefined });
+  const clientOptions = {
+    ...options,
+    login: undefined,
+    ...(command === 'prepare' ? { autoLogin: false, autoReconnect: false } : {}),
+  };
   await runClientCommand({
-    client,
+    client: () => createClient(clientOptions),
     command,
     login,
     autoReconnect: options.autoReconnect,

@@ -321,6 +321,7 @@ for the supported contract and remaining native evidence.
 ```sh
 qq-native-client --help
 qq-native-client init --config ./qq.json --data-dir /absolute/path/to/account-data
+qq-native-client prepare --config ./qq.json
 qq-native-client login --config ./qq.json --method qr
 qq-native-client contacts --config ./qq.json
 qq-native-client groups --config ./qq.json
@@ -331,6 +332,13 @@ Help lists configuration, login, reads, watch and explicit send/management comma
 Business commands restore existing authorization; QR login is explicit. Watch
 prints only messages by default; `normalized`/`all` print named business envelopes.
 Shutdown releases subscriptions and closes the client.
+
+`prepare` checks resource loading and native initialization before account login.
+It prints the initialized client state, native export names and their count, then
+closes. It disables configured login and reconnection and rejects account flags
+such as `--uin`, `--method` and `--qr-file`. Ctrl+C suppresses a pending result and
+closes the client as soon as initialization returns; it does not cancel an ongoing
+resource download. This check does not verify account access or signing integrity.
 
 ## Native packages and mirrors
 
