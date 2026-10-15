@@ -1,0 +1,51 @@
+sdk/scripts/linux-signing-old-vtable.py
+  s_2104cc474f1ce5::t_10b6f5e76c3fe7 1-29
+sdk/scripts/linux-signing-static.py
+  s_2104cc474f1ce5::t_10b6f5e76c3fe7 1-60
+sdk/docs/signing-integrity.md
+  s_2104cc474f1ce5::t_ab7494d2b62f5f 41
+sdk/docs/sdk-quality.md
+  s_2104cc474f1ce5::t_aae17a848ef627 315-329
+  s_2104cc474f1ce5::t_a641e175141764 330-339
+sdk/scripts/linux-signing-global-refs.py
+  s_2104cc474f1ce5::t_10b6f5e76c3fe7 1-27
+sdk/test/signing-reproduction.test.ts
+  s_2104cc474f1ce5::t_b2e56a2b1a7bee 1-54
+sdk/docs/linux-signing-static.md
+  s_2104cc474f1ce5::t_aae17a848ef627 9-16
+  s_2104cc474f1ce5::t_ab7494d2b62f5f 3-8,124,138,223
+sdk/docs/evidence/signing-reproduction-tools.json
+  s_2104cc474f1ce5::t_07736b8668f063 1-211
+sdk/scripts/inspect-official-bootstrap.py
+  s_2104cc474f1ce5::t_7fea3754b6b6e6 1-33
+sdk/scripts/linux-signing-caller-contract.py
+  s_2104cc474f1ce5::t_8a0d141053acd6 1-8
+sdk/scripts/linux-signing-field-map.py
+  s_2104cc474f1ce5::t_a0c26d14ce6a9e 1-29
+sdk/scripts/linux-signing-image-predicate.py
+  s_2104cc474f1ce5::t_abd3dff606b956 1-21
+sdk/scripts/linux-signing-old-preinit.py
+  s_2104cc474f1ce5::t_f6ad194cff2fc9 1-10
+sdk/scripts/linux-signing-output-copy.py
+  s_2104cc474f1ce5::t_6fdc6cabfb5220 1-8
+sdk/scripts/linux-signing-setup-contract.py
+  s_2104cc474f1ce5::t_56b6ce920e8673 1-8
+sdk/scripts/linux-signing-state-effects.py
+  s_2104cc474f1ce5::t_34f77cbda70d78 1-15
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "879ceb7583c094561d1834876ae25f16e1194589",
+  "prompts": {},
+  "sessions": {
+    "s_2104cc474f1ce5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f05b-a8e3-78c1-a6c8-abbfc887b55a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
